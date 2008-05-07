@@ -1763,16 +1763,16 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
 
 Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
   assert(DestLoc == 0 && "Does not return a value!");
-  if (TREE_OPERAND(exp, 0)) {
-    // Emit the expression, including the assignment to RESULT_DECL.  If the
-    // operand is an aggregate value, create a temporary to evaluate it into.
-    MemRef DestLoc;
-    const Type *DestTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)));
-    if (!DestTy->isFirstClassType() && 
-        TREE_CODE(TREE_OPERAND(exp, 0)) != MODIFY_EXPR)
-      DestLoc = CreateTempLoc(DestTy);
-    Emit(TREE_OPERAND(exp, 0), DestLoc.Ptr ? &DestLoc : NULL);
-  }
+  tree retval = TREE_OPERAND(exp, 0);
+
+  assert((!retval || TREE_CODE(retval) == RESULT_DECL ||
+          (TREE_CODE(retval) == MODIFY_EXPR &&
+           TREE_CODE(TREE_OPERAND(retval, 0)) == RESULT_DECL)) &&
+         "RETURN_EXPR not gimple!");
+
+  if (retval && TREE_CODE(retval) != RESULT_DECL)
+    // Emit the assignment to RESULT_DECL.
+    Emit(retval, 0);
 
   // Emit a branch to the exit label.
   Builder.CreateBr(ReturnBB);

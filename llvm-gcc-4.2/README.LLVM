@@ -75,12 +75,12 @@ If building for Darwin/PPC:
     TRIPLE=powerpc-apple-darwin8
   
 If building for Darwin/X86 (32- and 64-bit support):
-    TARGETOPTIONS=--with-arch=nocona --with-tune=generic
+    TARGETOPTIONS='--with-arch=nocona --with-tune=generic'
     TRIPLE=i686-apple-darwin8
     
 If building for Darwin/X86 (32-bit support only):
-    TARGETOPTIONS=--with-arch=pentium-m --with-tune=prescott --disable-multilib
-    TRIPLE=i686-apple-darwin8
+   TARGETOPTIONS='--with-arch=pentium-m --with-tune=prescott --disable-multilib'
+   TRIPLE=i686-apple-darwin8
 
 In addition, you *must* specify the following options to configure:
 

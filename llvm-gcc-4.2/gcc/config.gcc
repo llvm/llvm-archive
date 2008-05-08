@@ -1765,7 +1765,12 @@ powerpc-*-darwin*)
 	# APPLE LOCAL mainline candidate 2006-06-22 4512244
 	extra_parts="${extra_parts} crt2.o"
 	case ${target} in
-	  *-darwin1[0-9]* | *-darwin[8-9]*)
+          # LLVM LOCAL begin
+	  *-darwin1[0-9]*)
+	    tm_file="${tm_file} rs6000/darwin8.h"
+	    ;;
+	  *-darwin[8-9]*)
+          # LLVM LOCAL end
 	    tmake_file="${tmake_file} rs6000/t-darwin8"
 	    tm_file="${tm_file} rs6000/darwin8.h"
 	    ;;

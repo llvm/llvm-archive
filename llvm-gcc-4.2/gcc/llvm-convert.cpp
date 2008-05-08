@@ -6646,11 +6646,16 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   if (TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
-    std::vector<Value*> Idxs;
-    Idxs.push_back(Constant::getNullValue(Type::Int32Ty));
-    Idxs.push_back(ConstantInt::get(Type::Int32Ty, MemberIndex));
-    FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, &Idxs[0],
-                                              Idxs.size());
+    Constant *Ops[] = {
+      StructAddrLV,
+      Constant::getNullValue(Type::Int32Ty),
+      ConstantInt::get(Type::Int32Ty, MemberIndex)
+    };
+    FieldPtr = ConstantExpr::getGetElementPtr(StructAddrLV, Ops+1, 2);
+    
+    FieldPtr = ConstantFoldInstOperands(Instruction::GetElementPtr,
+                                        FieldPtr->getType(), Ops,
+                                        3, &TD); 
     
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.

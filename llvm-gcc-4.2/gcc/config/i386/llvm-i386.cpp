@@ -248,11 +248,13 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADQ: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
-    Value *Zero = Constant::getNullValue(Type::DoubleTy);
-    Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
+    PointerType *i64Ptr = PointerType::getUnqual(Type::Int64Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], i64Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
-    Result = BuildVector(Ops[0], Zero, NULL);
+    Value *Zero = ConstantInt::get(Type::Int64Ty, 0);
+    Result = BuildVector(Zero, Zero, NULL);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
+    Result = Builder.CreateInsertElement(Result, Ops[0], Idx, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }

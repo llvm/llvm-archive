@@ -66,6 +66,7 @@ extern "C" {
 #include "rtl.h"
 #include "libfuncs.h"
 #include "tree-flow.h"
+#include "tree-gimple.h"
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
@@ -261,15 +262,14 @@ void eraseLocalLLVMValues() {
   }
 }
 
-/// isGCC_SSA_Temporary - Return true if this is an SSA temporary that we can
+/// isGimpleTemporary - Return true if this is a gimple temporary that we can
 /// directly compile into an LLVM temporary.  This saves us from creating an
 /// alloca and creating loads/stores of that alloca (a compile-time win).  We
-/// can only do this if the value is a first class llvm value and if it's a 
-/// "gimple_formal_tmp_var".
-static bool isGCC_SSA_Temporary(tree decl) {
-  return TREE_CODE(decl) == VAR_DECL &&
-         DECL_GIMPLE_FORMAL_TEMP_P(decl) && !TREE_ADDRESSABLE(decl) &&
-         !isAggregateTreeType(TREE_TYPE(decl));
+/// can only do this if the value is a first class llvm value and if it's a
+/// "gimple_formal_tmp_reg".
+static bool isGimpleTemporary(tree decl) {
+  return is_gimple_formal_tmp_reg(decl) &&
+    !isAggregateTreeType(TREE_TYPE(decl));
 }
 
 /// isStructWithVarSizeArrayAtEnd - Return true if this StructType contains a
@@ -1583,9 +1583,9 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       TREE_STATIC(decl) || DECL_EXTERNAL(decl) || type == error_mark_node)
     return;
 
-  // SSA temporaries are handled specially: their DECL_LLVM is set when the
+  // Gimple temporaries are handled specially: their DECL_LLVM is set when the
   // definition is encountered.
-  if (isGCC_SSA_Temporary(decl))
+  if (isGimpleTemporary(decl))
     return;
   
   // If this is just the rotten husk of a variable that the gimplifier
@@ -2162,8 +2162,8 @@ void TreeToLLVM::EmitUnwindBlock() {
 /// requires an r-value, this method emits the lvalue computation, then loads
 /// the result.
 Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
-  // If this is an SSA value, don't emit a load, just use the result.
-  if (isGCC_SSA_Temporary(exp)) {
+  // If this is a gimple temporary, don't emit a load, just use the result.
+  if (isGimpleTemporary(exp)) {
     assert(DECL_LLVM_SET_P(exp) && "Definition not found before use!");
     return DECL_LLVM(exp);
   } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
@@ -2791,12 +2791,12 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   tree lhs = TREE_OPERAND (exp, 0);
   tree rhs = TREE_OPERAND (exp, 1);
 
-  // If this is the definition of an SSA variable, set its DECL_LLVM to the
+  // If this is the definition of a gimple temporary, set its DECL_LLVM to the
   // RHS.
   bool LHSSigned = !TYPE_UNSIGNED(TREE_TYPE(lhs));
   bool RHSSigned = !TYPE_UNSIGNED(TREE_TYPE(rhs));
-  if (isGCC_SSA_Temporary(lhs)) {
-    // If DECL_LLVM is already set, this is a multiply defined GCC temporary.
+  if (isGimpleTemporary(lhs)) {
+    // If DECL_LLVM is already set, this is a multiply defined gimple temporary.
     if (DECL_LLVM_SET_P(lhs)) {
       HandleMultiplyDefinedGCCTemp(lhs);
       return EmitMODIFY_EXPR(exp, DestLoc);
@@ -5276,8 +5276,8 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
     }
   }
 
-  assert(!isGCC_SSA_Temporary(exp) &&
-         "Cannot use an SSA temporary as an l-value");
+  assert(!isGimpleTemporary(exp) &&
+         "Cannot use a gimple temporary as an l-value");
   
   Value *Decl = DECL_LLVM(exp);
   if (Decl == 0) {

@@ -2164,8 +2164,16 @@ void TreeToLLVM::EmitUnwindBlock() {
 Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   // If this is a gimple temporary, don't emit a load, just use the result.
   if (isGimpleTemporary(exp)) {
-    assert(DECL_LLVM_SET_P(exp) && "Definition not found before use!");
-    return DECL_LLVM(exp);
+    if (DECL_LLVM_SET_P(exp))
+      return DECL_LLVM(exp);
+    // Since basic blocks are output in no particular order, it is perfectly
+    // possible to encounter a use of a gimple temporary before encountering
+    // its definition, which is what has happened here.  This happens rarely
+    // in practice, so there's no point in trying to do anything clever: just
+    // demote to an ordinary variable and create an alloca to hold its value.
+    DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
+    EmitAutomaticVariableDecl(exp);
+    // Fall through.
   } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
              TREE_STATIC(exp)) {
     // If this is a register variable, EmitLV can't handle it (there is no

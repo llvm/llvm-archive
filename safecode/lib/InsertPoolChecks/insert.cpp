@@ -745,6 +745,8 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
                                        VoidPtrType, Type::UIntTy, NULL);
   IORegister = M.getOrInsertFunction("pchk_reg_io", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
+  IOFree  = M.getOrInsertFunction("pchk_drop_io", Type::VoidTy, VoidPtrType,
+                                  VoidPtrType, NULL);
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
                                   VoidPtrType, NULL);
   StackFree = M.getOrInsertFunction("pchk_drop_stack", Type::VoidTy, VoidPtrType,
@@ -899,6 +901,17 @@ InsertPoolChecks::addHeapRegs (Module & M) {
           args.push_back (len);
           new CallInst(IORegister, args, "", IP);
         }
+      } else if (name == "iounmap") {
+        if (EnableIOChecks) {
+          // Drop object after deallocation
+          Instruction* IP = i->getInstruction()->getNext();
+          Value* VP  = castTo (i->getInstruction(), VoidPtrType, IP);
+          Value* VMP = castTo (MPV, VoidPtrType, IP);
+
+          args.push_back (VMP);
+          args.push_back (VP);
+          new CallInst(IOFree, args, "", IP);
+        }
 #endif
       } else
         assert(0 && "unknown alloc");
@@ -968,6 +981,32 @@ void InsertPoolChecks::addObjFrees(Module& M) {
       }
     }
   }
+
+#ifdef SVA_IO
+  if (!EnableIOChecks) return;
+  L.clear();
+  Function* IMF = M.getNamedFunction("iounmap");
+  if (IMF) L.push_back(IMF);
+  for (std::list<Function*>::iterator ii = L.begin(), ee = L.end();
+       ii != ee; ++ii) {
+    Function* F = *ii;
+    for (Value::use_iterator ii = F->use_begin(), ee = F->use_end();
+         ii != ee; ++ii) {
+      if (CallInst* CI = dyn_cast<CallInst>(*ii)) {
+        if (CI->getCalledFunction() == F) {
+          Value* Ptr = CI->getOperand(1);
+          Value* MP = getPD(getDSNode(Ptr, CI->getParent()->getParent()), M);
+          if (MP) {
+            MP = new CastInst(MP, PointerType::get(Type::SByteTy), "MP", CI);
+            Ptr = new CastInst(Ptr, PointerType::get(Type::SByteTy), "ADDR", CI);
+            new CallInst(IOFree, make_vector(MP, Ptr, 0), "", CI);
+          }
+        }
+      }
+    }
+  }
+
+#endif
 #endif
 }
 
@@ -1678,18 +1717,21 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
 //  false - This value is not eligable for an exactcheck.
 //
 static inline bool
-isEligableForExactCheck (Value * Pointer) {
+isEligableForExactCheck (Value * Pointer, bool IOOkay) {
   if ((isa<AllocaInst>(Pointer)) || (isa<GlobalVariable>(Pointer)))
     return true;
 
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction() &&
         (CI->getCalledFunction()->getName() == "__vmalloc" || 
-         CI->getCalledFunction()->getName() == "__ioremap" || 
          CI->getCalledFunction()->getName() == "malloc" || 
          CI->getCalledFunction()->getName() == "kmalloc" || 
          CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
          CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
+      return true;
+    }
+
+    if (IOOkay && (CI->getCalledFunction()->getName() == "__ioremap")) {
       return true;
     }
   }
@@ -1763,7 +1805,7 @@ InsertPoolChecks::findCheckedPointer (Value * PointerOperand) {
 //            (i.e. a GEP).  This value is always written.
 //
 static Value *
-findSourcePointer (Value * PointerOperand, bool & indexed) {
+findSourcePointer (Value * PointerOperand, bool & indexed, bool IOOkay = true) {
   //
   // Attempt to look for the originally allocated object by scanning the data
   // flow up.
@@ -1771,7 +1813,7 @@ findSourcePointer (Value * PointerOperand, bool & indexed) {
   indexed = false;
   Value * SourcePointer = PointerOperand;
   Value * OldSourcePointer = 0;
-  while (!isEligableForExactCheck (SourcePointer)) {
+  while (!isEligableForExactCheck (SourcePointer, IOOkay)) {
     assert (OldSourcePointer != SourcePointer);
     OldSourcePointer = SourcePointer;
     // Check for GEP and cast constant expressions
@@ -1815,7 +1857,7 @@ findSourcePointer (Value * PointerOperand, bool & indexed) {
     break;
   }
 
-  if (isEligableForExactCheck (SourcePointer))
+  if (isEligableForExactCheck (SourcePointer, IOOkay))
     PointerOperand = SourcePointer;
 
   return PointerOperand;
@@ -3479,13 +3521,12 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F, bool io) {
 
   //
   // Do not perform a check on regular memory if:
-  //  o there is no DSNode,
   //  o the node is not folded (i.e., the node is type-consistent),
   //  o the node is incomplete,
   //
   if (!((Node->isNodeCompletelyFolded()) ||
         (Node->isUnknownNode()) ||
-        (Node->isIONode())))
+        (EnableIOChecks && (Node->isIONode()))))
     return;
 
   //
@@ -3503,7 +3544,7 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F, bool io) {
     ThePoolCheckFunction = PoolCheckIO;
   } else {
     if ((Node->isUnknownNode()) || (Node->isIncomplete())) {
-      if (EnableUnknownChecks) {
+      if (EnableUnknownChecks || EnableIOChecks) {
         ThePoolCheckFunction = PoolCheckUI;
       } else {
         ++MissedIncompleteChecks;
@@ -3533,14 +3574,64 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F, bool io) {
   // object).
   //
   //
-  if (!((Node->isIONode()) && (Node->isHeapNode()   ||
-                               Node->isGlobalNode() ||
-                               Node->isAllocaNode()))) {
-    if ((findCheckedPointer(V))) {
+  bool indexed = true;
+  Value * SourcePointer = findSourcePointer (V, indexed, false);
+  if (!(EnableIOChecks && (Node->isIONode()) && (Node->isHeapNode()   ||
+                                                 Node->isGlobalNode() ||
+                                                 Node->isAllocaNode()))) {
+    if (findCheckedPointer(V)) {
       ++SavedPoolChecks;
       return;
     }
+
+    if ((!io) &&
+        (V == SourcePointer) &&
+        (isEligableForExactCheck (SourcePointer, false))) {
+      ++SavedPoolChecks;
+      return;
+    }
+  } else {
+    //
+    // If I can prove that this is a memory object, I can alleviate checks if
+    // there was already a bounds check performed.
+    //
+    if (!io) {
+#if 1
+      // Find the source of the pointer
+      if (isEligableForExactCheck (SourcePointer, false)) {
+        if ((V == SourcePointer) || (findCheckedPointer(V))) {
+          ++SavedPoolChecks;
+          return;
+        }
+      }
+#else
+      // Don't protect memory loads and stores from accessing I/O objects
+      if (findCheckedPointer(V)) {
+        ++SavedPoolChecks;
+        return;
+      }
+
+      // If the pointer is trivially known to be a valid memory object,
+      // don't bother doing a run-time check
+      if ((!io) &&
+          (V == SourcePointer) &&
+          (isEligableForExactCheck (SourcePointer, false))) {
+        ++SavedPoolChecks;
+        return;
+      }
+#endif
+    }
   }
+
+#if 0
+  //
+  // Determine if the pointer is one which we already know is valid.
+  //
+  if (!io && ((isa<GlobalVariable>(V)) || (isa<AllocaInst>(V)))) {
+    ++SavedPoolChecks;
+    return;
+  }
+#endif
 
   // Get the pool handle associated with this pointer.  If there is no pool
   // handle, use a NULL pointer value and let the runtime deal with it.

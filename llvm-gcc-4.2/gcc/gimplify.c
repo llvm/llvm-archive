@@ -5145,6 +5145,10 @@ gimplify_omp_atomic_fetch_op (tree *expr_p, tree addr, tree rhs, int index)
   decl = built_in_decls[base + index + 1];
   itype = TREE_TYPE (TREE_TYPE (decl));
 
+#ifdef ENABLE_LLVM
+  /* LLVM LOCAL fix me. Add target specific check. */
+  return GS_UNHANDLED;
+#endif
   if (optab[TYPE_MODE (itype)] == CODE_FOR_nothing)
     return GS_UNHANDLED;
 
@@ -5221,6 +5225,10 @@ gimplify_omp_atomic_pipeline (tree *expr_p, tree *pre_p, tree addr,
   type = TYPE_MAIN_VARIANT (TREE_TYPE (TREE_TYPE (addr)));
   itype = TREE_TYPE (TREE_TYPE (cmpxchg));
 
+#ifdef ENABLE_LLVM
+  /* LLVM LOCAL fix me. Add target specific check. */
+  return GS_UNHANDLED;
+#endif
   if (sync_compare_and_swap[TYPE_MODE (itype)] == CODE_FOR_nothing)
     return GS_UNHANDLED;
 

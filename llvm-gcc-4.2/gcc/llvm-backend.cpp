@@ -377,7 +377,6 @@ static void createOptimizationPasses() {
     PM->add(createLICMPass());                  // Hoist loop invariants
     PM->add(createLoopUnswitchPass(optimize_size ? true : false));
     PM->add(createLoopIndexSplitPass());        // Split loop index
-    PM->add(createInstructionCombiningPass());  // Clean up after LICM/reassoc
     PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
     PM->add(createLoopDeletionPass());          // Delete dead loops
     if (flag_unroll_loops)

@@ -41,6 +41,7 @@ int stat_poolcheckarray_i=0;
 int stat_boundscheck=0;
 int stat_boundscheck_i=0;
 int stat_regio=0;
+int stat_poolcheckio=0;
 
 /* Global splay for holding the interrupt context */
 void * ICSplay;
@@ -249,6 +250,14 @@ pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len) {
 
   ++stat_regio;
   adl_splay_insert(&MP->IOObjs, addr, len, __builtin_return_address(0));
+  PCUNLOCK();
+}
+
+void
+pchk_drop_io (MetaPoolTy* MP, void* addr) {
+  if (!MP) return;
+  PCLOCK();
+  adl_splay_delete(&MP->IOObjs, addr);
   PCUNLOCK();
 }
 #endif
@@ -493,7 +502,11 @@ void poolcheck_i (MetaPoolTy* MP, void* addr) {
 #endif
   ++stat_poolcheck;
   PCLOCK();
-  volatile int t = adl_splay_find(&MP->Objs, addr);
+  int t1 = adl_splay_find(&MP->IOObjs, addr);
+  if (t1) {
+    if (1) poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+  volatile int t2 = adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
   return;
 }
@@ -511,7 +524,7 @@ poolcheckio(MetaPoolTy* MP, void* addr) {
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
-  ++stat_poolcheck;
+  ++stat_poolcheckio;
 
   /*
    * Determine if this is an I/O port address.  If so, just let it pass.

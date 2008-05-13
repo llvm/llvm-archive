@@ -26,6 +26,7 @@ extern int stat_poolcheckarray_i;
 extern int stat_boundscheck;
 extern int stat_boundscheck_i;
 extern int stat_regio;
+extern int stat_poolcheckio;
 extern unsigned int externallocs;
 extern unsigned int allallocs;
 
@@ -51,6 +52,7 @@ getstackpromotes()
   poolcheckinfo ("LLVA: external allocs", externallocs);
   poolcheckinfo ("LLVA: all      allocs", allallocs);
   poolcheckinfo ("LLVA: io registrations", stat_regio);
+  poolcheckinfo ("LLVA: io poolchecks   ", stat_poolcheckio);
   return stack_promotes;
 }
 

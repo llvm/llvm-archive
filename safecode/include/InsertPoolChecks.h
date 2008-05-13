@@ -212,6 +212,7 @@ struct InsertPoolChecks : public FunctionPass {
     Function *PoolRegister;
     Function *StackRegister;
     Function *IORegister;
+    Function *IOFree;
     Function *ObjFree;
     Function *StackFree;
     Function *IO;

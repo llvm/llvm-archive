@@ -360,7 +360,8 @@ static void createOptimizationPasses() {
       if (optimize > 2)
         PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
     }
-    
+
+    PM->add(createTailDuplicationPass());       // Simplify cfg by copying code    
     if (!lang_hooks.flag_no_builtin())
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.

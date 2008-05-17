@@ -128,7 +128,7 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (optimize_size)
+  if (optimize_size || flag_inline_trees == 1)
     // Reduce inline limit. Default limit is 200.
     Args.push_back("--inline-threshold=100");
   if (flag_unwind_tables)
@@ -353,14 +353,10 @@ static void createOptimizationPasses() {
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
     if (flag_unit_at_a_time && flag_exceptions)
       PM->add(createPruneEHPass());               // Remove dead EH info
-
-    if (optimize > 1) {
-      if (flag_inline_trees > 1)                  // respect -fno-inline-functions
-        PM->add(createFunctionInliningPass());    // Inline small functions
-      if (optimize > 2)
-        PM->add(createArgumentPromotionPass()); // Scalarize uninlined fn args
-    }
-
+    if (flag_inline_trees)                      // respect -fno-inline-functions
+      PM->add(createFunctionInliningPass());    // Inline small functions
+    if (optimize > 2)
+      PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     PM->add(createTailDuplicationPass());       // Simplify cfg by copying code    
     if (!lang_hooks.flag_no_builtin())
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations

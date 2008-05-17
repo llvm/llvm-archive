@@ -485,14 +485,10 @@ init_optimization_passes (void)
   NEXT_PASS (pass_early_local_passes);
   NEXT_PASS (pass_ipa_cp);
   NEXT_PASS (pass_ipa_inline);
-/* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);
   NEXT_PASS (pass_ipa_pta);
-#endif
-/* LLVM LOCAL end */
   *p = NULL;
 
   /* All passes needed to lower the function into shape optimizers can
@@ -504,9 +500,9 @@ init_optimization_passes (void)
   NEXT_PASS (pass_lower_cf);
   NEXT_PASS (pass_lower_eh);
   NEXT_PASS (pass_build_cfg);
-  NEXT_PASS (pass_lower_complex_O0);
   /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
+  NEXT_PASS (pass_lower_complex_O0);
   NEXT_PASS (pass_lower_vector);
 #endif
   /* LLVM LOCAL end */
@@ -516,16 +512,6 @@ init_optimization_passes (void)
   NEXT_PASS (pass_early_tree_profile);
 #endif
   /* LLVM LOCAL end */
-  *p = NULL;
-
-  p = &pass_early_local_passes.sub;
-  /* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
-  NEXT_PASS (pass_tree_profile);
-#endif
-  /* LLVM LOCAL end */
-  NEXT_PASS (pass_cleanup_cfg);
-  NEXT_PASS (pass_rebuild_cgraph_edges);
   *p = NULL;
 
   /* LLVM LOCAL begin */
@@ -538,6 +524,12 @@ init_optimization_passes (void)
   *p = NULL;
 #endif
   /* LLVM LOCAL end */
+
+  p = &pass_early_local_passes.sub;
+  NEXT_PASS (pass_tree_profile);
+  NEXT_PASS (pass_cleanup_cfg);
+  NEXT_PASS (pass_rebuild_cgraph_edges);
+  *p = NULL;
 
   p = &all_passes;
   NEXT_PASS (pass_fixup_cfg);
@@ -684,8 +676,6 @@ init_optimization_passes (void)
   NEXT_PASS (pass_dce_loop);
   *p = NULL;
 
-  /* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
   p = &pass_loop2.sub;
   NEXT_PASS (pass_rtl_loop_init);
   NEXT_PASS (pass_rtl_move_loop_invariants);
@@ -760,8 +750,6 @@ init_optimization_passes (void)
   NEXT_PASS (pass_set_nothrow_function_flags);
   NEXT_PASS (pass_final);
   *p = NULL;
-#endif
-  /* LLVM LOCAL end */
 
 #undef NEXT_PASS
 

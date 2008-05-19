@@ -1614,13 +1614,9 @@ cgraph_optimize (void)
       dump_cgraph (cgraph_dump_file);
     }
     
-  /* LLVM local begin */
-#ifndef ENABLE_LLVM
   /* Don't run the IPA passes if there was any error or sorry messages.  */
   if (errorcount == 0 && sorrycount == 0)
     ipa_passes ();
-#endif
-  /* LLVM local end */
 
   /* This pass remove bodies of extern inline functions we never inlined.
      Do this later so other IPA passes see what is really going on.  */

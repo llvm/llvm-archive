@@ -481,14 +481,20 @@ init_optimization_passes (void)
 #define NEXT_PASS(PASS)  (p = next_pass_1 (p, &PASS))
   /* Interprocedural optimization passes.  */
   p = &all_ipa_passes;
+  /* LLVM local begin */
+#ifndef ENABLE_LLVM
   NEXT_PASS (pass_early_ipa_inline);
   NEXT_PASS (pass_early_local_passes);
   NEXT_PASS (pass_ipa_cp);
-  NEXT_PASS (pass_ipa_inline);
+#endif
+  NEXT_PASS (pass_ipa_inline); /* LLVM: inline functions marked always_inline */
+#ifndef ENABLE_LLVM
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);
   NEXT_PASS (pass_ipa_pta);
+#endif
+  /* LLVM local end */
   *p = NULL;
 
   /* All passes needed to lower the function into shape optimizers can

@@ -484,9 +484,9 @@ init_optimization_passes (void)
   NEXT_PASS (pass_early_ipa_inline);
   NEXT_PASS (pass_early_local_passes);
   NEXT_PASS (pass_ipa_cp);
-  NEXT_PASS (pass_ipa_inline);
 /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
+  NEXT_PASS (pass_ipa_inline);
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);

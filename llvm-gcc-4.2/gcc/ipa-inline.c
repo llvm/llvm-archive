@@ -941,11 +941,7 @@ cgraph_decide_inlining (void)
 	/* At the moment, no IPA passes change function bodies before inlining.
 	   Save some time by not recomputing function body sizes if early inlining
 	   already did so.  */
-        /* LLVM local begin - Don't rely on pass_early_ipa_inline being run.  */
-#ifndef ENABLE_LLVM
 	if (!flag_early_inlining)
-#endif
-        /* LLVM local end */
 	  node->local.self_insns = node->global.insns
 	     = estimate_num_insns (node->decl);
 
@@ -1032,8 +1028,6 @@ cgraph_decide_inlining (void)
 		 overall_insns - old_insns);
     }
 
-  /* LLVM local begin */
-#ifndef ENABLE_LLVM
   if (!flag_really_no_inline)
     cgraph_decide_inlining_of_small_functions ();
 
@@ -1107,8 +1101,6 @@ cgraph_decide_inlining (void)
 	    }
 	}
     }
-#endif
-  /* LLVM local end */
 
   if (dump_file)
     fprintf (dump_file,
@@ -1155,8 +1147,6 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node, bool early)
 	inlined = true;
       }
 
-  /* LLVM local begin */
-#ifndef ENABLE_LLVM
   /* Now do the automatic inlining.  */
   if (!flag_really_no_inline)
     for (e = node->callees; e; e = e->next_callee)
@@ -1189,8 +1179,6 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node, bool early)
 	  else if (!early)
 	    e->inline_failed = failed_reason;
 	}
-#endif
-  /* LLVM local end */
   if (early && inlined)
     {
       push_cfun (DECL_STRUCT_FUNCTION (node->decl));

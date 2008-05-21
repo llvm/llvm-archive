@@ -1160,7 +1160,7 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
       return CI->getOperand(0);
   // Do an end-run around the builder's folding logic.
   // TODO: introduce a new builder class that does target specific folding.
-  Value *Result = Builder.Insert(CastInst::create(Instruction::CastOps(opcode),
+  Value *Result = Builder.Insert(CastInst::Create(Instruction::CastOps(opcode),
                                                   V, Ty, V->getNameStart()));
 
   // If this is a constantexpr, fold the instruction with
@@ -1247,7 +1247,7 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
     // alloc instructions before.  It doesn't matter what this instruction is,
     // it is dead.  This allows us to insert allocas in order without having to
     // scan for an insertion point. Use BitCast for int -> int
-    AllocaInsertionPoint = CastInst::create(Instruction::BitCast,
+    AllocaInsertionPoint = CastInst::Create(Instruction::BitCast,
       Constant::getNullValue(Type::Int32Ty), Type::Int32Ty, "alloca point");
     // Insert it as the first instruction in the entry block.
     Fn->begin()->getInstList().insert(Fn->begin()->begin(),

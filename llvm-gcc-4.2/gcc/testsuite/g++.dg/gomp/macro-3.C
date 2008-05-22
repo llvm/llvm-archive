@@ -1,5 +1,6 @@
 // PR preprocessor/27746
 // { dg-do compile }
+// { dg-require-fdump "" }
 // { dg-options "-fopenmp -fdump-tree-omplower" }
 
 #define omp		FOO

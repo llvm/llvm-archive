@@ -39,9 +39,16 @@ set save-dg-do-what-default ${dg-do-what-default}
 set DEFAULT_VECTCFLAGS ""
 
 # These flags are used for all targets.
-lappend DEFAULT_VECTCFLAGS "-O2" "-ftree-vectorize" \
-  "-ftree-vectorizer-verbose=4" "-fdump-tree-vect-stats"
-
+# LLVM LOCAL begin tree-vect-stats dump is disabled
+# Seems to be useless for test purposes, so just disable it.
+if { [ is_llvm ] } {
+  lappend DEFAULT_VECTCFLAGS "-O2" "-ftree-vectorize" \
+  "-ftree-vectorizer-verbose=4"
+} else {
+  lappend DEFAULT_VECTCFLAGS "-O2" "-ftree-vectorize" \
+   "-ftree-vectorizer-verbose=4" "-fdump-tree-vect-stats"
+}
+# LLVM LOCAL end
 # Skip these tests for targets that do not support generating vector
 # code.  Set additional target-dependent vector flags, which can be
 # overridden by using dg-options in individual tests.

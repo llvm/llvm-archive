@@ -872,7 +872,7 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
     const Type *ETy = STy->getElementType(i);
     if (const ArrayType *ATy = dyn_cast<ArrayType>(ETy))
       ETy = ATy->getElementType();
-    if (!ETy->isFirstClassType() && ETy->getTypeID() != Type::X86_FP80TyID)
+    if (!ETy->isSingleValueType() && ETy->getTypeID() != Type::X86_FP80TyID)
       return false;
     if (ETy->isInteger())
       foundInt = true;
@@ -1142,7 +1142,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     const Type *DestElemType = DestTy->getElementType(DNO);
 
     // Directly access first class values using getresult.
-    if (DestElemType->isFirstClassType()) {
+    if (DestElemType->isSingleValueType()) {
       Value *GEP = Builder.CreateStructGEP(Dest, DNO, "mrv_gep");
       GetResultInst *GR = Builder.CreateGetResult(Src, SNO, "mrv_gr");
       Builder.CreateStore(GR, GEP, isVolatile);

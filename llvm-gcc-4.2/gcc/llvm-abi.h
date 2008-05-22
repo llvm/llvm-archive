@@ -363,7 +363,7 @@ public:
         C.HandleScalarShadowArgument(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isFirstClassType() || Ty == Type::VoidTy) {
+    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -417,7 +417,7 @@ public:
         C.HandleScalarArgument(Ty, type);
         ScalarElts.push_back(Ty);
       }
-    } else if (Ty->isFirstClassType()) {
+    } else if (Ty->isSingleValueType()) {
       C.HandleScalarArgument(Ty, type);
       ScalarElts.push_back(Ty);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {

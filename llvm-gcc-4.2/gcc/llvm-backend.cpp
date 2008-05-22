@@ -1078,7 +1078,7 @@ bool ValidateRegisterVariable(tree decl) {
 #endif
   else if (DECL_INITIAL(decl) != 0 && TREE_STATIC(decl))
     error("global register variable has initial value");
-  else if (!Ty->isFirstClassType())
+  else if (!Ty->isSingleValueType())
     sorry("%JLLVM cannot handle register variable %qD, report a bug",
           decl, decl);
   else {

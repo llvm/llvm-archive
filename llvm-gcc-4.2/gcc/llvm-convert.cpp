@@ -709,7 +709,7 @@ void TreeToLLVM::StartFunctionBody() {
     const Type *ArgTy = ConvertType(TREE_TYPE(Args));
     bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
     if (isInvRef ||
-        (!ArgTy->isFirstClassType() &&
+        (!ArgTy->isSingleValueType() &&
          isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
@@ -1296,7 +1296,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
 
   unsigned Alignment = std::min(DestLoc.Alignment, SrcLoc.Alignment);
 
-  if (ElTy->isFirstClassType()) {
+  if (ElTy->isSingleValueType()) {
     LoadInst *V = Builder.CreateLoad(SrcLoc.Ptr, SrcLoc.Volatile, "tmp");
     StoreInst *S = Builder.CreateStore(V, DestLoc.Ptr, DestLoc.Volatile);
     V->setAlignment(Alignment);
@@ -1330,7 +1330,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
 /// CountAggregateElements - Return the number of elements in the specified type
 /// that will need to be loaded/stored if we copy this by explicit accesses.
 static unsigned CountAggregateElements(const Type *Ty) {
-  if (Ty->isFirstClassType()) return 1;
+  if (Ty->isSingleValueType()) return 1;
 
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     unsigned NumElts = 0;
@@ -1381,7 +1381,7 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
 static void ZeroAggregate(MemRef DestLoc, IRBuilder &Builder) {
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
-  if (ElTy->isFirstClassType()) {
+  if (ElTy->isSingleValueType()) {
     StoreInst *St = Builder.CreateStore(Constant::getNullValue(ElTy),
                                         DestLoc.Ptr, DestLoc.Volatile);
     St->setAlignment(DestLoc.Alignment);
@@ -2648,7 +2648,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     const Type *ArgTy = ConvertType(TREE_TYPE(TREE_VALUE(arg)));
 
     // Push the argument.
-    if (ArgTy->isFirstClassType()) {
+    if (ArgTy->isSingleValueType()) {
       // A scalar - push the value.
       Client.pushValue(Emit(TREE_VALUE(arg), 0));
     } else {
@@ -2836,7 +2836,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
 
   if (!LV.isBitfield()) {
     const Type *ValTy = ConvertType(TREE_TYPE(rhs));
-    if (ValTy->isFirstClassType()) {
+    if (ValTy->isSingleValueType()) {
       // Non-bitfield, scalar value.  Just emit a store.
       Value *RHS = Emit(rhs, 0);
       // Convert RHS to the right type if we can, otherwise convert the pointer.
@@ -3200,7 +3200,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     return EmitPtrBinOp(exp, Opc);   // Pointer arithmetic!
   if (isa<StructType>(Ty))
     return EmitComplexBinOp(exp, DestLoc);
-  assert(Ty->isFirstClassType() && DestLoc == 0 &&
+  assert(Ty->isSingleValueType() && DestLoc == 0 &&
          "Bad binary operation!");
   
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
@@ -3617,7 +3617,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(decl)) {
-    if (Ty->isFirstClassType())
+    if (Ty->isSingleValueType())
       return UndefValue::get(Ty);
     return 0;   // Just don't copy something into DestLoc.
   }
@@ -3920,7 +3920,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       cast<PointerType>(Dest.Ptr->getType())->getElementType();
     
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
-    if (!AllowsMem && DestValTy->isFirstClassType()) { // Reg dest -> asm return
+    if (!AllowsMem && DestValTy->isSingleValueType()) { // Reg dest -> asm return
       StoreCallResultAddrs.push_back(Dest.Ptr);
       ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;
@@ -3955,7 +3955,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const Type *LLVMTy = ConvertType(type);
 
       Value *Op = 0;
-      if (LLVMTy->isFirstClassType()) {
+      if (LLVMTy->isSingleValueType()) {
         if (TREE_CODE(Val)==ADDR_EXPR &&
             TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
           // Emit the label, but do not assume it is going to be the target
@@ -4247,7 +4247,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         error("%Hunsupported target builtin %<%s%> used", &EXPR_LOCATION(exp),
               BuiltinName);
         const Type *ResTy = ConvertType(TREE_TYPE(exp));
-        if (ResTy->isFirstClassType())
+        if (ResTy->isSingleValueType())
           Result = UndefValue::get(ResTy);
         return true;
       }
@@ -5694,7 +5694,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
     return BuildVector(BuildVecOps);
   }
 
-  assert(!Ty->isFirstClassType() && "Constructor for scalar type??");
+  assert(!Ty->isSingleValueType() && "Constructor for scalar type??");
   
   // Start out with the value zero'd out.
   EmitAggregateZero(*DestLoc, type);
@@ -5722,7 +5722,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
     if (!tree_purpose)
       return 0;  // Not actually initialized?
 
-    if (!ConvertType(TREE_TYPE(tree_purpose))->isFirstClassType()) {
+    if (!ConvertType(TREE_TYPE(tree_purpose))->isSingleValueType()) {
       Value *V = Emit(tree_value, DestLoc);
       assert(V == 0 && "Aggregate value returned in a register?");
     } else {
@@ -5927,7 +5927,7 @@ Constant *TreeConstantToLLVM::ConvertNOP_EXPR(tree exp) {
   bool TyIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
   
   // If this is a structure-to-structure cast, just return the uncasted value.
-  if (!Elt->getType()->isFirstClassType() || !Ty->isFirstClassType())
+  if (!Elt->getType()->isSingleValueType() || !Ty->isSingleValueType())
     return Elt;
   
   // Elt and Ty can be integer, float or pointer here: need generalized cast

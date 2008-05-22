@@ -10146,6 +10146,10 @@ ix86_expand_convert_uns_SF2SI_sse (rtx operands[])
   rtx int_result_xmm;
   rtx v_rtx;
   rtx incoming_value;
+#ifdef ENABLE_LLVM
+  gcc_assert(0 && "rtx floating point conversion?");
+  return 0;
+#endif
 
   cfun->uses_vector = 1;
 
@@ -10155,8 +10159,11 @@ ix86_expand_convert_uns_SF2SI_sse (rtx operands[])
   real_from_integer (&rvt_int_two31, SFmode, 0x80000000ULL, 0ULL, 1);
   int_two31_as_fp = const_double_from_real_value (rvt_int_two31, SFmode);
 
+#ifndef ENABLE_LLVM
+  /* This warns if HOST_WIDE_INT < 64. */
   real_from_integer (&rvt_int_two32, SFmode, (HOST_WIDE_INT)0x100000000ULL,
 		     0ULL, 1);
+#endif
   int_two32_as_fp = const_double_from_real_value (rvt_int_two32, SFmode);
 
   incoming_value = force_reg (GET_MODE (operands[1]), operands[1]);
@@ -10283,6 +10290,11 @@ ix86_expand_convert_uns_DI2DF_sse (rtx operands[])
   rtx biases, exponents;
   rtvec biases_rtvec, exponents_rtvec;
 
+#ifdef ENABLE_LLVM
+  gcc_assert(0 && "rtx floating point conversion?");
+  return 0;
+#endif
+
   cfun->uses_vector = 1;
 
   gcc_assert (ix86_preferred_stack_boundary >= 128);
@@ -10317,8 +10329,11 @@ ix86_expand_convert_uns_DI2DF_sse (rtx operands[])
 			    gen_rtx_SUBREG (V2DFmode, int_xmm, 0));
 
   /* Integral versions of the DFmode 'exponents' above.  */
+#ifndef ENABLE_LLVM
+  /* These get warnings if HOST_WIDE_INT < 64 */
   REAL_VALUE_FROM_INT (bias_lo_rvt, 0x00000000000000ULL, 0x100000ULL, DFmode);
   REAL_VALUE_FROM_INT (bias_hi_rvt, 0x10000000000000ULL, 0x000000ULL, DFmode);
+#endif
   bias_lo_rtx = CONST_DOUBLE_FROM_REAL_VALUE (bias_lo_rvt, DFmode);
   bias_hi_rtx = CONST_DOUBLE_FROM_REAL_VALUE (bias_hi_rvt, DFmode);
   biases_rtvec = gen_rtvec (2, bias_lo_rtx, bias_hi_rtx);
@@ -10415,6 +10430,10 @@ ix86_expand_convert_sign_DI2DF_sse (rtx operands[])
   rtx int_two32_as_fp, int_two32_as_fp_vec;
   rtx target = operands[0];
   rtx input = force_reg (DImode, operands[1]);
+#ifdef ENABLE_LLVM
+  gcc_assert(0 && "rtx floating point conversion?");
+  return 0;
+#endif
 
   gcc_assert (ix86_preferred_stack_boundary >= 128);
   gcc_assert (GET_MODE (input) == DImode);
@@ -10425,7 +10444,10 @@ ix86_expand_convert_sign_DI2DF_sse (rtx operands[])
   emit_insn (gen_sse2_cvtsi2sd (fp_value_hi_xmm, fp_value_hi_xmm,
 				gen_rtx_SUBREG (SImode, input, 4)));
 
+#ifndef ENABLE_LLVM
+  /* This gets warnings when HOST_WIDE_INT < 64 */
   real_from_integer (&rvt_int_two32, DFmode, 0x100000000ULL, 0ULL, 1);
+#endif
   int_two32_as_fp = const_double_from_real_value (rvt_int_two32, DFmode);
   rvt_int_two32_vec = gen_rtx_CONST_VECTOR (V2DFmode,
 				gen_2_4_rtvec (2, int_two32_as_fp, DFmode));

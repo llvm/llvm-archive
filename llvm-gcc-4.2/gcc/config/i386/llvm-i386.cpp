@@ -147,6 +147,16 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = Ops[0];
     }
     return true;
+  case IX86_BUILTIN_SHUFPD:
+    if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
+      int EV = Elt->getZExtValue();
+      Result = BuildVectorShuffle(Ops[0], Ops[1],
+                                  ((EV & 0x01) >> 0),   ((EV & 0x02) >> 1)+2);
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
+    }
+    return true;
   case IX86_BUILTIN_PSHUFW:
   case IX86_BUILTIN_PSHUFD:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
@@ -229,8 +239,14 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_UNPCKHPS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 6, 3, 7);
     return true;
+  case IX86_BUILTIN_UNPCKHPD:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 1, 3);
+    return true;
   case IX86_BUILTIN_UNPCKLPS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 4, 1, 5);
+    return true;
+  case IX86_BUILTIN_UNPCKLPD:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
     return true;
   case IX86_BUILTIN_MOVHLPS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 6, 7, 2, 3);
@@ -240,6 +256,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_MOVSS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 1, 2, 3);
+    return true;
+  case IX86_BUILTIN_MOVSD:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 1);
     return true;
   case IX86_BUILTIN_MOVQ: {
     Value *Zero = ConstantInt::get(Type::Int32Ty, 0);

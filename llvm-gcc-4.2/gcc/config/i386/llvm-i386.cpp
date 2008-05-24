@@ -224,6 +224,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PUNPCKHDQ128:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 6, 3, 7);
     return true;
+  case IX86_BUILTIN_PUNPCKHQDQ128:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 1, 3);
+    return true;
   case IX86_BUILTIN_PUNPCKLBW128:
     Result = BuildVectorShuffle(Ops[0], Ops[1],  0, 16,  1, 17,
                                                  2, 18,  3, 19,
@@ -235,6 +238,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_PUNPCKLDQ128:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 4, 1, 5);
+    return true;
+  case IX86_BUILTIN_PUNPCKLQDQ128:
+    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
     return true;
   case IX86_BUILTIN_UNPCKHPS:
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 6, 3, 7);

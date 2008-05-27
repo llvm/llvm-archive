@@ -4750,6 +4750,8 @@ struct tree_opt_pass pass_life =
 static unsigned int
 rest_of_handle_flow2 (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   /* If optimizing, then go ahead and split insns now.  */
 #ifndef STACK_REGS
   if (optimize > 0)
@@ -4767,6 +4769,8 @@ rest_of_handle_flow2 (void)
      it and the rest of the code and also allows delayed branch
      scheduling to operate in the epilogue.  */
   thread_prologue_and_epilogue_insns (get_insns ());
+#endif
+/* LLVM LOCAL end */
   epilogue_completed = 1;
   flow2_completed = 1;
   return 0;

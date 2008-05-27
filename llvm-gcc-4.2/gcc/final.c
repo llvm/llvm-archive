@@ -132,6 +132,8 @@ int insn_current_reference_address (rtx branch) {
 static rtx debug_insn;
 rtx current_output_insn;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 /* Line number of last NOTE.  */
 static int last_linenum;
 
@@ -146,7 +148,8 @@ static const char *last_filename;
 
 /* Whether to force emission of a line note before the next insn.  */
 static bool force_source_line = false;
-
+#endif
+/* LLVM LOCAL end */
 extern const int length_unit_log; /* This is defined in insn-attrtab.c.  */
 
 /* Nonzero while outputting an `asm' with operands.
@@ -157,10 +160,13 @@ rtx this_is_asm_operands;
 /* Number of operands of this insn, for an `asm' with operands.  */
 static unsigned int insn_noperands;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 /* Compare optimization flag.  */
 
 static rtx last_ignored_compare = 0;
-
+#endif
+/* LLVM LOCAL end */
 /* Assign a unique number to each insn that is output.
    This can be used to generate unique local labels.  */
 
@@ -202,10 +208,13 @@ char regs_asm_clobbered[FIRST_PSEUDO_REGISTER];
 
 int frame_pointer_needed;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 /* Number of unmatched NOTE_INSN_BLOCK_BEG notes we have seen.  */
 
 static int block_depth;
-
+#endif
+/* LLVM LOCAL end */
 /* Nonzero if have enabled APP processing of our assembler output.  */
 
 static int app_on;
@@ -229,12 +238,20 @@ rtx current_insn_predicate;
 #ifdef HAVE_ATTR_length
 static int asm_insn_count (rtx);
 #endif
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 static void profile_function (FILE *);
 static void profile_after_prologue (FILE *);
 static bool notice_source_line (rtx);
+#endif
+/* LLVM LOCAL end */
 static rtx walk_alter_subreg (rtx *);
 static void output_asm_name (void);
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 static void output_alternate_entry_point (FILE *, rtx);
+#endif
+/* LLVM LOCAL end */
 static tree get_mem_expr_from_op (rtx, int *);
 static void output_asm_operand_names (rtx *, int *, int);
 static void output_operand (rtx, int);
@@ -244,9 +261,13 @@ static void leaf_renumber_regs (rtx);
 #ifdef HAVE_cc0
 static int alter_cond (rtx);
 #endif
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 #ifndef ADDR_VEC_ALIGN
 static int final_addr_vec_align (rtx);
 #endif
+#endif
+/* LLVM LOCAL end */
 #ifdef HAVE_ATTR_length
 static int align_fuzz (rtx, rtx, int, unsigned);
 #endif
@@ -541,6 +562,8 @@ get_attr_min_length (rtx insn)
 #endif
 
 #ifndef ADDR_VEC_ALIGN
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 static int
 final_addr_vec_align (rtx addr_vec)
 {
@@ -551,6 +574,8 @@ final_addr_vec_align (rtx addr_vec)
   return exact_log2 (align);
 
 }
+#endif
+/* LLVM LOCAL end */
 
 #define ADDR_VEC_ALIGN(ADDR_VEC) final_addr_vec_align (ADDR_VEC)
 #endif
@@ -788,6 +813,8 @@ struct tree_opt_pass pass_compute_alignments =
 };
 
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 /* Make a pass over all insns and compute their actual lengths by shortening
    any branches of variable length if possible.  */
 
@@ -2535,6 +2562,8 @@ notice_source_line (rtx insn)
     }
   return false;
 }
+#endif
+/* LLVM LOCAL end */
 
 /* For each operand in INSN, simplify (subreg (reg)) so that it refers
    directly to the desired hard register.  */
@@ -3932,6 +3961,8 @@ debug_free_queue (void)
 static unsigned int
 rest_of_handle_final (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   rtx x;
   const char *fnname;
 
@@ -3987,6 +4018,8 @@ rest_of_handle_final (void)
     (*debug_hooks->function_decl) (current_function_decl);
   /* APPLE LOCAL end aaa */
   timevar_pop (TV_SYMOUT);
+#endif
+/* LLVM LOCAL end */
   return 0;
 }
 
@@ -4011,8 +4044,12 @@ struct tree_opt_pass pass_final =
 static unsigned int
 rest_of_handle_shorten_branches (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   /* Shorten branches.  */
   shorten_branches (get_insns ());
+#endif
+/* LLVM LOCAL end */
   return 0;
 }
 
@@ -4037,6 +4074,8 @@ struct tree_opt_pass pass_shorten_branches =
 static unsigned int
 rest_of_clean_state (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   rtx insn, next;
 
   /* It is very important to decompose the RTL instruction chain here:
@@ -4109,6 +4148,8 @@ rest_of_clean_state (void)
   /* We're done with this function.  Free up memory if we can.  */
   free_after_parsing (cfun);
   free_after_compilation (cfun);
+#endif
+/* LLVM LOCAL end */
   return 0;
 }
 

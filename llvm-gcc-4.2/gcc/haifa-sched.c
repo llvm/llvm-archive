@@ -146,7 +146,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "params.h"
 
 /* LLVM LOCAL begin comment out most of this file */
-#ifndef ENABLE_LLVM
+#ifdef ENABLE_LLVM
 #undef INSN_SCHEDULING
 #endif
 /* LLVM LOCAL end */

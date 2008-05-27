@@ -3048,7 +3048,7 @@ objc_build_struct (tree class, tree fields, tree super_name)
   /* APPLE LOCAL begin radar 5676962 */
   tree t;
   int cv = 0;
-  struct lang_type ** pTypeLang;
+  struct lang_type ** pTypeLang = 0;
   /* APPLE LOCAL end radar 5676962 */
 
   /* APPLE LOCAL begin radar 5025001 */

@@ -353,7 +353,7 @@ static void createOptimizationPasses() {
     PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
     if (flag_unit_at_a_time && flag_exceptions)
       PM->add(createPruneEHPass());               // Remove dead EH info
-    if (flag_inline_trees)                      // respect -fno-inline-functions
+    if (flag_inline_trees > 1)                  // respect -fno-inline-functions
       PM->add(createFunctionInliningPass());    // Inline small functions
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args

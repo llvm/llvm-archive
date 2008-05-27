@@ -2107,8 +2107,7 @@ lang_dependent_init (const char *name)
   llvm_lang_dependent_init(name);
   init_eh();
   return 1; /* don't initialize the RTL backend */
-#endif
-  /* LLVM LOCAL end */
+#else
   
   /* These create various _DECL nodes, so need to be called after the
      front end is initialized.  */
@@ -2144,6 +2143,8 @@ lang_dependent_init (const char *name)
   timevar_pop (TV_SYMOUT);
 
   return 1;
+#endif
+  /* LLVM LOCAL end */
 }
 
 /* Clean up: close opened files, etc.  */

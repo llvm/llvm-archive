@@ -791,7 +791,12 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 /* This processor has special stack-like registers.  See reg-stack.c
    for details.  */
 
+/* LLVM LOCAL begin We don't need the RTL-based STACK_REGS (x87) mechanism. */
+#ifndef ENABLE_LLVM
 #define STACK_REGS
+#endif
+/* LLVM LOCAL end */
+
 #define IS_STACK_MODE(MODE)					\
   (((MODE) == SFmode && (!TARGET_SSE || !TARGET_SSE_MATH))	\
    || ((MODE) == DFmode && (!TARGET_SSE2 || !TARGET_SSE_MATH))  \

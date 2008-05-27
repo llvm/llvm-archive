@@ -246,8 +246,7 @@ finish_optimization_passes (void)
   /* LLVM LOCAL begin Dead code strip cc1. */
 #ifdef ENABLE_LLVM
   return;
-#endif
-  /* LLVM LOCAL end Dead code strip cc1. */
+#else
 
   timevar_push (TV_DUMP);
   if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)
@@ -280,6 +279,8 @@ finish_optimization_passes (void)
 	}
 
   timevar_pop (TV_DUMP);
+#endif
+  /* LLVM LOCAL end Dead code strip cc1. */
 }
 
 static bool

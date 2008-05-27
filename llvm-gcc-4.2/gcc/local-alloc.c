@@ -82,6 +82,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "timevar.h"
 #include "tree-pass.h"
 
+/* LLVM LOCAL begin comment out most of this file */
+#ifndef ENABLE_LLVM
+/* LLVM LOCAL end */
 /* Next quantity number available for allocation.  */
 
 static int next_qty;
@@ -215,7 +218,9 @@ static int *reg_qty;
    to a subreg of a DImode register.  */
 
 static char *reg_offset;
-
+/* LLVM LOCAL begin the following def is referenced elsewhere */
+#endif
+/* LLVM LOCAL end */
 /* Vector of substitutions of register numbers,
    used to map pseudo regs into hardware regs.
    This is set up as a result of register allocation.
@@ -225,6 +230,9 @@ static char *reg_offset;
 
 short *reg_renumber;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
+/* LLVM LOCAL end */
 /* Set of hard registers live at the current point in the scan
    of the instructions in a basic block.  */
 
@@ -2557,12 +2565,18 @@ LargestAlignmentOfVariables (void)
 }
 #endif
 /* APPLE LOCAL end radar 4216496, 4229407, 4120689, 4095567 */
+/* LLVM LOCAL begin */
+#endif
+/* LLVM LOCAL end */
 
 /* Run old register allocator.  Return TRUE if we must exit
    rest_of_compilation upon return.  */
 static unsigned int
 rest_of_handle_local_alloc (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
+/* LLVM LOCAL end */
   int rebuild_notes;
 
   /* Determine if the current function is a leaf before running reload
@@ -2627,6 +2641,9 @@ rest_of_handle_local_alloc (void)
       dump_local_alloc (dump_file);
       timevar_pop (TV_DUMP);
     }
+/* LLVM LOCAL begin */
+#endif
+/* LLVM LOCAL end */
   return 0;
 }
 

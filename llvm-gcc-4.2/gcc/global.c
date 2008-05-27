@@ -40,6 +40,10 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "timevar.h"
 #include "vecprim.h"
 
+/* LLVM LOCAL begin comment out most of this file */
+#ifndef ENABLE_LLVM 
+/* LLVM LOCAL end */
+
 /* APPLE LOCAL begin rewrite weight computation */
 /* The rewritten weight computation works fine on Darwin, but causes
    bootstrap compares to fail on Linux.  */
@@ -434,12 +438,6 @@ global_alloc (void)
 
   size_t i;
   rtx x;
-
-  /* LLVM LOCAL begin - cc1 code size. */
-#ifdef ENABLE_LLVM
-  return 0;
-#endif
-  /* LLVM LOCAL end */
 
   make_accurate_live_analysis ();
 
@@ -3145,6 +3143,10 @@ make_accurate_live_analysis (void)
     }
   free_bb_info ();
 }
+/* LLVM LOCAL begin */
+#endif
+/* LLVM LOCAL end */
+
 /* Run old register allocator.  Return TRUE if we must exit
    rest_of_compilation upon return.  */
 static unsigned int
@@ -3155,6 +3157,10 @@ rest_of_handle_global_alloc (void)
   /* If optimizing, allocate remaining pseudo-regs.  Do the reload
      pass fixing up any insns that are invalid.  */
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+  failure = 0;
+#else
   if (optimize)
     failure = global_alloc ();
   else
@@ -3171,6 +3177,8 @@ rest_of_handle_global_alloc (void)
     }
 
   gcc_assert (reload_completed || failure);
+#endif
+/* LLVM LOCAL end */
   reload_completed = !failure;
   return 0;
 }

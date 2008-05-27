@@ -103,6 +103,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "timevar.h"
 #include "tree-pass.h"
 
+/* LLVM LOCAL begin comment out most of this file */
+#ifndef ENABLE_LLVM
+/* LLVM LOCAL end */
 /* Number of attempts to combine instructions in this function.  */
 
 static int combine_attempts;
@@ -11622,6 +11625,9 @@ mark_used_regs_combine (rtx x)
       }
   }
 }
+/* LLVM LOCAL begin following function is used elsewhere */
+#endif
+/* LLVM LOCAL end */
 
 /* Remove register number REGNO from the dead registers list of INSN.
 
@@ -11641,6 +11647,9 @@ remove_death (unsigned int regno, rtx insn)
   return note;
 }
 
+/* LLVM LOCAL begin comment out most of file */
+#ifndef ENABLE_LLVM
+/* LLVM LOCAL end */
 /* For each register (hardware or pseudo) used within expression X, if its
    death is in an instruction with cuid between FROM_CUID (inclusive) and
    TO_INSN (exclusive), put a REG_DEAD note for that register in the
@@ -12598,6 +12607,9 @@ dump_combine_total_stats (FILE *file)
      "\n;; Combiner totals: %d attempts, %d substitutions (%d requiring new space),\n;; %d successes.\n",
      total_attempts, total_merges, total_extras, total_successes);
 }
+/* LLVM LOCAL begin */
+#endif
+/* LLVM LOCAL end */
 
 
 static bool
@@ -12610,6 +12622,8 @@ gate_handle_combine (void)
 static unsigned int
 rest_of_handle_combine (void)
 {
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   int rebuild_jump_labels_after_combine
     = combine_instructions (get_insns (), max_reg_num ());
 
@@ -12625,6 +12639,8 @@ rest_of_handle_combine (void)
       delete_dead_jumptables ();
       cleanup_cfg (CLEANUP_EXPENSIVE | CLEANUP_UPDATE_LIFE);
     }
+#endif
+/* LLVM LOCAL end */
   return 0;
 }
 

@@ -779,8 +779,12 @@ decode_options (unsigned int argc, const char **argv)
       flag_strict_aliasing = saved_flag_strict_aliasing;
   /* APPLE LOCAL end AV 3846092 */
   /* APPLE LOCAL begin 4224227, 4231773 */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if (!optimize_size_z)
     optimize_size = 0;
+#endif
+  /* LLVM LOCAL end */
   /* APPLE LOCAL end 4224227, 4231773 */
 }
 

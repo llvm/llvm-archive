@@ -4498,9 +4498,9 @@ make_automaton_attrs (void)
 	  }
     }
 
-  make_internal_attr ("*internal_dfa_insn_code", code_exp, ATTR_NONE);
 /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
+  make_internal_attr ("*internal_dfa_insn_code", code_exp, ATTR_NONE);
   make_internal_attr ("*insn_default_latency",   lats_exp, ATTR_NONE);
   make_internal_attr ("*bypass_p",               byps_exp, ATTR_NONE);
 #endif

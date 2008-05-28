@@ -2562,6 +2562,14 @@ notice_source_line (rtx insn)
     }
   return false;
 }
+#else
+/* This is called from several BEs, we need a definition. */
+void
+/* APPLE LOCAL optimization pragmas 3124235/3420242 */
+final (rtx first ATTRIBUTE_UNUSED, FILE *file ATTRIBUTE_UNUSED, 
+       int optimizing ATTRIBUTE_UNUSED)
+{
+}
 #endif
 /* LLVM LOCAL end */
 

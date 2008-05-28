@@ -328,7 +328,6 @@ static void createOptimizationPasses() {
     else
       PerFunctionPasses->add(createScalarReplAggregatesPass());
     PerFunctionPasses->add(createInstructionCombiningPass());
-    //    PerFunctionPasses->add(createCFGSimplificationPass());
   }
 
   // FIXME: AT -O0/O1, we should stream out functions at a time.

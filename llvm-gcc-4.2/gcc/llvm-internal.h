@@ -285,6 +285,10 @@ class TreeToLLVM {
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
   
+  /// UniquedValues - Values defined using a no-op bitcast in order to make them
+  /// unique.  These can be simplified once the function has been emitted.
+  std::vector<BitCastInst *> UniquedValues;
+
   //===---------------------- Exception Handling --------------------------===//
 
   /// LandingPads - The landing pad for a given EH region.
@@ -448,7 +452,7 @@ private:
   ///
   static bool isNoopCast(Value *V, const Type *Ty);
 
-  void HandleMultiplyDefinedGCCTemp(tree_node *var);
+  void HandleMultiplyDefinedGimpleTemporary(tree_node *var);
   
   /// EmitAnnotateIntrinsic - Emits call to annotate attr intrinsic
   void EmitAnnotateIntrinsic(Value *V, tree_node *decl);

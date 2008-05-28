@@ -843,6 +843,17 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // may be deleted when the optimizers run, so would be dangerous to keep.
   eraseLocalLLVMValues();
 
+  // Simplify any values that were uniqued using a no-op bitcast.
+  for (std::vector<BitCastInst *>::iterator I = UniquedValues.begin(),
+       E = UniquedValues.end(); I != E; ++I) {
+    BitCastInst *BI = *I;
+    assert(BI->getSrcTy() == BI->getDestTy() && "Not a no-op bitcast!");
+    BI->replaceAllUsesWith(BI->getOperand(0));
+    // Safe to erase because after the call to eraseLocalLLVMValues.
+    BI->eraseFromParent();
+  }
+  UniquedValues.clear();
+
   return Fn;
 }
 
@@ -2734,19 +2745,18 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   return 0;
 }
 
-/// HandleMultiplyDefinedGCCTemp - GCC temporaries are *mostly* single
-/// definition, and always have all uses dominated by the definition.  In cases
-/// where the temporary has multiple uses, we will first see the initial 
-/// definition, some uses of that definition, then subsequently see another
-/// definition with uses of this second definition.
+/// HandleMultiplyDefinedGimpleTemporary - Gimple temporaries *mostly* have a
+/// single definition, in which case all uses are dominated by the definition.
+/// This routine exists to handle the rare case of a gimple temporary with
+/// multiple definitions.  It turns the temporary into an ordinary automatic
+/// variable by creating an alloca for it, initializing the alloca with the
+/// first definition that was seen, and fixing up any existing uses to load
+/// the alloca instead.
 ///
-/// Because LLVM temporaries *must* be single definition, when we see the second
-/// definition, we actually change the temporary to mark it as not being a GCC
-/// temporary anymore.  We then create an alloca for it, initialize it with the
-/// first value seen, then treat it as a normal variable definition.
-///
-void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
-  Value *FirstVal = DECL_LLVM(Var);
+void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
+  Value *UniqVal = DECL_LLVM(Var);
+  assert(isa<CastInst>(UniqVal) && "Invalid value for gimple temporary!");
+  Value *FirstVal = cast<CastInst>(UniqVal)->getOperand(0);
 
   // Create a new temporary and set the VAR_DECL to use it as the llvm location.
   Value *NewTmp = CreateTemporary(FirstVal->getType());
@@ -2756,11 +2766,11 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
   // being stored is an instruction, emit the store right after the instruction,
   // otherwise, emit it into the entry block.
   StoreInst *SI = new StoreInst(FirstVal, NewTmp);
-  
+
   BasicBlock::iterator InsertPt;
   if (Instruction *I = dyn_cast<Instruction>(FirstVal)) {
     InsertPt = I;                      // Insert after the init instruction.
-    
+
     // If the instruction is an alloca in the entry block, the insert point
     // will be before the alloca.  Advance to the AllocaInsertionPoint if we are
     // before it.
@@ -2774,7 +2784,7 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
         }
       }
     }
-    
+
     // If the instruction is an invoke, the init is inserted on the normal edge.
     if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
       InsertPt = II->getNormalDest()->begin();
@@ -2788,7 +2798,12 @@ void TreeToLLVM::HandleMultiplyDefinedGCCTemp(tree Var) {
   }
   BasicBlock *BB = InsertPt->getParent();
   BB->getInstList().insert(InsertPt, SI);
-  
+
+  // Replace any uses of the original value with a load of the alloca.
+  for (Value::use_iterator U = UniqVal->use_begin(), E = UniqVal->use_end();
+       U != E; ++U)
+    U.getUse().set(new LoadInst(NewTmp, "mtmp", cast<Instruction>(*U)));
+
   // Finally, This is no longer a GCC temporary.
   DECL_GIMPLE_FORMAL_TEMP_P(Var) = 0;
 }
@@ -2806,13 +2821,22 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   if (isGimpleTemporary(lhs)) {
     // If DECL_LLVM is already set, this is a multiply defined gimple temporary.
     if (DECL_LLVM_SET_P(lhs)) {
-      HandleMultiplyDefinedGCCTemp(lhs);
+      HandleMultiplyDefinedGimpleTemporary(lhs);
       return EmitMODIFY_EXPR(exp, DestLoc);
     }
     Value *RHS = Emit(rhs, 0);
-    RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
-    SET_DECL_LLVM(lhs, RHS);
-    return RHS;
+    const Type *LHSTy = ConvertType(TREE_TYPE(lhs));
+    // The value may need to be replaced later if this temporary is multiply
+    // defined - ensure it can be uniquely identified by not folding the cast.
+    Instruction::CastOps opc = CastInst::getCastOpcode(RHS, RHSSigned,
+                                                       LHSTy, LHSSigned);
+    CastInst *Cast = CastInst::Create(opc, RHS, LHSTy, RHS->getNameStart());
+    if (opc == Instruction::BitCast && RHS->getType() == LHSTy)
+      // Simplify this no-op bitcast once the function is emitted.
+      UniquedValues.push_back(cast<BitCastInst>(Cast));
+    Builder.Insert(Cast);
+    SET_DECL_LLVM(lhs, Cast);
+    return Cast;
   } else if (TREE_CODE(lhs) == VAR_DECL && DECL_REGISTER(lhs) &&
              TREE_STATIC(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest

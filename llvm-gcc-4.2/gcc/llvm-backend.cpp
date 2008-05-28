@@ -130,7 +130,7 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Arguments");
   if (optimize_size || flag_inline_trees == 1)
     // Reduce inline limit. Default limit is 200.
-    Args.push_back("--inline-threshold=100");
+    Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 
@@ -357,7 +357,8 @@ static void createOptimizationPasses() {
       PM->add(createFunctionInliningPass());    // Inline small functions
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
-    PM->add(createTailDuplicationPass());       // Simplify cfg by copying code    
+    if (!optimize_size)
+      PM->add(createTailDuplicationPass());     // Simplify cfg by copying code    
     if (!lang_hooks.flag_no_builtin())
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.

@@ -239,15 +239,14 @@ rest_of_type_compilation (tree type, int toplev)
 void
 finish_optimization_passes (void)
 {
-  enum tree_dump_index i;
-  struct dump_file_info *dfi;
-  char *name;
-  
   /* LLVM LOCAL begin Dead code strip cc1. */
 #ifdef ENABLE_LLVM
   return;
 #else
-
+  enum tree_dump_index i;
+  struct dump_file_info *dfi;
+  char *name;
+  
   timevar_push (TV_DUMP);
   if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)
     {

@@ -526,6 +526,9 @@ void set_flags_from_O (unsigned int cmdline)
       /* Enable loop unrolling at -O2 if -f[no-]unroll-loops is not used.  */
       if (!flag_unroll_loops_set && !optimize_size)
         flag_unroll_loops = 1;
+      /* Enable llvm inliner at -O2. */
+      if (cmdline)
+        flag_inline_functions = 1;
       /* LLVM LOCAL end */
     }
 

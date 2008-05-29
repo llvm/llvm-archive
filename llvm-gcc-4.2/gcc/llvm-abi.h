@@ -138,17 +138,21 @@ static bool doNotUseShadowReturn(tree type, tree fndecl) {
 /// rejectFatBitField, and the single element is a bitfield of a type that's
 /// bigger than the struct, return null anyway.
 static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
-                                         bool rejectFatBitfield) {
+                                         bool rejectFatBitfield,
+                                         bool acceptUnions) {
   // Scalars are good.
   if (!isAggregateTreeType(type)) return type;
   
   tree FoundField = 0;
   switch (TREE_CODE(type)) {
   case QUAL_UNION_TYPE:
-  case UNION_TYPE:     // Single element unions don't count.
   case COMPLEX_TYPE:   // Complex values are like 2-element records.
   default:
     return 0;
+  case UNION_TYPE:     // Single element unions don't count.
+    if (!acceptUnions)
+      return 0;
+    // fall through
   case RECORD_TYPE:
     // If this record has variable length, reject it.
     if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
@@ -174,13 +178,15 @@ static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
         }
       }
     return FoundField ? isSingleElementStructOrArray(FoundField, 
-                                                     ignoreZeroLength, false)
+                                                     ignoreZeroLength, false,
+                                                     false)
                       : 0;
   case ARRAY_TYPE:
     const ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
     if (!Ty || Ty->getNumElements() != 1)
       return 0;
-    return isSingleElementStructOrArray(TREE_TYPE(type), false, false);
+    return isSingleElementStructOrArray(TREE_TYPE(type), false, false, 
+                                        false);
   }
 }
 
@@ -278,7 +284,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // for field-by-field struct passing does not handle this one right.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
-   !isSingleElementStructOrArray(X, false, true)
+   !isSingleElementStructOrArray(X, false, true, false)
 #endif
 
 // LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR - Return a TYPE tree if this single
@@ -289,7 +295,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // by abusing the __aligned__ attribute.)
 #ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
 #define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
-  isSingleElementStructOrArray(X, false, false)
+  isSingleElementStructOrArray(X, false, false, false)
 #endif
 
 // LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR - Return a TYPE tree if this vector type

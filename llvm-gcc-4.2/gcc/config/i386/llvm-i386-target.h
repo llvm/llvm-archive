@@ -95,8 +95,17 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
    considered as if they were the type of the data field. */
 #ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
 #define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
-  isSingleElementStructOrArray(X, true, false)
+  isSingleElementStructOrArray(X, true, false, false)
 #endif
+
+/* LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS - Return true if this aggregate
+   value should be passed in integer registers.  This differs from the usual
+   handling in that x86-64 passes single-int-element unions as the type of the 
+   field. */
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X)                \
+  (TARGET_64BIT ?                                                    \
+   !isSingleElementStructOrArray((X), true, true, true) :            \
+   !isSingleElementStructOrArray((X), false, true, false))
 
 extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 

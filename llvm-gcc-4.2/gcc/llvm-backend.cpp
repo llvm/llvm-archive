@@ -128,7 +128,7 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (optimize_size || flag_inline_trees == 1)
+  if (optimize_size || optimize < 3)
     // Reduce inline limit. Default limit is 200.
     Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)

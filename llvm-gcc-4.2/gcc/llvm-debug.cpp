@@ -90,15 +90,15 @@ static uint64_t NodeSizeInBits(tree Node) {
   } else if (TYPE_P(Node)) {
     if (TYPE_SIZE(Node) == NULL_TREE)
       return 0;
-    else if (host_integerp (TYPE_SIZE(Node), 1))
-      return tree_low_cst (TYPE_SIZE(Node), 1);
+    else if (isInt64(TYPE_SIZE(Node), 1))
+      return getInt64(TYPE_SIZE(Node), 1);
     else
       return TYPE_ALIGN(Node);
   } else if (DECL_P(Node)) {
     if (DECL_SIZE(Node) == NULL_TREE)
       return 0;
-    else if (host_integerp (DECL_SIZE(Node), 1))
-      return tree_low_cst (DECL_SIZE(Node), 1);
+    else if (isInt64(DECL_SIZE(Node), 1))
+      return getInt64(DECL_SIZE(Node), 1);
     else
       return DECL_ALIGN(Node);
   }
@@ -583,10 +583,9 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           tree MinValue = TYPE_MIN_VALUE(Domain);
           tree MaxValue = TYPE_MAX_VALUE(Domain);
           if (MinValue && MaxValue &&
-              host_integerp(MinValue, 0) &&
-              host_integerp(MaxValue, 0)) {
-            Subrange->setLo(tree_low_cst(MinValue, 0));
-            Subrange->setHi(tree_low_cst(MaxValue, 0));
+              isInt64(MinValue, 0) && isInt64(MaxValue, 0)) {
+            Subrange->setLo(getInt64(MinValue, 0));
+            Subrange->setHi(getInt64(MaxValue, 0));
           }
         }
         
@@ -612,8 +611,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
           EnumeratorDesc *EnumDesc = new EnumeratorDesc();
 
           tree EnumValue = TREE_VALUE(Link);
-          int64_t Value = tree_low_cst(EnumValue,
-                                       tree_int_cst_sgn(EnumValue) > 0);
+          int64_t Value = getInt64(EnumValue, tree_int_cst_sgn(EnumValue) > 0);
           const char *EnumName = IDENTIFIER_POINTER(TREE_PURPOSE(Link));
           EnumDesc->setName(EnumName);
           EnumDesc->setValue(Value);
@@ -657,7 +655,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
             }
           }
           
-          MemberDesc->setOffset(tree_low_cst(BINFO_OFFSET(BInfo), 0));
+          MemberDesc->setOffset(getInt64(BINFO_OFFSET(BInfo), 0));
           Elements.push_back(MemberDesc);
         }
       }

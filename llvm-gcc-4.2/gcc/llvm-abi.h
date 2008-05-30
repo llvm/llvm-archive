@@ -138,21 +138,17 @@ static bool doNotUseShadowReturn(tree type, tree fndecl) {
 /// rejectFatBitField, and the single element is a bitfield of a type that's
 /// bigger than the struct, return null anyway.
 static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
-                                         bool rejectFatBitfield,
-                                         bool acceptUnions) {
+                                         bool rejectFatBitfield) {
   // Scalars are good.
   if (!isAggregateTreeType(type)) return type;
   
   tree FoundField = 0;
   switch (TREE_CODE(type)) {
   case QUAL_UNION_TYPE:
+  case UNION_TYPE:     // Single element unions don't count.
   case COMPLEX_TYPE:   // Complex values are like 2-element records.
   default:
     return 0;
-  case UNION_TYPE:     // Single element unions don't count.
-    if (!acceptUnions)
-      return 0;
-    // fall through
   case RECORD_TYPE:
     // If this record has variable length, reject it.
     if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
@@ -178,15 +174,13 @@ static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
         }
       }
     return FoundField ? isSingleElementStructOrArray(FoundField, 
-                                                     ignoreZeroLength, false,
-                                                     false)
+                                                     ignoreZeroLength, false)
                       : 0;
   case ARRAY_TYPE:
     const ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
     if (!Ty || Ty->getNumElements() != 1)
       return 0;
-    return isSingleElementStructOrArray(TREE_TYPE(type), false, false, 
-                                        false);
+    return isSingleElementStructOrArray(TREE_TYPE(type), false, false);
   }
 }
 
@@ -283,8 +277,8 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // single element is a bitfield of a type bigger than the struct; the code
 // for field-by-field struct passing does not handle this one right.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X) \
-   !isSingleElementStructOrArray(X, false, true, false)
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y) \
+   !isSingleElementStructOrArray((X), false, true)
 #endif
 
 // LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR - Return a TYPE tree if this single
@@ -295,7 +289,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // by abusing the __aligned__ attribute.)
 #ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
 #define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
-  isSingleElementStructOrArray(X, false, false, false)
+  isSingleElementStructOrArray(X, false, false)
 #endif
 
 // LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR - Return a TYPE tree if this vector type
@@ -408,6 +402,7 @@ public:
   /// their fields.
   void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
                       ParameterAttributes *Attributes = NULL) {
+    unsigned Size = 0;
     const Type *Ty = ConvertType(type);
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
@@ -418,7 +413,7 @@ public:
       ScalarElts.push_back(PtrTy);
     } else if (Ty->getTypeID()==Type::VectorTyID) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty, ScalarElts);
+        PassInIntegerRegisters(type, Ty, ScalarElts, 0);
       } else {
         C.HandleScalarArgument(Ty, type);
         ScalarElts.push_back(Ty);
@@ -444,8 +439,8 @@ public:
         *Attributes |= 
           ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type)) {
-      PassInIntegerRegisters(type, Ty, ScalarElts);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size)) {
+      PassInIntegerRegisters(type, Ty, ScalarElts, Size);
     } else if (isZeroSizedStructOrUnion(type)) {
       // Zero sized struct or union, just drop it!
       ;
@@ -526,10 +521,15 @@ public:
     
   /// PassInIntegerRegisters - Given an aggregate value that should be passed in
   /// integer registers, convert it to a structure containing ints and pass all
-  /// of the struct elements in.
+  /// of the struct elements in.  If Size is set we pass only that many bytes.
   void PassInIntegerRegisters(tree type, const Type *Ty,
-                              std::vector<const Type*> &ScalarElts) {
-    unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
+                              std::vector<const Type*> &ScalarElts,
+                              unsigned origSize) {
+    unsigned Size;
+    if (origSize)
+      Size = origSize;
+    else
+      Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
 
     // FIXME: We should preserve all aggregate value alignment information.
     // Work around to preserve some aggregate value alignment information:
@@ -568,7 +568,7 @@ public:
       Elts.push_back(Type::Int8Ty);
       Size -= 1;
     }
-    assert(Size == 0 && "Didn't cover value?");
+    assert((origSize || Size == 0) && "Didn't cover value?");
     const StructType *STy = StructType::get(Elts, false);
 
     unsigned i = 0;

@@ -1288,4 +1288,38 @@ Value *llvm_x86_load_scalar_argument(Value *L,
   return Loc;
 }
 
+/// llvm_x86_should_pass_aggregate_in_integer_regs - x86-32 is same as the
+/// default.  x86-64 detects the case where a type is 16 bytes long but
+/// only 8 of them are passed, the rest being padding (*size is set to 8
+/// to identify this case).
+bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size)
+{
+  *size = 0;
+  if (TARGET_64BIT) {
+    enum x86_64_reg_class Class[MAX_CLASSES];
+    enum machine_mode Mode = ix86_getNaturalModeForType(type);
+    int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
+    if (NumClasses == 1 && (Class[0] == X86_64_INTEGERSI_CLASS ||
+                            Class[0] == X86_64_INTEGER_CLASS)) {
+      /* 8 byte object, one int register */
+      return true;
+    }
+    if (NumClasses == 2 && (Class[0] == X86_64_INTEGERSI_CLASS ||
+                            Class[0] == X86_64_INTEGER_CLASS)) {
+      if (Class[1] == X86_64_INTEGERSI_CLASS ||
+          Class[1] == X86_64_INTEGER_CLASS)
+        /* 16 byte object, 2 int registers */
+        return true;
+      if (Class[1] == X86_64_NO_CLASS) {
+        /* 16 byte object, only 1st register has information */
+        *size = 8;
+        return true;
+      }
+    }
+    return false;    
+  }
+  else 
+    return !isSingleElementStructOrArray(type, false, true);
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

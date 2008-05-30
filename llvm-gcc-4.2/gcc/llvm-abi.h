@@ -277,7 +277,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // single element is a bitfield of a type bigger than the struct; the code
 // for field-by-field struct passing does not handle this one right.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y) \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y, Z) \
    !isSingleElementStructOrArray((X), false, true)
 #endif
 
@@ -403,6 +403,7 @@ public:
   void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
                       ParameterAttributes *Attributes = NULL) {
     unsigned Size = 0;
+    bool DontCheckAlignment = false;
     const Type *Ty = ConvertType(type);
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
@@ -413,7 +414,7 @@ public:
       ScalarElts.push_back(PtrTy);
     } else if (Ty->getTypeID()==Type::VectorTyID) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty, ScalarElts, 0);
+        PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
       } else {
         C.HandleScalarArgument(Ty, type);
         ScalarElts.push_back(Ty);
@@ -439,8 +440,9 @@ public:
         *Attributes |= 
           ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size)) {
-      PassInIntegerRegisters(type, Ty, ScalarElts, Size);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size,
+                                                     &DontCheckAlignment)) {
+      PassInIntegerRegisters(type, Ty, ScalarElts, Size, DontCheckAlignment);
     } else if (isZeroSizedStructOrUnion(type)) {
       // Zero sized struct or union, just drop it!
       ;
@@ -524,7 +526,7 @@ public:
   /// of the struct elements in.  If Size is set we pass only that many bytes.
   void PassInIntegerRegisters(tree type, const Type *Ty,
                               std::vector<const Type*> &ScalarElts,
-                              unsigned origSize) {
+                              unsigned origSize, bool DontCheckAlignment) {
     unsigned Size;
     if (origSize)
       Size = origSize;
@@ -537,7 +539,7 @@ public:
     // from Int64 alignment. ARM backend needs this.
     unsigned Align = TYPE_ALIGN(type)/8;
     unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
-    bool UseInt64 = (Align >= Int64Align);
+    bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
 
     // FIXME: In cases where we can, we should use the original struct.
     // Consider cases like { int, int } and {int, short} for example!  This will

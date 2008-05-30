@@ -98,15 +98,16 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   isSingleElementStructOrArray(X, true, false)
 #endif
 
-extern bool llvm_x86_should_pass_aggregate_in_integer_regs(tree, unsigned*);
+extern bool llvm_x86_should_pass_aggregate_in_integer_regs(tree, 
+                                                          unsigned*, bool*);
 
 /* LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS - Return true if this aggregate
    value should be passed in integer registers.  This differs from the usual
    handling in that x86-64 passes 128-bit structs and unions which only
    contain data in the first 64 bits, as 64-bit objects.  (These can be
    created by abusing __attribute__((aligned)).  */
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y)             \
-  llvm_x86_should_pass_aggregate_in_integer_regs((X), (Y))
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y, Z)             \
+  llvm_x86_should_pass_aggregate_in_integer_regs((X), (Y), (Z))
 
 extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 

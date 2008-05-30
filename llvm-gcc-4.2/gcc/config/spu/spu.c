@@ -99,7 +99,7 @@ static rtx frame_emit_load (int regno, rtx addr, HOST_WIDE_INT offset);
 static rtx frame_emit_add_imm (rtx dst, rtx src, HOST_WIDE_INT imm,
 			       rtx scratch);
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
 static void emit_nop_for_insn (rtx insn);
 static bool insn_clobbers_hbr (rtx insn);
 static void spu_emit_branch_hint (rtx before, rtx branch, rtx target,
@@ -141,7 +141,7 @@ static bool spu_return_in_memory (tree type, tree fntype);
 static void fix_range (const char *);
 static void spu_encode_section_info (tree, rtx, int);
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
 static tree spu_builtin_mul_widen_even (tree);
 static tree spu_builtin_mul_widen_odd (tree);
 #endif
@@ -1819,7 +1819,7 @@ struct spu_bb_info
 };
 
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
 /* The special $hbr register is used to prevent the insn scheduler from
    moving hbr insns across instructions which invalidate them.  It
    should only be used in a clobber, and this function searches for
@@ -1956,7 +1956,7 @@ static void
 insert_branch_hints (void)
 {
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
   struct spu_bb_info *spu_bb_info;
   rtx branch, insn, next;
   rtx branch_target = 0;
@@ -2132,7 +2132,7 @@ insert_branch_hints (void)
 }
 
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
 /* Emit a nop for INSN such that the two will dual issue.  This assumes
    INSN is 8-byte aligned.  When INSN is inline asm we emit an lnop.
    We check for TImode to handle a MULTI1 insn which has dual issued its
@@ -2162,7 +2162,7 @@ static void
 insert_nops (void)
 {
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
   rtx insn, next_insn, prev_insn;
   int length;
   int addr;
@@ -5041,7 +5041,7 @@ spu_expand_builtin (tree exp,
 }
 
 /* LLVM LOCAL begin */
-#ifndef INSN_SCHEDULING
+#ifdef INSN_SCHEDULING
 /* Implement targetm.vectorize.builtin_mul_widen_even.  */
 static tree
 spu_builtin_mul_widen_even (tree type)

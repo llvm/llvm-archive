@@ -1391,18 +1391,18 @@ void llvm_emit_file_scope_asm(const char *string) {
 // print-tree.c for tree dumps.
 //
 void print_llvm(FILE *file, void *LLVM) {
-  oFILEstream FS(file);
-  FS << "LLVM: ";
-  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
+  oFILEstream fs(file);
+  fs << "LLVM: ";
+  WriteAsOperand(fs, (Value*)LLVM, true, TheModule);
 }
 
 // print_llvm_type - Print the specified LLVM type symbolically, called by
 // print-tree.c for tree dumps.
 //
 void print_llvm_type(FILE *file, void *LLVM) {
-  oFILEstream FS(file);
-  FS << "LLVM: ";
-  WriteTypeSymbolic(FS, (const Type*)LLVM, TheModule);
+  oFILEstream fs(file);
+  fs << "LLVM: ";
+  WriteTypeSymbolic(fs, (const Type*)LLVM, TheModule);
 }
 
 // Get a register name given its decl.  In 4.2 unlike 4.0 these names

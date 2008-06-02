@@ -2179,7 +2179,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
   tree GccUnionTy = 0;
-  unsigned MaxSize = 0, MaxAlign = 0;
+  unsigned MaxAlignSize = 0, MaxAlign = 0;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field) != FIELD_DECL) continue;
 //    assert(getFieldOffsetInBits(Field) == 0 && "Union with non-zero offset?");
@@ -2233,29 +2233,27 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     const Type *TheTy = ConvertType(TheGccTy);
     unsigned Size  = TD.getABITypeSize(TheTy);
     unsigned Align = TD.getABITypeAlignment(TheTy);
-    
+
     adjustPaddingElement(GccUnionTy, TheGccTy);
 
-    // Select TheTy as union type if it meets one of the following criteria
-    // 1) UnionTy is 0
-    // 2) TheTy alignment is more then UnionTy
-    // 3) TheTy size is greater than UnionTy size and TheTy alignment is 
-    //    equal to UnionTy
-    // 4) TheTy size is greater then UnionTy size and TheTy is packed
-    bool useTheTy = false;
+    // Select TheTy as union type if it is more aligned than any other.  If more
+    // than one field achieves the maximum alignment then choose the biggest.
+    bool useTheTy;
     if (UnionTy == 0)
       useTheTy = true;
+    else if (Align < MaxAlign)
+      useTheTy = false;
     else if (Align > MaxAlign)
       useTheTy = true;
-    else if (MaxAlign == Align && Size > MaxSize)
+    else if (Size > MaxAlignSize)
       useTheTy = true;
-    else if (Size > MaxSize)
-      useTheTy = true;
+    else
+      useTheTy = false;
 
     if (useTheTy) {
       UnionTy = TheTy;
       GccUnionTy = TheGccTy;
-      MaxSize = MAX(MaxSize, Size);
+      MaxAlignSize = Size;
       MaxAlign = Align;
     }
 

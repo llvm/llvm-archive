@@ -743,14 +743,18 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     case X86_64_SSE_CLASS:
       // If it's a SSE class argument, then one of the followings are possible:
       // 1. 1 x SSE, size is 8: 1 x Double.
-      // 2. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
+      // 2. 1 x SSE, size is 4: 1 x Float.
+      // 3. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
       //                                         <2 x i64>, or <2 x f64>.
-      // 3. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
-      // 4. 2 x SSE, size is 16: 2 x Double.
+      // 4. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
+      // 5. 2 x SSE, size is 16: 2 x Double.
       if ((NumClasses-i) == 1) {
         if (Bytes == 8) {
           Elts.push_back(Type::DoubleTy);
           Bytes -= 8;
+        } else if (Bytes == 4) {
+          Elts.push_back (Type::FloatTy);
+          Bytes -= 4;
         } else
           assert(0 && "Not yet handled!");
       } else if ((NumClasses-i) == 2) {
@@ -799,6 +803,10 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
           Elts.push_back(VectorType::get(Type::FloatTy, 2));
           Elts.push_back(Type::Int64Ty);
+        } else if (Class[i+1] == X86_64_NO_CLASS) {
+          // padding bytes, don't pass
+          Elts.push_back(Type::DoubleTy);
+          Bytes -= 16;
         } else
           assert(0 && "Not yet handled!");
         ++i; // Already handled the next one.
@@ -1001,14 +1009,18 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
     case X86_64_SSE_CLASS:
       // If it's a SSE class argument, then one of the followings are possible:
       // 1. 1 x SSE, size is 8: 1 x Double.
-      // 2. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
+      // 2. 1 x SSE, size is 4: 1 x Float.
+      // 3. 1 x SSE + 1 x SSEUP, size is 16: 1 x <4 x i32>, <4 x f32>,
       //                                         <2 x i64>, or <2 x f64>.
-      // 3. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
-      // 4. 2 x SSE, size is 16: 2 x Double.
+      // 4. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
+      // 5. 2 x SSE, size is 16: 2 x Double.
       if ((NumClasses-i) == 1) {
         if (Bytes == 8) {
           Elts.push_back(Type::DoubleTy);
           Bytes -= 8;
+        } else if (Bytes == 4) {
+          Elts.push_back(Type::FloatTy);
+          Bytes -= 4;
         } else
           assert(0 && "Not yet handled!");
       } else if ((NumClasses-i) == 2) {

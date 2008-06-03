@@ -6604,9 +6604,12 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   }
     
   // Create a new string global.
+  const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
   GlobalVariable *GV = new GlobalVariable(Init->getType(), StringIsConstant,
-                                          GlobalVariable::InternalLinkage,
-                                          Init, ".str", TheModule);
+                                          GlobalVariable::InternalLinkage, Init,
+                                           TAI ? 
+                                            TAI->getStringConstantPrefix() : 
+                                            ".str", TheModule);
   if (SlotP) *SlotP = GV;
   return GV;
 }

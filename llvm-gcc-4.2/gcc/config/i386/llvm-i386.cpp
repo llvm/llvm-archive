@@ -1315,18 +1315,26 @@ bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
     enum machine_mode Mode = ix86_getNaturalModeForType(type);
     int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
     *DontCheckAlignment= true;
-    if (NumClasses == 1 && (Class[0] == X86_64_INTEGERSI_CLASS ||
-                            Class[0] == X86_64_INTEGER_CLASS)) {
+    if (NumClasses == 1 && Class[0] == X86_64_INTEGER_CLASS) {
       /* 8 byte object, one int register */
       *size = 8;
       return true;
     }
+    if (NumClasses == 1 && Class[0] == X86_64_INTEGERSI_CLASS) {
+      /* 4 byte object, one int register */
+      *size = 4;
+      return true;
+    }
     if (NumClasses == 2 && (Class[0] == X86_64_INTEGERSI_CLASS ||
                             Class[0] == X86_64_INTEGER_CLASS)) {
-      if (Class[1] == X86_64_INTEGERSI_CLASS ||
-          Class[1] == X86_64_INTEGER_CLASS) {
+      if (Class[1] == X86_64_INTEGER_CLASS) {
         /* 16 byte object, 2 int registers */
         *size = 16;
+        return true;
+      }
+      if (Class[1] == X86_64_INTEGERSI_CLASS) {
+        /* 12 byte object, 2 int registers */
+        *size = 12;
         return true;
       }
       if (Class[1] == X86_64_NO_CLASS) {

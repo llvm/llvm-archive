@@ -570,7 +570,7 @@ public:
       Elts.push_back(Type::Int8Ty);
       Size -= 1;
     }
-    assert((origSize || Size == 0) && "Didn't cover value?");
+    assert(Size == 0 && "Didn't cover value?");
     const StructType *STy = StructType::get(Elts, false);
 
     unsigned i = 0;

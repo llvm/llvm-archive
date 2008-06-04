@@ -2264,40 +2264,36 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   }
 
   std::vector<const Type*> UnionElts;
-  unsigned UnionSize = 0;
+  unsigned EltAlign = 0;
+  unsigned EltSize = 0;
   if (UnionTy) {            // Not an empty union.
-    UnionSize = TD.getABITypeSize(UnionTy);
+    EltAlign = TD.getABITypeAlignment(UnionTy);
+    EltSize = TD.getABITypeSize(UnionTy);
     UnionElts.push_back(UnionTy);
   }
-  
+
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC union, insert tail padding now.  This handles cases where the union
   // has larger alignment than the largest member does, thus requires tail
   // padding.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
     unsigned GCCTypeSize = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
-    
-    if (UnionSize != GCCTypeSize) {
-      assert(UnionSize < GCCTypeSize &&
+
+    if (EltSize != GCCTypeSize) {
+      assert(EltSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
       const Type *PadTy = Type::Int8Ty;
-      if (GCCTypeSize-UnionSize != 1)
-        PadTy = ArrayType::get(PadTy, GCCTypeSize-UnionSize);
+      if (GCCTypeSize-EltSize != 1)
+        PadTy = ArrayType::get(PadTy, GCCTypeSize-EltSize);
       UnionElts.push_back(PadTy);
     }
   }
-  
-  // If this is an empty union, but there is tail padding, make a filler.
-  if (UnionTy == 0) {
-    unsigned Size = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
-    UnionTy = Type::Int8Ty;
-    if (Size != 1) UnionTy = ArrayType::get(UnionTy, Size);
-  }
-  
-  const Type *ResultTy = StructType::get(UnionElts, false);
+
+  bool isPacked = EltAlign > TYPE_ALIGN_UNIT(type);
+  const Type *ResultTy = StructType::get(UnionElts, isPacked);
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
-  
+
   // If there was a forward declaration for this type that is now resolved,
   // refine anything that used it to the new type.
   if (OldTy)

@@ -1321,7 +1321,7 @@ struct StructTypeConversionInfo {
   /// getTypeSize - Return the size of the specified type in bytes.
   ///
   unsigned getTypeSize(const Type *Ty) const {
-    return Packed ? TD.getTypeStoreSize(Ty) : TD.getABITypeSize(Ty);
+    return TD.getABITypeSize(Ty);
   }
   
   /// getLLVMType - Return the LLVM type for the specified object.

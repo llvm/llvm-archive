@@ -51,7 +51,7 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #undef INSN_SCHEDULING
 #endif
 
-#ifdef ISNS_SCHEDULING
+#ifdef INSN_SCHEDULING
 /* LLVM LOCAL end */
 /* A flag indicating that a ddg edge belongs to an SCC or not.  */
 enum edge_flag {NOT_IN_SCC = 0, IN_SCC};

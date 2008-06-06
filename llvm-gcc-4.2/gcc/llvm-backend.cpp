@@ -51,6 +51,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/System/Program.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -272,6 +273,10 @@ void llvm_pch_write_init(void) {
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
 
+  // If writing to stdout, set binary mode.
+  if (asm_out_file == stdout)
+    sys::Program::ChangeStdoutToBinary();
+
   // Emit an LLVM .bc file to the output.  This is used when passed
   // -emit-llvm -c to the GCC driver.
   PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
@@ -472,6 +477,10 @@ void llvm_asm_file_start(void) {
     // Disable emission of .ident into the output file... which is completely
     // wrong for llvm/.bc emission cases.
     flag_no_ident = 1;
+
+  // If writing to stdout, set binary mode.
+  if (asm_out_file == stdout)
+    sys::Program::ChangeStdoutToBinary();
 
   AttributeUsedGlobals.clear();
   timevar_pop(TV_LLVM_INIT);

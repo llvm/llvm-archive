@@ -449,12 +449,22 @@ public:
     } else if (TREE_CODE(type) == RECORD_TYPE) {
       for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
         if (TREE_CODE(Field) == FIELD_DECL) {
+          const tree Ftype = getDeclaredType(Field);
+          const Type *FTy = ConvertType(Ftype);
           unsigned FNo = GetFieldIndex(Field);
           assert(FNo != ~0U && "Case not handled yet!");
-          
-          C.EnterField(FNo, Ty);
-          HandleArgument(getDeclaredType(Field), ScalarElts);
-          C.ExitField();
+
+          // Currently, a bvyal type inside a non-byval struct is a zero-length
+          // object inside a bigger object on x86-64.  This type should be
+          // skipped (but only when it is inside a bigger object).
+          // (We know there currently are no other such cases active because
+          // they would hit the assert in FunctionPrologArgumentConversion::
+          // HandleByValArgument.)
+          if (!LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(Ftype, FTy)) {
+            C.EnterField(FNo, Ty);
+            HandleArgument(getDeclaredType(Field), ScalarElts);
+            C.ExitField();
+          }
         }
     } else if (TREE_CODE(type) == COMPLEX_TYPE) {
       C.EnterField(0, Ty);

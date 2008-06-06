@@ -554,7 +554,12 @@ static bool llvm_x86_64_should_pass_aggregate_in_memory(tree TreeType,
                                                         enum machine_mode Mode){
   int IntRegs, SSERegs;
   /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
-  return !ix86_HowToPassArgument(Mode, TreeType, 0, &IntRegs, &SSERegs);
+  int ret = ix86_HowToPassArgument(Mode, TreeType, 0, &IntRegs, &SSERegs);
+  if (ret==0)
+    return true;
+  if (ret==1 && IntRegs==0 && SSERegs==0)   // zero-sized struct
+    return true;
+  return false;
 }
 
 /* Returns true if all elements of the type are integer types. */

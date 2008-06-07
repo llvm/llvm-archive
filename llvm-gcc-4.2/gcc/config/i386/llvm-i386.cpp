@@ -872,6 +872,22 @@ tree llvm_x86_should_return_vector_as_scalar(tree type, bool isBuiltin) {
   return 0;
 }
 
+/* MMX vectors are returned in XMM0 on x86-64 Darwin.  The easiest way to
+   communicate this is pretend they're doubles.
+   Judging from comments, this would not be right for Win64.  Don't know
+   about Linux.  */
+tree llvm_x86_should_return_selt_struct_as_scalar(tree type) {
+  tree retType = isSingleElementStructOrArray(type, true, false);
+  if (!retType || !TARGET_64BIT || !TARGET_MACHO)
+    return retType;
+  if (TREE_CODE(retType) == VECTOR_TYPE &&
+      TYPE_SIZE(retType) &&
+      TREE_CODE(TYPE_SIZE(retType))==INTEGER_CST &&
+      TREE_INT_CST_LOW(TYPE_SIZE(retType))==64)
+    return double_type_node;
+  return retType;
+}
+
 /* MMX vectors v2i32, v4i16, v8i8, v2f32 are returned using sret on Darwin
    32-bit.  Vectors bigger than 128 are returned using sret.  */
 bool llvm_x86_should_return_vector_as_shadow(tree type, bool isBuiltin) {

@@ -91,12 +91,15 @@ extern "C" bool contains_128bit_aligned_vector_p(tree);
   (TARGET_64BIT ? 0 : \
    TARGET_SSE && contains_128bit_aligned_vector_p(T) ? 16 : 4)
 
+extern tree llvm_x86_should_return_selt_struct_as_scalar(tree);
+
 /* Structs containing a single data field plus zero-length fields are
-   considered as if they were the type of the data field. */
-#ifndef LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR
+   considered as if they were the type of the data field.  On x86-64,
+   if the element type is an MMX vector, return it as double (which will
+   get it into XMM0). */
+
 #define LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(X) \
-  isSingleElementStructOrArray(X, true, false)
-#endif
+  llvm_x86_should_return_selt_struct_as_scalar((X))
 
 extern bool llvm_x86_should_pass_aggregate_in_integer_regs(tree, 
                                                           unsigned*, bool*);

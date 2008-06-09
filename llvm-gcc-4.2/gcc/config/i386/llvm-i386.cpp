@@ -1035,6 +1035,7 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
       //                                         <2 x i64>, or <2 x f64>.
       // 4. 1 x SSE + 1 x SSESF, size is 12: 1 x Double, 1 x Float.
       // 5. 2 x SSE, size is 16: 2 x Double.
+      // 6. 1 x SSE, 1 x NO:  Second is padding, pass as double.
       if ((NumClasses-i) == 1) {
         if (Bytes == 8) {
           Elts.push_back(Type::DoubleTy);
@@ -1088,8 +1089,12 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
           Elts.push_back(VectorType::get(Type::FloatTy, 2));
           Elts.push_back(Type::Int64Ty);
-        } else
+        } else if (Class[i+1] == X86_64_NO_CLASS) {
+          Elts.push_back(Type::DoubleTy);
+          Bytes -= 16;
+        } else {
           assert(0 && "Not yet handled!");
+        }
         ++i; // Already handled the next one.
       } else
         assert(0 && "Not yet handled!");

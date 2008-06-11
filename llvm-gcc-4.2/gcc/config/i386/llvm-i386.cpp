@@ -629,13 +629,6 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
   if (Bytes == 0)
     return false;
 
-  if (TARGET_64BIT &&
-      (Bytes == GET_MODE_SIZE(SImode) || Bytes == GET_MODE_SIZE(DImode))) {
-    // 32-bit or 64-bit and all elements are integers, not passed in memory.
-    const Type *Ty = ConvertType(TreeType);
-    if (llvm_x86_is_all_integer_types(Ty))
-      return false;
-  }
   if (!TARGET_64BIT) {
     std::vector<const Type*> Elts;
     return !llvm_x86_32_should_pass_aggregate_in_mixed_regs(TreeType, Ty, Elts);
@@ -662,6 +655,9 @@ static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
         ++NumXMMs;
     } else if (Ty->isInteger() || isa<PointerType>(Ty)) {
       ++NumGPRs;
+    } else if (Ty==Type::VoidTy) {
+      // Padding bytes that are not passed anywhere
+      ;
     } else {
       // Floating point scalar argument.
       assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
@@ -728,6 +724,7 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
                                                 std::vector<const Type*> &Elts){
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  bool totallyEmpty = true;
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
   int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
@@ -743,9 +740,11 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     case X86_64_INTEGER_CLASS:
     case X86_64_INTEGERSI_CLASS:
       Elts.push_back(Type::Int64Ty);
+      totallyEmpty = false;
       Bytes -= 8;
       break;
     case X86_64_SSE_CLASS:
+      totallyEmpty = false;
       // If it's a SSE class argument, then one of the followings are possible:
       // 1. 1 x SSE, size is 8: 1 x Double.
       // 2. 1 x SSE, size is 4: 1 x Float.
@@ -811,6 +810,7 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_NO_CLASS) {
           // padding bytes, don't pass
           Elts.push_back(Type::DoubleTy);
+          Elts.push_back(Type::VoidTy);
           Bytes -= 16;
         } else
           assert(0 && "Not yet handled!");
@@ -819,10 +819,12 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
         assert(0 && "Not yet handled!");
       break;
     case X86_64_SSESF_CLASS:
+      totallyEmpty = false;
       Elts.push_back(Type::FloatTy);
       Bytes -= 4;
       break;
     case X86_64_SSEDF_CLASS:
+      totallyEmpty = false;
       Elts.push_back(Type::DoubleTy);
       Bytes -= 8;
       break;
@@ -831,12 +833,16 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     case X86_64_COMPLEX_X87_CLASS:
       return false;
     case X86_64_NO_CLASS:
-      return false;
+      // Padding bytes that are not passed (unless the entire object consists
+      // of padding)
+      Elts.push_back(Type::VoidTy);
+      Bytes -= 8;
+      break;
     default: assert(0 && "Unexpected register class!");
     }
   }
 
-  return true;
+  return !totallyEmpty;
 }
 
 /* On Darwin, vectors which are not MMX nor SSE should be passed as integers. */

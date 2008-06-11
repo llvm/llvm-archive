@@ -607,9 +607,20 @@ public:
   /// mixed integer, floating point, and vector registers, convert it to a
   /// structure containing the specified struct elements in.
   void PassInMixedRegisters(tree type, const Type *Ty,
-                            std::vector<const Type*> &Elts,
+                            std::vector<const Type*> &OrigElts,
                             std::vector<const Type*> &ScalarElts) {
+    // We use VoidTy in OrigElts to mean "this is a word in the aggregate
+    // that occupies storage but has no useful information, and is not passed
+    // anywhere".  Happens on x86-64.
+    std::vector<const Type*> Elts(OrigElts);
+    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
+                                                                 Type::Int64Ty;
+    for (unsigned i=0, e=Elts.size(); i!=e; ++i)
+      if (OrigElts[i]==Type::VoidTy)
+        Elts[i] = wordType;
+
     const StructType *STy = StructType::get(Elts, false);
+
     unsigned Size = getTargetData().getABITypeSize(STy);
     const StructType *InSTy = dyn_cast<StructType>(Ty);
     unsigned InSize = 0;
@@ -627,13 +638,15 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      C.EnterField(i, STy);
-      unsigned RealSize = 0;
-      if (LastEltSizeDiff && i == (e - 1))
-        RealSize = LastEltSizeDiff;
-      C.HandleScalarArgument(Elts[i], 0, RealSize);
-      ScalarElts.push_back(Elts[i]);
-      C.ExitField();
+      if (OrigElts[i] != Type::VoidTy) {
+        C.EnterField(i, STy);
+        unsigned RealSize = 0;
+        if (LastEltSizeDiff && i == (e - 1))
+          RealSize = LastEltSizeDiff;
+        C.HandleScalarArgument(Elts[i], 0, RealSize);
+        ScalarElts.push_back(Elts[i]);
+        C.ExitField();
+      }
     }
   }
 };

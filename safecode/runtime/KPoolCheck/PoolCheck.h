@@ -16,6 +16,30 @@
 
 #include "safecode/Config/config.h"
 
+extern void llva_load_lif (unsigned int enable);
+extern unsigned int llva_save_lif (void);
+
+
+static unsigned
+disable_irqs ()
+{
+  unsigned int is_set;
+  is_set = llva_save_lif ();
+  llva_load_lif (0);
+  return is_set;
+}
+
+static void
+enable_irqs (int is_set)
+{
+  llva_load_lif (is_set);
+}
+
+#define PCLOCK() int pc_i = disable_irqs();
+#define PCLOCK2() pc_i = disable_irqs();
+#define PCUNLOCK() enable_irqs(pc_i);
+
+
 typedef struct MetaPoolTy {
   /* A splay of Pools, useful for registration tracking */
   void* Slabs;
@@ -72,7 +96,11 @@ extern "C" {
   void pchk_drop_obj(MetaPoolTy* MP, void* addr);
   void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc);
   void pchk_drop_pool(MetaPoolTy* MP, void* PoolID);
-  
+
+  /* Register and Deregister Integer State buffers */
+  void pchk_reg_int (void* addr);
+  void pchk_drop_int (void * addr);
+
   /* check that addr exists in pool MP */
   void poolcheck(MetaPoolTy* MP, void* addr);
 
@@ -103,6 +131,8 @@ extern "C" {
   void pchk_iccheck (void * addr);
   void * getBegin (void * node) __attribute__ ((weak));
   void * getEnd (void * node) __attribute__ ((weak));
+
+  unsigned int pchk_check_int (void * addr);
 
   void pchk_profile(MetaPoolTy* MP, void* pc, long time);
 

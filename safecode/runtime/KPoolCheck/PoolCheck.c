@@ -21,7 +21,7 @@
 #endif
 #define DEBUG(x) 
 
-/* Flag whether we are pchk_ready to perform pool operations */
+/* Flag whether we are ready to perform pool operations */
 int pchk_ready = 0;
 
 /* Flag whether to do profiling */
@@ -48,29 +48,6 @@ void * ICSplay;
 
 /* Global splay for holding the integer states */
 MetaPoolTy IntegerStatePool;
-
-extern void llva_load_lif (unsigned int enable);
-extern unsigned int llva_save_lif (void);
-
-
-static unsigned
-disable_irqs ()
-{
-  unsigned int is_set;
-  is_set = llva_save_lif ();
-  llva_load_lif (0);
-  return is_set;
-}
-
-static void
-enable_irqs (int is_set)
-{
-  llva_load_lif (is_set);
-}
-
-#define PCLOCK() int pc_i = disable_irqs();
-#define PCLOCK2() pc_i = disable_irqs();
-#define PCUNLOCK() enable_irqs(pc_i);
 
 #define maskaddr(_a) ((void*) ((unsigned)_a & ~(4096 - 1)))
 
@@ -274,11 +251,26 @@ void pchk_reg_ic_memtrap (void * p, void* addr) {
   PCUNLOCK();
 }
 
-void pchk_reg_int (void* addr) {
+/*
+ * Function: pchk_reg_int()
+ *
+ * Descripton:
+ *  This function registers an integer state.
+ *
+ * Inputs:
+ *  addr - The pointer to the integer state.
+ *
+ * Preconditions:
+ *  The virtual machine must ensure that the pointer points to valid integer
+ *  state.
+ */
+void
+pchk_reg_int (void* addr) {
   unsigned int index;
   if (!pchk_ready) return;
   PCLOCK();
   adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, __builtin_return_address(0));
+
 #if 1
   /*
    * Look for an entry in the cache that matches.  If it does, just erase it.
@@ -293,6 +285,65 @@ void pchk_reg_int (void* addr) {
   }
 #endif
   PCUNLOCK();
+}
+
+/*
+ * Function: pchk_drop_int()
+ *
+ * Description:
+ *  Mark the specified integer state as invalid.
+ */
+void
+pchk_drop_int (void * addr) {
+  unsigned int index;
+
+  PCLOCK();
+  adl_splay_delete(&(IntegerStatePool.Objs), addr);
+
+  /*
+   * See if the object is within the cache.  If so, remove it from the cache.
+   */
+  for (index=0; index < 4; ++index) {
+    if ((IntegerStatePool.start[index] <= addr) &&
+       (IntegerStatePool.start[index]+IntegerStatePool.length[index] >= addr)) {
+      IntegerStatePool.start[index] = 0;
+      IntegerStatePool.length[index] = 0;
+      IntegerStatePool.cache[index] = 0;
+    }
+  }
+  PCUNLOCK();
+}
+
+/*
+ * Function: pchk_check_int()
+ *
+ * Description:
+ *  Verify whether the specified pointer points to a valid integer state.
+ *
+ * Inputs:
+ *  addr - The integer state to check.
+ *
+ * Return value:
+ *  0 - The pointer does not point to valid integer state.
+ *  1 - The pointer does point to valid integer state.
+ */
+unsigned int
+pchk_check_int (void* addr) {
+  if (!pchk_ready) return 1;
+
+  PCLOCK();
+
+  void * S = addr;
+  unsigned len, tag;
+  unsigned int found = 0;
+
+  if (adl_splay_retrieve(&IntegerStatePool.Objs, &S, &len, &tag))
+    if (addr == S)
+      found =  1;
+
+  PCUNLOCK();
+
+  return found;
 }
 
 /* Remove a non-pool allocated object */

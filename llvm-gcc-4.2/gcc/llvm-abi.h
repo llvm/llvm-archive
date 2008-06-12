@@ -376,10 +376,10 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type))
-          C.HandleAggregateResultAsScalar(ScalarTy);
-        else if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
+        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
           C.HandleAggregateResultAsAggregate(AggrTy);
+        else if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type))
+          C.HandleAggregateResultAsScalar(ScalarTy);
         else {
           assert(0 && "Unable to determine how to return this aggregate!");
           abort();

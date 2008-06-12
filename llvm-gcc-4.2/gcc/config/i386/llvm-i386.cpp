@@ -941,15 +941,13 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (llvm_x86_should_not_return_complex_in_memory(TreeType))
     return true;
 
-  // llvm only accepts first class types for multiple values in ret instruction.
+  // FIXME: llvm x86-64 code generator is not able to handle return {i8, float}
   bool foundInt = false;
   unsigned STyElements = STy->getNumElements();
   for (unsigned i = 0; i < STyElements; ++i) { 
     const Type *ETy = STy->getElementType(i);
     if (const ArrayType *ATy = dyn_cast<ArrayType>(ETy))
       ETy = ATy->getElementType();
-    if (!ETy->isSingleValueType() && ETy->getTypeID() != Type::X86_FP80TyID)
-      return false;
     if (ETy->isInteger())
       foundInt = true;
   }
@@ -961,7 +959,6 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (NumClasses == 0)
     return false;
 
-  // FIXME: llvm x86-64 code generator is not able to handle return {i8, float}
   if (NumClasses == 1 && foundInt)
     return false;
 

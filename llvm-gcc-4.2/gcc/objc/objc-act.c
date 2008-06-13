@@ -5737,7 +5737,12 @@ build_message_reference_decl (void)
 
   sprintf (buf, "_OBJC_MESSAGE_REF_%d", message_reference_idx++);
   decl = start_var_decl (objc_v2_message_ref_template, buf);
-
+#ifdef ENABLE_LLVM
+  /* These are 4-byte aligned in 32-byte, 16-byte in 64-bit, which does not
+     follow from the alignments of the component types. */
+  DECL_ALIGN(decl) = BITS_PER_WORD==32 ? 32 : 128;
+  DECL_USER_ALIGN(decl) = 1;
+#endif
   return decl;
 }
 

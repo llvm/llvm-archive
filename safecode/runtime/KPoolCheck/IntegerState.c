@@ -36,22 +36,23 @@ extern unsigned int llva_save_integer (void * p) __attribute__ ((regparm(0)));
  *  new - The new integer state to load on to the processor.
  *
  * Return value:
- *  An identifier that can be used to reload the integer state on to the
- *  processor.
+ *  0 - State swapping failed.
+ *  1 - State swapping succeeded.
  */
-void *
-sva_swap_integer (void * old, void * new) {
-#if 0
-  unsigned int state[24];
-  void * old = &state;
-  void * new = &state;
-#endif
+unsigned
+sva_swap_integer (void * new, void ** statep) {
+  /*
+   * Current state held on CPU: We allocate it here so that the caller cannot
+   * free it and cause a dangling pointer to an integer state.
+   */
+  unsigned int old[24];
 
   /*
    * Determine whether the integer state is valid.
    */
-  if ((pchk_check_int (old)) == 0){
+  if ((pchk_check_int (new)) == 0) {
     poolcheckfail ("sva_swap_integer: Bad integer state:", (unsigned)old, (void*)__builtin_return_address(0));
+    return 0;
   }
 
   /*
@@ -63,13 +64,18 @@ sva_swap_integer (void * old, void * new) {
      * caller.
      */
     pchk_drop_int (old);
-    return new;
+    return 1;
   }
 
   /*
    * Register the saved integer state in the splay tree.
    */
   pchk_reg_int (old);
+
+  /*
+   * Inform the caller of the location of the last state saved.
+   */
+  *statep = old;
 
   /*
    * Now, reload the integer state pointed to by new.
@@ -80,6 +86,6 @@ sva_swap_integer (void * old, void * new) {
    * The loading of integer state failed.
    */
   pchk_drop_int (old);
-  return (void *)(0);
+  return 0;
 }
 

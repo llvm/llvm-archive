@@ -5983,6 +5983,13 @@ build_classlist_super_translation_table (bool metaclass_chain)
 	  expr = convert (objc_class_type, build_fold_addr_expr (expr));
 	}
       finish_var_decl (decl, expr);
+      /* LLVM LOCAL begin - radar 5998983 */
+#ifdef ENABLE_LLVM
+      /* Reset the initializer for this reference as it most likely changed.  */
+      if (!optimize)
+        reset_initializer_llvm(decl);
+#endif
+      /* LLVM LOCAL end - radar 5998983 */
     }
 }
 /* APPLE LOCAL end radar 4535676 */

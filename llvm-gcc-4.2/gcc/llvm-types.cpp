@@ -602,6 +602,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   case VECTOR_TYPE:
   case POINTER_TYPE:
   case REFERENCE_TYPE:
+  case OFFSET_TYPE:
     // These types have no holes.
     return true;
 

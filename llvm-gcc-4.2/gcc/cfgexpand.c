@@ -697,8 +697,12 @@ defer_stack_allocation (tree var, bool toplevel)
 {
   /* If stack protection is enabled, *all* stack variables must be deferred,
      so that we can re-order the strings to the top of the frame.  */
+  /* LLVM LOCAL begin stack protector */
+#if 0
   if (flag_stack_protect)
     return true;
+#endif
+  /* LLVM LOCAL end stack protector */
 
   /* Variables in the outermost scope automatically conflict with
      every other variable.  The only reason to want to defer them
@@ -817,6 +821,8 @@ clear_tree_used (tree block)
 #define SPCT_HAS_ARRAY			4
 #define SPCT_HAS_AGGREGATE		8
 
+/* LLVM LOCAL begin stack protector */
+#if 0
 static unsigned int
 stack_protect_classify_type (tree type)
 {
@@ -946,6 +952,8 @@ create_stack_guard (void)
   expand_one_stack_var (guard);
   cfun->stack_protect_guard = guard;
 }
+#endif
+/* LLVM LOCAL end stack protector */
 
 /* Expand all variables used in the function.  */
 
@@ -1020,10 +1028,14 @@ expand_used_vars (void)
 	 reflect this.  */
       add_alias_set_conflicts ();
 
+/* LLVM LOCAL begin stack protector */
+#if 0
       /* If stack protection is enabled, we don't share space between
 	 vulnerable data and non-vulnerable data.  */
       if (flag_stack_protect)
 	add_stack_protection_conflicts ();
+#endif
+/* LLVM LOCAL end stack protector */
 
       /* Now that we have collected all stack variables, and have computed a
 	 minimal interference graph, attempt to save some stack space.  */
@@ -1036,11 +1048,15 @@ expand_used_vars (void)
      stack guard: protect-all, alloca used, protected decls present.  */
   /* APPLE LOCAL begin CW asm */
   /* Don't create a guard for iasm functions.  */
+  /* LLVM LOCAL begin stack protector */
+#if 0
   if ((flag_stack_protect == 2
       || (flag_stack_protect
 	   && (current_function_calls_alloca || has_protected_decls)))
       && !cfun->iasm_asm_function)
     create_stack_guard ();
+#endif
+  /* LLVM LOCAL end stack protector */
   /* APPLE LOCAL end CW asm */
 
   /* Assign rtl to each variable based on these partitions.  */
@@ -1051,6 +1067,8 @@ expand_used_vars (void)
       /* ??? We could probably integrate this into the qsort we did
 	 earlier, such that we naturally see these variables first,
 	 and thus naturally allocate things in the right order.  */
+  /* LLVM LOCAL begin stack protector */
+#if 0
       if (has_protected_decls)
 	{
 	  /* Phase 1 contains only character arrays.  */
@@ -1060,7 +1078,8 @@ expand_used_vars (void)
 	  if (flag_stack_protect == 2)
 	    expand_stack_vars (stack_protect_decl_phase_2);
 	}
-
+#endif
+  /* LLVM LOCAL end stack protector */
       expand_stack_vars (NULL);
 
       /* Free up stack variable graph data.  */
@@ -1615,6 +1634,8 @@ tree_expand_cfg (void)
   expand_used_vars ();
 
   /* Honor stack protection warnings.  */
+  /* LLVM LOCAL begin stack protector */
+#if 0
   if (warn_stack_protect)
     {
       if (current_function_calls_alloca)
@@ -1623,6 +1644,8 @@ tree_expand_cfg (void)
 	warning (0, "not protecting function: no buffer at least %d bytes long",
 		 (int) PARAM_VALUE (PARAM_SSP_BUFFER_SIZE));
     }
+#endif
+  /* LLVM LOCAL end stack protector */
 
   /* Set up parameters and prepare for return, for the function.  */
   expand_function_start (current_function_decl);

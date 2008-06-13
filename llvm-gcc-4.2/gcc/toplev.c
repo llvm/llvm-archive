@@ -2015,6 +2015,8 @@ process_options (void)
   cl_pf_opts_cooked = cl_pf_opts;
   /* APPLE LOCAL end optimization pragmas 3124235/3420242 */
 
+/* LLVM LOCAL begin stack protector */
+#if 0
   /* Targets must be able to place spill slots at lower addresses.  If the
      target already uses a soft frame pointer, the transition is trivial.  */
   if (!FRAME_GROWS_DOWNWARD && flag_stack_protect)
@@ -2024,6 +2026,8 @@ process_options (void)
     }
   if (!flag_stack_protect)
     warn_stack_protect = 0;
+#endif
+/* LLVM LOCAL end stack protector */
 
   /* ??? Unwind info is not correct around the CFG unless either a frame
      pointer is present or A_O_A is set.  Fixing this requires rewriting

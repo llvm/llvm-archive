@@ -2462,9 +2462,10 @@ assign_parm_adjust_stack_rtl (struct assign_parm_data_one *data)
 
   /* If stack protection is in effect for this function, don't leave any
      pointers in their passed stack slots.  */
+  /* LLVM LOCAL. 
+     Remove flag_stack_protector == 2 check */
   else if (cfun->stack_protect_guard
-	   && (flag_stack_protect == 2
-	       || data->passed_pointer
+	   && (data->passed_pointer
 	       || POINTER_TYPE_P (data->nominal_type)))
     stack_parm = NULL;
 

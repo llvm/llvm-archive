@@ -4685,6 +4685,137 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
+  case BUILT_IN_ADD_AND_FETCH_1:
+  case BUILT_IN_ADD_AND_FETCH_2:
+  case BUILT_IN_ADD_AND_FETCH_4:
+  case BUILT_IN_ADD_AND_FETCH_8:
+  case BUILT_IN_ADD_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    Result = Builder.CreateAdd(Result, C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_SUB_AND_FETCH_1:
+  case BUILT_IN_SUB_AND_FETCH_2:
+  case BUILT_IN_SUB_AND_FETCH_4:
+  case BUILT_IN_SUB_AND_FETCH_8:
+  case BUILT_IN_SUB_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    Result = Builder.CreateSub(Result, C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_OR_AND_FETCH_1:
+  case BUILT_IN_OR_AND_FETCH_2:
+  case BUILT_IN_OR_AND_FETCH_4:
+  case BUILT_IN_OR_AND_FETCH_8:
+  case BUILT_IN_OR_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    Result = Builder.CreateOr(Result, C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_XOR_AND_FETCH_1:
+  case BUILT_IN_XOR_AND_FETCH_2:
+  case BUILT_IN_XOR_AND_FETCH_4:
+  case BUILT_IN_XOR_AND_FETCH_8:
+  case BUILT_IN_XOR_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    Result = Builder.CreateXor(Result, C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_NAND_AND_FETCH_1:
+  case BUILT_IN_NAND_AND_FETCH_2:
+  case BUILT_IN_NAND_AND_FETCH_4:
+  case BUILT_IN_NAND_AND_FETCH_8:
+  case BUILT_IN_NAND_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+                         C, C + 2);
+    Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+
 #endif //FIXME: these break the build for backends that haven't implemented them
 
 

@@ -629,14 +629,10 @@ c_cpp_builtins (cpp_reader *pfile)
   /* Make the choice of the stack protector runtime visible to source code.
      The macro names and values here were chosen for compatibility with an
      earlier implementation, i.e. ProPolice.  */
-  /* LLVM LOCAL begin stack protector */
-#if 0
   if (flag_stack_protect == 2)
     cpp_define (pfile, "__SSP_ALL__=2");
   else if (flag_stack_protect == 1)
     cpp_define (pfile, "__SSP__=1");
-#endif
-  /* LLVM LOCAL end stack protector */
 
   if (flag_openmp)
     cpp_define (pfile, "_OPENMP=200505");

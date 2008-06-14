@@ -1212,7 +1212,10 @@ extern enum rs6000_abi rs6000_current_abi;	/* available for use by subtarget */
 
    On the RS/6000, we grow upwards, from the area after the outgoing
    arguments.  */
-#define FRAME_GROWS_DOWNWARD (flag_stack_protect != 0)
+/* LLVM LOCAL begin stack protector */
+#define FRAME_GROWS_DOWNWARD 0
+/* LLVM LOCAL end stack protector */
+
 
 /* Size of the outgoing register save area */
 #define RS6000_REG_SAVE ((DEFAULT_ABI == ABI_AIX			\

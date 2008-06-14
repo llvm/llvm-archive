@@ -4512,7 +4512,27 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_ADD_2:
   case BUILT_IN_FETCH_AND_ADD_4:
   case BUILT_IN_FETCH_AND_ADD_8:
-  case BUILT_IN_FETCH_AND_ADD_16:
+  case BUILT_IN_FETCH_AND_ADD_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_las, 
+                                                   &Ty, 1),
+      C, C + 2);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
   case BUILT_IN_FETCH_AND_SUB_1:
   case BUILT_IN_FETCH_AND_SUB_2:
   case BUILT_IN_FETCH_AND_SUB_4:
@@ -4524,13 +4544,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_1) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_2) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_4) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_8) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_FETCH_AND_SUB_16))
-      C[1] = Builder.CreateNeg(C[1]);
-
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty = OrigTy;
     if (isa<PointerType>(Ty)) 
@@ -4539,7 +4552,107 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_lss, 
+                                                   &Ty, 1),
+      C, C + 2);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_FETCH_AND_OR_1:
+  case BUILT_IN_FETCH_AND_OR_2:
+  case BUILT_IN_FETCH_AND_OR_4:
+  case BUILT_IN_FETCH_AND_OR_8:
+  case BUILT_IN_FETCH_AND_OR_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_load_or, 
+                                                   &Ty, 1),
+      C, C + 2);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_FETCH_AND_AND_1:
+  case BUILT_IN_FETCH_AND_AND_2:
+  case BUILT_IN_FETCH_AND_AND_4:
+  case BUILT_IN_FETCH_AND_AND_8:
+  case BUILT_IN_FETCH_AND_AND_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_load_and, 
+                                                   &Ty, 1),
+      C, C + 2);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_FETCH_AND_XOR_1:
+  case BUILT_IN_FETCH_AND_XOR_2:
+  case BUILT_IN_FETCH_AND_XOR_4:
+  case BUILT_IN_FETCH_AND_XOR_8:
+  case BUILT_IN_FETCH_AND_XOR_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_load_xor, 
+                                                   &Ty, 1),
+      C, C + 2);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
+  case BUILT_IN_FETCH_AND_NAND_1:
+  case BUILT_IN_FETCH_AND_NAND_2:
+  case BUILT_IN_FETCH_AND_NAND_4:
+  case BUILT_IN_FETCH_AND_NAND_8:
+  case BUILT_IN_FETCH_AND_NAND_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty = OrigTy;
+    if (isa<PointerType>(Ty)) 
+      Ty = TD.getIntPtrType();     
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
+    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_load_nand, 
                                                    &Ty, 1),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);

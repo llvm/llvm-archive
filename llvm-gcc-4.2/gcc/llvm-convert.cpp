@@ -4730,7 +4730,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_lss, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateSub(Result, C[1]);
@@ -4756,7 +4756,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_load_or, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateOr(Result, C[1]);
@@ -4782,7 +4782,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_load_xor, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateXor(Result, C[1]);
@@ -4808,7 +4808,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_load_nand, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);

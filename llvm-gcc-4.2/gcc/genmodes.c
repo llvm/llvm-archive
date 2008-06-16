@@ -785,11 +785,12 @@ calc_wider_mode (void)
 
 /* Output routines.  */
 
-#define tagged_printf(FMT, ARG, TAG) do {		\
-  int count_;						\
-  printf ("  " FMT ",%n", ARG, &count_);		\
-  printf ("%*s/* %s */\n", 27 - count_, "", TAG);	\
+/* LLVM LOCAL begin mainline */
+#define tagged_printf(FMT, ARG, TAG) do {               \
+  int count_ = printf ("  " FMT ",", ARG);              \
+  printf ("%*s/* %s */\n", 27 - count_, "", TAG);       \
 } while (0)
+/* LLVM LOCAL end mainline */
 
 #define print_decl(TYPE, NAME, ASIZE) \
   puts ("\nconst " TYPE " " NAME "[" ASIZE "] =\n{");

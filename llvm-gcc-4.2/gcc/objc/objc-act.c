@@ -2383,6 +2383,7 @@ objc_build_ivar_layout (bool strong_ivar_layout)
   bool hasUnion, bytesSkipped;
   int num_nibbles = 0;
   bool first_nibble = true;
+  tree retval;
 
   if (!flag_objc_gc || !implementation_template)
     return NULL_TREE;
@@ -2559,12 +2560,13 @@ objc_build_ivar_layout (bool strong_ivar_layout)
     }
   OUTPUT_LAYOUT_BYTE (0);  /* null terminate string */
   string = obstack_finish (&util_obstack);
-  obstack_free (&util_obstack, util_firstobj);
   /* if ivar_layout bitmap is all 1 bits (nothing skipped) then use NULL as
      final layout. */
-  return (strong_ivar_layout && !bytesSkipped) 
+  retval = (strong_ivar_layout && !bytesSkipped) 
 	   ? NULL_TREE 
 	   : add_objc_string (get_identifier (string), class_names);
+  obstack_free (&util_obstack, util_firstobj);
+  return retval;
 }
 
 /**

@@ -936,10 +936,11 @@ namespace {
     unsigned &CallingConv;
     bool isShadowRet;
     bool KNRPromotion;
+    unsigned Offset;
   public:
     FunctionTypeConversion(PATypeHolder &retty, std::vector<PATypeHolder> &AT,
                            unsigned &CC, bool KNR)
-      : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR) {
+      : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR), Offset(0) {
       CallingConv = CallingConv::C;
       isShadowRet = false;
     }
@@ -955,8 +956,9 @@ namespace {
     /// HandleAggregateResultAsScalar - This callback is invoked if the function
     /// returns an aggregate value by bit converting it to the specified scalar
     /// type and returning that.
-    void HandleAggregateResultAsScalar(const Type *ScalarTy) {
+    void HandleAggregateResultAsScalar(const Type *ScalarTy, unsigned Offset=0) {
       RetTy = ScalarTy;
+      this->Offset = Offset;
     }
 
     /// HandleAggregateResultAsAggregate - This callback is invoked if the function

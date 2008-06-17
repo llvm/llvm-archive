@@ -941,17 +941,6 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (llvm_x86_should_not_return_complex_in_memory(TreeType))
     return true;
 
-  // FIXME: llvm x86-64 code generator is not able to handle return {i8, float}
-  bool foundInt = false;
-  unsigned STyElements = STy->getNumElements();
-  for (unsigned i = 0; i < STyElements; ++i) { 
-    const Type *ETy = STy->getElementType(i);
-    if (const ArrayType *ATy = dyn_cast<ArrayType>(ETy))
-      ETy = ATy->getElementType();
-    if (ETy->isInteger())
-      foundInt = true;
-  }
-
   // Let gcc specific routine answer the question.
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
@@ -959,12 +948,15 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
   if (NumClasses == 0)
     return false;
 
-  if (NumClasses == 1 && foundInt)
-    return false;
-
   if (NumClasses == 1 && 
       (Class[0] == X86_64_INTEGERSI_CLASS || Class[0] == X86_64_INTEGER_CLASS))
-    // This will fit in one i32 register.
+    // This will fit in one i64 register.
+    return false;
+
+  if (NumClasses == 2 &&
+      (Class[0] == X86_64_NO_CLASS || Class[1] == X86_64_NO_CLASS))
+    // One word is padding which is not passed at all; treat this as returning
+    // the scalar type of the other word.
     return false;
 
   // Otherwise, use of multiple value return is OK.
@@ -973,7 +965,8 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
 
 // llvm_x86_scalar_type_for_struct_return - Return LLVM type if TYPE
 // can be returned as a scalar, otherwise return NULL.
-const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
+const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
+  *Offset = 0;
   const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getABITypeSize(Ty);
   if (Size == 0)
@@ -989,13 +982,67 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type) {
   if (llvm_suitable_multiple_ret_value_type(Ty, type))
     return NULL;
 
-  if (Size <= 8)
-    return Type::Int64Ty;
-  else if (Size <= 16)
-    return IntegerType::get(128);
-  else if (Size <= 32)
-    return IntegerType::get(256);
+  if (TARGET_64BIT) {
+    // This logic relies on llvm_suitable_multiple_ret_value_type to have
+    // removed anything not expected here.
+    enum x86_64_reg_class Class[MAX_CLASSES];
+    enum machine_mode Mode = ix86_getNaturalModeForType(type);
+    int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
+    if (NumClasses == 0)
+      return Type::Int64Ty;
 
+    if (NumClasses == 1) {
+      if (Class[0] == X86_64_INTEGERSI_CLASS ||
+          Class[0] == X86_64_INTEGER_CLASS) {
+        // one int register
+        HOST_WIDE_INT Bytes =
+          (Mode == BLKmode) ? int_size_in_bytes(type) : 
+                              (int) GET_MODE_SIZE(Mode);
+        if (Bytes>4)
+          return Type::Int64Ty;
+        else if (Bytes>2)
+          return Type::Int32Ty;
+        else if (Bytes>1)
+          return Type::Int16Ty;
+        else
+          return Type::Int8Ty;
+      }
+      assert(0 && "Unexpected type!"); 
+    }
+    if (NumClasses == 2) {
+      if (Class[1] == X86_64_NO_CLASS) {
+        if (Class[0] == X86_64_INTEGER_CLASS || 
+            Class[0] == X86_64_NO_CLASS ||
+            Class[0] == X86_64_INTEGERSI_CLASS)
+          return Type::Int64Ty;
+        else if (Class[0] == X86_64_SSE_CLASS || Class[0] == X86_64_SSEDF_CLASS)
+          return Type::DoubleTy;
+        else if (Class[0] == X86_64_SSESF_CLASS)
+          return Type::FloatTy;
+        assert(0 && "Unexpected type!");
+      }
+      if (Class[0] == X86_64_NO_CLASS) {
+        *Offset = 8;
+        if (Class[1] == X86_64_INTEGERSI_CLASS ||
+            Class[1] == X86_64_INTEGER_CLASS)
+          return Type::Int64Ty;
+        else if (Class[1] == X86_64_SSE_CLASS || Class[1] == X86_64_SSEDF_CLASS)
+          return Type::DoubleTy;
+        else if (Class[1] == X86_64_SSESF_CLASS)
+          return Type::FloatTy;
+        assert(0 && "Unexpected type!"); 
+      }
+      assert(0 && "Unexpected type!");
+    }
+    assert(0 && "Unexpected type!");
+  } else {
+    if (Size <= 8)
+      return Type::Int64Ty;
+    else if (Size <= 16)
+      return IntegerType::get(128);
+    else if (Size <= 32)
+      return IntegerType::get(256);
+  }
   return NULL;
 }
 

@@ -57,8 +57,10 @@ struct DefaultABIClient {
 
   /// HandleAggregateResultAsScalar - This callback is invoked if the function
   /// returns an aggregate value by bit converting it to the specified scalar
-  /// type and returning that.
-  void HandleAggregateResultAsScalar(const Type *ScalarTy) {}
+  /// type and returning that.  The bit conversion should start at byte Offset
+  /// within the struct, and ScalarTy is not necessarily big enough to cover
+  /// the entire struct.
+  void HandleAggregateResultAsScalar(const Type *ScalarTy, unsigned Offset=0) {}
 
   /// HandleAggregateResultAsAggregate - This callback is invoked if the function
   /// returns an aggregate value using multiple return values.
@@ -197,9 +199,10 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // getLLVMScalarTypeForStructReturn - Return LLVM Type if TY can be 
 // returned as a scalar, otherwise return NULL. This is the default
 // target independent implementation.
-static const Type* getLLVMScalarTypeForStructReturn(tree type) {
+static const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
   const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getABITypeSize(Ty);
+  *Offset = 0;
   if (Size == 0)
     return Type::VoidTy;
   else if (Size == 1)
@@ -309,8 +312,8 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
 // returned as a scalar, otherwise return NULL.
 #ifndef LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN
-#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
-  getLLVMScalarTypeForStructReturn(X)
+#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X, Y) \
+  getLLVMScalarTypeForStructReturn((X), (Y))
 #endif
 
 // LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
@@ -351,6 +354,7 @@ public:
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
   void HandleReturnType(tree type, tree fn, bool isBuiltin) {
+    unsigned Offset = 0;
     const Type *Ty = ConvertType(type);
     if (Ty->getTypeID() == Type::VectorTyID) {
       // Vector handling is weird on x86.  In particular builtin and
@@ -378,8 +382,9 @@ public:
         // aggregate.
         if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
           C.HandleAggregateResultAsAggregate(AggrTy);
-        else if (const Type* ScalarTy = LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type))
-          C.HandleAggregateResultAsScalar(ScalarTy);
+        else if (const Type* ScalarTy = 
+                    LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type, &Offset))
+          C.HandleAggregateResultAsScalar(ScalarTy, Offset);
         else {
           assert(0 && "Unable to determine how to return this aggregate!");
           abort();

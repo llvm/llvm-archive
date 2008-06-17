@@ -350,6 +350,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()) {
   FnDecl = fndecl;
   Fn = 0;
   ReturnBB = UnwindBB = 0;
+  ReturnOffset = 0;
   
   if (TheDebugInfo) {
     expanded_location Location = expand_location(DECL_SOURCE_LOCATION (fndecl));
@@ -427,10 +428,11 @@ namespace {
     IRBuilder Builder;
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
+    unsigned Offset;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
                                      const IRBuilder &B)
-      : FunctionDecl(FnDecl), AI(ai), Builder(B) {}
+      : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0) {}
     
     void setName(const std::string &Name) {
       NameStack.push_back(Name);
@@ -518,6 +520,10 @@ namespace {
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
       // Should not get here.
       abort();
+    }
+
+    void HandleAggregateResultAsScalar(const Type *ScalarTy, unsigned Offset=0) {
+      this->Offset = Offset;
     }
 
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
@@ -696,6 +702,8 @@ void TreeToLLVM::StartFunctionBody() {
   // Handle the DECL_RESULT.
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
                                 DECL_BUILT_IN(FnDecl));
+  // Remember this for use by FinishFunctionBody.
+  TheTreeToLLVM->ReturnOffset = Client.Offset;
 
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
@@ -805,10 +813,16 @@ Function *TreeToLLVM::FinishFunctionBody() {
           RetVals.push_back(E);
         }
       } else {
-        // Otherwise, this aggregate result must be something that is returned in
-        // a scalar register for this target.  We must bit convert the aggregate
-        // to the specified scalar type, which we do by casting the pointer and
-        // loading.
+        // Otherwise, this aggregate result must be something that is returned
+        // in a scalar register for this target.  We must bit convert the
+        // aggregate to the specified scalar type, which we do by casting the
+        // pointer and loading.  The load does not necessarily start at the 
+        // beginning of the aggregate (x86-64).
+        if (ReturnOffset) {
+          RetVal = BitCastToType(RetVal, PointerType::getUnqual(Type::Int8Ty));
+          RetVal = Builder.CreateGEP(RetVal, 
+                    ConstantInt::get(TD.getIntPtrType(), ReturnOffset), "tmp");
+        }
         RetVal = BitCastToType(RetVal,
                                PointerType::getUnqual(Fn->getReturnType()));
         RetVal = Builder.CreateLoad(RetVal, "retval");
@@ -2383,6 +2397,7 @@ namespace {
     MemRef RetBuf;
     bool isShadowRet;
     bool isAggrRet;
+    unsigned Offset;
 
     FunctionCallArgumentConversion(SmallVector<Value*, 16> &ops,
                                    const FunctionType *FnTy,
@@ -2391,7 +2406,7 @@ namespace {
                                    IRBuilder &b)
       : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
         useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false),
-        isAggrRet(false) { }
+        isAggrRet(false), Offset(0) { }
 
     // Push the address of an argument.
     void pushAddress(Value *Loc) {
@@ -2472,12 +2487,13 @@ namespace {
     /// HandleAggregateResultAsScalar - This callback is invoked if the function
     /// returns an aggregate value by bit converting it to the specified scalar
     /// type and returning that.
-    void HandleAggregateResultAsScalar(const Type *ScalarTy) {
-      // There is nothing to do here.
+    void HandleAggregateResultAsScalar(const Type *ScalarTy, 
+                                       unsigned Offset = 0) {
+      this->Offset = Offset;
     }
 
-    /// HandleAggregateResultAsAggregate - This callback is invoked if the function
-    /// returns an aggregate value using multiple return values.
+    /// HandleAggregateResultAsAggregate - This callback is invoked if the 
+    /// function returns an aggregate value using multiple return values.
     void HandleAggregateResultAsAggregate(const Type *AggrTy) {
       // There is nothing to do here.
       isAggrRet = true;
@@ -2734,12 +2750,18 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   // the current target specifies that the aggregate be returned in scalar
   // registers even though it is an aggregate.  We must bitconvert the scalar
   // to the destination aggregate type.  We do this by casting the DestLoc
-  // pointer and storing into it.
+  // pointer and storing into it.  The store does not necessarily start at the
+  // beginning of the aggregate (x86-64).
   if (!DestLoc)
     return Call;   // Normal scalar return.
 
-  Value *Ptr = BitCastToType(DestLoc->Ptr, 
-                             PointerType::getUnqual(Call->getType()));
+  Value *Ptr = DestLoc->Ptr;
+  if (Client.Offset) {
+    Ptr = BitCastToType(Ptr, PointerType::getUnqual(Type::Int8Ty));
+    Ptr = Builder.CreateGEP(Ptr, 
+                  ConstantInt::get(TD.getIntPtrType(), Client.Offset), "tmp");
+  }
+  Ptr = BitCastToType(Ptr, PointerType::getUnqual(Call->getType()));
   StoreInst *St = Builder.CreateStore(Call, Ptr, DestLoc->Volatile);
   St->setAlignment(DestLoc->Alignment);
   return 0;

@@ -116,10 +116,11 @@ extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
 
 /* LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as a scalar, otherwise return NULL. */
-#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X) \
-  llvm_x86_scalar_type_for_struct_return(X)
+#define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X, Y) \
+  llvm_x86_scalar_type_for_struct_return((X), (Y))
 
-extern const Type *llvm_x86_scalar_type_for_struct_return(tree type);
+extern const Type *llvm_x86_scalar_type_for_struct_return(tree type, 
+                                                          unsigned *Offset);
 
 /* LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as an aggregate, otherwise return NULL. */

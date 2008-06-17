@@ -274,6 +274,7 @@ class TreeToLLVM {
   Function *Fn;
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
+  unsigned ReturnOffset;
 
   // State that changes as the function is emitted.
 

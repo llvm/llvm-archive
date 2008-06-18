@@ -77,10 +77,12 @@ private:
   
 public:
   DebugInfo(Module *m);
-  
+  ~DebugInfo();
+
   // Accessors.
   void setLocationFile(const char *FullPath) { CurFullPath = FullPath; }
   void setLocationLine(int LineNo)           { CurLineNo = LineNo; }
+  const Module *getModule() const            { return M; }
   
   /// getValueFor - Return a llvm representation for a given debug information
   /// descriptor.

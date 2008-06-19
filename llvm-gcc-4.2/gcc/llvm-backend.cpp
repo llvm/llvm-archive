@@ -203,7 +203,6 @@ void llvm_initialize_backend(void) {
     RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
  
   if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
-    // TheDebugInfo is taking ownership of TheModule.
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
@@ -227,9 +226,8 @@ oFILEstream *AsmIntermediateOutStream = 0;
 void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   std::string ModuleName = TheModule->getModuleIdentifier();
 
-  // Don't delete the module if the debug info isn't done with it yet.
-  if (!TheDebugInfo || TheDebugInfo->getModule() != TheModule)
-    delete TheModule;
+  delete TheModule;
+  delete TheDebugInfo;
 
   clearTargetBuiltinCache();
 
@@ -238,6 +236,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
   std::string ErrMsg;
   TheModule = ParseBitcodeFile(MB, &ErrMsg);
+  TheDebugInfo = new DebugInfo(TheModule);
   delete MB;
 
   if (!TheModule) {

@@ -225,10 +225,6 @@ DebugInfo::DebugInfo(Module *m)
   SR.setModule(M);
 }
 
-DebugInfo::~DebugInfo() {
-  delete M;
-}
-
 /// getValueFor - Return a llvm representation for a given debug information
 /// descriptor.
 Value *DebugInfo::getValueFor(DebugInfoDesc *DD) {

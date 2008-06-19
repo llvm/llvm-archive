@@ -236,8 +236,10 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
   std::string ErrMsg;
   TheModule = ParseBitcodeFile(MB, &ErrMsg);
-  TheDebugInfo = new DebugInfo(TheModule);
   delete MB;
+
+  if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
+    TheDebugInfo = new DebugInfo(TheModule);
 
   if (!TheModule) {
     cerr << "Error reading bytecodes from PCH file\n";

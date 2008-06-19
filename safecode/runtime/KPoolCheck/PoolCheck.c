@@ -553,11 +553,22 @@ void poolcheck_i (MetaPoolTy* MP, void* addr) {
 #endif
   ++stat_poolcheck;
   PCLOCK();
+
+  /*
+   * Ensure that the pointer is not within an I/O object.
+   */
   int t1 = adl_splay_find(&MP->IOObjs, addr);
   if (t1) {
-    if (1) poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
-  volatile int t2 = adl_splay_find(&MP->Objs, addr);
+
+  /*
+   * Ensure that the pointer is not within an Integer State object.
+   */
+  if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
+    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
   PCUNLOCK();
   return;
 }

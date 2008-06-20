@@ -1073,10 +1073,6 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   DSGraph & TDG = getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
 
-  if (Node)
-    if (Node->isIONode())
-      std::cerr << "JTC: Bounds Check: IONOde" << std::endl;
-
   //
   // Determine whether an alignment check is needed.  This occurs when a DSNode
   // is type unknown (collapsed) but has pointers to type known (uncollapsed)
@@ -2621,7 +2617,7 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     return;
   }
 
-#if 1
+#if 0
   // JTC: Debugging for I/O
   DSGraph & TDG = getDSGraph(*(MAI->getParent()->getParent()));
   DSNode * Node = TDG.getNodeForValue(MAI).getNode();

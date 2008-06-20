@@ -815,6 +815,12 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *getBeginEndTy = FunctionType::get(VoidPtrType, FArg8, false);
   getBegin = M.getOrInsertFunction("getBegin", getBeginEndTy);
   getEnd   = M.getOrInsertFunction("getEnd",   getBeginEndTy);
+
+  std::vector<const Type*> FArg10 (1, VoidPtrType);
+  FArg10.push_back(VoidPtrType);
+  FArg10.push_back(Type::UIntTy);
+  FunctionType *declareStackTy = FunctionType::get (Type::VoidTy, FArg10, false);
+  declareStack = M.getOrInsertFunction("pchk_declarestack", declareStackTy);
 }
 
 
@@ -2296,6 +2302,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   // Transform the function
   if (!(F.isExternal())) TransformFunction (F);
   if (!DisableLSChecks)  addLoadStoreChecks(F);
+  addDeclaredStackChecks(F);
 
   //
   // Update the statistics.
@@ -3259,6 +3266,42 @@ void InsertPoolChecks::TransformFunction (Function & F) {
   } 
 }
 
+void
+InsertPoolChecks::addDeclaredStackChecks (Function & F) {
+  std::vector<Value *> args;
+  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
+    if (CallInst * CI = dyn_cast<CallInst>(&*I))
+      if (Function * CalledFunc = CI->getCalledFunction())
+        if (CalledFunc->getName() == "sva_declare_stack") {
+          // Grab the stack argument
+          Value * StackPointer = CI->getOperand(1);
+
+          //
+          // Get the pool handle for this node.  If we can't get one, use a
+          // NULL pool handle.
+          //
+          Value *PH = getPoolHandle (StackPointer, &F);
+          if (!PH)
+            PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
+          PH = castTo (PH, PointerType::get(Type::SByteTy), CI);
+          StackPointer = castTo (StackPointer, PointerType::get(Type::SByteTy), CI);
+
+          //
+          // Insert the call to register the stack and to resize the heap
+          // object to which it belongs.
+          //
+          args.clear();
+          args.push_back (PH);
+          args.push_back (StackPointer);
+          args.push_back (CI->getOperand(2));
+          std::cerr << *PH << std::endl;
+          std::cerr << *StackPointer << std::endl;
+          std::cerr << *(CI->getOperand(2)) << std::endl;
+          std::cerr << *declareStack << std::endl;
+          new CallInst (declareStack, args, "", CI);
+        }
+  return;
+}
 
 void InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
   //

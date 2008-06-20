@@ -52,11 +52,18 @@ void * exactcheck2a(signed char *base, signed char *result, unsigned size) {
   return result;
 }
 
-void * exactcheck3(signed char *base, signed char *result, signed char * end) {
+void *
+exactcheck3(signed char *base, signed char *result, signed char * end) {
   ++stat_exactcheck3;
   if ((result < base) || (result > end )) {
     if(ec_do_fail) poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
   }
+
+  /*
+   * Ensure that the result is not within an Integer State.
+   */
+  if (pchk_check_int (result))
+    poolcheckfail ("Pointer within Integer State detected ", (unsigned)base, (void*)__builtin_return_address(0));
   return result;
 }
 

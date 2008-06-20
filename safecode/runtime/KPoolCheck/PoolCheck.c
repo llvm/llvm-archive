@@ -52,6 +52,14 @@ MetaPoolTy IntegerStatePool;
 /* Global splay for holding the declared stacks */
 void * StackSplay = 0;
 
+struct node {
+  void* left;
+  void* right;
+  char* key;
+  char* end;
+  void* tag;
+};
+
 #define maskaddr(_a) ((void*) ((unsigned)_a & ~(4096 - 1)))
 
 static int isInCache(MetaPoolTy*  MP, void* addr) {
@@ -204,7 +212,31 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
   if (!MP) { return; }
   PCLOCK();
 
-  adl_splay_insert(&MP->Objs, addr, len, __builtin_return_address(0));
+  /*
+   * Determine which stack this object is on and enter the MetaPool into the
+   * splay tree of the stack object.
+   */
+  void * S = addr;
+  unsigned stacktag = 0;
+  if (adl_splay_retrieve(&(StackSplay), &S, 0, 0)) {
+    stacktag = (unsigned) (S);
+    void * MPSplay = &(((struct node *)(StackSplay))->tag);
+    adl_splay_insert(MPSplay, MP, 1, 0);
+  } else {
+    /*
+     * FIXME: Should we generate an error if we're running on an unregistered
+     *        stack?
+     */
+  }
+
+  /*
+   * Insert the stack object into the MetaPool's splay tree.
+   * Set the tag to the beginning of the stack that it is in; this will allow
+   * us to delete all stack objects corresponding to that stack when the stack
+   * is deleted.
+   */
+  adl_splay_insert(&MP->Objs, addr, len, stacktag);
+
 #if 1
   /*
    * Look for an entry in the cache that matches.  If it does, just erase it.
@@ -354,10 +386,58 @@ pchk_check_int (void* addr) {
  *
  * Description:
  *  Add a declared stack to the set of valid stacks.
+ *
+ * Note:
+ *  The tag field of the Stack splay tree is actually another splay tree that
+ *  contains the set of MetaPools containing objects registered on this stack.
  */
 void
-pchk_declarestack (void * addr, unsigned size) {
-  adl_splay_insert(&(StackSplay), addr, size, __builtin_return_address(0));
+pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
+  MetaPoolTy * MP = (MetaPoolTy *)(MPv);
+
+  /*
+   * First, ensure that this stack has not been allocated within another
+   * pre-existing stack.
+   */
+  if (adl_splay_find(&(StackSplay), addr)) {
+    poolcheckfail ("pchk_declarestack: Stack already registered", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
+  /*
+   * Adjust the size of the heap or global object from which the stack comes.
+   */
+  void * S = addr;
+  unsigned objlen, objtag;
+  if (adl_splay_retrieve(&MP->Objs, &S, &objlen, &objtag)) {
+    struct node * Object = MP->Objs;
+
+    /* Check that the stack remains within the bounds of the object */
+    if ((addr + size) > ((unsigned char *)S + objlen)) {
+      poolcheckfail ("pchk_declarestack: Stack extends beyond end of object in which it is allocated", (unsigned)addr, (void*)__builtin_return_address(0));
+    }
+
+    /*
+     * Adjust the size of the object accordingly.  It may be necessary to split
+     * the object into two different objects if the stack is in the middle of
+     * the object.
+     */
+    if (S == addr) {
+      Object->key += size;
+    } else {
+      Object->end = addr;
+      if ((addr + size) != ((unsigned char *)S + objlen)) {
+        adl_splay_insert (&(MP->Objs), addr+size, ((unsigned char *)(S) + objlen) - (addr+size), objtag);
+      }
+    }
+  } else {
+    poolcheckfail ("pchk_declarestack: Can't find object from which stack is allocated", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
+  /*
+   * Add the stack into the splay of stacks.
+   */
+  adl_splay_insert(&(StackSplay), addr, size, 0);
+
   return;
 }
 
@@ -731,14 +811,6 @@ void* pchk_getActualValue(MetaPoolTy* MP, void* src) {
  *  If the node is not found in the pool, it returns 0x00000000.
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
-struct node {
-  void* left;
-  void* right;
-  char* key;
-  char* end;
-  void* tag;
-};
-
 #define USERSPACE 0xC0000000
 
 struct node zero_page = {0, 0, 0, (char *)4095, 0};

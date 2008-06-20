@@ -44,10 +44,13 @@ int stat_regio=0;
 int stat_poolcheckio=0;
 
 /* Global splay for holding the interrupt context */
-void * ICSplay;
+void * ICSplay = 0;
 
 /* Global splay for holding the integer states */
 MetaPoolTy IntegerStatePool;
+
+/* Global splay for holding the declared stacks */
+void * StackSplay = 0;
 
 #define maskaddr(_a) ((void*) ((unsigned)_a & ~(4096 - 1)))
 
@@ -344,6 +347,24 @@ pchk_check_int (void* addr) {
   PCUNLOCK();
 
   return found;
+}
+
+/*
+ * Function: pchk_declarestack()
+ *
+ * Description:
+ *  Add a declared stack to the set of valid stacks.
+ */
+void
+pchk_declarestack (void * addr, unsigned size) {
+  adl_splay_insert(&(StackSplay), addr, size, __builtin_return_address(0));
+  return;
+}
+
+void
+pchk_removestack (void * addr) {
+  adl_splay_delete(&(StackSplay), addr);
+  return;
 }
 
 /* Remove a non-pool allocated object */
@@ -793,6 +814,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  *
  * Return value:
  *  If the node is found in the pool, it returns the bounds.
+ *  If the node is found within an integer state object, it returns 0x00000000.
  *  If the node is not found in the pool, it returns 0xffffffff.
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
@@ -858,6 +880,17 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   }
 #endif
 
+  /*
+   * Ensure that the destination pointer is not within the bounds of a saved
+   * Integer State object.
+   */
+  S = src;
+  len = 0;
+  fs = adl_splay_retrieve (&(IntegerStatePool.IOObjs), &S, &len, 0);
+  if (fs) {
+    PCUNLOCK();
+    return &not_found;
+  }
   PCUNLOCK();
 
   /*

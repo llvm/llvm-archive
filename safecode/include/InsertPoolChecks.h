@@ -222,6 +222,7 @@ struct InsertPoolChecks : public FunctionPass {
     Function *PoolFindMP;
     Function *getBegin;
     Function *getEnd;
+    Function *declareStack;
 
     void simplifyGEPList();
     void addObjFrees(Module& M);
@@ -233,6 +234,7 @@ struct InsertPoolChecks : public FunctionPass {
     DSNode* getDSNode(const Value *V, Function *F);
     unsigned getDSNodeOffset(const Value *V, Function *F);
     void addLoadStoreChecks (Function & F);
+    void addDeclaredStackChecks (Function & F);
     void insertAlignmentCheck (LoadInst * LI);
     void TransformFunction(Function &F);
     void handleCallInst(CallInst *CI);

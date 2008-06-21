@@ -408,7 +408,7 @@ static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
   assert (RealSize == 0 &&
           "The target should handle this argument!");
   // This cast only involves pointers, therefore BitCast.
-  Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy), "tmp");
+  Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy));
   Builder.CreateStore(ArgVal, Loc);
 }
 
@@ -495,7 +495,7 @@ namespace {
         if (isa<PointerType>(ArgVal->getType()) && isa<PointerType>(LLVMTy)) {
           // If this is GCC being sloppy about pointer types, insert a bitcast.
           // See PR1083 for an example.
-          ArgVal = Builder.CreateBitCast(ArgVal, LLVMTy, "tmp");
+          ArgVal = Builder.CreateBitCast(ArgVal, LLVMTy);
         } else if (ArgVal->getType() == Type::DoubleTy) {
           // If this is a K&R float parameter, it got promoted to double. Insert
           // the truncation to float now.
@@ -531,9 +531,9 @@ namespace {
       
       Value *Loc = LocStack.back();
       // This cast only involves pointers, therefore BitCast.
-      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), "tmp");
+      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy));
 
-      Loc = Builder.CreateStructGEP(Loc, FieldNo, "tmp");
+      Loc = Builder.CreateStructGEP(Loc, FieldNo);
       LocStack.push_back(Loc);    
     }
     void ExitField() {
@@ -820,8 +820,8 @@ Function *TreeToLLVM::FinishFunctionBody() {
         // beginning of the aggregate (x86-64).
         if (ReturnOffset) {
           RetVal = BitCastToType(RetVal, PointerType::getUnqual(Type::Int8Ty));
-          RetVal = Builder.CreateGEP(RetVal, 
-                    ConstantInt::get(TD.getIntPtrType(), ReturnOffset), "tmp");
+          RetVal = Builder.CreateGEP(RetVal,
+                            ConstantInt::get(TD.getIntPtrType(), ReturnOffset));
         }
         RetVal = BitCastToType(RetVal,
                                PointerType::getUnqual(Fn->getReturnType()));
@@ -1322,7 +1322,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
   unsigned Alignment = std::min(DestLoc.Alignment, SrcLoc.Alignment);
 
   if (ElTy->isSingleValueType()) {
-    LoadInst *V = Builder.CreateLoad(SrcLoc.Ptr, SrcLoc.Volatile, "tmp");
+    LoadInst *V = Builder.CreateLoad(SrcLoc.Ptr, SrcLoc.Volatile);
     StoreInst *S = Builder.CreateStore(V, DestLoc.Ptr, DestLoc.Volatile);
     V->setAlignment(Alignment);
     S->setAlignment(Alignment);
@@ -1331,8 +1331,8 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       if (gccType && isPaddingElement(gccType, i))
         continue;
-      Value *DElPtr = Builder.CreateStructGEP(DestLoc.Ptr, i, "tmp");
-      Value *SElPtr = Builder.CreateStructGEP(SrcLoc.Ptr, i, "tmp");
+      Value *DElPtr = Builder.CreateStructGEP(DestLoc.Ptr, i);
+      Value *SElPtr = Builder.CreateStructGEP(SrcLoc.Ptr, i);
       unsigned Align = MinAlign(Alignment, SL->getElementOffset(i));
       CopyAggregate(MemRef(DElPtr, Align, DestLoc.Volatile),
                     MemRef(SElPtr, Align, SrcLoc.Volatile),
@@ -1342,8 +1342,8 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
     const ArrayType *ATy = cast<ArrayType>(ElTy);
     unsigned EltSize = getTargetData().getABITypeSize(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      Value *DElPtr = Builder.CreateStructGEP(DestLoc.Ptr, i, "tmp");
-      Value *SElPtr = Builder.CreateStructGEP(SrcLoc.Ptr, i, "tmp");
+      Value *DElPtr = Builder.CreateStructGEP(DestLoc.Ptr, i);
+      Value *SElPtr = Builder.CreateStructGEP(SrcLoc.Ptr, i);
       unsigned Align = MinAlign(Alignment, i * EltSize);
       CopyAggregate(MemRef(DElPtr, Align, DestLoc.Volatile),
                     MemRef(SElPtr, Align, SrcLoc.Volatile),
@@ -1413,7 +1413,7 @@ static void ZeroAggregate(MemRef DestLoc, IRBuilder &Builder) {
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
     const StructLayout *SL = getTargetData().getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i, "tmp");
+      Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i);
       unsigned Alignment = MinAlign(DestLoc.Alignment, SL->getElementOffset(i));
       ZeroAggregate(MemRef(Ptr, Alignment, DestLoc.Volatile), Builder);
     }
@@ -1421,7 +1421,7 @@ static void ZeroAggregate(MemRef DestLoc, IRBuilder &Builder) {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
     unsigned EltSize = getTargetData().getABITypeSize(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
-      Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i, "tmp");
+      Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i);
       unsigned Alignment = MinAlign(DestLoc.Alignment, i * EltSize);
       ZeroAggregate(MemRef(Ptr, Alignment, DestLoc.Volatile), Builder);
     }
@@ -1512,7 +1512,7 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
   // The idea is that it's a pointer to type "Value"
   // which is opaque* but the routine expects i8** and i8*.
   const PointerType *Ty = PointerType::getUnqual(Type::Int8Ty);
-  V = Builder.CreateBitCast(V, PointerType::getUnqual(Ty), "tmp");
+  V = Builder.CreateBitCast(V, PointerType::getUnqual(Ty));
   
   Value *Ops[2] = {
     V,
@@ -1669,7 +1669,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   else if (TREE_CODE(decl) == RESULT_DECL)
     Name = "retval";
   else
-    Name = "tmp";
+    Name = "";
 
   // Insert an alloca for this variable.
   AllocaInst *AI;
@@ -1882,8 +1882,8 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
       }
     } else {
       // The range is too big to add to the switch - emit an "if".
-      Value *Diff = Builder.CreateSub(SwitchExp, LowC, "tmp");
-      Value *Cond = Builder.CreateICmpULE(Diff, ConstantInt::get(Range), "tmp");
+      Value *Diff = Builder.CreateSub(SwitchExp, LowC);
+      Value *Cond = Builder.CreateICmpULE(Diff, ConstantInt::get(Range));
       BasicBlock *False_Block = BasicBlock::Create("case_false");
       Builder.CreateCondBr(Cond, Dest, False_Block);
       EmitBlock(False_Block);
@@ -2078,11 +2078,11 @@ void TreeToLLVM::EmitPostPads() {
     } else if (RegionKind < 0) {
       // Filter - the result of a filter selection will be a negative index if
       // there is a match.
-      Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
+      Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
 
       // Compare with the filter action value.
       Value *Zero = ConstantInt::get(Select->getType(), 0);
-      Value *Compare = Builder.CreateICmpSLT(Select, Zero, "tmp");
+      Value *Compare = Builder.CreateICmpSLT(Select, Zero);
 
       // Branch on the compare.
       BasicBlock *NoFilterBB = BasicBlock::Create("nofilter");
@@ -2099,12 +2099,12 @@ void TreeToLLVM::EmitPostPads() {
 
         // Call get eh type id.
         Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
-        Value *Select = Builder.CreateLoad(ExceptionSelectorValue, "tmp");
+        Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
 
         // Compare with the exception selector.
-        Value *Compare = Builder.CreateICmpEQ(Select, TypeID, "tmp");
+        Value *Compare = Builder.CreateICmpEQ(Select, TypeID);
 
-        Cond = Cond ? Builder.CreateOr(Cond, Compare, "tmp") : Compare;
+        Cond = Cond ? Builder.CreateOr(Cond, Compare) : Compare;
       }
 
       BasicBlock *NoCatchBB = NULL;
@@ -2223,7 +2223,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     if (!DestLoc) {
       // Scalar value: emit a load.
       Value *Ptr = BitCastToType(LV.Ptr, PointerType::getUnqual(Ty));
-      LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile, "tmp");
+      LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
       LI->setAlignment(Alignment);
       return LI;
     } else {
@@ -2259,9 +2259,9 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
         ThisLastBitPlusOne = LV.BitStart+LV.BitSize;
 
       Value *Ptr = Index ?
-        Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::Int32Ty, Index),
-                          "tmp") : LV.Ptr;
-      LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile, "tmp");
+        Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::Int32Ty, Index)) :
+        LV.Ptr;
+      LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
       LI->setAlignment(Alignment);
       Value *Val = LI;
 
@@ -2280,7 +2280,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
       if (FirstBitInVal+BitsInVal != ValSizeInBits) {
         Value *ShAmt = ConstantInt::get(ValTy,
                                         ValSizeInBits-(FirstBitInVal+BitsInVal));
-        Val = Builder.CreateShl(Val, ShAmt, "tmp");
+        Val = Builder.CreateShl(Val, ShAmt);
       }
 
       // Shift right required?
@@ -2288,14 +2288,13 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
         bool AddSignBits = !TYPE_UNSIGNED(TREE_TYPE(exp)) && !Result;
         Value *ShAmt = ConstantInt::get(ValTy, ValSizeInBits-BitsInVal);
         Val = AddSignBits ?
-          Builder.CreateAShr(Val, ShAmt, "tmp") :
-          Builder.CreateLShr(Val, ShAmt, "tmp");
+          Builder.CreateAShr(Val, ShAmt) : Builder.CreateLShr(Val, ShAmt);
       }
 
       if (Result) {
         Value *ShAmt = ConstantInt::get(ValTy, BitsInVal);
-        Result = Builder.CreateShl(Result, ShAmt, "tmp");
-        Result = Builder.CreateOr(Result, Val, "tmp");
+        Result = Builder.CreateShl(Result, ShAmt);
+        Result = Builder.CreateOr(Result, Val);
       } else {
         Result = Val;
       }
@@ -2440,7 +2439,7 @@ namespace {
       Value *Loc = LocStack.back();
       if (Loc) {
         // An address.  Convert to the right type and load the value out.
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty), "tmp");
+        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty));
         return Builder.CreateLoad(Loc, "val");
       } else {
         // A value - just return it.
@@ -2573,7 +2572,7 @@ namespace {
     /// (of type PtrTy) to the argument is passed rather than the argument itself.
     void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type){
       Value *Loc = getAddress();
-      Loc = Builder.CreateBitCast(Loc, PtrTy, "tmp");
+      Loc = Builder.CreateBitCast(Loc, PtrTy);
       CallOperands.push_back(Loc);
     }
 
@@ -2591,7 +2590,7 @@ namespace {
     /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       Value *Loc = getAddress();
-      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy), "tmp");
+      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy));
       pushAddress(Builder.CreateStructGEP(Loc, FieldNo, "elt"));
     }
     void ExitField() {
@@ -2737,8 +2736,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (Call->getType() == Type::VoidTy)
     return 0;
 
-  Call->setName("tmp");
-
   if (Client.isAggrReturn()) {
     Value *Dest = BitCastToType(DestLoc->Ptr,
                                 PointerType::getUnqual(Call->getType()));
@@ -2758,8 +2755,8 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   Value *Ptr = DestLoc->Ptr;
   if (Client.Offset) {
     Ptr = BitCastToType(Ptr, PointerType::getUnqual(Type::Int8Ty));
-    Ptr = Builder.CreateGEP(Ptr, 
-                  ConstantInt::get(TD.getIntPtrType(), Client.Offset), "tmp");
+    Ptr = Builder.CreateGEP(Ptr,
+                           ConstantInt::get(TD.getIntPtrType(), Client.Offset));
   }
   Ptr = BitCastToType(Ptr, PointerType::getUnqual(Call->getType()));
   StoreInst *St = Builder.CreateStore(Call, Ptr, DestLoc->Volatile);
@@ -2937,9 +2934,9 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
       ThisLastBitPlusOne = LV.BitStart+LV.BitSize;
 
     Value *Ptr = Index ?
-      Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::Int32Ty, Index),
-                        "tmp") : LV.Ptr;
-    LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile, "tmp");
+      Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::Int32Ty, Index)) :
+      LV.Ptr;
+    LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
     LI->setAlignment(Alignment);
     Value *OldVal = LI;
     Value *NewVal = BitSource;
@@ -2955,7 +2952,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     // If not storing into the zero'th bit, shift the Src value to the left.
     if (FirstBitInVal) {
       Value *ShAmt = ConstantInt::get(ValTy, FirstBitInVal);
-      NewVal = Builder.CreateShl(NewVal, ShAmt, "tmp");
+      NewVal = Builder.CreateShl(NewVal, ShAmt);
     }
 
     // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
@@ -2965,21 +2962,21 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     Mask = ConstantExpr::getTruncOrBitCast(Mask, ValTy);
 
     if (FirstBitInVal+BitsInVal != ValSizeInBits)
-      NewVal = Builder.CreateAnd(NewVal, Mask, "tmp");
+      NewVal = Builder.CreateAnd(NewVal, Mask);
 
     // Next, mask out the bits this bit-field should include from the old value.
     Mask = ConstantExpr::getNot(Mask);
-    OldVal = Builder.CreateAnd(OldVal, Mask, "tmp");
+    OldVal = Builder.CreateAnd(OldVal, Mask);
 
     // Finally, merge the two together and store it.
-    NewVal = Builder.CreateOr(OldVal, NewVal, "tmp");
+    NewVal = Builder.CreateOr(OldVal, NewVal);
 
     StoreInst *SI = Builder.CreateStore(NewVal, Ptr, isVolatile);
     SI->setAlignment(Alignment);
 
     if (I + 1 < Strides) {
       Value *ShAmt = ConstantInt::get(ValTy, BitsInVal);
-      BitSource = Builder.CreateLShr(BitSource, ShAmt, "tmp");
+      BitSource = Builder.CreateLShr(BitSource, ShAmt);
     }
   }
 
@@ -3081,8 +3078,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
     // Target holds the temporary created above.
     const Type *ExpTy = ConvertType(TREE_TYPE(exp));
     return Builder.CreateLoad(BitCastToType(Target.Ptr,
-                                            PointerType::getUnqual(ExpTy)), 
-                                            "tmp");
+                                            PointerType::getUnqual(ExpTy)));
   }
   
   if (DestLoc) {
@@ -3106,29 +3102,29 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
   // bitcast'able.  This supports things like v_c_e(foo*, float).
   if (isa<PointerType>(OpVal->getType())) {
     if (isa<PointerType>(DestTy))   // ptr->ptr is a simple bitcast.
-      return Builder.CreateBitCast(OpVal, DestTy, "tmp");
+      return Builder.CreateBitCast(OpVal, DestTy);
     // Otherwise, ptrtoint to intptr_t first.
-    OpVal = Builder.CreatePtrToInt(OpVal, TD.getIntPtrType(), "tmp");
+    OpVal = Builder.CreatePtrToInt(OpVal, TD.getIntPtrType());
   }
   
   // If the destination type is a pointer, use inttoptr.
   if (isa<PointerType>(DestTy))
-    return Builder.CreateIntToPtr(OpVal, DestTy, "tmp");
+    return Builder.CreateIntToPtr(OpVal, DestTy);
 
   // Otherwise, use a bitcast.
-  return Builder.CreateBitCast(OpVal, DestTy, "tmp");
+  return Builder.CreateBitCast(OpVal, DestTy);
 }
 
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   if (!DestLoc) {
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
     if (!isa<PointerType>(V->getType()))
-      return Builder.CreateNeg(V, "tmp");
+      return Builder.CreateNeg(V);
     
     // GCC allows NEGATE_EXPR on pointers as well.  Cast to int, negate, cast
     // back.
     V = CastToAnyType(V, false, TD.getIntPtrType(), false);
-    V = Builder.CreateNeg(V, "tmp");
+    V = Builder.CreateNeg(V);
     return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
   }
   
@@ -3141,8 +3137,8 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: -(a+ib) = -a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  R = Builder.CreateNeg(R, "tmp");
-  I = Builder.CreateNeg(I, "tmp");
+  R = Builder.CreateNeg(R);
+  I = Builder.CreateNeg(I);
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -3158,7 +3154,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: ~(a+ib) = a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  I = Builder.CreateNeg(I, "tmp");
+  I = Builder.CreateNeg(I);
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -3224,15 +3220,14 @@ Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
       ICmpInst::Predicate(TYPE_UNSIGNED(Op0Ty) ? UIOpc : SIOpc);
 
     // Get the compare instructions
-    Value *Result = Builder.CreateICmp(pred, LHS, RHS, "tmp");
+    Value *Result = Builder.CreateICmp(pred, LHS, RHS);
     
     // The GCC type is probably an int, not a bool.
     return CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
   }
 
   // Handle floating point comparisons, if we get here.
-  Value *Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred),
-                                     LHS, RHS, "tmp");
+  Value *Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
   
   // The GCC type is probably an int, not a bool.
   return CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
@@ -3261,7 +3256,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
 
-  return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS, "tmp");
+  return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
 }
 
 /// EmitPtrBinOp - Handle binary expressions involving pointers, e.g. "P+4".
@@ -3294,7 +3289,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
         if (Opc == Instruction::Sub)
           EltOffset = -EltOffset;
         Constant *C = ConstantInt::get(Type::Int64Ty, EltOffset);
-        Value *V = Builder.CreateGEP(LHS, C, "tmp");
+        Value *V = Builder.CreateGEP(LHS, C);
         return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
       }
     }
@@ -3308,7 +3303,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
   LHS = CastToAnyType(LHS, LHSIsSigned, IntPtrTy, false);
   RHS = CastToAnyType(RHS, RHSIsSigned, IntPtrTy, false);
-  Value *V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS, "tmp");
+  Value *V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
 }
 
@@ -3326,7 +3321,7 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   RHS = Builder.CreateICmpNE(RHS, Constant::getNullValue(RHS->getType()),
                              "toBool");
   
-  Value *Res = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS,"tmp");
+  Value *Res = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   return CastToType(Instruction::ZExt, Res, ConvertType(TREE_TYPE(exp)));
 }
 
@@ -3342,7 +3337,7 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     RHS = Builder.CreateIntCast(RHS, LHS->getType(), false,
                                 (RHS->getName()+".cast").c_str());
   
-  return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS, "tmp");
+  return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
 }
 
 Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
@@ -3356,13 +3351,12 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
     ConstantInt::get(In->getType(), In->getType()->getPrimitiveSizeInBits());
   
   // Do the two shifts.
-  Value *V1 = Builder.CreateBinOp((Instruction::BinaryOps)Opc1, In, Amt, "tmp");
-  Value *OtherShift = Builder.CreateSub(TypeSize, Amt, "tmp");
-  Value *V2 = Builder.CreateBinOp((Instruction::BinaryOps)Opc2, In, 
-                                  OtherShift, "tmp");
+  Value *V1 = Builder.CreateBinOp((Instruction::BinaryOps)Opc1, In, Amt);
+  Value *OtherShift = Builder.CreateSub(TypeSize, Amt);
+  Value *V2 = Builder.CreateBinOp((Instruction::BinaryOps)Opc2, In, OtherShift);
   
   // Or the two together to return them.
-  Value *Merge = Builder.CreateOr(V1, V2, "tmp");
+  Value *Merge = Builder.CreateOr(V1, V2);
   return CastToUIntType(Merge, ConvertType(TREE_TYPE(exp)));
 }
 
@@ -3387,11 +3381,11 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
   
   Value *Compare;
   if (LHS->getType()->isFloatingPoint())
-    Compare = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS, "tmp");
+    Compare = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
   else if TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)))
-    Compare = Builder.CreateICmp(ICmpInst::Predicate(UIPred), LHS, RHS, "tmp");
+    Compare = Builder.CreateICmp(ICmpInst::Predicate(UIPred), LHS, RHS);
   else
-    Compare = Builder.CreateICmp(ICmpInst::Predicate(SIPred), LHS, RHS, "tmp");
+    Compare = Builder.CreateICmp(ICmpInst::Predicate(SIPred), LHS, RHS);
 
   return Builder.CreateSelect(Compare, LHS, RHS,
                               TREE_CODE(exp) == MAX_EXPR ? "max" : "min");
@@ -3413,7 +3407,7 @@ Value *TreeToLLVM::EmitEXACT_DIV_EXPR(tree exp, const MemRef *DestLoc) {
       // Create an ashr instruction, by the log of the division amount.
       Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
       return Builder.CreateAShr(LHS, ConstantInt::get(LHS->getType(),
-                                                      Log2_64(IntValue)),"tmp");
+                                                      Log2_64(IntValue)));
     }
   }
   
@@ -3440,17 +3434,17 @@ Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, const MemRef *DestLoc) {
   
   // The two possible values for Mod.
   Value *Rem = Builder.CreateSRem(LHS, RHS, "rem");
-  Value *RemPlusRHS = Builder.CreateAdd(Rem, RHS, "tmp");
+  Value *RemPlusRHS = Builder.CreateAdd(Rem, RHS);
   
   // HaveSameSign: (LHS >= 0) == (RHS >= 0).
-  Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero, "tmp");
-  Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero, "tmp");
-  Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive,RHSIsPositive,"tmp");
+  Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero);
+  Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero);
+  Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive,RHSIsPositive);
   
   // RHS exactly divides LHS iff Rem is zero.
-  Value *RemIsZero = Builder.CreateICmpEQ(Rem, Zero, "tmp");
+  Value *RemIsZero = Builder.CreateICmpEQ(Rem, Zero);
   
-  Value *SameAsRem = Builder.CreateOr(HaveSameSign, RemIsZero, "tmp");
+  Value *SameAsRem = Builder.CreateOr(HaveSameSign, RemIsZero);
   return Builder.CreateSelect(SameAsRem, Rem, RemPlusRHS, "mod");
 }
 
@@ -3482,26 +3476,25 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
     // Quick quiz question: what value is returned for INT_MIN CDiv -1?
 
     // Determine the signs of LHS and RHS, and whether they have the same sign.
-    Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero, "tmp");
-    Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero, "tmp");
-    Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive, RHSIsPositive,
-                                             "tmp");
+    Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero);
+    Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero);
+    Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive, RHSIsPositive);
 
     // Offset equals 1 if LHS and RHS have the same sign and LHS is not zero.
-    Value *LHSNotZero = Builder.CreateICmpNE(LHS, Zero, "tmp");
-    Value *OffsetOne = Builder.CreateAnd(HaveSameSign, LHSNotZero, "tmp");
+    Value *LHSNotZero = Builder.CreateICmpNE(LHS, Zero);
+    Value *OffsetOne = Builder.CreateAnd(HaveSameSign, LHSNotZero);
     // ... otherwise it is 0.
-    Value *Offset = Builder.CreateSelect(OffsetOne, One, Zero, "tmp");
+    Value *Offset = Builder.CreateSelect(OffsetOne, One, Zero);
 
     // Calculate Sign(RHS) ...
-    Value *SignRHS = Builder.CreateSelect(RHSIsPositive, One, MinusOne, "tmp");
+    Value *SignRHS = Builder.CreateSelect(RHSIsPositive, One, MinusOne);
     // ... and Sign(RHS) * Offset
     Value *SignedOffset = CastToType(Instruction::SExt, OffsetOne, Ty);
-    SignedOffset = Builder.CreateAnd(SignRHS, SignedOffset, "tmp");
+    SignedOffset = Builder.CreateAnd(SignRHS, SignedOffset);
 
     // Return CDiv = (LHS - Sign(RHS) * Offset) Div RHS + Offset.
-    Value *CDiv = Builder.CreateSub(LHS, SignedOffset, "tmp");
-    CDiv = Builder.CreateSDiv(CDiv, RHS, "tmp");
+    Value *CDiv = Builder.CreateSub(LHS, SignedOffset);
+    CDiv = Builder.CreateSDiv(CDiv, RHS);
     return Builder.CreateAdd(CDiv, Offset, "cdiv");
   }
 
@@ -3511,12 +3504,12 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   // as long as LHS is non-zero.
 
   // Offset is 1 if LHS is non-zero, 0 otherwise.
-  Value *LHSNotZero = Builder.CreateICmpNE(LHS, Zero, "tmp");
-  Value *Offset = Builder.CreateSelect(LHSNotZero, One, Zero, "tmp");
+  Value *LHSNotZero = Builder.CreateICmpNE(LHS, Zero);
+  Value *Offset = Builder.CreateSelect(LHSNotZero, One, Zero);
 
   // Return CDiv = (LHS - Offset) Div RHS + Offset.
-  Value *CDiv = Builder.CreateSub(LHS, Offset, "tmp");
-  CDiv = Builder.CreateUDiv(CDiv, RHS, "tmp");
+  Value *CDiv = Builder.CreateSub(LHS, Offset);
+  CDiv = Builder.CreateUDiv(CDiv, RHS);
   return Builder.CreateAdd(CDiv, Offset, "cdiv");
 }
 
@@ -3552,28 +3545,27 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
     // Quick quiz question: what value is returned for INT_MIN RDiv -1?
     
     // Determine the signs of LHS and RHS, and whether they have the same sign.
-    Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero, "tmp");
-    Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero, "tmp");
-    Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive, RHSIsPositive,
-                                               "tmp");
+    Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero);
+    Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero);
+    Value *HaveSameSign = Builder.CreateICmpEQ(LHSIsPositive, RHSIsPositive);
     
     // Calculate |LHS| ...
-    Value *MinusLHS = Builder.CreateNeg(LHS, "tmp");
+    Value *MinusLHS = Builder.CreateNeg(LHS);
     Value *AbsLHS = Builder.CreateSelect(LHSIsPositive, LHS, MinusLHS,
                                          (LHS->getNameStr()+".abs").c_str());
     // ... and |RHS|
-    Value *MinusRHS = Builder.CreateNeg(RHS, "tmp");
+    Value *MinusRHS = Builder.CreateNeg(RHS);
     Value *AbsRHS = Builder.CreateSelect(RHSIsPositive, RHS, MinusRHS,
                                          (RHS->getNameStr()+".abs").c_str());
     
     // Calculate AbsRDiv = (|LHS| + (|RHS| UDiv 2)) UDiv |RHS|.
-    Value *HalfAbsRHS = Builder.CreateUDiv(AbsRHS, Two, "tmp");
-    Value *Numerator = Builder.CreateAdd(AbsLHS, HalfAbsRHS, "tmp");
-    Value *AbsRDiv = Builder.CreateUDiv(Numerator, AbsRHS, "tmp");
+    Value *HalfAbsRHS = Builder.CreateUDiv(AbsRHS, Two);
+    Value *Numerator = Builder.CreateAdd(AbsLHS, HalfAbsRHS);
+    Value *AbsRDiv = Builder.CreateUDiv(Numerator, AbsRHS);
     
     // Return AbsRDiv or -AbsRDiv according to whether LHS and RHS have the
     // same sign or not.
-    Value *MinusAbsRDiv = Builder.CreateNeg(AbsRDiv, "tmp");
+    Value *MinusAbsRDiv = Builder.CreateNeg(AbsRDiv);
     return Builder.CreateSelect(HaveSameSign, AbsRDiv, MinusAbsRDiv, "rdiv");
   }
   
@@ -3587,18 +3579,18 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
   // if it occurred.
   
   // Usually the numerator is LHS + (RHS Div 2); calculate this.
-  Value *HalfRHS = Builder.CreateUDiv(RHS, Two, "tmp");
-  Value *Numerator = Builder.CreateAdd(LHS, HalfRHS, "tmp");
+  Value *HalfRHS = Builder.CreateUDiv(RHS, Two);
+  Value *Numerator = Builder.CreateAdd(LHS, HalfRHS);
   
   // Did the calculation overflow?
-  Value *Overflowed = Builder.CreateICmpULT(Numerator, HalfRHS, "tmp");
+  Value *Overflowed = Builder.CreateICmpULT(Numerator, HalfRHS);
   
   // If so, use (LHS + (RHS Div 2)) - RHS for the numerator instead.
-  Value *AltNumerator = Builder.CreateSub(Numerator, RHS, "tmp");
-  Numerator = Builder.CreateSelect(Overflowed, AltNumerator, Numerator, "tmp");
+  Value *AltNumerator = Builder.CreateSub(Numerator, RHS);
+  Numerator = Builder.CreateSelect(Overflowed, AltNumerator, Numerator);
   
   // Quotient = Numerator / RHS.
-  Value *Quotient = Builder.CreateUDiv(Numerator, RHS, "tmp");
+  Value *Quotient = Builder.CreateUDiv(Numerator, RHS);
   
   // Return Quotient unless we overflowed, in which case return Quotient + 1.
   return Builder.CreateAdd(Quotient, CastToUIntType(Overflowed, Ty), "rdiv");
@@ -3673,7 +3665,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   
   const char *Name = extractRegisterName(decl);
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
-  CallInst *Call = Builder.CreateCall(IA, "tmp");
+  CallInst *Call = Builder.CreateCall(IA);
   Call->setDoesNotThrow();
   return Call;
 }
@@ -4021,8 +4013,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
             TySize == 32 || TySize == 64) {
           LLVMTy = IntegerType::get(TySize);
           Op = Builder.CreateLoad(BitCastToType(LV.Ptr,
-                                                PointerType::getUnqual(LLVMTy)),
-                                  "tmp");
+                                               PointerType::getUnqual(LLVMTy)));
         } else {
           // Otherwise, emit our value as a lvalue and let the codegen deal with
           // it.
@@ -4171,8 +4162,7 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
   
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     Result = Builder.CreateInsertElement(Result, Ops[i], 
-                                         ConstantInt::get(Type::Int32Ty, i),
-                                         "tmp");
+                                         ConstantInt::get(Type::Int32Ty, i));
   
   return Result;
 }
@@ -4221,8 +4211,7 @@ Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
   va_end(VA);
 
   // Turn this into the appropriate shuffle operation.
-  return Builder.CreateShuffleVector(InVec1, InVec2, ConstantVector::get(Idxs),
-                                     "tmp");
+  return Builder.CreateShuffleVector(InVec1, InVec2, ConstantVector::get(Idxs));
 }
 
 //===----------------------------------------------------------------------===//
@@ -4379,7 +4368,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
     Result = Builder.CreateBinOp(Instruction::And, Result, 
-                                 ConstantInt::get(Result->getType(), 1), "tmp");
+                                 ConstantInt::get(Result->getType(), 1));
     return true;
   }
   case BUILT_IN_POPCOUNT:  // These GCC builtins always return int.
@@ -4422,19 +4411,18 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
-    Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1),
-                               "tmp");
+    Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1));
     Value *Cond =
-      Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()), "tmp");
+      Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()));
     Result = Builder.CreateSelect(Cond,
                                   Constant::getNullValue(Result->getType()),
-                                  Result, "tmp");
+                                  Result);
     return true;
   }
   case BUILT_IN_FLT_ROUNDS: {
-    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                         Intrinsic::flt_rounds),
-                                "tmp");
+    Result =
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                                   Intrinsic::flt_rounds));
     Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
     return true;
   }
@@ -4876,7 +4864,7 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
   // most intrinsics, but is needed for ctpop, cttz, ctlz.
   const Type *Ty = InVal->getType();
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
-                                                        InVal, "tmp");
+                              InVal);
   return true;
 }
 
@@ -4896,7 +4884,7 @@ Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
   
   return Builder.CreateCall(cast<Function>(
     TheModule->getOrInsertFunction(Name, Amt->getType(), Amt->getType(), NULL)),
-                            Amt, "tmp");
+                            Amt);
 }
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
@@ -4906,7 +4894,7 @@ Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                       Intrinsic::sqrt, &Ty, 1),
-                            Amt, "tmp");
+                            Amt);
 }
 
 Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
@@ -4924,7 +4912,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                       Intrinsic::powi, &Ty, 1),
-                            Args.begin(), Args.end(), "tmp");
+                            Args.begin(), Args.end());
 }
 
 
@@ -5069,8 +5057,7 @@ bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
   
   Intrinsic::ID IID =
     !isFrame ? Intrinsic::returnaddress : Intrinsic::frameaddress;
-  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
-                              Level, "tmp");
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Level);
   Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
   return true;
 }
@@ -5114,8 +5101,7 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
     return false;
   
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                        Intrinsic::stacksave),
-                              "tmp");
+                                                        Intrinsic::stacksave));
   return true;
 }
 
@@ -5205,7 +5191,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
 
   Value *Offset = Emit(TREE_VALUE(arglist), 0);
   Value *Handler = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
-  Offset = Builder.CreateIntCast(Offset, Type::Int32Ty, true, "tmp");
+  Offset = Builder.CreateIntCast(Offset, Type::Int32Ty, true);
   Handler = BitCastToType(Handler, PointerType::getUnqual(Type::Int8Ty));
 
   SmallVector<Value *, 2> Args;
@@ -5259,20 +5245,20 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
 
       Size = ConstantInt::get(Type::Int8Ty, size);
       Idx  = ConstantInt::get(Type::Int32Ty, rnum);
-      Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+      Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx), false);
     }
   }
 
   if (!wrote_return_column) {
     Size = ConstantInt::get(Type::Int8Ty, GET_MODE_SIZE (Pmode));
     Idx  = ConstantInt::get(Type::Int32Ty, DWARF_FRAME_RETURN_COLUMN);
-    Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+    Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx), false);
   }
 
 #ifdef DWARF_ALT_FRAME_RETURN_COLUMN
   Size = ConstantInt::get(Type::Int8Ty, GET_MODE_SIZE (Pmode));
   Idx  = ConstantInt::get(Type::Int32Ty, DWARF_ALT_FRAME_RETURN_COLUMN);
-  Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx, "tmp"), false);
+  Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx), false);
 #endif
 
 #endif /* DWARF2_UNWIND_INFO */
@@ -5312,7 +5298,7 @@ bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
   Amt = CastToSIntType(Amt, Type::Int32Ty);
-  Result = Builder.CreateAlloca(Type::Int8Ty, Amt, "tmp");
+  Result = Builder.CreateAlloca(Type::Int8Ty, Amt);
   return true;
 }
 
@@ -5493,30 +5479,30 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     DSTi = Builder.CreateSub(LHSi, RHSi, "tmpi");
     break;
   case MULT_EXPR: { // (a+ib) * (c+id) = (ac-bd) + i(ad+cb)
-    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
-    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi, "tmp"); // b*d
-    DSTr = Builder.CreateSub(Tmp1, Tmp2, "tmp");  // ac-bd
+    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr); // a*c
+    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi); // b*d
+    DSTr = Builder.CreateSub(Tmp1, Tmp2);        // ac-bd
 
-    Value *Tmp3 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
-    Value *Tmp4 = Builder.CreateMul(RHSr, LHSi, "tmp"); // c*b
-    DSTi = Builder.CreateAdd(Tmp3, Tmp4, "tmp"); // ad+cb
+    Value *Tmp3 = Builder.CreateMul(LHSr, RHSi); // a*d
+    Value *Tmp4 = Builder.CreateMul(RHSr, LHSi); // c*b
+    DSTi = Builder.CreateAdd(Tmp3, Tmp4);        // ad+cb
     break;
   }
   case RDIV_EXPR: { // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
-    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr, "tmp"); // a*c
-    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi, "tmp"); // b*d
-    Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2, "tmp"); // ac+bd
-    
-    Value *Tmp4 = Builder.CreateMul(RHSr, RHSr, "tmp"); // c*c
-    Value *Tmp5 = Builder.CreateMul(RHSi, RHSi, "tmp"); // d*d
-    Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5, "tmp"); // cc+dd
-    // FIXME: What about integer complex?
-    DSTr = Builder.CreateFDiv(Tmp3, Tmp6, "tmp");
+    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr); // a*c
+    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi); // b*d
+    Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2); // ac+bd
 
-    Value *Tmp7 = Builder.CreateMul(LHSi, RHSr, "tmp"); // b*c
-    Value *Tmp8 = Builder.CreateMul(LHSr, RHSi, "tmp"); // a*d
-    Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8, "tmp"); // bc-ad
-    DSTi = Builder.CreateFDiv(Tmp9, Tmp6, "tmp");
+    Value *Tmp4 = Builder.CreateMul(RHSr, RHSr); // c*c
+    Value *Tmp5 = Builder.CreateMul(RHSi, RHSi); // d*d
+    Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5); // cc+dd
+    // FIXME: What about integer complex?
+    DSTr = Builder.CreateFDiv(Tmp3, Tmp6);
+
+    Value *Tmp7 = Builder.CreateMul(LHSi, RHSr); // b*c
+    Value *Tmp8 = Builder.CreateMul(LHSr, RHSi); // a*d
+    Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8); // bc-ad
+    DSTi = Builder.CreateFDiv(Tmp9, Tmp6);
     break;
   }
   case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)
@@ -5527,7 +5513,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
       DSTr = Builder.CreateICmpEQ(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateICmpEQ(LHSi, RHSi, "tmpi");
     }
-    return Builder.CreateAnd(DSTr, DSTi, "tmp");
+    return Builder.CreateAnd(DSTr, DSTi);
   case NE_EXPR:   // (a+ib) != (c+id) = (a != c) | (b != d) 
     if (LHSr->getType()->isFloatingPoint()) {
       DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
@@ -5536,7 +5522,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
       DSTr = Builder.CreateICmpNE(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateICmpNE(LHSi, RHSi, "tmpi");
     }
-    return Builder.CreateOr(DSTr, DSTi, "tmp");
+    return Builder.CreateOr(DSTr, DSTi);
   }
 
   EmitStoreToComplex(*DestLoc, DSTr, DSTi);
@@ -5667,7 +5653,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // If this is an index into an LLVM array, codegen as a GEP.
   if (isArrayCompatible(ArrayType)) {
     Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), IndexVal };
-    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idxs, Idxs + 2, "tmp");
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idxs, Idxs + 2);
     return BitCastToType(Ptr, 
                          PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
   }
@@ -5676,7 +5662,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (isSequentialCompatible(ArrayType)) {
     const Type *PtrElementTy = PointerType::getUnqual(ConvertType(ElementType));
     ArrayAddr = BitCastToType(ArrayAddr, PtrElementTy);
-    Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
     return BitCastToType(Ptr, 
                          PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
   }
@@ -5687,12 +5673,12 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   ArrayAddr = BitCastToType(ArrayAddr, PointerType::getUnqual(Type::Int8Ty));
   if (VOID_TYPE_P(TREE_TYPE(ArrayType))) 
-    return Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
+    return Builder.CreateGEP(ArrayAddr, IndexVal);
 
   Value *TypeSize = Emit(array_ref_element_size(exp), 0);
   TypeSize = CastToUIntType(TypeSize, IntPtrTy);
-  IndexVal = Builder.CreateMul(IndexVal, TypeSize, "tmp");
-  Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal, "tmp");
+  IndexVal = Builder.CreateMul(IndexVal, TypeSize);
+  Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
   return BitCastToType(Ptr, PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
 }
 
@@ -5752,7 +5738,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
     assert(MemberIndex < StructTy->getNumContainedTypes() &&
            "Field Idx out of range!");
-    FieldPtr = Builder.CreateStructGEP(StructAddrLV.Ptr, MemberIndex, "tmp");
+    FieldPtr = Builder.CreateStructGEP(StructAddrLV.Ptr, MemberIndex);
 
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.
@@ -5769,13 +5755,13 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     unsigned ByteOffset = BitStart/8;
     if (ByteOffset > 0) {
       Offset = Builder.CreateAdd(Offset,
-        ConstantInt::get(Offset->getType(), ByteOffset), "tmp");
+        ConstantInt::get(Offset->getType(), ByteOffset));
       BitStart -= ByteOffset*8;
     }
 
     Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr, 
                             Offset->getType());
-    Ptr = Builder.CreateAdd(Ptr, Offset, "tmp");
+    Ptr = Builder.CreateAdd(Ptr, Offset);
     FieldPtr = CastToType(Instruction::IntToPtr, Ptr, 
                           PointerType::getUnqual(FieldTy));
   }
@@ -5846,7 +5832,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       Constant *Offset = ConstantInt::get(TD.getIntPtrType(), ByteOffset);
       FieldPtr = CastToType(Instruction::PtrToInt, FieldPtr,
                             Offset->getType());
-      FieldPtr = Builder.CreateAdd(FieldPtr, Offset, "tmp");
+      FieldPtr = Builder.CreateAdd(FieldPtr, Offset);
       FieldPtr = CastToType(Instruction::IntToPtr, FieldPtr,
                             PointerType::getUnqual(FieldTy));
 
@@ -5900,8 +5886,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
     // than this.  e.g. check out when compiling unwind-dw2-fde-darwin.c.
     Ptr.Ptr = BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy));
     Ptr.Ptr = Builder.CreateGEP(Ptr.Ptr,
-                                ConstantInt::get(Type::Int32Ty, UnitOffset),
-                                "tmp");
+                                ConstantInt::get(Type::Int32Ty, UnitOffset));
     BitStart -= UnitOffset*ValueSizeInBits;
   }
   
@@ -5916,7 +5901,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
 LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
   assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
-  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx, "tmp"));
+  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx));
 }
 
 LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {

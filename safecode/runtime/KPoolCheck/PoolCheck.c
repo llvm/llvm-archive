@@ -131,7 +131,8 @@ static int insertCache(MetaPoolTy* MP, void* addr) {
  * Preconditions:
  *  1) The OS kernel is able to handle callbacks from the Execution Engine.
  */
-void pchk_init(void) {
+void
+pchk_init(void) {
 
   /* initialize runtime */
   adl_splay_libinit(poolcheckmalloc);
@@ -304,7 +305,18 @@ pchk_reg_int (void* addr) {
   unsigned int index;
   if (!pchk_ready) return;
   PCLOCK();
-  adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, __builtin_return_address(0));
+
+  /*
+   * First, find the stack upon which this state is saved.
+   */
+  void * Stack = addr;
+  unsigned len;
+  if (adl_splay_retrieve(&StackSplay, &Stack, &len, 0)) {
+    adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, Stack);
+  } else {
+    poolcheckinfo2 ("pchk_reg_int: Did not find containing stack", (int)addr, (int)__builtin_return_address(0));
+    poolcheckfail ("pchk_reg_int: Did not find containing stack", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
 
 #if 1
   /*
@@ -455,9 +467,6 @@ pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
  */
 void
 pchk_releasestack (void * addr) {
-  /*
-   * First, de-register all stack objects associated with this stack.
-   */
   void * S = addr;
   unsigned int len;
   if (adl_splay_retrieve(&(StackSplay), &S, &len, 0)) {
@@ -470,16 +479,27 @@ pchk_releasestack (void * addr) {
       poolcheckfail ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
     }
 
+    /*
+     * Deregister all stack objects associated with this stack.
+     */
     struct node ** MPSplay = (struct node **) &(((struct node *)(StackSplay))->tag);
     while (*MPSplay) {
       void * MP = (*MPSplay)->tag;
       adl_splay_delete_tag (MP, S);
       adl_splay_delete (MPSplay, (*MPSplay)->key);
     }
+
+    /*
+     * Delete any saved integer state on the stack.
+     */
+    adl_splay_delete_tag (&(IntegerStatePool.Objs), S);
   } else {
     poolcheckfail ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
   }
 
+  /*
+   * Delete the stack itself.
+   */
   adl_splay_delete(&(StackSplay), addr);
   return;
 }
@@ -684,7 +704,8 @@ poolcheck(MetaPoolTy* MP, void* addr) {
  *  Same as poolcheck(), but does not fail if the pointer is not found. This is
  *  useful for checking incomplete/unknown nodes.
  */
-void poolcheck_i (MetaPoolTy* MP, void* addr) {
+void
+poolcheck_i (MetaPoolTy* MP, void* addr) {
   if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));

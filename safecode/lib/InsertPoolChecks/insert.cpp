@@ -3294,10 +3294,6 @@ InsertPoolChecks::addDeclaredStackChecks (Function & F) {
           args.push_back (PH);
           args.push_back (StackPointer);
           args.push_back (CI->getOperand(2));
-          std::cerr << *PH << std::endl;
-          std::cerr << *StackPointer << std::endl;
-          std::cerr << *(CI->getOperand(2)) << std::endl;
-          std::cerr << *declareStack << std::endl;
           new CallInst (declareStack, args, "", CI);
         }
   return;

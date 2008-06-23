@@ -441,8 +441,45 @@ pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
   return;
 }
 
+/*
+ * Function: pchk_releasestack()
+ *
+ * Description:
+ *  Mark the given stack as invalid.  This will invalidate all stack objects
+ *  on the stack that are currently registered with the execution engine.
+ *
+ * Algorithm:
+ *  o Ensure that we're not invaliding the stack currently within use.
+ *  o Invalidate all stack objects registered on the stack.
+ *  o Invalidate the stack object in the stack splay.
+ */
 void
-pchk_removestack (void * addr) {
+pchk_releasestack (void * addr) {
+  /*
+   * First, de-register all stack objects associated with this stack.
+   */
+  void * S = addr;
+  unsigned int len;
+  if (adl_splay_retrieve(&(StackSplay), &S, &len, 0)) {
+    /*
+     * Ensure that we're not trying to release the currently used stack.
+     */
+    unsigned char * stackp;
+    __asm__ ("movl %%esp, %0\n" : "=r" (stackp));
+    if ((S <= stackp) && (stackp < (S+len))) {
+      poolcheckfail ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
+    }
+
+    struct node ** MPSplay = (struct node **) &(((struct node *)(StackSplay))->tag);
+    while (*MPSplay) {
+      void * MP = (*MPSplay)->tag;
+      adl_splay_delete_tag (MP, S);
+      adl_splay_delete (MPSplay, (*MPSplay)->key);
+    }
+  } else {
+    poolcheckfail ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
   adl_splay_delete(&(StackSplay), addr);
   return;
 }

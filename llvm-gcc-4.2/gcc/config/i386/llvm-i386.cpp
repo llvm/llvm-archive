@@ -862,7 +862,10 @@ bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
 
 /* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
     this by returning i64 here.  Likewise, (generic) vectors such as v2i16
-    are returned in EAX.  */
+    are returned in EAX.  
+   On Darwin x86-64, v1i64 is returned in RAX and other MMX vectors are 
+    returned in XMM0.  Judging from comments, this would not be right for
+    Win64.  Don't know about Linux.  */
 tree llvm_x86_should_return_vector_as_scalar(tree type, bool isBuiltin) {
   if (TARGET_MACHO &&
       !isBuiltin &&
@@ -872,6 +875,8 @@ tree llvm_x86_should_return_vector_as_scalar(tree type, bool isBuiltin) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 &&
         TYPE_VECTOR_SUBPARTS(type)==1)
       return uint64_type_node;
+    if (TARGET_64BIT && TREE_INT_CST_LOW(TYPE_SIZE(type))==64)
+      return double_type_node;
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==32)
       return uint32_type_node;
   }

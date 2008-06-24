@@ -146,7 +146,9 @@ extern tree llvm_x86_should_return_vector_as_scalar(tree, bool);
 
 /* The MMX vector v1i64 is returned in EAX and EDX on Darwin.  Communicate
     this by returning i64 here.  Likewise, (generic) vectors such as v2i16
-    are returned in EAX.  */
+    are returned in EAX.  
+    On Darwin x86-64, MMX vectors are returned in XMM0.  Communicate this by
+    returning f64.  */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(X,isBuiltin)\
   llvm_x86_should_return_vector_as_scalar((X), (isBuiltin))
 

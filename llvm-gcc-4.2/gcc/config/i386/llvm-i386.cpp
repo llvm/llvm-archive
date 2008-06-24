@@ -845,7 +845,9 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   return !totallyEmpty;
 }
 
-/* On Darwin, vectors which are not MMX nor SSE should be passed as integers. */
+/* On Darwin x86-32, vectors which are not MMX nor SSE should be passed as 
+   integers.  On Darwin x86-64, such vectors bigger than 128 bits should be
+   passed in memory (byval). */
 bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
   if (!TARGET_MACHO)
     return false;
@@ -855,6 +857,24 @@ bool llvm_x86_should_pass_vector_in_integer_regs(tree type) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==64 && TARGET_MMX)
       return false;
     if (TREE_INT_CST_LOW(TYPE_SIZE(type))==128 && TARGET_SSE)
+      return false;
+    if (TARGET_64BIT && TREE_INT_CST_LOW(TYPE_SIZE(type)) > 128)
+      return false;
+  }
+  return true;
+}
+
+/* On Darwin x86-64, vectors which are bigger than 128 bits should be passed
+   byval (in memory).  */
+bool llvm_x86_should_pass_vector_using_byval_attr(tree type) {
+  if (!TARGET_MACHO)
+    return false;
+  if (!TARGET_64BIT)
+    return false;
+  if (TREE_CODE(type) == VECTOR_TYPE &&
+      TYPE_SIZE(type) &&
+      TREE_CODE(TYPE_SIZE(type))==INTEGER_CST) {
+    if (TREE_INT_CST_LOW(TYPE_SIZE(type))<=128)
       return false;
   }
   return true;

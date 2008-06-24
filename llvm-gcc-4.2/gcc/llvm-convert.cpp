@@ -717,6 +717,8 @@ void TreeToLLVM::StartFunctionBody() {
     const Type *ArgTy = ConvertType(TREE_TYPE(Args));
     bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
     if (isInvRef ||
+        (ArgTy->getTypeID()==Type::VectorTyID &&
+         LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(TREE_TYPE(Args))) ||
         (!ArgTy->isSingleValueType() &&
          isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs))) {
       // If the value is passed by 'invisible reference' or 'byval reference',

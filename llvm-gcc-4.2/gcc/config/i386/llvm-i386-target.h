@@ -112,33 +112,39 @@ extern bool llvm_x86_should_pass_aggregate_in_integer_regs(tree,
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y, Z)             \
   llvm_x86_should_pass_aggregate_in_integer_regs((X), (Y), (Z))
 
-extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
+extern const Type *llvm_x86_scalar_type_for_struct_return(tree type, 
+                                                          unsigned *Offset);
 
 /* LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as a scalar, otherwise return NULL. */
 #define LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(X, Y) \
   llvm_x86_scalar_type_for_struct_return((X), (Y))
 
-extern const Type *llvm_x86_scalar_type_for_struct_return(tree type, 
-                                                          unsigned *Offset);
+extern const Type *llvm_x86_aggr_type_for_struct_return(tree type);
 
 /* LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as an aggregate, otherwise return NULL. */
 #define LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(X) \
   llvm_x86_aggr_type_for_struct_return(X)
 
-extern const Type *llvm_x86_aggr_type_for_struct_return(tree type);
+extern void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
+                                                   bool isVolatile,
+                                                   IRBuilder &B);
 
 /* LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
    SRC and assign it to DEST. */
 #define LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,V,B)       \
   llvm_x86_extract_multiple_return_value((Src),(Dest),(V),(B))
 
-extern void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
-                                                   bool isVolatile,
-                                                   IRBuilder &B);
+extern bool llvm_x86_should_pass_vector_using_byval_attr(tree);
 
-/* Vectors which are not MMX nor SSE should be passed as integers. */
+/* On x86-64, vectors which are not MMX nor SSE should be passed byval. */
+#define LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(X)      \
+  llvm_x86_should_pass_vector_using_byval_attr((X))
+
+extern bool llvm_x86_should_pass_vector_in_integer_regs(tree);
+
+/* On x86-32, vectors which are not MMX nor SSE should be passed as integers. */
 #define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(X)      \
   llvm_x86_should_pass_vector_in_integer_regs((X))
 

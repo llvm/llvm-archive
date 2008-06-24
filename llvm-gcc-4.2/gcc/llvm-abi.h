@@ -236,6 +236,13 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
   false
 #endif
 
+// LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR - Return true if this vector
+// type should be passed byval.  Used for generic vectors on x86-64.
+#ifndef LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR
+#define LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(X) \
+  false
+#endif
+
 // LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
@@ -420,6 +427,13 @@ public:
     } else if (Ty->getTypeID()==Type::VectorTyID) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
+      } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
+        C.HandleByValArgument(Ty, type);
+        if (Attributes) {
+          *Attributes |= ParamAttr::ByVal;
+          *Attributes |= 
+            ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+        }
       } else {
         C.HandleScalarArgument(Ty, type);
         ScalarElts.push_back(Ty);

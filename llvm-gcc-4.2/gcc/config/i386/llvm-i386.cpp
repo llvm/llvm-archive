@@ -1191,8 +1191,7 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
 
   std::vector<const Type*> GCCElts;
   llvm_x86_64_get_multiple_return_reg_classes(type, Ty, GCCElts);
-  return StructType::get(GCCElts, STy->isPacked());
-
+  return StructType::get(GCCElts, false);
 }
 
 // llvm_x86_extract_mrv_array_element - Helper function that help extract 

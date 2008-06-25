@@ -4507,7 +4507,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_lcs, 
+                                                   Intrinsic::atomic_cmp_swap, 
                                                    &Ty, 1),
       C, C + 3);
     if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_1) ||
@@ -4539,7 +4539,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_load_add, 
                                                    &Ty, 1),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4564,7 +4564,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_lss, 
+                                                   Intrinsic::atomic_load_sub, 
                                                    &Ty, 1),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4716,7 +4716,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_las, 
+                                                   Intrinsic::atomic_load_add, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateAdd(Result, C[1]);
@@ -4742,7 +4742,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_lss, 
+                                                   Intrinsic::atomic_load_sub, 
                                                    &Ty, 1),
                          C, C + 2);
     Result = Builder.CreateSub(Result, C[1]);

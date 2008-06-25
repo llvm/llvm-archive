@@ -39,8 +39,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
-#include <iostream>
-
 extern "C" {
 #include "langhooks.h"
 #include "toplev.h"

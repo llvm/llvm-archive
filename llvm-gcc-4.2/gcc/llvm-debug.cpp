@@ -439,11 +439,14 @@ static TypeDesc *AddTypeQualifiers(tree_node *type, CompileUnitDesc *Unit,
 /// getOrCreateType - Get the type from the cache or create a new type if
 /// necessary.
 /// FIXME - I hate jumbo methods - split up.
-TypeDesc *DebugInfo::getOrCreateType(tree_node *type, CompileUnitDesc *Unit) {
+TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
   DEBUGASSERT(type != NULL_TREE && type != error_mark_node &&
               "Not a type.");
   if (type == NULL_TREE || type == error_mark_node) return NULL;
-  
+
+  // Ignore about variants such as const, volatile, or restrict.
+  type = TYPE_MAIN_VARIANT(type);
+
   // Should only be void if a pointer/reference/return type.  Returning NULL
   // allows the caller to produce a non-derived type.
   if (TREE_CODE(type) == VOID_TYPE) return NULL;

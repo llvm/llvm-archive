@@ -46,10 +46,6 @@ extern "C" {
 }
 #include "llvm-abi.h"
 
-void llvm_compute_type(tree X) {
-  ConvertType(X);
-}
-
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM types with GCC trees
 //===----------------------------------------------------------------------===//

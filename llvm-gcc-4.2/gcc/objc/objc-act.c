@@ -8633,22 +8633,6 @@ build_private_template (tree class)
       /* APPLE LOCAL begin ObjC new abi */
       if (flag_objc_abi == 2)
         CLASS_TYPE (class) = record;
-      
-      /* APPLE LOCAL llvm begin */
-#if 0
-#ifdef ENABLE_LLVM
-      /* Synthesized properties will later be added to this RECORD_DECL as they
-       * are found in @implementations.  We don't want the LLVM tree->llvm
-       * converter to see these newly added properties, so we emulate the RTL
-       * backend and analyze the type eagerly in this case.  It would be better
-       * for the ObjC front-end to not add these properties to the RECORD_DECL
-       * but that would be a large/invasive change.  rdar://5812818
-       */
-      if (flag_objc_abi == 2)
-        llvm_compute_type(record);
-#endif
-#endif
-      /* APPLE LOCAL llvm end */
     }
 }
       /* APPLE LOCAL end ObjC new abi */

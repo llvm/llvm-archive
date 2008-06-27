@@ -901,9 +901,9 @@ void DebugInfo::readLLVMDebugInfo() {
   if (!GVs.empty())
     GlobalVariableAnchor = ((GlobalVariableDesc*)GVs[0])->getAnchor();
 
-  const std::map<GlobalVariable *, DebugInfoDesc *> &GlobalDescs
+  const DenseMap<GlobalVariable *, DebugInfoDesc *> &GlobalDescs
     = MMI.getDIDeserializer()->getGlobalDescs();
-  for (std::map<GlobalVariable *, DebugInfoDesc *>::const_iterator 
+  for (DenseMap<GlobalVariable *, DebugInfoDesc *>::const_iterator 
          I = GlobalDescs.begin(), E = GlobalDescs.end(); I != E; ++I) 
     SR.addDescriptor(I->second, I->first);
 }

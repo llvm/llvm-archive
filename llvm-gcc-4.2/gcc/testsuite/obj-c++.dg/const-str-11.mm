@@ -31,4 +31,4 @@ const XStr *appKey = @"MyApp";
 
 /* { dg-final { scan-assembler ".section __OBJC, __cstring_object" } } */
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler ".long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5\n" } } */
+/* { dg-final { scan-assembler ".long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5.*\n" } } */

@@ -1000,6 +1000,46 @@ objc_start_class_implementation (tree class, tree super_class)
     = objc_ivar_context
     = start_class (CLASS_IMPLEMENTATION_TYPE, class, super_class, NULL_TREE);
   objc_public_flag = 0;
+#ifdef ENABLE_LLVM
+  if (flag_objc_abi == 2) 
+    {
+      tree record = CLASS_STATIC_TEMPLATE(implementation_template);
+      if (record) 
+        {
+          bool changed = false;
+          tree field;
+          for (field = TYPE_FIELDS(record); field; field = TREE_CHAIN (field))
+            {
+#ifdef OBJCPLUS
+              /* Skip C++ static members, and things that are not fields at all. */
+              if (TREE_CODE (field) != FIELD_DECL || TREE_STATIC (field))
+                continue;
+#endif
+              /* If we have an embedded base class, and its size doesn't match the
+                 size in the field node, that's because ivars were added to the base
+                 class after the field node was built.  We need to update the field
+                 node and re-layout the outer record. */
+              if (DECL_ARTIFICIAL (field) && !DECL_NAME (field)
+                  && TREE_CODE (TREE_TYPE (field)) == RECORD_TYPE
+                  && DECL_SIZE (field) && TYPE_SIZE(TREE_TYPE(field))
+                  && TREE_CODE (DECL_SIZE (field)) == INTEGER_CST
+                  && TREE_CODE (TYPE_SIZE (TREE_TYPE (field))) == INTEGER_CST
+                  && TREE_INT_CST_LOW (DECL_SIZE (field))
+                     != TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (field))))
+                {
+                  DECL_SIZE (field) = TYPE_SIZE (TREE_TYPE (field));
+                  DECL_SIZE_UNIT (field) = TYPE_SIZE_UNIT (TREE_TYPE (field));
+                  changed = true;
+                }
+            }
+          if (changed) 
+            {
+              TYPE_SIZE (record) = 0;
+              layout_type (record);
+            }
+        }
+    }
+#endif
 }
 
 void

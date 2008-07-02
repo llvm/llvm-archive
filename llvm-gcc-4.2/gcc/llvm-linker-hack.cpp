@@ -50,7 +50,7 @@ void dummy_function() {
   llvm::createScalarReplAggregatesPass();
   llvm::createCFGSimplificationPass();
 
-  llvm::createDefaultScheduler(NULL, NULL, NULL);
+  llvm::createDefaultScheduler(NULL, NULL, NULL, false);
   llvm::createLinearScanRegisterAllocator();
   llvm::createLocalRegisterAllocator();
 

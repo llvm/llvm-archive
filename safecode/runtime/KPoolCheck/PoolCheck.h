@@ -134,8 +134,9 @@ extern "C" {
 
   unsigned int pchk_check_int (void * addr);
 
-  void pchk_declarestack (void * MP, unsigned char * addr, unsigned size);
-  void pchk_releasestack (void * addr);
+  void   pchk_declarestack (void * MP, unsigned char * addr, unsigned size);
+  void   pchk_releasestack (void * addr);
+  void * pchk_checkstack   (void * addr, unsigned int * size);
   void pchk_profile(MetaPoolTy* MP, void* pc, long time);
 
 #ifdef __cpluscplus

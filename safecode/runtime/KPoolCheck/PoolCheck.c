@@ -504,11 +504,75 @@ pchk_releasestack (void * addr) {
   return;
 }
 
+/*
+ * Function: pchk_checkstack()
+ *
+ * Description:
+ *  Ensure that the given pointer is within a declared stack.  If it is, return
+ *  information about the stack.
+ *
+ * Inputs:
+ *  addr   - The pointer to check
+ *
+ * Output:
+ *  length - The size in bytes of the stack will be returned in the location
+ *           pointed to by length.
+ *
+ * Return value:
+ *  NULL - The given pointer does not point into a stack.
+ *  Otherwise, a pointer to the beginning of the stack is returned.
+ */
+void *
+pchk_checkstack (void * addr, unsigned int * length) {
+  void * S = addr;
+  unsigned int len;
+  if (adl_splay_retrieve(&(StackSplay), &S, &len, 0)) {
+    *length = len;
+    return S;
+  }
+
+  return 0;
+}
+
 /* Remove a non-pool allocated object */
 void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
   unsigned int index;
   if (!MP) return;
+
+
   PCLOCK();
+
+#if 0
+  /*
+   * Ensure that we are not attempting to free a stack that is currently
+   * in use.
+   */
+  void * S = addr;
+  unsigned len;
+  if (adl_splay_retrieve(&MP->Objs, &S, &len, 0)) {
+    unsigned char * stackp;
+    __asm__ ("movl %%esp, %0\n" : "=r" (stackp));
+    if ((S <= stackp) && (stackp < (S+len))) {
+      poolcheckfail ("pchk_drop_obj: Releasing current stack",
+                     (unsigned)addr,
+                     (void*)__builtin_return_address(0));
+    }
+  }
+#endif
+
+  /*
+   * Ensure that the object is not a declared stack.
+   */
+  if (adl_splay_find (&StackSplay, addr)) {
+    poolcheckfail ("pchk_drop_obj: Releasing declared stack",
+                   (unsigned)addr,
+                   (void*)__builtin_return_address(0));
+    return;
+  }
+
+  /*
+   * Delete the object from the splay tree.
+   */
   adl_splay_delete(&MP->Objs, addr);
 #if 0
   {

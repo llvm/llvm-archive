@@ -390,6 +390,9 @@ do {					\
    %{!mmacosx-version-min=*:-macosx_version_min %(darwin_minversion)} \
    %{mmacosx-version-min=*:-macosx_version_min %*} \
    "/* APPLE LOCAL end mainline 2007-02-20 5005743 */" \
+   "/* APPLE LOCAL begin llvm */" \
+   %{Zmllvm*:-mllvm %*} \
+   "/* APPLE LOCAL end llvm */" \
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \

@@ -452,7 +452,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
   if (TREE_CODE(type) == VOID_TYPE) return NULL;
   
   // Check to see if the compile unit already has created this type.
-  TypeDesc *&Slot = TypeCache[type];
+  TypeDesc *Slot = TypeCache[type];
   if (Slot) return Slot;
   
   // Ty will have contain the resulting type.
@@ -473,7 +473,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       // typedefs are derived from some other type.
       DerivedTypeDesc *DerivedTy = new DerivedTypeDesc(DW_TAG_typedef);
       // Set the slot early to prevent recursion difficulties.
-      Slot = Ty = DerivedTy;
+      TypeCache[type] = Ty = DerivedTy;
       // Handle derived type.
       TypeDesc *FromTy = getOrCreateType(DECL_ORIGINAL_TYPE(Name), Unit);
       DerivedTy->setFromType(FromTy);
@@ -503,7 +503,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       Ty = DerivedTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(type, Unit, DerivedTy);
+      TypeCache[type] = AddTypeQualifiers(type, Unit, DerivedTy);
       // Handle the derived type.
       TypeDesc *FromTy = getOrCreateType(TREE_TYPE(type), Unit);
       DerivedTy->setFromType(FromTy);
@@ -525,7 +525,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       Ty = SubrTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(type, Unit, SubrTy);
+      TypeCache[type] = AddTypeQualifiers(type, Unit, SubrTy);
       
       // Prepare to add the arguments for the subroutine.
       std::vector<DebugInfoDesc *> &Elements = SubrTy->getElements();
@@ -560,14 +560,14 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
         Ty = ArrayTy = new CompositeTypeDesc(DW_TAG_vector_type);
         // Set the slot early to prevent recursion difficulties.
         // Any other use of the type should include the qualifiers.
-        Slot = AddTypeQualifiers(type, Unit, ArrayTy);
+        TypeCache[type] = AddTypeQualifiers(type, Unit, ArrayTy);
         // Use the element type of the from this point.
         type = TREE_TYPE(TYPE_FIELDS(TYPE_DEBUG_REPRESENTATION_TYPE(type)));
       } else {
         Ty = ArrayTy = new CompositeTypeDesc(DW_TAG_array_type);
         // Set the slot early to prevent recursion difficulties.
         // Any other use of the type should include the qualifiers.
-        Slot = AddTypeQualifiers(type, Unit, ArrayTy);
+        TypeCache[type] = AddTypeQualifiers(type, Unit, ArrayTy);
       }
 
       // Prepare to add the dimensions of the array.
@@ -603,7 +603,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       CompositeTypeDesc *Enum = new CompositeTypeDesc(DW_TAG_enumeration_type);
       Ty = Enum;
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(type, Unit, Enum);
+      TypeCache[type] = AddTypeQualifiers(type, Unit, Enum);
       // Prepare to add the enumeration values.
       std::vector<DebugInfoDesc *> &Elements = Enum->getElements();
 
@@ -633,7 +633,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       Ty = StructTy;
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(type, Unit, StructTy);
+      TypeCache[type] = AddTypeQualifiers(type, Unit, StructTy);
       // Prepare to add the fields.
       std::vector<DebugInfoDesc *> &Elements = StructTy->getElements();
       
@@ -762,7 +762,7 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       BasicTypeDesc *BTy = new BasicTypeDesc();
       Ty = BTy;
       // Any other use of the type should include the qualifiers.
-      Slot = AddTypeQualifiers(type, Unit, BTy);
+      TypeCache[type] = AddTypeQualifiers(type, Unit, BTy);
       // The encoding specific to the type.
       unsigned Encoding = 0;
 
@@ -818,9 +818,8 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
     Ty->setOffset(Offset);
   }
 
-  DEBUGASSERT(Slot && "Unimplemented type");
-  
-  return Slot;
+  DEBUGASSERT(TypeCache[type] && "Unimplemented type");
+  return TypeCache[type];
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or create a new

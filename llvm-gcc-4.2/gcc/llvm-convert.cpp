@@ -87,10 +87,12 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 // than the LLVM Value pointer while using PCH. 
 
 // Collection of LLVM Values
-
 static std::vector<Value *> LLVMValues;
 typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
 static LLVMValuesMapTy LLVMValuesMap;
+/// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
+/// this allows us to efficiently identify and remove them.
+static std::vector<unsigned> LocalLLVMValueIDs;
 
 // Remember the LLVM value for GCC tree node.
 void llvm_set_decl(tree Tr, Value *V) {
@@ -110,10 +112,14 @@ void llvm_set_decl(tree Tr, Value *V) {
     return;
   }
 
-  unsigned Index = LLVMValues.size() + 1;
   LLVMValues.push_back(V);
+  unsigned Index = LLVMValues.size();
   SET_DECL_LLVM_INDEX(Tr, Index);
   LLVMValuesMap[V] = Index;
+  
+  // Remember local values.
+  if (!isa<Constant>(V))
+    LocalLLVMValueIDs.push_back(Index);
 }
 
 // Return TRUE if there is a LLVM Value associate with GCC tree node.
@@ -122,10 +128,7 @@ bool llvm_set_decl_p(tree Tr) {
   if (Index == 0)
     return false;
 
-  if (LLVMValues[Index - 1])
-    return true;
-
-  return false;
+  return LLVMValues[Index - 1] != 0;
 }
 
 // Get LLVM Value for the GCC tree node based on LLVMValues vector index.
@@ -142,8 +145,8 @@ Value *llvm_get_decl(tree Tr) {
     // If there was an error, we may have disabled creating LLVM values.
     if (Index == 0) return 0;
   }
-  assert ((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
-  assert (LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
+  assert((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
+  assert(LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
 
   return LLVMValues[Index - 1];
 }
@@ -151,6 +154,8 @@ Value *llvm_get_decl(tree Tr) {
 /// changeLLVMValue - If Old exists in the LLVMValues map, rewrite it to New.
 /// At this point we know that New is not in the map.
 void changeLLVMValue(Value *Old, Value *New) {
+  assert(isa<Constant>(Old) && isa<Constant>(New) &&
+         "Cannot change local values");
   assert(!LLVMValuesMap.count(New) && "New cannot be in the map!");
   
   // Find Old in the table.
@@ -174,7 +179,6 @@ void changeLLVMValue(Value *Old, Value *New) {
 
 // Read LLVM Types string table
 void readLLVMValues() {
-
   GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
   if (!V)
     return;
@@ -206,12 +210,10 @@ void readLLVMValues() {
 // Create a string table to hold these LLVM Values' names. This string
 // table will be used to recreate LTypes vector after loading PCH.
 void writeLLVMValues() {
-  
   if (LLVMValues.empty()) 
     return;
 
   std::vector<Constant *> ValuesForPCH;
-
   for (std::vector<Value *>::iterator I = LLVMValues.begin(),
          E = LLVMValues.end(); I != E; ++I)  {
     if (Constant *C = dyn_cast_or_null<Constant>(*I))
@@ -234,33 +236,20 @@ void writeLLVMValues() {
 
 /// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
 void eraseLocalLLVMValues() {
-  // Try to reduce the size of LLVMValues by removing local values from the end.
-  std::vector<Value *>::reverse_iterator I, E;
-
-  for (I = LLVMValues.rbegin(), E = LLVMValues.rend(); I != E; ++I) {
-    Value *V = *I;
-    if (V == 0)
-      continue;
+  // Erase all the local values, these are stored in LocalLLVMValueIDs.
+  while (!LocalLLVMValueIDs.empty()) {
+    unsigned Idx = LocalLLVMValueIDs.back()-1;
+    LocalLLVMValueIDs.pop_back();
     
-    if (isa<Constant>(V))
-      break;
-
-    LLVMValuesMap.erase(V);
-  }
-
-  LLVMValues.erase(I.base(), LLVMValues.end()); // Drop erased values
-
-  // Iterate over LLVMValuesMap since it may be much smaller than LLVMValues.
-  for (LLVMValuesMapTy::iterator I = LLVMValuesMap.begin(),
-       E = LLVMValuesMap.end(); I != E; ++I) {
-    assert(I->first && "Values map contains NULL!");
-    if (!isa<Constant>(I->first)) {
-      unsigned Index = I->second - 1;
-      assert(Index < LLVMValues.size() && LLVMValues[Index] == I->first &&
-             "Inconsistent value map!");
-      LLVMValues[Index] = NULL;
-      LLVMValuesMap.erase(I);
+    if (Value *V = LLVMValues[Idx]) {
+      assert(!isa<Constant>(V) && "Found local value");
+      LLVMValuesMap.erase(V);
     }
+
+    if (Idx == LLVMValues.size()-1)
+      LLVMValues.pop_back();
+    else
+      LLVMValues[Idx] = 0;
   }
 }
 
@@ -271,7 +260,7 @@ void eraseLocalLLVMValues() {
 /// "gimple_formal_tmp_reg".
 static bool isGimpleTemporary(tree decl) {
   return is_gimple_formal_tmp_reg(decl) &&
-    !isAggregateTreeType(TREE_TYPE(decl));
+        !isAggregateTreeType(TREE_TYPE(decl));
 }
 
 /// isStructWithVarSizeArrayAtEnd - Return true if this StructType contains a

@@ -1022,8 +1022,11 @@ setup_one_parameter (copy_body_data *id, tree p, tree value, tree fn,
   /* If the parameter is never assigned to, we may not need to
      create a new variable here at all.  Instead, we may be able
      to just use the argument value.  */
+/* LLVM LOCAL begin fix handling of parameters with variably modified types */
+  /* We need the copy if it has a variably modified type. */
   if (TREE_READONLY (p)
       && !TREE_ADDRESSABLE (p)
+      && !variably_modified_type_p (TREE_TYPE (p), id->src_fn)
       && value && !TREE_SIDE_EFFECTS (value))
     {
       /* We may produce non-gimple trees by adding NOPs or introduce
@@ -1048,6 +1051,13 @@ setup_one_parameter (copy_body_data *id, tree p, tree value, tree fn,
      here since the type of this decl must be visible to the calling
      function.  */
   var = copy_decl_to_var (p, id);
+
+  /* But, we must remap variably modified types, which depend on local
+     variables in this function and are NOT visible to the calling
+     function. */
+  if (variably_modified_type_p (TREE_TYPE (p), id->src_fn))
+    TREE_TYPE (var) = remap_type(TREE_TYPE (p), id);    
+/* LLVM LOCAL end fix handling of parameters with variably modified types */
 
   /* See if the frontend wants to pass this by invisible reference.  If
      so, our new VAR_DECL will have REFERENCE_TYPE, and we need to

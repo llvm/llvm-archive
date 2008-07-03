@@ -84,7 +84,7 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 //
 // LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM 
 // Values using this vector's index. It is easier to save and restore the index 
-// than the LLVM Value pointer while usig PCH. 
+// than the LLVM Value pointer while using PCH. 
 
 // Collection of LLVM Values
 
@@ -238,12 +238,14 @@ void eraseLocalLLVMValues() {
   std::vector<Value *>::reverse_iterator I, E;
 
   for (I = LLVMValues.rbegin(), E = LLVMValues.rend(); I != E; ++I) {
-    if (Value *V = *I) {
-      if (isa<Constant>(V))
-        break;
-      else
-        LLVMValuesMap.erase(V);
-    }
+    Value *V = *I;
+    if (V == 0)
+      continue;
+    
+    if (isa<Constant>(V))
+      break;
+
+    LLVMValuesMap.erase(V);
   }
 
   LLVMValues.erase(I.base(), LLVMValues.end()); // Drop erased values

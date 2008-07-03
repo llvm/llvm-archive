@@ -880,20 +880,20 @@ void DebugInfo::readLLVMDebugInfo() {
   MachineModuleInfo MMI;
   MMI.AnalyzeModule(*TheModule);
 
-  std::vector<SubprogramDesc *> Subprograms =
-    MMI.getAnchoredDescriptors<SubprogramDesc>(*TheModule);
+  std::vector<SubprogramDesc *> Subprograms;
+  MMI.getAnchoredDescriptors<SubprogramDesc>(*TheModule, Subprograms);
 
   if (!Subprograms.empty())
     SubprogramAnchor = Subprograms[0]->getAnchor();
 
-  std::vector<CompileUnitDesc *> CUs =
-    MMI.getAnchoredDescriptors<CompileUnitDesc>(*TheModule);
+  std::vector<CompileUnitDesc *> CUs;
+  MMI.getAnchoredDescriptors<CompileUnitDesc>(*TheModule, CUs);
 
   if (!CUs.empty())
     CompileUnitAnchor = CUs[0]->getAnchor();
 
-  std::vector<GlobalVariableDesc *> GVs =
-    MMI.getAnchoredDescriptors<GlobalVariableDesc>(*TheModule);
+  std::vector<GlobalVariableDesc *> GVs;
+  MMI.getAnchoredDescriptors<GlobalVariableDesc>(*TheModule, GVs);
 
   if (!GVs.empty())
     GlobalVariableAnchor = GVs[0]->getAnchor();

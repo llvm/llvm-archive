@@ -1064,6 +1064,8 @@ x86_64-*-darwin*)
 	# Deleted with_arch
 	# APPLE LOCAL mainline
 	with_cpu=${with_cpu:-core2}
+	# APPLE LOCAL Macintosh alignment 2002-2-19 --ff
+	extra_options="${extra_options} i386/darwin.opt"
 	tmake_file="t-darwin ${cpu_type}/t-darwin64 t-slibgcc-darwin"
 	tm_file="${tm_file} ${cpu_type}/darwin64.h"
 	;;

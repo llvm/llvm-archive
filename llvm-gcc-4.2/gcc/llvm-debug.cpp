@@ -880,26 +880,23 @@ void DebugInfo::readLLVMDebugInfo() {
   MachineModuleInfo MMI;
   MMI.AnalyzeModule(*TheModule);
 
-  std::vector<void*> Subprograms;
-  SubprogramDesc SPD;
-  MMI.getAnchoredDescriptors(*TheModule, &SPD, Subprograms);
+  std::vector<SubprogramDesc *> Subprograms =
+    MMI.getAnchoredDescriptors<SubprogramDesc>(*TheModule);
 
   if (!Subprograms.empty())
-    SubprogramAnchor = ((SubprogramDesc*)Subprograms[0])->getAnchor();
+    SubprogramAnchor = Subprograms[0]->getAnchor();
 
-  std::vector<void*> CUs;
-  CompileUnitDesc CUD;
-  MMI.getAnchoredDescriptors(*TheModule, &CUD, CUs);
+  std::vector<CompileUnitDesc *> CUs =
+    MMI.getAnchoredDescriptors<CompileUnitDesc>(*TheModule);
 
   if (!CUs.empty())
-    CompileUnitAnchor = ((CompileUnitDesc*)CUs[0])->getAnchor();
+    CompileUnitAnchor = CUs[0]->getAnchor();
 
-  std::vector<void*> GVs;
-  GlobalVariableDesc GVD;
-  MMI.getAnchoredDescriptors(*TheModule, &GVD, GVs);
+  std::vector<GlobalVariableDesc *> GVs =
+    MMI.getAnchoredDescriptors<GlobalVariableDesc>(*TheModule);
 
   if (!GVs.empty())
-    GlobalVariableAnchor = ((GlobalVariableDesc*)GVs[0])->getAnchor();
+    GlobalVariableAnchor = GVs[0]->getAnchor();
 
   const std::map<GlobalVariable *, DebugInfoDesc *> &GlobalDescs
     = MMI.getDIDeserializer()->getGlobalDescs();

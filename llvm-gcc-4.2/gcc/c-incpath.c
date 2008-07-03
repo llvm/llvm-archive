@@ -176,13 +176,14 @@ add_standard_paths (const char *sysroot, const char *iprefix,
     }
 }
 
-
 /* APPLE LOCAL begin headermaps 3871393 */ 
+#include <stdint.h>
+
 /* Private function that hashes the contents of the null-terminated
    string in a case-insensitive way.  For use by headermaps only.  */
 
 static inline 
-uint32 hmap_hash_string (const char *str)
+uint32_t hmap_hash_string (const char *str)
 {
   const char *sp;
   unsigned hash_code = 0;
@@ -296,9 +297,9 @@ hmap_construct_pathname (const char *filename, cpp_dir *dir)
       struct hmap_header_map *headermap;
       const char *strings;
       struct hmap_bucket *buckets;
-      uint32 bucket_mask;
-      uint32 i;
-      uint32 key_offset;
+      uint32_t bucket_mask;
+      uint32_t i;
+      uint32_t key_offset;
 
       headermap = (struct hmap_header_map *)dir->header_map;
       strings = ((const char *)headermap) + headermap->strings_offset;

@@ -4334,6 +4334,27 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_UNWIND_INIT:
     return EmitBuiltinUnwindInit(exp, Result);
 
+  case BUILT_IN_OBJECT_SIZE: {
+    tree ArgList = TREE_OPERAND (exp, 1);
+    if (!validate_arglist(ArgList, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
+      error("Invalid builtin_object_size argument types");
+      return false;
+    }
+    tree ObjSizeTree = TREE_VALUE (TREE_CHAIN (ArgList));
+    STRIP_NOPS (ObjSizeTree);
+    if (TREE_CODE (ObjSizeTree) != INTEGER_CST
+        || tree_int_cst_sgn (ObjSizeTree) < 0
+        || compare_tree_int (ObjSizeTree, 3) > 0) {
+      error("Invalid second builtin_object_size argument");
+      return false;
+    }
+
+    if (tree_low_cst (ObjSizeTree, 0) < 2)
+      Result = ConstantInt::get(Type::Int32Ty, 0);
+    else
+      Result = ConstantInt::getAllOnesValue(Type::Int32Ty);
+    return true;
+  }
   // Unary bit counting intrinsics.
   // NOTE: do not merge these case statements.  That will cause the memoized 
   // Function* to be incorrectly shared across the different typed functions.

@@ -111,6 +111,7 @@ void readLLVMValues();
 void writeLLVMValues();
 void clearTargetBuiltinCache();
 const char* extractRegisterName(union tree_node*);
+void handleVisibility(union tree_node* decl, GlobalValue *GV);
 
 struct StructTypeConversionInfo;
 

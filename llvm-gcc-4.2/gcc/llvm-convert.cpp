@@ -592,14 +592,7 @@ void TreeToLLVM::StartFunctionBody() {
            "Calling convention disagreement between prototype and impl!");
     // The visibility can be changed from the last time we've seen this
     // function. Set to current.
-    if (TREE_PUBLIC(FnDecl)) {
-      if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
-        Fn->setVisibility(Function::HiddenVisibility);
-      else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_PROTECTED)
-        Fn->setVisibility(Function::ProtectedVisibility);
-      else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_DEFAULT)
-        Fn->setVisibility(Function::DefaultVisibility);
-    }
+    handleVisibility(FnDecl, Fn);
   } else {
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry) {
@@ -646,12 +639,7 @@ void TreeToLLVM::StartFunctionBody() {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
   // Handle visibility style
-  if (TREE_PUBLIC(FnDecl)) {
-    if (DECL_VISIBILITY(FnDecl) == VISIBILITY_HIDDEN)
-      Fn->setVisibility(Function::HiddenVisibility);
-    else if (DECL_VISIBILITY(FnDecl) == VISIBILITY_PROTECTED)
-      Fn->setVisibility(Function::ProtectedVisibility);
-  }
+  handleVisibility(FnDecl, Fn);
 
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))

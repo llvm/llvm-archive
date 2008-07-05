@@ -104,6 +104,22 @@ static void createOptimizationPasses();
 bool OptimizationPassesCreated = false;
 static void destroyOptimizationPasses();
 
+// Forward decl visibility style to global.
+void handleVisibility(tree decl, GlobalValue *GV) {
+  // If decl has visibility specified explicitely (via attribute) - honour
+  // it. Otherwise (e.g. visibility specified via -fvisibility=hidden) honour
+  // only if symbol is local.
+  if (TREE_PUBLIC(decl) &&
+      (DECL_VISIBILITY_SPECIFIED(decl) || !DECL_EXTERNAL(decl))) {
+    if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
+      GV->setVisibility(GlobalValue::HiddenVisibility);
+    else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
+      GV->setVisibility(GlobalValue::ProtectedVisibility);
+    else if (DECL_VISIBILITY(decl) == VISIBILITY_DEFAULT)
+      GV->setVisibility(Function::DefaultVisibility);
+  }
+}
+
 void llvm_initialize_backend(void) {
   // Initialize LLVM options.
   std::vector<const char*> Args;
@@ -756,13 +772,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
 
   GlobalAlias* GA = new GlobalAlias(Aliasee->getType(), Linkage, "",
                                     Aliasee, TheModule);
-  // Handle visibility style
-  if (TREE_PUBLIC(decl)) {
-    if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-      GA->setVisibility(GlobalValue::HiddenVisibility);
-    else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
-      GA->setVisibility(GlobalValue::ProtectedVisibility);
-  }
+
+  handleVisibility(decl, GA);
 
   if (V->getType() == GA->getType())
     V->replaceAllUsesWith(GA);
@@ -1009,13 +1020,7 @@ void emit_global_to_llvm(tree decl) {
   TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-  // Handle visibility style
-  if (TREE_PUBLIC(decl)) {
-    if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-      GV->setVisibility(GlobalValue::HiddenVisibility);
-    else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
-      GV->setVisibility(GlobalValue::ProtectedVisibility);
-  }
+  handleVisibility(decl, GV);
 
   // Set the section for the global.
   if (TREE_CODE(decl) == VAR_DECL) {
@@ -1201,13 +1206,7 @@ void make_decl_llvm(tree decl) {
       TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-      // Handle visibility style
-      if (TREE_PUBLIC(decl)) {
-        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-          FnEntry->setVisibility(GlobalValue::HiddenVisibility);
-        else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
-          FnEntry->setVisibility(GlobalValue::ProtectedVisibility);
-      }
+     handleVisibility(decl, FnEntry);
 
       // If FnEntry got renamed, then there is already an object with this name
       // in the symbol table.  If this happens, the old one must be a forward
@@ -1253,14 +1252,7 @@ void make_decl_llvm(tree decl) {
       TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-      // Handle visibility style
-      if (TREE_PUBLIC(decl)) {
-        if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-          GV->setVisibility(GlobalValue::HiddenVisibility);
-        else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
-          GV->setVisibility(GlobalValue::ProtectedVisibility);
-      }
-
+      handleVisibility(decl, GV);
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
@@ -1278,13 +1270,7 @@ void make_decl_llvm(tree decl) {
         TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-        // Handle visibility style
-        if (TREE_PUBLIC(decl)) {
-          if (DECL_VISIBILITY(decl) == VISIBILITY_HIDDEN)
-            GV->setVisibility(GlobalValue::HiddenVisibility);
-          else if (DECL_VISIBILITY(decl) == VISIBILITY_PROTECTED)
-            GV->setVisibility(GlobalValue::ProtectedVisibility);
-        }
+	handleVisibility(decl, GV);
 
         // If GV got renamed, then there is already an object with this name in
         // the symbol table.  If this happens, the old one must be a forward

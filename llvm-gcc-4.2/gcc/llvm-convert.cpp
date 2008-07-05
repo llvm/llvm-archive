@@ -4350,9 +4350,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     }
 
     if (tree_low_cst (ObjSizeTree, 0) < 2)
-      Result = ConstantInt::get(Type::Int32Ty, 0);
-    else
       Result = ConstantInt::getAllOnesValue(Type::Int32Ty);
+    else
+      Result = ConstantInt::get(Type::Int32Ty, 0);
     return true;
   }
   // Unary bit counting intrinsics.

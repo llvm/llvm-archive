@@ -721,6 +721,7 @@ const struct mips_cpu_info mips_cpu_info_table[] = {
 
   /* MIPS II */
   { "r6000", PROCESSOR_R6000, 2 },
+  { "allegrex", PROCESSOR_ALLEGREX, 2 },
 
   /* MIPS III */
   { "r4000", PROCESSOR_R4000, 3 },

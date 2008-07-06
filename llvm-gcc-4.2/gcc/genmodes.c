@@ -822,8 +822,9 @@ enum machine_mode\n{");
   for (c = 0; c < MAX_MODE_CLASS; c++)
     for (m = modes[c]; m; m = m->next)
       {
-	int count_;
-	printf ("  %smode,%n", m->name, &count_);
+	/* LLVM LOCAL begin mainline */
+	int count_ = printf ("  %smode,", m->name);
+	/* LLVM LOCAL end mainline */
 	printf ("%*s/* %s:%d */\n", 27 - count_, "",
 		 trim_filename (m->file), m->line);
       }

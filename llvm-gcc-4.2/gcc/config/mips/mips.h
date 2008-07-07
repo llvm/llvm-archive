@@ -23,6 +23,16 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* LLVM LOCAL begin */
+
+#ifdef ENABLE_LLVM
+
+/* Add general target specific stuff */
+#include "llvm-mips-target.h"
+
+#endif /* ENABLE_LLVM */
+
+/* LLVM LOCAL end */
 
 /* MIPS external variables defined in mips.c.  */
 

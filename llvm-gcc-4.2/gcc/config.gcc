@@ -315,6 +315,9 @@ m68k-*-*)
 	;;
 mips*-*-*)
 	cpu_type=mips
+# LLVM LOCAL begin
+	out_cxx_file=mips/llvm-mips.cpp
+# LLVM LOCAL end                               
 	need_64bit_hwint=yes
 	;;
 powerpc*-*-*)

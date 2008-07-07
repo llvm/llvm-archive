@@ -355,6 +355,8 @@ Objective-C and Objective-C++ Dialects}.
 -p  -pg  -print-file-name=@var{library}  -print-libgcc-file-name @gol
 -print-multi-directory  -print-multi-lib @gol
 -print-prog-name=@var{program}  -print-search-dirs  -Q @gol
+@c LLVM LOCAL
+-mllvm @var{string}
 -save-temps  -time}
 
 @item Optimization Options
@@ -4842,6 +4844,13 @@ When used in combination with the @option{-x} command line option,
 input source file with the same extension as an intermediate file.
 The corresponding intermediate file may be obtained by renaming the
 source file before using @option{-save-temps}.
+
+@c LLVM LOCAL begin
+@-mllvm @var{string}
+@optindex mllvm
+This options provides a way to supply llvm optimization and code
+generation debugging options to LLVM component directly. 
+@c LLVM LOCAL end
 
 @item -time
 @opindex time

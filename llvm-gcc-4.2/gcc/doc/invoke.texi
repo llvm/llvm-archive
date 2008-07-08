@@ -4848,8 +4848,10 @@ source file before using @option{-save-temps}.
 @c LLVM LOCAL begin
 @item -mllvm @var{string}
 @opindex mllvm
-This options provides a way to supply llvm optimization and code
-generation debugging options to LLVM component directly. 
+This option provides a way to supply llvm optimization and code
+generation debugging options to LLVM component directly. This option
+is intended for compiler developers, who are investigationg LLVM 
+component bug, only.
 @c LLVM LOCAL end
 
 @item -time

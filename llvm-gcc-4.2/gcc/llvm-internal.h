@@ -525,8 +525,6 @@ private:
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
                                        const MemRef *DestLoc, Value *&Result);
   bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
-  Value *EmitBuiltinUnaryFPOp(Value *InVal, const char *F32Name,
-                              const char *F64Name, const char *LongDoubleName);
   Value *EmitBuiltinSQRT(tree_node *exp);
   Value *EmitBuiltinPOWI(tree_node *exp);
 

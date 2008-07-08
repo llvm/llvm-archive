@@ -3148,10 +3148,30 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
     Value *Cmp = Builder.CreateICmp(pred, Op, OpN->getOperand(0), "abscond");
     return Builder.CreateSelect(Cmp, Op, OpN, "abs");
-  } else {
-    // Turn FP abs into fabs/fabsf.
-    return EmitBuiltinUnaryFPOp(Op, "fabsf", "fabs", "fabsl");
   }
+
+  // Turn FP abs into fabs/fabsf.
+  const char *Name = 0;
+
+  switch (Op->getType()->getTypeID()) {
+  default: assert(0 && "Unknown FP type!");
+  case Type::FloatTyID:  Name = "fabsf"; break;
+  case Type::DoubleTyID: Name = "fabs"; break;
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID: Name = "fabsl"; break;
+  }
+
+  Function *F = cast<Function>(TheModule->getOrInsertFunction(Name,
+                                                              Op->getType(),
+                                                              Op->getType(),
+                                                              NULL));
+  CallInst *Call = Builder.CreateCall(F, Op);
+  F->setDoesNotThrow();
+  Call->setDoesNotThrow();
+  F->setDoesNotAccessMemory();
+  Call->setDoesNotAccessMemory();
+  return Call;
 }
 
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
@@ -4868,25 +4888,6 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
                               InVal);
   return true;
-}
-
-Value *TreeToLLVM::EmitBuiltinUnaryFPOp(Value *Amt, const char *F32Name,
-                                        const char *F64Name, 
-                                        const char *LongDoubleName) {
-  const char *Name = 0;
-  
-  switch (Amt->getType()->getTypeID()) {
-  default: assert(0 && "Unknown FP type!");
-  case Type::FloatTyID:  Name = F32Name; break;
-  case Type::DoubleTyID: Name = F64Name; break;
-  case Type::X86_FP80TyID:
-  case Type::PPC_FP128TyID:
-  case Type::FP128TyID: Name = LongDoubleName; break;
-  }
-  
-  return Builder.CreateCall(cast<Function>(
-    TheModule->getOrInsertFunction(Name, Amt->getType(), Amt->getType(), NULL)),
-                            Amt);
 }
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {

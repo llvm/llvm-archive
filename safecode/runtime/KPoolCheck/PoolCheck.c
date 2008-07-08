@@ -476,6 +476,7 @@ pchk_releasestack (void * addr) {
     unsigned char * stackp;
     __asm__ ("movl %%esp, %0\n" : "=r" (stackp));
     if ((S <= stackp) && (stackp < (S+len))) {
+      poolcheckinfo2 ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
       poolcheckfail ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
     }
 
@@ -483,10 +484,13 @@ pchk_releasestack (void * addr) {
      * Deregister all stack objects associated with this stack.
      */
     struct node ** MPSplay = (struct node **) &(((struct node *)(StackSplay))->tag);
-    while (*MPSplay) {
-      void * MP = (*MPSplay)->tag;
-      adl_splay_delete_tag (MP, S);
-      adl_splay_delete (MPSplay, (*MPSplay)->key);
+    while (adl_splay_size (MPSplay)) {
+      void * MP = (*MPSplay)->key;
+      /* Delete all stack objects belonging to this stack. */
+      if (MP) adl_splay_delete_tag (MP, S);
+
+      /* Delete this node out of the set of MetaPools */
+      adl_splay_delete (MPSplay, MP);
     }
 
     /*
@@ -494,6 +498,7 @@ pchk_releasestack (void * addr) {
      */
     adl_splay_delete_tag (&(IntegerStatePool.Objs), S);
   } else {
+    poolcheckinfo2 ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
     poolcheckfail ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
   }
 

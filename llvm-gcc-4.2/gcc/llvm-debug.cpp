@@ -342,10 +342,11 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Value *AllocACast = new BitCastInst(AI, EmpPtr, Name, CurBB);
 
   // Call llvm.dbg.declare.
-  SmallVector<Value *, 2> Args;
-  Args.push_back(AllocACast);
-  Args.push_back(getCastValueFor(Variable));
-  CallInst::Create(DeclareFn, Args.begin(), Args.end(), "", CurBB);
+  Value *Args[2] = {
+    AllocACast,
+    getCastValueFor(Variable)
+  };
+  CallInst::Create(DeclareFn, Args, Args + 2, "", CurBB);
 }
 
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 

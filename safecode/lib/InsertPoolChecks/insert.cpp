@@ -3274,17 +3274,17 @@ InsertPoolChecks::addDeclaredStackChecks (Function & F) {
       if (Function * CalledFunc = CI->getCalledFunction())
         if (CalledFunc->getName() == "sva_declare_stack") {
           // Grab the stack argument
-          Value * StackPointer = CI->getOperand(1);
+          Value * StackPtr = CI->getOperand(1);
 
           //
           // Get the pool handle for this node.  If we can't get one, use a
           // NULL pool handle.
           //
-          Value *PH = getPoolHandle (StackPointer, &F);
+          Value *PH = getPoolHandle (StackPtr, &F);
           if (!PH)
             PH = Constant::getNullValue(PointerType::get(Type::SByteTy));
           PH = castTo (PH, PointerType::get(Type::SByteTy), CI);
-          StackPointer = castTo (StackPointer, PointerType::get(Type::SByteTy), CI);
+          StackPtr = castTo (StackPtr, PointerType::get(Type::SByteTy), CI);
 
           //
           // Insert the call to register the stack and to resize the heap
@@ -3292,7 +3292,7 @@ InsertPoolChecks::addDeclaredStackChecks (Function & F) {
           //
           args.clear();
           args.push_back (PH);
-          args.push_back (StackPointer);
+          args.push_back (StackPtr);
           args.push_back (CI->getOperand(2));
           new CallInst (declareStack, args, "", CI);
         }

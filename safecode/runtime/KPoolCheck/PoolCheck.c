@@ -397,11 +397,14 @@ pchk_check_int (void* addr) {
  * Function: pchk_declarestack()
  *
  * Description:
- *  Add a declared stack to the set of valid stacks.
+ *  Add a declared stack to the set of valid stacks.  The start and size of the
+ *  stack must exactly match the start and size of one allocated heap or global
+ *  object.  Stack objects are invalid; regions within fully registered objects
+ *  are also invalid.
  *
  * Note:
  *  The tag field of the Stack splay tree is actually another splay tree that
- *  contains the set of MetaPools containing objects registered on this stack.
+ *  contains the set of MetaPools that contain objects registered on this stack.
  */
 void
 pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
@@ -416,31 +419,14 @@ pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
   }
 
   /*
-   * Adjust the size of the heap or global object from which the stack comes.
+   * Ensure that the stack object is the only object within the allocated
+   * region.
    */
   void * S = addr;
   unsigned objlen, objtag;
   if (adl_splay_retrieve(&MP->Objs, &S, &objlen, &objtag)) {
-    struct node * Object = MP->Objs;
-
-    /* Check that the stack remains within the bounds of the object */
-    if ((addr + size) > ((unsigned char *)S + objlen)) {
-      poolcheckfail ("pchk_declarestack: Stack extends beyond end of object in which it is allocated", (unsigned)addr, (void*)__builtin_return_address(0));
-    }
-
-    /*
-     * Adjust the size of the object accordingly.  It may be necessary to split
-     * the object into two different objects if the stack is in the middle of
-     * the object.
-     */
-    if (S == addr) {
-      Object->key += size;
-    } else {
-      Object->end = addr;
-      if ((addr + size) != ((unsigned char *)S + objlen)) {
-        adl_splay_insert (&(MP->Objs), addr+size, ((unsigned char *)(S) + objlen) - (addr+size), objtag);
-      }
-    }
+    if ((S != addr) || (objlen != size))
+      poolcheckfail ("pchk_declarestack: Stack does not match allocated object", (unsigned)addr, (void*)__builtin_return_address(0));
   } else {
     poolcheckfail ("pchk_declarestack: Can't find object from which stack is allocated", (unsigned)addr, (void*)__builtin_return_address(0));
   }
@@ -540,10 +526,10 @@ pchk_checkstack (void * addr, unsigned int * length) {
 }
 
 /* Remove a non-pool allocated object */
-void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
+void
+pchk_drop_obj (MetaPoolTy* MP, void* addr) {
   unsigned int index;
   if (!MP) return;
-
 
   PCLOCK();
 
@@ -587,6 +573,7 @@ void pchk_drop_obj(MetaPoolTy* MP, void* addr) {
     poolcheckinfo ("drop_obj: Failed to remove: 1", addr, tag);
   }
 #endif
+
   /*
    * See if the object is within the cache.  If so, remove it from the cache.
    */

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/badbin.hlx">
-  <bundle id="badbin">
-    <constant id="0000" type="s8"><bin>12345</bin></constant>
-  </bundle>
-</hlvm>

@@ -6619,7 +6619,6 @@ static Constant *ConvertStructFieldInitializerToType(Constant *Val,
 
 Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   const StructType *STy = cast<StructType>(ConvertType(TREE_TYPE(exp)));
-  bool OneEltIsUnion = false;
   std::vector<Constant*> ResultElts;
   ResultElts.resize(STy->getNumElements());
 
@@ -6639,9 +6638,6 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       }
     }
 
-   if (TREE_CODE(TREE_TYPE(elt_value)) == UNION_TYPE)
-     OneEltIsUnion = true;
-   
     // Decode the field's value.
     Constant *Val = Convert(elt_value);
    
@@ -6682,29 +6678,9 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   }
   
   // Fill in null elements with zeros.
-  unsigned InitSize = 0;
   for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
     if (ResultElts[i] == 0)
       ResultElts[i] = Constant::getNullValue(STy->getElementType(i));
-    InitSize += getTargetData().getABITypeSize(ResultElts[i]->getType());
-  }
-
-  // If the struct has a fixed size, and if one the union value we converted isn't 
-  // large enough to fill all the bits, add a zero initialized array at the end to pad
-  // it out.
-  tree StructType = TREE_TYPE(exp);
-  if (OneEltIsUnion && 
-      TYPE_SIZE(StructType) && TREE_CODE(TYPE_SIZE(StructType)) == INTEGER_CST) {
-    unsigned StructSize = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(exp)))+7)/8;
-    if (StructSize != InitSize) {
-      const Type *FillTy;
-      assert(StructSize > InitSize && "Init shouldn't be larger than struct!");
-      if (StructSize - InitSize == 1)
-        FillTy = Type::Int8Ty;
-      else
-        FillTy = ArrayType::get(Type::Int8Ty, StructSize - InitSize);
-      ResultElts.push_back(Constant::getNullValue(FillTy));
-    }
   }
 
   return ConstantStruct::get(ResultElts, STy->isPacked());

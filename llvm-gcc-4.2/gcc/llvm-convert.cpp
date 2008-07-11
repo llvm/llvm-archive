@@ -3383,7 +3383,7 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
   Value *Compare;
   if (LHS->getType()->isFloatingPoint())
     Compare = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
-  else if TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)))
+  else if (TYPE_UNSIGNED(TREE_TYPE(exp)))
     Compare = Builder.CreateICmp(ICmpInst::Predicate(UIPred), LHS, RHS);
   else
     Compare = Builder.CreateICmp(ICmpInst::Predicate(SIPred), LHS, RHS);

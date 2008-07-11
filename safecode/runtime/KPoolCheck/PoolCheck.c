@@ -701,7 +701,7 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   PCUNLOCK();
   if ((t) && ((addr - S) == offset))
     return;
-  if(do_fail) poolcheckfail ("poolcheckalign failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  if (do_fail) poolcheckfail ("poolcheckalign failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
 }
 
 /*
@@ -729,6 +729,21 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
     else
       if (do_fail) poolcheckfail ("poolcheckalign_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
+
+  /*
+   * Ensure that the pointer is not within an I/O object.
+   */
+  if (adl_splay_find(&MP->IOObjs, addr)) {
+    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
+  /*
+   * Ensure that the pointer is not within an Integer State object.
+   */
+  if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
+    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  }
+
   return;
 }
 

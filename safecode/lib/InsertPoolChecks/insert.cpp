@@ -43,6 +43,10 @@ cl::opt<bool> EnableIOChecks  ("enable-iochecks", cl::Hidden,
                                cl::init(false),
                                cl::desc("Enable checks on I/O operations"));
 
+cl::opt<bool> EnableDSChecks  ("enable-dschecks", cl::Hidden,
+                               cl::init(false),
+                               cl::desc("Enable checks for creating stacks"));
+
 cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::Hidden, cl::init(false),
                 cl::desc("Insert pool checks instead of exact bounds checks"));
@@ -3268,6 +3272,15 @@ void InsertPoolChecks::TransformFunction (Function & F) {
 
 void
 InsertPoolChecks::addDeclaredStackChecks (Function & F) {
+  //
+  // Don't insert any checks if such checks are disabled.
+  //
+  if (!EnableDSChecks) return;
+
+  //
+  // Instrument calls to sva_declare_stack() so that they deregister the
+  // memory object from the appropriate MetaPool.
+  //
   std::vector<Value *> args;
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (CallInst * CI = dyn_cast<CallInst>(&*I))

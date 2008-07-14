@@ -10617,7 +10617,10 @@ build_v2_ivar_list_initializer (tree class_name, tree type, tree field_decl)
 
     /* Set alignment */
     /* APPLE LOCAL radar 5724385 */
-    val = TYPE_ALIGN_UNIT (TREE_TYPE (field_decl));
+    val = TYPE_ALIGN_UNIT (
+            DECL_BIT_FIELD_TYPE (field_decl) ? DECL_BIT_FIELD_TYPE (field_decl) : 
+            TREE_TYPE (field_decl));
+    /* APPLE LOCAL end radar 5724385 */
     val = exact_log2 (val);
     ivar = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, val), ivar);
 

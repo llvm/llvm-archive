@@ -348,7 +348,7 @@ DSNodeHandle GraphBuilder::getValueDest(Value &Val) {
   } else if (Constant *C = dyn_cast<Constant>(V)) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       std::set<Value*> sources;
-      if (getSourcePointerValues(CE, sources)) {      
+      if (getSourcePointerValues(CE, sources)) {
         NH = createNode();
         for (std::set<Value*>::iterator ii = sources.begin(), ee = sources.end();
              ii != ee; ++ii)
@@ -1510,10 +1510,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
     // allocation functions
     if (AllocList.end() != std::find(AllocList.begin(), AllocList.end(), F->getName())) {
       DSNodeHandle RetNH;
-      if (F->getName() == "pseudo_alloc")
-        RetNH = getValueDest(**CS.arg_begin());
-      else
-        RetNH = getValueDest(*CS.getInstruction());
+      RetNH = getValueDest(*CS.getInstruction());
       RetNH.getNode()->setHeapNodeMarker()->setModifiedMarker();
       RetNH.getNode()->getMP()->addCallSite(CS);
       return;

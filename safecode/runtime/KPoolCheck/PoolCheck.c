@@ -170,6 +170,10 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
   PCUNLOCK();
 }
 
+#ifdef LLVA_MMU_CHECKS
+extern void llva_reg_obj(void*, void*, unsigned);
+#endif
+
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   unsigned int index;
@@ -191,6 +195,10 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   }
 #endif
 
+#ifdef LLVA_MMU_CHECKS 
+  llva_reg_obj(addr, MP, MP->TK);
+#endif
+ 
   adl_splay_insert(&MP->Objs, addr, len, __builtin_return_address(0));
 #if 1
   /*
@@ -1123,6 +1131,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   }
 #endif
 
+#ifdef SVA_IO
   /*
    * Ensure that the destination pointer is not within the bounds of a saved
    * Integer State object.
@@ -1137,6 +1146,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   }
 #endif
   PCUNLOCK();
+#endif
 
   /*
    * If the source pointer is within the first page of memory, return the zero

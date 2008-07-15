@@ -68,11 +68,17 @@ typedef struct MetaPoolTy {
   unsigned int length[4];
   void * cache[4];
 #endif
+ 
 
 #ifdef SVA_IO
   /* A splay for I/O objects */
   void * IOObjs;
 #endif
+
+#ifdef LLVA_MMU_CHECKS 
+  unsigned TK;
+#endif
+
 } MetaPoolTy;
 
 typedef struct funccache {

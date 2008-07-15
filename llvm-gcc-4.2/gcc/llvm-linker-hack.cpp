@@ -71,7 +71,6 @@ void dummy_function() {
   llvm::createPredicateSimplifierPass();
   llvm::createCondPropagationPass();
   llvm::createGlobalOptimizerPass();
-  llvm::createTailDuplicationPass();
   llvm::createJumpThreadingPass();
   llvm::createFunctionInliningPass();
   llvm::createRaiseAllocationsPass();

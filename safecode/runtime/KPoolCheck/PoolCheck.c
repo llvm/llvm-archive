@@ -709,9 +709,17 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   unsigned len = 0;
   int t = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   PCUNLOCK();
-  if ((t) && ((addr - S) == offset))
-    return;
-  if (do_fail) poolcheckfail ("poolcheckalign failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  if (t)
+    if ((addr - S) == offset)
+      return;
+    else {
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)offset, (void*)__builtin_return_address(0));
+    }
+  else {
+    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
+    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(2): ", (unsigned)offset, (void*)__builtin_return_address(0));
+  }
 }
 
 /*
@@ -737,7 +745,8 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
     if ((addr - S) == offset)
       return;
     else
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: addr: ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: offs: ", (unsigned)offset, (void*)__builtin_return_address(0));
   }
 
   /*

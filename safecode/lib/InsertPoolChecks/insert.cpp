@@ -199,11 +199,15 @@ makeMetaPool(Module* M, DSNode* N) {
 #ifdef SVA_IO
   MPTV.push_back(VoidPtrType);
 #endif
+#ifdef LLVA_MMU_CHECKS
+  MPTV.push_back(Type::UIntTy);
+#endif
 
   const StructType* MPT = StructType::get(MPTV);
 
   static int x = 0;
   std::string Name = "_metaPool_";
+
  
   unsigned Flags = N ? N->getMP()->getFlags() : 0;
   if(Flags & DSNode::Incomplete)
@@ -227,6 +231,7 @@ makeMetaPool(Module* M, DSNode* N) {
   Name += "_";
   ++x;
 
+#ifndef LLVA_MMU_CHECKS
   return new GlobalVariable(
                             /*type=*/ MPT,
                             /*isConstant=*/ false,
@@ -234,6 +239,44 @@ makeMetaPool(Module* M, DSNode* N) {
                             /*initializer=*/ Constant::getNullValue(MPT),
                             /*name=*/ Name,
                             /*parent=*/ M );
+#else
+  PointerType* PointerTy_0 = PointerType::get(Type::SByteTy);
+  ArrayType* ArrayTy_1 = ArrayType::get(Type::UIntTy, 4);
+  ArrayType* ArrayTy_2 = ArrayType::get(PointerTy_0, 4) ;
+
+  std::vector<Constant*> const_struct_9_fields;
+  Constant* const_ptr_10 = Constant::getNullValue(PointerTy_0);
+  const_struct_9_fields.push_back(const_ptr_10); // Slabs
+  const_struct_9_fields.push_back(const_ptr_10); // Objs
+  const_struct_9_fields.push_back(const_ptr_10); // Functions
+  const_struct_9_fields.push_back(const_ptr_10); // oob
+  const_struct_9_fields.push_back(const_ptr_10); // profile
+  const_struct_9_fields.push_back(const_ptr_10); // cache0
+  const_struct_9_fields.push_back(const_ptr_10); // cache1
+  const_struct_9_fields.push_back(const_ptr_10); // cache2
+  const_struct_9_fields.push_back(const_ptr_10); // cache3
+  Constant* const_int32_11 = Constant::getNullValue(Type::UIntTy);
+  const_struct_9_fields.push_back(const_int32_11); // cindex
+  Constant* const_array_12 = Constant::getNullValue(ArrayTy_1);
+  const_struct_9_fields.push_back(const_array_12); // start
+  const_struct_9_fields.push_back(const_array_12); // length
+  Constant* const_array_13 = Constant::getNullValue(ArrayTy_2);
+  const_struct_9_fields.push_back(const_array_13); // cache
+  const_struct_9_fields.push_back(const_ptr_10); // IOObjs
+  ConstantInt* const_int8_14 = ConstantInt::get(Type::UIntTy, N && !(N->isNodeCompletelyFolded()));
+  const_struct_9_fields.push_back(const_int8_14); //TK
+  Constant* const_struct_9 = ConstantStruct::get(MPT, const_struct_9_fields);
+
+
+  return new GlobalVariable(
+                            /*type=*/ MPT,
+                            /*isConstant=*/ false,
+                            /*Linkage=*/ GlobalValue::InternalLinkage,
+                            /*initializer=*/ const_struct_9,
+                            /*name=*/ Name,
+                            /*parent=*/ M );
+#endif
+
 }
 
 #ifndef LLVA_KERNEL

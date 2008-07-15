@@ -192,6 +192,7 @@ struct InsertPoolChecks : public FunctionPass {
     // Functions
     Function *PoolCheck;
     Function *PoolCheckIO;
+    Function *PoolCheckIOI;
     Function *PoolCheckAlign;
     Function *PoolCheckUI;
     Function *PoolCheckAlignUI;
@@ -268,7 +269,8 @@ struct InsertPoolChecks : public FunctionPass {
       else
         return 0;
     }
-    void addLSChecks(Value *V, Instruction *I, Function *F, bool io = false);
+    void addLSChecks(Value *V, Instruction *I, Function *F);
+    void addIOLSChecks (Value *V, Instruction *I, Function *F);
     Value * getPoolHandle(const Value *V, Function *F);
 #endif  
 };

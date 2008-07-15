@@ -12041,6 +12041,11 @@ build_protocollist_translation_table (void)
       /* APPLE LOCAL end radar 4695109 */
       expr = convert (objc_protocol_type, build_fold_addr_expr (expr));
       finish_var_decl (decl, expr);
+#ifdef ENABLE_LLVM
+      /* At -O0, we may have emitted references to the decl earlier. */
+      if (!optimize)
+        reset_initializer_llvm(decl);
+#endif
     }
 }
 

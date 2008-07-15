@@ -554,12 +554,14 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
   /*
    * Ensure that the object is not a declared stack.
    */
+#ifdef SVA_IO
   if (adl_splay_find (&StackSplay, addr)) {
     poolcheckfail ("pchk_drop_obj: Releasing declared stack",
                    (unsigned)addr,
                    (void*)__builtin_return_address(0));
     return;
   }
+#endif
 
   /*
    * Delete the object from the splay tree.
@@ -733,6 +735,7 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   /*
    * Ensure that the pointer is not within an I/O object.
    */
+#ifdef SVA_IO
   if (adl_splay_find(&MP->IOObjs, addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
@@ -743,6 +746,7 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
+#endif
 
   return;
 }
@@ -787,6 +791,7 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
   /*
    * Ensure that the pointer is not within an I/O object.
    */
+#ifdef SVA_IO
   int t1 = adl_splay_find(&MP->IOObjs, addr);
   if (t1) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
@@ -798,6 +803,7 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
   if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
+#endif
 
   PCUNLOCK();
   return;
@@ -811,7 +817,7 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
  */
 #ifdef SVA_IO
 void
-poolcheckio(MetaPoolTy* MP, void* addr) {
+poolcheckio (MetaPoolTy* MP, void* addr) {
   if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
@@ -829,12 +835,47 @@ poolcheckio(MetaPoolTy* MP, void* addr) {
   PCUNLOCK();
   if (t)
     return;
-#if 0
-  if (do_fail) poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
-#else
-  if (1) poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
-#endif
+  poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
 }
+
+void
+poolcheckio_i (MetaPoolTy* MP, void* addr) {
+  if (!pchk_ready || !MP) return;
+#if 0
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
+#endif
+  ++stat_poolcheckio;
+
+  /*
+   * Determine if this is an I/O port address.  If so, just let it pass.
+   */
+  if (((unsigned int)(addr)) & 0xffff0000)
+    return;
+
+  PCLOCK();
+  int found = adl_splay_find(&MP->IOObjs, addr);
+
+  if (found) {
+    PCUNLOCK();
+    return;
+  }
+
+  /*
+   * If we didn't find the object, then try to ensure that the pointer is not
+   * within a valid memory object.
+   */
+  found = adl_splay_find(&MP->IOObjs, addr);
+  PCUNLOCK();
+
+  if (found)
+    poolcheckfail ("poolcheckio_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+
+  /*
+   * We don't know where this pointer can pointer to; just ignore it for now.
+   */
+  return;
+}
+
 #endif
 
 /* check that src and dest are same obj or slab */
@@ -1020,6 +1061,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
+  return &found;
   if (!pchk_ready || !MP) return &found;
   ++stat_boundscheck;
   /* Try fail cache first */
@@ -1085,13 +1127,15 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
    * Ensure that the destination pointer is not within the bounds of a saved
    * Integer State object.
    */
+#ifdef SVA_IO
   S = src;
   len = 0;
-  fs = adl_splay_retrieve (&(IntegerStatePool.IOObjs), &S, &len, 0);
+  fs = adl_splay_retrieve (&(IntegerStatePool.Objs), &S, &len, 0);
   if (fs) {
     PCUNLOCK();
     return &not_found;
   }
+#endif
   PCUNLOCK();
 
   /*

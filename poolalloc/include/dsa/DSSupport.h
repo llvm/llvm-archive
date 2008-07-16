@@ -55,6 +55,8 @@ namespace DS { // FIXME: After the paper, this should get cleaned up
 ///
 class DSNodeHandle {
   mutable DSNode *N;
+
+  // The offset into the node to which the DSHandle points
   mutable unsigned Offset;
   void operator==(const DSNode *N);  // DISALLOW, use to promote N to nodehandle
 public:

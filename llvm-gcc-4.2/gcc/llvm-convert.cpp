@@ -5753,6 +5753,12 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   } else {
     Value *Offset = Emit(field_offset, 0);
 
+    // For ObjC2, we may have a base class field that should not be taken into
+    // account here, as it is already in Offset.  The ObjC FE figures this out.
+    tree field_bit_offset = objc_v2_bitfield_ivar_bitpos(exp);
+    if (field_bit_offset) {
+      BitStart = (unsigned)getINTEGER_CSTVal(field_bit_offset);
+    }
     // Here BitStart gives the offset of the field in bits from field_offset.
     // Incorporate as much of it as possible into the pointer computation.
     unsigned ByteOffset = BitStart/8;

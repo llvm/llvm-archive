@@ -18878,9 +18878,9 @@ objc_create_named_tmp_var (tree type, const char *prefix)
 
    __objcFastEnumerationState enumState = { 0 };
    id items[16];
-   unsigned int limit; 
+   unsigned long limit; 
    unsigned long startMutations;
-   unsigned int counter;
+   unsigned long counter;
    [collection countByEnumeratingWithState:&enumState objects:items count:16];
 
    it returns expression for:
@@ -18924,14 +18924,14 @@ objc_build_foreach_components (tree receiver, tree *enumState_decl,
 			   build_index_type (build_int_cst (NULL_TREE, 16 - 1)));
   *items_decl = objc_create_named_tmp_var (type, "cstar");
 
-  /* unsigned int limit */
-  *limit_decl = objc_create_named_tmp_var (unsigned_type_node, "cstar");
+  /* unsigned long limit */
+  *limit_decl = objc_create_named_tmp_var (long_unsigned_type_node, "cstar");
 
   /* unsigned long startMutations */
   *startMutations_decl = objc_create_named_tmp_var (long_unsigned_type_node, "cstar");
 
-  /* unsigned int counter */
-  *counter_decl = objc_create_named_tmp_var (unsigned_type_node, "cstar");
+  /* unsigned long counter */
+  *counter_decl = objc_create_named_tmp_var (long_unsigned_type_node, "cstar");
 
   /* [collection countByEnumeratingWithState:&enumState objects:items count:16] */
   sel_name = get_identifier ("countByEnumeratingWithState:objects:count:");
@@ -19094,7 +19094,7 @@ objc_finish_foreach_loop (location_t location, tree cond, tree for_body, tree bl
   /* do { */
   outer_do_body = c_begin_compound_stmt (true);
 
-  /* unsigned int counter = 0; */
+  /* unsigned long counter = 0; */
   exp = build2 (MODIFY_EXPR, void_type_node, counter_decl, 
 		fold_convert (TREE_TYPE (counter_decl), integer_zero_node)); 
   bind = build3 (BIND_EXPR, void_type_node, counter_decl, exp, NULL);

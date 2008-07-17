@@ -1619,7 +1619,7 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
       return "__DATA, __objc_catlist, regular, no_dead_strip"; 
     else if (!strncmp (name, "LABEL_NONLAZY_CLASS_", 20))
       return "__DATA, __objc_nlclslist, regular, no_dead_strip";
-    else if (!strncmp (name, "LABEL_NONLAZY_CAGEGORY_", 23))
+    else if (!strncmp (name, "LABEL_NONLAZY_CATEGORY_", 23))
       return "__DATA, __objc_nlcatlist, regular, no_dead_strip";
     else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
       return "__DATA, __objc_protorefs, regular, no_dead_strip";

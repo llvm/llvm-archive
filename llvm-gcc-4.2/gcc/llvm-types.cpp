@@ -352,7 +352,7 @@ bool isBitfield(tree_node *field_decl) {
   assert(!(TypeSizeInBits & 7) && "A type with a non-byte size!");
 
   assert(DECL_SIZE(field_decl) && "Bitfield with no bit size!");
-  unsigned FieldSizeInBits = TREE_INT_CST_LOW(DECL_SIZE(field_decl));
+  uint64_t FieldSizeInBits = getInt64(DECL_SIZE(field_decl), true);
   if (FieldSizeInBits < TypeSizeInBits)
     // Not wide enough to hold the entire type - treat as a bitfield.
     return true;
@@ -506,11 +506,11 @@ void TypeRefinementDatabase::dump() const {
 
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
 /// structure.
-static unsigned getFieldOffsetInBits(tree Field) {
+static uint64_t getFieldOffsetInBits(tree Field) {
   assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
+  uint64_t Result = getInt64(DECL_FIELD_BIT_OFFSET(Field), true);
   if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
-    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
+    Result += getInt64(DECL_FIELD_OFFSET(Field), true)*8;
   return Result;
 }
 
@@ -1806,9 +1806,9 @@ bool TypeConverter::DecodeStructFields(tree Field,
   Info.allFieldsAreNotBitFields();
 
   // Get the starting offset in the record.
-  unsigned StartOffsetInBits = getFieldOffsetInBits(Field);
+  uint64_t StartOffsetInBits = getFieldOffsetInBits(Field);
   assert((StartOffsetInBits & 7) == 0 && "Non-bit-field has non-byte offset!");
-  unsigned StartOffsetInBytes = StartOffsetInBits/8;
+  uint64_t StartOffsetInBytes = StartOffsetInBits/8;
 
   const Type *Ty = ConvertType(getDeclaredType(Field));
 
@@ -1988,13 +1988,13 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
     if (!isa<OpaqueType>(Ty) || TYPE_SIZE(type) == 0)
       return Ty;
   }
-  
+
   if (TYPE_SIZE(type) == 0) {   // Forward declaration?
     const Type *Ty = OpaqueType::get();
     TheModule->addTypeName(GetTypeName("struct.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
-  
+
   // Note that we are compiling a struct now.
   bool OldConvertingStruct = ConvertingStruct;
   ConvertingStruct = true;
@@ -2006,7 +2006,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   // Alter any fields that appear to represent base classes so their lists
   // of fields bear some resemblance to reality.
   FixBaseClassFields(type);
-                                
+
   // Convert over all of the elements of the struct.
   bool retryAsPackedStruct = false;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
@@ -2015,10 +2015,10 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       break;
     }
   }
-  
+
   if (retryAsPackedStruct) {
     delete Info;
-    Info = new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type), 
+    Info = new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN_UNIT(type),
                                         true);
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
       if (DecodeStructFields(Field, *Info) == false) {
@@ -2030,21 +2030,21 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   // If the LLVM struct requires explicit tail padding to be the same size as
   // the GCC struct, insert tail padding now.  This handles, e.g., "{}" in C++.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
-    uint64_t GCCTypeSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
+    uint64_t GCCTypeSize = getInt64(TYPE_SIZE_UNIT(type), true);
     uint64_t LLVMStructSize = Info->getSizeAsLLVMStruct();
 
     if (LLVMStructSize > GCCTypeSize) {
       Info->RemoveExtraBytes();
       LLVMStructSize = Info->getSizeAsLLVMStruct();
     }
-      
+
     if (LLVMStructSize != GCCTypeSize) {
       assert(LLVMStructSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
       uint64_t LLVMLastElementEnd = Info->getNewElementByteOffset(1);
 
       // If only one byte is needed then insert i8.
-      if (GCCTypeSize-LLVMLastElementEnd == 1) 
+      if (GCCTypeSize-LLVMLastElementEnd == 1)
         Info->addElement(Type::Int8Ty, 1, 1);
       else {
         if ( ((GCCTypeSize-LLVMStructSize) % 4) == 0) {
@@ -2054,19 +2054,19 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            Int32ArraySize, true /* Padding Element */);
         } else {
-          const Type *PadTy = 
+          const Type *PadTy =
             ArrayType::get(Type::Int8Ty, GCCTypeSize-LLVMStructSize);
-          Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd, 
-                           GCCTypeSize - LLVMLastElementEnd, 
+          Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
+                           GCCTypeSize - LLVMLastElementEnd,
                            true /* Padding Element */);
-          
+
         }
       }
     }
   } else
     Info->RemoveExtraBytes();
-    
-  
+
+
   // Now that the LLVM struct is finalized, figure out a safe place to index to
   // and set index values for each FieldDecl that doesn't start at a variable
   // offset.
@@ -2074,7 +2074,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
     if (TREE_CODE(Field) == FIELD_DECL &&
         TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
-      unsigned FieldOffsetInBits = getFieldOffsetInBits(Field);
+      uint64_t FieldOffsetInBits = getFieldOffsetInBits(Field);
       tree FieldType = getDeclaredType(Field);
 
       // If this is a bitfield, we may want to adjust the FieldOffsetInBits to
@@ -2093,8 +2093,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         CurFieldNo = 0;
 
         // Skip 'int:0', which just affects layout.
-        unsigned FieldSizeInBits = TREE_INT_CST_LOW(DECL_SIZE(Field));
-        if (FieldSizeInBits == 0)
+        if (integer_zerop(DECL_SIZE(Field)))
           continue;
       }
 
@@ -2103,35 +2102,35 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       bool isZeroSizeField = !TYPE_SIZE(FieldType) ||
         integer_zerop(TYPE_SIZE(FieldType));
 
-      unsigned FieldNo = 
+      unsigned FieldNo =
         Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
       SetFieldIndex(Field, FieldNo);
     }
 
   // Put the original gcc struct back the way it was; necessary to prevent the
   // binfo-walking code in cp/class from getting confused.
-  RestoreBaseClassFields(type);  
+  RestoreBaseClassFields(type);
 
   const Type *ResultTy = Info->getLLVMType();
   StructTypeInfoMap[type] = Info;
-  
+
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
-  
+
   // If there was a forward declaration for this type that is now resolved,
   // refine anything that used it to the new type.
   if (OldTy)
     const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
-  
+
   // Finally, set the name for the type.
   TheModule->addTypeName(GetTypeName("struct.", orig_type),
                          GET_TYPE_LLVM(type));
-  
+
   // We have finished converting this struct.  See if the is the outer-most
   // struct being converted by ConvertType.
   ConvertingStruct = OldConvertingStruct;
   if (!ConvertingStruct) {
-    
+
     // If this is the outer-most level of structness, resolve any pointers
     // that were deferred.
     while (!PointersToReresolve.empty()) {
@@ -2146,7 +2145,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       }
     }
   }
-  
+
   return GET_TYPE_LLVM(type);
 }
 
@@ -2160,7 +2159,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     if (!isa<OpaqueType>(Ty) || TYPE_SIZE(type) == 0)
       return Ty;
   }
-  
+
   if (TYPE_SIZE(type) == 0) {   // Forward declaraion?
     const Type *Ty = OpaqueType::get();
     TheModule->addTypeName(GetTypeName("union.", orig_type), Ty);
@@ -2173,7 +2172,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
   // Find the type with the largest aligment, and if we have multiple types with
   // the same alignment, select one with largest size. If type with max. align
-  // is smaller then other types then we will add padding later on anyway to 
+  // is smaller then other types then we will add padding later on anyway to
   // match union size.
   const TargetData &TD = getTargetData();
   const Type *UnionTy = 0;
@@ -2210,7 +2209,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
     if (TREE_CODE(TheGccTy) == BOOLEAN_TYPE &&
         TYPE_SIZE_UNIT(TheGccTy) &&
-        DECL_SIZE_UNIT(Field) && 
+        DECL_SIZE_UNIT(Field) &&
         TREE_CODE(DECL_SIZE_UNIT(Field)) == INTEGER_CST &&
         TREE_CODE(TYPE_SIZE_UNIT(TheGccTy)) == INTEGER_CST &&
         TREE_INT_CST_LOW(TYPE_SIZE_UNIT(TheGccTy)) >
@@ -2276,7 +2275,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // has larger alignment than the largest member does, thus requires tail
   // padding.
   if (TYPE_SIZE(type) && TREE_CODE(TYPE_SIZE(type)) == INTEGER_CST) {
-    unsigned GCCTypeSize = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(type))+7)/8;
+    uint64_t GCCTypeSize = getInt64(TYPE_SIZE_UNIT(type), true);
 
     if (EltSize != GCCTypeSize) {
       assert(EltSize < GCCTypeSize &&
@@ -2297,11 +2296,11 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // refine anything that used it to the new type.
   if (OldTy)
     const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
-  
+
   // Finally, set the name for the type.
   TheModule->addTypeName(GetTypeName("struct.", orig_type),
                          GET_TYPE_LLVM(type));
-  
+
   // We have finished converting this union.  See if the is the outer-most
   // union being converted by ConvertType.
   ConvertingStruct = OldConvertingStruct;
@@ -2320,9 +2319,8 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       }
     }
   }
-  
+
   return GET_TYPE_LLVM(type);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */
-

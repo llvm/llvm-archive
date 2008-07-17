@@ -32,7 +32,7 @@ static const int do_profile = 0;
 static const int use_oob = 0;
 
 /* Flag whether to print error messages on bounds violations */
-static const int do_fail = 0;
+static const int do_fail = 1;
 
 /* Statistic counters */
 int stat_poolcheck=0;
@@ -433,8 +433,10 @@ pchk_declarestack (void * MPv, unsigned char * addr, unsigned size) {
   void * S = addr;
   unsigned objlen, objtag;
   if (adl_splay_retrieve(&MP->Objs, &S, &objlen, &objtag)) {
-    if ((S != addr) || (objlen != size))
-      poolcheckfail ("pchk_declarestack: Stack does not match allocated object", (unsigned)addr, (void*)__builtin_return_address(0));
+    if (S != addr)
+      poolcheckfail ("pchk_declarestack: Stack does not match allocated object start", (unsigned)addr, (void*)S);
+    if (objlen != size)
+      poolcheckfail ("pchk_declarestack: Stack does not match allocated object length", (unsigned)size, (void*)objlen);
   } else {
     poolcheckfail ("pchk_declarestack: Can't find object from which stack is allocated", (unsigned)addr, (void*)__builtin_return_address(0));
   }
@@ -707,18 +709,23 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   PCLOCK();
   void* S = addr;
   unsigned len = 0;
-  int t = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  void * tag = 0;
+  int t = adl_splay_retrieve(&MP->Objs, &S, &len, &tag);
   PCUNLOCK();
   if (t)
     if ((addr - S) == offset)
       return;
     else {
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)S, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
     }
   else {
     if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
-    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(2): ", (unsigned)offset, (void*)__builtin_return_address(0));
+    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(2): ", (unsigned)S, (void*)__builtin_return_address(0));
+    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
+    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
   }
 }
 
@@ -739,14 +746,19 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   PCLOCK();
   void* S = addr;
   unsigned len = 0;
-  volatile int t = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  void * tag = 0;
+  volatile int t = adl_splay_retrieve(&MP->Objs, &S, &len, &tag);
   PCUNLOCK();
   if (t) {
-    if ((addr - S) == offset)
+    if ((addr - S) == offset) {
       return;
-    else
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: addr: ", (unsigned)addr, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: offs: ", (unsigned)offset, (void*)__builtin_return_address(0));
+    } else {
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: addr : ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: start: ", (unsigned)S, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: len  : ", (unsigned)len, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: offst: ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: tag  : ", (unsigned)tag, (void*)__builtin_return_address(0));
+    }
   }
 
   /*

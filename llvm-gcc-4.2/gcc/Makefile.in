@@ -802,10 +802,6 @@ BASEVER_s   := "\"$(BASEVER_c)\""
 DEVPHASE_s  := "\"$(if $(DEVPHASE_c), ($(DEVPHASE_c)))\""
 DATESTAMP_s := "\"$(if $(DEVPHASE_c), $(DATESTAMP_c))\""
 
-# LLVM LOCAL begin svn version
-SVNVER_c    := $(shell svnversion $(abs_srcdir) )
-SVNVER_s := "\"$(if $(SVNVER_c), $(SVNVER_c))\""
-# LLVM LOCAL end svn version
 # Shorthand variables for dependency lists.
 TARGET_H = $(TM_H) target.h insn-modes.h
 MACHMODE_H = machmode.h mode-classes.def insn-modes.h
@@ -2052,14 +2048,10 @@ gcc-options.o: options.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) opts.h intl
 
 dumpvers: dumpvers.c
 
-# LLVM LOCAL begin svn version
-.PHONY: version.o
-version.o:
+version.o: version.c version.h $(DATESTAMP) $(BASEVER) $(DEVPHASE)
 	$(CC) $(ALL_CFLAGS) $(ALL_CPPFLAGS) \
 	-DBASEVER=$(BASEVER_s) -DDATESTAMP=$(DATESTAMP_s) \
-        -DSVNVER=$(SVNVER_s) \
 	-DDEVPHASE=$(DEVPHASE_s) -c $(srcdir)/version.c $(OUTPUT_OPTION)
-# LLVM LOCAL endn svn version
 
 gtype-desc.o: gtype-desc.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
 	$(VARRAY_H) $(HASHTAB_H) $(SPLAY_TREE_H) bitmap.h $(TREE_H) $(RTL_H) \

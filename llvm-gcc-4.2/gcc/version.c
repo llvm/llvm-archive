@@ -33,4 +33,4 @@ const char bug_report_url[] = "<URL:http://developer.apple.com/bugreporter>";
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, and DEVPHASE are defined by the Makefile.  */
 
-const char version_string[] = BASEVER DATESTAMP DEVPHASE VERSUFFIX SVNVER;
+const char version_string[] = BASEVER DATESTAMP DEVPHASE VERSUFFIX;

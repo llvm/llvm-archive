@@ -112,6 +112,7 @@ struct PreInsertPoolChecks : public ModulePass {
     Function *ExactCheck3;
     Function *GetActualValue;
     Function *PoolRegister;
+    Function *PageRegister;
     Function *StackRegister;
     Function *ObjFree;
     Function *StackFree;
@@ -211,6 +212,7 @@ struct InsertPoolChecks : public FunctionPass {
     Function *ExactCheck3;
     Function *GetActualValue;
     Function *PoolRegister;
+    Function *PageRegister;
     Function *StackRegister;
     Function *IORegister;
     Function *IOFree;

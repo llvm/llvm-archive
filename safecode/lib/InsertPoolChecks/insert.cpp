@@ -532,6 +532,8 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
+  PageRegister = M.getOrInsertFunction("pchk_reg_page", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
   StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
@@ -944,6 +946,26 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (len);
         new CallInst(PoolRegister, args, "", IP);
+      } else if (name == "__get_free_page") {
+        Instruction* IP = i->getInstruction()->getNext();
+        Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);
+        Value* VMP = castTo (MPV, VoidPtrType, IP);
+        Value* len = castTo (ConstantInt::get(Type::UIntTy,0),Type::UIntTy, IP);
+
+        args.push_back (VMP);
+        args.push_back (VP);
+        args.push_back (len);
+        new CallInst(PageRegister, args, "", IP);
+      } else if (name == "__get_free_pages") {
+        Instruction* IP = i->getInstruction()->getNext();
+        Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);
+        Value* VMP = castTo (MPV, VoidPtrType, IP);
+        Value* len = castTo (i->getArgument(0), Type::UIntTy, IP);
+
+        args.push_back (VMP);
+        args.push_back (VP);
+        args.push_back (len);
+        new CallInst(PageRegister, args, "", IP);
       } else if (name == "pseudo_alloc") {
         Instruction* IP = i->getInstruction()->getNext();
         Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);

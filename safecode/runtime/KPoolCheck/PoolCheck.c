@@ -133,9 +133,23 @@ static int insertCache(MetaPoolTy* MP, void* addr) {
  */
 void
 pchk_init(void) {
+  // Index variable for loops
+  int index;
 
   /* initialize runtime */
   adl_splay_libinit(poolcheckmalloc);
+
+  /*
+   * Initialize the Integer State Pool.
+   */
+  IntegerStatePool.Slabs = 0;
+  IntegerStatePool.Objs = 0;
+  IntegerStatePool.Functions = 0;
+  IntegerStatePool.OOB = 0;
+  IntegerStatePool.IOObjs = 0;
+  for (index = 0; index < 4; ++index) {
+    IntegerStatePool.cache[index] = (void *)0;
+  }
 
   /*
    * Register all of the global variables in their respective meta pools.
@@ -177,15 +191,9 @@ extern void llva_reg_obj(void*, void*, unsigned);
 /* Register a non-pool allocated object */
 void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   unsigned int index;
-#if 0
-  if (!MP) { poolcheckinfo("reg obj on null pool", addr); return; }
-#else
   if (!MP) { return; }
-#endif
-#if 0
-  if (pchk_ready) poolcheckinfo2 ("pchk_reg_obj", addr, len);
-#endif
   PCLOCK();
+
 #if 0
   {
   void * S = addr;
@@ -214,6 +222,18 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   }
 #endif
   PCUNLOCK();
+}
+
+/*
+ * Function: pchk_reg_pages()
+ *
+ * Description:
+ *  This is just like pchk_reg_obj(), except that the length is an order of the
+ *  number of pages (e.g., 1 is 2^1 pages = 8192 bytes).
+ */
+void
+pchk_reg_pages (MetaPoolTy* MP, void* addr, unsigned order) {
+  pchk_reg_obj (MP, addr, 4096 * (1u << order));
 }
 
 void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
@@ -675,9 +695,9 @@ pchk_reg_func (MetaPoolTy * MP, unsigned int num, void ** functable) {
 void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc) {
   if(!MP) return;
   if(*(void**)MPLoc && *(void**)MPLoc != MP) {
-    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inference bug a): ", (unsigned)*(void**)MPLoc, (void*)__builtin_return_address(0));
-    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inference bug b): ", (unsigned) MP, (void*)__builtin_return_address(0));
-    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inference bug c): ", (unsigned) PoolID, (void*)__builtin_return_address(0));
+    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inf bug a): ", (unsigned)*(void**)MPLoc, (void*)__builtin_return_address(0));
+    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inf bug b): ", (unsigned) MP, (void*)__builtin_return_address(0));
+    if(do_fail) poolcheckfail("reg_pool: Pool in 2 MP (inf bug c): ", (unsigned) PoolID, (void*)__builtin_return_address(0));
   }
 
   *(void**)MPLoc = (void*) MP;
@@ -705,6 +725,13 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
+
+  /*
+   * Let null pointers go; they're aligned.
+   */
+  if ((addr == 0) && (offset == 0))
+    return;
+
   ++stat_poolcheck;
   PCLOCK();
   void* S = addr;
@@ -712,21 +739,44 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
   void * tag = 0;
   int t = adl_splay_retrieve(&MP->Objs, &S, &len, &tag);
   PCUNLOCK();
-  if (t)
-    if ((addr - S) == offset)
+  if (t) {
+    if ((addr - S) == offset) {
       return;
-    else {
+    } else {
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)S, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
+      return;
     }
-  else {
-    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
-    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(2): ", (unsigned)S, (void*)__builtin_return_address(0));
-    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
-    if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
   }
+
+  /*
+   * Search through the set of function pointers.
+   */
+  PCLOCK2();
+  t = adl_splay_retrieve(&MP->Functions, &S, &len, &tag);
+  PCUNLOCK();
+
+  if (t) {
+    if (addr == S) {
+      return;
+    } else {
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)S, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
+      return;
+    }
+  }
+
+  /*
+   * The object has not been found.  Provide an error.
+   */
+  if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
+  if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(2): ", (unsigned)S, (void*)__builtin_return_address(0));
+  if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
+  if (do_fail) poolcheckfail ("poolcheckalign failure: Missing(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
 }
 
 /*

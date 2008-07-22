@@ -108,6 +108,7 @@ struct PreInsertPoolChecks : public ModulePass {
     Function *UIBoundsCheck;
     Function *getBounds;
     Function *UIgetBounds;
+    Function * UIgetBoundsNoIO;
     Function *ExactCheck2;
     Function *ExactCheck3;
     Function *GetActualValue;
@@ -208,6 +209,7 @@ struct InsertPoolChecks : public FunctionPass {
     Function *UIBoundsCheck;
     Function *getBounds;
     Function *UIgetBounds;
+    Function * UIgetBoundsNoIO;
     Function *ExactCheck2;
     Function *ExactCheck3;
     Function *GetActualValue;
@@ -249,6 +251,7 @@ struct InsertPoolChecks : public FunctionPass {
     void addExactCheck  (Value * Pointer, Value * Index, Value * Bound, Instruction * InsertPt);
     void addExactCheck2 (Value * Base, Value * Result, Value * Bound, Instruction * InsertPt);
     Value * addExactCheck3 (Value * Source, Value * Result, Value * Bound, Instruction * Next);
+    Value * getAllocationSize (Value * V, Instruction * InsertPt);
     bool insertExactCheck (GetElementPtrInst * GEP);
     bool insertExactCheck (Instruction * , Value *, Value *, Instruction *);
     void insertFunctionCheck(CallInst* CI);

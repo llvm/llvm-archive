@@ -151,8 +151,16 @@ static Statistic<> StructGEPsRemoved  ("safecode", "Structure GEP Checks Removed
 //MonotonicOpts
 static Statistic<> MonotonicOpts  ("safecode", "Number of monotonic LICM bounds check optimisations");
 
+static Statistic<> ArgLSChecks  ("safecode", "Number of Load/Store Checks on Function Arguments");
+static Statistic<> PhiLSChecks  ("safecode", "Number of Load/Store Checks on PHI Nodes");
+static Statistic<> LDLSChecks  ("safecode", "Number of Load/Store Checks on Load Instructions");
+static Statistic<> GEPLSChecks  ("safecode", "Number of Load/Store Checks on GEP Instructions");
+static Statistic<> LSGEPS  ("safecode", "Number of GEPs used only for loads and stores");
+static Statistic<> SavedLSGEPS  ("safecode", "Number of saved loads and stores through LSGEPS");
+
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
+static std::set<Value *> MemCheckedValues;
 
 ////////////////////////////////////////////////////////////////////////////
 // Static Functions
@@ -178,6 +186,101 @@ isNodeRegistered (DSNode * Node) {
   }
 
   return true;
+}
+
+//
+// Function: usedOnlyForLoadStore()
+//
+// Description:
+//  Determines whether the given instruction is only used as the pointer
+//  operand for load and/or store instructions.
+//
+// Return value:
+//  true  - The value is only used as a pointer operand for loads/stores.
+//  false - The value has some other use besides as an operand for loads/stores.
+//
+static bool
+usedOnlyForLoadStore (Value * InitialValue) {
+  std::vector<Value *> Worklist;
+  std::set<PHINode *>  VisitedPhis;
+
+  Worklist.push_back (InitialValue);
+
+  bool onlyLS = true;
+  while (onlyLS && (!Worklist.empty())) {
+    Value * V = Worklist.back();
+    Worklist.pop_back();
+
+    Value::use_iterator i = V->use_begin(), e = V->use_end();
+    for (; i != e; ++i) {
+      if (LoadInst * LI=dyn_cast<LoadInst>(i))
+        if (((LI->getPointerOperand()) == V))
+          continue;
+
+      if (StoreInst * SI=dyn_cast<StoreInst>(i))
+        if (((SI->getOperand(0)) == V) && ((SI->getOperand(1)) != V))
+          continue;
+
+      if (isa<GetElementPtrInst>(i)) {
+        Value * ins = dyn_cast<Value>(i);
+        Worklist.push_back (ins);
+        continue;
+      }
+
+      if (isa<SelectInst>(i)) {
+        Value * ins = dyn_cast<Value>(i);
+        Worklist.push_back (ins);
+        continue;
+      }
+
+      if (isa<SetCondInst>(i)) {
+        continue;
+      }
+
+      if (PHINode * Phi = dyn_cast<PHINode>(i)) {
+        if (VisitedPhis.find(Phi) == VisitedPhis.end()) {
+          VisitedPhis.insert (Phi);
+          Worklist.push_back (Phi);
+        }
+        continue;
+      }
+
+      if (CastInst * CastI = dyn_cast<CastInst>(i)) {
+        if (isa<PointerType>(CastI->getType())) {
+          Value * ins = dyn_cast<Value>(i);
+          Worklist.push_back (ins);
+          continue;
+        }
+      }
+
+      if (CallInst * CI = dyn_cast<CallInst>(i)) {
+        Function * F;
+        if (F=CI->getCalledFunction()) {
+          std::string name = F->getName();
+          if (name == "exactcheck3") {
+            Worklist.push_back (CI);
+            continue;
+          }
+
+          if ((name == "llva_atomic_compare_and_swap") ||
+              (name == "llvm.memset.i32")) {
+            if (CI->getOperand(1) == V)
+              continue;
+          }
+
+          if (name == "llvm.memcpy.i32") {
+            if ((CI->getOperand(1) == V) || (CI->getOperand(2) == V))
+              continue;
+          }
+        }
+      }
+
+      onlyLS = false;
+      break;
+    }
+  }
+
+  return onlyLS;
 }
 
 //Do not replace these with check results
@@ -528,6 +631,7 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
   getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
   UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
+  UIgetBoundsNoIO = M.getOrInsertFunction("getBoundsnoio_i", getBoundsTy);
 
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
@@ -791,6 +895,7 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
   getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
   UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
+  UIgetBoundsNoIO = M.getOrInsertFunction("getBoundsnoio_i", getBoundsTy);
 
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
@@ -1190,6 +1295,10 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   if (Node->isIONode())
     ++OBoundsChecks;
 
+  // Determine whether the destination value is always used as a pointer
+  // operand in a load and/or store
+  bool OnlyLoadStore = usedOnlyForLoadStore(Dest);
+
   //
   // Cast the pool handle, source and destination pointers into the correct
   // type for the call instruction.
@@ -1219,9 +1328,15 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
         (Node->isAllocaNode()) ||
         (Node->isIncomplete()) ||
         (Node->isUnknownNode()))
-      CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
+      if (OnlyLoadStore)
+        CI = new CallInst(UIgetBoundsNoIO, args, "uibc",InsertPt);
+      else
+        CI = new CallInst(UIgetBounds, args, "uibc",InsertPt);
     else
-      CI = new CallInst(getBounds, args, "bc", InsertPt);
+      if (OnlyLoadStore)
+        CI = new CallInst(UIgetBoundsNoIO, args, "bc", InsertPt);
+      else
+        CI = new CallInst(getBounds, args, "bc", InsertPt);
     std::vector<Value *> boundsargs(1, CI);
     Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
     Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
@@ -1256,6 +1371,11 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   //
   CheckedValues.insert (Dest);
   CheckedValues.insert (CI);
+  if (OnlyLoadStore) {
+    MemCheckedValues.insert (Dest);
+    MemCheckedValues.insert (CI);
+    ++LSGEPS;
+  }
 
   // Update statistics
   ++BoundsChecks;
@@ -1506,11 +1626,6 @@ InsertPoolChecks::addExactCheck2 (Value * BasePointer,
   args.push_back(CastBounds);
   Instruction * CI;
   CI = new CallInst(ExactCheck2, args, "", InsertPt);
-
-  //
-  // Record that this value was checked.
-  //
-  CheckedValues.insert (Result);
 
 #if 0
   //
@@ -1947,6 +2062,57 @@ findSourcePointer (Value * PointerOperand, bool & indexed, bool IOOkay = true) {
     PointerOperand = SourcePointer;
 
   return PointerOperand;
+}
+
+//
+// Method: getAllocationSize()
+//
+// Description:
+//  Return an LLVM value that describes the allocation of this instruction.
+//
+// Inputs:
+//  I        - The instruction which performs the allocation
+//  InsertPt - The instruction before which to insert any size calculation
+//             instructions (useful for array allocations).
+//
+Value *
+InsertPoolChecks::getAllocationSize (Value * I, Instruction * InsertPt) {
+  // Handle global variables
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(I)) {
+    return ConstantInt::get(Type::IntTy, TD->getTypeSize(GV->getType()->getElementType()));
+  }
+
+  // Handle alloca instructions
+  if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+    const Type * AllocaType = AI->getAllocatedType();
+    Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
+
+    if (AI->isArrayAllocation())
+      AllocSize = BinaryOperator::create(Instruction::Mul,
+                                         AllocSize,
+                                         AI->getOperand(0), "size", InsertPt);
+    return AllocSize;
+  }
+
+  // Handle calls to the kernel allocators
+  CallInst* CI = dyn_cast<CallInst>(I);
+  if (CI && (CI->getCalledFunction())) {
+    if ((CI->getCalledFunction()->getName() == "__vmalloc") || 
+        (CI->getCalledFunction()->getName() == "kmalloc") || 
+        (CI->getCalledFunction()->getName() == "malloc") || 
+        (CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
+      return CI->getOperand(1);
+    } else if (CI->getCalledFunction()->getName() == "kmem_cache_alloc") {
+      // Insert a call to kmem_get_cachesize() to determine the size of the
+      // allocated object
+      const Type * VoidPtrType = PointerType::get(Type::SByteTy);
+      Value* VP  = castTo (CI->getOperand(1), VoidPtrType, InsertPt);
+      CallInst *len = new CallInst(KmemCachegetSize, VP, "", InsertPt);
+      return len;
+    }
+  }
+
+  return 0;
 }
 
 //
@@ -3654,16 +3820,19 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   }
 
   bool needsCheck = false;
+
   if (Node->isNodeCompletelyFolded() ||
       Node->isUnknownNode() ||
       Node->isIncomplete()) {
     needsCheck = true;
   }
 
-  if (Node->isIONode() && (Node->isHeapNode()   ||
-                           Node->isGlobalNode() ||
-                           Node->isAllocaNode())) {
-    needsCheck = true;
+  if (EnableIOChecks) {
+    if (Node->isIONode() && (Node->isHeapNode()   ||
+                             Node->isGlobalNode() ||
+                             Node->isAllocaNode())) {
+      needsCheck = true;
+    }
   }
 
   if (!needsCheck) return;
@@ -3689,6 +3858,12 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
     insertAlignmentCheck (LI);
   }
 
+  //
+  // Attempt to find the orign of the pointer that we're checking.
+  //
+  bool indexed = true;
+  Value * SourcePointer = findSourcePointer (V, indexed, false);
+
   //  
   // Do not perform a load/store check if the pointer used for this operation
   // has already been checked.  However, we must do the check if the pointer
@@ -3698,49 +3873,64 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // object).
   //
   //
-  bool indexed = true;
-  Value * SourcePointer = findSourcePointer (V, indexed, false);
   if (Node->isComplete() && (!(Node->isUnknownNode()))) {
     if (!(EnableIOChecks && Node->isIONode())) {
       if (findCheckedPointer(V)) {
         ++SavedPoolChecks;
         return;
       }
-
-      if ((V == SourcePointer) &&
-          (isEligableForExactCheck (SourcePointer, false))) {
-        ++SavedPoolChecks;
-        return;
-      }
-    } else {
-      //
-      // If I can prove that this is a memory object, I can alleviate checks if
-      // there was already a bounds check performed.
-      //
-#if 1
-      // Find the source of the pointer
-      if (isEligableForExactCheck (SourcePointer, false)) {
-        if ((V == SourcePointer) || (findCheckedPointer(V))) {
-          ++SavedPoolChecks;
-          return;
-        }
-      }
-#else
-      // Don't protect memory loads and stores from accessing I/O objects
-      if (findCheckedPointer(V)) {
-        ++SavedPoolChecks;
-        return;
-      }
-
-      // If the pointer is trivially known to be a valid memory object,
-      // don't bother doing a run-time check
-      if ((V == SourcePointer) &&
-          (isEligableForExactCheck (SourcePointer, false))) {
-        ++SavedPoolChecks;
-        return;
-      }
-#endif
     }
+  }
+
+  //
+  // If I can prove that this is a memory object (or I don't care about I/O
+  // objects), then I can alleviate checks if there was already a bounds check
+  // performed.
+  //
+  if ((!EnableIOChecks) || (isEligableForExactCheck (SourcePointer, false))) {
+    if (findCheckedPointer(V)) {
+      ++SavedPoolChecks;
+      return;
+    }
+  }
+
+  //
+  // If the pointer we're checking is known to be the beginning of a memory
+  // object, then we know the load/store is good, and no check is needed.
+  //
+  if (isEligableForExactCheck (V, false)) {
+    ++SavedPoolChecks;
+    return;
+  }
+
+  //
+  // If the pointer we're checking was part of a bounds check, and that bounds
+  // check could *prove* that the result of the indexing operation would only
+  // be used to access memory, then elide the check.
+  //
+  if (MemCheckedValues.find (V) != MemCheckedValues.end()) {
+    ++SavedPoolChecks;
+    ++SavedLSGEPS;
+    return;
+  }
+
+  // Gather statistics for understanding why we don't remove as many checks
+  // as we'd like.
+  if (isa<Argument>(SourcePointer))
+    ++ArgLSChecks;
+  if (isa<PHINode>(SourcePointer))
+    ++PhiLSChecks;
+  if (isa<LoadInst>(SourcePointer))
+    ++LDLSChecks;
+  if (isa<GetElementPtrInst>(SourcePointer))
+    ++GEPLSChecks;
+
+  //
+  // See if we can get away with an exactcheck().
+  //
+  if (isEligableForExactCheck (SourcePointer, false)) {
+    addExactCheck2 (SourcePointer, V, getAllocationSize(SourcePointer, I), I);
+    return;
   }
 
   // Get the pool handle associated with this pointer.  If there is no pool

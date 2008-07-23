@@ -3143,10 +3143,11 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
 Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   if (!Op->getType()->isFloatingPoint()) {
-    Instruction *OpN = Builder.CreateNeg(Op, (Op->getName()+"neg").c_str());
+    Value *OpN = Builder.CreateNeg(Op, (Op->getName()+"neg").c_str());
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
-    Value *Cmp = Builder.CreateICmp(pred, Op, OpN->getOperand(0), "abscond");
+    Value *Cmp = Builder.CreateICmp(pred, Op, 
+                             Constant::getNullValue(Op->getType()), "abscond");
     return Builder.CreateSelect(Cmp, Op, OpN, "abs");
   }
 

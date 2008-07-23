@@ -4124,7 +4124,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     Builder.CreateStore(CV, StoreCallResultAddrs[0]);
   else if (unsigned NumResults = StoreCallResultAddrs.size()) {
     for (unsigned i = 0; i != NumResults; ++i) {
-      Value *ValI = Builder.CreateGetResult(CV, i, "asmresult");
+      Value *ValI = Builder.CreateExtractValue(CV, i, "asmresult");
       Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
     }
   }

@@ -1233,7 +1233,7 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
                                                unsigned DestElemNo,
                                                IRBuilder &Builder,
                                                bool isVolatile) {
-  GetResultInst *GR = Builder.CreateGetResult(Src, SrcFieldNo, "mrv_gr");
+  Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
   const StructType *STy = cast<StructType>(Src->getType());
   llvm::Value *Idxs[3];
   Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
@@ -1242,10 +1242,10 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
   Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
   if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
     Value *ElemIndex = ConstantInt::get(Type::Int32Ty, SrcElemNo);
-    Value *GRElem = Builder.CreateExtractElement(GR, ElemIndex, "mrv");
-    Builder.CreateStore(GRElem, GEP, isVolatile);
+    Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");
+    Builder.CreateStore(EVIElem, GEP, isVolatile);
   } else {
-    Builder.CreateStore(GR, GEP, isVolatile);
+    Builder.CreateStore(EVI, GEP, isVolatile);
   }
 }
 
@@ -1272,21 +1272,21 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     // DestTy is { float, float, float }
     // STy is { <4 x float>, float > }
 
-    GetResultInst *GR = Builder.CreateGetResult(Src, 0, "mrv_gr");
+    Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
 
     Value *E0Index = ConstantInt::get(Type::Int32Ty, 0);
-    Value *GR0 = Builder.CreateExtractElement(GR, E0Index, "mrv.v");
+    Value *EVI0 = Builder.CreateExtractElement(EVI, E0Index, "mrv.v");
     Value *GEP0 = Builder.CreateStructGEP(Dest, 0, "mrv_gep");
-    Builder.CreateStore(GR0, GEP0, isVolatile);
+    Builder.CreateStore(EVI0, GEP0, isVolatile);
 
     Value *E1Index = ConstantInt::get(Type::Int32Ty, 1);
-    Value *GR1 = Builder.CreateExtractElement(GR, E1Index, "mrv.v");
+    Value *EVI1 = Builder.CreateExtractElement(EVI, E1Index, "mrv.v");
     Value *GEP1 = Builder.CreateStructGEP(Dest, 1, "mrv_gep");
-    Builder.CreateStore(GR1, GEP1, isVolatile);
+    Builder.CreateStore(EVI1, GEP1, isVolatile);
 
     Value *GEP2 = Builder.CreateStructGEP(Dest, 2, "mrv_gep");
-    GetResultInst *GR2 = Builder.CreateGetResult(Src, 1, "mrv_gr");
-    Builder.CreateStore(GR2, GEP2, isVolatile);
+    Value *EVI2 = Builder.CreateExtractValue(Src, 1, "mrv_gr");
+    Builder.CreateStore(EVI2, GEP2, isVolatile);
     return;
   }
 
@@ -1297,8 +1297,8 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     // Directly access first class values using getresult.
     if (DestElemType->isSingleValueType()) {
       Value *GEP = Builder.CreateStructGEP(Dest, DNO, "mrv_gep");
-      GetResultInst *GR = Builder.CreateGetResult(Src, SNO, "mrv_gr");
-      Builder.CreateStore(GR, GEP, isVolatile);
+      Value *EVI = Builder.CreateExtractValue(Src, SNO, "mrv_gr");
+      Builder.CreateStore(EVI, GEP, isVolatile);
       ++DNO; ++SNO;
       continue;
     } 
@@ -1311,14 +1311,14 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 
       Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
       Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
-      GetResultInst *GR = Builder.CreateGetResult(Src, 0, "mrv_gr");
-      Builder.CreateStore(GR, GEP, isVolatile);
+      Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
+      Builder.CreateStore(EVI, GEP, isVolatile);
       ++SNO;
 
       Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 1);
       GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
-      GR = Builder.CreateGetResult(Src, 1, "mrv_gr");
-      Builder.CreateStore(GR, GEP, isVolatile);
+      EVI = Builder.CreateExtractValue(Src, 1, "mrv_gr");
+      Builder.CreateStore(EVI, GEP, isVolatile);
       ++DNO; ++SNO;
       continue;
     }

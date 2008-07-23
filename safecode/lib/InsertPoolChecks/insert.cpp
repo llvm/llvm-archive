@@ -1177,6 +1177,24 @@ void InsertPoolChecks::addObjFrees(Module& M) {
     }
   }
 
+  Function* FP = M.getNamedFunction ("free_pages");
+  if (FP) {
+    Value::use_iterator ii = FP->use_begin(), ee = FP->use_end();
+    for (; ii != ee; ++ii) {
+      if (CallInst* CI = dyn_cast<CallInst>(*ii)) {
+        if (CI->getCalledFunction() == FP) {
+          Value* Ptr = CI->getOperand(1);
+          Value* MP = getPD(getDSNode(Ptr, CI->getParent()->getParent()), M);
+          if (MP) {
+            MP = new CastInst(MP, PointerType::get(Type::SByteTy), "MP", CI);
+            Ptr = new CastInst(Ptr, PointerType::get(Type::SByteTy), "ADDR", CI);
+            new CallInst(ObjFree, make_vector(MP, Ptr, 0), "", CI);
+          }
+        }
+      }
+    }
+  }
+
 #ifdef SVA_IO
   if (!EnableIOChecks) return;
   L.clear();
@@ -1200,7 +1218,6 @@ void InsertPoolChecks::addObjFrees(Module& M) {
       }
     }
   }
-
 #endif
 #endif
 }
@@ -3871,7 +3888,6 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // checks only ensure that we are accessing a valid object; they do not
   // ensure that we are accessing the correct type (I/O or regular memory) of
   // object).
-  //
   //
   if (Node->isComplete() && (!(Node->isUnknownNode()))) {
     if (!(EnableIOChecks && Node->isIONode())) {

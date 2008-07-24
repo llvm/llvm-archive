@@ -23,9 +23,17 @@
 /* Flag whether to print error messages on bounds violations */
 int ec_do_fail = 1;
 
+/* Flags whether we're ready to do run-time checks */
+extern int pchk_ready;
+
 extern int stat_exactcheck;
 extern int stat_exactcheck2;
 extern int stat_exactcheck3;
+
+extern int stat_poolcheck;
+
+/* Global splay for holding the integer states */
+extern MetaPoolTy IntegerStatePool;
 
 void * exactcheck(int a, int b, void * result) {
   ++stat_exactcheck;

@@ -157,10 +157,14 @@ static Statistic<> LDLSChecks  ("safecode", "Number of Load/Store Checks on Load
 static Statistic<> GEPLSChecks  ("safecode", "Number of Load/Store Checks on GEP Instructions");
 static Statistic<> LSGEPS  ("safecode", "Number of GEPs used only for loads and stores");
 static Statistic<> SavedLSGEPS  ("safecode", "Number of saved loads and stores through LSGEPS");
+static Statistic<> RedundantLS  ("safecode", "Number of redundant load/store checks");
 
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
 static std::set<Value *> MemCheckedValues;
+
+// Map GEP instructions to their getBounds calls
+static std::map<Value *, Value * > GEPBounds;
 
 ////////////////////////////////////////////////////////////////////////////
 // Static Functions
@@ -281,6 +285,49 @@ usedOnlyForLoadStore (Value * InitialValue) {
   }
 
   return onlyLS;
+}
+
+//
+// Function: hasBadCall()
+//
+// Description:
+//  Determine whether this basic block has a call instruction that prevents
+//  optimizations that reduce the number of run-time checks.  Any call to a
+//  function other than our run-time checks can modify the registered objects.
+//
+static bool
+hasBadCall (BasicBlock * BB) {
+  bool hasBadCall = false;
+
+  BasicBlock::iterator i = BB->begin(), e = BB->end();
+  for (; i != e; ++i) {
+    if (CallInst * CI = dyn_cast<CallInst>(i)) {
+      if (Function * F = CI->getCalledFunction()) {
+        // Intrinsic functions do not change the set of recorded objects
+        if (F->isIntrinsic()) continue;
+
+        // Run-time checks do not change the set of recorded objects
+        std::string name = F->getName();
+        if ((name == "exactcheck3") ||
+            (name == "exactcheck2") ||
+            (name == "exactcheck2a") ||
+            (name == "poolcheck") ||
+            (name == "poolcheck_i") ||
+            (name == "getBounds") ||
+            (name == "getBounds_i") ||
+            (name == "getBegin") ||
+            (name == "getEnd")) {
+          continue;
+        }
+
+        // This call could change the set of registered objects
+        hasBadCall = true;
+        break;
+      }
+    }
+  }
+
+  return hasBadCall;
 }
 
 //Do not replace these with check results
@@ -1354,6 +1401,10 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
         CI = new CallInst(UIgetBoundsNoIO, args, "bc", InsertPt);
       else
         CI = new CallInst(getBounds, args, "bc", InsertPt);
+
+    // Record the call instruction with its GEP
+    GEPBounds.insert (make_pair(I,CI));
+
     std::vector<Value *> boundsargs(1, CI);
     Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
     Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
@@ -1370,6 +1421,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
         UI->replaceUsesOfWith (Dest,EC3);
     }
     CI = EC3;
+    GEPBounds.insert (make_pair(EC3,CI));
   } else {
     std::vector<Value *> args(1, PH);
     args.push_back (SrcCast);
@@ -3808,6 +3860,8 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
 }
 
 #ifdef LLVA_KERNEL
+static std::map<Value *, BasicBlock *> LSChecked;
+
 //
 // Method: addLSChecks()
 //
@@ -3938,8 +3992,17 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
     ++PhiLSChecks;
   if (isa<LoadInst>(SourcePointer))
     ++LDLSChecks;
-  if (isa<GetElementPtrInst>(SourcePointer))
-    ++GEPLSChecks;
+
+  std::map<Value *, BasicBlock *>::iterator i;
+  if (!hasBadCall(I->getParent()))
+    if ((i = LSChecked.find(V)) == LSChecked.end()) {
+      LSChecked.insert (make_pair(V,I->getParent()));
+    } else {
+      if (i->second == I->getParent())
+        ++RedundantLS;
+      else
+        LSChecked.insert (make_pair(V,I->getParent()));
+    }
 
   //
   // See if we can get away with an exactcheck().
@@ -3947,6 +4010,49 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   if (isEligableForExactCheck (SourcePointer, false)) {
     addExactCheck2 (SourcePointer, V, getAllocationSize(SourcePointer, I), I);
     return;
+  }
+
+  if (Instruction * AGEP = dyn_cast<GetElementPtrInst>(SourcePointer)) {
+    BasicBlock * BB = AGEP->getParent();
+    if (BB == I->getParent())
+      if (!hasBadCall (BB))
+        if ((GEPBounds.find (AGEP)) != GEPBounds.end())
+          ++GEPLSChecks;
+  }
+
+  //
+  // Determine if we can fetch the bounds information from a previous GEP
+  // lookup.
+  //
+  if (Instruction * AGEP = dyn_cast<Instruction>(V)) {
+    BasicBlock * BB = AGEP->getParent();
+    if (I->getParent() == BB) {
+      if (!hasBadCall(BB)) {
+        std::map<Value *, Value * >::iterator it;
+        if ((it = GEPBounds.find (AGEP)) != GEPBounds.end()) {
+          Value * VCast=castTo (V, PointerType::get(Type::SByteTy), I);
+          if (VCast != V) AddedValues.insert(VCast);
+          std::vector<Value *> args(1, it->second);
+          Instruction * LowerBound = new CallInst(getBegin, args, "gbls", I);
+          Instruction * UpperBound = new CallInst(getEnd,   args, "gels", I);
+          Value * EC3 = addExactCheck3 (LowerBound, VCast, UpperBound, I);
+          AddedValues.insert(EC3);
+          EC3 = castTo (EC3, V->getType(), I);
+          AddedValues.insert(EC3);
+
+          //
+          // Replace all uses of the original pointer with the result of the
+          // exactcheck.  This ensures that the check will not get dead code
+          // eliminated.
+          Value::use_iterator UI = V->use_begin();
+          for (; UI != V->use_end(); ++UI) {
+            if (AddedValues.find(*UI) == AddedValues.end())
+              UI->replaceUsesOfWith (V, EC3);
+          }
+          return;
+        }
+      }
+    }
   }
 
   // Get the pool handle associated with this pointer.  If there is no pool

@@ -32,7 +32,7 @@ static const int do_profile = 0;
 static const int use_oob = 0;
 
 /* Flag whether to print error messages on bounds violations */
-static const int do_fail = 1;
+static const int do_fail = 0;
 
 /* Statistic counters */
 int stat_poolcheck=0;
@@ -146,7 +146,9 @@ pchk_init(void) {
   IntegerStatePool.Objs = 0;
   IntegerStatePool.Functions = 0;
   IntegerStatePool.OOB = 0;
+#ifdef SVA_IO
   IntegerStatePool.IOObjs = 0;
+#endif
   for (index = 0; index < 4; ++index) {
     IntegerStatePool.cache[index] = (void *)0;
   }
@@ -236,7 +238,35 @@ pchk_reg_pages (MetaPoolTy* MP, void* addr, unsigned order) {
   pchk_reg_obj (MP, addr, 4096 * (1u << order));
 }
 
-void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
+/* Pointer to the beginning of the current stack */
+static void * CurrentStackSplay = 0;
+
+void
+pchk_update_stack (void) {
+#ifdef SVA_IO
+  /*
+   * Get the stack pointer.
+   */
+  unsigned int value;
+  void * sp;
+  __asm__ ("movl %%esp, %0\n" : "=r" (value));
+  sp = (void *)(value);
+
+  /*
+   * Determine which stack it is in.
+   */
+  void * S = sp;
+  unsigned stacktag = 0;
+  if (adl_splay_retrieve(&(StackSplay), &S, 0, 0)) {
+    CurrentStackSplay = &(((struct node *)(StackSplay))->tag);
+  } else {
+    CurrentStackSplay = 0;
+  }
+#endif
+}
+
+void
+pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
   unsigned int index;
   if (!MP) { return; }
   PCLOCK();
@@ -247,6 +277,8 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
    */
   void * S = addr;
   unsigned stacktag = 0;
+#ifdef SVA_IO
+#if 0
   if (adl_splay_retrieve(&(StackSplay), &S, 0, 0)) {
     stacktag = (unsigned) (S);
     void * MPSplay = &(((struct node *)(StackSplay))->tag);
@@ -257,6 +289,12 @@ void pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
      *        stack?
      */
   }
+#else
+  if (CurrentStackSplay) {
+    adl_splay_insert (CurrentStackSplay, MP, 1, 0);
+  }
+#endif
+#endif
 
   /*
    * Insert the stack object into the MetaPool's splay tree.
@@ -342,7 +380,6 @@ pchk_reg_int (void* addr) {
   if (adl_splay_retrieve(&StackSplay, &Stack, &len, 0)) {
     adl_splay_insert(&(IntegerStatePool.Objs), addr, 72, Stack);
   } else {
-    poolcheckinfo2 ("pchk_reg_int: Did not find containing stack", (int)addr, (int)__builtin_return_address(0));
     poolcheckfail ("pchk_reg_int: Did not find containing stack", (unsigned)addr, (void*)__builtin_return_address(0));
   }
 
@@ -492,7 +529,6 @@ pchk_releasestack (void * addr) {
     unsigned char * stackp;
     __asm__ ("movl %%esp, %0\n" : "=r" (stackp));
     if ((S <= stackp) && (stackp < (S+len))) {
-      poolcheckinfo2 ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
       poolcheckfail ("pchk_releasestack: Releasing current stack", (unsigned)addr, (void*)__builtin_return_address(0));
     }
 
@@ -514,7 +550,6 @@ pchk_releasestack (void * addr) {
      */
     adl_splay_delete_tag (&(IntegerStatePool.Objs), S);
   } else {
-    poolcheckinfo2 ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
     poolcheckfail ("pchk_releasestack: Invalid stack", (unsigned)addr, (void*)__builtin_return_address(0));
   }
 
@@ -563,24 +598,6 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
 
   PCLOCK();
 
-#if 0
-  /*
-   * Ensure that we are not attempting to free a stack that is currently
-   * in use.
-   */
-  void * S = addr;
-  unsigned len;
-  if (adl_splay_retrieve(&MP->Objs, &S, &len, 0)) {
-    unsigned char * stackp;
-    __asm__ ("movl %%esp, %0\n" : "=r" (stackp));
-    if ((S <= stackp) && (stackp < (S+len))) {
-      poolcheckfail ("pchk_drop_obj: Releasing current stack",
-                     (unsigned)addr,
-                     (void*)__builtin_return_address(0));
-    }
-  }
-#endif
-
   /*
    * Ensure that the object is not a declared stack.
    */
@@ -597,14 +614,6 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
    * Delete the object from the splay tree.
    */
   adl_splay_delete(&MP->Objs, addr);
-#if 0
-  {
-  void * S = addr;
-  unsigned len, tag;
-  if (adl_splay_retrieve(&MP->Objs, &S, &len, &tag))
-    poolcheckinfo ("drop_obj: Failed to remove: 1", addr, tag);
-  }
-#endif
 
   /*
    * See if the object is within the cache.  If so, remove it from the cache.
@@ -793,12 +802,20 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
   ++stat_poolcheck;
+
+  /*
+   * Let null pointers go; they're aligned.
+   */
+  if ((addr == 0) && (offset == 0))
+    return;
+
   PCLOCK();
   void* S = addr;
   unsigned len = 0;
   void * tag = 0;
   volatile int t = adl_splay_retrieve(&MP->Objs, &S, &len, &tag);
   PCUNLOCK();
+
   if (t) {
     if ((addr - S) == offset) {
       return;
@@ -812,9 +829,29 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   }
 
   /*
+   * Search through the set of function pointers.
+   */
+  PCLOCK2();
+  t = adl_splay_retrieve(&MP->Functions, &S, &len, &tag);
+  PCUNLOCK();
+
+  if (t) {
+    if (addr == S) {
+      return;
+    } else {
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: Align(2): ", (unsigned)S, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: Align(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i failure: Align(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
+      return;
+    }
+  }
+
+  /*
    * Ensure that the pointer is not within an I/O object.
    */
 #ifdef SVA_IO
+  PCLOCK2();
   if (adl_splay_find(&MP->IOObjs, addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
@@ -825,6 +862,7 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
+  PCUNLOCK();
 #endif
 
   return;
@@ -865,26 +903,14 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
   ++stat_poolcheck;
+
+  /*
+   * Check the splay trees for a valid object.
+   */
   PCLOCK();
-
-  /*
-   * Ensure that the pointer is not within an I/O object.
-   */
-#ifdef SVA_IO
-  int t1 = adl_splay_find(&MP->IOObjs, addr);
-  if (t1) {
-    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
-  }
-
-  /*
-   * Ensure that the pointer is not within an Integer State object.
-   */
-  if (adl_splay_find (&(IntegerStatePool.Objs), addr)) {
-    poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
-  }
-#endif
-
+  volatile int t = adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
+
   return;
 }
 
@@ -954,7 +980,6 @@ poolcheckio_i (MetaPoolTy* MP, void* addr) {
    */
   return;
 }
-
 #endif
 
 /* check that src and dest are same obj or slab */
@@ -1140,7 +1165,6 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
 void* getBounds_i(MetaPoolTy* MP, void* src) {
-  return &found;
   if (!pchk_ready || !MP) return &found;
   ++stat_boundscheck;
   /* Try fail cache first */
@@ -1218,6 +1242,84 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
 #endif
   PCUNLOCK();
 #endif
+
+  /*
+   * If the source pointer is within the first page of memory, return the zero
+   * page.
+   */
+  if (src < 4096)
+    return &zero_page;
+
+  return &found;
+}
+
+/*
+ * Function: getBoundsnoio_i()
+ *
+ * Description:
+ *  Get the bounds associated with this object in the specified metapool.
+ *  However, the object cannot be an I/O object, so do not bother with I/O
+ *  object bounds.
+ *
+ * Return value:
+ *  If the node is found in the pool, it returns the bounds.
+ *  If the node is found within an integer state object, it returns 0x00000000.
+ *  If the node is not found in the pool, it returns 0xffffffff.
+ *  If the pool is not yet pchk_ready, it returns 0xffffffff
+ */
+void*
+getBoundsnoio_i(MetaPoolTy* MP, void* src) {
+  if (!pchk_ready || !MP) return &found;
+  ++stat_boundscheck;
+
+  /* Try fail cache first */
+  PCLOCK();
+#if 0
+  int i = isInCache(MP, src);
+  if (i) {
+    mtfCache(MP, i);
+    PCUNLOCK();
+    return &found;
+  }
+#endif
+
+#if 0
+  {
+    unsigned int index  = MP->cindex;
+    unsigned int cindex = MP->cindex;
+    do
+    {
+      if ((MP->start[index] <= src) &&
+         (MP->start[index]+MP->length[index] >= src))
+        return MP->cache[index];
+      index = (index + 1) & 3;
+    } while (index != cindex);
+  }
+#endif
+
+  /*
+   * Look in the object splay for the given pointer.
+   */
+  void* S = src;
+  unsigned len = 0;
+
+  long long tsc1, tsc2;
+  if (do_profile) tsc1 = llva_save_tsc();
+  int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
+  if (do_profile) tsc2 = llva_save_tsc();
+  if (do_profile) pchk_profile(MP, __builtin_return_address(0), (long)(tsc2 - tsc1));
+
+  if (fs) {
+#if 1
+    unsigned int index = MP->cindex;
+    MP->start[index] = S;
+    MP->length[index] = len;
+    MP->cache[index] = MP->Objs;
+    MP->cindex = (index+1) & 3u;
+#endif
+    PCUNLOCK();
+    return MP->Objs;
+  }
 
   /*
    * If the source pointer is within the first page of memory, return the zero

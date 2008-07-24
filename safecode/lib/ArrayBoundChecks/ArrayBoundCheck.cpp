@@ -1012,10 +1012,21 @@ void ArrayBoundsCheck::collectSafetyConstraints(Function &F) {
           fMap[&F]->addMemAccessInst(MAI, reqArgs);
         } else {
           if (NoStaticChecks) {
+#if 0
             if ((!DoStructChecks) && (!indexesStructsOnly (MAI)))
               MarkGEPUnsafe (MAI);
             else
               ++SafeStructs;
+#else
+            if (DoStructChecks) {
+              if (!indexesStructsOnly (MAI))
+                MarkGEPUnsafe (MAI);
+              else
+                ++SafeStructs;
+            } else {
+              MarkGEPUnsafe (MAI);
+            }
+#endif
             ++TotalStructs;
             continue;
           }

@@ -412,7 +412,9 @@ makeMetaPool(Module* M, DSNode* N) {
   const_struct_9_fields.push_back(const_array_12); // length
   Constant* const_array_13 = Constant::getNullValue(ArrayTy_2);
   const_struct_9_fields.push_back(const_array_13); // cache
+#ifdef SVA_IO
   const_struct_9_fields.push_back(const_ptr_10); // IOObjs
+#endif
   ConstantInt* const_int8_14 = ConstantInt::get(Type::UIntTy, N && !(N->isNodeCompletelyFolded()));
   const_struct_9_fields.push_back(const_int8_14); //TK
   Constant* const_struct_9 = ConstantStruct::get(MPT, const_struct_9_fields);

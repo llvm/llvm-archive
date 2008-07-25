@@ -814,8 +814,10 @@ Function *TreeToLLVM::FinishFunctionBody() {
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
   if (RetVals.empty())
     Builder.CreateRetVoid();
+  else if (RetVals.size() == 1)
+    Builder.CreateRet(RetVals[0]);
   else
-    Builder.CreateRet(&RetVals[0], RetVals.size());
+    Builder.CreateAggregateRet(&RetVals[0], RetVals.size());
 
   // Emit pending exception handling code.
   EmitLandingPads();

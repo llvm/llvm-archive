@@ -1,3 +1,135 @@
+2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* typeck.c (comptypes): block-pointer types'
+	return type get special treatment.
+
+2008-07-21  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6029624
+	* call.c (objcp_reference_related_p): New
+	* cp-tree.h (objcp_reference_related_p): New decl.
+
+2008-07-16  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 5559195
+	* decl.c (cxx_maybe_build_cleanup): When considering whether to
+	build a cleanup for a class type, use
+	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY and
+	CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE instead of
+	TYPE_HAS_NONTRIVIAL_DESTRUCTOR to determine whether it must be
+	output.
+
+2008-07-15  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 5559195
+	* cp-tree.h (struct lang_type_class): Add destructor_triviality_final
+	flag to mark when has_nontrivial_destructor_body and
+	destructor_nontrivial_because_of_base are final.  Add accessor for
+	this flag.
+	* parser.c (cp_parser_statement_seq_opt): Use 
+	CLASSTYPE_DESTRUCTOR_TRIVIALITY_FINAL to determine if
+	destructor should be checked for being empty, and set it if
+	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY is changed.
+
+2008-07-14  Eugene Marinelli <marinelli@apple.com>
+
+	* class.c (check_bases): Remove curly braces.
+
+2008-07-10  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 5559195
+	* init.c (push_base_cleanups): Check flags indicating whether
+	destructor of base class has a nontrivial body, has a base destructor
+	that must be called, or is private to determine whether it should be
+	called by the derived class.  Set
+	CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE to 1 if it has
+	members that must be deleted.
+	* class.c (check_bases, finish_struct_bits,
+	add_implicitly_declared_members): Set
+	CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE and
+	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY based on base classes.
+	(check_methods): Set CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY to 1
+	whenever a user-declared destructor is seen as a conservative
+	assumption.
+	* cp-tree.h (struct lang_type_class): Add
+	has_nontrivial_destructor_body and
+	destructor_nontrivial_because_of_base flags.  Decrement remaining
+	dummy bits.  Add accessors for these flags.
+	* parser.c (cp_parser_statement_seq_opt): Unmark
+	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY and then set it again only if
+	a statement is parsed.
+
+2008-06-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5982990
+	* parser.c (cp_parser_compound_statement): Take a new
+	argument which is used to call objc_mark_locals_volatile.
+	(cp_parser_primary_expression, cp_parser_statement,
+         etc.): add extra argument in calling cp_parser_compound_statement.
+	(cp_parser_objc_synchronized_statement): Passes
+	flag_objc_sjlj_exceptions as last argument in calling
+	cp_parser_compound_statement.
+
+2008-06-02  Fariborz Jahanian  <fjahanian@apple.com>
+
+        Radar 5976344
+	* Parser.c (cp_parser_objc_interstitial_code): Allow template
+	declaration inside ObjC @implementation.
+
+2008-05-30  Josh Conner  <jconner@apple.com>
+
+	Radar 5933878
+	* method.c (implicitly_declare_fn): Set DECL_ALIGN, if needed.
+	Backport from 4.3:
+	2007-07-09  Geoffrey Keating  <geoffk@apple.com>
+	PR 32617
+	* decl.c (cxx_init_decl_processing): Don't set
+	force_align_functions_log.
+	(grokfndecl): Honour ptrmemfunc_vbit_in_pfn.
+	* typeck.c (cxx_alignof_expr): When alignof is used on a plain
+	FUNCTION_DECL, return its alignment.
+
+2008-02-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5732232 - code gen part 2.
+	* cp-lang.c (c_finish_return): Defined these
+	templates to get a clean compile.
+
+2008-05-01  Josh Conner  <jconner@apple.com>
+
+	* optimize.c: Rewrite of structor shrinkage.
+	(enum in_charge_use):  New.
+	(struct thunk_tree_walk_data):  New.
+	(struct clone_info):  New.
+	(maybe_alias_body):  Remove.
+	(examine_tree_for_in_charge_use):  New.
+	(compute_use_thunks):  New.
+	(maybe_thunk_body):  Rename to thunk_body.  Remove
+	explicit in-charge parameter.
+	(find_earlier_clone):  New.
+	(maybe_clone_body):  Remove most of old decloner
+	patch, replace with new algorithm.
+
+2008-03-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5802025
+	* typeck.c (finish_class_member_access_expr): Generate getter call
+	from an OBJC_PROPERTY_REFERENCE_EXPR.
+
+2008-03-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5733674
+        * decl.c (expand_static_init): Generate write barrier for
+        static initialization in objective-c++ mode.
+
+2007-11-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5619052
+        * pt.c (value_dependent_expression_p): @encode expression is 
+        value-dependent if the operand is type-dependent.
+        (type_dependent_expression_p): Treat @encode same as 'sizeof'.
+
 1007-10-26  Josh Conner  <jconner@apple.com>
 
 	Radar 5562046

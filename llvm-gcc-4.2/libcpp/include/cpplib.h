@@ -926,13 +926,13 @@ struct hmap_bucket
 
 struct hmap_header_map
 {
-  uint32_t magic;             /* Magic word, also indicates byte order       */
-  uint16_t version;           /* Version number -- currently 1               */
-  uint16_t _reserved;         /* Reserved for future use -- zero for now     */
-  uint32_t strings_offset;    /* Offset to start of string pool              */
-  uint32_t count;             /* Number of entries in the string table       */
-  uint32_t capacity;          /* Number of buckets (always a power of 2)     */
-  uint32_t max_value_length;  /* Length of longest result path (excl. '\0')  */
+  uint32_t magic;                /* Magic word, also indicates byte order       */
+  uint16_t version;              /* Version number -- currently 1               */
+  uint16_t _reserved;            /* Reserved for future use -- zero for now     */
+  uint32_t strings_offset;       /* Offset to start of string pool              */
+  uint32_t count;                /* Number of entries in the string table       */
+  uint32_t capacity;             /* Number of buckets (always a power of 2)     */
+  uint32_t max_value_length;     /* Length of longest result path (excl. '\0')  */
   struct hmap_bucket buckets[1]; /* Inline array of 'capacity' maptable buckets */
   /* Strings follow the buckets, at strings_offset.  */
 };

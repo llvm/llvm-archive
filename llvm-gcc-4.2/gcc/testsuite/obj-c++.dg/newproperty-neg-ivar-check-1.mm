@@ -9,9 +9,9 @@
 @end
 
 @implementation Moe
-@synthesize ivar;
+@synthesize ivar; /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar" } */
 - (void)setIvar:(int)arg{}
-@end /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar" } */
+@end
 
 @interface Fred
 @property int ivar;

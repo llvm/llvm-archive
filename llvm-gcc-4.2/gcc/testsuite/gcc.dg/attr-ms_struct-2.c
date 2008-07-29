@@ -1,5 +1,6 @@
 /* Test for MS structure sizes.  */
-/* { dg-do run { target *-*-interix* *-*-mingw* *-*-cygwin* i?86-*-darwin* } } */
+/* APPLE LOCAL 5946347 ms_struct support */
+/* { dg-do run { target *-*-interix* *-*-mingw* *-*-cygwin* i?86-*-darwin* arm*-*-darwin*} } */
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options "-std=gnu99" } */
 

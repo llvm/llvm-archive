@@ -9,6 +9,8 @@
 /* { dg-do run } */
 /* APPLE LOCAL radar 4894756 */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* APPLE LOCAL ARM objc2 */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 #include <objc/objc.h>
 /* APPLE LOCAL radar 4894756 */

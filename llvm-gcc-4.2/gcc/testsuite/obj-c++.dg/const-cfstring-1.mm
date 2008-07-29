@@ -7,6 +7,8 @@
 
 /* { dg-do run { target *-*-darwin* } } */
 /* { dg-options "-fconstant-cfstrings -framework Cocoa" } */
+/* APPLE LOCAL ARM Cocoa not available on arm-darwin targets */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 #import <Foundation/NSString.h>
 #import <CoreFoundation/CFString.h>

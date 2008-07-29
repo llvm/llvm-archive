@@ -3,7 +3,8 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com>  */
 
 /* { dg-options "-fnext-runtime -fno-constant-cfstrings" } */
-/* { dg-do compile { target *-*-darwin* } } */
+/* APPLE LOCAL ARM radar 5804096 */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>

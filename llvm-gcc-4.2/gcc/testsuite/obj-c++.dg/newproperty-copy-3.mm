@@ -2,7 +2,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-#include <Cocoa/Cocoa.h>
+#include <Foundation/Foundation.h>
 
 @interface NamedObject : NSObject
 @property(copy) NSString *name;

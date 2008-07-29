@@ -15,34 +15,6 @@
 5405050: objc.dg/encode-8.m (test for excess errors)
 5405050: objc.dg/gnu-runtime-3.m (test for excess errors)
 5405050: objc.dg/type-stream-1.m (test for excess errors)
-4943900: objc/execute/string1.m compilation,  -O0  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -O1  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -O2  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -O3 -fomit-frame-pointer  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -O3 -g  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -Os  -fnext-runtime
-4943900: objc/execute/string1.m compilation,  -fast  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -O0  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -O1  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -O2  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -O3 -fomit-frame-pointer  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -O3 -g  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -Os  -fnext-runtime
-4943900: objc/execute/string2.m compilation,  -fast  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -O0  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -O1  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -O2  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -O3 -fomit-frame-pointer  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -O3 -g  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -Os  -fnext-runtime
-4943900: objc/execute/string3.m compilation,  -fast  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -O0  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -O1  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -O2  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -O3 -fomit-frame-pointer  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -O3 -g  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -Os  -fnext-runtime
-4943900: objc/execute/string4.m compilation,  -fast  -fnext-runtime
 5095016: objc.dg-struct-layout-encoding-1/t001_main.m (test for excess errors)
 5095016: objc.dg-struct-layout-encoding-1/t002_main.m (test for excess errors)
 5095016: objc.dg-struct-layout-encoding-1/t003_main.m (test for excess errors)

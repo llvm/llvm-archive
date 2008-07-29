@@ -1,8 +1,9 @@
 // APPLE LOCAL file mainline
 // Check if ObjC classes with non-POD C++ ivars are specially marked in the metadata.
-// { dg-do run { target *-*-darwin* } }
+// APPLE LOCAL ARM radar 5804096 - radar 5706927
+// { dg-do run { target powerpc*-*-darwin* } }
 // APPLE LOCAL radar 4842158
-// { dg-options "-fobjc-call-cxx-cdtors -fnext-runtime -mmacosx-version-min=10.3" }
+// { dg-options "-fnext-runtime -mmacosx-version-min=10.3" }
 /* APPLE LOCAL radar 4280641 */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 

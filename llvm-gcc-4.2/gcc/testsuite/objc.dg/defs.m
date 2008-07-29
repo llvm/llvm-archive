@@ -3,8 +3,10 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-options "-lobjc" } */
 /* { dg-do run } */
-/* APPLE LOCAL objc2 */
+/* APPLE LOCAL begin objc2 */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
+/* APPLE LOCAL end objc2 */
 
 #include <objc/objc.h>
 #include <objc/Object.h>

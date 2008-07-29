@@ -3,6 +3,7 @@
    format strings. */
 /* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 
 #include <Cocoa/Cocoa.h>

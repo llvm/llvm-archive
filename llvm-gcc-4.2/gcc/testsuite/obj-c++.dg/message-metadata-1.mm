@@ -1,7 +1,9 @@
 /* APPLE LOCAL file radar 4582204 */
 /* Test that message_ref_t meta-data is generated for for objc and obj-c++ */
-/* { dg-options "-fobjc-abi-version=2 -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-abi-version=2 -mmacosx-version-min=10.5" } */
 /* { dg-do compile } */
+/* APPLE LOCAL ARM hybrid ABI */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 @interface Foo 
 +class; 

@@ -3,7 +3,8 @@
 /* APPLE LOCAL end mainline 4.3 2007-06-14 */ \
 // { dg-require-weak "" }
 // { dg-options "-O2" }
-// { dg-options "-O2 -mmacosx-version-min=10.2" { target { powerpc-*-darwin* } } }
+/* APPLE LOCAL begin 5817940 */
+/* APPLE LOCAL end special options for ppc no longer needed */
 // { dg-additional-sources "attr-weakref-1a.c attr-weakref-1b.c" }
 
 // Copyright 2005 Free Software Foundation, Inc.

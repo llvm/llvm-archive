@@ -3,7 +3,7 @@
 /* Author: Ziemowit Laski  */
 
 /* { dg-options "-fno-constant-cfstrings -fwritable-strings -fconstant-string-class=Foo -mmacosx-version-min=10.4" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 #include <objc/Object.h>

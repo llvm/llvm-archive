@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5142207 */
 /* Test for visibility 'hidden' flag inserted in 32bit objc class's meta-data. */
-/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
 
 __attribute__((visibility("hidden"))) 

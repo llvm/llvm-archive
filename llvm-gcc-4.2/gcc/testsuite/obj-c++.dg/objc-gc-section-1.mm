@@ -4,6 +4,7 @@
 
 /* { dg-do compile } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 @interface INTF
 @end

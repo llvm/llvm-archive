@@ -16,6 +16,8 @@ asm void bar() { fool:
 	add	eax, eax
 	add	fool, eax
 	add	eax, fool
+	addpd	xmm0, xmm0
+	addpd	xmm0, fool
 	addps	xmm0, xmm0
 	addps	xmm0, fool
 	addsd	xmm0, xmm0

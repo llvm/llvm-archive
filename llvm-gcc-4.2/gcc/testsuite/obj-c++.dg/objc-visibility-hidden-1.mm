@@ -3,6 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 __attribute__((visibility("hidden"))) 
 @interface Foo {

@@ -1,6 +1,7 @@
 /* Radar 4964532 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -gdwarf-2 -dA -mmacosx-version-min=10.4" } */
+/* { dg-options "-O2 -gdwarf-2 -dA -mmacosx-version-min=10.4" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-O2 -gdwarf-2 -dA" { target arm*-*-darwin* } } */
 /* { dg-final { scan-assembler "DW_OP_APPLE_uninit" } } */
 #include <stdio.h>
 #include <stdlib.h>

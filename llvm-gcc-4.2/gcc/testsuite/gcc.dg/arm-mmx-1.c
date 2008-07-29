@@ -5,6 +5,8 @@
 /* { dg-skip-if "" { *-*-* } { "-mfloat-abi=softfp" } { "" } } */
 /* { dg-require-effective-target arm32 } */
 /* { dg-final { scan-assembler "ldmfd\[ 	]sp!.*ip,\[ ]*pc" } } */
+/* APPLE LOCAL alternate frame layout */
+/* { dg-skip-if "" { arm*-apple-darwin* } { "*" } { "" } } */
 
 /* This function uses all the call-saved registers, namely r4, r5, r6,
    r7, r8, r9, sl, fp.  Since we also save lr, that leaves an odd

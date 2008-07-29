@@ -6,7 +6,8 @@
 /* Developed by Ziemowit Laski <zlaski@apple.com>.  */
 
 /* { dg-do run { target *-*-darwin* } } */
-/* { dg-options "-fconstant-cfstrings -framework Cocoa" } */
+/* { dg-options "-fconstant-cfstrings -framework Cocoa" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fconstant-cfstrings -framework Foundation" { target arm*-*-darwin* } } */
 
 #import <Foundation/NSString.h>
 #import <CoreFoundation/CFString.h>

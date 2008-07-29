@@ -1,5 +1,7 @@
 /* { dg-options "-fgnu-runtime" } */
 /* { dg-do run } */
+/* APPLE LOCAL ARM not available on arm-darwin targets */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 /* LLVM LOCAL */
 /* { dg-xfail-if "" { *-*-darwin* } { "*" } { "" } } */
 #include <objc/typedstream.h>

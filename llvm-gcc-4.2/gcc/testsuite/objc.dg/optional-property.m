@@ -3,6 +3,8 @@
    setter/getters. Program should compile and run with no errors. */
 /* { dg-options "-mmacosx-version-min=10.5 -framework Foundation" } */
 /* { dg-do run { target *-*-darwin* } } */
+/* APPLE LOCAL ARM not available on arm-darwin targets */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 #import <Cocoa/Cocoa.h>
 

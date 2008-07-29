@@ -6,6 +6,8 @@
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-O0 -g -c -save-temps -dA --no-warn" } */
 /* { dg-skip-if "Unmatchable assembly" { mmix-*-* } { "*" } { "" } } */
+/* APPLE LOCAL ARM AppKit not available on darwin-arm */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 /* { dg-final { scan-assembler "__debug_pubtypes" } } */
 /* { dg-final { scan-assembler "long\[ \t]+0x\[0-9a-f]+\[ \t]+\[#;]\[ \t]+Length of Public Type Names Info" } } */
 /* { dg-final { scan-assembler "id\\\\0\"\[ \t]+\[#;]\[ \t]+external name" } } */

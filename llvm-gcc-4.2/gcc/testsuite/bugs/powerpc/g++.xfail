@@ -12,14 +12,5 @@
 ###------------------------------------------------------------------
 4531667: g++.dg/bitreverse-23.C execution test
 #
-# The following tests fail only when the c++ suite is run through Obj-C++.
-#
-# The following tests fail only when the c++ suite is run with -m64
-#
-# The following tests fail only when the c++ suite is run on ppc with -m64
-#
-# The following tests fail only when the c++ suite is run on x86
-#
-# The following tests fail only when the c++ suite is run on G5 with -m64
-#
-# The following tests fail only when the c++ suite is run on x86 with -m64
+# The following tests fail only when the c++ suite is run with -mcpu=G5
+5822514: g++.dg/altivec-8.C execution test

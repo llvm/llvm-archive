@@ -7,6 +7,8 @@
 
 /* { dg-do run { xfail arc-*-* avr-*-* c4x-*-* cris-*-* h8300-*-* hppa*64*-*-* m32r-*-* m68hc1?-*-* m681?-*-* m680*-*-* m68k-*-* mcore-*-* mn10300-*-* xstormy16-*-* v850*-*-* vax-*-* xtensa-*-* } } */
 /* { dg-options "-O2 -foptimize-sibling-calls" } */
+/* APPLE LOCAL ARM 5798689 sibcalls not implemented for Thumb mode */
+/* { dg-skip-if "" { arm-*-darwin* } { "-mthumb" } { "" } } */
 
 /* The option -foptimize-sibling-calls is the default, but serves as
    marker.  This test is xfailed on targets without sibcall patterns

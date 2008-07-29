@@ -13,7 +13,7 @@
 /* { dg-final { scan-assembler "vspltisw v11, *10" } } */
 /* { dg-final { scan-assembler "vspltisw v12, *11" } } */
 /* { dg-final { scan-assembler "vspltisw v13, *12" } } */
-
+ 
 void
 foo (vector signed int v0, vector signed int v1, vector signed int v2,
      vector signed int v3, vector signed int v4, vector signed int v5,

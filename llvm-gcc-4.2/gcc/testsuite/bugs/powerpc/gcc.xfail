@@ -11,6 +11,7 @@
 ###
 ###------------------------------------------------------------------
 5066141: gcc.dg/pr30643.c scan-assembler-not undefined
+5951276: gcc.target/i386/20020616-1.c execution test
 #
 # ppc only
 3906375: gcc.dg/debug/debug-1.c -gstabs -fast scan-assembler xyzzy
@@ -73,12 +74,6 @@
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 13)
 5275911: gcc.dg/invalid-call-1.c non-compatible type (test for warnings, line 18)
 0000000: compiler driver --coverage option(s) (compiler options)
-#
-# -mmacosx-version-min=10.4 only
-5342828: gcc.dg/pie-link.c (test for excess errors)
-#
-# -m64 -mmacosx-version-min=10.4 only
-5342857: gcc.apple/objcpp.c (test for excess errors)
 #
 # -fasm-blocks only
 5087183: gcc.dg/cpp/19951227-1.c  (test for errors, line 2)

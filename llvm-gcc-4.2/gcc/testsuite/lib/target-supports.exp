@@ -126,48 +126,6 @@ proc check_no_messages_and_pattern {prop pattern args} {
     return $value
 }
 
-# APPLE LOCAL begin 5612787 sse4
-# Implement an effective-target check for property PROP by invoking
-# the compiler and seeing if it prints any messages.  Assume that the
-# property holds if the compiler doesn't print anything.  The other
-# arguments are as for get_compiler_messages, starting with TYPE.
-proc check_no_compiler_messages {prop args} {
-    global et_cache
-
-    set target [current_target_name]
-    if {![info exists et_cache($prop,target)]
-	|| $et_cache($prop,target) != $target} {
-	verbose "check_no_compiler_messages $prop: compiling source for $target" 2
-	set et_cache($prop,target) $target
-	set et_cache($prop,value) \
-	    [string match "" [eval get_compiler_messages $prop 0 $args]]
-    }
-    set value $et_cache($prop,value)
-    verbose "check_no_compiler_messages $prop: returning $value for $target" 2
-    return $value
-}
-
-# Similar to check_no_compiler_messages, but also verify that the regular
-# expression PATTERN matches the compiler's output.
-proc check_no_messages_and_pattern {prop pattern args} {
-    global et_cache
-
-    set target [current_target_name]
-    if {![info exists et_cache($prop,target)]
-	|| $et_cache($prop,target) != $target} {
-	verbose "check_no_messages_and_pattern $prop: compiling source for $target" 2
-	set et_cache($prop,target) $target
-	set results [eval get_compiler_messages $prop 1 $args]
-	set et_cache($prop,value) \
-	    [expr [string match "" [lindex $results 0]] \
-		 && [regexp $pattern [lindex $results 1]]]
-    }
-    set value $et_cache($prop,value)
-    verbose "check_no_messages_and_pattern $prop: returning $value for $target" 2
-    return $value
-}
-# APPLE LOCAL end 5612787 sse4
-
 ###############################
 # proc check_weak_available { }
 ###############################

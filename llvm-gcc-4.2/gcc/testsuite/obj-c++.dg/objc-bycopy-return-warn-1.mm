@@ -2,6 +2,8 @@
 /* Check that an instance method with 'bycopy' return type issues a warning when the 
    object it is returning does not conform to NSCoding protocol. */
 /* { dg-do compile { target *-*-darwin* } } */
+/* APPLE LOCAL ARM Cocoa not available on arm-darwin targets */
+/* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
 #include <Cocoa/Cocoa.h>
 @interface MyClass : NSObject

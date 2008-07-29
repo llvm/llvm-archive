@@ -3,7 +3,8 @@
    when compiling for the NeXT runtime.  */
 /* Author: Ziemowit Laski <zlaski@apple.com>  */
 
-/* { dg-do compile { target *-*-darwin* } } */
+/* APPLE LOCAL ARM objc2 */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fnext-runtime" } */
 /* APPLE LOCAL 64-bit 4492976 */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */

@@ -18,12 +18,19 @@ const char *enc2 = @encode(Vec<double>);
 int main(void) {
   const char *encode = @encode(long);
 
-#if __OBJC2__
-  if (strcmp (encode, "q"))
-#else
-  if (strcmp (encode, "l"))
-#endif
-    abort();
+  /* APPLE LOCAL begin ARM 5804096 */
+  switch (sizeof (long))
+    {
+      case 4:
+	if (strcmp (encode, "l"))
+	  abort ();
+	break;
+      case 8:
+	if (strcmp (encode, "q"))
+	  abort ();
+	break;
+    }
+  /* APPLE LOCAL end ARM 5804096 */
 
   if (strcmp (enc, "{Vec<float>=ffiq}"))
     abort();

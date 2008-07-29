@@ -1,5 +1,5 @@
 /* APPLE LOCAL file 5814283 */
-/* { dg-do compile } */
+/* { dg-do compile { target "i?86-*-darwin*" } } */
 /* { dg-options "-O2 -mssse3" } */
 #include <emmintrin.h>
 #include <tmmintrin.h>

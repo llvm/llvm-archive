@@ -2,7 +2,9 @@
 // and if they perform their desired function.
 
 // { dg-do run }
-// { dg-options "-fobjc-call-cxx-cdtors" }
+/* APPLE LOCAL begin 5809596  */
+/* Removed option */
+/* APPLE LOCAL end 5809596  */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

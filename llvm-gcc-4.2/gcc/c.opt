@@ -751,6 +751,12 @@ fobjc-exceptions
 ObjC ObjC++ Var(flag_objc_exceptions)
 Enable Objective-C exception and synchronization syntax
 
+; APPLE LOCAL begin ARM hybrid objc-2.0
+fobjc-legacy-dispatch
+ObjC ObjC++ Var(flag_objc_legacy_dispatch) Init(-1)
+Use Objective-C v1 message dispatching
+; APPLE LOCAL end ARM hybrid objc-2.0
+
 ; APPLE LOCAL begin radar 2848255
 fobjc-zerocost-exceptions
 ObjC ObjC++ Var(flag_objc_zerocost_exceptions) Init(0)
@@ -772,6 +778,12 @@ Program only supprts (GC) in ObjC/ObjC++ programs
 fobjc-gc
 ObjC ObjC++ Var(flag_objc_gc)
 Enable garbage collection (GC) in Objective-C/Objective-C++ programs
+
+; APPLE LOCAL begin radar 5811887 - blocks
+fblocks
+C ObjC C++ ObjC++ Var(flag_blocks) Init(-1)
+Program supports c/objc extension blocks
+; APPLE LOCAL end radar 5811887 - blocks
 
 ; Nonzero means that we generate NeXT setjmp based exceptions.
 fobjc-sjlj-exceptions
@@ -964,6 +976,12 @@ C ObjC C++ ObjC++ Joined Separate
 iwithprefixbefore
 C ObjC C++ ObjC++ Joined Separate
 -iwithprefixbefore <dir>	Add <dir> to the end of the main include path
+
+; APPLE LOCAL begin ARM iwithsysroot 4917039
+iwithsysroot
+C ObjC C++ ObjC++ Joined Separate
+-iwithsysroot <dir> Add <sysroot>/<dir> to the start of the system include path
+; APPLE LOCAL end ARM iwithsysroot 4917039
 
 lang-asm
 C Undocumented

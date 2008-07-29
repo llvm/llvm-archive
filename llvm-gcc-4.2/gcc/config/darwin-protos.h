@@ -136,8 +136,9 @@ extern bool objc_check_format_cfstring (tree, unsigned HOST_WIDE_INT, bool *);
 /* APPLE LOCAL radar 5195402 */
 extern bool objc_check_cfstringref_type (tree);
 
-/* APPLE LOCAL begin radar 2996215 */
-extern tree objc_create_init_utf16_var (const unsigned char *, size_t, size_t *);
-/* APPLE LOCAL end radar 2996215 */
+/* APPLE LOCAL begin radar 2996215 - 6068877 */
+extern bool cvt_utf8_utf16 (const unsigned char *, size_t, unsigned char **, size_t *);
+extern tree create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUniChars);
+/* APPLE LOCAL end radar 2996215 - 6068877 */
 /* APPLE LOCAL radar 5202926 */
 extern bool objc_anonymous_local_objc_name (const char *);

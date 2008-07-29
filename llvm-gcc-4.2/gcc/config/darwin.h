@@ -124,6 +124,14 @@ extern GTY(()) int darwin_ms_struct;
    command-line option translations specific to the particular target
    architecture.  */
 
+/* LLVM LOCAL - begin */
+#ifdef ENABLE_LLVM
+#define LLVM_FLAG  { "-mllvm", "-Zmllvm" },
+#else
+#define LLVM_FLAG
+#endif
+/* LLVM LOCAL - end */
+
 #define TARGET_OPTION_TRANSLATE_TABLE \
   { "-all_load", "-Zall_load" },  \
   { "-allowable_client", "-Zallowable_client" },  \
@@ -160,7 +168,7 @@ extern GTY(()) int darwin_ms_struct;
   { "-init", "-Zinit" },  \
   { "-install_name", "-Zinstall_name" },  \
   /* LLVM LOCAL */ \
-  { "-mllvm", "-Zmllvm" },  \
+  LLVM_FLAG  \
   { "-mkernel", "-mkernel -static -Wa,-static" }, \
   { "-multiply_defined_unused", "-Zmultiplydefinedunused" },  \
   { "-multiply_defined", "-Zmultiply_defined" },  \
@@ -191,6 +199,13 @@ extern int darwin_running_cxx;
 extern GTY(()) int darwin_reverse_bitfields;
 /* APPLE LOCAL end pragma reverse_bitfields */
 
+/* APPLE LOCAL begin ARM 5683689 */
+enum darwin_version_type {
+  DARWIN_VERSION_MACOSX,
+  DARWIN_VERSION_IPHONEOS
+};
+/* APPLE LOCAL end ARM 5683689 */
+
 /* APPLE LOCAL AT&T-style stub 4164563 */
 #define MACHOPIC_ATT_STUB (darwin_macho_att_stub)
 
@@ -202,6 +217,11 @@ extern GTY(()) int darwin_reverse_bitfields;
 	warn_pointer_sign = 1;						\
 	CPP_OPTION (parse_in, pascal_strings) = 1;			\
       }									\
+    /* APPLE LOCAL begin ARM 5683689 */					\
+    if (darwin_macosx_version_min && darwin_iphoneos_version_min)	\
+      error ("-mmacosx-version-min not allowed with"			\
+             " -miphoneos-version-min");				\
+    /* APPLE LOCAL end ARM 5683689 */					\
     /* The c_dialect...() macros are not available to us here.  */	\
     darwin_running_cxx = (strstr (lang_hooks.name, "C++") != 0);	\
     /* APPLE LOCAL end constant cfstrings */				\
@@ -222,6 +242,14 @@ do {					\
 
 /* These compiler options take n arguments.  */
 
+/* LLVM LOCAL - begin */
+#ifdef ENABLE_LLVM
+#define LLVM_STRCMP(STR) !strcmp (STR, "Zmllvm") ? 1 :
+#else
+#define LLVM_STRCMP(STR)
+#endif
+/* LLVM LOCAL - end */
+ 
 #undef  WORD_SWITCH_TAKES_ARG
 #define WORD_SWITCH_TAKES_ARG(STR)              \
   (DEFAULT_WORD_SWITCH_TAKES_ARG (STR) ? 1 :    \
@@ -237,8 +265,8 @@ do {					\
    !strcmp (STR, "Zimage_base") ? 1 :           \
    !strcmp (STR, "Zinit") ? 1 :                 \
    !strcmp (STR, "Zinstall_name") ? 1 :         \
-  /* LLVM LOCAL */ \
-   !strcmp (STR, "Zmllvm") ? 1 :                \
+   /* LLVM LOCAL */                             \
+   LLVM_STRCMP(STR)                             \
    !strcmp (STR, "Zmultiplydefinedunused") ? 1 : \
    !strcmp (STR, "Zmultiply_defined") ? 1 :     \
    !strcmp (STR, "precomp-trustfile") ? 1 :     \
@@ -306,6 +334,7 @@ do {					\
    specifying the handling of options understood by generic Unix
    linkers, and for positional arguments like libraries.  */
 /* APPLE LOCAL begin mainline */
+#ifdef ENABLE_LLVM
 #define LINK_COMMAND_SPEC "\
 %{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
     %(linker) %l %X %{d} %{s} %{t} %{Z} %{u*} \
@@ -322,10 +351,29 @@ do {					\
     %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
 %{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
 "/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
-"/* APPLE LOCAL ARM 5342595 */"\
 "/* LLVM LOCAL do not use dsymutil with -O1 or higher */"\
     %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
     %{!O: %{!O1: %{!O2: %{!O3: %{!O4: %{!Os: %(darwin_dsymutil) }}}}}}}}}}}}}}"
+#else
+#define LINK_COMMAND_SPEC "\
+%{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+    %(linker) %l %X %{d} %{s} %{t} %{Z} %{u*} \
+    %{A} %{e*} %{m} %{r} %{x} \
+    %{o*}%{!o:-o a.out} \
+    %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
+    %{L*} %{fopenmp:%:include(libgomp.spec)%(link_gomp)}   \
+"/* APPLE LOCAL add fcreate-profile */"\
+    %(link_libgcc) %o %{fprofile-arcs|fprofile-generate|fcreate-profile|coverage:-lgcov} \
+"/* APPLE LOCAL nested functions 4357979  */"\
+    %{fnested-functions: -allow_stack_execute} \
+    %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %G %L}} \
+"/* APPLE LOCAL begin mainline 4.3 2006-10-31 4370146 */"\
+    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
+%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
+"/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
+    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
+    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+#endif
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT
@@ -342,6 +390,14 @@ do {					\
 /* Note that options taking arguments may appear multiple times on a
    command line with different arguments each time, so put a * after
    their names so all of them get passed.  */
+/* LLVM LOCAL - begin */
+#ifdef ENABLE_LLVM
+#define LLVM_LINK_SPEC "%{Zmllvm*:-mllvm %*}"
+#else
+#define LLVM_LINK_SPEC ""
+#endif
+/* LLVM LOCAL - end */
+
 /* APPLE LOCAL begin mainline */
 #define LINK_SPEC  \
   "%{static}%{!static:-dynamic} \
@@ -386,13 +442,14 @@ do {					\
    %{headerpad_max_install_names*} \
    %{Zimage_base*:-image_base %*} \
    %{Zinit*:-init %*} \
-   "/* APPLE LOCAL begin mainline 2007-02-20 5005743 */" \
-   %{!mmacosx-version-min=*:-macosx_version_min %(darwin_minversion)} \
+   "/* APPLE LOCAL begin ARM 5683689 */"\
+   %{!mmacosx-version-min=*: %{!miphoneos-version-min=*: %(darwin_ld_minversion)}} \
    %{mmacosx-version-min=*:-macosx_version_min %*} \
-   "/* APPLE LOCAL end mainline 2007-02-20 5005743 */" \
-   "/* APPLE LOCAL begin llvm */" \
-   %{Zmllvm*:-mllvm %*} \
-   "/* APPLE LOCAL end llvm */" \
+   %{miphoneos-version-min=*:-iphoneos_version_min %*} \
+   "/* APPLE LOCAL end ARM 5683689 */"\
+   "/* APPLE LOCAL begin llvm */\
+  LLVM_LINK_SPEC \
+   /* APPLE LOCAL end llvm */" \
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \
@@ -448,6 +505,8 @@ do {					\
 #define REAL_LIBGCC_SPEC						   \
 /* APPLE LOCAL libgcc_static.a  */					   \
    "%{static:-lgcc_static; static-libgcc: -lgcc_eh -lgcc;		   \
+      "/* APPLE LOCAL ARM 5683689 5681645 */"				   \
+      miphoneos-version-min=*: %(darwin_iphoneos_libgcc);		   \
       shared-libgcc|fexceptions|fgnu-runtime:				   \
        %:version-compare(!> 10.5 mmacosx-version-min= -lgcc_s.10.4)	   \
        %:version-compare(>= 10.5 mmacosx-version-min= -lgcc_s.10.5)	   \
@@ -491,19 +550,27 @@ do {					\
   { "darwin_dylib1", DARWIN_DYLIB1_SPEC },				\
   { "darwin_minversion", DARWIN_MINVERSION_SPEC },			\
 /* APPLE LOCAL end mainline */						\
-/* APPLE LOCAL begin ARM 5342595 */					\
-  { "darwin_dsymutil", DARWIN_DSYMUTIL_SPEC },
-/* APPLE LOCAL end ARM 5342595 */
- 
-/* APPLE LOCAL begin mainline */
+/* APPLE LOCAL begin ARM 5683689 */					\
+  { "darwin_cc1_minversion", DARWIN_CC1_MINVERSION_SPEC },		\
+  { "darwin_ld_minversion", DARWIN_LD_MINVERSION_SPEC },		\
+/* APPLE LOCAL end ARM 5683689 */					\
+/* APPLE LOCAL ARM 5681645 */						\
+  { "darwin_iphoneos_libgcc", DARWIN_IPHONEOS_LIBGCC_SPEC },
+
+/* APPLE LOCAL begin ARM 5683689 */
 #define DARWIN_DYLIB1_SPEC						\
-  "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
-   %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)"
+  "%{miphoneos-version-min=*: -ldylib1.o}				\
+   %{!miphoneos-version-min=*:						\
+     %:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
+     %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)}"
 
 #define DARWIN_CRT1_SPEC						\
-  "%:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
-   %:version-compare(>= 10.5 mmacosx-version-min= -lcrt1.10.5.o)"
-/* APPLE LOCAL end mainline */
+/* APPLE LOCAL ARM 5823776 iphoneos should use crt1.o */		\
+  "%{miphoneos-version-min=*: -lcrt1.o}					\
+   %{!miphoneos-version-min=*:						\
+     %:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
+     %:version-compare(>= 10.5 mmacosx-version-min= -lcrt1.10.5.o)}"
+/* APPLE LOCAL end ARM 5683689 */
 
 /* Default Darwin ASM_SPEC, very simple.  */
 /* APPLE LOCAL begin radar 4161346 */
@@ -517,12 +584,18 @@ do {					\
 #define DBX_DEBUGGING_INFO 1
 
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 /* Prefer DWARF only if appropriate dsymutil is available.  */
-  #define DWARF2_DEBUGGING_INFO
+#define DWARF2_DEBUGGING_INFO
 #ifdef HAVE_DSYMUTIL
   #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 #else
   #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
+#endif
+#else
+/* Prefer DWARF2.  */
+#define DWARF2_DEBUGGING_INFO
+#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 #endif
 /* LLVM LOCAL end */
 
@@ -591,6 +664,7 @@ do {					\
   } while (0)
 
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 /* As in the warning above, alias definitions aren't supported on Mach-O. */
 #define TARGET_DOES_NOT_SUPPORT_ALIAS_DEFINITIONS
 
@@ -608,6 +682,7 @@ do {					\
       (FN)->setLinkage(Function::ExternalLinkage);                      \
     }                                                                   \
   } while (0)
+#endif
 /* LLVM LOCAL end */
 
 /* Darwin has the pthread routines in libSystem, which every program
@@ -701,7 +776,10 @@ do {					\
 #undef OBJC_FLAG_ZEROCOST_EXCEPTIONS
 #define OBJC_FLAG_ZEROCOST_EXCEPTIONS						\
   do {									\
-       if (strverscmp (darwin_macosx_version_min, "10.5") < 0) 		\
+       /* APPLE LOCAL begin ARM 5683689 */				\
+       if (darwin_macosx_version_min					\
+	   && strverscmp (darwin_macosx_version_min, "10.5") < 0)	\
+       /* APPLE LOCAL end ARM 5683689 */				\
 	 error ("Mac OS X version 10.5 or later is needed for zerocost-exceptions"); \
      } while (0)
 /* APPLE LOCAL end radar 5023725 */
@@ -729,6 +807,10 @@ do {					\
          } 								\
        if (flag_objc_abi == -1)						\
          flag_objc_abi = (flag_next_runtime && TARGET_64BIT) ? 2 : 1;	\
+       /* APPLE LOCAL begin ARM hybrid objc-2.0 */			\
+       if (flag_objc_legacy_dispatch == -1)				\
+	 flag_objc_legacy_dispatch = (flag_objc_abi < 2);		\
+       /* APPLE LOCAL end ARM hybrid objc-2.0 */			\
          /* APPLE LOCAL begin radar 2848255 */                          \
         /* APPLE LOCAL begin radar 5023725 */                           \
         if (flag_objc_abi == 2)                                         \
@@ -745,14 +827,29 @@ do {					\
              flag_objc_abi = 2;  /* recover */                          \
            }                                                            \
          /* APPLE LOCAL end radar 2848255 */                            \
+	/* APPLE LOCAL begin 5660282 */					\
+	if (darwin_iphoneos_version_min && flag_objc_gc)		\
+	  {								\
+	    warning (0, "-fobjc-gc not supported for iPhone OS; ignoring.");\
+	    flag_objc_gc = 0;						\
+	  }								\
+	if (darwin_iphoneos_version_min && flag_objc_gc_only)		\
+	  {								\
+	    warning (0, "-fobjc-gc-only not supported for iPhone OS; ignoring.");\
+	    flag_objc_gc_only = 0;					\
+	  }								\
+	/* APPLE LOCAL end 5660282 */					\
   } while (0)
 /* APPLE LOCAL end radar 4862848 */
 
 /* APPLE LOCAL begin radar 4531086 */
 #undef OBJC_WARN_OBJC2_FEATURES
 #define OBJC_WARN_OBJC2_FEATURES(MESSAGE)				\
+  /* APPLE LOCAL begin ARM 5683689 */					\
   do {									\
-    if (strverscmp (darwin_macosx_version_min, "10.5") < 0)		\
+    if (darwin_macosx_version_min					\
+	&& strverscmp (darwin_macosx_version_min, "10.5") < 0)		\
+  /* APPLE LOCAL end ARM 5683689 */					\
       warning (0, "Mac OS X version 10.5 or later is needed for use of %s", \
 	       MESSAGE);						\
   } while (0)
@@ -1092,32 +1189,40 @@ enum machopic_addr_class {
       }								\
   } while (0)
 
+/* APPLE LOCAL begin ARM 5603763 */
+/* Given a symbol name, remove quotes, prefix it with "L", suffix it
+   with SUFFIX, and re-apply quotes if needed.  */
+
+#define GEN_SUFFIXED_NAME_FOR_SYMBOL(BUF,SYMBOL,SYMBOL_LENGTH,SUFFIX)	\
+  do {									\
+    const char *symbol_ = (SYMBOL);					\
+    char *buffer_ = (BUF);						\
+    if (symbol_[0] == '"')						\
+      {									\
+        strcpy (buffer_, "\"L");					\
+        strcpy (buffer_ + 2, symbol_ + 1);				\
+	strcpy (buffer_ + (SYMBOL_LENGTH), SUFFIX "\"");		\
+      }									\
+    else if (name_needs_quotes (symbol_))				\
+      {									\
+        strcpy (buffer_, "\"L");					\
+        strcpy (buffer_ + 2, symbol_);					\
+	strcpy (buffer_ + (SYMBOL_LENGTH) + 2, SUFFIX "\"");		\
+      }									\
+    else								\
+      {									\
+        strcpy (buffer_, "L");						\
+        strcpy (buffer_ + 1, symbol_);					\
+	strcpy (buffer_ + (SYMBOL_LENGTH) + 1, SUFFIX);			\
+      }									\
+  } while (0)
+
 /* Given a symbol name string, create the lazy pointer version
    of the symbol name.  */
 
 #define GEN_LAZY_PTR_NAME_FOR_SYMBOL(BUF,SYMBOL,SYMBOL_LENGTH)	\
-  do {								\
-    const char *symbol_ = (SYMBOL);                             \
-    char *buffer_ = (BUF);					\
-    if (symbol_[0] == '"')					\
-      {								\
-        strcpy (buffer_, "\"L");				\
-        strcpy (buffer_ + 2, symbol_ + 1);			\
-	strcpy (buffer_ + (SYMBOL_LENGTH), "$lazy_ptr\"");	\
-      }								\
-    else if (name_needs_quotes (symbol_))			\
-      {								\
-        strcpy (buffer_, "\"L");				\
-        strcpy (buffer_ + 2, symbol_);				\
-	strcpy (buffer_ + (SYMBOL_LENGTH) + 2, "$lazy_ptr\"");	\
-      }								\
-    else							\
-      {								\
-        strcpy (buffer_, "L");					\
-        strcpy (buffer_ + 1, symbol_);				\
-	strcpy (buffer_ + (SYMBOL_LENGTH) + 1, "$lazy_ptr");	\
-      }								\
-  } while (0)
+  GEN_SUFFIXED_NAME_FOR_SYMBOL (BUF, SYMBOL, SYMBOL_LENGTH, "$lazy_ptr")
+/* APPLE LOCAL end ARM 5603763 */
 
 #define EH_FRAME_SECTION_NAME   "__TEXT"
 #define EH_FRAME_SECTION_ATTR ",coalesced,no_toc+strip_static_syms+live_support"
@@ -1168,8 +1273,10 @@ enum machopic_addr_class {
 #define HANDLE_PRAGMA_PACK_PUSH_POP 1
 
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 /* Handle pragma pack separately */
 #define TARGET_OVERRIDE_PRAGMA_PACK_HANDLER 1
+#endif
 /* LLVM LOCAL end */
 
 #define DARWIN_REGISTER_TARGET_PRAGMAS()			\
@@ -1296,7 +1403,6 @@ void add_framework_path (char *);
 #define TARGET_HANDLE_C_OPTION(CODE, ARG, VALUE)			\
   darwin_handle_c_option (CODE, ARG, VALUE)
 /* APPLE LOCAL end iframework for 4.3 4094959 */
-
 
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
@@ -1434,11 +1540,23 @@ extern int flag_apple_kext;
 
 /* APPLE LOCAL begin mainline 2007-06-14 5235474 */
 #ifndef CROSS_DIRECTORY_STRUCTURE
-extern void darwin_default_min_version (int * argc, char *** argv);
+/* APPLE LOCAL begin ARM 5683689 */
+/* LLVM FIXME: Uncomment!!! */
+#if 0
+extern void darwin_default_min_version (int * argc, char *** argv,
+					enum darwin_version_type vers_type);
 #define GCC_DRIVER_HOST_INITIALIZATION \
   /* APPLE LOCAL isysroot 5083137 */ \
   GCC_DRIVER_HOST_INITIALIZATION1; \
-  darwin_default_min_version (&argc, &argv)
+  darwin_default_min_version (&argc, &argv, DARWIN_DEFAULT_VERSION_TYPE)
+/* APPLE LOCAL end ARM 5683689 */
+#else
+extern void darwin_default_min_version (int * argc, char *** argv);
+#define GCC_DRIVER_HOST_INITIALIZATION          \
+   /* APPLE LOCAL isysroot 5083137 */ \
+   GCC_DRIVER_HOST_INITIALIZATION1; \
+   darwin_default_min_version (&argc, &argv)
+#endif
 #endif /* CROSS_DIRECTORY_STRUCTURE */
 /* APPLE LOCAL end mainline 2007-06-14 5235474 */
 

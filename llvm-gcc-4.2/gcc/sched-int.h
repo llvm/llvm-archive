@@ -344,7 +344,6 @@ struct haifa_insn_data
 };
 
 extern struct haifa_insn_data *h_i_d;
-
 /* Used only if (current_sched_info->flags & USE_GLAT) != 0.
    These regsets store global_live_at_{start, end} information
    for each basic block.  */

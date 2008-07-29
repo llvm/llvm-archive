@@ -70,6 +70,7 @@ extern "C" {
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
+#include "c-common.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -380,7 +381,7 @@ static void createOptimizationPasses() {
       PM->add(createFunctionInliningPass());    // Inline small functions
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
-    if (!lang_hooks.flag_no_builtin())
+    if (!flag_no_builtin)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.

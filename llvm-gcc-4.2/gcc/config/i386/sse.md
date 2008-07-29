@@ -3069,17 +3069,9 @@
   operands[1] = gen_lowpart (TImode, operands[1]);
 })
 
-(define_insn "sse2_lshrti3"
-  [(set (match_operand:TI 0 "register_operand" "=x")
- 	(lshiftrt:TI (match_operand:TI 1 "register_operand" "0")
-		     (match_operand:SI 2 "const_0_to_255_mul_8_operand" "n")))]
-  "TARGET_SSE2"
-{
-  operands[2] = GEN_INT (INTVAL (operands[2]) / 8);
-  return "psrldq\t{%2, %0|%0, %2}";
-}
-  [(set_attr "type" "sseishft")
-   (set_attr "mode" "TI")])
+;; APPLE LOCAL begin mainline 5951842
+;; moved sse2_lshrti3 to i386.md
+;; APPLE LOCAL end mainline 5951842
 
 (define_expand "vec_shr_<mode>"
   [(set (match_operand:SSEMODEI 0 "register_operand" "")

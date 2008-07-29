@@ -874,9 +874,9 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
  * Description:
  *  Check that addr exists in pool MP
  */
-void
+void *
 poolcheck(MetaPoolTy* MP, void* addr) {
-  if (!pchk_ready || !MP) return;
+  if (!pchk_ready || !MP) return addr;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -885,8 +885,9 @@ poolcheck(MetaPoolTy* MP, void* addr) {
   int t = adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
   if (t)
-    return;
+    return addr;
   if(do_fail) poolcheckfail ("poolcheck failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  return 0;
 }
 
 /*
@@ -896,9 +897,9 @@ poolcheck(MetaPoolTy* MP, void* addr) {
  *  Same as poolcheck(), but does not fail if the pointer is not found. This is
  *  useful for checking incomplete/unknown nodes.
  */
-void
+void *
 poolcheck_i (MetaPoolTy* MP, void* addr) {
-  if (!pchk_ready || !MP) return;
+  if (!pchk_ready || !MP) return addr;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -911,7 +912,7 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
   volatile int t = adl_splay_find(&MP->Objs, addr);
   PCUNLOCK();
 
-  return;
+  return addr;
 }
 
 /*
@@ -921,9 +922,9 @@ poolcheck_i (MetaPoolTy* MP, void* addr) {
  *  Check that the given pointer is within the bounds of a valid I/O object.
  */
 #ifdef SVA_IO
-void
+void *
 poolcheckio (MetaPoolTy* MP, void* addr) {
-  if (!pchk_ready || !MP) return;
+  if (!pchk_ready || !MP) return addr;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -933,19 +934,20 @@ poolcheckio (MetaPoolTy* MP, void* addr) {
    * Determine if this is an I/O port address.  If so, just let it pass.
    */
   if (((unsigned int)(addr)) & 0xffff0000)
-    return;
+    return addr;
 
   PCLOCK();
   int t = adl_splay_find(&MP->IOObjs, addr);
   PCUNLOCK();
   if (t)
-    return;
+    return addr;
   poolcheckfail ("poolcheckio failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
+  return 0;
 }
 
-void
+void *
 poolcheckio_i (MetaPoolTy* MP, void* addr) {
-  if (!pchk_ready || !MP) return;
+  if (!pchk_ready || !MP) return addr;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
 #endif
@@ -955,14 +957,14 @@ poolcheckio_i (MetaPoolTy* MP, void* addr) {
    * Determine if this is an I/O port address.  If so, just let it pass.
    */
   if (((unsigned int)(addr)) & 0xffff0000)
-    return;
+    return addr;
 
   PCLOCK();
   int found = adl_splay_find(&MP->IOObjs, addr);
 
   if (found) {
     PCUNLOCK();
-    return;
+    return addr;
   }
 
   /*
@@ -978,7 +980,7 @@ poolcheckio_i (MetaPoolTy* MP, void* addr) {
   /*
    * We don't know where this pointer can pointer to; just ignore it for now.
    */
-  return;
+  return addr;
 }
 #endif
 

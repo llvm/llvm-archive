@@ -108,7 +108,8 @@ extern "C" {
   void pchk_drop_int (void * addr);
 
   /* check that addr exists in pool MP */
-  void poolcheck (MetaPoolTy* MP, void* addr) __attribute__ ((pure));
+  void * poolcheck   (MetaPoolTy* MP, void* addr) __attribute__ ((pure));
+  void * poolcheck_i (MetaPoolTy* MP, void* addr) __attribute__ ((pure));
 
   /* check that src and dest are same obj or slab */
   void poolcheckarray(MetaPoolTy* MP, void* src, void* dest);
@@ -118,8 +119,8 @@ extern "C" {
   void poolcheckarray_i(MetaPoolTy* MP, void* src, void* dest);
 
   /* I/O Poolchecks */
-  void poolcheckio   (MetaPoolTy* MP, void* addr);
-  void poolcheckio_i (MetaPoolTy* MP, void* addr);
+  void * poolcheckio   (MetaPoolTy* MP, void* addr);
+  void * poolcheckio_i (MetaPoolTy* MP, void* addr);
 
   /* if src is an out of object pointer, get the original value */
   void* pchk_getActualValue(MetaPoolTy* MP, void* src);

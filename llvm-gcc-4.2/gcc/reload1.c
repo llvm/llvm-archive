@@ -1797,6 +1797,21 @@ find_reg (struct insn_chain *chain, int order)
 	      /* Among registers with equal cost, prefer caller-saved ones, or
 		 use REG_ALLOC_ORDER if it is defined.  */
 	      || (this_cost == best_cost
+/* APPLE LOCAL begin 5831562 add DIMODE_REG_ALLOC_ORDER */
+#ifdef DIMODE_REG_ALLOC_ORDER
+		  && ((rl->mode == DImode 
+		        && dimode_inv_reg_alloc_order[regno]
+		           < dimode_inv_reg_alloc_order[best_reg])
+		      || (rl->mode != DImode
+#ifdef REG_ALLOC_ORDER
+			  && (inv_reg_alloc_order[regno]
+			      < inv_reg_alloc_order[best_reg])
+#else
+			  && call_used_regs[regno]
+			  && ! call_used_regs[best_reg]
+#endif
+		    ))
+#else
 #ifdef REG_ALLOC_ORDER
 		  && (inv_reg_alloc_order[regno]
 		      < inv_reg_alloc_order[best_reg])
@@ -1804,6 +1819,8 @@ find_reg (struct insn_chain *chain, int order)
 		  && call_used_regs[regno]
 		  && ! call_used_regs[best_reg]
 #endif
+#endif
+/* APPLE LOCAL end 5831562 add DIMODE_REG_ALLOC_ORDER */
 		  ))
 	    {
 	      best_reg = regno;

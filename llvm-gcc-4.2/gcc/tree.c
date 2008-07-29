@@ -1911,7 +1911,7 @@ expr_align (tree t)
     case SAVE_EXPR:         case COMPOUND_EXPR:       case MODIFY_EXPR:
     case INIT_EXPR:         case TARGET_EXPR:         case WITH_CLEANUP_EXPR:
     case CLEANUP_POINT_EXPR:
-      /* These don't change the alignment of an object. */
+      /* These don't change the alignment of an object.  */
       return expr_align (TREE_OPERAND (t, 0));
 
     case COND_EXPR:
@@ -5102,6 +5102,25 @@ build_pointer_type (tree to_type)
   return build_pointer_type_for_mode (to_type, ptr_mode, false);
 }
 
+/* APPLE LOCAL begin radar 5732232 - blocks */
+tree
+build_block_pointer_type (tree to_type)
+{
+  tree t;
+  
+  t = make_node (BLOCK_POINTER_TYPE);
+
+  TREE_TYPE (t) = to_type;
+  TYPE_MODE (t) = ptr_mode;
+
+  /* Lay out the type.  This function has many callers that are concerned
+     with expression-construction, and this simplifies them all.  */
+  layout_type (t);
+
+  return t;
+}
+/* APPLE LOCAL end radar 5732232 - blocks */
+
 /* Same as build_pointer_type_for_mode, but for REFERENCE_TYPE.  */
 
 tree
@@ -6919,7 +6938,12 @@ reconstruct_complex_type (tree type, tree bottom)
       /* APPLE LOCAL begin AltiVec */
       outer = (TREE_CODE (type) == REFERENCE_TYPE
 	       ? build_reference_type (inner)
-	       : build_pointer_type (inner));
+               /* APPLE LOCAL begin blocks 5882266 */
+	       : (TREE_CODE (type) == BLOCK_POINTER_TYPE ? 
+                  build_block_pointer_type (inner) : 
+                  build_pointer_type (inner))
+               );
+               /* APPLE LOCAL end blocks 5882266 */
       /* APPLE LOCAL end AltiVec */
     }
   else if (TREE_CODE (type) == ARRAY_TYPE)

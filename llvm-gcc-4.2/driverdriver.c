@@ -120,6 +120,11 @@ struct arch_config_guess_map arch_config_map [] =
   {"ppc", "powerpc"},
   {"ppc64", "powerpc"},
   {"x86_64", "i686"},
+  {"arm", "arm"},
+  {"armv4t", "arm"},
+  {"armv5", "arm"},
+  {"xscale", "arm"},
+  {"armv6", "arm"},
   {NULL, NULL}
 };
 
@@ -754,6 +759,16 @@ add_arch_options (int index, const char **current_argv, int arch_index)
     current_argv[arch_index] = "-march=pentium2";
   else if (!strcmp (arches[index], "x86_64"))
     current_argv[arch_index] = "-m64";
+  else if (!strcmp (arches[index], "arm"))
+    current_argv[arch_index] = "-march=armv4t";
+  else if (!strcmp (arches[index], "armv4t"))
+    current_argv[arch_index] = "-march=armv4t";
+  else if (!strcmp (arches[index], "armv5"))
+    current_argv[arch_index] = "-march=armv5tej";
+  else if (!strcmp (arches[index], "xscale"))
+    current_argv[arch_index] = "-march=xscale";
+  else if (!strcmp (arches[index], "armv6"))
+    current_argv[arch_index] = "-march=armv6k";
   else
     count = 0;
 
@@ -1251,7 +1266,6 @@ main (int argc, const char **argv)
   char *override_option_str = NULL;
   char path_buffer[2*PATH_MAX+1];
   int linklen;
-  int delete_prefix = 0;
 
   total_argc = argc;
   prog_len = 0;
@@ -1307,26 +1321,7 @@ main (int argc, const char **argv)
   curr_dir = (char *) malloc (sizeof (char) * (prefix_len + 1));
   strncpy (curr_dir, argv[0], prefix_len);
   curr_dir[prefix_len] = '\0';
-  /* LLVM LOCAL begin - These drivers live in /.../usr/llvm-gcc-4.2/bin */
-#if 0
-  {
-    size_t curr_dir_len = strlen (curr_dir);
-    const char *llvm_bin_dir = "/usr/llvm-gcc-4.2/bin/";
-    size_t bin_dir_len = strlen (llvm_bin_dir);
-
-    if (curr_dir_len <= bin_dir_len ||
-        strncmp (&curr_dir[curr_dir_len - bin_dir_len], llvm_bin_dir, bin_dir_len) != 0) {
-      driver_exec_prefix =
-        make_relative_prefix (argv[0], curr_dir, "/usr/llvm-gcc-4.2/bin/");
-      delete_prefix = 1;
-      prefix_len = strlen (driver_exec_prefix);
-    } else
-      driver_exec_prefix = curr_dir;
-  }
-#else
-  driver_exec_prefix = curr_dir;
-#endif
-  /* LLVM LOCAL end - These drivers live in /.../usr/llvm-gcc-4.2/bin */
+  driver_exec_prefix = (argv[0], "/usr/bin", curr_dir);
 
 #ifdef DEBUG
   fprintf (stderr,"%s: full progname = %s\n", progname, argv[0]);
@@ -1628,11 +1623,5 @@ main (int argc, const char **argv)
 
   final_cleanup ();
   free (curr_dir);
-  /* LLVM LOCAL - begin */
-#if 0
-  if (delete_prefix)
-    free (driver_exec_prefix);
-#endif
-  /* LLVM LOCAL - end */
   return greatest_status;
 }

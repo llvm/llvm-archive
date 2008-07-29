@@ -77,6 +77,20 @@ AC_ARG_ENABLE(safeio,
                   AC_DEFINE(SVA_IO,[[1]]),
                   )
 
+dnl --enable-safemmu: compile SAFECode to perform SAFE MMU checks
+AC_ARG_ENABLE(safemmu,
+  AS_HELP_STRING(--enable-safemmu,
+                 [Enable safe MMU checks (default is NO)]),
+                  AC_DEFINE(SVA_MMU,[[1]]),
+                  )
+
+dnl --enable-safekstacks: compile SAFECode to perform SAFE kernel stack checks
+AC_ARG_ENABLE(safekstacks,
+  AS_HELP_STRING(--enable-safekstacks,
+                 [Enable safe kernel stack checks (default is NO)]),
+                  AC_DEFINE(SVA_KSTACKS,[[1]]),
+                  )
+
 dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************

@@ -806,6 +806,7 @@ Optional Features:
   --enable-kernel         Use SAFECode for use with Linux Kernel (default is
                           NO)
   --enable-safeio         Enable safe I/O checks (default is NO)
+  --enable-safemmu        Enable safe MMU checks (default is NO)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2457,6 +2458,15 @@ if test "${enable_safeio+set}" = set; then
   enableval="$enable_safeio"
   cat >>confdefs.h <<\_ACEOF
 #define SVA_IO 1
+_ACEOF
+
+fi;
+
+# Check whether --enable-safemmu or --disable-safemmu was given.
+if test "${enable_safemmu+set}" = set; then
+  enableval="$enable_safemmu"
+  cat >>confdefs.h <<\_ACEOF
+#define SVA_MMU 1
 _ACEOF
 
 fi;

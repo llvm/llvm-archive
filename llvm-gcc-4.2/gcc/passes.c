@@ -83,9 +83,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "tree-pass.h"
 #include "tree-dump.h"
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #include "llvm.h"
 
-#ifdef ENABLE_LLVM
 /* LLVM doesn't need the GCC scheduler.  Clear this so it need not be linked
    in.  */
 #undef INSN_SCHEDULING
@@ -198,11 +198,11 @@ rest_of_decl_compilation (tree decl,
     {
     /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
-    timevar_push (TV_SYMOUT);
-    debug_hooks->type_decl (decl, !top_level);
-    timevar_pop (TV_SYMOUT);
+      timevar_push (TV_SYMOUT);
+      debug_hooks->type_decl (decl, !top_level);
+      timevar_pop (TV_SYMOUT);
 #else
-    llvm_emit_typedef (decl);
+      llvm_emit_typedef (decl);
 #endif
     /* LLVM LOCAL end */
     }
@@ -246,7 +246,7 @@ finish_optimization_passes (void)
   enum tree_dump_index i;
   struct dump_file_info *dfi;
   char *name;
-  
+
   timevar_push (TV_DUMP);
   if (profile_arc_flag || flag_test_coverage || flag_branch_probabilities)
     {
@@ -725,6 +725,11 @@ init_optimization_passes (void)
   NEXT_PASS (pass_sms);
   NEXT_PASS (pass_sched);
   NEXT_PASS (pass_local_alloc);
+  /* APPLE LOCAL begin 5695218 */
+#ifdef TARGET_386
+  NEXT_PASS (pass_life3);
+#endif
+  /* APPLE LOCAL end 5695218 */
   NEXT_PASS (pass_global_alloc);
   NEXT_PASS (pass_postreload);
   *p = NULL;

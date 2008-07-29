@@ -33,6 +33,34 @@ castTo (Value * V, const Type * Ty, Instruction * InsertPt) {
 }
 
 //
+// Function: castTo()
+//
+// Description:
+//  Given an LLVM value, insert a cast instruction to make it a given type.
+//
+static inline Value *
+castTo (Value * V, const Type * Ty, BasicBlock * BB) {
+  //
+  // Don't bother creating a cast if it's already the correct type.
+  //
+  if (V->getType() == Ty)
+    return V;
+                                                                                
+  //
+  // If it's a constant, just create a constant expression.
+  //
+  if (Constant * C = dyn_cast<Constant>(V)) {
+    Constant * CE = ConstantExpr::getCast (C, Ty);
+    return CE;
+  }
+                                                                                
+  //
+  // Otherwise, insert a cast instruction.
+  //
+  return new CastInst(V, Ty, "cast", BB);
+}
+
+//
 // Function: indexesStructsOnly()
 //
 // Description:

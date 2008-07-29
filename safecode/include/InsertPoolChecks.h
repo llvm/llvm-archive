@@ -4,6 +4,7 @@
 #include "safecode/Config/config.h"
 #include "ConvertUnsafeAllocas.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/Analysis/ValueNumbering.h"
 #include "llvm/Pass.h"
 
 #ifndef LLVA_KERNEL
@@ -153,6 +154,7 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<ConvertUnsafeAllocas>();
       AU.addRequired<PreInsertPoolChecks>();
       AU.addPreserved<PreInsertPoolChecks>();
+      AU.addRequired<ValueNumbering>();
 #if 0
       AU.addRequired<CompleteBUDataStructures>();
       AU.addRequired<TDDataStructures>();
@@ -175,6 +177,7 @@ struct InsertPoolChecks : public FunctionPass {
     PreInsertPoolChecks * preSCPass;
     CUA::ConvertUnsafeAllocas * cuaPass;
     TargetData * TD;
+    ValueNumbering * VNPass;
 #ifndef  LLVA_KERNEL
     PoolAllocate * paPass;
     EquivClassGraphs *equivPass;
@@ -239,6 +242,7 @@ struct InsertPoolChecks : public FunctionPass {
     DSNode* getDSNode(const Value *V, Function *F);
     unsigned getDSNodeOffset(const Value *V, Function *F);
     void addLoadStoreChecks (Function & F);
+    void optimizeLoadStoreChecks (Function & F);
     void addDeclaredStackChecks (Function & F);
     void insertAlignmentCheck (LoadInst * LI);
     void TransformFunction(Function &F);

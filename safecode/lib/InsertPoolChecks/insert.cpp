@@ -43,9 +43,15 @@ cl::opt<bool> EnableIOChecks  ("enable-iochecks", cl::Hidden,
                                cl::init(false),
                                cl::desc("Enable checks on I/O operations"));
 
+#ifdef SVA_KSTACKS
+cl::opt<bool> EnableDSChecks  ("enable-dschecks", cl::Hidden,
+                               cl::init(true),
+                               cl::desc("Enable checks for creating stacks"));
+#else
 cl::opt<bool> EnableDSChecks  ("enable-dschecks", cl::Hidden,
                                cl::init(false),
                                cl::desc("Enable checks for creating stacks"));
+#endif
 
 cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::Hidden, cl::init(false),
@@ -158,6 +164,8 @@ static Statistic<> GEPLSChecks  ("safecode", "Number of Load/Store Checks on GEP
 static Statistic<> LSGEPS  ("safecode", "Number of GEPs used only for loads and stores");
 static Statistic<> SavedLSGEPS  ("safecode", "Number of saved loads and stores through LSGEPS");
 static Statistic<> RedundantLS  ("safecode", "Number of redundant load/store checks");
+static Statistic<> FuncFPLS  ("safecode", "Number of loads that are only used for indirect calls");
+static Statistic<> GEP2LS  ("safecode", "Number of loads that are only used for GEPs");
 
 // The set of values that already have run-time checks
 static std::set<Value *> CheckedValues;
@@ -185,8 +193,10 @@ isNodeRegistered (DSNode * Node) {
         (Node->isHeapNode())   ||
         (Node->isGlobalNode()) ||
         (EnableIOChecks && (Node->isIONode())))) {
-    ++NoSHGBoundsChecks;
-    return false;
+    if (Node->isComplete()) {
+      ++NoSHGBoundsChecks;
+      return false;
+    }
   }
 
   return true;
@@ -349,7 +359,7 @@ makeMetaPool(Module* M, DSNode* N) {
 #ifdef SVA_IO
   MPTV.push_back(VoidPtrType);
 #endif
-#ifdef LLVA_MMU_CHECKS
+#ifdef SVA_MMU
   MPTV.push_back(Type::UIntTy);
 #endif
 
@@ -381,7 +391,7 @@ makeMetaPool(Module* M, DSNode* N) {
   Name += "_";
   ++x;
 
-#ifndef LLVA_MMU_CHECKS
+#ifndef SVA_MMU
   return new GlobalVariable(
                             /*type=*/ MPT,
                             /*isConstant=*/ false,
@@ -656,7 +666,7 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
   std::vector<const Type *> Arg(1, VoidPtrType);
   Arg.push_back(VoidPtrType);
   FunctionType *PoolCheckTy =
-    FunctionType::get(Type::VoidTy,Arg, false);
+    FunctionType::get(VoidPtrType,Arg, false);
   PoolCheck = M.getOrInsertFunction("poolcheck", PoolCheckTy);
 
   std::vector<const Type *> Arg2(1, VoidPtrType);
@@ -909,7 +919,7 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   std::vector<const Type *> Arg(1, VoidPtrType);
   Arg.push_back(VoidPtrType);
   FunctionType *PoolCheckTy =
-    FunctionType::get(Type::VoidTy,Arg, false);
+    FunctionType::get(VoidPtrType,Arg, false);
   PoolCheck   = M.getOrInsertFunction("poolcheck", PoolCheckTy);
   PoolCheckUI = M.getOrInsertFunction("poolcheck_i", PoolCheckTy);
   PoolCheckIO = M.getOrInsertFunction("poolcheckio", PoolCheckTy);
@@ -1546,6 +1556,13 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
       FuncPointer = cExpr->getOperand(0);
 
   //
+  // Determine if this was really a direct call in disguise.  If so,
+  // then don't put in a run-time check.
+  //
+  if (isa<Function>(FuncPointer))
+    return;
+
+  //
   // Determine if the function pointer came from a load instruction that loaded
   // its value from a type known pool.  If it is, it does not need a check.
   //
@@ -2051,11 +2068,13 @@ InsertPoolChecks::findCheckedPointer (Value * PointerOperand) {
   // If the pointer is a GEP, then as long as it has a DSNode, it has been
   // checked or proven safe.
   //
-  Instruction * I;
-  if ((I = dyn_cast<GetElementPtrInst>(SourcePointer)) &&
-     (getDSNode (I, I->getParent()->getParent())) &&
-     (getPoolHandle(I, I->getParent()->getParent()))) {
-    return true;
+  if (!DisableGEPChecks) {
+    Instruction * I;
+    if ((I = dyn_cast<GetElementPtrInst>(SourcePointer)) &&
+       (getDSNode (I, I->getParent()->getParent())) &&
+       (getPoolHandle(I, I->getParent()->getParent()))) {
+      return true;
+    }
   }
 #if 0
   return (CheckedValues.find (SourcePointer) != CheckedValues.end());
@@ -2609,6 +2628,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   preSCPass = &getAnalysis<PreInsertPoolChecks>();
   cuaPass   = &getAnalysis<ConvertUnsafeAllocas>();
   TD        = &getAnalysis<TargetData>();
+  VNPass    = &getAnalysis<ValueNumbering>();
 #ifdef LLVA_KERNEL  
   TDPass    = &getAnalysis<TDDataStructures>();
   scevPass  = &getAnalysis<ScalarEvolution>();
@@ -2624,6 +2644,7 @@ InsertPoolChecks::runOnFunction (Function & F) {
   if (!(F.isExternal())) TransformFunction (F);
   if (!DisableLSChecks)  addLoadStoreChecks(F);
   addDeclaredStackChecks(F);
+  optimizeLoadStoreChecks(F);
 
   //
   // Update the statistics.
@@ -2932,6 +2953,11 @@ InsertPoolChecks::AggregateGEPs (GetElementPtrInst * MAI,
 }
 
 void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
+  //
+  // If we're not doing GEP checks, skip all this.
+  //
+  if (DisableGEPChecks) return;
+
   // Get the set of unsafe GEP instructions from the array bounds check pass
   // If this instruction is not within that set, then the result of the GEP
   // instruction has been proven safe, and there is no need to insert a check.
@@ -3995,16 +4021,32 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   if (isa<LoadInst>(SourcePointer))
     ++LDLSChecks;
 
-  std::map<Value *, BasicBlock *>::iterator i;
-  if (!hasBadCall(I->getParent()))
-    if ((i = LSChecked.find(V)) == LSChecked.end()) {
-      LSChecked.insert (make_pair(V,I->getParent()));
-    } else {
-      if (i->second == I->getParent())
-        ++RedundantLS;
-      else
-        LSChecked.insert (make_pair(V,I->getParent()));
+#if 0
+  //
+  // If we're willing to load from invalid memory, forego the check if the
+  // loaded value will only used in an indirect call check or a GEP check.
+  //
+  if (isa<LoadInst>(I)) {
+    bool CanSkip = true;
+    Value::use_iterator UI = I->use_begin();
+    for (; UI != I->use_end(); ++UI) {
+      if (CallInst * CI = dyn_cast<CallInst>(UI))
+        if (CI->getCalledValue() == I)
+          continue;
+
+      if (GetElementPtrInst * GEP = dyn_cast<GetElementPtrInst>(UI))
+        if (CheckedValues.find(GEP) != CheckedValues.end())
+          continue;
+      CanSkip = false;
+      break;
     }
+
+    if (CanSkip) ++FuncFPLS;
+
+    if (CanSkip)
+      return;
+  }
+#endif
 
   //
   // See if we can get away with an exactcheck().
@@ -4197,6 +4239,45 @@ InsertPoolChecks::addIOLSChecks (Value *V, Instruction *I, Function *F) {
   std::vector<Value *> args(1,CastPHI);
   args.push_back(CastVI);
   new CallInst (ThePoolCheckFunction ,args, "", I);
+}
+
+void
+InsertPoolChecks::optimizeLoadStoreChecks (Function & F) {
+  std::set<Value *> PoolChecks;
+
+  // Find all of the load/store checks in this function
+  for (Function::iterator BB = F.begin(); BB != F.end(); ++BB) {
+    for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
+      if (CallInst * CI = dyn_cast<CallInst>(I)) {
+        if (CI->getCalledFunction()) {
+          if ((CI->getCalledFunction()->getName() == "poolcheck") ||
+              (CI->getCalledFunction()->getName() == "poolcheck_i")) {
+            PoolChecks.insert (CI);
+          }
+        }
+      }
+    }
+  }
+
+  //
+  // Now determine how many redundancies there are.
+  //
+  std::vector<Value *> Dups;
+  while (!(PoolChecks.empty())) {
+    Value * V = *(PoolChecks.begin());
+    VNPass->getEqualNumberNodes (V, Dups);
+
+    RedundantLS += Dups.size();
+
+    // Clear Dups for the next round
+    PoolChecks.erase (PoolChecks.begin());
+    if (Dups.size()) {
+      Value * V = Dups.back();
+      PoolChecks.erase (V);
+      Dups.pop_back();
+    }
+    Dups.clear();
+  }
 }
 
 void InsertPoolChecks::addLoadStoreChecks (Function & FR) {

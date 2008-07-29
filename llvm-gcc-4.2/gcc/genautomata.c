@@ -7031,6 +7031,7 @@ output_translate_vect (automaton_t automaton)
   fprintf (output_file, "};\n\n");
   VEC_free (vect_el_t,heap, translate_vect);
 }
+
 /* The value in a table state x ainsn -> something which represents
    undefined value.  */
 static int undefined_vect_el_value;

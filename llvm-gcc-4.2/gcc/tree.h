@@ -995,8 +995,12 @@ extern void omp_clause_range_check_failed (const tree, const char *, int,
    (It should be renamed to INDIRECT_TYPE_P.)  Keep these checks in
    ascending code order.  */
 
+/* APPLE LOCAL begin blocks 5862465 */
 #define POINTER_TYPE_P(TYPE) \
-  (TREE_CODE (TYPE) == POINTER_TYPE || TREE_CODE (TYPE) == REFERENCE_TYPE)
+  (TREE_CODE (TYPE) == POINTER_TYPE \
+   || TREE_CODE (TYPE) == REFERENCE_TYPE \
+   || TREE_CODE (TYPE) == BLOCK_POINTER_TYPE)
+/* APPLE LOCAL end blocks 5862465 */
 
 /* Nonzero if this type is a complete type.  */
 #define COMPLETE_TYPE_P(NODE) (TYPE_SIZE (NODE) != NULL_TREE)
@@ -2104,6 +2108,17 @@ struct tree_block GTY(())
 #define TYPE_CONTAINS_PLACEHOLDER_INTERNAL(NODE) \
   (TYPE_CHECK (NODE)->type.contains_placeholder_bits)
 
+/* APPLE LOCAL begin radar 5811943 - Fix type of pointers to blocks  */
+/* Indicates that the struct type is a block struct, rather than
+   a 'normal' struct, i.e. one of its fields is a function that can
+   be called.  This uses the existing bit-field lang_flag_2 in the
+   struct tree_type, rather than creating a new bit field, as 
+   lang_flag_2 is currently unused and we don't want to increase the 
+   size of trees if we can avoid it.  */
+#define TYPE_BLOCK_IMPL_STRUCT(NODE) \
+  (TYPE_CHECK (NODE)->type.lang_flag_2)
+/* APPLE LOCAL end radar 5811943 - Fix type of pointers to Blocks  */
+
 struct die_struct;
 
 struct tree_type GTY(())
@@ -2128,6 +2143,14 @@ struct tree_type GTY(())
 
   unsigned lang_flag_0 : 1;
   unsigned lang_flag_1 : 1;
+  /* APPLE LOCAL begin radar 5811943 - Fix type of pointers to Blocks  */
+  /* Since it is currently completely unused, and in the interest of
+     not making trees any bigger than they already are, lang_flag_2
+     in the tree_type struct will be used to indicate that a struct is a 
+     block struct.  The macro used for these purposes is 
+     TYPE_BLOCK_IMPL_STRUCT, rather than TYPE_LANG_FLAG_2, in order to make 
+     its uses in the code more clear.  */
+  /* APPLE LOCAL end radar 5811943 - Fix type of pointers to Blocks  */
   unsigned lang_flag_2 : 1;
   unsigned lang_flag_3 : 1;
   unsigned lang_flag_4 : 1;
@@ -2142,11 +2165,11 @@ struct tree_type GTY(())
     int GTY ((tag ("0"))) address;
     char * GTY ((tag ("1"))) pointer;
     struct die_struct * GTY ((tag ("2"))) die;
-    /* LLVM LOCAL begin */
+/* LLVM LOCAL begin */
     unsigned GTY ((tag ("3"))) llvm;   /* Really an LLVM Type vector (LTypes) index */
   } GTY ((desc ("LLVM_IS_ENABLED ? 3 : debug_hooks == &sdb_debug_hooks ? 1 : debug_hooks == &dwarf2_debug_hooks ? 2 : 0"),
-	  descbits ("2"))) symtab;
 /* LLVM LOCAL end */
+	  descbits ("2"))) symtab;
   tree name;
   tree minval;
   tree maxval;
@@ -3038,7 +3061,19 @@ struct tree_decl_with_vis GTY(())
 
  /* Belongs to VAR_DECL exclusively.  */
  ENUM_BITFIELD(tls_model) tls_model : 3;
- /* 11 unused bits. */
+
+ /* APPLE LOCAL begin radar 5732232 - blocks */
+ /* Belongs to FUNCTION_DECL exclusively. */
+ unsigned block_helper_func : 1;
+ /* Belong to VAR_DECL exclusively. */
+ unsigned block_decl_byref : 1;
+ unsigned block_decl_copied : 1;
+ /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
+ unsigned copyable_byref_local_var : 1;
+ unsigned copyable_byref_local_nonpod : 1;
+ /* 6 unused bits. */
+ /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
+ /* APPLE LOCAL end radar 5732232 - blocks */
 };
 
 /* In a VAR_DECL that's static,
@@ -3083,6 +3118,16 @@ extern void decl_init_priority_insert (tree, unsigned short);
 /* In a VAR_DECL, the model to use if the data should be allocated from
    thread-local storage.  */
 #define DECL_TLS_MODEL(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.tls_model)
+
+/* APPLE LOCAL begin radar 5732232 - blocks */
+#define BLOCK_HELPER_FUNC(NODE) (FUNCTION_DECL_CHECK (NODE)->decl_with_vis.block_helper_func)
+#define BLOCK_DECL_BYREF(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_byref)
+#define BLOCK_DECL_COPIED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_copied)
+/* APPLE LOCAL end radar 5732232 - blocks */
+/* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
+#define COPYABLE_BYREF_LOCAL_VAR(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.copyable_byref_local_var)
+#define COPYABLE_BYREF_LOCAL_NONPOD(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.copyable_byref_local_nonpod)
+/* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 
 /* In a VAR_DECL, nonzero if the data should be allocated from
    thread-local storage.  */

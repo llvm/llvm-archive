@@ -511,3 +511,9 @@
 
 /* Define to 1 if building with safe I/O checks */
 #undef SVA_IO
+
+/* Define to 1 if building with safe MMU checks */
+#undef SVA_MMU
+
+/* Define to 1 if building with safe kernel stack checks */
+#undef SVA_KSTACKS

@@ -216,6 +216,10 @@ in the following sections.
 -Wnewline-eof (APPLE ONLY) @gol
 @c APPLE LOCAL -Wno-altivec-long-deprecated --ilr **
 -Wno-altivec-long-deprecated (APPLE ONLY)
+@c APPLE LOCAL begin 5695218
+-fglobal-alloc-prefer-bytes (APPLE ONLY)
+-fno-global-alloc-prefer-bytes (APPLE ONLY)
+@c APPLE LOCAL end 5695218
 @c APPLE LOCAL fwritable strings
 -funsigned-bitfields  -funsigned-char  -fwritable-strings}
 
@@ -378,7 +382,11 @@ Objective-C and Objective-C++ Dialects}.
 -fcrossjumping  -fif-conversion  -fif-conversion2 @gol
 -finline-functions  -finline-functions-called-once @gol
 -finline-limit=@var{n}  -fkeep-inline-functions @gol
--fkeep-static-consts  -fmerge-constants  -fmerge-all-constants @gol
+@c APPLE LOCAL begin ARM conditionally disable local RA
+-fkeep-static-consts @gol
+-flocal-alloc (APPLE ONLY) @gol
+-fmerge-constants  -fmerge-all-constants @gol
+@c APPLE LOCAL end ARM conditionally disable local RA
 -fmodulo-sched -fno-branch-count-reg @gol
 -fno-default-inline  -fno-defer-pop -fmove-loop-invariants @gol
 -fno-function-cse  -fno-guess-branch-probability @gol
@@ -428,6 +436,8 @@ Objective-C and Objective-C++ Dialects}.
 -iprefix @var{file}  -iwithprefix @var{dir} @gol
 -iwithprefixbefore @var{dir}  -isystem @var{dir} @gol
 -imultilib @var{dir} -isysroot @var{dir} @gol
+@c APPLE LOCAL ARM iwithsysroot 4917039
+-iwithsysroot (APPLE ONLY) @var{dir} @gol
 -M  -MM  -MF  -MG  -MP  -MQ  -MT  -nostdinc  @gol
 -P  -fworking-directory  -remap @gol
 -trigraphs  -undef  -U@var{macro}  -Wp,@var{option} @gol
@@ -492,7 +502,10 @@ Objective-C and Objective-C++ Dialects}.
 -mthumb  -marm @gol
 -mtpcs-frame  -mtpcs-leaf-frame @gol
 -mcaller-super-interworking  -mcallee-super-interworking @gol
--mtp=@var{name}}
+@c APPLE LOCAL begin 5946347 ms_struct support
+-mtp=@var{name} @gol
+-mms-bitfields -mno-ms-bitfields}
+@c APPLE LOCAL end 5946347 ms_struct support
 
 @c APPLE LOCAL ARM prune man page
 @ignore
@@ -547,6 +560,8 @@ Objective-C and Objective-C++ Dialects}.
 -twolevel_namespace  -umbrella  -undefined @gol
 -unexported_symbols_list  -weak_reference_mismatches @gol
 -whatsloaded -F -gused -gfull -mmacosx-version-min=@var{version} @gol
+@c APPLE LOCAL ARM 5905142
+-miphoneos-version-min=@var{version} @gol
 @c APPLE LOCAL pascal strings
 -mpascal-strings (APPLE ONLY) @gol
 @c APPLE LOCAL begin fat builds
@@ -628,7 +643,10 @@ Objective-C and Objective-C++ Dialects}.
 -mstackrealign @gol
 -momit-leaf-frame-pointer  -mno-red-zone -mno-tls-direct-seg-refs @gol
 -mcmodel=@var{code-model} @gol
--m32  -m64 -mlarge-data-threshold=@var{num}}
+@c APPLE LOCAL begin 5946347 ms_struct support
+-m32  -m64 -mlarge-data-threshold=@var{num} @gol
+-mms-bitfields -mno-ms-bitfields}
+@c APPLE LOCAL end 5946347 ms_struct support
 
 @c APPLE LOCAL prune man page
 @ignore
@@ -777,7 +795,10 @@ See RS/6000 and PowerPC Options.
 -mfloat-gprs=yes  -mfloat-gprs=no -mfloat-gprs=single -mfloat-gprs=double @gol
 -mprototype  -mno-prototype @gol
 -msim  -mmvme  -mads  -myellowknife  -memb  -msdata @gol
--msdata=@var{opt}  -mvxworks  -mwindiss  -G @var{num}  -pthread}
+@c APPLE LOCAL begin 5946347 ms_struct support
+-msdata=@var{opt}  -mvxworks  -mwindiss  -G @var{num}  -pthread @gol
+-mms-bitfields -mno-ms-bitfields}
+@c APPLE LOCAL end 5946347 ms_struct support
 
 @c APPLE LOCAL prune man page
 @ignore
@@ -973,12 +994,9 @@ C++ source code which must be preprocessed.  Note that in @samp{.cxx},
 the last two letters must both be literally @samp{x}.  Likewise,
 @samp{.C} refers to a literal capital C@.
 
-@item @var{file}.mm
-@itemx @var{file}.M
-Objective-C++ source code which must be preprocessed.
-
-@item @var{file}.mii
-Objective-C++ source code which should not be preprocessed.
+@c APPLE LOCAL begin Objective-C++
+@c Delete duplicate @var{file}.mm, @var{file}.M, @var{file}.mii.
+@c APPLE LOCAL end Objective-C++
 
 @item @var{file}.hh
 @itemx @var{file}.H
@@ -1644,6 +1662,18 @@ Warn if constant CFString objects contain non-portable characters
 (default behavior)
 @c APPLE LOCAL end radar 3506309
 
+@c APPLE LOCAL begin 5695218
+@item -fglobal-alloc-prefer-bytes
+@item -fno-global-alloc-prefer-bytes
+@opindex fglobal-alloc-prefer-bytes
+For the x86_32 architecture, prefer byte or short values to word
+values during global register allocation.  Some of the registers on
+this target can't be used with values smaller than a 32-bit word;
+allocating these values earlier increases the chance they will get a
+byte-capable (or short-capable) register.  Ignored for other targets.
+Defaults on with global register allocation (@code{-Os}, @code{-O2},
+or @code{-O3}).  (APPLE ONLY)
+@c APPLE LOCAL end 5695218
 @c APPLE LOCAL begin fwritable strings. 
 @item -fwritable-strings
 @opindex fwritable-strings
@@ -5349,6 +5379,16 @@ GCC enables this option by default.  If you want to force the compiler to
 check if the variable was referenced, regardless of whether or not
 optimization is turned on, use the @option{-fno-keep-static-consts} option.
 
+@c APPLE LOCAL begin ARM conditionally disable local RA
+@item -flocal-alloc
+(APPLE ONLY) Enable the local (intra-basic-block) register allocator.
+
+GCC enables this option by default.  If you want to force the compiler to
+supress register allocation within a basic block, use the
+@option{-fno-local-alloc} option.  This option cannot be disabled with
+@option{-O0}, for correctness reasons.
+@c APPLE LOCAL end ARM conditionally disable local RA
+
 @item -fmerge-constants
 Attempt to merge identical constants (string constants and floating point
 constants) across compilation units.
@@ -7357,6 +7397,14 @@ the ordering for the include_next directive are not inadvertently changed.
 If you really need to change the search order for system directories,
 use the @option{-nostdinc} and/or @option{-isystem} options.
 
+@c APPLE LOCAL begin ARM iwithsysroot 4917039
+The option @option{-iwithsysroot} (APPLE ONLY), if specified with an
+absolute path, will prepend the system root directory (if applicable) to
+the path and add it to the beginning of the system search paths.  If
+specified with a relative path, @option{-iwithsysroot} will behave
+identically to @option{-isystem}.
+@c APPLE LOCAL end ARM iwithsysroot 4917039
+
 @item -iquote@var{dir}
 @opindex iquote
 Add the directory @var{dir} to the head of the list of directories to
@@ -8468,6 +8516,15 @@ models are @option{soft}, which generates calls to @code{__aeabi_read_tp},
 best available method for the selected processor.  The default setting is
 @option{auto}.
 
+@c APPLE LOCAL begin  5946347 ms_struct support
+@item -mms-bitfields
+@opindex mms-bitfields
+Set the default structure layout to be compatible with the Microsoft
+compiler standard. This is equivalent to adding an @code{ms_struct}
+attribute to each structure and union tag definition. The default is
+@option{mno-ms-bitfields}.
+@c APPLE LOCAL end 5946347 ms_struct support
+
 @end table
 
 @c APPLE LOCAL ARM prune man page
@@ -8863,12 +8920,35 @@ The earliest version of MacOS X that this executable will run on
 is @var{version}.  Typical values of @var{version} include @code{10.1},
 @code{10.2}, and @code{10.3.9}.
 
+@c APPLE LOCAL begin ARM 5905142
+This value can also be set with the @env{MACOSX_DEPLOYMENT_TARGET}
+environment variable.  If both the command-line option is specified
+and the environment variable is set, the command-line option will
+take precedence.
+@c APPLE LOCAL end ARM 5905142
+
 @c APPLE LOCAL begin mainline 2007-06-14 5235474
 If the compiler was built to use the system's headers by default,
 then the default for this option is the system version on which the
 compiler is running, otherwise the default is to make choices which
 are compatible with as many systems and code bases as possible.
 @c APPLE LOCAL end mainline 2007-06-14 5235474
+
+@c APPLE LOCAL begin ARM 5905142
+This value is not set by default for ARM targets.
+
+@item -miphoneos-version-min=@var{version}
+The earliest version of iPhone OS that this executable will run on
+is @var{version}.
+
+This value can also be set with the @env{IPHONEOS_DEPLOYMENT_TARGET}
+environment variable.  If both the command-line option is specified
+and the environment variable is set, the command-line option will
+take precedence.
+
+On ARM targets, if not specified by the command-line option or
+environment variable, this value defaults to 2.0.
+@c APPLE LOCAL end ARM 5905142
 
 @item -mkernel
 @opindex mkernel
@@ -10559,6 +10639,16 @@ building of shared libraries are not supported with the medium model.
 Generate code for the large model: This model makes no assumptions
 about addresses and sizes of sections.  Currently GCC does not implement
 this model.
+
+@c APPLE LOCAL begin 5946347 ms_struct support
+@item -mms-bitfields
+@opindex mms-bitfields
+Set the default structure layout to be compatible with the Microsoft
+compiler standard. This is equivalent to adding an @code{ms_struct}
+attribute to each structure and union tag definition. The default is
+@option{mno-ms-bitfields}.
+@c APPLE LOCAL end 5946347 ms_struct support
+
 @end table
 
 @c APPLE LOCAL prune man page
@@ -12896,6 +12986,15 @@ when the linker is known to generate glue.
 Adds support for multithreading with the @dfn{pthreads} library.
 This option sets flags for both the preprocessor and linker.
 
+@c APPLE LOCAL begin 5946347 ms_struct support
+@item -mms-bitfields
+@opindex mms-bitfields
+Set the default structure layout to be compatible with the Microsoft
+compiler standard. This is equivalent to adding an @code{ms_struct}
+attribute to each structure and union tag definition. The default is
+@option{mno-ms-bitfields}.
+@c APPLE LOCAL end 5946347 ms_struct support
+
 @end table
 
 @c APPLE LOCAL prune man page
@@ -14746,6 +14845,21 @@ Recognize EUCJP characters.
 If @env{LANG} is not defined, or if it has some other value, then the
 compiler will use mblen and mbtowc as defined by the default locale to
 recognize and translate multibyte characters.
+
+@c APPLE LOCAL begin ARM 5905142
+@item MACOSX_DEPLOYMENT_TARGET
+@itemx IPHONEOS_DEPLOYMENT_TARGET
+These variables are used to set the target OS version, as described
+for command-line options @option{-mmacosx-version-min} and
+@option{-miphoneos-version-min}.  Only one OS version can be specified
+per architecture, with @env{MACOSX_DEPLOYMENT_TARGET} taking precedence
+on non-ARM targets and @env{IPHONEOS_DEPLOYMENT_TARGET} taking
+precedence on ARM targets.
+
+If either command-line option @option{-mmacosx-version-min} or
+@option{-miphoneos-version-min} is specified, both of these
+environment variables are ignored.
+@c APPLE LOCAL end ARM 5905142
 @end table
 
 @noindent

@@ -1590,6 +1590,8 @@ The keyword @code{__attribute__} allows you to specify special
 attributes when making a declaration.  This keyword is followed by an
 attribute specification inside double parentheses.  The following
 attributes are currently defined for functions on all targets:
+@c APPLE LOCAL mainline aligned functions 5933878
+@code{aligned},
 @code{noreturn}, @code{returns_twice}, @code{noinline}, @code{always_inline},
 @c APPLE LOCAL nodebug
 @code{nodebug},
@@ -1634,6 +1636,29 @@ mangled name for the target must be used.  It is an error if @samp{__f}
 is not defined in the same translation unit.
 
 Not all target machines support this attribute.
+
+@c APPLE LOCAL begin mainline aligned functions 5933878
+@item aligned (@var{alignment})
+@cindex @code{aligned} attribute
+This attribute specifies a minimum alignment for the function,
+measured in bytes.
+
+You cannot use this attribute to decrease the alignment of a function,
+only to increase it.  However, when you explicitly specify a function
+alignment this will override the effect of the
+@option{-falign-functions} (@pxref{Optimize Options}) option for this
+function.
+
+Note that the effectiveness of @code{aligned} attributes may be
+limited by inherent limitations in your linker.  On many systems, the
+linker is only able to arrange for functions to be aligned up to a
+certain maximum alignment.  (For some linkers, the maximum supported
+alignment may be very very small.)  See your linker documentation for
+further information.
+
+The @code{aligned} attribute can also be used for variables and fields
+(@pxref{Variable Attributes}.)
+@c APPLE LOCAL end mainline aligned functions 5933878
 
 @item always_inline
 @cindex @code{always_inline} function attribute
@@ -3190,6 +3215,11 @@ up to a maximum of 8 byte alignment, then specifying @code{aligned(16)}
 in an @code{__attribute__} will still only provide you with 8 byte
 alignment.  See your linker documentation for further information.
 
+@c APPLE LOCAL begin aligned functions 5933878
+The @code{aligned} attribute can also be used for functions
+(@pxref{Function Attributes}.)
+@c APPLE LOCAL end aligned functions 5933878
+
 @item cleanup (@var{cleanup_function})
 @cindex @code{cleanup} attribute
 The @code{cleanup} attribute runs a function when the variable goes
@@ -3465,150 +3495,15 @@ Medium and large model objects may live anywhere in the 32-bit address space
 addresses).
 @end table
 
-@anchor{i386 Variable Attributes}
-@subsection i386 Variable Attributes
-
-Two attributes are currently defined for i386 configurations:
-@code{ms_struct} and @code{gcc_struct}
-
-@table @code
-@item ms_struct
-@itemx gcc_struct
-@cindex @code{ms_struct} attribute
-@cindex @code{gcc_struct} attribute
-
-If @code{packed} is used on a structure, or if bit-fields are used
-it may be that the Microsoft ABI packs them differently
-than GCC would normally pack them.  Particularly when moving packed
-data between functions compiled with GCC and the native Microsoft compiler
-(either via function call or as data in a file), it may be necessary to access
-either format.
-
-Currently @option{-m[no-]ms-bitfields} is provided for the Microsoft Windows X86
-compilers to match the native Microsoft compiler.
-
-The Microsoft structure layout algorithm is fairly simple with the exception
-of the bitfield packing:
-
-The padding and alignment of members of structures and whether a bit field
-can straddle a storage-unit boundary
-
-@enumerate
-@item Structure members are stored sequentially in the order in which they are
-declared: the first member has the lowest memory address and the last member
-the highest.
-
-@item Every data object has an alignment-requirement. The alignment-requirement
-for all data except structures, unions, and arrays is either the size of the
-object or the current packing size (specified with either the aligned attribute
-or the pack pragma), whichever is less. For structures,  unions, and arrays,
-the alignment-requirement is the largest alignment-requirement of its members.
-Every object is allocated an offset so that:
-
-offset %  alignment-requirement == 0
-
-@item Adjacent bit fields are packed into the same 1-, 2-, or 4-byte allocation
-unit if the integral types are the same size and if the next bit field fits
-into the current allocation unit without crossing the boundary imposed by the
-common alignment requirements of the bit fields.
-@end enumerate
-
-Handling of zero-length bitfields:
-
-MSVC interprets zero-length bitfields in the following ways:
-
-@enumerate
-@item If a zero-length bitfield is inserted between two bitfields that would
-normally be coalesced, the bitfields will not be coalesced.
-
-For example:
-
-@smallexample
-struct
- @{
-   unsigned long bf_1 : 12;
-   unsigned long : 0;
-   unsigned long bf_2 : 12;
- @} t1;
-@end smallexample
-
-The size of @code{t1} would be 8 bytes with the zero-length bitfield.  If the
-zero-length bitfield were removed, @code{t1}'s size would be 4 bytes.
-
-@item If a zero-length bitfield is inserted after a bitfield, @code{foo}, and the
-alignment of the zero-length bitfield is greater than the member that follows it,
-@code{bar}, @code{bar} will be aligned as the type of the zero-length bitfield.
-
-For example:
-
-@smallexample
-struct
- @{
-   char foo : 4;
-   short : 0;
-   char bar;
- @} t2;
-
-struct
- @{
-   char foo : 4;
-   short : 0;
-   double bar;
- @} t3;
-@end smallexample
-
-For @code{t2}, @code{bar} will be placed at offset 2, rather than offset 1.
-Accordingly, the size of @code{t2} will be 4.  For @code{t3}, the zero-length
-bitfield will not affect the alignment of @code{bar} or, as a result, the size
-of the structure.
-
-Taking this into account, it is important to note the following:
-
-@enumerate
-@item If a zero-length bitfield follows a normal bitfield, the type of the
-zero-length bitfield may affect the alignment of the structure as whole. For
-example, @code{t2} has a size of 4 bytes, since the zero-length bitfield follows a
-normal bitfield, and is of type short.
-
-@item Even if a zero-length bitfield is not followed by a normal bitfield, it may
-still affect the alignment of the structure:
-
-@smallexample
-struct
- @{
-   char foo : 6;
-   long : 0;
- @} t4;
-@end smallexample
-
-Here, @code{t4} will take up 4 bytes.
-@end enumerate
-
-@item Zero-length bitfields following non-bitfield members are ignored:
-
-@smallexample
-struct
- @{
-   char foo;
-   long : 0;
-   char bar;
- @} t5;
-@end smallexample
-
-Here, @code{t5} will take up 2 bytes.
-@end enumerate
-@end table
-
+@c APPLE LOCAL begin 5946347 ms_struct support
+@anchor{PowerPC Variable Attributes}
 @subsection PowerPC Variable Attributes
 
-Three attributes currently are defined for PowerPC configurations:
-@code{altivec}, @code{ms_struct} and @code{gcc_struct}.
+One is defined for PowerPC configurations: @code{altivec}.
 
-For full documentation of the struct attributes please see the
-documentation in the @xref{i386 Variable Attributes}, section.
-
-For documentation of @code{altivec} attribute please see the
+For documentation of the @code{altivec} attribute please see the
 documentation in the @xref{PowerPC Type Attributes}, section.
+@c APPLE LOCAL end 5946347 ms_struct support
 
 @subsection SPU Variable Attributes
 
@@ -3924,7 +3819,171 @@ and caught in another, the class must have default visibility.
 Otherwise the two shared objects will be unable to use the same
 typeinfo node and exception handling will break.
 
+@c APPLE LOCAL begin weak types 5954418
+@item weak
+In C++, attribute weak can be applied to a class to ensure that all
+non-hidden instances of the type are treated as the same type across
+shared library boundaries on platforms (such as darwin and arm aapcs)
+that can emit vtables and the type info meta data as non-comdat
+symbols.  This is useful when the class has a key method and the
+translation unit that contains the key method is used in more than one
+shared library or in a shared library and the application.  Doing this
+results in more expensive startup times.  This attribute is inherited
+by subclasses, so it is only necessary to mark a base type.  The
+typical use would be to mark any types used for throwing across shared
+library boundaries or those used in dynamic_cast operations across a
+shared library boundary.
+@c APPLE LOCAL end weak types 5954418
+
+@c APPLE LOCAL begin 5946347 ms_struct support
+@end table
+
+To specify multiple attributes, separate them by commas within the
+double parentheses: for example, @samp{__attribute__ ((aligned (16),
+packed))}.
+
+@anchor{i386 Type Attributes}
+@subsection i386 Type Attributes
+
+Two attributes are currently defined for i386 configurations:
+@code{ms_struct} and @code{gcc_struct}
+
+@table @code
+@item ms_struct
+@itemx gcc_struct
+@cindex @code{ms_struct} attribute
+@cindex @code{gcc_struct} attribute
+
+If @code{packed} is used on a structure, or if bit-fields are used
+it may be that the Microsoft ABI packs them differently
+than GCC would normally pack them.  Particularly when moving packed
+data between functions compiled with GCC and the native Microsoft compiler
+(either via function call or as data in a file), it may be necessary to access
+either format.
+
+Currently @option{-m[no-]ms-bitfields} is provided for the Microsoft Windows X86
+compilers to match the native Microsoft compiler.
+
+The Microsoft structure layout algorithm is fairly simple with the exception
+of the bitfield packing:
+
+The padding and alignment of members of structures and whether a bit field
+can straddle a storage-unit boundary
+
+@enumerate
+@item Structure members are stored sequentially in the order in which they are
+declared: the first member has the lowest memory address and the last member
+the highest.
+
+@item Every data object has an alignment-requirement. The alignment-requirement
+for all data except structures, unions, and arrays is either the size of the
+object or the current packing size (specified with either the aligned attribute
+or the pack pragma), whichever is less. For structures,  unions, and arrays,
+the alignment-requirement is the largest alignment-requirement of its members.
+Every object is allocated an offset so that:
+
+offset %  alignment-requirement == 0
+
+@item Adjacent bit fields are packed into the same 1-, 2-, or 4-byte allocation
+unit if the integral types are the same size and if the next bit field fits
+into the current allocation unit without crossing the boundary imposed by the
+common alignment requirements of the bit fields.
+@end enumerate
+
+Handling of zero-length bitfields:
+
+MSVC interprets zero-length bitfields in the following ways:
+
+@enumerate
+@item If a zero-length bitfield is inserted between two bitfields that would
+normally be coalesced, the bitfields will not be coalesced.
+
+For example:
+
+@smallexample
+struct
+ @{
+   unsigned long bf_1 : 12;
+   unsigned long : 0;
+   unsigned long bf_2 : 12;
+ @} t1;
+@end smallexample
+
+The size of @code{t1} would be 8 bytes with the zero-length bitfield.  If the
+zero-length bitfield were removed, @code{t1}'s size would be 4 bytes.
+
+@item If a zero-length bitfield is inserted after a bitfield, @code{foo}, and the
+alignment of the zero-length bitfield is greater than the member that follows it,
+@code{bar}, @code{bar} will be aligned as the type of the zero-length bitfield.
+
+For example:
+
+@smallexample
+struct
+ @{
+   char foo : 4;
+   short : 0;
+   char bar;
+ @} t2;
+
+struct
+ @{
+   char foo : 4;
+   short : 0;
+   double bar;
+ @} t3;
+@end smallexample
+
+For @code{t2}, @code{bar} will be placed at offset 2, rather than offset 1.
+Accordingly, the size of @code{t2} will be 4.  For @code{t3}, the zero-length
+bitfield will not affect the alignment of @code{bar} or, as a result, the size
+of the structure.
+
+Taking this into account, it is important to note the following:
+
+@enumerate
+@item If a zero-length bitfield follows a normal bitfield, the type of the
+zero-length bitfield may affect the alignment of the structure as whole. For
+example, @code{t2} has a size of 4 bytes, since the zero-length bitfield follows a
+normal bitfield, and is of type short.
+
+@item Even if a zero-length bitfield is not followed by a normal bitfield, it may
+still affect the alignment of the structure:
+
+@smallexample
+struct
+ @{
+   char foo : 6;
+   long : 0;
+ @} t4;
+@end smallexample
+
+Here, @code{t4} will take up 4 bytes.
+@end enumerate
+
+@item Zero-length bitfields following non-bitfield members are ignored:
+
+@smallexample
+struct
+ @{
+   char foo;
+   long : 0;
+   char bar;
+ @} t5;
+@end smallexample
+
+Here, @code{t5} will take up 2 bytes.
+@end enumerate
+@end table
+
+@anchor{ARM Type Attributes}
 @subsection ARM Type Attributes
+
+Two attributes currently are defined for ARM configurations:
+@code{ms_struct} and @code{gcc_struct}.
+
+For full documentation of the struct attributes please see the
+documentation in the @xref{i386 Type Attributes}, section.
 
 On those ARM targets that support @code{dllimport} (such as Symbian
 OS), you can use the @code{notshared} attribute to indicate that the
@@ -3946,32 +4005,7 @@ In this code, @code{C::C} is exported from the current DLL, but the
 virtual table for @code{C} is not exported.  (You can use
 @code{__attribute__} instead of @code{__declspec} if you prefer, but
 most Symbian OS code uses @code{__declspec}.)
-
-@anchor{i386 Type Attributes}
-@subsection i386 Type Attributes
-
-Two attributes are currently defined for i386 configurations:
-@code{ms_struct} and @code{gcc_struct}
-
-@item ms_struct
-@itemx gcc_struct
-@cindex @code{ms_struct}
-@cindex @code{gcc_struct}
-
-If @code{packed} is used on a structure, or if bit-fields are used
-it may be that the Microsoft ABI packs them differently
-than GCC would normally pack them.  Particularly when moving packed
-data between functions compiled with GCC and the native Microsoft compiler
-(either via function call or as data in a file), it may be necessary to access
-either format.
-
-Currently @option{-m[no-]ms-bitfields} is provided for the Microsoft Windows X86
-compilers to match the native Microsoft compiler.
-@end table
-
-To specify multiple attributes, separate them by commas within the
-double parentheses: for example, @samp{__attribute__ ((aligned (16),
-packed))}.
+@c APPLE LOCAL end 5946347 ms_struct support
 
 @anchor{PowerPC Type Attributes}
 @subsection PowerPC Type Attributes

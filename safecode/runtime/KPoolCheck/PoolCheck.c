@@ -167,11 +167,7 @@ pchk_init(void) {
 
 /* Register a slab */
 void pchk_reg_slab(MetaPoolTy* MP, void* PoolID, void* addr, unsigned len) {
-#if 0
-  if (!MP) { poolcheckinfo("reg slab on null pool", (int)addr); return; }
-#else
   if (!MP) { return; }
-#endif
   PCLOCK();
   adl_splay_insert(&MP->Slabs, addr, len, PoolID);
   PCUNLOCK();
@@ -186,7 +182,7 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
   PCUNLOCK();
 }
 
-#ifdef LLVA_MMU_CHECKS
+#ifdef SVA_MMU
 extern void llva_reg_obj(void*, void*, unsigned);
 #endif
 
@@ -205,7 +201,7 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   }
 #endif
 
-#ifdef LLVA_MMU_CHECKS 
+#ifdef SVA_MMU 
   llva_reg_obj(addr, MP, MP->TK);
 #endif
  
@@ -241,9 +237,9 @@ pchk_reg_pages (MetaPoolTy* MP, void* addr, unsigned order) {
 /* Pointer to the beginning of the current stack */
 static void * CurrentStackSplay = 0;
 
+#ifdef SVA_KSTACKS
 void
 pchk_update_stack (void) {
-#ifdef SVA_IO
   /*
    * Get the stack pointer.
    */
@@ -262,8 +258,8 @@ pchk_update_stack (void) {
   } else {
     CurrentStackSplay = 0;
   }
-#endif
 }
+#endif
 
 void
 pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
@@ -277,23 +273,10 @@ pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
    */
   void * S = addr;
   unsigned stacktag = 0;
-#ifdef SVA_IO
-#if 0
-  if (adl_splay_retrieve(&(StackSplay), &S, 0, 0)) {
-    stacktag = (unsigned) (S);
-    void * MPSplay = &(((struct node *)(StackSplay))->tag);
-    adl_splay_insert(MPSplay, MP, 1, 0);
-  } else {
-    /*
-     * FIXME: Should we generate an error if we're running on an unregistered
-     *        stack?
-     */
-  }
-#else
+#ifdef SVA_KSTACKS
   if (CurrentStackSplay) {
     adl_splay_insert (CurrentStackSplay, MP, 1, 0);
   }
-#endif
 #endif
 
   /*
@@ -366,6 +349,7 @@ void pchk_reg_ic_memtrap (void * p, void* addr) {
  *  The virtual machine must ensure that the pointer points to valid integer
  *  state.
  */
+#ifdef SVA_KSTACKS
 void
 pchk_reg_int (void* addr) {
   unsigned int index;
@@ -589,6 +573,7 @@ pchk_checkstack (void * addr, unsigned int * length) {
 
   return 0;
 }
+#endif
 
 /* Remove a non-pool allocated object */
 void
@@ -601,7 +586,7 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
   /*
    * Ensure that the object is not a declared stack.
    */
-#ifdef SVA_IO
+#ifdef SVA_KSTACKS
   if (adl_splay_find (&StackSplay, addr)) {
     poolcheckfail ("pchk_drop_obj: Releasing declared stack",
                    (unsigned)addr,
@@ -855,7 +840,9 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   if (adl_splay_find(&MP->IOObjs, addr)) {
     poolcheckfail ("poolcheck_i failure: ", (unsigned)addr, (void*)__builtin_return_address(0));
   }
+#endif
 
+#ifdef SVA_KSTACKS
   /*
    * Ensure that the pointer is not within an Integer State object.
    */
@@ -1228,12 +1215,11 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   }
 #endif
 
-#ifdef SVA_IO
+#ifdef SVA_KSTACKS
   /*
    * Ensure that the destination pointer is not within the bounds of a saved
    * Integer State object.
    */
-#ifdef SVA_IO
   S = src;
   len = 0;
   fs = adl_splay_retrieve (&(IntegerStatePool.Objs), &S, &len, 0);
@@ -1241,7 +1227,6 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
     PCUNLOCK();
     return &not_found;
   }
-#endif
   PCUNLOCK();
 #endif
 
@@ -1332,45 +1317,6 @@ getBoundsnoio_i(MetaPoolTy* MP, void* src) {
 
   return &found;
 }
-
-/*
- * Function:getIOBounds()
- *
- * Description:
- *  Locate the bounds for the given object in the set of I/O objects.
- */
-#if 0
-void*
-getIOBounds (MetaPoolTy* MP, void* src) {
-  if (!pchk_ready || !MP) return &found;
-#if 0
-  if (do_profile) pchk_profile(MP, __builtin_return_address(0));
-#endif
-  ++stat_boundscheck;
-
-  /* try objs */
-  void* S = src;
-  unsigned len = 0;
-  PCLOCK();
-  int fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
-  if (fs) {
-    PCUNLOCK();
-    return (MP->Objs);
-  }
-
-  PCUNLOCK();
-
-  /*
-   * If the source pointer is within the first page of memory, return the zero
-   * page.
-   */
-  if (src < 4096)
-    return &zero_page;
-
-  /* Return that the object was not found */
-  return &not_found;
-}
-#endif
 
 char* invalidptr = 0;
 

@@ -75,7 +75,7 @@ typedef struct MetaPoolTy {
   void * IOObjs;
 #endif
 
-#ifdef LLVA_MMU_CHECKS 
+#ifdef SVA_MMU 
   unsigned TK;
 #endif
 

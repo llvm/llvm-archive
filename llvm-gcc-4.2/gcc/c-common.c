@@ -745,12 +745,12 @@ const struct attribute_spec c_common_attribute_table[] =
   { "sentinel",               0, 2, false, true, true,
 			      handle_sentinel_attribute },
   /* LLVM LOCAL begin */
-  #ifdef ENABLE_LLVM
+#ifdef ENABLE_LLVM
   { "annotate",                0, -1, true, false, false,
                               handle_annotate_attribute },
   { "gcroot",		      0, 0, false, true, false,
 			      handle_gcroot_attribute },
-  #endif
+#endif
   /* LLVM LOCAL end */
   /* APPLE LOCAL radar 5932809 - copyable byref blocks */
   { "blocks", 1, 1, true, false, false, handle_blocks_attribute },
@@ -3254,19 +3254,20 @@ c_sizeof_or_alignof_type (tree type, bool is_sizeof, int complain)
   return value;
 }
 
+/* APPLE LOCAL begin mainline aligned functions 5933878 */
 /* Implement the __alignof keyword: Return the minimum required
-   alignment of EXPR, measured in bytes.  For VAR_DECL's and
-   FIELD_DECL's return DECL_ALIGN (which can be set from an
-   "aligned" __attribute__ specification).  */
+   alignment of EXPR, measured in bytes.  For VAR_DECLs,
+   FUNCTION_DECLs and FIELD_DECLs return DECL_ALIGN (which can be set
+   from an "aligned" __attribute__ specification).  */
 
 tree
 c_alignof_expr (tree expr)
 {
   tree t;
 
-  if (TREE_CODE (expr) == VAR_DECL)
+  if (VAR_OR_FUNCTION_DECL_P (expr))
     t = size_int (DECL_ALIGN_UNIT (expr));
-
+/* APPLE LOCAL end mainline aligned functions 5933878 */
   else if (TREE_CODE (expr) == COMPONENT_REF
 	   && DECL_C_BIT_FIELD (TREE_OPERAND (expr, 1)))
     {
@@ -5095,7 +5096,8 @@ handle_aligned_attribute (tree *node, tree ARG_UNUSED (name), tree args,
       TYPE_ALIGN (*type) = (1 << i) * BITS_PER_UNIT;
       TYPE_USER_ALIGN (*type) = 1;
     }
-  else if (TREE_CODE (decl) != VAR_DECL
+  /* APPLE LOCAL mainline aligned functions 5933878 */
+  else if (! VAR_OR_FUNCTION_DECL_P (decl)
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
 	   && TREE_CODE (decl) != FIELD_DECL
 	   && TREE_CODE (decl) != LABEL_DECL)
@@ -5104,6 +5106,20 @@ handle_aligned_attribute (tree *node, tree ARG_UNUSED (name), tree args,
       error ("alignment may not be specified for %q+D", decl);
       *no_add_attrs = true;
     }
+  /* APPLE LOCAL begin mainline aligned functions 5933878 */
+  else if (TREE_CODE (decl) == FUNCTION_DECL
+	   && DECL_ALIGN (decl) > (1 << i) * BITS_PER_UNIT)
+    {
+      if (DECL_USER_ALIGN (decl))
+	error ("alignment for %q+D was previously specified as %d "
+	       "and may not be decreased", decl,
+	       DECL_ALIGN (decl) / BITS_PER_UNIT);
+      else
+	error ("alignment for %q+D must be at least %d", decl,
+	       DECL_ALIGN (decl) / BITS_PER_UNIT);
+	*no_add_attrs = true;
+    }
+  /* APPLE LOCAL end mainline aligned functions 5933878 */
   else
     {
       DECL_ALIGN (decl) = (1 << i) * BITS_PER_UNIT;
@@ -9001,11 +9017,5 @@ warn_array_subscript_with_type_char (tree index)
     warning (OPT_Wchar_subscripts, "array subscript has type %<char%>");
 }
 
-
-/* APPLE LOCAL begin define this sensibly in all languages */
-bool c_flag_no_builtin(void) {
-  return flag_no_builtin;
-}
-/* APPLE LOCAL end define this sensibly in all languages */
 
 #include "gt-c-common.h"

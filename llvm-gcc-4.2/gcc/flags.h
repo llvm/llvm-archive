@@ -239,8 +239,6 @@ extern int align_labels_max_skip;
 extern int align_functions_log;
 
 /* APPLE LOCAL begin mainline aligned functions 5933878 */
-/* LLVM FIXME: Remove next line!! */
-extern int force_align_functions_log;
 /* Removed extern force_align_functions_log.  */
 /* APPLE LOCAL end mainline aligned functions 5933878 */
 

@@ -3284,11 +3284,9 @@ cxx_init_decl_processing (void)
     default_visibility = VISIBILITY_HIDDEN;
   /* APPLE LOCAL end mainline 2007-06-28 ms tinfo compat 4230099 */
 
-  /* Force minimum function alignment if using the least significant
-     bit of function pointers to store the virtual bit.  */
-  if (TARGET_PTRMEMFUNC_VBIT_LOCATION == ptrmemfunc_vbit_in_pfn
-      && force_align_functions_log < 1)
-    force_align_functions_log = 1;
+  /* APPLE LOCAL begin mainline aligned functions 5933878 */
+  /* Removed lines.  */
+  /* APPLE LOCAL end mainline aligned functions 5933878 */
 
   /* Initially, C.  */
   current_lang_name = lang_name_c;
@@ -6266,6 +6264,16 @@ grokfndecl (tree ctype,
   /* Propagate volatile out from type to decl.  */
   if (TYPE_VOLATILE (type))
     TREE_THIS_VOLATILE (decl) = 1;
+
+  /* APPLE LOCAL begin mainline aligned functions 5933878 */
+  /* If pointers to member functions use the least significant bit to
+     indicate whether a function is virtual, ensure a pointer
+     to this function will have that bit clear.  */
+  if (TARGET_PTRMEMFUNC_VBIT_LOCATION == ptrmemfunc_vbit_in_pfn
+      && TREE_CODE (type) == METHOD_TYPE
+      && DECL_ALIGN (decl) < 2 * BITS_PER_UNIT)
+    DECL_ALIGN (decl) = 2 * BITS_PER_UNIT;
+  /* APPLE LOCAL end mainline aligned functions 5933878 */
 
   if (friendp
       && TREE_CODE (orig_declarator) == TEMPLATE_ID_EXPR)

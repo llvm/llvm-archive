@@ -399,9 +399,9 @@ int align_labels_log;
 int align_labels_max_skip;
 int align_functions_log;
 
-/* Like align_functions_log above, but used by front-ends to force the
-   minimum function alignment.  Zero means no alignment is forced.  */
-int force_align_functions_log;
+/* APPLE LOCAL begin mainline aligned functions 5933878 */
+/* Removed force_align_functions_log.  */
+/* APPLE LOCAL end mainline aligned functions 5933878 */
 
 typedef struct
 {

@@ -660,9 +660,11 @@ c_common_handle_option (size_t scode, const char *arg, int value)
 
     case OPT_fbuiltin:
       flag_no_builtin = !value;
+      /* LLVM LOCAL begin */
 #ifdef LLVM
       flag_no_simplify_libcalls = !value;
 #endif
+      /* LLVM LOCAL end */
       break;
 
     case OPT_fbuiltin_:
@@ -688,9 +690,11 @@ c_common_handle_option (size_t scode, const char *arg, int value)
     case OPT_fhosted:
       flag_hosted = value;
       flag_no_builtin = !value;
+      /* LLVM LOCAL begin */
 #ifdef LLVM
       flag_no_simplify_libcalls = !value;
 #endif
+      /* LLVM LOCAL end */
       /* warn_main will be 2 if set by -Wall, 1 if set by -Wmain */
       if (!value && warn_main == 2)
 	warn_main = 0;

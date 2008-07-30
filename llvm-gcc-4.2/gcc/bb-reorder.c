@@ -87,6 +87,7 @@
 
 /* LLVM LOCAL begin comment out most of this file */
 #ifndef ENABLE_LLVM
+
 #ifndef HAVE_conditional_execution
 #define HAVE_conditional_execution 0
 #endif
@@ -1967,7 +1968,7 @@ insert_section_boundary_note (void)
 	}
     }
 }
-#endif
+#endif /* !ENABLE_LLVM */
 /* LLVM LOCAL end */
 
 /* Duplicate the blocks containing computed gotos.  This basically unfactors
@@ -1981,6 +1982,7 @@ gate_duplicate_computed_gotos (void)
 {
   return (optimize > 0 && flag_expensive_optimizations && !optimize_size);
 }
+
 
 static unsigned int
 duplicate_computed_gotos (void)

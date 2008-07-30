@@ -1604,6 +1604,17 @@ constrain_visibility (tree decl, int visibility)
       DECL_VISIBILITY (decl) = visibility;
       return true;
     }
+  /* APPLE LOCAL begin constrain visibility for templates 5813435 */
+  else if (visibility > DECL_VISIBILITY (decl)
+	   && DECL_VISIBILITY_SPECIFIED (decl)
+	   && !lookup_attribute ("visibility", DECL_ATTRIBUTES (decl))
+	   && !lookup_attribute ("dllexport", DECL_ATTRIBUTES (decl)))
+    {
+      /* We also constrain implicit visibilities (for templates).  */
+      DECL_VISIBILITY (decl) = visibility;
+      return true;
+    }
+  /* APPLE LOCAL end constrain visibility for templates 5813435 */
   return false;
 }
 

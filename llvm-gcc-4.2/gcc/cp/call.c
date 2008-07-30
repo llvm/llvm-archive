@@ -907,6 +907,15 @@ reference_related_p (tree t1, tree t2)
 	      && DERIVED_FROM_P (t1, t2)));
 }
 
+/* APPLE LOCAL begin radar 6029624 */
+/* Used in objective-c++, same as reference_related_p */
+bool
+objcp_reference_related_p (tree t1, tree t2)
+{
+  return reference_related_p (t1, t2);
+}
+/* APPLE LOCAL end radar 6029624 */
+
 /* Returns nonzero if T1 is reference-compatible with T2.  */
 
 static bool

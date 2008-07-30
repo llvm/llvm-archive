@@ -1022,11 +1022,14 @@ setup_one_parameter (copy_body_data *id, tree p, tree value, tree fn,
   /* If the parameter is never assigned to, we may not need to
      create a new variable here at all.  Instead, we may be able
      to just use the argument value.  */
-/* LLVM LOCAL begin fix handling of parameters with variably modified types */
-  /* We need the copy if it has a variably modified type. */
   if (TREE_READONLY (p)
       && !TREE_ADDRESSABLE (p)
+/* LLVM LOCAL begin fix handling of parameters with variably modified types */
+#ifdef ENABLE_LLVM
+      /* We need the copy if it has a variably modified type. */
       && !variably_modified_type_p (TREE_TYPE (p), id->src_fn)
+#endif
+/* LLVM LOCAL end */
       && value && !TREE_SIDE_EFFECTS (value))
     {
       /* We may produce non-gimple trees by adding NOPs or introduce
@@ -1052,12 +1055,15 @@ setup_one_parameter (copy_body_data *id, tree p, tree value, tree fn,
      function.  */
   var = copy_decl_to_var (p, id);
 
+/* LLVM LOCAL begin fix handling of parameters with variably modified types */
+#ifdef ENABLE_LLVM
   /* But, we must remap variably modified types, which depend on local
      variables in this function and are NOT visible to the calling
      function. */
   if (variably_modified_type_p (TREE_TYPE (p), id->src_fn))
     TREE_TYPE (var) = remap_type(TREE_TYPE (p), id);    
-/* LLVM LOCAL end fix handling of parameters with variably modified types */
+#endif
+/* LLVM LOCAL end */
 
   /* See if the frontend wants to pass this by invisible reference.  If
      so, our new VAR_DECL will have REFERENCE_TYPE, and we need to
@@ -1274,9 +1280,8 @@ declare_return_variable (copy_body_data *id, tree return_slot_addr,
 
     /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-    /* The return node may not dominate all of its uses.  Because of
-     * this, conservatively don't consider it for SSA form anymore.
-    */
+    /* The return node may not dominate all of its uses.  Because of this,
+       conservatively don't consider it for SSA form anymore.  */
     if (TREE_CODE (var) == VAR_DECL)
       DECL_GIMPLE_FORMAL_TEMP_P (var) = 0;
 #endif
@@ -1580,7 +1585,7 @@ inlinable_function_p (tree fn)
 
   /* Squirrel away the result so that we don't have to check again.  */
   DECL_UNINLINABLE (fn) = !inlinable;
-  
+
   return inlinable;
 }
 
@@ -2840,7 +2845,7 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
   if (!update_clones)
     DECL_NAME (new_decl) = create_tmp_var_name (NULL);
   /* LLVM LOCAL begin */
-  #ifndef ENABLE_LLVM
+#ifndef ENABLE_LLVM
   /* Create a new SYMBOL_REF rtx for the new name. */
   if (DECL_RTL (old_decl) != NULL)
     {
@@ -2849,7 +2854,7 @@ tree_function_versioning (tree old_decl, tree new_decl, varray_type tree_map,
 	gen_rtx_SYMBOL_REF (GET_MODE (XEXP (DECL_RTL (old_decl), 0)),
 			    IDENTIFIER_POINTER (DECL_NAME (new_decl)));
     }
-  #endif
+#endif
   /* LLVM LOCAL end */
     
   /* Prepare the data structures for the tree copy.  */

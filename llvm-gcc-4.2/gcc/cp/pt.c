@@ -5288,15 +5288,6 @@ reopen_tinst_level (tree level)
   pop_tinst_level ();
 }
 
-/* Returns the TINST_LEVEL which gives the original instantiation
-   context.  */
-
-tree
-outermost_tinst_level (void)
-{
-  return tree_last (current_tinst_level);
-}
-
 /* DECL is a friend FUNCTION_DECL or TEMPLATE_DECL.  ARGS is the
    vector of template arguments, as for tsubst.
 
@@ -5778,7 +5769,15 @@ instantiate_class_template (tree type)
   if (CLASSTYPE_VISIBILITY_SPECIFIED (pattern))
     {
       CLASSTYPE_VISIBILITY_SPECIFIED (type) = 1;
-      CLASSTYPE_VISIBILITY (type) = CLASSTYPE_VISIBILITY (pattern);
+      /* APPLE LOCAL begin 5812195 */
+      /* CLASSTYPE_VISIBILITY (type) should already be set by the time
+	 we get here, in particular, we should just constrain the
+	 visibility, as we don't reconstrain on template arguments
+	 post this whereas we've already done that by the time we get
+	 here.  */
+      if (CLASSTYPE_VISIBILITY (type) < CLASSTYPE_VISIBILITY (pattern))
+	CLASSTYPE_VISIBILITY (type) = CLASSTYPE_VISIBILITY (pattern);
+      /* APPLE LOCAL end 5812195 */
     }
 
   pbinfo = TYPE_BINFO (pattern);
@@ -7011,7 +7010,7 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	cp_apply_type_quals_to_decl (cp_type_quals (type), r);
 	DECL_CONTEXT (r) = ctx;
 	/* Clear out the mangled name and RTL for the instantiation.  */
-        SET_DECL_ASSEMBLER_NAME (r, NULL_TREE);
+	SET_DECL_ASSEMBLER_NAME (r, NULL_TREE);
 	if (CODE_CONTAINS_STRUCT (TREE_CODE (t), TS_DECL_WRTL))
         /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM

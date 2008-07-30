@@ -1571,7 +1571,11 @@ c_parser_declaration_or_fndef (c_parser *parser, bool fndef_ok, bool empty_ok,
       /* Function definition (nested or otherwise).  */
       if (nested)
 	{
-	  if (pedantic)
+          /* APPLE LOCAL begin radar 5985368 */
+          if (declarator->declarator && declarator->declarator->kind == cdk_block_pointer)
+            error ("bad definition of a block");
+	  else if (pedantic)
+          /* APPLE LOCAL end radar 5985368 */
 	    pedwarn ("ISO C forbids nested functions");
 	  /* APPLE LOCAL begin nested functions 4258406 4357979 (in 4.2 m) */
 	  else if (flag_nested_functions == 0)
@@ -4387,7 +4391,8 @@ c_parser_for_statement (c_parser *parser)
 	  /* APPLE LOCAL begin radar 4708210 (for_objc_collection in 4.2) */
 	  cond = NULL_TREE;
 	  c_parser_declaration_or_fndef (parser, true, true, true, true, &cond);
-	  if (c_parser_next_token_is_keyword (parser, RID_IN))
+	  /* APPLE LOCAL radar 5925639 */
+	  if (c_parser_next_token_is_keyword (parser, RID_IN) && cond)
 	    {
 	      cond = finish_parse_foreach_header (parser, cond);
 	      foreach_p = true;
@@ -4415,7 +4420,8 @@ c_parser_for_statement (c_parser *parser)
 	      cond = NULL_TREE;
 	      c_parser_declaration_or_fndef (parser, true, true, true, true, &cond);
 	      restore_extension_diagnostics (ext);
-	      if (c_parser_next_token_is_keyword (parser, RID_IN))
+	      /* APPLE LOCAL radar 5925639 */
+	      if (c_parser_next_token_is_keyword (parser, RID_IN) && cond)
 	        {
 		  cond = finish_parse_foreach_header (parser, cond);
 	          foreach_p = true;
@@ -5471,6 +5477,8 @@ c_parser_alignof_expression (c_parser *parser)
 			     assignment-expression ,
 			     assignment-expression )
      __builtin_types_compatible_p ( type-name , type-name )
+     APPLE LOCAL blocks (C++ cf)
+     ^ block-literal-expr
 
    offsetof-member-designator:
      identifier
@@ -5975,29 +5983,6 @@ c_parser_postfix_expression (c_parser *parser)
 	      /* (in 4.2 ba) */
 	      c_parser_consume_token (parser);
 	      expr.value = get_identifier (".");
-	      expr.original_code = ERROR_MARK;
-	      break;
-	    }
-	  /* (in 4.2 be) */
-	  if (c_parser_next_token_is (parser, CPP_ATSIGN))
-	    {
-	      tree id;
-	      location_t loc = c_parser_peek_token (parser)->location;
-	      c_parser_consume_token (parser);
-	      if (c_parser_peek_token (parser)->id_kind != C_ID_ID)
-		{
-		  c_parser_error (parser, "expected identifier");
-		  expr.value = error_mark_node;
-		  expr.original_code = ERROR_MARK;
-		  break;
-		}
-
-	      id = c_parser_peek_token (parser)->value;
-	      c_parser_consume_token (parser);
-	      id = prepend_char_identifier (id, '@');
-	      expr.value = build_external_ref (id,
-					       (c_parser_peek_token (parser)->type
-						== CPP_OPEN_PAREN), loc);
 	      expr.original_code = ERROR_MARK;
 	      break;
 	    }
@@ -9212,17 +9197,6 @@ c_parser_iasm_operand (c_parser *parser)
 
   /* Jump into the usual operand precedence stack.  */
   operand = c_parser_binary_expression (parser, false).value;
-
-  /* (in 4.2 bd) */
-  while (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
-    {
-      struct c_expr op2;
-      c_parser_consume_token (parser);
-      op2 = c_parser_expr_no_commas (parser, NULL);
-      c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
-				 "expected %<)%>");
-      operand = iasm_build_register_offset (operand, op2.value);
-    }
 
   /* (in 4.2 bd) */
   while (c_parser_next_token_is (parser, CPP_OPEN_PAREN))

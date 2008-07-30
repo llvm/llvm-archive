@@ -16319,6 +16319,12 @@ objc_add_internal_ivar (tree class, tree property, const char *ivar_name)
   tree record = CLASS_STATIC_TEMPLATE (class);
   tree type = TREE_TYPE (property);
   tree field_decl, field;
+  /* APPLE LOCAL begin radar 6029624 */
+#ifdef OBJCPLUS
+  if (TREE_CODE (type) == REFERENCE_TYPE)
+    type = TYPE_MAIN_VARIANT (TREE_TYPE (type));
+#endif
+  /* APPLE LOCAL end radar 6029624 */
   field_decl = create_field_decl (type,
                                   ivar_name ? ivar_name 
 					    : objc_build_property_ivar_name (property));
@@ -19587,8 +19593,22 @@ void objc_declare_property_impl (int impl_code, tree tree_list)
 		      tree ivar_type = DECL_BIT_FIELD_TYPE (ivar_decl) 
 					 ? DECL_BIT_FIELD_TYPE (ivar_decl) 
 					 : TREE_TYPE (ivar_decl);
-		      if (comptypes (ivar_type, TREE_TYPE (property_decl)) != 1
-			  && !objc_compare_types (TREE_TYPE (property_decl), ivar_type, -5, NULL_TREE))
+                      /* APPLE LOCAL begin radar 6029624 */
+                      tree property_type = TREE_TYPE (property_decl);
+		      bool comparison_result;
+#ifdef OBJCPLUS
+                      if (TREE_CODE (property_type) == REFERENCE_TYPE)
+			{
+		          property_type = TREE_TYPE (property_type);
+		          comparison_result = 
+                            !objcp_reference_related_p (property_type, ivar_type);
+		        }
+		      else
+#endif
+		        comparison_result = comptypes (ivar_type, property_type) != 1;
+		      if (comparison_result
+			  && !objc_compare_types (property_type, ivar_type, -5, NULL_TREE))
+                      /* APPLE LOCAL end radar 6029624 */
 		      /* APPLE LOCAL end radar 5389292 */
 			{
 		          error ("type of property %qs does not match type of ivar %qs", 

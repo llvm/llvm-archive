@@ -2464,6 +2464,39 @@ check_switch_goto (struct cp_binding_level* level)
   return check_previous_goto_1 (NULL_TREE, level, level->names, false, NULL);
 }
 
+/* APPLE LOCAL begin blocks 6040305 (cp) */
+/* This routine issues a diagnostic if a __block variable is seen in
+   the current scope.  This is for now called from a goto statement.  */
+void
+diagnose_byref_var_in_current_scope (void)
+{
+#if 0
+  /* FIXME finish this off. */
+  struct c_scope *scope;
+  struct c_binding *b;
+  
+  gcc_assert (current_scope);
+  if (flag_objc_gc_only || !current_scope->byref_in_current_scope)
+    return;
+  
+  scope = current_scope;
+  while (scope && scope != file_scope)
+  {
+    for (b = scope->bindings; b; b = b->prev)
+    {
+      tree p = b->decl;
+      if (p && TREE_CODE (p) == VAR_DECL && COPYABLE_BYREF_LOCAL_VAR (p)) {
+        error ("local byref variable %s is in the scope of this goto",
+               IDENTIFIER_POINTER (DECL_NAME (p)));
+        return;
+      }
+    }
+    scope = scope->outer;
+  }
+#endif
+}
+/* APPLE LOCAL begin blocks 6040305 (cp) */
+
 /* Check that a new jump to a label DECL is OK.  Called by
    finish_goto_stmt.  */
 
@@ -2473,6 +2506,10 @@ check_goto (tree decl)
   struct named_label_entry *ent, dummy;
   bool saw_catch = false, identified = false;
   tree bad;
+
+  /* APPLE LOCAL begin 6040305 */
+  diagnose_byref_var_in_current_scope ();
+  /* APPLE LOCAL end 6040305 */
 
   /* We can't know where a computed goto is jumping.
      So we assume that it's OK.  */
@@ -4048,18 +4085,6 @@ start_decl (const cp_declarator *declarator,
       error ("definition of %q#D is marked %<dllimport%>", decl);
       DECL_DLLIMPORT_P (decl) = 0;
     }
-
- /* APPLE LOCAL begin mainline 2005-10-12 */
-  /* Dllimported symbols cannot be defined.  Static data members (which
-     can be initialized in-class and dllimported) go through grokfield,
-     not here, so we don't need to exclude those decls when checking for
-     a definition.  */
-  if (initialized && DECL_DLLIMPORT_P (decl))
-    {
-      error ("definition of %q#D is marked %<dllimport%>", decl);
-      DECL_DLLIMPORT_P (decl) = 0;
-    }
- /* APPLE LOCAL end mainline 2005-10-12 */
 
   /* If #pragma weak was used, mark the decl weak now.  */
   maybe_apply_pragma_weak (decl);
@@ -5889,6 +5914,16 @@ expand_static_init (tree decl, tree init)
       && TYPE_HAS_TRIVIAL_DESTRUCTOR (TREE_TYPE (decl)))
     return;
 
+  /* APPLE LOCAL begin radar 5733674 */
+  if (c_dialect_objc () && flag_objc_gc && init && TREE_CODE (init) == INIT_EXPR)
+  {
+    tree result = objc_generate_write_barrier (TREE_OPERAND (init, 0), 
+                                               INIT_EXPR, TREE_OPERAND (init, 1));
+    if (result)
+      init = result;
+  }
+  /* APPLE LOCAL end radar 5733674 */
+  
   if (DECL_FUNCTION_SCOPE_P (decl))
     {
       /* Emit code to perform this initialization but once.  */
@@ -7384,6 +7419,8 @@ grokdeclarator (const cp_declarator *declarator,
 	  case cdk_pointer:
 	  case cdk_reference:
 	  case cdk_ptrmem:
+	    /* APPLE LOCAL blocks 6040305 */
+	  case cdk_block_pointer:
 	    break;
 
 	  case cdk_error:
@@ -8078,6 +8115,33 @@ grokdeclarator (const cp_declarator *declarator,
 	    }
 	  ctype = NULL_TREE;
 	  break;
+
+	  /* APPLE LOCAL begin blocks 6040305 (cj) */
+	case cdk_block_pointer:
+	  if (TREE_CODE (type) != FUNCTION_TYPE)
+	    {
+	      error ("block pointer to non-function type is invalid");
+	      type = error_mark_node;
+	    }
+	  else
+	    {
+	      /* We now know that the TYPE_QUALS don't apply to the decl,
+		 but to the target of the pointer.  */
+	      type_quals = TYPE_UNQUALIFIED;
+
+	      type = build_block_pointer_type (type);
+
+	      if (declarator->u.pointer.qualifiers)
+		{
+		  type
+		    = cp_build_qualified_type (type,
+					       declarator->u.pointer.qualifiers);
+		  type_quals = cp_type_quals (type);
+		}
+	    }
+	  ctype = NULL_TREE;
+	  break;
+	  /* APPLE LOCAL end blocks 6040305 (cj) */
 
 	case cdk_error:
 	  break;
@@ -11868,8 +11932,28 @@ cxx_maybe_build_cleanup (tree decl)
 {
   tree type = TREE_TYPE (decl);
 
-  if (type != error_mark_node && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type))
+  /* APPLE LOCAL begin omit calls to empty destructors 5559195 */
+  tree dtor = NULL_TREE;
+  bool build_cleanup = false;
+
+  if (TREE_CODE (type) == RECORD_TYPE)
+    dtor = CLASSTYPE_DESTRUCTORS (type);
+
+  if (type != error_mark_node)
     {
+      if (TREE_CODE (type) == RECORD_TYPE)
+	/* For RECORD_TYPEs, we can refer to more precise flags than
+	   TYPE_HAS_NONTRIVIAL_DESTRUCTOR. */
+	build_cleanup = (dtor && TREE_PRIVATE (dtor))
+	  || CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (type)
+	  || CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE (type);
+      else
+	build_cleanup = TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type);
+    }
+
+  if (build_cleanup)
+    {
+  /* APPLE LOCAL end omit calls to empty destructors 5559195 */
       int flags = LOOKUP_NORMAL|LOOKUP_DESTRUCTOR;
       tree rval;
       bool has_vbases = (TREE_CODE (type) == RECORD_TYPE

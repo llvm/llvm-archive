@@ -37,5 +37,4 @@ extern tree grokdeclarator (const cp_declarator *,
 /* APPLE LOCAL radar 4721858 */
 extern void emit_instantiate_pending_templates (location_t *);
 /* APPLE LOCAL blocks 6040305 (ce) */
-/* LLVM FIXME: Uncomment!!! */
-/*extern tree grokparms (cp_parameter_declarator *first_parm, tree *parms); */
+extern tree grokparms (cp_parameter_declarator *first_parm, tree *parms);

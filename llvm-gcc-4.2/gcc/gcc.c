@@ -6460,7 +6460,8 @@ int
 main (int argc, char **argv)
 {
   size_t i;
-  int value;
+  /* APPLE LOCAL uninit warning */
+  int value = 0;
   int linker_was_run = 0;
   int lang_n_infiles = 0;
   int num_linker_inputs = 0;
@@ -7000,9 +7001,7 @@ main (int argc, char **argv)
 		  infiles[i].incompiler = lookup_compiler (infiles[i].name,
 							   strlen (infiles[i].name),
 							   infiles[i].language);
-
-		  if (value < 0)
-		    this_file_error = 1;
+			  
 		}
 	      else if (traditional_cpp_flag)
 			{
@@ -7015,6 +7014,9 @@ main (int argc, char **argv)
 			}
 	    }
 
+	  if (value < 0)
+	    this_file_error = 1;
+  
 	  if (this_file_error)
 	    {
 	      delete_failure_queue ();

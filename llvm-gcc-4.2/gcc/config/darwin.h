@@ -1541,8 +1541,6 @@ extern int flag_apple_kext;
 /* APPLE LOCAL begin mainline 2007-06-14 5235474 */
 #ifndef CROSS_DIRECTORY_STRUCTURE
 /* APPLE LOCAL begin ARM 5683689 */
-/* LLVM FIXME: Uncomment!!! */
-#if 0
 extern void darwin_default_min_version (int * argc, char *** argv,
 					enum darwin_version_type vers_type);
 #define GCC_DRIVER_HOST_INITIALIZATION \
@@ -1550,13 +1548,6 @@ extern void darwin_default_min_version (int * argc, char *** argv,
   GCC_DRIVER_HOST_INITIALIZATION1; \
   darwin_default_min_version (&argc, &argv, DARWIN_DEFAULT_VERSION_TYPE)
 /* APPLE LOCAL end ARM 5683689 */
-#else
-extern void darwin_default_min_version (int * argc, char *** argv);
-#define GCC_DRIVER_HOST_INITIALIZATION          \
-   /* APPLE LOCAL isysroot 5083137 */ \
-   GCC_DRIVER_HOST_INITIALIZATION1; \
-   darwin_default_min_version (&argc, &argv)
-#endif
 #endif /* CROSS_DIRECTORY_STRUCTURE */
 /* APPLE LOCAL end mainline 2007-06-14 5235474 */
 

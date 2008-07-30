@@ -1890,7 +1890,9 @@ size_binop (enum tree_code code, tree arg0, tree arg1)
   if (TREE_CODE (arg0) == INTEGER_CST && TREE_CODE (arg1) == INTEGER_CST)
     {
       /* And some specific cases even faster than that.  */
-      /* LLVM local begin gcc 121252 */
+      /* LLVM LOCAL - begin gcc 121252 */
+      /* FIXME: Do we need this LLVM-specific code anymore? */
+#ifdef ENABLE_LLVM
       if (code == PLUS_EXPR)
 	{
 	  if (integer_zerop (arg0) && !TREE_OVERFLOW (arg0))
@@ -1908,7 +1910,16 @@ size_binop (enum tree_code code, tree arg0, tree arg1)
 	  if (integer_onep (arg0) && !TREE_OVERFLOW (arg0))
 	    return arg1;
 	}
-      /* LLVM local end gcc 121252 */
+#else
+      if (code == PLUS_EXPR && integer_zerop (arg0))
+	return arg1;
+      else if ((code == MINUS_EXPR || code == PLUS_EXPR)
+	       && integer_zerop (arg1))
+	return arg0;
+      else if (code == MULT_EXPR && integer_onep (arg0))
+	return arg1;
+#endif
+      /* LLVM LOCAL - end gcc 121252 */
 
       /* Handle general case of two integer constants.  */
       return int_const_binop (code, arg0, arg1, 0);
@@ -2162,6 +2173,8 @@ fold_convert (tree type, tree arg)
     {
     case INTEGER_TYPE: case ENUMERAL_TYPE: case BOOLEAN_TYPE:
     case POINTER_TYPE: case REFERENCE_TYPE:
+      /* APPLE LOCAL blocks 5862465 */
+    case BLOCK_POINTER_TYPE:
     case OFFSET_TYPE:
       if (TREE_CODE (arg) == INTEGER_CST)
 	{
@@ -6833,14 +6846,14 @@ try_move_mult_to_index (enum tree_code code, tree addr, tree op1)
 
   for (;; ref = TREE_OPERAND (ref, 0))
     {
+      /* LLVM LOCAL begin */      
       if (TREE_CODE (ref) == ARRAY_REF
-          /* LLVM LOCAL begin */      
-#if ENABLE_LLVM
+#ifdef ENABLE_LLVM
           /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
           && (TREE_CODE (TREE_TYPE (TREE_OPERAND (ref, 0))) == ARRAY_TYPE)
 #endif
-          /* LLVM LOCAL end */
          )
+      /* LLVM LOCAL end */
 	{
 	  itype = TYPE_DOMAIN (TREE_TYPE (TREE_OPERAND (ref, 0)));
 	  if (! itype)
@@ -12951,14 +12964,14 @@ fold_read_from_constant_string (tree exp)
 {
   if ((TREE_CODE (exp) == INDIRECT_REF
        || TREE_CODE (exp) == ARRAY_REF)
-      && TREE_CODE (TREE_TYPE (exp)) == INTEGER_TYPE
 /* LLVM LOCAL begin */      
+      && TREE_CODE (TREE_TYPE (exp)) == INTEGER_TYPE
 #if ENABLE_LLVM
     /* LLVM extends ARRAY_REF to allow pointers to be the base value. */
       && (TREE_CODE (TREE_TYPE (TREE_OPERAND (exp, 0))) == ARRAY_TYPE)
 #endif
-/* LLVM LOCAL end */      
     )
+/* LLVM LOCAL end */      
     {
       tree exp1 = TREE_OPERAND (exp, 0);
       tree index;

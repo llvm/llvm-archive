@@ -84,7 +84,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "tree-mudflap.h"
 
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #include "llvm.h"
+#endif
 /* LLVM LOCAL end */
 
 #if defined (DWARF2_UNWIND_INFO) || defined (DWARF2_DEBUGGING_INFO)

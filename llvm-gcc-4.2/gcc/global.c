@@ -51,6 +51,11 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #define REWRITE_WEIGHT_COMPUTATION
 #endif
 /* APPLE LOCAL end rewrite weight computation */
+/* APPLE LOCAL begin 5831562 ARM pseudo-pseudo tying*/
+#ifndef TIE_PSEUDOS
+#define TIE_PSEUDOS 0
+#endif
+/* APPLE LOCAL end 5831562 ARM pseudo-pseudo tying*/
 
 /* This pass of the compiler performs global register allocation.
    It assigns hard register numbers to all the pseudo registers
@@ -307,6 +312,13 @@ static HARD_REG_SET regs_used_so_far;
    It is zero for a reg that contains global pseudos or is explicitly used.  */
 
 static int local_reg_n_refs[FIRST_PSEUDO_REGISTER];
+
+/* APPLE LOCAL begin 5831562 ARM pseudo-pseudo tying*/
+/* Set with no registers.  This is not declared const to avoid a warning at the point
+   of use; but it is const.  */
+
+static HARD_REG_SET empty_reg_set;
+/* APPLE LOCAL end 5831562 ARM pseudo-pseudo tying*/
 
 /* APPLE LOCAL begin rewrite weight computation */
 #ifdef REWRITE_WEIGHT_COMPUTATION
@@ -1538,6 +1550,12 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 #else
 	  int regno = i;
 #endif
+/* APPLE LOCAL begin 5831562 add DIMODE_REG_ALLOC_ORDER */
+#ifdef DIMODE_REG_ALLOC_ORDER
+	  if (mode == DImode)
+	    regno = dimode_reg_alloc_order[i];
+#endif
+/* APPLE LOCAL end 5831562 add DIMODE_REG_ALLOC_ORDER */
 	  if (! TEST_HARD_REG_BIT (used, regno)
 	      && HARD_REGNO_MODE_OK (regno, mode)
 	      && (allocno[num].calls_crossed == 0
@@ -1837,8 +1855,24 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 	});
 
       /* APPLE LOCAL begin 4321079 */
+      /* APPLE LOCAL begin 5831562 ARM pseudo-pseudo tying*/
       {
 	int k, l;
+	/* If this reg is not live over calls, remove any ties to pseudo-regs
+	   that are live over calls; they cannot use this reg. */
+	if (call_used_regs[best_reg])
+	  {
+	    EXECUTE_IF_SET_IN_ALLOCNO_SET (
+	      pseudo_preferences + num * allocno_row_words, k,
+	      {
+		if (allocno[k].calls_crossed != 0)
+		  {
+		    CLEAR_PSEUDO_PREF (num, k);
+		    CLEAR_PSEUDO_PREF (k, num);
+		  }
+	      });
+	  }
+
 	/* Mark tied pseudo-regs that have not yet been assigned a reg
 	   and do not already have a hard reg preference
 	   and do not conflict as preferring this reg.  Mark pseudo-regs
@@ -1848,9 +1882,19 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 	  pseudo_preferences + num * allocno_row_words, k,
 	  {
 	    if (!CONFLICTP (num, k) && reg_renumber[allocno[k].reg] < 0)
-	      SET_REGBIT (hard_reg_copy_preferences, k, best_reg);
+	      {
+	       /* go-if-equal is not exactly what we want, ugh */
+		GO_IF_HARD_REG_EQUAL (allocno[k].hard_reg_copy_preferences, 
+				      empty_reg_set, none_yet);
+		goto skip;
+		none_yet:;
+		  SET_REGBIT (hard_reg_copy_preferences, k, best_reg);
+		skip:;
+	      }
 
-	    if (num != k && !CONFLICTP (num, k))
+	    if (num != k && !CONFLICTP (num, k) && 
+		(reg_renumber[allocno[k].reg] < 0 ||
+		 reg_renumber[allocno[k].reg] == best_reg))
 	      EXECUTE_IF_SET_IN_ALLOCNO_SET (
 		conflicts + k * allocno_row_words, l,
 		{
@@ -1858,21 +1902,28 @@ find_reg (int num, HARD_REG_SET losers, int alt_regs_p, int accept_call_clobbere
 		    SET_REGBIT (regs_someone_prefers, l, best_reg);
 		});
 	  });
-	/* Mark pseudo-regs tied to conflicting regs and not yet assigned a
-	   reg as not preferring this reg.  */
+	/* Mark pseudo-regs tied to {conflicting allocnos which have either
+	   not yet been assigned a reg, or assigned best_reg}, but are not
+	   tied to this allocno, and not yet assigned a reg, as not preferring
+	   this reg, provided they are not already marked as preferring
+	   this reg.  Got that?  */
 	EXECUTE_IF_SET_IN_ALLOCNO_SET (
 	  conflicts + num * allocno_row_words, k,
 	  {
-	    if (num != k)
+	    if (num != k 
+		&& (reg_renumber[allocno[k].reg] < 0
+		    || reg_renumber[allocno[k].reg] == best_reg))
 	      EXECUTE_IF_SET_IN_ALLOCNO_SET (
 		pseudo_preferences + k * allocno_row_words, l, 
 		{
-		  if (k != l && !CONFLICTP (k, l) 
+		  if (k != l && !CONFLICTP (k, l) && !TEST_PSEUDO_PREF (l, num)
+		      && !TEST_HARD_REG_BIT(allocno[l].hard_reg_preferences, best_reg)
 		      && reg_renumber[allocno[l].reg] < 0)
 		    SET_REGBIT (regs_someone_prefers, l, best_reg);
 		});
 	  });
       }	    
+      /* APPLE LOCAL end 5831562 ARM pseudo-pseudo tying*/
       /* APPLE LOCAL end 4321079 */
     }
 }
@@ -2191,11 +2242,19 @@ set_preference (rtx dest, rtx src)
   int copy = 1;
 
   /* APPLE LOCAL begin 4321079 */
-  /* Look under SUBREG for vectors; vector-to-vector SUBREGs are NOPs. */
+  /* APPLE LOCAL begin 5831562 ARM pseudo-pseudo tying*/
+  /* Look under SUBREG for vectors; vector-to-vector SUBREGs are NOPs.
+     This code formerly did less testing, which was OK on PPC and x86
+     as vector-to-nonvector SUBREGs did not occur; but they do on ARM. */
 
   if (GET_RTX_FORMAT (GET_CODE (src))[0] == 'e'
-      && ! (GET_CODE (src) == SUBREG && VECTOR_MODE_P (GET_MODE (dest))))
+      && ! (GET_CODE (src) == SUBREG 
+           && REG_P (SUBREG_REG (src))
+           && VECTOR_MODE_P (GET_MODE (src))
+           && VECTOR_MODE_P (GET_MODE (SUBREG_REG (src)))
+           && VECTOR_MODE_P (GET_MODE (dest))))
     src = XEXP (src, 0), copy = 0;
+  /* APPLE LOCAL end 5831562 ARM pseudo-pseudo tying*/
   /* APPLE LOCAL end 4321079 */
 
   /* Get the reg number for both SRC and DEST.
@@ -2305,11 +2364,13 @@ set_preference (rtx dest, rtx src)
      marked as tied here; the data is only used for pseudos that do not
      conflict. */
 
+  /* APPLE LOCAL begin 5831562 ARM pseudo-pseudo tying*/
   if (src_regno >= FIRST_PSEUDO_REGISTER && reg_allocno[src_regno] >= 0
-      && VECTOR_MODE_P (GET_MODE (src_reg))
+      && (VECTOR_MODE_P (GET_MODE (src_reg)) || TIE_PSEUDOS)
       && dest_regno >= FIRST_PSEUDO_REGISTER && reg_allocno[dest_regno] >= 0
-      && VECTOR_MODE_P (GET_MODE (dest_reg))
+      && (VECTOR_MODE_P (GET_MODE (dest_reg)) || TIE_PSEUDOS)
       && copy)
+  /* APPLE LOCAL end 5831562 ARM pseudo-pseudo tying*/
     {
       src_regno += offset;
       SET_PSEUDO_PREF (reg_allocno[dest_regno], reg_allocno[src_regno]);

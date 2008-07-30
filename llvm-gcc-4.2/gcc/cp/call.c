@@ -281,7 +281,8 @@ build_call (tree function, tree parms)
 
   function = build_addr_func (function);
 
-  gcc_assert (TYPE_PTR_P (TREE_TYPE (function)));
+  /* APPLE LOCAL blocks 6040305 */
+  gcc_assert (TYPE_PTR_P (TREE_TYPE (function)) || TREE_CODE (TREE_TYPE (function)) == BLOCK_POINTER_TYPE);
   fntype = TREE_TYPE (TREE_TYPE (function));
   gcc_assert (TREE_CODE (fntype) == FUNCTION_TYPE
 	      || TREE_CODE (fntype) == METHOD_TYPE);
@@ -657,7 +658,8 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
   if (same_type_p (from, to))
     return conv;
 
-  if ((tcode == POINTER_TYPE || TYPE_PTR_TO_MEMBER_P (to))
+  /* APPLE LOCAL blocks 6040305 (ck) */
+  if ((tcode == POINTER_TYPE || tcode == BLOCK_POINTER_TYPE || TYPE_PTR_TO_MEMBER_P (to))
       && expr && null_ptr_cst_p (expr))
     conv = build_conv (ck_std, to, conv);
   else if ((tcode == INTEGER_TYPE && fcode == POINTER_TYPE)
@@ -675,6 +677,14 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
       conv = build_conv (ck_std, to, conv);
       conv->bad_p = true;
     }
+  /* APPLE LOCAL begin blocks (ck) */
+  else if (tcode == POINTER_TYPE && fcode == BLOCK_POINTER_TYPE
+	   && (objc_is_id (to)
+	       || VOID_TYPE_P (TREE_TYPE (to))))
+    {
+      conv = build_conv (ck_ptr, to, conv);
+    }
+  /* APPLE LOCAL end blocks (ck) */
   else if ((tcode == POINTER_TYPE && fcode == POINTER_TYPE)
 	   || (TYPE_PTRMEM_P (to) && TYPE_PTRMEM_P (from)))
     {
@@ -827,6 +837,8 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
       if (ARITHMETIC_TYPE_P (from)
 	  || fcode == ENUMERAL_TYPE
 	  || fcode == POINTER_TYPE
+	  /* APPLE LOCAL blocks 6040305 (cl) */
+	  || fcode == BLOCK_POINTER_TYPE
 	  || TYPE_PTR_TO_MEMBER_P (from))
 	{
 	  conv = build_conv (ck_std, to, conv);
@@ -3543,10 +3555,20 @@ build_conditional_expr (tree arg1, tree arg2, tree arg3)
        cv-qualification of either the second or the third operand.
        The result is of the common type.  */
   else if ((null_ptr_cst_p (arg2)
-	    && (TYPE_PTR_P (arg3_type) || TYPE_PTR_TO_MEMBER_P (arg3_type)))
+	   /* APPLE LOCAL begin blocks 6040305 (co) */
+	    && (TYPE_PTR_P (arg3_type) || TYPE_PTR_TO_MEMBER_P (arg3_type)
+		|| TREE_CODE (arg3_type) == BLOCK_POINTER_TYPE))
+	   /* APPLE LOCAL end blocks 6040305 (co) */
 	   || (null_ptr_cst_p (arg3)
-	       && (TYPE_PTR_P (arg2_type) || TYPE_PTR_TO_MEMBER_P (arg2_type)))
+	   /* APPLE LOCAL begin blocks 6040305 (co) */
+	       && (TYPE_PTR_P (arg2_type) || TYPE_PTR_TO_MEMBER_P (arg2_type)
+		   || TREE_CODE (arg2_type) == BLOCK_POINTER_TYPE))
+	   /* APPLE LOCAL end blocks 6040305 (co) */
 	   || (TYPE_PTR_P (arg2_type) && TYPE_PTR_P (arg3_type))
+	   /* APPLE LOCAL begin blocks 6040305 (co) */
+	   || (TREE_CODE (arg2_type) == BLOCK_POINTER_TYPE
+	       && TREE_CODE (arg3_type) == BLOCK_POINTER_TYPE)
+	   /* APPLE LOCAL end blocks 6040305 (co) */
 	   || (TYPE_PTRMEM_P (arg2_type) && TYPE_PTRMEM_P (arg3_type))
 	   || (TYPE_PTRMEMFUNC_P (arg2_type) && TYPE_PTRMEMFUNC_P (arg3_type)))
     {

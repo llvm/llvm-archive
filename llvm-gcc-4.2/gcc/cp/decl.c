@@ -54,7 +54,8 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL optimization pragmas 3124235/3420242 */
 #include "opts.h"
 
-static tree grokparms (cp_parameter_declarator *, tree *);
+/* APPLE LOCAL blocks 6040305 (ce) */
+tree grokparms (cp_parameter_declarator *, tree *);
 static const char *redeclaration_error_message (tree, tree);
 
 static int decl_jump_unsafe (tree);
@@ -9201,7 +9202,8 @@ check_default_argument (tree decl, tree arg)
 
    *PARMS is set to the chain of PARM_DECLs created.  */
 
-static tree
+/* APPLE LOCAL blocks 6040305 (ce) */
+tree
 grokparms (cp_parameter_declarator *first_parm, tree *parms)
 {
   tree result = NULL_TREE;

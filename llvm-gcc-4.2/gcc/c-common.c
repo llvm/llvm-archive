@@ -202,6 +202,11 @@ cpp_reader *parse_in;		/* Declared in c-pragma.h.  */
 
 */
 
+/* APPLE LOCAL begin radar 5811943 - Fix type of pointers to Blocks  */
+/* Move declaration of invoke_impl_ptr_type from c-typeck.c  */
+tree invoke_impl_ptr_type;
+/* APPLE LOCAL end radar 5811943 - Fix type of pointers to Blocks  */
+
 tree c_global_trees[CTI_MAX];
 
 /* Switches common to the C front ends.  */
@@ -626,6 +631,8 @@ static tree handle_cleanup_attribute (tree *, tree, tree, int, bool *);
 static tree handle_warn_unused_result_attribute (tree *, tree, tree, int,
 						 bool *);
 static tree handle_sentinel_attribute (tree *, tree, tree, int, bool *);
+/* APPLE LOCAL radar 5932809 - copyable byref blocks */
+static tree handle_blocks_attribute (tree *, tree, tree, int, bool *);
 
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
@@ -744,6 +751,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_gcroot_attribute },
   #endif
   /* LLVM LOCAL end */
+  /* APPLE LOCAL radar 5932809 - copyable byref blocks */
+  { "blocks", 1, 1, true, false, false, handle_blocks_attribute },
   { NULL,                     0, 0, false, false, false, NULL }
 };
 
@@ -6046,6 +6055,119 @@ handle_warn_unused_result_attribute (tree *node, tree name,
 
   return NULL_TREE;
 }
+
+/* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
+/* Handle "blocks" attribute. */
+static tree
+handle_blocks_attribute (tree *node, tree name, 
+                           tree args,
+                           int ARG_UNUSED (flags), bool *no_add_attrs)
+{
+  tree arg_ident;
+  *no_add_attrs = true;
+  if (!(*node) || TREE_CODE (*node) != VAR_DECL)
+    {
+      warning (OPT_Wattributes, "byref attribute can be specified on variables only - ignored");
+      return NULL_TREE;
+    }
+  arg_ident = TREE_VALUE (args);
+  gcc_assert (TREE_CODE (arg_ident) == IDENTIFIER_NODE);
+  /* APPLE LOCAL radar 6096219 */
+  if (strcmp (IDENTIFIER_POINTER (arg_ident), "byref"))
+    {
+      /* APPLE LOCAL radar 6096219 */
+      warning (OPT_Wattributes, "Only \"byref\" is allowed - %qE attribute ignored", 
+               name);
+      return NULL_TREE;
+    }
+
+  COPYABLE_BYREF_LOCAL_VAR (*node) = 1;
+  COPYABLE_BYREF_LOCAL_NONPOD (*node) = block_requires_copying (*node);
+  return NULL_TREE;
+}
+/* APPLE LOCAL end radar 5932809 - copyable byref blocks */
+
+/* APPLE LOCAL begin blocks 6040305 */
+static tree block_byref_release_decl;
+
+/* Build a: void _Block_byref_release (void *) if not done
+  already. */
+tree
+build_block_byref_release_decl (void)
+{
+  if (!block_byref_release_decl &&
+      !(block_byref_release_decl =
+        lookup_name (get_identifier ("_Block_byref_release"))))
+  {
+    tree func_type =
+    build_function_type (void_type_node,
+                         tree_cons (NULL_TREE, ptr_type_node, void_list_node));
+
+    block_byref_release_decl =
+      builtin_function ("_Block_byref_release", func_type, 0, NOT_BUILT_IN, 
+			0, NULL_TREE);
+
+    TREE_NOTHROW (block_byref_release_decl) = 0;
+  }
+  return block_byref_release_decl;
+}
+
+/* This routine builds call to:
+ _Block_byref_release(VAR_DECL.forwarding);
+ and adds it to the statement list.
+ */
+tree
+build_block_byref_release_exp (tree var_decl)
+{
+  tree exp = var_decl, call_exp, func_params;
+  tree type = TREE_TYPE (var_decl);
+  /* __block variables imported into Blocks are not _Block_byref_released()
+   from within the Block statement itself; otherwise, each envokation of
+   the block causes a release. Make sure to release __block variables declared 
+   and used locally in the block though. */
+  if (cur_block 
+      && (BLOCK_DECL_COPIED (var_decl) || BLOCK_DECL_BYREF (var_decl)))
+    return NULL_TREE;
+  if (BLOCK_DECL_BYREF (var_decl)) {
+    /* This is a "struct Block_byref_X *" type. Get its pointee. */
+    gcc_assert (POINTER_TYPE_P (type));
+    type = TREE_TYPE (type);
+    exp = build_indirect_ref (exp, "unary *");
+  }
+  TREE_USED (var_decl) = 1;
+
+  /* Declare: _Block_byref_release(void*) if not done already. */
+  exp = build_component_ref (exp, get_identifier ("forwarding"));
+  func_params = tree_cons (NULL_TREE, exp, NULL_TREE);
+  call_exp = build_function_call (build_block_byref_release_decl (), func_params);
+  return call_exp;
+}
+/* APPLE LOCAL begin blocks 6040305 */
+/* APPLE LOCAL begin radar 5803600 */
+/** add_block_global_byref_list - Adds global variable decl to the list of
+    byref global declarations in the current block.
+*/
+void add_block_global_byref_list (tree decl)
+{
+  cur_block->block_byref_global_decl_list = 
+    tree_cons (NULL_TREE, decl, cur_block->block_byref_global_decl_list);
+}
+
+/** in_block_global_byref_list - returns TRUE if global variable is
+    in the list of 'byref' declarations.
+*/
+bool in_block_global_byref_list (tree decl)
+{
+  tree chain;
+  if (TREE_STATIC (decl)) {
+    for (chain = cur_block->block_byref_global_decl_list; chain;
+         chain = TREE_CHAIN (chain))
+      if (TREE_VALUE (chain) == decl)
+        return true;
+  }
+  return false;
+}
+/* APPLE LOCAL end radar 5803600 */
 
 /* Handle a "sentinel" attribute.  */
 

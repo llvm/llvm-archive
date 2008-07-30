@@ -8418,6 +8418,8 @@ root_type (tree type)
     case ERROR_MARK:
       return error_mark_node;
 
+    /* APPLE LOCAL radar 5732232 - blocks */
+    case BLOCK_POINTER_TYPE:
     case POINTER_TYPE:
     case REFERENCE_TYPE:
       return type_main_variant (root_type (TREE_TYPE (type)));
@@ -8450,6 +8452,8 @@ is_base_type (tree type)
     case ENUMERAL_TYPE:
     case FUNCTION_TYPE:
     case METHOD_TYPE:
+    /* APPLE LOCAL radar 5732232 - blocks */
+    case BLOCK_POINTER_TYPE:
     case POINTER_TYPE:
     case REFERENCE_TYPE:
     case OFFSET_TYPE:
@@ -8637,7 +8641,8 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
       mod_type_die = new_die (DW_TAG_volatile_type, comp_unit_die, type);
       sub_die = modified_type_die (type, 0, 0, context_die);
     }
-  else if (code == POINTER_TYPE)
+  /* APPLE LOCAL radar 5732232 - blocks */
+  else if (code == POINTER_TYPE || code == BLOCK_POINTER_TYPE)
     {
       mod_type_die = new_die (DW_TAG_pointer_type, comp_unit_die, type);
       add_AT_unsigned (mod_type_die, DW_AT_byte_size,
@@ -12986,6 +12991,8 @@ gen_type_die (tree type, dw_die_ref context_die)
     case ERROR_MARK:
       break;
 
+    /* APPLE LOCAL radar 5732232 - blocks */
+    case BLOCK_POINTER_TYPE:
     case POINTER_TYPE:
     case REFERENCE_TYPE:
       /* We must set TREE_ASM_WRITTEN in case this is a recursive type.  This

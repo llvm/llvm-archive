@@ -30,7 +30,9 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "langhooks.h"
 #include "tree-iterator.h"
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #include "llvm.h"
+#endif
 /* LLVM LOCAL end */
 
 /* Define the hash table of nodes already seen.

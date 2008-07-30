@@ -7122,6 +7122,22 @@ cp_lexer_iasm_bol (cp_lexer* lexer)
 static void
 cp_parser_statement_seq_opt (cp_parser* parser, tree in_statement_expr)
 {
+  /* APPLE LOCAL begin omit calls to empty destructors 5559195 */
+  tree class_type = DECL_CONTEXT (current_function_decl);
+
+  bool determine_destructor_triviality =
+    DECL_DESTRUCTOR_P (current_function_decl) && class_type != NULL_TREE
+    && !CLASSTYPE_DESTRUCTOR_TRIVIALITY_FINAL (class_type);
+
+  /* Assume that the destructor is trivial at first, and mark nontrivial if
+     any statement is parsed. */
+  if (determine_destructor_triviality)
+    {
+      CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (class_type) = 0;
+      CLASSTYPE_DESTRUCTOR_TRIVIALITY_FINAL (class_type) = 1;
+    }
+  /* APPLE LOCAL end omit calls to empty destructors 5559195 */
+
   /* Scan statements until there aren't any more.  */
   while (true)
     {
@@ -7139,6 +7155,11 @@ cp_parser_statement_seq_opt (cp_parser* parser, tree in_statement_expr)
 		  || token->keyword == RID_AT_END)))
       /* APPLE LOCAL end ObjC++ 4185810 */
 	break;
+
+      /* APPLE LOCAL begin omit calls to empty destructors 5559195 */
+      if (determine_destructor_triviality)
+	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (class_type) = 1;
+      /* APPLE LOCAL end omit calls to empty destructors 5559195 */
 
       /* Parse the statement.  */
       cp_parser_statement (parser, in_statement_expr, true);
@@ -19632,6 +19653,10 @@ cp_parser_objc_interstitial_code (cp_parser* parser)
 	     token->type == CPP_OPEN_BRACE ? "{" : "}");
     }
   /* APPLE LOCAL end 4093475 */
+  /* APPLE LOCAL begin radar 5976344 */
+   else if (token->keyword == RID_TEMPLATE)
+     cp_parser_declaration (parser);
+  /* APPLE LOCAL end radar 5976344 */
   /* Finally, try to parse a block-declaration, or a function-definition.  */
   else
     cp_parser_block_declaration (parser, /*statement_p=*/false);

@@ -639,4 +639,3 @@ __do_global_ctors (void)
 #else /* ! CRT_BEGIN && ! CRT_END */
 #error "One of CRT_BEGIN or CRT_END must be defined."
 #endif
-

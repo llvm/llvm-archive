@@ -391,6 +391,7 @@ enum warn_strict_overflow_code
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 extern int flag_llvm_pch_read;
+extern int flag_no_simplify_libcalls;
 #endif
 /* LLVM LOCAL end */
 

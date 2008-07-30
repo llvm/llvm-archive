@@ -70,11 +70,13 @@ extern "C" {
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
-#include "c-common.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;
+
+// Non-zero if libcalls should not be simplified.
+int flag_no_simplify_libcalls;
 
 // Global state for the LLVM backend.
 Module *TheModule = 0;
@@ -381,7 +383,7 @@ static void createOptimizationPasses() {
       PM->add(createFunctionInliningPass());    // Inline small functions
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
-    if (!flag_no_builtin)
+    if (!flag_no_simplify_libcalls)
       PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
     PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
     PM->add(createJumpThreadingPass());         // Thread jumps.

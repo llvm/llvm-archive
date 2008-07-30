@@ -58,9 +58,9 @@ cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
                 cl::desc("Insert pool checks instead of exact bounds checks"));
   
 // Options for Enabling/Disabling the Insertion of Various Checks
-cl::opt<bool> EnableUnknownChecks ("enable-unknownchecks", cl::Hidden,
-                                   cl::init(false),
-                                   cl::desc("Enable Checks on Incomplete/Unknown Nodes"));
+cl::opt<bool> EnableIncompleteFuncChecks ("enable-ifchecks", cl::Hidden,
+                                   cl::init(true),
+                                   cl::desc("Enable Indirect Call Checks on Incomplete Nodes"));
 
 cl::opt<bool> EnableNullChecks  ("enable-nullchecks", cl::Hidden,
                                 cl::init(false),
@@ -277,6 +277,12 @@ usedOnlyForLoadStore (Value * InitialValue) {
           }
 
           if ((name == "llva_atomic_compare_and_swap") ||
+              (name == "llva_atomic_cas_lw") ||
+              (name == "llva_atomic_cas_h") ||
+              (name == "llva_atomic_cas_b") ||
+              (name == "llva_atomic_fetch_add_store") ||
+              (name == "llva_atomic_and") ||
+              (name == "llva_atomic_or") ||
               (name == "llvm.memset.i32")) {
             if (CI->getOperand(1) == V)
               continue;
@@ -1588,7 +1594,7 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   // DSNode may be missing valid function targets.  In that case, do not
   // insert a check.
   //
-  if ((!EnableUnknownChecks) && (Node->isIncomplete())) {
+  if (EnableIncompleteFuncChecks && (Node->isIncomplete())) {
     ++MissedFuncChecks;
     return;
   }

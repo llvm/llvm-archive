@@ -19872,7 +19872,6 @@ objc_check_format_nsstring (tree argument,
 /* APPLE LOCAL end radar 4985544 - 5195402 */
 
 /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
 /* APPLE LOCAL begin radar 2996215 */
 /* Objc wrapper to call libcpp's conversion routine. */
 static bool
@@ -19887,7 +19886,7 @@ objc_cvt_utf8_utf16 (const unsigned char *inbuf, size_t length,
    section and initializes it with uniCharBuf[numUniChars] characters. 
 */
 tree 
-objc_create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUniChars)
+create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUniChars)
 {
   size_t l;
   tree decl, type, init;
@@ -19918,7 +19917,6 @@ objc_create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *n
   finish_var_decl (decl,  init);
   return decl;
 }
-#endif
 /* APPLE LOCAL end radar 2996215 */
 
 /* APPLE LOCAL begin radar 5202926 */

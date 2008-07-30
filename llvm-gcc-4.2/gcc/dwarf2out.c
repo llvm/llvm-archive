@@ -11480,9 +11480,8 @@ add_type_attribute (dw_die_ref object_die, tree type, int decl_const,
   dw_die_ref type_die  = NULL;
 
   /* APPLE LOCAL begin radar 5811943 - Fix type of pointers to blocks  */
-  if (code == BLOCK_POINTER_TYPE)
+  if (code == BLOCK_POINTER_TYPE && invoke_impl_ptr_type)
     {
-      gcc_assert (invoke_impl_ptr_type);
       type = invoke_impl_ptr_type;
       code = TREE_CODE (type);
     }

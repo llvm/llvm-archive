@@ -69,9 +69,6 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "hashtab.h"
 #include "cgraph.h"
 #include "input.h"
-/* APPLE LOCAL radar 5811943 - Fix type of pointers to Blocks  */
-/* APPLE LOCAL Radar 5741731, typedefs used in '@try' blocks    */ 
-#include "c-common.h"
 
 #ifdef DWARF2_DEBUGGING_INFO
 static void dwarf2out_source_line (unsigned int, const char *);
@@ -4099,6 +4096,7 @@ static unsigned get_AT_unsigned (dw_die_ref, enum dwarf_attribute);
 static inline dw_die_ref get_AT_ref (dw_die_ref, enum dwarf_attribute);
 static bool is_c_family (void);
 static bool is_cxx (void);
+static bool is_objc(void);
 static bool is_java (void);
 static bool is_fortran (void);
 static bool is_ada (void);
@@ -5491,6 +5489,16 @@ is_cxx (void)
   unsigned int lang = get_AT_unsigned (comp_unit_die, DW_AT_language);
   
   return lang == DW_LANG_C_plus_plus || lang == DW_LANG_ObjC_plus_plus;
+}
+
+/* Return TRUE if the language is objc.  */
+
+static inline bool
+is_objc (void)
+{
+  unsigned int lang = get_AT_unsigned (comp_unit_die, DW_AT_language);
+
+  return lang == DW_LANG_ObjC;
 }
 
 /* Return TRUE if the language is Fortran.  */
@@ -8615,7 +8623,7 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
 
   /* APPLE LOCAL begin Radar 5741731, typedefs used in '@try' blocks    */ 
   if (is_volatile_type
-      && c_dialect_objc ()
+      && is_objc ()
       && lookup_attribute ("objc_volatilized", TYPE_ATTRIBUTES (type)))
     {
       is_volatile_type = 0;

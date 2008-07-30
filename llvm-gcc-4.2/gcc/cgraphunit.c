@@ -166,8 +166,11 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "tree-gimple.h"
 #include "tree-pass.h"
 #include "output.h"
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #include "llvm.h"
+#endif
+/* LLVM LOCAL end */
 
 static void cgraph_expand_all_functions (void);
 static void cgraph_mark_functions_to_output (void);

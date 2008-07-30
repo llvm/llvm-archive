@@ -699,7 +699,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_section_attribute },
   { "aligned",                0, 1, false, false, false,
 			      handle_aligned_attribute },
-  { "weak",                   0, 0, true,  false, false,
+  /* APPLE LOCAL weak types 5954418 */
+  { "weak",                   0, 0, false, false, false,
 			      handle_weak_attribute },
   { "alias",                  1, 1, true,  false, false,
 			      handle_alias_attribute },
@@ -2536,8 +2537,11 @@ tree
 pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 {
   tree size_exp, ret;
-  /* LLVM LOCAL */
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   bool size_set = 0;
+#endif
+  /* LLVM LOCAL end */
 
   /* The result is a pointer of the same type that is being added.  */
 
@@ -2561,14 +2565,21 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 	pedwarn ("pointer to member function used in arithmetic");
       size_exp = integer_one_node;
     }
+  else
   /* LLVM LOCAL begin */
-  else {
-    size_set = 1;
+#ifdef ENABLE_LLVM
+    {
+      size_set = 1;
+#endif
+  /* LLVM LOCAL end */
+
     size_exp = size_in_bytes (TREE_TYPE (result_type));
-  }
+
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+    }
 
   /* In LLVM we want to represent this as &P[i], not as P+i*sizeof(*P). */
-#ifdef ENABLE_LLVM
   /* Convert the pointer to char* if it is a pointer to a zero sized object. */
   if (!size_set)
     ptrop = convert(build_pointer_type(char_type_node), ptrop);
@@ -5114,6 +5125,13 @@ handle_weak_attribute (tree *node, tree name,
   if (TREE_CODE (*node) == FUNCTION_DECL
       || TREE_CODE (*node) == VAR_DECL)
     declare_weak (*node);
+  /* APPLE LOCAL begin weak types 5954418 */
+  else if (! targetm.cxx.class_data_always_comdat ()
+	   && TREE_CODE (*node) == RECORD_TYPE)
+    {
+      /* Leave on the type for the C++ front end */
+    }
+  /* APPLE LOCAL end weak types 5954418 */
   else
     warning (OPT_Wattributes, "%qE attribute ignored", name);
     	
@@ -7123,7 +7141,11 @@ struct iasm_op_constraint
 /* ??? This should be in defaults.h or a CW asm specific header.  */
 #ifndef TARGET_IASM_OP_CONSTRAINT
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #define TARGET_IASM_OP_CONSTRAINT
+#else
+#define TARGET_IASM_OP_CONSTRAINT {}
+#endif
 /* LLVM LOCAL end */
 #endif
 
@@ -7205,7 +7227,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   const struct iasm_op_constraint db[] = {
     TARGET_IASM_OP_CONSTRAINT
     /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
     { "", 0, "" }
+#endif
     /* LLVM LOCAL end */
   };
   struct iasm_op_constraint key;
@@ -7219,7 +7243,11 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
       size_t i;
       once = 1;
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       for (i=0; i < sizeof (db) / sizeof(db[0]) - 2; ++i)
+#else
+      for (i=0; i < sizeof (db) / sizeof(db[0]) - 1; ++i)
+#endif
       /* LLVM LOCAL end */
 	gcc_assert (iasm_op_comp (&db[i+1], &db[i]) >= 0);
     }
@@ -7231,7 +7259,11 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
   TARGET_IASM_REORDER_ARG(opcode, key.argnum, num_args, argnum);
 
   /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   r = bsearch (&key, db, sizeof (db) / sizeof (db[0]) - 1, sizeof (db[0]), iasm_op_comp);
+#else
+  r = bsearch (&key, db, sizeof (db) / sizeof (db[0]), sizeof (db[0]), iasm_op_comp);
+#endif
   /* LLVM LOCAL end */
 
   IASM_SYNTH_CONSTRAINTS(r, argnum, num_args, db);
@@ -7562,7 +7594,7 @@ iasm_extra_clobbers (const char *ARG_UNUSED (opcode),
   const char **clobbers;
   int num;
 
-#if defined(TARGET_IASM_EXTRA_CLOBBERS) && defined(ENABLE_CHECKING)
+#ifdef ENABLE_CHECKING
   /* Ensure that the table is sorted. */
   static int once;
   if (once == 0)
@@ -8209,7 +8241,9 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	  && TREE_STATIC (arg)
 /* APPLE LOCAL begin LLVM */
 /* DECL_RTL does not get set for LLVM */
-/*	  && MEM_P (DECL_RTL (arg))*/
+#ifndef ENABLE_LLVM
+	  && MEM_P (DECL_RTL (arg))
+#endif
          )
 /* APPLE LOCAL end LLVM */
 	{
@@ -8440,7 +8474,7 @@ iasm_label (tree labid, bool atsign)
 {
 /* LLVM LOCAL begin */
 /* Unused variables resulting from code change below. */
-#if 1
+#ifdef ENABLE_LLVM
   tree stmt, label;
 #else
    tree sexpr;
@@ -8460,9 +8494,8 @@ iasm_label (tree labid, bool atsign)
 
   iasm_buffer[0] = '\0';
   label = iasm_define_label (labid);
-/* LLVM LOCAL begin */
-#if 1
-/* LLVM LOCAL end */
+/* LLVM LOCAL */
+#ifdef ENABLE_LLVM
   /* Ideally I'd like to do this, but, it moves the label in:
 
 	nop

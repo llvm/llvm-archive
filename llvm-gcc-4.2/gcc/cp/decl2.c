@@ -53,8 +53,11 @@ Boston, MA 02110-1301, USA.  */
 #include "intl.h"
 /* APPLE LOCAL elide global inits 3814991 */
 #include "tree-iterator.h"
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #include "llvm.h"
+#endif
+/* LLVM LOCAL end */
 
 extern cpp_reader *parse_in;
 
@@ -1879,12 +1882,9 @@ constrain_class_visibility (tree type)
 	int subvis = type_visibility (ftype);
 
 	if (subvis == VISIBILITY_ANON)
-	  {
-	    if (!in_main_input_context ())
-	      warning (0, "\
+	  warning (0, "\
 %qT has a field %qD whose type uses the anonymous namespace",
 		   type, t);
-	  }
 	else if (IS_AGGR_TYPE (ftype)
 		 && vis < VISIBILITY_HIDDEN
 		 && subvis >= VISIBILITY_HIDDEN)
@@ -1899,12 +1899,9 @@ constrain_class_visibility (tree type)
       int subvis = type_visibility (TREE_TYPE (t));
 
       if (subvis == VISIBILITY_ANON)
-        {
-	  if (!in_main_input_context())
-	    warning (0, "\
+	warning (0, "\
 %qT has a base %qT whose type uses the anonymous namespace",
 		 type, TREE_TYPE (t));
-	}
       else if (vis < VISIBILITY_HIDDEN
 	       && subvis >= VISIBILITY_HIDDEN)
 	warning (OPT_Wattributes, "\
@@ -1912,6 +1909,27 @@ constrain_class_visibility (tree type)
 		 type, TREE_TYPE (t));
     }
 }
+
+/* APPLE LOCAL begin weak types 5954418 */
+static bool
+typeinfo_comdat (tree type)
+{
+  tree binfo, base_binfo;
+  int j;
+
+  if (lookup_attribute ("weak", TYPE_ATTRIBUTES (type)))
+    return true;
+  
+  for (binfo = TYPE_BINFO (type), j = 0;
+       BINFO_BASE_ITERATE (binfo, j, base_binfo); ++j)
+    {
+      if (typeinfo_comdat (BINFO_TYPE (base_binfo)))
+	return true;
+    }
+
+  return false;
+}
+/* APPLE LOCAL end weak types 5954418 */
 
 /* DECL is a FUNCTION_DECL or VAR_DECL.  If the object file linkage
    for DECL has not already been determined, do so now by setting
@@ -2109,7 +2127,10 @@ import_export_decl (tree decl)
 		{
 		  comdat_p = (targetm.cxx.class_data_always_comdat ()
 			      || (CLASSTYPE_KEY_METHOD (type)
-				  && DECL_DECLARED_INLINE_P (CLASSTYPE_KEY_METHOD (type))));
+				  /* APPLE LOCAL begin weak types 5954418 */
+				  && DECL_DECLARED_INLINE_P (CLASSTYPE_KEY_METHOD (type)))
+			      || typeinfo_comdat (type));
+		  /* APPLE LOCAL end weak types 5954418 */
 		  mark_needed (decl);
 		  if (!flag_weak)
 		    {

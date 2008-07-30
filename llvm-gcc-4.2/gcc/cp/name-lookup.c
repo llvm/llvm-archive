@@ -1370,10 +1370,9 @@ leave_scope (void)
       is_class_level = 0;
     }
 
-#ifdef HANDLE_PRAGMA_VISIBILITY
-  if (scope->has_visibility)
-    pop_visibility ();
-#endif
+  /* APPLE LOCAL begin visibility 5805832 */
+  /* pop_visibility() removed */
+  /* APPLE LOCAL end visibility 5805832 */
 
   /* Move one nesting level up.  */
   current_binding_level = scope->level_chain;
@@ -3018,13 +3017,16 @@ push_namespace (tree name)
 /* Same, but specify attributes to apply to the namespace.  The attributes
    only apply to the current namespace-body, not to any later extensions. */
 
-void
+/* APPLE LOCAL visibility 5805832 */
+bool
 push_namespace_with_attribs (tree name, tree attributes)
 {
   tree d = NULL_TREE;
   int need_new = 1;
   int implicit_use = 0;
   bool anon = !name;
+  /* APPLE LOCAL visibility 5805832 */
+  bool visibility_pushed = false;
 
   timevar_push (TV_NAME_LOOKUP);
 
@@ -3113,7 +3115,8 @@ push_namespace_with_attribs (tree name, tree attributes)
 	  continue;
 	}
 
-      current_binding_level->has_visibility = 1;
+      /* APPLE LOCAL visibility 5805832 */
+      visibility_pushed = true;
       push_visibility (TREE_STRING_POINTER (x));
       goto found;
     }
@@ -3121,6 +3124,8 @@ push_namespace_with_attribs (tree name, tree attributes)
 #endif
 
   timevar_pop (TV_NAME_LOOKUP);
+  /* APPLE LOCAL visibility 5805832 */
+  return visibility_pushed;
 }
 
 /* Pop from the scope of the current namespace.  */

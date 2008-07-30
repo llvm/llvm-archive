@@ -199,11 +199,13 @@ static tree start_class (enum tree_code, tree, tree, tree);
 static tree continue_class (tree);
 static void finish_class (tree);
 static void start_method_def (tree);
+/* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
 #ifdef OBJCPLUS
-static void objc_start_function (tree, tree, tree, tree);
+static void objc_start_function (tree, tree, tree, tree, tree);
 #else
-static void objc_start_function (tree, tree, tree, struct c_arg_info *);
+static void objc_start_function (tree, tree, tree, struct c_arg_info *, tree);
 #endif
+/* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
 /* APPLE LOCAL radar 4947311 - protocol attributes */
 static tree start_protocol (tree, tree, tree);
 static tree build_method_decl (enum tree_code, tree, tree, tree, bool);
@@ -1182,6 +1184,8 @@ objc_add_property_setter_method (tree class, tree x)
   arg_name = get_identifier ("_value");
   /* APPLE LOCAL radar 4157812 */
   selector = objc_build_keyword_decl (key_name, arg_type, arg_name, NULL_TREE);
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  DECL_SOURCE_LOCATION (selector) = DECL_SOURCE_LOCATION (x);
   setter_decl = build_method_decl (INSTANCE_METHOD_DECL,
                                    ret_type, selector,
                                    build_tree_list (NULL_TREE, NULL_TREE),
@@ -5235,10 +5239,12 @@ build_module_initializer_routine (void)
 #endif
 
   objc_push_parm (build_decl (PARM_DECL, NULL_TREE, void_type_node));
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
   objc_start_function (get_identifier (TAG_GNUINIT),
 		       build_function_type (void_type_node,
 					    OBJC_VOID_AT_END),
-		       NULL_TREE, objc_get_parm_info (0));
+		       NULL_TREE, objc_get_parm_info (0), NULL_TREE);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
 
   body = c_begin_compound_stmt (true);
   add_stmt (build_function_call
@@ -15875,6 +15881,8 @@ objc_synthesize_setter (tree class, tree class_method, tree property)
 static void
 objc_synthesize_new_getter (tree class, tree class_method, tree property)
 {
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  location_t save_input_location;
   tree decl,body,ret_val,fn;
   /* APPLE LOCAL begin radar 5207415 */
   tree property_getter = PROPERTY_GETTER_NAME (property) 
@@ -15886,6 +15894,11 @@ objc_synthesize_new_getter (tree class, tree class_method, tree property)
 		     /* APPLE LOCAL radar 5207415 */
                      objc_implementation_context),property_getter))
     return;
+
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  save_input_location = input_location;
+  input_location = DECL_SOURCE_LOCATION (property);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
 
   objc_lookup_property_ivar (class, property);
 
@@ -15901,7 +15914,11 @@ objc_synthesize_new_getter (tree class, tree class_method, tree property)
   if (!umsg_GetAtomicProperty || !umsg_CopyAtomicStruct)
     declare_atomic_property_api ();
   objc_inherit_code = INSTANCE_METHOD_DECL;
-  objc_start_method_definition (copy_node (decl), NULL_TREE);
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  decl = copy_node (decl);
+  DECL_SOURCE_LOCATION (decl) = DECL_SOURCE_LOCATION (property);
+  objc_start_method_definition (decl, NULL_TREE);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
   body = c_begin_compound_stmt (true);
   if (!flag_objc_gc_only && IS_ATOMIC (property)
       && (PROPERTY_COPY (property) == boolean_true_node
@@ -15988,6 +16005,8 @@ objc_synthesize_new_getter (tree class, tree class_method, tree property)
   finish_function ();
 #endif
   objc_finish_method_definition (fn);
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  input_location = save_input_location;
 }
 
 /* This routine synthesizes a 'setter' routine for new property. */
@@ -15998,6 +16017,8 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
   tree body, lhs;
   /* APPLE LOCAL begin radar 5207415 */
   tree setter_ident;
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  location_t save_input_location;
 
   if (PROPERTY_SETTER_NAME (property))
     setter_ident = PROPERTY_SETTER_NAME (property);
@@ -16020,11 +16041,20 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
   if (!decl)
     return;
 
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  save_input_location = input_location;
+  input_location = DECL_SOURCE_LOCATION (property);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
+
   /* APPLE LOCAL begin radar 4947014 - objc atomic property */
   if (!umsg_SetAtomicProperty || !umsg_CopyAtomicStruct)
     declare_atomic_property_api ();
   objc_inherit_code = INSTANCE_METHOD_DECL;
-  objc_start_method_definition (copy_node (decl), NULL_TREE);
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  decl = copy_node (decl);
+  DECL_SOURCE_LOCATION (decl) = DECL_SOURCE_LOCATION (property);
+  objc_start_method_definition (decl, NULL_TREE);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
   body = c_begin_compound_stmt (true);
   /* property_name = _value; */
   stmt = NULL_TREE;
@@ -16117,6 +16147,8 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
   finish_function ();
 #endif
   objc_finish_method_definition (fn);
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  input_location = save_input_location;
 }
 
 /* APPLE LOCAL begin radar 4966565 */
@@ -16451,6 +16483,10 @@ finish_class (tree class)
 	          getter_decl = build_method_decl (INSTANCE_METHOD_DECL,
 	     				           rettype, prop_name, NULL_TREE,
 						   false);
+		  /* APPLE LOCAL begin radar 5839812 - synthesized methods  */
+		  DECL_SOURCE_LOCATION (getter_decl) = 
+		                                      DECL_SOURCE_LOCATION (x);
+		  /* APPLE LOCAL end radar 5839812 - synthesized methods  */
 	  	  objc_add_method (class, getter_decl, false, OPTIONAL_PROPERTY (x));
 	          METHOD_PROPERTY_CONTEXT (getter_decl) = x;
 	          TREE_DEPRECATED (getter_decl) = TREE_DEPRECATED (x);
@@ -16469,6 +16505,10 @@ finish_class (tree class)
 	          getter_decl = build_method_decl (INSTANCE_METHOD_DECL,
 	     				           rettype, PROPERTY_GETTER_NAME (x), 
 						   NULL_TREE, false);
+		  /* APPLE LOCAL begin radar 5839812 - synthesized methods  */
+		  DECL_SOURCE_LOCATION (getter_decl) = 
+		                                      DECL_SOURCE_LOCATION (x);
+		  /* APPLE LOCAL end radar 5839812 - synthesized methods  */
 	  	  objc_add_method (class, getter_decl, false, false);
 		  /* APPLE LOCAL radar 5390587 */
 	          METHOD_PROPERTY_CONTEXT (getter_decl) = x;
@@ -16547,6 +16587,10 @@ finish_class (tree class)
 		      setter_decl = build_method_decl (INSTANCE_METHOD_DECL,
                                       build_tree_list (NULL_TREE, void_type_node), selector,
                                       build_tree_list (NULL_TREE, NULL_TREE), false);
+		      /* APPLE LOCAL begin radar 5839812 - synthesized methods  */
+		      DECL_SOURCE_LOCATION (setter_decl) = 
+		                                      DECL_SOURCE_LOCATION (x);
+		      /* APPLE LOCAL end radar 5839812 - synthesized methods  */
 		      objc_add_method (class, setter_decl, false, false);
 		      METHOD_PROPERTY_CONTEXT (setter_decl) = x;
 		      /* Issue error if setter name matches a property name. */
@@ -17582,16 +17626,31 @@ objc_fold_obj_type_ref (tree ref ATTRIBUTE_UNUSED,
 
 static void
 objc_start_function (tree name, tree type, tree attrs,
+/* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
 #ifdef OBJCPLUS
-		     tree params
+		     tree params,
 #else
-		     struct c_arg_info *params
+		     struct c_arg_info *params,
 #endif
-		     )
+		     tree method)
+/* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
 {
   tree fndecl = build_decl (FUNCTION_DECL, name, type);
 
 #ifdef OBJCPLUS
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  /* fndecl's source location is, by default, the current input location
+     (build_decl automatically does that).  If the fndecl is for a synthesized
+     property's getter or setter method, then the current input location will 
+     be the '@end', rather than the '@property' or '@synthesize' statement.
+     The following statement detects that situation and re-sets fndecl to
+     the correct source location for the '@property' or '@synthesize' 
+     statement.  */
+  if (method
+      && (strcmp (DECL_SOURCE_FILE (fndecl), DECL_SOURCE_FILE (method)) != 0
+	  || DECL_SOURCE_LINE (fndecl) != DECL_SOURCE_LINE (method)))
+    DECL_SOURCE_LOCATION (fndecl) = DECL_SOURCE_LOCATION (method);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
   DECL_ARGUMENTS (fndecl) = params;
   DECL_INITIAL (fndecl) = error_mark_node;
   DECL_EXTERNAL (fndecl) = 0;
@@ -17607,6 +17666,19 @@ objc_start_function (tree name, tree type, tree attrs,
 #else
   struct c_label_context_se *nstack_se;
   struct c_label_context_vm *nstack_vm;
+  /* APPLE LOCAL begin radar 5839812 - location for synthesized methods  */
+  /* fndecl's source location is, by default, the current input location
+     (build_decl automatically does that).  If the fndecl is for a synthesized
+     property's getter or setter method, then the current input location will 
+     be the '@end', rather than the '@property' or '@synthesize' statement.
+     The following statement detects that situation and re-sets fndecl to
+     the correct source location for the '@property' or '@synthesize' 
+     statement.  */
+  if (method
+      && (strcmp (DECL_SOURCE_FILE (fndecl), DECL_SOURCE_FILE (method)) != 0
+	  || DECL_SOURCE_LINE (fndecl) != DECL_SOURCE_LINE (method)))
+    DECL_SOURCE_LOCATION (fndecl) = DECL_SOURCE_LOCATION (method);
+  /* APPLE LOCAL end radar 5839812 - location for synthesized methods  */
   nstack_se = XOBNEW (&parser_obstack, struct c_label_context_se);
   nstack_se->labels_def = NULL;
   nstack_se->labels_used = NULL;
@@ -17695,7 +17767,8 @@ really_start_method (tree method,
   meth_type
     = build_function_type (ret_type,
 			   get_arg_type_list (method, METHOD_DEF, 0));
-  objc_start_function (method_id, meth_type, NULL_TREE, parmlist);
+  /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
+  objc_start_function (method_id, meth_type, NULL_TREE, parmlist, method);
 
   /* Set self_decl from the first argument.  */
   self_decl = DECL_ARGUMENTS (current_function_decl);
@@ -19451,6 +19524,9 @@ void objc_declare_property_impl (int impl_code, tree tree_list)
 	  else
 	    {
 	      tree property_decl = copy_node (x);
+
+	      /* APPLE LOCAL radar 5839812 location for synthesized methods  */
+	      DECL_SOURCE_LOCATION (property_decl) = input_location;
 	      
 	      if (impl_code == 2)  /* @dynamic ... */
 	        PROPERTY_DYNAMIC (property_decl) = boolean_true_node;

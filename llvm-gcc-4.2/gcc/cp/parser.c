@@ -11528,6 +11528,8 @@ static void
 cp_parser_namespace_definition (cp_parser* parser)
 {
   tree identifier, attribs;
+  /* APPLE LOCAL visibility 5805832 */
+  bool visibility_pushed = false;
 
   /* Look for the `namespace' keyword.  */
   cp_parser_require_keyword (parser, RID_NAMESPACE, "`namespace'");
@@ -11547,9 +11549,16 @@ cp_parser_namespace_definition (cp_parser* parser)
   /* Look for the `{' to start the namespace.  */
   cp_parser_require (parser, CPP_OPEN_BRACE, "`{'");
   /* Start the namespace.  */
-  push_namespace_with_attribs (identifier, attribs);
+  /* APPLE LOCAL visibility 5805832 */
+  visibility_pushed = push_namespace_with_attribs (identifier, attribs);
   /* Parse the body of the namespace.  */
   cp_parser_namespace_body (parser);
+  /* APPLE LOCAL begin visibility 5805832 */
+#ifdef HANDLE_PRAGMA_VISIBILITY
+  if (visibility_pushed)
+    pop_visibility ();
+#endif
+  /* APPLE LOCAL end visibility 5805832 */
   /* Finish the namespace.  */
   pop_namespace ();
   /* Look for the final `}'.  */

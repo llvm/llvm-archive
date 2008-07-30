@@ -2129,6 +2129,10 @@ finish_class_member_access_expr (tree object, tree name, bool template_p)
 	  /* APPLE LOCAL radar 5285911 */
           && (expr = objc_build_property_reference_expr (object, name)))
         return expr;
+      /* APPLE LOCAL begin radar 5802025 */
+      else if (objc_property_reference_expr (object))
+        object = objc_build_property_getter_func_call (object);
+      /* APPLE LOCAL end radar 5802025 */
     }
   /* APPLE LOCAL end C* property (Radar 4436866) */
 
@@ -3510,7 +3514,8 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
       if (TREE_CODE (orig_op0) == STRING_CST
 	  || TREE_CODE (orig_op1) == STRING_CST)
 	warning (OPT_Waddress, 
-                 "comparison with string literal results in unspecified behaviour");
+		 /* APPLE LOCAL spelling 5808469 */
+                 "comparison with string literal results in unspecified behavior");
 
       build_type = boolean_type_node;
       if ((code0 == INTEGER_TYPE || code0 == REAL_TYPE)

@@ -4236,6 +4236,8 @@ c_parser_switch_statement (c_parser *parser)
   tree block, expr, body, save_break;
   gcc_assert (c_parser_next_token_is_keyword (parser, RID_SWITCH));
   c_parser_consume_token (parser);
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  in_bc_stmt_block ();
   block = c_begin_compound_stmt (flag_isoc99);
   if (c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
     {
@@ -4253,6 +4255,8 @@ c_parser_switch_statement (c_parser *parser)
     add_stmt (build1 (LABEL_EXPR, void_type_node, c_break_label));
   c_break_label = save_break;
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  outof_bc_stmt_block ();
 }
 
 /* Parse a while statement (C90 6.6.5, C99 6.8.5).
@@ -4277,6 +4281,8 @@ c_parser_while_statement (c_parser *parser)
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
   attrs = c_parser_attributes (parser);
 /* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  in_bc_stmt_block ();
   block = c_begin_compound_stmt (flag_isoc99);
   loc = c_parser_peek_token (parser)->location;
   cond = c_parser_paren_condition (parser);
@@ -4290,6 +4296,8 @@ c_parser_while_statement (c_parser *parser)
 		 true);
 /* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  outof_bc_stmt_block ();
   c_break_label = save_break;
   c_cont_label = save_cont;
 }
@@ -4316,6 +4324,8 @@ c_parser_do_statement (c_parser *parser)
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
   attrs = c_parser_attributes (parser);
 /* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  in_bc_stmt_block ();
   block = c_begin_compound_stmt (flag_isoc99);
   loc = c_parser_peek_token (parser)->location;
   save_break = c_break_label;
@@ -4335,6 +4345,8 @@ c_parser_do_statement (c_parser *parser)
   c_finish_loop (loc, cond, NULL, body, new_break, new_cont, attrs, false);
 /* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
   add_stmt (c_end_compound_stmt (block, flag_isoc99));
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  outof_bc_stmt_block ();
 }
 
 /* Parse a for statement (C90 6.6.5, C99 6.8.5).
@@ -4374,6 +4386,8 @@ c_parser_for_statement (c_parser *parser)
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
   attrs = c_parser_attributes (parser);
 /* APPLE LOCAL end for-fsf-4_4 3274130 5295549 */ \
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  in_bc_stmt_block ();
   /* APPLE LOCAL radar 4472881 (in 4.2 ah) */
   block = c_begin_compound_stmt (flag_isoc99 || c_dialect_objc ());
   if (c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
@@ -4499,6 +4513,8 @@ c_parser_for_statement (c_parser *parser)
   /* APPLE LOCAL end radar 4708210 (for_objc_collection in 4.2) */
   /* APPLE LOCAL radar 4472881 (in 4.2 ai) */
   add_stmt (c_end_compound_stmt (block, flag_isoc99 || c_dialect_objc ()));
+  /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
+  outof_bc_stmt_block ();
   c_break_label = save_break;
   c_cont_label = save_cont;
 }
@@ -7258,6 +7274,26 @@ c_parser_objc_try_catch_statement (c_parser *parser)
   objc_finish_try_stmt ();
 }
 
+/* APPLE LOCAL begin radar 5982990 */
+/* This routine is called from c_parser_objc_synchronized_statement
+   and is identical to c_parser_compound_statement with
+   the addition of volatizing local variables seen in the scope
+   of @synchroniz block.
+*/
+static tree
+c_parser_objc_synch_compound_statement (c_parser *parser)
+{
+  tree stmt;
+  if (!c_parser_require (parser, CPP_OPEN_BRACE, "expected %<{%>"))
+    return error_mark_node;
+  stmt = c_begin_compound_stmt (true);
+  c_parser_compound_statement_nostart (parser);
+  if (flag_objc_sjlj_exceptions)
+    objc_mark_locals_volatile (NULL);
+  return c_end_compound_stmt (stmt, true);
+}
+/* APPLE LOCAL end radar 5982990 */
+
 /* Parse an objc-synchronized-statement.
 
    objc-synchronized-statement:
@@ -7279,7 +7315,8 @@ c_parser_objc_synchronized_statement (c_parser *parser)
     }
   else
     expr = error_mark_node;
-  stmt = c_parser_compound_statement (parser);
+  /* APPLE LOCAL radar 5982990 */
+  stmt = c_parser_objc_synch_compound_statement (parser);
   objc_build_synchronized (loc, expr, stmt);
 }
 

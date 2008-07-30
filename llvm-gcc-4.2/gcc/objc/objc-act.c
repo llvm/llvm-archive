@@ -18934,6 +18934,19 @@ objc_rewrite_function_call (tree function, tree params)
   return function;
 }
 
+/* APPLE LOCAL begin radar 5802025 */
+tree objc_build_property_getter_func_call (tree pref_expr)
+{
+  tree getter_call;
+  tree save_UOBJC_SUPER_decl = UOBJC_SUPER_decl;
+  UOBJC_SUPER_decl = TREE_OPERAND (pref_expr, 2);
+  getter_call = objc_build_getter_call (TREE_OPERAND (pref_expr, 0),
+                                    TREE_OPERAND (pref_expr, 1));
+  UOBJC_SUPER_decl = save_UOBJC_SUPER_decl;
+  return getter_call;
+}
+/* APPLE LOCAL end radar 5802025 */
+  
 /* Look for the special case of OBJC_TYPE_REF with the address of
    a function in OBJ_TYPE_REF_EXPR (presumably objc_msgSend or one
    of its cousins).  */
@@ -18972,13 +18985,8 @@ objc_gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p)
   /* APPLE LOCAL end radar 5276085 */
   /* APPLE LOCAL begin radar 5285911 5494488 */
   else if (objc_property_reference_expr (*expr_p))
-    {
-      tree save_UOBJC_SUPER_decl = UOBJC_SUPER_decl;
-      UOBJC_SUPER_decl = TREE_OPERAND (*expr_p, 2);
-      *expr_p = objc_build_getter_call (TREE_OPERAND (*expr_p, 0), 
-					TREE_OPERAND (*expr_p, 1));
-      UOBJC_SUPER_decl = save_UOBJC_SUPER_decl;
-    }
+    /* APPLE LOCAL radar 5802025 */
+    *expr_p = objc_build_property_getter_func_call (*expr_p);
   /* APPLE LOCAL end radar 5285911 5494488 */
 
 #ifdef OBJCPLUS

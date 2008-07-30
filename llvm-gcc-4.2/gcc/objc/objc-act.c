@@ -714,6 +714,11 @@ generate_struct_by_value_array (void)
 bool
 objc_init (void)
 {
+/* APPLE LOCAL begin ARM 5726269 */
+#ifdef OBJC_TARGET_FLAG_OBJC_ABI
+  OBJC_TARGET_FLAG_OBJC_ABI;
+#endif
+/* APPLE LOCAL end ARM 5726269 */
   /* APPLE LOCAL radar 4862848 */
   OBJC_FLAG_OBJC_ABI;
   /* APPLE LOCAL begin radar 4531086 */
@@ -746,12 +751,18 @@ objc_init (void)
 
   if (flag_next_runtime)
     {
+      /* APPLE LOCAL begin ARM hybrid objc-2.0 */
+      bool use_hybrid_msgSend = (flag_objc_abi == 2
+				 && flag_objc_legacy_dispatch);
       TAG_GETCLASS = "objc_getClass";
       TAG_GETMETACLASS = "objc_getMetaClass";
       TAG_MSGSEND = "objc_msgSend";
-      TAG_MSGSENDSUPER = "objc_msgSendSuper";
+      TAG_MSGSENDSUPER = use_hybrid_msgSend ? "objc_msgSendSuper2"
+					    : "objc_msgSendSuper";
       TAG_MSGSEND_STRET = "objc_msgSend_stret";
-      TAG_MSGSENDSUPER_STRET = "objc_msgSendSuper_stret";
+      TAG_MSGSENDSUPER_STRET = use_hybrid_msgSend ? "objc_msgSendSuper2_stret"
+						  : "objc_msgSendSuper_stret";
+      /* APPLE LOCAL end ARM hybrid objc-2.0 */
       default_constant_string_class_name = "NSConstantString";
       /* APPLE LOCAL begin radar 4810609 */
       if (flag_objc_gc_only)
@@ -759,14 +770,11 @@ objc_init (void)
       /* APPLE LOCAL end radar 4810609 */
       /* APPLE LOCAL begin radar 4949034 */
 #ifdef OBJCPLUS
-      if (flag_objc_abi == 2)
-	{
-	  /* In objc2 abi -fobjc-call-cxx-cdtors in on by default. */
-	  if (flag_objc_call_cxx_cdtors == -1)
-	    flag_objc_call_cxx_cdtors = 1;
-	}
-      else if (flag_objc_call_cxx_cdtors == -1)
-	flag_objc_call_cxx_cdtors = 0;
+      /* APPLE LOCAL begin radar 5809596 */
+      /* For all objc ABIs -fobjc-call-cxx-cdtors is on by default. */
+      if (flag_objc_call_cxx_cdtors == -1)
+        flag_objc_call_cxx_cdtors = 1;
+      /* APPLE LOCAL end radar 5809596 */
 #endif
       /* APPLE LOCAL end radar 4949034 */
     }
@@ -3479,6 +3487,13 @@ objc_common_type (tree type1, tree type2)
      -3		Comparison (LTYP and RTYP may match in either direction);
      -4		Silent comparison (for C++ overload resolution).
      -5         Comparison of ivar and @synthesized property type
+     // APPLE LOCAL begin radar 5218071
+     -6         Comparison of two property types; RTYP is type of property
+                in 'base' and LTYP is property type in derived class. They
+                match if LTYP is more specialized than RTYP; this includes
+                when RTYP is 'id' or LTYP is an object derived from an object 
+                of RTYP.
+    // APPLE LOCAL end radar 5218071
      APPLE LOCAL end 4175534  */
 
 bool
@@ -4383,7 +4398,8 @@ synth_module_prologue (void)
 						 NULL, NULL_TREE);
 
       /* APPLE LOCAL begin ObjC new abi */
-      if (flag_objc_abi == 2)
+      /* APPLE LOCAL ARM hybrid objc-2.0 */
+      if (flag_objc_abi == 2 && !flag_objc_legacy_dispatch)
 	{
           /* APPLE LOCAL radar 4699834 */
  	  /* Removed _rtp suffix from objc_msgSend_fixup_rtp and variants */
@@ -4727,6 +4743,20 @@ string_eq (const void *ptr1, const void *ptr2)
 		      len1));
 }
 
+/* APPLE LOCAL begin radar 5982789 */
+/* This routine build "NSString" type if "NSString" class is declared
+  in scope where it is needed. */
+static tree buildNSStringType(void)
+{
+  tree NSString_decl;
+
+  NSString_decl = objc_is_class_name (get_identifier ("NSString"));
+  if (!NSString_decl)
+    return NULL_TREE;
+  return objc_get_protocol_qualified_type (NSString_decl, NULL_TREE);
+}
+/* APPLE LOCAL end radar 5982789 */
+
 /* Given a chain of STRING_CST's, build a static instance of
    NXConstantString which points at the concatenation of those
    strings.  We place the string object in the __string_objects
@@ -4753,10 +4783,15 @@ objc_build_string_object (tree string)
      ObjC string literal.  On Darwin (Mac OS X), for example,
      we may wish to obtain a constant CFString reference instead.  */
   constructor = (*targetm.construct_objc_string) (string);
-  /* APPLE LOCAL begin radar 4494634 */
+  /* APPLE LOCAL begin radar 4494634, 5982789 */
   if (constructor)
-    return build1 (NOP_EXPR, objc_object_type, constructor);
-  /* APPLE LOCAL end radar 4494634 */
+    {
+      tree NSStringPtrType = buildNSStringType();
+      return build1 (NOP_EXPR, 
+                     NSStringPtrType ? build_pointer_type (NSStringPtrType)
+                                     : objc_object_type, constructor);
+    }
+  /* APPLE LOCAL end radar 4494634, 5982789 */
   /* APPLE LOCAL end constant cfstrings */  
     
   /* Check whether the string class being used actually exists and has the
@@ -12846,6 +12881,8 @@ get_arg_type_list (tree meth, int context, int superflag)
   /* Selector type - will eventually change to `int'.  */
   /* APPLE LOCAL begin ObjC new abi */
   chainon (arglist, build_tree_list (NULL_TREE, flag_objc_abi == 2 
+				     /* APPLE LOCAL ARM hybrid objc-2.0 */
+						&& !flag_objc_legacy_dispatch
 				     ? (superflag 
 					? objc_v2_super_selector_type 
 					: objc_v2_selector_type)
@@ -13393,7 +13430,8 @@ objc_finish_message_expr (tree receiver, tree sel_name, tree method_params)
   /* APPLE LOCAL ObjC new abi */
   /* Code moved down */
   /* APPLE LOCAL begin ObjC new abi */
-  if (flag_objc_abi == 2)
+  /* APPLE LOCAL ARM hybrid objc-2.0 */
+  if (flag_objc_abi == 2 && !flag_objc_legacy_dispatch)
     {
       tree ret_type;
       tree message_func_decl;
@@ -17181,14 +17219,16 @@ encode_type (tree type, int curtype, int format)
   else if (code == ARRAY_TYPE)
     encode_array (type, curtype, format);
 
-  else if (code == POINTER_TYPE)
-    encode_pointer (type, curtype, format);
 /* APPLE LOCAL begin radar 4476365 */
 #ifdef OBJCPLUS
   else if (code == REFERENCE_TYPE)
     encode_pointer (type, curtype, format);
 #endif
 /* APPLE LOCAL end radar 4476365 */
+
+  /* APPLE LOCAL radar 5849129 */
+  else if (code == POINTER_TYPE || code == BLOCK_POINTER_TYPE)
+    encode_pointer (type, curtype, format);
 
   else if (code == RECORD_TYPE || code == UNION_TYPE || code == ENUMERAL_TYPE)
     encode_aggregate (type, curtype, format);
@@ -19595,14 +19635,13 @@ void objc_declare_property_impl (int impl_code, tree tree_list)
 bool
 objc_check_nsstring_pointer_type (tree type)
 {
-  tree NSString_decl, NSString_type;
+  tree NSString_type;
 
   if (TREE_CODE (type) != POINTER_TYPE)
     return false;
-  NSString_decl = objc_is_class_name (get_identifier ("NSString"));
-  if (!NSString_decl)
+  NSString_type = buildNSStringType();
+  if (!NSString_type)
     return false;
-  NSString_type = objc_get_protocol_qualified_type (NSString_decl, NULL_TREE);
   return (TYPE_MAIN_VARIANT (TREE_TYPE (type)) == NSString_type);
 }
 

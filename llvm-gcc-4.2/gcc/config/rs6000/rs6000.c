@@ -1227,11 +1227,19 @@ darwin_rs6000_override_options (void)
   rs6000_altivec_abi = 1;
   TARGET_ALTIVEC_VRSAVE = 1;
 
+  /* APPLE LOCAL begin ARM 5683689 */
+  if (!darwin_macosx_version_min && !darwin_iphoneos_version_min)
+    darwin_macosx_version_min = "10.1";
+  /* APPLE LOCAL end ARM 5683689 */
+
+  /* APPLE LOCAL begin ARM 5683689 */
   /* APPLE LOCAL begin constant cfstrings */
   if (darwin_constant_cfstrings < 0)
-    darwin_constant_cfstrings = (strverscmp (darwin_macosx_version_min, "10.2")
-				 >= 0);
+    darwin_constant_cfstrings = 
+      darwin_iphoneos_version_min
+      || (strverscmp (darwin_macosx_version_min, "10.2") >= 0);
   /* APPLE LOCAL end constant cfstrings */
+  /* APPLE LOCAL end ARM 5683689 */
 
   if (DEFAULT_ABI == ABI_DARWIN)
   {
@@ -1273,6 +1281,8 @@ darwin_rs6000_override_options (void)
      G4 unless targetting the kernel.  */
   if (!flag_mkernel
       && !flag_apple_kext
+      /* APPLE LOCAL ARM 5683689 */
+      && darwin_macosx_version_min
       && strverscmp (darwin_macosx_version_min, "10.5") >= 0
       && ! (target_flags_explicit & MASK_ALTIVEC)
       && ! rs6000_select[1].string)

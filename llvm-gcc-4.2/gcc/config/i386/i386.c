@@ -63,6 +63,10 @@ extern struct cpp_reader* parse_in;
 #include "c-tree.h"
 #include "c-common.h"
 /* APPLE LOCAL end regparmandstackparm */
+/* APPLE LOCAL begin dwarf call/pop 5221468 */
+#include "debug.h"
+#include "dwarf2out.h"
+/* APPLE LOCAL end dwarf call/pop 5221468 */
 
 #ifndef CHECK_STACK_LIMIT
 #define CHECK_STACK_LIMIT (-1)
@@ -1330,13 +1334,6 @@ static section *x86_64_elf_select_section (tree decl, int reloc,
 #define TARGET_ENCODE_SECTION_INFO SUBTARGET_ENCODE_SECTION_INFO
 #endif
 
- /* APPLE LOCAL begin mainline 2005-07-31 */
-#ifdef SUBTARGET_ENCODE_SECTION_INFO
-#undef TARGET_ENCODE_SECTION_INFO
-#define TARGET_ENCODE_SECTION_INFO SUBTARGET_ENCODE_SECTION_INFO
-#endif
-
- /* APPLE LOCAL end mainline 2005-07-31 */
 #undef TARGET_ASM_OPEN_PAREN
 #define TARGET_ASM_OPEN_PAREN ""
 #undef TARGET_ASM_CLOSE_PAREN
@@ -1440,10 +1437,6 @@ static section *x86_64_elf_select_section (tree decl, int reloc,
 #define TARGET_INTERNAL_ARG_POINTER ix86_internal_arg_pointer
 #undef TARGET_DWARF_HANDLE_FRAME_UNSPEC
 #define TARGET_DWARF_HANDLE_FRAME_UNSPEC ix86_dwarf_handle_frame_unspec
-/* LLVM LOCAL begin mainline */
-#undef TARGET_STRICT_ARGUMENT_NAMING
-#define TARGET_STRICT_ARGUMENT_NAMING hook_bool_CUMULATIVE_ARGS_true
-/* LLVM LOCAL end mainline */
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR ix86_gimplify_va_arg
@@ -2011,6 +2004,8 @@ override_options (void)
   /* APPLE LOCAL begin mainline */
   if (TARGET_64BIT)
     {
+      if (TARGET_ALIGN_DOUBLE)
+        error ("-malign-double makes no sense in the 64bit mode");
       if (TARGET_RTD)
         error ("-mrtd calling convention not supported in the 64bit mode");
       /* APPLE LOCAL begin radar 4877693 */
@@ -5346,7 +5341,29 @@ output_set_got (rtx dest, rtx label ATTRIBUTE_UNUSED)
       if (!flag_pic)
 	output_asm_insn ("mov{l}\t{%2, %0|%0, %2}", xops);
       else
-	output_asm_insn ("call\t%a2", xops);
+	/* APPLE LOCAL begin dwarf call/pop 5221468 */
+	{
+	  output_asm_insn ("call\t%a2", xops);
+
+	  /* If necessary, report the effect that the instruction has on
+	     the unwind info.  */
+#if defined (DWARF2_UNWIND_INFO)
+	  if (flag_asynchronous_unwind_tables
+#if !defined (HAVE_prologue)
+	      && !ACCUMULATE_OUTGOING_ARGS
+#endif
+	      && dwarf2out_do_frame ())
+	    {
+	      rtx insn = gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+				      gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+						    GEN_INT (-4)));
+	      insn = make_insn_raw (insn);
+	      RTX_FRAME_RELATED_P (insn) = 1;
+	      dwarf2out_frame_debug (insn, true);
+	    }
+#endif
+	}
+      /* APPLE LOCAL end dwarf call/pop 5221468 */
 
 #if TARGET_MACHO
       /* Output the Mach-O "canonical" label name ("Lxx$pb") here too.  This
@@ -5359,7 +5376,30 @@ output_set_got (rtx dest, rtx label ATTRIBUTE_UNUSED)
 				 CODE_LABEL_NUMBER (XEXP (xops[2], 0)));
 
       if (flag_pic)
-	output_asm_insn ("pop{l}\t%0", xops);
+	/* APPLE LOCAL begin dwarf call/pop 5221468 */
+	{
+	  output_asm_insn ("pop{l}\t%0", xops);
+
+	  /* If necessary, report the effect that the instruction has on
+	     the unwind info.   We've already done this for delay slots
+	     and call instructions.  */
+#if defined (DWARF2_UNWIND_INFO)
+	  if (flag_asynchronous_unwind_tables
+#if !defined (HAVE_prologue)
+	      && !ACCUMULATE_OUTGOING_ARGS
+#endif
+	      && dwarf2out_do_frame ())
+	    {
+	      rtx insn = gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+				      gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+						    GEN_INT (4)));
+	      insn = make_insn_raw (insn);
+	      RTX_FRAME_RELATED_P (insn) = 1;
+	      dwarf2out_frame_debug (insn, true);
+	    }
+#endif
+	}
+      /* APPLE LOCAL end dwarf call/pop 5221468 */
     }
   else
     {
@@ -7778,15 +7818,13 @@ output_pic_addr_const (FILE *file, rtx x, int code)
       break;
 
     case SYMBOL_REF:
-      /* APPLE LOCAL axe stubs 5571540 */
+      /* APPLE LOCAL begin axe stubs 5571540 */
       if (! TARGET_MACHO ||
-          /* LLVM LOCAL begin */
 #if TARGET_MACHO
-          /* darwin_stubs not available on non-Darwin systems  */
           ! darwin_stubs ||
 #endif
-          /* LLVM LOCAL end */
           TARGET_64BIT)
+      /* APPLE LOCAL end axe stubs 5571540 */
 	output_addr_const (file, x);
       else
 	{
@@ -21840,8 +21878,13 @@ iasm_type_for (tree arg)
       else if (IDENTIFIER_POINTER (arg)[1] == 'x')
 	mode = SFmode;
       else if (IDENTIFIER_POINTER (arg)[1] == 'm')
-        /* LLVM LOCAL - Force MMX to use a vector mode: PR1222. */
+        /* LLVM LOCAL - begin Force MMX to use a vector mode: PR1222. */
+#ifdef ENABLE_LLVM
 	mode = V2SImode;
+#else
+	mode = SFmode;
+#endif
+        /* LLVM LOCAL - end Force MMX to use a vector mode: PR1222. */
 
       if (mode != VOIDmode)
 	type = lang_hooks.types.type_for_mode (mode, 1);
@@ -21919,7 +21962,9 @@ iasm_is_offset (tree v)
 	  && TREE_STATIC (v)
 /* APPLE LOCAL begin LLVM */
 /* DECL_RTL is not set for LLVM */
-/*        && MEM_P (DECL_RTL (v))*/
+#ifndef ENABLE_LLVM
+          && MEM_P (DECL_RTL (v))
+#endif
          )
 /* APPLE LOCAL end LLVM */
 	{
@@ -21934,7 +21979,9 @@ iasm_is_offset (tree v)
       && TREE_STATIC (v)
 /* APPLE LOCAL begin LLVM */
 /* DECL_RTL is not set for LLVM */
-/*    && MEM_P (DECL_RTL (v))*/
+#ifndef ENABLE_LLVM
+      && MEM_P (DECL_RTL (v))
+#endif
      )
 /* APPLE LOCAL end LLVM */
     {
@@ -22840,8 +22887,8 @@ asm_preferred_eh_data_format (int code, int global)
 }
 
 
-/* APPLE LOCAL begin LLVM */
-
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 /* These are wrappers for type_natural_mode and examine_argument which are
    both static functions. */
 enum machine_mode ix86_getNaturalModeForType(tree type) {
@@ -22858,8 +22905,7 @@ int ix86_ClassifyArgument(enum machine_mode mode, tree type,
                           int bit_offset) {
   return classify_argument(mode, type, classes, bit_offset);
 }
-
-  
-/* APPLE LOCAL end LLVM */
+#endif
+/* LLVM LOCAL end */
 
 #include "gt-i386.h"

@@ -661,7 +661,7 @@ c_common_handle_option (size_t scode, const char *arg, int value)
     case OPT_fbuiltin:
       flag_no_builtin = !value;
       /* LLVM LOCAL begin */
-#ifdef LLVM
+#ifdef ENABLE_LLVM
       flag_no_simplify_libcalls = !value;
 #endif
       /* LLVM LOCAL end */
@@ -691,7 +691,7 @@ c_common_handle_option (size_t scode, const char *arg, int value)
       flag_hosted = value;
       flag_no_builtin = !value;
       /* LLVM LOCAL begin */
-#ifdef LLVM
+#ifdef ENABLE_LLVM
       flag_no_simplify_libcalls = !value;
 #endif
       /* LLVM LOCAL end */

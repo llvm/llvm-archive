@@ -853,6 +853,13 @@ comptypes_internal (tree type1, tree type2)
 
   switch (TREE_CODE (t1))
     {
+    /* APPLE LOCAL begin radar 5795493 */
+      case BLOCK_POINTER_TYPE:
+        val = (TREE_CODE (t2) == BLOCK_POINTER_TYPE) && 
+              types_are_block_compatible (TREE_TYPE (t1), TREE_TYPE (t2));
+        break;
+        
+    /* APPLE LOCAL end radar 5795493 */
     case POINTER_TYPE:
       /* Do not remove mode or aliasing information.  */
       if (TYPE_MODE (t1) != TYPE_MODE (t2)
@@ -8749,8 +8756,12 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
     case TRUTH_OR_EXPR:
     case TRUTH_XOR_EXPR:
       if ((code0 == INTEGER_TYPE || code0 == POINTER_TYPE
+	   /* APPLE LOCAL radar 5928316 */
+	   || code0 == BLOCK_POINTER_TYPE
 	   || code0 == REAL_TYPE || code0 == COMPLEX_TYPE)
 	  && (code1 == INTEGER_TYPE || code1 == POINTER_TYPE
+	      /* APPLE LOCAL radar 5928316 */
+	      || code1 == BLOCK_POINTER_TYPE
 	      || code1 == REAL_TYPE || code1 == COMPLEX_TYPE))
 	{
 	  /* Result of these operations is always an int,

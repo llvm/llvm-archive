@@ -1775,8 +1775,11 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 	     gimplified.  */
         /* LLVM LOCAL begin */
         /* Handle the LLVM extension that allows: (ARRAY_REF ptr, idx) */
-	  if (!TREE_OPERAND (t, 2) && 
-              TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
+	  if (!TREE_OPERAND (t, 2)
+#ifdef ENABLE_LLVM
+              && TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE
+#endif
+              )
         /* LLVM LOCAL end */
 	    {
 	      tree low = unshare_expr (array_ref_low_bound (t));
@@ -1791,8 +1794,11 @@ gimplify_compound_lval (tree *expr_p, tree *pre_p,
 
           /* LLVM LOCAL begin */
           /* Handle the LLVM extension that allows: (ARRAY_REF ptr, idx) */
-          if (!TREE_OPERAND (t, 3) &&
-              TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE)
+          if (!TREE_OPERAND (t, 3)
+#ifdef ENABLE_LLVM
+              && TREE_CODE (TREE_TYPE (TREE_OPERAND (t, 0))) == ARRAY_TYPE
+#endif
+              )
             /* LLVM LOCAL end */
 	    {
 	      tree elmt_type = TREE_TYPE (TREE_TYPE (TREE_OPERAND (t, 0)));

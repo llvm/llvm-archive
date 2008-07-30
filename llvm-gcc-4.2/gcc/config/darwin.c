@@ -229,6 +229,15 @@ machopic_symbol_defined_p (rtx sym_ref)
 	  if (DECL_COMMON (decl))
 	    return false;
 	}
+      /* APPLE LOCAL begin 6077274 */
+      /* Weak functions should always be indirected.  */
+      else if (SYMBOL_REF_FLAGS (sym_ref) & SYMBOL_FLAG_FUNCTION)
+	{
+	  tree decl = SYMBOL_REF_DECL (sym_ref);
+	  if (decl && DECL_WEAK (decl))
+	    return false;
+	}
+      /* APPLE LOCAL end 6077274 */
       return true;
     }
   return false;
@@ -2395,7 +2404,7 @@ darwin_build_constant_cfstring (tree str)
         {
           size_t numUniChars;
           const unsigned char *inbuf = (unsigned char *)TREE_STRING_POINTER (str);
-          utf16_str = objc_create_init_utf16_var (inbuf, length, &numUniChars);
+          utf16_str = create_init_utf16_var (inbuf, length, &numUniChars);
           if (!utf16_str)
             {
               warning (0, "input conversion stopped due to an input byte "
@@ -2553,9 +2562,13 @@ darwin_override_options (void)
       /* APPLE LOCAL end kext v2 */
     }
   /* APPLE LOCAL begin axe stubs 5571540 */
+  /* APPLE LOCAL begin ARM 5683689 */
+
   /* Go ahead and generate stubs for old systems, just in case.  */
-  if (strverscmp (darwin_macosx_version_min, "10.5") < 0)
+  if (darwin_macosx_version_min
+      && strverscmp (darwin_macosx_version_min, "10.5") < 0)
     darwin_stubs = true;
+  /* APPLE LOCAL end ARM 5683689 */
   /* APPLE LOCAL end axe stubs 5571540 */
 /* APPLE LOCAL diff confuses me */
 }

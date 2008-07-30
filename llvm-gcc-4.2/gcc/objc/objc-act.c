@@ -19871,54 +19871,6 @@ objc_check_format_nsstring (tree argument,
 }
 /* APPLE LOCAL end radar 4985544 - 5195402 */
 
-/* LLVM LOCAL begin */
-/* APPLE LOCAL begin radar 2996215 */
-/* Objc wrapper to call libcpp's conversion routine. */
-static bool
-objc_cvt_utf8_utf16 (const unsigned char *inbuf, size_t length, 
-		     unsigned char **uniCharBuf, size_t *numUniChars)
-{
-  return cpp_utf8_utf16 (parse_in, inbuf, length, uniCharBuf, numUniChars);
-}
-/* LLVM LOCAL end */
-
-/* This routine declares static char __utf16_string [numUniChars] in __TEXT,__ustring 
-   section and initializes it with uniCharBuf[numUniChars] characters. 
-*/
-tree 
-create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUniChars)
-{
-  size_t l;
-  tree decl, type, init;
-  tree initlist = NULL_TREE;
-  tree attribute;
-  const char *section_name = "__TEXT,__ustring";
-  int len = strlen (section_name);
-  unsigned char *uniCharBuf;
-  static int num;
-  static char name[BUFSIZE];
-
-  if (!objc_cvt_utf8_utf16 (inbuf, length, &uniCharBuf, numUniChars))
-    return NULL_TREE;
-
-  for (l = 0; l < *numUniChars; l++)
-    initlist = tree_cons (NULL_TREE, build_int_cst (char_type_node, uniCharBuf[l]), initlist);
-  type = build_array_type (char_type_node, 
-			   build_index_type (build_int_cst (NULL_TREE, *numUniChars)));
-  sprintf (name, "__utf16_string_%d", ++num);
-  decl = start_var_decl (type, name);
-  attribute = tree_cons (NULL_TREE, build_string (len, section_name), NULL_TREE);
-  attribute = tree_cons (get_identifier ("section"), attribute, NULL_TREE);
-  decl_attributes (&decl, attribute, 0);
-  attribute = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, 2), NULL_TREE);
-  attribute = tree_cons (get_identifier ("aligned"), attribute, NULL_TREE);
-  decl_attributes (&decl, attribute, 0);
-  init = objc_build_constructor (type, nreverse (initlist)); 
-  finish_var_decl (decl,  init);
-  return decl;
-}
-/* APPLE LOCAL end radar 2996215 */
-
 /* APPLE LOCAL begin radar 5202926 */
 /* This routine returns 'true' if given NAME is the special objective-c 
    anonymous file-scope static name. It accomodates c++'s mangling of such 

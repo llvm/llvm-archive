@@ -5,4 +5,10 @@
 
 #define _GCC_NEXT_LIMITS_H		/* tell gcc's limits.h to recurse */
 /* APPLE LOCAL begin 4401222 */
+/* LLVM LOCAL */
+#ifndef CONFIG_DARWIN_H
+#include_next <limits.h>
+#undef _GCC_NEXT_LIMITS_H
+/* LLVM LOCAL */
+#endif /* not CONFIG_DARWIN_H */
 /* APPLE LOCAL end 4401222 */

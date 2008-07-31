@@ -4520,18 +4520,19 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();
+    const Type* Ty[2];
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
 
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
-    C[2] = Builder.CreateIntCast(C[2], Ty, "cast");
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
 
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_cmp_swap, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 3);
     if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_1) ||
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_2) ||
@@ -4555,15 +4556,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_add, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4580,15 +4583,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_sub, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4605,15 +4610,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0]))
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_or, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4630,15 +4637,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_and, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4655,15 +4664,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();     
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_xor, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4680,15 +4691,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_nand, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
       C, C + 2);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
@@ -4706,15 +4719,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     };
 
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_swap, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4732,15 +4747,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_add, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     Result = Builder.CreateAdd(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4758,15 +4775,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();     
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_sub, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     Result = Builder.CreateSub(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4784,15 +4803,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();     
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_or, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     Result = Builder.CreateOr(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4810,15 +4831,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_xor, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     Result = Builder.CreateXor(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, OrigTy);
@@ -4836,15 +4859,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
-    const Type* Ty = OrigTy;
-    if (isa<PointerType>(Ty)) 
-      Ty = TD.getIntPtrType();     
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty));
-    C[1] = Builder.CreateIntCast(C[1], Ty, "cast");
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();     
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_nand, 
-                                                   &Ty, 1),
+                                                   Ty, 2),
                          C, C + 2);
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
     Result = Builder.CreateIntToPtr(Result, OrigTy);

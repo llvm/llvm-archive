@@ -4820,6 +4820,34 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = Builder.CreateIntToPtr(Result, OrigTy);
     return true;
   }
+  case BUILT_IN_AND_AND_FETCH_1:
+  case BUILT_IN_AND_AND_FETCH_2:
+  case BUILT_IN_AND_AND_FETCH_4:
+  case BUILT_IN_AND_AND_FETCH_8:
+  case BUILT_IN_AND_AND_FETCH_16: {
+    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    tree arglist = TREE_OPERAND(exp, 1);
+    Value* C[2] = {
+      Emit(TREE_VALUE(arglist), 0),
+      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+    };
+    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
+    const Type* Ty[2];
+    Ty[0] = OrigTy;
+    if (isa<PointerType>(Ty[0])) 
+      Ty[0] = TD.getIntPtrType();     
+    Ty[1] = C[0]->getType();
+    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    Result = 
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                   Intrinsic::atomic_load_and,
+                                                   Ty, 2),
+                         C, C + 2);
+    Result = Builder.CreateAnd(Result, C[1]);
+    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    return true;
+  }
   case BUILT_IN_XOR_AND_FETCH_1:
   case BUILT_IN_XOR_AND_FETCH_2:
   case BUILT_IN_XOR_AND_FETCH_4:

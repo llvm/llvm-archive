@@ -4521,6 +4521,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     };
     const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
+    Ty[0] = OrigTy;
     if (isa<PointerType>(Ty[0])) 
       Ty[0] = TD.getIntPtrType();
     Ty[1] = C[0]->getType();

@@ -4096,7 +4096,10 @@ static unsigned get_AT_unsigned (dw_die_ref, enum dwarf_attribute);
 static inline dw_die_ref get_AT_ref (dw_die_ref, enum dwarf_attribute);
 static bool is_c_family (void);
 static bool is_cxx (void);
+/* LLVM LOCAL begin */
 static bool is_objc(void);
+static bool is_objcxx(void);
+/* LLVM LOCAL end */
 static bool is_java (void);
 static bool is_fortran (void);
 static bool is_ada (void);
@@ -5491,6 +5494,7 @@ is_cxx (void)
   return lang == DW_LANG_C_plus_plus || lang == DW_LANG_ObjC_plus_plus;
 }
 
+/* LLVM LOCAL begin */
 /* Return TRUE if the language is objc.  */
 
 static inline bool
@@ -5500,6 +5504,17 @@ is_objc (void)
 
   return lang == DW_LANG_ObjC;
 }
+
+/* Return TRUE if the language is objc++.  */
+
+static inline bool
+is_objcxx (void)
+{
+  unsigned int lang = get_AT_unsigned (comp_unit_die, DW_AT_language);
+
+  return lang == DW_LANG_ObjC_plus_plus;
+}
+/* LLVM LOCAL end */
 
 /* Return TRUE if the language is Fortran.  */
 
@@ -8623,7 +8638,8 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
 
   /* APPLE LOCAL begin Radar 5741731, typedefs used in '@try' blocks    */ 
   if (is_volatile_type
-      && is_objc ()
+      /* LLVM LOCAL */
+      && (is_objc () || is_objcxx ())
       && lookup_attribute ("objc_volatilized", TYPE_ATTRIBUTES (type)))
     {
       is_volatile_type = 0;

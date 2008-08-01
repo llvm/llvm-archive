@@ -496,10 +496,14 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
     }
 
     case POINTER_TYPE:
-    case REFERENCE_TYPE: {
+    case REFERENCE_TYPE:
+    case BLOCK_POINTER_TYPE: {
       // type* and type&
-      unsigned T = TREE_CODE(type) == POINTER_TYPE ? DW_TAG_pointer_type :
-                                                     DW_TAG_reference_type;
+      // FIXME: Should BLOCK_POINTER_TYP have its own DW_TAG?
+      unsigned T = (TREE_CODE(type) == POINTER_TYPE ||
+                    TREE_CODE(type) == BLOCK_POINTER_TYPE) ?
+        DW_TAG_pointer_type :
+        DW_TAG_reference_type;
       DerivedTypeDesc *DerivedTy = new DerivedTypeDesc(T);
       Ty = DerivedTy;
       // Set the slot early to prevent recursion difficulties.

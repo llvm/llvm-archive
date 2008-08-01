@@ -302,7 +302,8 @@ static std::string GetTypeName(const char *Prefix, tree type) {
 bool isSequentialCompatible(tree_node *type) {
   assert((TREE_CODE(type) == ARRAY_TYPE ||
           TREE_CODE(type) == POINTER_TYPE ||
-          TREE_CODE(type) == REFERENCE_TYPE) && "not a sequential type!");
+          TREE_CODE(type) == REFERENCE_TYPE ||
+          TREE_CODE(type) == BLOCK_POINTER_TYPE) && "not a sequential type!");
   // This relies on gcc types with constant size mapping to LLVM types with the
   // same size.  It is possible for the component type not to have a size:
   // struct foo;  extern foo bar[];
@@ -315,7 +316,8 @@ bool isSequentialCompatible(tree_node *type) {
 bool isArrayCompatible(tree_node *type) {
   assert((TREE_CODE(type) == ARRAY_TYPE ||
           TREE_CODE(type) == POINTER_TYPE ||
-          TREE_CODE(type) == REFERENCE_TYPE) && "not a sequential type!");
+          TREE_CODE(type) == REFERENCE_TYPE ||
+          TREE_CODE(type) == BLOCK_POINTER_TYPE) && "not a sequential type!");
   return
     (TREE_CODE(type) == ARRAY_TYPE) && (
       // Arrays with no size are fine as long as their components are layed out
@@ -598,6 +600,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   case VECTOR_TYPE:
   case POINTER_TYPE:
   case REFERENCE_TYPE:
+  case BLOCK_POINTER_TYPE:
   case OFFSET_TYPE:
     // These types have no holes.
     return true;
@@ -784,6 +787,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     
   case POINTER_TYPE:
   case REFERENCE_TYPE:
+  case BLOCK_POINTER_TYPE:
     if (const PointerType *Ty = cast_or_null<PointerType>(GET_TYPE_LLVM(type))){
       // We already converted this type.  If this isn't a case where we have to
       // reparse it, just return it.
@@ -1219,7 +1223,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     // types.
     tree RestrictArgTy = (DeclArgs) ? TREE_TYPE(DeclArgs) : ArgTy;
     if (TREE_CODE(RestrictArgTy) == POINTER_TYPE ||
-        TREE_CODE(RestrictArgTy) == REFERENCE_TYPE) {
+        TREE_CODE(RestrictArgTy) == REFERENCE_TYPE ||
+        TREE_CODE(RestrictArgTy) == BLOCK_POINTER_TYPE) {
       if (TYPE_RESTRICT(RestrictArgTy))
         Attributes |= ParamAttr::NoAlias;
     }

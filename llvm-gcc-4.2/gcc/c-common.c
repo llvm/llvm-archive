@@ -8821,7 +8821,7 @@ sync_resolve_size (tree function, tree params)
     goto incompatible;
 
   type = TREE_TYPE (type);
-  if (!INTEGRAL_TYPE_P (type) && !POINTER_TYPE_P (type))
+  if (!INTEGRAL_TYPE_P (type))
     goto incompatible;
 
   size = tree_low_cst (TYPE_SIZE_UNIT (type), 1);

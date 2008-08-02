@@ -81,8 +81,10 @@ exactcheck3(signed char *base, signed char *result, signed char * end) {
   /*
    * Ensure that the result is not within an Integer State.
    */
+#ifdef SVA_KSTACKS
   if (pchk_check_int (result))
     poolcheckfail ("Pointer within Integer State detected ", (unsigned)base, (void*)__builtin_return_address(0));
+#endif
   return result;
 }
 

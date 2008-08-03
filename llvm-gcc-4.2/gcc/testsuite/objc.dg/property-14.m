@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4664707 */
 /* Test sequence of assignment to setters. */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5 -std=c99" } */
+/* { dg-options "-mmacosx-version-min=10.5 -std=c99" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-std=c99" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>

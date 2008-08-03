@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5195402 */
 /* Test for correct implementation of format_arg attribute on NSString * type of
    format strings. */
-/* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral -mmacosx-version-min=10.5" } */
+/* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 

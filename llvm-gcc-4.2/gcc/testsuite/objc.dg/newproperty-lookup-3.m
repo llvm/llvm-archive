@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test for property lookup in a protocol id. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @protocol NSCollection

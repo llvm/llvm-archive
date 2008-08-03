@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4816280 */
 /* Diagnose as needed when 'ivar' synthesis is needed and it is not allowed. 
    'fragile' ivar (32bit abi) only. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -fobjc-abi-version=1" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -fobjc-abi-version=1" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -fobjc-abi-version=1" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 
 @interface Moe

@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4838528 */
 /* Warn when dot-syntax calls a 'setter' and setter's return type is not
    'void' */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface Subclass 

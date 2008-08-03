@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4712415 - radar 5285911 */
 /* This program tests use of deprecated attribute on property. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <objc/objc.h>

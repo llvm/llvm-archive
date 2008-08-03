@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4816280 */
 /* No warning for implementation with user-accessor, @dynamic or @synthesize properties. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface Larry

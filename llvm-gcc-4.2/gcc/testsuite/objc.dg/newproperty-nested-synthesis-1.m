@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5040740 */
 /* This program tests that properties declared in super class only can be synthesize in 
    a class derived from the suprt class. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -std=c99 -lobjc" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -std=c99 -lobjc" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -std=c99 -lobjc" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>

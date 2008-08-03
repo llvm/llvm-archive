@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4816280 */
 /* Test that gcc warns when property declared in class has no implementation declarative. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface Subclass 

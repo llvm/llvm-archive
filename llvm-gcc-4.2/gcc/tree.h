@@ -2470,7 +2470,8 @@ struct tree_struct_field_tag GTY(())
 /* Likewise for the size in bytes.  */
 #define DECL_SIZE_UNIT(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.size_unit)
 /* Holds the alignment required for the datum, in bits.  */
-#define DECL_ALIGN(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.u1.a.align)
+/* APPLE LOCAL mainline aligned functions 5933878 */
+#define DECL_ALIGN(NODE) (DECL_COMMON_CHECK (NODE)->decl_common.align)
 /* The alignment of NODE, in bytes.  */
 #define DECL_ALIGN_UNIT(NODE) (DECL_ALIGN (NODE) / BITS_PER_UNIT)
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
@@ -2487,7 +2488,11 @@ struct tree_struct_field_tag GTY(())
    operation it is.  Note, however, that this field is overloaded, with
    DECL_BUILT_IN_CLASS as the discriminant, so the latter must always be
    checked before any access to the former.  */
-#define DECL_FUNCTION_CODE(NODE) (FUNCTION_DECL_CHECK (NODE)->decl_common.u1.f)
+/* APPLE LOCAL begin mainline aligned functions 5933878 */
+#define DECL_FUNCTION_CODE(NODE) \
+  (FUNCTION_DECL_CHECK (NODE)->function_decl.function_code)
+/* APPLE LOCAL end mainline aligned functions 5933878 */
+
 #define DECL_DEBUG_EXPR_IS_FROM(NODE) \
   (DECL_COMMON_CHECK (NODE)->decl_common.debug_expr_is_from)
 
@@ -2634,20 +2639,11 @@ struct tree_decl_common GTY(())
   unsigned int iasm_frame_size;
   /* APPLE LOCAL end CW asm blocks */
 
-  union tree_decl_u1 {
-    /* In a FUNCTION_DECL for which DECL_BUILT_IN holds, this is
-       DECL_FUNCTION_CODE.  */
-    enum built_in_function f;
-    /* In a FUNCTION_DECL for which DECL_BUILT_IN does not hold, this
-       is used by language-dependent code.  */
-    HOST_WIDE_INT i;
-    /* DECL_ALIGN and DECL_OFFSET_ALIGN.  (These are not used for
-       FUNCTION_DECLs).  */
-    struct tree_decl_u1_a {
-      unsigned int align : 24;
-      unsigned int off_align : 8;
-    } a;
-  } GTY ((skip)) u1;
+  /* APPLE LOCAL begin mainline aligned functions 5933878 */
+  unsigned int align : 24;
+  /* DECL_OFFSET_ALIGN, used only for FIELD_DECLs.  */
+  unsigned int off_align : 8;
+  /* APPLE LOCAL end mainline aligned functions 5933878 */
 
   tree size_unit;
   tree initial;
@@ -2735,11 +2731,13 @@ struct tree_decl_with_rtl GTY(())
    DECL_OFFSET_ALIGN thus returns the alignment that DECL_FIELD_OFFSET
    has.  */
 #define DECL_OFFSET_ALIGN(NODE) \
-  (((unsigned HOST_WIDE_INT)1) << FIELD_DECL_CHECK (NODE)->decl_common.u1.a.off_align)
+  /* APPLE LOCAL mainline aligned functions 5933878 */ \
+  (((unsigned HOST_WIDE_INT)1) << FIELD_DECL_CHECK (NODE)->decl_common.off_align)
 
 /* Specify that DECL_ALIGN(NODE) is a multiple of X.  */
 #define SET_DECL_OFFSET_ALIGN(NODE, X) \
-  (FIELD_DECL_CHECK (NODE)->decl_common.u1.a.off_align = exact_log2 ((X) & -(X)))
+  /* APPLE LOCAL mainline aligned functions 5933878 */ \
+  (FIELD_DECL_CHECK (NODE)->decl_common.off_align = exact_log2 ((X) & -(X)))
 /* 1 if the alignment for this type was requested by "aligned" attribute,
    0 if it is the default for this type.  */
 
@@ -3263,6 +3261,12 @@ struct tree_decl_non_common GTY(())
 struct tree_function_decl GTY(())
 {
   struct tree_decl_non_common common;
+
+  /* APPLE LOCAL begin mainline aligned functions 5933878 */
+  /* In a FUNCTION_DECL for which DECL_BUILT_IN holds, this is
+     DECL_FUNCTION_CODE.  Otherwise unused.  */
+  enum built_in_function function_code;
+  /* APPLE LOCAL end mainline aligned functions 5933878 */
 
   unsigned static_ctor_flag : 1;
   unsigned static_dtor_flag : 1;

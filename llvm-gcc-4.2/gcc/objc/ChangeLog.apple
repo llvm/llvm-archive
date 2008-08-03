@@ -1,3 +1,11 @@
+2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6049617
+	* objc-act.c (objc_finish_message_expr): Check and warn
+	on depricated/unavilable methods.
+	(build_objc_method_call): Removed above checking code.
+	(build_v2_build_objc_method_call): Ditto.
+
 2008-07-25  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6023694

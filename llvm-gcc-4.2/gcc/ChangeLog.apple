@@ -1,6 +1,51 @@
+2008-08-01  Geoff Keating  <geoffk@apple.com>
+
+        Radar 5095227
+	* config/rs6000/rs6000.c (darwin_rs6000_override_options): Don't
+	enable -fstack-protector for PPC kexts targeting 10.6 by default.
+	* g++.apple/kext-stackprotect-1.c: New.
+	* g++.apple/kext-stackprotect-2.c: New.
+
+2008-08-01  Jon Ziegler <jonz@apple.com>
+
+	Radar 5095227
+	Re-apply Geoff's patch for -fstack-protector.
+
+2008-08-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5965787 (tweak).
+	* c-decl.c (build_indirect_object_id_exp): Fixed offset
+	computation of the 'object' field.
+
+2008-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress
+	* gimplify.c (gimplify_return_expr): Do not gimplify
+	return expresison yet if inside a block.
+
+2008-07-30  Bill Wendling  <wendling@apple.com>
+
+	Radar 6113240
+	* tree.h: Declare invoke_impl_ptr_type.
+	* dwarf2out.c (is_objc): New. Returns true if language is ObjC.
+	(modified_type_die): Use is_objc instead of c_dialect_objc.
+	(add_type_attribute): Don't assert if invoke_imple_ptr_type is null.
+	* c-common.h: invoke_impl_ptr_type is now declared in tree.h.
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6112131 (__block renamed to __byref)
+	* config/darwin-c.c (darwin_cpp_builtins): Remove __block
+	definition.
+	* c-parser.c: Refer to __byref instead of __block.
+	* c-common.c: Ditto
+	* c-typeck.c: Ditto
+	* c-decl.c: Ditto. Also, restored it
+	to its previous version.
+
 2008-07-25  Fariborz Jahanian <fjahanian@apple.com>
 
-        Radar 6014138
+	Radar 6014138
 	* config/darwin-c.c (darwin_cpp_builtins): Define __block
 	same as __byref.
 	* c-parser.c: All __byref are renamed to __block.

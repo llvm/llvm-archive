@@ -8191,7 +8191,7 @@ c_finish_bc_stmt (tree *label_p, bool is_break)
   if (skip)
     return NULL_TREE;
   /* APPLE LOCAL begin radar 6083129 - byref escapes (C++ cp) */
-  /* Before breaking out or on continue, release all local __block
+  /* Before breaking out or on continue, release all local __byref
      variables which go out of scope. */
   release_local_byrefs_at_break ();
   /* APPLE LOCAL end radar 6083129 - byref escapes  (C++ cp) */

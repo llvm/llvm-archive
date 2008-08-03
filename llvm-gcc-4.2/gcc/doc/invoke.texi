@@ -847,13 +847,6 @@ See RS/6000 and PowerPC Options.
 -mv8plus  -mno-v8plus  -mvis  -mno-vis
 -threads -pthreads -pthread}
 
-@emph{SPU Options}
-@gccoptlist{-mwarn-reloc -merror-reloc @gol
--msafe-dma -munsafe-dma @gol
--mbranch-hints @gol
--msmall-mem -mlarge-mem -mstdmain @gol
--mfixed-range=@var{register-range}}
-
 @emph{System V Options}
 @gccoptlist{-Qy  -Qn  -YP,@var{paths}  -Ym,@var{dir}}
 
@@ -3357,8 +3350,10 @@ void foo(bar) @{ @}
 An empty body occurs in an @samp{if} or @samp{else} statement.
 
 @c APPLE LOCAL begin mainline
-@item @r{(C++ only)}
-An empty body occurs in a @samp{while} or @samp{for} statement with no
+@c APPLE LOCAL begin pod error 6089368
+@item
+(C++ only) An empty body occurs in a @samp{while} or @samp{for} statement with no
+@c APPLE LOCAL end pod error 6089368
 whitespacing before the semicolon. This warning can be independently
 controlled by @option{-Wempty-body}.
 @c APPLE LOCAL end mainline
@@ -3370,24 +3365,26 @@ A pointer is compared against integer zero with @samp{<}, @samp{<=},
 @item
 A variable might be changed by @samp{longjmp} or @samp{vfork}.
 
-@item @r{(C++ only)}
-An enumerator and a non-enumerator both appear in a conditional expression.
+@c APPLE LOCAL begin pod error 6089368
+@item
+(C++ only) An enumerator and a non-enumerator both appear in a conditional expression.
 
-@item @r{(C++ only)}
-A non-static reference or non-static @samp{const} member appears in a
+@item
+(C++ only) A non-static reference or non-static @samp{const} member appears in a
 class without constructors.
 
-@item @r{(C++ only)}
-Ambiguous virtual bases.
+@item
+(C++ only) Ambiguous virtual bases.
 
-@item @r{(C++ only)}
-Subscripting an array which has been declared @samp{register}.
+@item
+(C++ only) Subscripting an array which has been declared @samp{register}.
 
-@item @r{(C++ only)}
-Taking the address of a variable which has been declared @samp{register}.
+@item
+(C++ only) Taking the address of a variable which has been declared @samp{register}.
 
-@item @r{(C++ only)}
-A base class is not initialized in a derived class' copy constructor.
+@item
+(C++ only) A base class is not initialized in a derived class' copy constructor.
+@c APPLE LOCAL end pod error 6089368
 @end itemize
 
 @item -Wno-div-by-zero
@@ -7084,6 +7081,8 @@ they cause the preprocessor output to be unsuitable for actual
 compilation.
 
 @table @gcctabopt
+@c APPLE LOCAL pod error 6089368
+@item -Wp,@var{option}
 @opindex Wp
 You can use @option{-Wp,@var{option}} to bypass the compiler driver
 and pass @var{option} directly through to the preprocessor.  If
@@ -8138,7 +8137,6 @@ platform.
 * Score Options::
 * SH Options::
 * SPARC Options::
-* SPU Options::
 * System V Options::
 * TMS320C3x/C4x Options::
 * V850 Options::
@@ -13751,74 +13749,6 @@ that of libraries supplied with it.
 @item -pthread
 @opindex pthread
 This is a synonym for @option{-pthreads}.
-@end table
-
-@node SPU Options
-@subsection SPU Options
-@cindex SPU options
-
-These @samp{-m} options are supported on the SPU:
-
-@table @gcctabopt
-@item -mwarn-reloc
-@itemx -merror-reloc
-@opindex mwarn-reloc
-@opindex merror-reloc
-
-The loader for SPU does not handle dynamic relocations.  By default, GCC
-will give an error when it generates code that requires a dynamic
-relocation.  @option{-mno-error-reloc} disables the error,
-@option{-mwarn-reloc} will generate a warning instead.
-
-@item -msafe-dma
-@itemx -munsafe-dma
-@opindex msafe-dma
-@opindex munsafe-dma
-
-Instructions which initiate or test completion of DMA must not be
-reordered with respect to loads and stores of the memory which is being
-accessed.  Users typically address this problem using the volatile
-keyword, but that can lead to inefficient code in places where the
-memory is known to not change.  Rather than mark the memory as volatile
-we treat the DMA instructions as potentially effecting all memory.  With
-@option{-munsafe-dma} users must use the volatile keyword to protect
-memory accesses.
-
-@item -mbranch-hints
-@opindex mbranch-hints
-
-By default, GCC will generate a branch hint instruction to avoid
-pipeline stalls for always taken or probably taken branches.  A hint
-will not be generated closer than 8 instructions away from its branch.
-There is little reason to disable them, except for debugging purposes,
-or to make an object a little bit smaller.
-
-@item -msmall-mem
-@itemx -mlarge-mem
-@opindex msmall-mem
-@opindex mlarge-mem
-
-By default, GCC generates code assuming that addresses are never larger
-than 18 bits.  With @option{-mlarge-mem} code is generated that assumes
-a full 32 bit address.
-
-@item -mstdmain
-@opindex mstdmain
-
-By default, GCC links against startup code that assumes the SPU-style
-main function interface (which has an unconventional parameter list).
-With @option{-mstdmain}, GCC will link your program against startup
-code that assumes a C99-style interface to @code{main}, including a
-local copy of @code{argv} strings.
-
-@item -mfixed-range=@var{register-range}
-@opindex mfixed-range
-Generate code treating the given register range as fixed registers.
-A fixed register is one that the register allocator can not use.  This is
-useful when compiling kernel code.  A register range is specified as
-two registers separated by a dash.  Multiple register ranges can be
-specified separated by a comma.
-
 @end table
 
 @node System V Options

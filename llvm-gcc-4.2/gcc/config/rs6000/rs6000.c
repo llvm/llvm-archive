@@ -1296,6 +1296,15 @@ darwin_rs6000_override_options (void)
   if (DARWIN_GENERATE_ISLANDS)
     darwin_stubs = true;
   /* APPLE LOCAL end axe stubs 5571540 */
+  /* APPLE LOCAL begin stack-protector default 5095227 */
+  /* Don't enable -fstack-protector by default for kexts on darwin ppc
+     targeting 10.6 because there's a bug that it exposes in some kext,
+     <rdar://problem/6034665>.  */
+  if (flag_stack_protect == -1
+      && (flag_mkernel || flag_apple_kext)
+      && strcmp (darwin_macosx_version_min, "10.6") == 0)
+    flag_stack_protect = 0;
+  /* APPLE LOCAL end stack-protector default 5095227 */
 }
 #endif
 

@@ -2570,6 +2570,16 @@ darwin_override_options (void)
     darwin_stubs = true;
   /* APPLE LOCAL end ARM 5683689 */
   /* APPLE LOCAL end axe stubs 5571540 */
+  /* APPLE LOCAL begin stack-protector default 5095227 */
+  /* Default flag_stack_protect to 1 if on 10.5 or later for user code,
+     or 10.6 or later for code identified as part of the kernel.  */
+  if (flag_stack_protect == -1
+      && darwin_macosx_version_min
+      && ((! flag_mkernel && ! flag_apple_kext
+	   && strverscmp (darwin_macosx_version_min, "10.5") >= 0)
+	  || strverscmp (darwin_macosx_version_min, "10.6") >= 0))
+    flag_stack_protect = 1;
+  /* APPLE LOCAL end stack-protector default 5095227 */
 /* APPLE LOCAL diff confuses me */
 }
 /* APPLE LOCAL begin radar 4985544 */

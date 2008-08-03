@@ -45,8 +45,6 @@ snapshot:
 .globl snapshot_ret
 	.type	snapshot_ret, @function
 snapshot_ret:
-	pushq	%rbp
-	movq	%rsp, %rbp
 	movq	%rdi, rdi(%rip)
 	call	*callthis(%rip)
 	movq	%rax, rax(%rip)
@@ -57,7 +55,6 @@ snapshot_ret:
 	fstpt	x87_regs+16(%rip)
 	fldt	x87_regs+16(%rip)
 	fldt	x87_regs(%rip)
-	leave
 	ret
 	.size	snapshot_ret, .-snapshot_ret
 

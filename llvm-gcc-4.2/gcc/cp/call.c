@@ -684,6 +684,10 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
     {
       conv = build_conv (ck_ptr, to, conv);
     }
+  else if (tcode == BLOCK_POINTER_TYPE && objc_is_id (from))
+    {
+      conv = build_conv (ck_ptr, to, conv);
+    }
   /* APPLE LOCAL end blocks (ck) */
   else if ((tcode == POINTER_TYPE && fcode == POINTER_TYPE)
 	   || (TYPE_PTRMEM_P (to) && TYPE_PTRMEM_P (from)))

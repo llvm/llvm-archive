@@ -774,6 +774,12 @@ finish_return_stmt (tree expr)
 
   expr = check_return_expr (expr, &no_warning);
 
+  /* APPLE LOCAL begin radar 6040305 - blocks */
+  if (current_function_decl && BLOCK_HELPER_FUNC (current_function_decl)
+      && !cur_block)
+    return expr;
+  /* APPLE LOCAL end radar 6040305 - blocks */
+
   if (flag_openmp && !check_omp_return ())
     return error_mark_node;
   if (!processing_template_decl)

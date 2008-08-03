@@ -9465,7 +9465,7 @@ build_block_struct_type (struct block_sema_info * block_impl)
     }
 
   /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
-  /* Further check to see that we have __block variables which require
+  /* Further check to see that we have __byref variables which require
      Copy/Dispose helpers. */
   for (chain = block_impl->block_byref_decl_list; chain;
        chain = TREE_CHAIN (chain))
@@ -9791,7 +9791,7 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
     }
 
   /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
-  /* For each __block declared variable used in |...| Must generate call to:
+  /* For each __byref declared variable used in |...| Must generate call to:
      _Block_byref_assign_copy(&_dest->myImportedBlock, _src->myImportedBlock)
   */
   for (chain = block_impl->block_byref_decl_list; chain;
@@ -9904,7 +9904,7 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
     }
 
   /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
-  /* For each __block declared variable used in |...| Must generate call to:
+  /* For each __byref declared variable used in |...| Must generate call to:
    _Block_byref_release(_src->myImportedClosure)
    */
   for (chain = block_impl->block_byref_decl_list; chain;

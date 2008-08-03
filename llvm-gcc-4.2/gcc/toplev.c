@@ -2013,6 +2013,12 @@ process_options (void)
   if (flag_cx_limited_range)
     flag_complex_method = 0;
 
+  /* APPLE LOCAL begin stack-protector default 5095227 */
+  /* Unless the target chooses otherwise, default stack protection to off.  */
+  if (flag_stack_protect == -1)
+    flag_stack_protect = 0;
+  /* APPLE LOCAL end stack-protector default 5095227 */
+
   /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
   cl_pf_opts_cooked = cl_pf_opts;
   /* APPLE LOCAL end optimization pragmas 3124235/3420242 */

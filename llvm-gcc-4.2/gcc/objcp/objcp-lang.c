@@ -213,11 +213,4 @@ finish_file (void)
 {
   objc_finish_file ();
 }
-
-/* APPLE LOCAL begin radar 5732232 - blocks */
-tree c_finish_return (tree exp)
-{
-  return exp;
-}
-/* APPLE LOCAL end radar 5732232 - blocks */
 #include "gtype-objcp.h"

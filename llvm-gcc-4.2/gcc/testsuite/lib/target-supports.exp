@@ -343,7 +343,9 @@ proc check_profiling_available { test_what } {
     if {![info exists profiling_available_saved]} {
 	# Some targets don't have any implementation of __bb_init_func or are
 	# missing other needed machinery.
+	# APPLE LOCAL begin ARM no profiling support
 	if { [istarget mmix-*-*]
+	     || [istarget arm*-*-darwin*]
 	     || [istarget arm*-*-eabi*]
 	     || [istarget arm*-*-elf]
 	     || [istarget arm*-*-symbianelf*]
@@ -361,6 +363,7 @@ proc check_profiling_available { test_what } {
 	} else {
 	    set profiling_available_saved 1
 	}
+	# APPLE LOCAL end ARM no profiling support
     }
 
     return $profiling_available_saved

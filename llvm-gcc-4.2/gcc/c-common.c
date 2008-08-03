@@ -6161,9 +6161,9 @@ build_block_byref_release_exp (tree var_decl)
 {
   tree exp = var_decl, call_exp, func_params;
   tree type = TREE_TYPE (var_decl);
-  /* __block variables imported into Blocks are not _Block_byref_released()
+  /* __byref variables imported into Blocks are not _Block_byref_released()
    from within the Block statement itself; otherwise, each envokation of
-   the block causes a release. Make sure to release __block variables declared 
+   the block causes a release. Make sure to release __byref variables declared 
    and used locally in the block though. */
   if (cur_block 
       && (BLOCK_DECL_COPIED (var_decl) || BLOCK_DECL_BYREF (var_decl)))
@@ -6182,7 +6182,7 @@ build_block_byref_release_exp (tree var_decl)
   call_exp = build_function_call (build_block_byref_release_decl (), func_params);
   return call_exp;
 }
-/* APPLE LOCAL begin blocks 6040305 */
+/* APPLE LOCAL end blocks 6040305 */
 /* APPLE LOCAL begin radar 5803600 */
 /** add_block_global_byref_list - Adds global variable decl to the list of
     byref global declarations in the current block.
@@ -8261,13 +8261,13 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	 variable.  */
       if (TREE_CODE (arg) == VAR_DECL
 	  && TREE_STATIC (arg)
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* DECL_RTL does not get set for LLVM */
 #ifndef ENABLE_LLVM
 	  && MEM_P (DECL_RTL (arg))
 #endif
          )
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 	{
 	  /* See assemble_name for details.  */
 	  const char *name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (arg));

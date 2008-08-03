@@ -1510,6 +1510,7 @@ rest_of_handle_branch_target_load_optimize (void)
 /* LLVM LOCAL begin - reduce cc1 size.  */
 #ifndef ENABLE_LLVM
   static int warned = 0;
+
   /* Leave this a warning for now so that it is possible to experiment
      with running this pass twice.  In 3.6, we should either make this
      an error, or use separate dump files.  */

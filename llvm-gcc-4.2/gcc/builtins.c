@@ -5314,14 +5314,39 @@ expand_builtin_init_trampoline (tree arglist)
   trampolines_created = 1;
   INITIALIZE_TRAMPOLINE (r_tramp, r_func, r_chain);
 
-/* LLVM local begin */
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 #ifdef TRAMPOLINE_ADJUST_ADDRESS
   TRAMPOLINE_ADJUST_ADDRESS (r_tramp);
 #endif
 
   return r_tramp;
+#else
+  return const0_rtx;
+#endif
+/* LLVM LOCAL end */
 }
-/* LLVM local end */
+
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
+static rtx
+expand_builtin_adjust_trampoline (tree arglist)
+{
+  rtx tramp;
+
+  if (!validate_arglist (arglist, POINTER_TYPE, VOID_TYPE))
+    return NULL_RTX;
+
+  tramp = expand_normal (TREE_VALUE (arglist));
+  tramp = round_trampoline_addr (tramp);
+#ifdef TRAMPOLINE_ADJUST_ADDRESS
+  TRAMPOLINE_ADJUST_ADDRESS (tramp);
+#endif
+
+  return tramp;
+}
+/* LLVM LOCAL */
+#endif
 
 /* Expand a call to the built-in signbit, signbitf or signbitl function.
    Return NULL_RTX if a normal call should be emitted rather than expanding
@@ -6307,7 +6332,7 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 
     case BUILT_IN_INIT_TRAMPOLINE:
       return expand_builtin_init_trampoline (arglist);
-    /* LLVM local deleted 2 lines */
+    /* LLVM LOCAL deleted 2 lines */
 
     case BUILT_IN_FORK:
     case BUILT_IN_EXECL:

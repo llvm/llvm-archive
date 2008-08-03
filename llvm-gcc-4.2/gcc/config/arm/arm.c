@@ -9358,8 +9358,10 @@ arm_reorg (void)
 
       if (GET_CODE (insn) == BARRIER)
 	push_minipool_barrier (insn, address);
+      /* APPLE LOCAL begin ARM 6008578 */
       else if (LABEL_P (insn))
 	address += get_label_pad (insn, address);
+      /* APPLE LOCAL end ARM 6008578 */
       else if (INSN_P (insn))
 	{
 	  rtx table;

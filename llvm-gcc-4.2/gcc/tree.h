@@ -4845,8 +4845,7 @@ extern bool has_alternative_entry_points (void);
 extern void note_alternative_entry_points (void);
 /* APPLE LOCAL end CW asm blocks */
 
-/* LLVM LOCAL pointers to blocks */
+/* APPLE LOCAL radar 6113240 */
 extern tree invoke_impl_ptr_type;
-/* LLVM LOCAL pointers to blocks */
 
 #endif  /* GCC_TREE_H  */

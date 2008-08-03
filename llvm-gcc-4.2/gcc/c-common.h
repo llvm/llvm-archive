@@ -1164,6 +1164,9 @@ struct block_sema_info {
 extern struct block_sema_info *cur_block;
 extern tree build_helper_func_decl (tree, tree);
 extern bool building_block_byref_decl;
+/* APPLE LOCAL - begin radar 6113240 */
+/* Move invoke_impl_ptr_type to tree.h */
+/* APPLE LOCAL - end radar 6113240 */
 extern tree build_block_byref_decl (tree, tree, tree);
 extern tree build_block_ref_decl (tree, tree);
 extern tree begin_block (void);

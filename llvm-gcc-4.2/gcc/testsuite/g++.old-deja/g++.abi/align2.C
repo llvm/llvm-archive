@@ -73,6 +73,24 @@ int main ()
   if (__alignof__ (unsigned long)      !=  4)
     abort ();
 #endif /* __x86_64__ || __ppc64__ */
+#if defined(__arm__)
+  if (sizeof (long long)               !=  8)
+    abort ();
+  if (__alignof__ (long long)          !=  4)
+    abort ();
+  if (sizeof (signed long long)        !=  8)
+    abort ();
+  if (__alignof__ (signed long long)   !=  4)
+    abort ();
+  if (sizeof (unsigned long long)      !=  8)
+    abort ();
+  if (__alignof__ (unsigned long long) !=  4)
+    abort ();
+  if (sizeof (enum A)                  !=  4)
+    abort ();
+  if (__alignof__ (enum A)             !=  4)
+    abort ();
+#else
   if (sizeof (long long)               !=  8)
     abort ();
   if (__alignof__ (long long)          !=  8)
@@ -89,6 +107,7 @@ int main ()
     abort ();
   if (__alignof__ (enum A)             !=  4)
     abort ();
+#endif /* __arm__ */
 #ifdef HAVE_IA64_TYPES
   if (sizeof (__int64)                 !=  8)
     abort ();
@@ -134,6 +153,20 @@ int main ()
   if (__alignof__ (void (*) ())        !=  4)
     abort ();
 #endif  /* __x86_64__ || __ppc64__ */
+#if defined(__arm__)
+  if (sizeof (float)                   !=  4)
+    abort ();
+  if (__alignof__ (float)              !=  4)
+    abort ();
+  if (sizeof (double)                  !=  8)
+    abort();
+  if (__alignof__ (double)             !=  4)
+    abort();
+  if (sizeof (long double)             !=  8)
+    abort ();
+  if (__alignof__ (long double)        !=  4)
+    abort ();
+#else
   if (sizeof (float)                   !=  4)
     abort ();
   if (__alignof__ (float)              !=  4)
@@ -146,6 +179,7 @@ int main ()
     abort ();
   if (__alignof__ (long double)        != 16)
     abort ();
+#endif /* __arm__ */
 #ifdef HAVE_IA64_TYPES
   if (sizeof (__float80)               != 16)
     abort ();

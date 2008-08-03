@@ -1086,13 +1086,9 @@ darwin_cpp_builtins (cpp_reader *pfile)
   if (flag_blocks && !c_dialect_cxx ()) {
     /* APPLE LOCAL radar 6096219 */
     builtin_define ("__byref=__attribute__((__blocks__(byref)))");
-    /* APPLE LOCAL radar 6014138 */
-    builtin_define ("__block=__attribute__((__blocks__(byref)))");
   }
   else {
     builtin_define ("__byref=");
-    /* APPLE LOCAL radar 6014138 */
-    builtin_define ("__block=");
   }
   /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 

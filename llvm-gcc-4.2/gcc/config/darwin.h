@@ -1044,6 +1044,7 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
        } while (0)
 #else
 /* LLVM LOCAL end */
+
 #define ASM_DECLARE_UNRESOLVED_REFERENCE(FILE,NAME)			\
     do {								\
 	 if (FILE) {							\

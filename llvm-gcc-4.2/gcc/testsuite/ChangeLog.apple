@@ -1,3 +1,73 @@
+2008-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress
+	* g++.apple/block-conditional-test.C: Add
+	* g++.apple/block-return.C: Modified.
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* g++.dg/block-id-block.C: Add
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* g++.apple/block-void-pointer.C: Removed
+	* g++.apple/block-helloworld.C: New
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6112131 (__block renamed to __byref)
+	* gcc.apple/block-blocks-test-4.c: Modified
+	* gcc.apple/block-noescape-helper-3.c: Modified
+	* gcc.apple/block-blocks-test-5.c: Modified
+	* gcc.apple/block-escape-do.c: Modified
+	* gcc.apple/block-escape-switch.c: Modified
+	* gcc.apple/block-blocks-test-6.c: Modified
+	* gcc.apple/block-escape-goto.c: Modified
+	* gcc.apple/block-escape-return.c: Modified
+	* gcc.apple/block-byref-attribute.c: Modified
+	* gcc.apple/block-blocks-test-7.c: Modified
+	* gcc.apple/block-blocks-test-8.c: Modified
+	* gcc.apple/block-escape-while.c: Modified
+	* gcc.apple/block-blocks-test-1.c: Modified
+	* gcc.apple/block-noescape-helper.c: Modified
+	* gcc.apple/block-escape-for.c: Modified
+	* gcc.apple/block-escape-nested-while.c: Modified
+	* gcc.apple/block-escape-for1.c: Modified
+	* gcc.apple/block-blocks-test-2.c: Modified
+	* gcc.apple/block-noescape-helper-1.c: Modified
+	* gcc.apple/block-blocks-test-3.c: Modified
+	* gcc.apple/block-escape-return1.c: Modified
+	* gcc.apple/block-noescape-helper-2.c: Modified
+	* gcc.apple/block-global-byref-2.c: Modified
+
+2008-07-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305
+	* g++.apple/block-global-implicit-byref.C: Add
+	* g++.apple/block-bad-def.C: Add
+	* g++.apple/block-const.C: Add
+
+2008-07-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305
+	* g++.apple/block-readonly-diag.C: Add
+	* g++.apple/block-void-pointer.C: Add
+
+2008-07-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305
+	* g++.apple/block-pointer-type-match.C: Add
+	* g++.apple/block-pointer.C: Add
+	* g++.apple/block-pointer-assignment.C: Add
+	* g++.apple/block-return.C: Add
+
+2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6049617
+	* objc.dg/method-attribute-4.m: Add
+
 2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6040305

@@ -4096,10 +4096,10 @@ static unsigned get_AT_unsigned (dw_die_ref, enum dwarf_attribute);
 static inline dw_die_ref get_AT_ref (dw_die_ref, enum dwarf_attribute);
 static bool is_c_family (void);
 static bool is_cxx (void);
-/* LLVM LOCAL begin */
-static bool is_objc(void);
-static bool is_objcxx(void);
-/* LLVM LOCAL end */
+/* APPLE LOCAL begin radar 6113240 */
+static bool is_objc (void);
+static bool is_objcxx (void);
+/* APPLE LOCAL end radar 6113240 */
 static bool is_java (void);
 static bool is_fortran (void);
 static bool is_ada (void);
@@ -5494,28 +5494,28 @@ is_cxx (void)
   return lang == DW_LANG_C_plus_plus || lang == DW_LANG_ObjC_plus_plus;
 }
 
-/* LLVM LOCAL begin */
-/* Return TRUE if the language is objc.  */
+/* APPLE LOCAL begin radar 6113240 */
+/* Return TRUE if the language is ObjC.  */
 
 static inline bool
 is_objc (void)
 {
   unsigned int lang = get_AT_unsigned (comp_unit_die, DW_AT_language);
-
+  
   return lang == DW_LANG_ObjC;
 }
 
-/* Return TRUE if the language is objc++.  */
+/* Return TRUE if the language is ObjC++.  */
 
 static inline bool
 is_objcxx (void)
 {
   unsigned int lang = get_AT_unsigned (comp_unit_die, DW_AT_language);
-
+  
   return lang == DW_LANG_ObjC_plus_plus;
 }
-/* LLVM LOCAL end */
 
+/* APPLE LOCAL end radar 6113240 */
 /* Return TRUE if the language is Fortran.  */
 
 static inline bool
@@ -8638,7 +8638,7 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
 
   /* APPLE LOCAL begin Radar 5741731, typedefs used in '@try' blocks    */ 
   if (is_volatile_type
-      /* LLVM LOCAL */
+      /* APPLE LOCAL - radar 6113240 */
       && (is_objc () || is_objcxx ())
       && lookup_attribute ("objc_volatilized", TYPE_ATTRIBUTES (type)))
     {
@@ -11496,8 +11496,10 @@ add_type_attribute (dw_die_ref object_die, tree type, int decl_const,
   dw_die_ref type_die  = NULL;
 
   /* APPLE LOCAL begin radar 5811943 - Fix type of pointers to blocks  */
+  /* APPLE LOCAL - radar 6113240 */
   if (code == BLOCK_POINTER_TYPE && invoke_impl_ptr_type)
     {
+      /* APPLE LOCAL - radar 6113240 Removed gcc_assert */
       type = invoke_impl_ptr_type;
       code = TREE_CODE (type);
     }

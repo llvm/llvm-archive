@@ -2,7 +2,8 @@
 /* This test is for categories which don't implement the accessors but some accessors are
    implemented in their base class implementation. In this case,no warning must be issued.
 */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface MyClass 

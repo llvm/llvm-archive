@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4965989 */
 /* Check for a variety misue of anonymous category. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface Foo

@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4968128 */
 /* Test that user specified setter declaration is generated correctly.
    No error/warning must be issued in this test case. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface PSEntry

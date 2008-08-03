@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Test that no bogus warning is issued in the synthesize compound-expression. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -Wall" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -Wall" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -Wall" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface test

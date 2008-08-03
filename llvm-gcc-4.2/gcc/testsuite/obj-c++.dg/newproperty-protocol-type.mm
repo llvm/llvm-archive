@@ -9,3 +9,4 @@
 @property id <PROTO> prop; /* { dg-warning "no 'assign', 'retain', or 'copy' attribute is specified" } */
 @property Class <PROTO> prop1;
 @end
+

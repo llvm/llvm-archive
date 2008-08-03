@@ -1,7 +1,8 @@
 /* APPLE LOCAL file 4540451 */
 /* Test that the new-ABI ivar symbols look like OBJC_IVAR_$_ClassName.IvarName
    not like .objc_ivar.ClassName.IvarName */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-abi-version=2" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface Rootclass { 

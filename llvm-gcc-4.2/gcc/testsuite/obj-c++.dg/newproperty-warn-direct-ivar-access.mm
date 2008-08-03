@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5376125 */
 /* Test for new objc option -Wdirect-ivar-access. */
-/* { dg-options "-mmacosx-version-min=10.5 -Wdirect-ivar-access" } */
+/* { dg-options "-mmacosx-version-min=10.5 -Wdirect-ivar-access" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wdirect-ivar-access" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface MyObject {

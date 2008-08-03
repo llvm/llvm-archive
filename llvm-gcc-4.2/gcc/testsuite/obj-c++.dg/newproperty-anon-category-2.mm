@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 4965989 */
 /* Test for checking out property execution with anonymous category adding setter to
    primary category. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>

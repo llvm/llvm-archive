@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4805321 */
 /* Program to test new dot-syntax to call setter/getter. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -lobjc" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -lobjc" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -lobjc" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/objc.h>

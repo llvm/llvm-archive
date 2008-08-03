@@ -3,7 +3,10 @@
 /* Testcase extracted from TextEdit:Document.m.  */
 
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-mdynamic-no-pic -fdump-rtl-jump" } */
+/* { dg-require-effective-target ilp32 } */
+/* APPLE LOCAL axe stubs 5571540 */
+/* { dg-options "-mdynamic-no-pic -fdump-rtl-jump -mmacosx-version-min=10.4" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-mdynamic-no-pic -fdump-rtl-jump" { target arm*-*-darwin* } } */
 /* LLVM LOCAL test not applicable */
 /* { dg-require-fdump "" } */
 

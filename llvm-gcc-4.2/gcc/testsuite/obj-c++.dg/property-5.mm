@@ -3,7 +3,8 @@
 /* Program should compile with no error or warning. */
 /* { dg-do compile { target *-*-darwin* } } */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "" { target arm*-*-darwin* } } */
 
 #import <Foundation/Foundation.h>
 

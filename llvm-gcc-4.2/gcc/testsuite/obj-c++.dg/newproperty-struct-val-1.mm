@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5265737 */
 /* Test that aggregate-valued properties work as expected. */
-/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation" } */
+/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-framework Foundation" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 #include <Foundation/Foundation.h>
 

@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 3533972 */
 /* Test that type conversion function is applied to the 'receiver' in a method call,
    if one is available. */
-/* { dg-options "-framework Foundation -mmacosx-version-min=10.5" } */
+/* { dg-options "-framework Foundation -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-framework Foundation" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 #include <Foundation/Foundation.h>
 

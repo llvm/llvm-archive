@@ -2,7 +2,8 @@
 /* Test lookup of properties in protocol */
 /* Program should compile with no error or warning. */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
+/* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "" { target arm*-*-darwin* } } */
 
 @protocol Rectangle
 @property int foo;

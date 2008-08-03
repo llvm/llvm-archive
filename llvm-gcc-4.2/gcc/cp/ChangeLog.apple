@@ -1,3 +1,35 @@
+2008-07-31  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in progress
+	* objcp-lang.c (c_finish_return): Removed
+	* cp-lang.c (c_finish_return): Removed
+	* typeck.c (c_finish_return): Add
+	(check_return_expr): On error of a return
+	expresison inside a block return error_mark_node.
+	* semantics.c (finish_return_stmt): For helper
+	functions, return expression is already done.
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* call.c (standard_conversion): Allow conversion of 'id'
+	type to a block pointer.
+
+2008-07-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* typeck.c (build_block_call): New
+	(build_function_call): Call build_block_call
+	for block calls.
+	* call.c (standard_conversion): Remove "void *" to
+	block pointer conversion.
+
+2008-07-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305
+	* call.c (standard_conversion): Allow assignment of
+	"void *" to block pointer object.
+
 2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6040305

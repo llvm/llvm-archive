@@ -518,14 +518,14 @@ static uint64_t getFieldOffsetInBits(tree Field) {
 
 /// FindLLVMTypePadding - If the specified struct has any inter-element padding,
 /// add it to the Padding array.
-static void FindLLVMTypePadding(const Type *Ty, unsigned BitOffset,
-                       SmallVector<std::pair<unsigned,unsigned>, 16> &Padding) {
+static void FindLLVMTypePadding(const Type *Ty, uint64_t BitOffset,
+                       SmallVector<std::pair<uint64_t,uint64_t>, 16> &Padding) {
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const TargetData &TD = getTargetData();
     const StructLayout *SL = TD.getStructLayout(STy);
-    unsigned PrevFieldBitOffset = 0;
+    uint64_t PrevFieldBitOffset = 0;
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      unsigned FieldBitOffset = SL->getElementOffset(i)*8;
+      uint64_t FieldBitOffset = SL->getElementOffset(i)*8;
 
       // Get padding of sub-elements.
       FindLLVMTypePadding(STy->getElementType(i), 
@@ -533,7 +533,7 @@ static void FindLLVMTypePadding(const Type *Ty, unsigned BitOffset,
       // Check to see if there is any padding between this element and the
       // previous one.
       if (i) {
-        unsigned PrevFieldEnd = 
+        uint64_t PrevFieldEnd = 
           PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
         if (PrevFieldEnd < FieldBitOffset)
           Padding.push_back(std::make_pair(PrevFieldEnd+BitOffset,
@@ -545,7 +545,7 @@ static void FindLLVMTypePadding(const Type *Ty, unsigned BitOffset,
     
     //  Check for tail padding.
     if (unsigned EltCount = STy->getNumElements()) {
-      unsigned PrevFieldEnd = PrevFieldBitOffset +
+      uint64_t PrevFieldEnd = PrevFieldBitOffset +
            TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
       if (PrevFieldEnd < SL->getSizeInBytes()*8)
         Padding.push_back(std::make_pair(PrevFieldEnd,
@@ -553,7 +553,7 @@ static void FindLLVMTypePadding(const Type *Ty, unsigned BitOffset,
     }
     
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    unsigned EltSize = getTargetData().getTypeSizeInBits(ATy->getElementType());
+    uint64_t EltSize = getTargetData().getTypeSizeInBits(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
       FindLLVMTypePadding(ATy->getElementType(), BitOffset+i*EltSize, Padding);
   }
@@ -661,7 +661,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
       if (TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
         return true;
 
-      unsigned FieldBitOffset = getFieldOffsetInBits(Field);
+      uint64_t FieldBitOffset = getFieldOffsetInBits(Field);
       if (GCCTypeOverlapsWithPadding(getDeclaredType(Field),
                                      PadStartBits-FieldBitOffset, PadSizeBits))
         return true;
@@ -695,7 +695,7 @@ bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type,
                                                        const Type *Ty) {
   
   // Start by finding all of the padding in the LLVM Type.
-  SmallVector<std::pair<unsigned,unsigned>, 16> StructPadding;
+  SmallVector<std::pair<uint64_t,uint64_t>, 16> StructPadding;
   FindLLVMTypePadding(Ty, 0, StructPadding);
   
   for (unsigned i = 0, e = StructPadding.size(); i != e; ++i)
@@ -1324,7 +1324,7 @@ struct StructTypeConversionInfo {
   
   /// getTypeSize - Return the size of the specified type in bytes.
   ///
-  unsigned getTypeSize(const Type *Ty) const {
+  uint64_t getTypeSize(const Type *Ty) const {
     return TD.getABITypeSize(Ty);
   }
   
@@ -1414,7 +1414,7 @@ struct StructTypeConversionInfo {
     // Get the LLVM type for the field.  If this field is a bitfield, use the
     // declared type, not the shrunk-to-fit type that GCC gives us in TREE_TYPE.
     unsigned ByteAlignment = getTypeAlignment(Ty);
-    unsigned NextByteOffset = getNewElementByteOffset(ByteAlignment);
+    uint64_t NextByteOffset = getNewElementByteOffset(ByteAlignment);
     if (NextByteOffset > ByteOffset || 
         ByteAlignment > getGCCStructAlignmentInBytes()) {
       // LLVM disagrees as to where this field should go in the natural field
@@ -1425,7 +1425,7 @@ struct StructTypeConversionInfo {
     // If alignment won't round us up to the right boundary, insert explicit
     // padding.
     if (NextByteOffset < ByteOffset) {
-      unsigned CurOffset = getNewElementByteOffset(1);
+      uint64_t CurOffset = getNewElementByteOffset(1);
       const Type *Pad = Type::Int8Ty;
       if (SavedTy && LastFieldStartsAtNonByteBoundry) 
         // We want to reuse SavedType to access this bit field.
@@ -1457,7 +1457,7 @@ struct StructTypeConversionInfo {
   
   /// getNewElementByteOffset - If we add a new element with the specified
   /// alignment, what byte offset will it land at?
-  unsigned getNewElementByteOffset(unsigned ByteAlignment) {
+  uint64_t getNewElementByteOffset(unsigned ByteAlignment) {
     if (Elements.empty()) return 0;
     uint64_t LastElementEnd = 
       ElementOffsetInBytes.back() + ElementSizeInBytes.back();
@@ -1480,7 +1480,7 @@ struct StructTypeConversionInfo {
   /// getFieldEndOffsetInBytes - Return the byte offset of the byte immediately
   /// after the specified field.  For example, if FieldNo is 0 and the field
   /// is 4 bytes in size, this will return 4.
-  unsigned getFieldEndOffsetInBytes(unsigned FieldNo) const {
+  uint64_t getFieldEndOffsetInBytes(unsigned FieldNo) const {
     assert(FieldNo < ElementOffsetInBytes.size() && "Invalid field #!");
     return ElementOffsetInBytes[FieldNo]+ElementSizeInBytes[FieldNo];
   }
@@ -1488,7 +1488,7 @@ struct StructTypeConversionInfo {
   /// getEndUnallocatedByte - Return the first byte that isn't allocated at the
   /// end of a structure.  For example, for {}, it's 0, for {int} it is 4, for
   /// {int,short}, it is 6.
-  unsigned getEndUnallocatedByte() const {
+  uint64_t getEndUnallocatedByte() const {
     if (ElementOffsetInBytes.empty()) return 0;
     return getFieldEndOffsetInBytes(ElementOffsetInBytes.size()-1);
   }
@@ -1547,7 +1547,7 @@ struct StructTypeConversionInfo {
     return ~0U;
   }
 
-  void addNewBitField(unsigned Size, unsigned FirstUnallocatedByte);
+  void addNewBitField(uint64_t Size, uint64_t FirstUnallocatedByte);
 
   void dump() const;
 };
@@ -1555,8 +1555,8 @@ struct StructTypeConversionInfo {
 // Add new element which is a bit field. Size is not the size of bit filed,
 // but size of bits required to determine type of new Field which will be
 // used to access this bit field.
-void StructTypeConversionInfo::addNewBitField(unsigned Size,
-                                              unsigned FirstUnallocatedByte) {
+void StructTypeConversionInfo::addNewBitField(uint64_t Size,
+                                              uint64_t FirstUnallocatedByte) {
 
   // Figure out the LLVM type that we will use for the new field.
   // Note, Size is not necessarily size of the new field. It indicates
@@ -1859,13 +1859,13 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     return;
 
   // Get the starting offset in the record.
-  unsigned StartOffsetInBits = getFieldOffsetInBits(Field);
-  unsigned EndBitOffset    = FieldSizeInBits+StartOffsetInBits;
+  uint64_t StartOffsetInBits = getFieldOffsetInBits(Field);
+  uint64_t EndBitOffset    = FieldSizeInBits+StartOffsetInBits;
   
   // If the last inserted LLVM field completely contains this bitfield, just
   // ignore this field.
   if (!Info.Elements.empty()) {
-    unsigned LastFieldBitOffset = Info.ElementOffsetInBytes.back()*8;
+    uint64_t LastFieldBitOffset = Info.ElementOffsetInBytes.back()*8;
     unsigned LastFieldBitSize   = Info.ElementSizeInBytes.back()*8;
     assert(LastFieldBitOffset <= StartOffsetInBits &&
            "This bitfield isn't part of the last field!");
@@ -1886,12 +1886,12 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
   
   // Compute the number of bits that we need to add to this struct to cover
   // this field.
-  unsigned FirstUnallocatedByte = Info.getEndUnallocatedByte();
-  unsigned StartOffsetFromByteBoundry = StartOffsetInBits & 7;
+  uint64_t FirstUnallocatedByte = Info.getEndUnallocatedByte();
+  uint64_t StartOffsetFromByteBoundry = StartOffsetInBits & 7;
 
   if (StartOffsetInBits < FirstUnallocatedByte*8) {
 
-    unsigned AvailableBits = FirstUnallocatedByte * 8 - StartOffsetInBits;
+    uint64_t AvailableBits = FirstUnallocatedByte * 8 - StartOffsetInBits;
     // This field's starting point is already allocated.
     if (StartOffsetFromByteBoundry == 0) {
       // This field starts at byte boundry. Need to allocate space

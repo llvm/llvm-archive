@@ -84,7 +84,6 @@ static bool arm_assemble_integer (rtx, unsigned int, int);
 static const char *fp_const_from_val (REAL_VALUE_TYPE *);
 static arm_cc get_arm_condition_code (rtx);
 static HOST_WIDE_INT int_log2 (HOST_WIDE_INT);
-static rtx is_jump_table (rtx);
 static const char *output_multi_immediate (rtx *, const char *, const char *,
 					   int, HOST_WIDE_INT);
 static const char *shift_op (rtx, HOST_WIDE_INT *);
@@ -95,6 +94,8 @@ static int handle_thumb_unexpanded_epilogue (bool);
 static int handle_thumb_exit (FILE *, int, bool);
 static int handle_thumb_pushpop (FILE *, unsigned long, int, int *, unsigned long, bool);
 /* APPLE LOCAL end compact switch tables */
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
 static rtx is_jump_table (rtx);
 static HOST_WIDE_INT get_jump_table_size (rtx);
 static Mnode *move_minipool_fix_forward_ref (Mnode *, Mnode *, HOST_WIDE_INT);
@@ -109,8 +110,14 @@ static Mfix *create_fix_barrier (Mfix *, HOST_WIDE_INT);
 static void push_minipool_barrier (rtx, HOST_WIDE_INT);
 static void push_minipool_fix (rtx, HOST_WIDE_INT, rtx *, enum machine_mode,
 			       rtx);
+/* LLVM LOCAL */
+#endif
 static void arm_reorg (void);
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
 static bool note_invalid_constants (rtx, HOST_WIDE_INT, int);
+/* LLVM LOCAL */
+#endif
 static int current_file_function_operand (rtx);
 static unsigned long arm_compute_save_reg0_reg12_mask (void);
 static unsigned long arm_compute_save_reg_mask (void);
@@ -140,9 +147,13 @@ static bool arm_fastmul_rtx_costs (rtx, int, int, int *);
 static bool arm_xscale_rtx_costs (rtx, int, int, int *);
 static bool arm_9e_rtx_costs (rtx, int, int, int *);
 static int arm_address_cost (rtx);
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
 static bool arm_memory_load_p (rtx);
 static bool arm_cirrus_insn_p (rtx);
 static void cirrus_reorg (rtx);
+/* LLVM LOCAL */
+#endif
 static void arm_init_builtins (void);
 static rtx arm_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 static void arm_init_iwmmxt_builtins (void);
@@ -432,7 +443,11 @@ static bool arm_ms_bitfield_layout_p (tree);
 #endif
 /* APPLE LOCAL end ARM darwin local binding */
 /* APPLE LOCAL ARM 6008578 */
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
 static HOST_WIDE_INT get_label_pad (rtx, HOST_WIDE_INT);
+/* LLVM LOCAL */
+#endif
 
 /* APPLE LOCAL begin ARM reliable backtraces */
 #undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
@@ -5888,6 +5903,14 @@ arm_address_cost (rtx x)
 static int
 arm_adjust_cost (rtx insn, rtx link, rtx dep, int cost)
 {
+/* LLVM LOCAL */
+#ifdef ENABLE_LLVM
+  insn = insn;
+  link = link;
+  dep = dep;
+  cost = cost;
+  return 1;
+#else  
   rtx i_pat, d_pat;
 
   /* Some true dependencies can have a higher cost depending
@@ -5961,6 +5984,8 @@ arm_adjust_cost (rtx insn, rtx link, rtx dep, int cost)
     }
 
   return cost;
+/* LLVM LOCAL */
+#endif
 }
 
 static int fp_consts_inited = 0;
@@ -6174,6 +6199,9 @@ arm_return_in_msb (tree valtype)
               || TREE_CODE (valtype) == COMPLEX_TYPE));
 }
 
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
+
 /* Returns TRUE if INSN is an "LDR REG, ADDR" instruction.
    Use by the Cirrus Maverick code which has to workaround
    a hardware bug triggered by such instructions.  */
@@ -6346,6 +6374,9 @@ cirrus_reorg (rtx first)
       return;
     }
 }
+
+/* LLVM LOCAL */
+#endif
 
 /* APPLE LOCAL begin ARM -mdynamic-no-pic support */
 /* Return TRUE if X references a SYMBOL_REF.  */
@@ -8354,6 +8385,9 @@ arm_adjust_insn_length (rtx insn, int *length)
 }
 /* APPLE LOCAL end ARM 4790140 compact switch tables */
 
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
+
 static Mnode *	minipool_vector_head;
 static Mnode *	minipool_vector_tail;
 static rtx	minipool_vector_label;
@@ -9087,6 +9121,9 @@ push_minipool_fix (rtx insn, HOST_WIDE_INT address, rtx *loc,
   minipool_fix_tail = fix;
 }
 
+/* LLVM LOCAL */
+#endif
+
 /* Return the cost of synthesizing a 64-bit constant VAL inline.
    Returns the number of insns needed, or 99 if we don't know how to
    do it.  */
@@ -9219,6 +9256,9 @@ arm_const_double_by_parts (rtx val)
   return false;
 }
 
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
+
 /* Scan INSN and note any of its operands that need fixing.
    If DO_PUSHES is false we do not actually push any of the fixups
    needed.  The function returns TRUE if any fixups were needed/pushed.
@@ -9322,6 +9362,9 @@ static HOST_WIDE_INT get_label_pad (rtx insn, HOST_WIDE_INT address)
 }
 /* APPLE LOCAL end ARM 6008578 */
 
+/* LLVM LOCAL */
+#endif
+
 /* Gcc puts the pool in the wrong place for ARM, since we can only
    load addresses a limited distance around the pc.  We do some
    special munging to move the constant pool values to the correct
@@ -9329,6 +9372,8 @@ static HOST_WIDE_INT get_label_pad (rtx insn, HOST_WIDE_INT address)
 static void
 arm_reorg (void)
 {
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
   rtx insn;
   HOST_WIDE_INT address = 0;
   Mfix * fix;
@@ -9494,6 +9539,8 @@ arm_reorg (void)
 
   /* Free the minipool memory.  */
   obstack_free (&minipool_obstack, minipool_startobj);
+/* LLVM LOCAL */
+#endif
 }
 
 /* Routines to output assembly language.  */
@@ -12914,6 +12961,10 @@ get_arm_condition_code (rtx comparison)
 void
 arm_final_prescan_insn (rtx insn)
 {
+/* LLVM LOCAL */
+#ifdef ENABLE_LLVM
+  insn = insn;
+#else
   /* BODY will hold the body of INSN.  */
   rtx body = PATTERN (insn);
 
@@ -13252,6 +13303,8 @@ arm_final_prescan_insn (rtx insn)
 	 call recog direct).  */
       recog (PATTERN (insn), insn, NULL);
     }
+/* LLVM LOCAL */
+#endif
 }
 
 /* Returns true if REGNO is a valid register
@@ -14769,6 +14822,10 @@ thumb_shiftable_const (unsigned HOST_WIDE_INT val)
 static int
 thumb_far_jump_used_p (void)
 {
+/* LLVM LOCAL */
+#ifdef ENABLE_LLVM
+  return 0;
+#else  
   rtx insn;
 
   /* This test is only important for leaf functions.  */
@@ -14833,6 +14890,8 @@ thumb_far_jump_used_p (void)
     }
 
   return 0;
+/* LLVM LOCAL */
+#endif
 }
 
 /* Return nonzero if FUNC must be entered in ARM mode.  */

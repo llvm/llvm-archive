@@ -7,6 +7,8 @@
 #include "syslimits.h"
 #endif
 #ifdef _GCC_NEXT_LIMITS_H
+/* LLVM LOCAL Fix for Linux builds */
+#define _GCC_LIMITS_H_
 #include_next <limits.h>
 #undef _GCC_NEXT_LIMITS_H
 #endif

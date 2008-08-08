@@ -395,7 +395,7 @@ static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
 static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
                                        const llvm::Type *LLVMTy,
                                        unsigned RealSize,
-                                       IRBuilder &Builder) {
+                                       IRBuilder<> &Builder) {
   assert (RealSize == 0 &&
           "The target should handle this argument!");
   // This cast only involves pointers, therefore BitCast.
@@ -416,13 +416,13 @@ namespace {
   struct FunctionPrologArgumentConversion : public DefaultABIClient {
     tree FunctionDecl;
     Function::arg_iterator &AI;
-    IRBuilder Builder;
+    IRBuilder<> Builder;
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
     unsigned Offset;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
-                                     const IRBuilder &B)
+                                     const IRBuilder<> &B)
       : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0) {}
     
     void setName(const std::string &Name) {
@@ -1296,7 +1296,7 @@ void TreeToLLVM::EmitBlock(BasicBlock *BB) {
 /// CopyAggregate - Recursively traverse the potientially aggregate src/dest
 /// ptrs, copying all of the elements.
 static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
-                          IRBuilder &Builder, tree gccType) {
+                          IRBuilder<> &Builder, tree gccType) {
   assert(DestLoc.Ptr->getType() == SrcLoc.Ptr->getType() &&
          "Cannot copy between two pointers of different type!");
   const Type *ElTy =
@@ -1386,7 +1386,7 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
 
 /// ZeroAggregate - Recursively traverse the potentially aggregate DestLoc,
 /// zero'ing all of the elements.
-static void ZeroAggregate(MemRef DestLoc, IRBuilder &Builder) {
+static void ZeroAggregate(MemRef DestLoc, IRBuilder<> &Builder) {
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
   if (ElTy->isSingleValueType()) {
@@ -2355,7 +2355,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
 static Value *llvm_load_scalar_argument(Value *L,
                                         const llvm::Type *LLVMTy,
                                         unsigned RealSize,
-                                        IRBuilder &Builder) {
+                                        IRBuilder<> &Builder) {
   assert (0 && "The target should override this routine!");
   return NULL;
 }
@@ -2375,7 +2375,7 @@ namespace {
     const FunctionType *FTy;
     const MemRef *DestLoc;
     bool useReturnSlot;
-    IRBuilder &Builder;
+    IRBuilder<> &Builder;
     Value *TheValue;
     MemRef RetBuf;
     bool isShadowRet;
@@ -2386,7 +2386,7 @@ namespace {
                                    const FunctionType *FnTy,
                                    const MemRef *destloc,
                                    bool ReturnSlotOpt,
-                                   IRBuilder &b)
+                                   IRBuilder<> &b)
       : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
         useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false),
         isAggrRet(false), Offset(0) { }

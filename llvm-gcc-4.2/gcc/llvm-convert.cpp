@@ -6111,7 +6111,7 @@ Constant *TreeConstantToLLVM::Convert(tree exp) {
   case VIEW_CONVERT_EXPR: return Convert(TREE_OPERAND(exp, 0));
   case ADDR_EXPR:     
     return ConstantExpr::getBitCast(EmitLV(TREE_OPERAND(exp, 0)),
-                                 ConvertType(TREE_TYPE(exp)));
+                                    ConvertType(TREE_TYPE(exp)));
   }
 }
 
@@ -6979,7 +6979,14 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (isArrayCompatible(ArrayType))
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx.push_back(IndexVal);
-  return ConstantExpr::getGetElementPtr(ArrayAddr, &Idx[0], Idx.size());
+
+  Constant *ArrayRef = ConstantExpr::getGetElementPtr(ArrayAddr, &Idx[0],
+                                                      Idx.size());
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(ArrayRef))
+    return ConstantFoldConstantExpression(CE, &getTargetData());
+  else
+    return ArrayRef;
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {

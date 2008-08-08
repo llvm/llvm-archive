@@ -424,9 +424,9 @@ for t in $LIBGOMP_TARGETS ; do
 		.$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ || exit 1
 	    if [ $h = 'powerpc' ] ; then
 		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/ppc64/libgomp.a \
-		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/ || exit 1
+		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/
 		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/ppc64/libgomp.spec \
-		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/ || exit 1
+		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/ppc64/
 	    elif [ $h = 'i686' ] ; then
 		cp -p $DIR/dst-$h-$t$DEST_ROOT/lib/x86_64/libgomp.a \
 		    .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/x86_64/ || exit 1

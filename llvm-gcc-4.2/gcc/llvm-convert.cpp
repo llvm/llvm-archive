@@ -6708,7 +6708,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
 
     // Decode the field's value.
     Constant *Val = Convert(elt_value);
-   
+
     // If the field is a bitfield, it could be spread across multiple fields and
     // may start at some bit offset.
     if (isBitfield(Field)) {
@@ -6717,7 +6717,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       // If not, things are much simpler.
       unsigned int FieldNo = GetFieldIndex(Field);
       assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
-     
+
       // Example: struct X { int A; char C[]; } x = { 4, "foo" };
       assert((TYPE_SIZE(getDeclaredType(Field)) ||
              (FieldNo == ResultElts.size()-1 &&
@@ -6751,7 +6751,34 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       ResultElts[i] = Constant::getNullValue(STy->getElementType(i));
   }
 
-  return ConstantStruct::get(ResultElts, STy->isPacked());
+  // The type we're going to build for the initializer is not necessarily the
+  // same as the type of the struct.  In cases where there is a union field.
+  // it is possible for the size and/or alignment of the two structs to differ,
+  // in which case we need some explicit padding.
+  Constant *retval = ConstantStruct::get(ResultElts, STy->isPacked());
+  const Type *NewSTy = retval->getType();
+
+  unsigned oldLLVMSize = getTargetData().getABITypeSize(STy);
+  unsigned oldLLVMAlign = getTargetData().getABITypeAlignment(STy);
+  oldLLVMSize = ((oldLLVMSize+oldLLVMAlign-1)/oldLLVMAlign)*oldLLVMAlign;
+
+  unsigned newLLVMSize = getTargetData().getABITypeSize(NewSTy);
+  unsigned newLLVMAlign = getTargetData().getABITypeAlignment(NewSTy);
+  newLLVMSize = ((newLLVMSize+newLLVMAlign-1)/newLLVMAlign)*newLLVMAlign;
+
+  // oldSize < newSize occurs legitimately when we don't know the size of
+  // the struct.
+  if (newLLVMSize < oldLLVMSize) {
+    const Type *FillTy;
+    if (oldLLVMSize - newLLVMSize == 1)
+      FillTy = Type::Int8Ty;
+    else
+      FillTy = ArrayType::get(Type::Int8Ty, oldLLVMSize - newLLVMSize);
+    ResultElts.push_back(Constant::getNullValue(FillTy));
+    retval = ConstantStruct::get(ResultElts, STy->isPacked());
+  }
+
+  return retval;
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {

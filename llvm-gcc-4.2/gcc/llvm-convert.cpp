@@ -6984,7 +6984,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
                                                       Idx.size());
 
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(ArrayRef))
-    return ConstantFoldConstantExpression(CE, &getTargetData());
+    return ConstantFoldConstantExpression(CE, &getTargetData()) || CE;
   else
     return ArrayRef;
 }

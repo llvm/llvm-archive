@@ -5288,6 +5288,17 @@ reopen_tinst_level (tree level)
   pop_tinst_level ();
 }
 
+/* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+/* Returns the TINST_LEVEL which gives the original instantiation
+   context.  */
+
+tree
+outermost_tinst_level (void)
+{
+  return tree_last (current_tinst_level);
+}
+/* LLVM LOCAL end */
+
 /* DECL is a friend FUNCTION_DECL or TEMPLATE_DECL.  ARGS is the
    vector of template arguments, as for tsubst.
 

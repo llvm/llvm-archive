@@ -131,7 +131,7 @@ extern const Type *llvm_x86_aggr_type_for_struct_return(tree type);
 
 extern void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
                                                    bool isVolatile,
-                                                   IRBuilder<> &B);
+                                                   LLVMBuilder &B);
 
 /* LLVM_EXTRACT_MULTIPLE_RETURN_VALUE - Extract multiple return value from
    SRC and assign it to DEST. */
@@ -208,7 +208,7 @@ bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
 extern void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
                                            const llvm::Type *LLVMTy,
                                            unsigned RealSize,
-                                           IRBuilder<> &Builder);
+                                           LLVMBuilder &Builder);
 #define LLVM_STORE_SCALAR_ARGUMENT(LOC,ARG,TYPE,SIZE,BUILDER)   \
   llvm_x86_store_scalar_argument((LOC),(ARG),(TYPE),(SIZE),(BUILDER))
 
@@ -217,7 +217,7 @@ extern void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
 extern Value *llvm_x86_load_scalar_argument(Value *L,
                                             const llvm::Type *LLVMTy,
                                             unsigned RealSize,
-                                            IRBuilder<> &Builder);
+                                            LLVMBuilder &Builder);
 #define LLVM_LOAD_SCALAR_ARGUMENT(LOC,TY,SIZE,BUILDER) \
   llvm_x86_load_scalar_argument((LOC),(TY),(SIZE),(BUILDER))
 

@@ -82,6 +82,7 @@ int flag_no_simplify_libcalls;
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
+TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
 llvm::OStream *AsmOutFile = 0;
 llvm::OStream *AsmIntermediateOutFile = 0;
@@ -208,6 +209,7 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 #endif
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
+  TheFolder = new TargetFolder(*TheTarget->getTargetData());
 
   // Install information about target datalayout stuff into the module for
   // optimizer use.
@@ -523,7 +525,7 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
     
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
-    StructInit[1] = ConstantExpr::getBitCast(Tors[i].first, FPTy);
+    StructInit[1] = TheFolder->CreateBitCast(Tors[i].first, FPTy);
     InitList.push_back(ConstantStruct::get(StructInit, false));
   }
   Constant *Array =
@@ -559,7 +561,7 @@ void llvm_asm_file_end(void) {
     for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
       Constant *C = *AI;
-      AUGs.push_back(ConstantExpr::getBitCast(C, SBP));
+      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
     }
 
     ArrayType *AT = ArrayType::get(SBP, AUGs.size());
@@ -834,7 +836,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
   const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
-  file = ConstantExpr::getBitCast(file, SBP);
+  file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
   //  to successive lookups.
@@ -855,8 +857,8 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
              "Annotate attribute arg should always be a string");
       Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
       Constant *Element[4] = {
-        ConstantExpr::getBitCast(GV,SBP),
-        ConstantExpr::getBitCast(strGV,SBP),
+        TheFolder->CreateBitCast(GV,SBP),
+        TheFolder->CreateBitCast(strGV,SBP),
         file,
         lineNo
       };
@@ -919,7 +921,7 @@ void reset_type_and_initializer_llvm(tree decl) {
                                              GV->getLinkage(), 0,
                                              GV->getName(), TheModule);
     NGV->setVisibility(GV->getVisibility());
-    GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
+    GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
     if (AttributeUsedGlobals.count(GV)) {
       AttributeUsedGlobals.remove(GV);
       AttributeUsedGlobals.insert(NGV);
@@ -986,7 +988,7 @@ void emit_global_to_llvm(tree decl) {
     GlobalVariable *NGV = new GlobalVariable(Init->getType(), GV->isConstant(),
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName(), TheModule);
-    GV->replaceAllUsesWith(ConstantExpr::getBitCast(NGV, GV->getType()));
+    GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
     if (AttributeUsedGlobals.count(GV)) {
       AttributeUsedGlobals.remove(GV);
       AttributeUsedGlobals.insert(NGV);
@@ -1217,7 +1219,7 @@ void make_decl_llvm(tree decl) {
         assert(G && G->isDeclaration() && "A global turned into a function?");
         
         // Replace any uses of "G" with uses of FnEntry.
-        Value *GInNewType = ConstantExpr::getBitCast(FnEntry, G->getType());
+        Value *GInNewType = TheFolder->CreateBitCast(FnEntry, G->getType());
         G->replaceAllUsesWith(GInNewType);
         
         // Update the decl that points to G.
@@ -1281,7 +1283,7 @@ void make_decl_llvm(tree decl) {
           assert(F && F->isDeclaration() && "A function turned into a global?");
           
           // Replace any uses of "F" with uses of GV.
-          Value *FInNewType = ConstantExpr::getBitCast(GV, F->getType());
+          Value *FInNewType = TheFolder->CreateBitCast(GV, F->getType());
           F->replaceAllUsesWith(FInNewType);
           
           // Update the decl that points to F.

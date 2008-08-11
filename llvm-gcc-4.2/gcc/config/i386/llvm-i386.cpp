@@ -1231,7 +1231,7 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
                                                unsigned SrcElemNo,
                                                unsigned DestFieldNo, 
                                                unsigned DestElemNo,
-                                               IRBuilder<> &Builder,
+                                               LLVMBuilder &Builder,
                                                bool isVolatile) {
   Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
   const StructType *STy = cast<StructType>(Src->getType());
@@ -1254,7 +1254,7 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
 // DEST types are StructType, but they may not match.
 void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
                                             bool isVolatile,
-                                            IRBuilder<> &Builder) {
+                                            LLVMBuilder &Builder) {
   
   const StructType *STy = cast<StructType>(Src->getType());
   unsigned NumElements = STy->getNumElements();
@@ -1358,7 +1358,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
                                 const llvm::Type *LLVMTy,
                                 unsigned RealSize,
-                                IRBuilder<> &Builder) {
+                                LLVMBuilder &Builder) {
   if (RealSize) {
     // Do byte wise store because actaul argument type does not match LLVMTy.
     Loc = Builder.CreateBitCast(Loc, 
@@ -1382,7 +1382,7 @@ void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
 Value *llvm_x86_load_scalar_argument(Value *L,
                                      const llvm::Type *LLVMTy,
                                      unsigned RealSize,
-                                     IRBuilder<> &Builder) {
+                                     LLVMBuilder &Builder) {
   Value *Loc = NULL;
   L = Builder.CreateBitCast(L, PointerType::getUnqual(llvm::Type::Int8Ty), "bc");
   // Load each byte individually.

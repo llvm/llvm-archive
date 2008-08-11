@@ -339,7 +339,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 #endif
 static void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
                                                        bool isVolatile,
-                                                       IRBuilder<> &Builder) {
+                                                       LLVMBuilder &Builder) {
   assert (0 && "LLVM_EXTRACT_MULTIPLE_RETURN_VALUE is not implemented!");
 }
 

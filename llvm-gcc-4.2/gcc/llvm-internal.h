@@ -39,6 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/TargetFolder.h"
 
 extern "C" {
 #include "llvm.h"
@@ -68,6 +69,8 @@ namespace llvm {
 }
 using namespace llvm;
 
+typedef IRBuilder<true, TargetFolder> LLVMBuilder;
+
 /// TheModule - This is the current global module that we are compiling into.
 ///
 extern llvm::Module *TheModule;
@@ -79,6 +82,9 @@ extern llvm::DebugInfo *TheDebugInfo;
 /// TheTarget - The current target being compiled for.
 ///
 extern llvm::TargetMachine *TheTarget;
+
+/// TheFolder - The constant folder to use.
+extern TargetFolder *TheFolder;
 
 /// getTargetData - Return the current TargetData object from TheTarget.
 const TargetData &getTargetData();
@@ -281,7 +287,7 @@ class TreeToLLVM {
 
   /// Builder - Instruction creator, the location to insert into is always the
   /// same as &Fn->back().
-  IRBuilder<> Builder;
+  LLVMBuilder Builder;
 
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.

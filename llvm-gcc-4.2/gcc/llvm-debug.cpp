@@ -232,7 +232,7 @@ Value *DebugInfo::getValueFor(DebugInfoDesc *DD) {
 /// getCastValueFor - Return a llvm representation for a given debug information
 /// descriptor cast to an empty struct pointer.
 Value *DebugInfo::getCastValueFor(DebugInfoDesc *DD) {
-  return ConstantExpr::getBitCast(SR.Serialize(DD), SR.getEmptyStructPtrType());
+  return TheFolder->CreateBitCast(SR.Serialize(DD), SR.getEmptyStructPtrType());
 }
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -

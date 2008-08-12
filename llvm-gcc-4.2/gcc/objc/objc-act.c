@@ -82,7 +82,7 @@ Boston, MA 02110-1301, USA.  */
 #endif
 /* LLVM LOCAL end */
 
-#define OBJC_VOID_AT_END	void_list_node
+#define OBJC_VOID_AT_END  void_list_node
 
 /* APPLE LOCAL radar 4506893 */
 static bool in_objc_property_setter_name_context = false;
@@ -104,15 +104,15 @@ static bool should_call_super_finalize = false;
    if method names contain underscores. -- rms.  */
 #ifndef OBJC_GEN_METHOD_LABEL
 #define OBJC_GEN_METHOD_LABEL(BUF, IS_INST, CLASS_NAME, CAT_NAME, SEL_NAME, NUM) \
-  do {					    \
-    char *temp;				    \
-    sprintf ((BUF), "_%s_%s_%s_%s",	    \
-	     ((IS_INST) ? "i" : "c"),	    \
-	     (CLASS_NAME),		    \
-	     ((CAT_NAME)? (CAT_NAME) : ""), \
-	     (SEL_NAME));		    \
-    for (temp = (BUF); *temp; temp++)	    \
-      if (*temp == ':') *temp = '_';	    \
+  do {                                      \
+    char *temp;                             \
+    sprintf ((BUF), "_%s_%s_%s_%s",         \
+             ((IS_INST) ? "i" : "c"),       \
+             (CLASS_NAME),                  \
+             ((CAT_NAME)? (CAT_NAME) : ""), \
+             (SEL_NAME));                   \
+    for (temp = (BUF); *temp; temp++)       \
+      if (*temp == ':') *temp = '_';        \
   } while (0)
 #endif
 /* APPLE LOCAL begin radar 4862848 */
@@ -175,8 +175,8 @@ char *util_firstobj;
 #define NEW_PROTOCOL_VERSION 3
 
 /* (Decide if these can ever be validly changed.) */
-#define OBJC_ENCODE_INLINE_DEFS 	0
-#define OBJC_ENCODE_DONT_INLINE_DEFS	1
+#define OBJC_ENCODE_INLINE_DEFS         0
+#define OBJC_ENCODE_DONT_INLINE_DEFS    1
 
 /*** Private Interface (procedures) ***/
 
@@ -14174,7 +14174,6 @@ build_ivar_reference (tree id)
   /* APPLE LOCAL begin ObjC new abi */
   /* APPLE LOCAL begin radar 5811191 - blocks */
   decl = self_decl;
-#ifndef OBJCPLUS
   if (cur_block)
   {
     /* Find a 'self' declaration in this block.  If not found,
@@ -14182,16 +14181,17 @@ build_ivar_reference (tree id)
     if (lookup_name_in_block (DECL_NAME (decl), &decl))
       decl = lookup_name (DECL_NAME (decl));
     else {
+#ifndef OBJCPLUS
       if (building_block_byref_decl) {
         warning (0, "ivar %qs may not be declared inside the 'byref' block - ignored",
                  IDENTIFIER_POINTER (id));
         return error_mark_node;
       }
+#endif
       decl = build_block_ref_decl (DECL_NAME (decl), decl);
     }
     gcc_assert (decl);
   }
-#endif  
   base = build_indirect_ref (decl, "->");
   /* APPLE LOCAL end radar 5811191 - blocks */
   if ((ivar = objc_v2_build_ivar_ref (base, id)))

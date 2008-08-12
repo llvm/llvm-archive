@@ -575,9 +575,9 @@ ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc || exit 1
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-g++-$MAJ_VERS llvm-g++ || exit 1
 
 # FIXME: This is a hack to get things working.
-for h in $HOSTS ; do
-    ln -s -f ../llvm-gcc-$MAJ_VERS/bin/$h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS $h-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS || exit 1
-    ln -s -f ../llvm-gcc-$MAJ_VERS/bin/$h-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS $h-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS || exit 1
+for t in $TARGETS ; do
+    ln -s -f ../llvm-gcc-$MAJ_VERS/bin/$t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS $t-apple-darwin$DARWIN_VERS-llvm-gcc-$MAJ_VERS || exit 1
+    ln -s -f ../llvm-gcc-$MAJ_VERS/bin/$t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS $t-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS || exit 1
 done
 
 # Copy one of the libllvmgcc.dylib's up to libexec/gcc.

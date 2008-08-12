@@ -2091,7 +2091,7 @@ getpagesize (void)
 #endif
 }
 
-#ifdef __i386__
+#if defined(__i386__) && ! defined(_WINBASE_H)
 extern int VirtualProtect (char *, int, int, int *) __attribute__((stdcall));
 #endif
 

@@ -381,6 +381,13 @@ x86_64-*-*)
 	tm_file="i386/biarch64.h ${tm_file}"
 	;;
 esac
+## LLVM LOCAL begin add dependency for llvm-i386-target.h
+case ${target} in
+x86_64-*-* | i686-*-* | i386-*-*)
+	tm_file="i386/llvm-i386-target.h ${tm_file}"
+	;;
+esac
+## LLVM LOCAL end
 
 # On a.out targets, we need to use collect2.
 case ${target} in

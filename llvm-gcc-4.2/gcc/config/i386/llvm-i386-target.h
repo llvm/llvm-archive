@@ -29,7 +29,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
     } else if (lookup_attribute("fastcall", type_attributes)) { \
       CC = CallingConv::X86_FastCall;                           \
     } else if (!TARGET_64BIT &&                                 \
-               lookup_attribute("sseregparm", type_attributes)){\
+               (TARGET_SSEREGPARM ||                            \
+                lookup_attribute("sseregparm",                  \
+                                 type_attributes))){            \
       CC = CallingConv::X86_SSECall;                            \
     }                                                           \
   }

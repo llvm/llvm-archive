@@ -22,5 +22,7 @@
 @dynamic referenceCount;
 @end
 
+/* LLVM LOCAL begin adjust for leading 'l' */
 /* { dg-final { scan-assembler "(L|l)_OBJC_\\\$_PROP_LIST_GCObject:" } } */
 /* { dg-final { scan-assembler "(L|l)_OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
+/* LLVM LOCAL end */

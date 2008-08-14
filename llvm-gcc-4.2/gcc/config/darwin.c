@@ -1535,30 +1535,7 @@ machopic_select_section (tree exp, int reloc,
 
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
-  const char *name;
-
-  if (TREE_CODE(decl) == CONST_DECL) {
-    extern int flag_next_runtime;
-    tree typename = TYPE_NAME(TREE_TYPE(decl));
-    if (TREE_CODE(typename) == TYPE_DECL)
-      typename = DECL_NAME(typename);
-    
-    if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_ObjCString")) {
-      if (flag_next_runtime)
-        return "__OBJC, __cstring_object,regular,no_dead_strip";
-      else
-        return "__OBJC, __string_object,no_dead_strip";
-    } else if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_CFString")) {
-      return "__DATA, __cfstring";
-    } else {
-      return 0;
-    }
-  }
-  
-  /* Get a pointer to the name, past the L_OBJC_ prefix. */
-  name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
-  
+const char *darwin_objc_llvm_special_name_section(const char* name) {
   if (!strncmp (name, "CLASS_METHODS_", 14))
     return "__OBJC,__cls_meth,regular,no_dead_strip";
   else if (!strncmp (name, "INSTANCE_METHODS_", 17))
@@ -1578,6 +1555,8 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
   else if (!strncmp (name, "METH_VAR_NAME_", 14))
     return "__TEXT,__cstring,cstring_literals";
   else if (!strncmp (name, "METH_VAR_TYPE_", 14))
+    return "__TEXT,__cstring,cstring_literals";
+  else if (!strncmp (name, "PROP_NAME_ATTR_", 15))
     return "__TEXT,__cstring,cstring_literals";
   else if (!strncmp (name, "CLASS_REFERENCES", 16))
     return "__OBJC,__cls_refs,literal_pointers,no_dead_strip";
@@ -1632,10 +1611,35 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
       return "__DATA, __objc_nlcatlist, regular, no_dead_strip";
     else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
       return "__DATA, __objc_protorefs, regular, no_dead_strip";
-    else 
+  }
+  return 0;
+}
+
+const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
+  const char *name;
+
+  if (TREE_CODE(decl) == CONST_DECL) {
+    extern int flag_next_runtime;
+    tree typename = TYPE_NAME(TREE_TYPE(decl));
+    if (TREE_CODE(typename) == TYPE_DECL)
+      typename = DECL_NAME(typename);
+    
+    if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_ObjCString")) {
+      if (flag_next_runtime)
+        return "__OBJC, __cstring_object,regular,no_dead_strip";
+      else
+        return "__OBJC, __string_object,no_dead_strip";
+    } else if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_CFString")) {
+      return "__DATA, __cfstring";
+    } else {
       return 0;
-  } else
-    return 0;
+    }
+  }
+  
+  /* Get a pointer to the name, past the L_OBJC_ prefix. */
+  name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
+
+  return darwin_objc_llvm_special_name_section(name);
 }
 #endif
 /* LLVM LOCAL end */

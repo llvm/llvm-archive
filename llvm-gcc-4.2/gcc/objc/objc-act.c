@@ -4081,12 +4081,22 @@ start_var_decl (tree type, const char *name)
   /* LLVM LOCAL begin */
   tree var = NULL_TREE;
 #ifdef ENABLE_LLVM
-  /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
-     later while emitting symbols, but fix it here for llvm.  */
+  /* Prefer to use 'L' as a prefix so symbols can be stripped at assembly
+     time. GCC codegen handles this later while emitting symbols, but fix
+     it here for llvm.  */
+  /* Special ObjC symbols in __data should use 'l' so the assembler
+     will not strip the symbol; the linker needs to see these, but
+     strip them after use. */
   char *new_name;
   if (name && strncmp (name, "_OBJC_", 6) == 0) {
     new_name = alloca (strlen (name) + 2);
+#if TARGET_MACHO
+    const char* section = darwin_objc_llvm_special_name_section(name+6);
+    new_name[0] = (section==0 || strcmp(section, "__DATA,__data")==0) 
+                  ? 'l' : 'L';
+#else
     new_name[0] = 'L';
+#endif
     strcpy (new_name + 1, name);
     var = build_decl (VAR_DECL, get_identifier (new_name), type);
     set_user_assembler_name (var, IDENTIFIER_POINTER (DECL_NAME (var)));
@@ -6379,6 +6389,7 @@ build_objc_string_decl (enum string_section section)
   {
     /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
        later while emitting symbols, but fix it here for llvm.  */
+    /* All these are in cstring, so none use 'l'. */
     char *tbuf = alloca (strlen (buf) + 2);
     tbuf[0] = 'L';
     strcpy (tbuf + 1, buf);

@@ -364,7 +364,8 @@ enum string_section
 };
 
 static tree add_objc_string (tree, enum string_section);
-static tree build_objc_string_decl (enum string_section);
+/* APPLE LOCAL do not create an unreferenced decl */
+static tree build_objc_string_ident (enum string_section);
 static void build_selector_table_decl (void);
 
 /* Protocol additions.  */
@@ -6301,7 +6302,8 @@ hash_ident_enter (hash *hashlist, tree ident)
 static tree
 add_objc_string (tree ident, enum string_section section)
 {
-  tree *chain, decl, type, string_expr;
+  /* APPLE LOCAL do not create an unreferenced decl */
+  tree *chain, decl, type, string_expr, sectionname;
   hash *hash_table;
   hash hsh;
 
@@ -6333,27 +6335,19 @@ add_objc_string (tree ident, enum string_section section)
     return convert (string_type_node, 
 		    build_unary_op (ADDR_EXPR, hsh->list->value, 1));
 
-  decl = build_objc_string_decl (section);
+  /* APPLE LOCAL do not create an unreferenced decl */
+  sectionname = build_objc_string_ident (section);
 
   type = build_array_type
 	 (char_type_node,
 	  build_index_type
 	  (build_int_cst (NULL_TREE,
 			  IDENTIFIER_LENGTH (ident))));
-  decl = start_var_decl (type, IDENTIFIER_POINTER (DECL_NAME (decl)));
+  /* APPLE LOCAL do not create an unreferenced decl */
+  decl = start_var_decl (type, IDENTIFIER_POINTER (sectionname));
   string_expr = my_build_string (IDENTIFIER_LENGTH (ident) + 1,
 				 IDENTIFIER_POINTER (ident));
   finish_var_decl (decl, string_expr);
-
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-  /* This decl's name is special, it uses 'L' as a prefix. Ask llvm to not
-     add leading underscore by setting it as a user supplied asm name.  */
-  set_user_assembler_name (decl, IDENTIFIER_POINTER (DECL_NAME (decl)));
-  /* Let optimizer know that this decl is not removable.  */
-  DECL_PRESERVE_P (decl) = 1;
-#endif
-  /* LLVM LOCAL end */
 
   hsh = hash_ident_enter (hash_table, ident);
   hash_add_attr (hsh, decl);
@@ -6370,9 +6364,11 @@ static GTY(()) int meth_var_types_idx;
 static GTY(()) int property_name_attr_idx;
 
 static tree
-build_objc_string_decl (enum string_section section)
+/* APPLE LOCAL do not create an unreferenced decl */
+build_objc_string_ident (enum string_section section)
 {
-  tree decl, ident;
+/* APPLE LOCAL begin do not create an unreferenced decl */
+/* APPLE LOCAL end do not create an unreferenced decl */
   char buf[256];
 
   if (section == class_names)
@@ -6385,50 +6381,9 @@ build_objc_string_decl (enum string_section section)
   else if (section == prop_names_attr)
     sprintf (buf, "_OBJC_PROP_NAME_ATTR_%d", property_name_attr_idx++);
   /* APPLE LOCAL end C* property metadata (Radar 4498373) */
-
-  /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-  {
-    /* Darwin linker prefers to use 'L' as a prefix. GCC codegen handles this
-       later while emitting symbols, but fix it here for llvm.  */
-    /* All these are in cstring, so none use 'l'. */
-    char *tbuf = alloca (strlen (buf) + 2);
-    tbuf[0] = 'L';
-    strcpy (tbuf + 1, buf);
-    ident = get_identifier (tbuf);
-  }
-#else
-  ident = get_identifier (buf);
-#endif
-  /* LLVM LOCAL end */
-
-  decl = build_decl (VAR_DECL, ident, build_array_type (char_type_node, 0));
-  DECL_EXTERNAL (decl) = 1;
-  TREE_PUBLIC (decl) = 0;
-  TREE_USED (decl) = 1;
-  TREE_CONSTANT (decl) = 1;
-  DECL_CONTEXT (decl) = 0;
-  DECL_ARTIFICIAL (decl) = 1;
-#ifdef OBJCPLUS
-  DECL_THIS_STATIC (decl) = 1; /* squash redeclaration errors */
-#endif
-
-  /* LLVM LOCAL begin */
-#ifndef ENABLE_LLVM
-  make_decl_rtl (decl);
-#else
-  /* This decl's name is special, it uses 'L' as a prefix. Ask llvm to not
-     add leading underscore by setting it as a user supplied asm name.  */
-  set_user_assembler_name (decl, IDENTIFIER_POINTER (DECL_NAME (decl)));
-
-  /* Let optimizer know that this decl is not removable.  */
-  DECL_PRESERVE_P (decl) = 1;
-  make_decl_llvm (decl);
-#endif
-  /* LLVM LOCAL end */
-  pushdecl_top_level (decl);
-
-  return decl;
+  /* APPLE LOCAL begin do not create an unreferenced decl */
+  return get_identifier (buf);
+  /* APPLE LOCAL end do not create an unreferenced decl */
 }
 
 

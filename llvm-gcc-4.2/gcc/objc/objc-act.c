@@ -4091,9 +4091,11 @@ start_var_decl (tree type, const char *name)
   if (name && strncmp (name, "_OBJC_", 6) == 0) {
     new_name = alloca (strlen (name) + 2);
 #if TARGET_MACHO
-    const char* section = darwin_objc_llvm_special_name_section(name+6);
-    new_name[0] = (section==0 || strcmp(section, "__DATA,__data")==0) 
-                  ? 'l' : 'L';
+    {
+      const char* section = darwin_objc_llvm_special_name_section(name+6);
+      new_name[0] = (section==0 || strcmp(section, "__DATA,__data")==0) 
+                    ? 'l' : 'L';
+    }
 #else
     new_name[0] = 'L';
 #endif

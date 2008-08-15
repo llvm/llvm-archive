@@ -2393,6 +2393,7 @@ c_parser_typeof_specifier (c_parser *parser)
       ret.spec = TREE_TYPE (expr.value);
       /* APPLE LOCAL begin radar 4204796 (in 4.2 n) */
       if (c_dialect_objc() 
+	  && ret.spec != error_mark_node
 	  && lookup_attribute ("objc_volatilized", TYPE_ATTRIBUTES (ret.spec)))
 	ret.spec = build_qualified_type
 	  (ret.spec, (TYPE_QUALS (ret.spec) & ~TYPE_QUAL_VOLATILE));

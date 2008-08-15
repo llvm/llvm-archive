@@ -29,7 +29,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"

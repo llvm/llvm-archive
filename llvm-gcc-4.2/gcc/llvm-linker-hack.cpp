@@ -55,7 +55,6 @@ void dummy_function() {
   llvm::createLocalRegisterAllocator();
 
   llvm::createGVNPass();
-  llvm::createGCSEPass();
   llvm::createLoopRotatePass();
   llvm::createLICMPass();
   llvm::createSCCPPass();

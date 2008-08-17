@@ -1336,6 +1336,32 @@ static unsigned CountAggregateElements(const Type *Ty) {
   }
 }
 
+/// containsFPField - indicates whether the given LLVM type 
+/// contains any floating point elements.
+
+static bool containsFPField(const Type *LLVMTy) {
+  if (LLVMTy->isFloatingPoint())
+    return true;
+  const StructType* STy = dyn_cast<StructType>(LLVMTy);
+  if (STy) {
+    for (StructType::element_iterator I = STy->element_begin(), 
+                                      E = STy->element_end(); I != E; I++) {
+      const Type *Ty = *I;
+      if (Ty->isFloatingPoint())
+        return true;
+      if (isa<StructType>(Ty) && containsFPField(Ty))
+        return true;
+      const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
+      if (ATy && containsFPField(ATy->getElementType()))
+        return true;
+      const VectorType *VTy = dyn_cast<VectorType>(Ty);
+      if (VTy && containsFPField(VTy->getElementType()))
+        return true;
+    }
+  }
+  return false;
+}
+
 #ifndef TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 64
 #endif
@@ -1352,9 +1378,15 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
           TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY) {
     const Type *LLVMTy = ConvertType(type);
 
+    // Some targets (x87) cannot pass non-floating-point values using FP
+    // instructions.  The LLVM type for a union may include FP elements,
+    // even if some of the union fields do not; it is unsafe to pass such
+    // converted types element by element.  PR 2680.
+
     // If the GCC type is not fully covered by the LLVM type, use memcpy. This
     // can occur with unions etc.
-    if (!TheTypeConverter->GCCTypeOverlapsWithLLVMTypePadding(type, LLVMTy) && 
+    if ((TREE_CODE(type) != UNION_TYPE || !containsFPField(LLVMTy)) &&
+        !TheTypeConverter->GCCTypeOverlapsWithLLVMTypePadding(type, LLVMTy) && 
         // Don't copy tons of tiny elements.
         CountAggregateElements(LLVMTy) <= 8) {
       DestLoc.Ptr = BitCastToType(DestLoc.Ptr, PointerType::getUnqual(LLVMTy));

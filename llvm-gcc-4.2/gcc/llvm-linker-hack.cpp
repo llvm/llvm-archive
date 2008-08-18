@@ -23,7 +23,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Analysis/LoadValueNumbering.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"

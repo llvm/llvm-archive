@@ -4522,7 +4522,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
 #if defined(TARGET_ALPHA) || defined(TARGET_386) || defined(TARGET_POWERPC)
-    //gcc uses many names for the sync intrinsics
+    // gcc uses many names for the sync intrinsics
+    // The type of the first argument is not reliable for choosing the
+    // right llvm function; if the original type is not volatile, gcc has
+    // helpfully changed it to "volatile void *" at this point.  The
+    // original type can be recovered from the function type.
+    // Note that Intrinsic::getDeclaration expects the type list in reversed
+    // order, while CreateCall expects the parameter list in normal order.
   case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
@@ -4540,14 +4546,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
       Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
 
@@ -4563,7 +4565,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_16))
       Result = Builder.CreateICmpEQ(Result, C[1]);
     else
-      Result = Builder.CreateIntToPtr(Result, OrigTy);
+      Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_ADD_1:
@@ -4577,20 +4579,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_add, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_SUB_1:
@@ -4604,20 +4603,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_sub, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_OR_1:
@@ -4631,20 +4627,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0]))
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_or, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_AND_1:
@@ -4658,20 +4651,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_and, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_XOR_1:
@@ -4685,20 +4675,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();     
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_xor, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_FETCH_AND_NAND_1:
@@ -4712,20 +4699,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_nand, 
                                                    Ty, 2),
       C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_1:
@@ -4740,13 +4724,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
 
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4754,7 +4735,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_ADD_AND_FETCH_1:
@@ -4768,13 +4749,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4782,7 +4760,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateAdd(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_SUB_AND_FETCH_1:
@@ -4796,13 +4774,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();     
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4810,7 +4785,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateSub(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_OR_AND_FETCH_1:
@@ -4824,13 +4799,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();     
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4838,7 +4810,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateOr(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_AND_AND_FETCH_1:
@@ -4852,13 +4824,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();     
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4866,7 +4835,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateAnd(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_XOR_AND_FETCH_1:
@@ -4880,13 +4849,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4894,7 +4860,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateXor(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
   case BUILT_IN_NAND_AND_FETCH_1:
@@ -4908,13 +4874,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type *OrigTy = cast<PointerType>(C[0]->getType())->getElementType();
     const Type* Ty[2];
-    Ty[0] = OrigTy;
-    if (isa<PointerType>(Ty[0])) 
-      Ty[0] = TD.getIntPtrType();     
-    Ty[1] = C[0]->getType();
-    C[0] = Builder.CreateBitCast(C[0], PointerType::getUnqual(Ty[0]));
+    Ty[0] = ResultTy;
+    Ty[1] = PointerType::getUnqual(ResultTy);
+    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4922,7 +4885,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                                    Ty, 2),
                          C, C + 2);
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
-    Result = Builder.CreateIntToPtr(Result, OrigTy);
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
   }
 

@@ -76,7 +76,6 @@ void dummy_function() {
   llvm::createSimplifyLibCallsPass();
   llvm::createArgumentPromotionPass();
   llvm::createDeadArgEliminationPass();
-  llvm::createLoadValueNumberingPass();
   llvm::createTailCallEliminationPass();
   llvm::createDeadStoreEliminationPass();
   llvm::createIPConstantPropagationPass();

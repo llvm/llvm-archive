@@ -1591,7 +1591,8 @@ void StructTypeConversionInfo::dump() const {
     std::cerr << "  Offset = " << ElementOffsetInBytes[i]
               << " Size = " << ElementSizeInBytes[i]
               << " Type = ";
-    WriteTypeSymbolic(std::cerr, Elements[i], TheModule) << "\n";
+    WriteTypeSymbolic(std::cerr, Elements[i], TheModule);
+    std::cerr << "\n";
   }
 }
 

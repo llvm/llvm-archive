@@ -4275,6 +4275,27 @@ void clearTargetBuiltinCache() {
   TargetBuiltinCache.clear();
 }
 
+Value *
+TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
+  const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+  tree arglist = TREE_OPERAND(exp, 1);
+  Value* C[2] = {
+    Emit(TREE_VALUE(arglist), 0),
+    Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+  };
+  const Type* Ty[2];
+  Ty[0] = ResultTy;
+  Ty[1] = PointerType::getUnqual(ResultTy);
+  C[0] = Builder.CreateBitCast(C[0], Ty[1]);
+  C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+  Value *Result = 
+    Builder.CreateCall(Intrinsic::getDeclaration(TheModule,  id,
+                                                 Ty, 2),
+    C, C + 2);
+  Result = Builder.CreateIntToPtr(Result, ResultTy);
+  return Result;
+}
+
 /// EmitBuiltinCall - exp is a call to fndecl, a builtin function.  Try to emit
 /// the call in a special way, setting Result to the scalar result if necessary.
 /// If we can't handle the builtin, return false, otherwise return true.
@@ -4573,23 +4594,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_ADD_4:
   case BUILT_IN_FETCH_AND_ADD_8:
   case BUILT_IN_FETCH_AND_ADD_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_add, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_add);
     return true;
   }
   case BUILT_IN_FETCH_AND_SUB_1:
@@ -4597,23 +4602,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_SUB_4:
   case BUILT_IN_FETCH_AND_SUB_8:
   case BUILT_IN_FETCH_AND_SUB_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_sub, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_sub);
     return true;
   }
   case BUILT_IN_FETCH_AND_OR_1:
@@ -4621,23 +4610,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_OR_4:
   case BUILT_IN_FETCH_AND_OR_8:
   case BUILT_IN_FETCH_AND_OR_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_or, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_or);
     return true;
   }
   case BUILT_IN_FETCH_AND_AND_1:
@@ -4645,23 +4618,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_AND_4:
   case BUILT_IN_FETCH_AND_AND_8:
   case BUILT_IN_FETCH_AND_AND_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_and, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_and);
     return true;
   }
   case BUILT_IN_FETCH_AND_XOR_1:
@@ -4669,23 +4626,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_XOR_4:
   case BUILT_IN_FETCH_AND_XOR_8:
   case BUILT_IN_FETCH_AND_XOR_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_xor, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_xor);
     return true;
   }
   case BUILT_IN_FETCH_AND_NAND_1:
@@ -4693,23 +4634,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_NAND_4:
   case BUILT_IN_FETCH_AND_NAND_8:
   case BUILT_IN_FETCH_AND_NAND_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_load_nand, 
-                                                   Ty, 2),
-      C, C + 2);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_nand);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_1:
@@ -4717,25 +4642,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOCK_TEST_AND_SET_4:
   case BUILT_IN_LOCK_TEST_AND_SET_8:
   case BUILT_IN_LOCK_TEST_AND_SET_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_swap, 
-                                                   Ty, 2),
-                         C, C + 2);
-    
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_swap);
     return true;
   }
   case BUILT_IN_ADD_AND_FETCH_1:
@@ -4886,6 +4793,39 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                          C, C + 2);
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
+    return true;
+  }
+
+  case BUILT_IN_LOCK_RELEASE_1:
+  case BUILT_IN_LOCK_RELEASE_2:
+  case BUILT_IN_LOCK_RELEASE_4:
+  case BUILT_IN_LOCK_RELEASE_8:
+  case BUILT_IN_LOCK_RELEASE_16: {
+    // This is effectively a volatile store of 0, and has no return value.
+    // The argument has typically been coerced to "volatile void*"; the
+    // only way to find the size of the operation is from the builtin
+    // opcode.
+    tree type;
+    switch(DECL_FUNCTION_CODE(fndecl)) {
+      case BUILT_IN_LOCK_RELEASE_1:
+        type = unsigned_char_type_node; break;
+      case BUILT_IN_LOCK_RELEASE_2:
+        type = short_unsigned_type_node; break;
+      case BUILT_IN_LOCK_RELEASE_4:
+        type = unsigned_type_node; break;
+      case BUILT_IN_LOCK_RELEASE_8:
+        type = long_long_unsigned_type_node; break;
+      case BUILT_IN_LOCK_RELEASE_16:    // not handled; should use SSE on x86
+      default:
+        abort();
+    }
+    tree arglist = TREE_OPERAND(exp, 1);
+    tree t1 = build1 (INDIRECT_REF, type, TREE_VALUE (arglist));
+    TREE_THIS_VOLATILE(t1) = 1;
+    tree t = build2 (MODIFY_EXPR, type, t1, 
+                     build_int_cst (type, (HOST_WIDE_INT)0));
+    EmitMODIFY_EXPR(t, 0);
+    Result = 0;
     return true;
   }
 

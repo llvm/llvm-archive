@@ -524,6 +524,7 @@ private:
   Value *BuildVector(const std::vector<Value*> &Elts);
   Value *BuildVector(Value *Elt, ...);
   Value *BuildVectorShuffle(Value *InVec1, Value *InVec2, ...);
+  Value *BuildBinaryAtomicBuiltin(tree_node *exp, Intrinsic::ID id);
 
   // Builtin Function Expansion.
   bool EmitBuiltinCall(tree_node *exp, tree_node *fndecl, 

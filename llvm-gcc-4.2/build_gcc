@@ -488,6 +488,8 @@ for t in $TARGETS ; do
       || exit 1
   # LLVM LOCAL end
 done
+# Compress manpages
+gzip -f $MDIR/*
 
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do

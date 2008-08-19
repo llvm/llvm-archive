@@ -20,8 +20,10 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+#include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -38,7 +40,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /// This function is never dynamically called.
 ///
 void dummy_function() {
-  new llvm::ExistingModuleProvider(0);
+  llvm::ModuleProvider *MP = new llvm::ExistingModuleProvider(0);
   llvm::createVerifierPass();
   llvm::CreateBitcodeWriterPass(*llvm::cout);
   llvm::WriteBitcodeToFile(0, *llvm::cout);
@@ -82,8 +84,10 @@ void dummy_function() {
   llvm::createMemCpyOptPass();
   llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
-  llvm::createDeadCodeEliminationPass();
-  
+
+  std::string Err;
+  llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),
+                                                               Err);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

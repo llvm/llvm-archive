@@ -5,7 +5,7 @@
    Contributed by Hans-Peter Nilsson  <hp@bitrange.com>  */
 
 /* { dg-do run } */
-/* { dg-options "-O2 -foptimize-sibling-calls" } */
+/* { dg-options "-O2 -foptimize-sibling-calls -fno-inline-functions" } */
 
 /* The option -foptimize-sibling-calls is the default, but serves as
    marker.  Self-recursion tail calls are optimized for all targets,

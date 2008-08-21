@@ -50,6 +50,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
 #include <cassert>
 #undef VISIBILITY_HIDDEN
@@ -239,6 +240,7 @@ void llvm_lang_dependent_init(const char *Name) {
 }
 
 oFILEstream *AsmOutStream = 0;
+static raw_ostream *AsmOutRawStream = 0;
 oFILEstream *AsmIntermediateOutStream = 0;
 
 /// Read bytecode from PCH file. Initialize TheModule and setup
@@ -289,6 +291,8 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 void llvm_pch_write_init(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
+  // FIXME: disentangle ostream madness here.  Kill off ostream and FILE.
+  AsmOutRawStream = new raw_os_ostream(*AsmOutStream);
   AsmOutFile = new OStream(*AsmOutStream);
 
   assert(!OptimizationPassesCreated);
@@ -456,7 +460,7 @@ static void createOptimizationPasses() {
 
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
-    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutStream,
+    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                            TargetMachine::AssemblyFile,
                                            /*FAST*/optimize == 0)) {
     default:
@@ -490,6 +494,8 @@ static void createOptimizationPasses() {
 void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
+  // FIXME: disentangle ostream madness here.  Kill off ostream and FILE.
+  AsmOutRawStream = new raw_os_ostream(*AsmOutStream);
   AsmOutFile = new OStream(*AsmOutStream);
 
   flag_llvm_pch_read = 0;
@@ -643,8 +649,11 @@ void llvm_asm_file_end(void) {
     CodeGenPasses->doFinalization();
   }
 
+  AsmOutRawStream->flush();
   AsmOutStream->flush();
   fflush(asm_out_file);
+  delete AsmOutRawStream;
+  AsmOutRawStream = 0;
   delete AsmOutStream;
   AsmOutStream = 0;
   delete AsmOutFile;

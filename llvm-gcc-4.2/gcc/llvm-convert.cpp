@@ -4296,6 +4296,34 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   return Result;
 }
 
+Value *
+TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
+  const Type *ResultTy = ConvertType(type);
+  tree arglist = TREE_OPERAND(exp, 1);
+  Value* C[3] = {
+    Emit(TREE_VALUE(arglist), 0),
+    Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
+    Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
+  };
+  const Type* Ty[2];
+  Ty[0] = ResultTy;
+  Ty[1] = PointerType::getUnqual(ResultTy);
+  C[0] = Builder.CreateBitCast(C[0], Ty[1]);
+  C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+  C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
+
+  Value *Result = 
+    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                 Intrinsic::atomic_cmp_swap, 
+                                                 Ty, 2),
+    C, C + 3);
+  if (isBool)
+    Result = Builder.CreateICmpEQ(Result, C[1]);
+  else
+    Result = Builder.CreateIntToPtr(Result, ResultTy);
+  return Result;
+}
+
 /// EmitBuiltinCall - exp is a call to fndecl, a builtin function.  Try to emit
 /// the call in a special way, setting Result to the scalar result if necessary.
 /// If we can't handle the builtin, return false, otherwise return true.
@@ -4547,47 +4575,38 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The type of the first argument is not reliable for choosing the
     // right llvm function; if the original type is not volatile, gcc has
     // helpfully changed it to "volatile void *" at this point.  The
-    // original type can be recovered from the function type.
+    // original type can be recovered from the function type in most cases.
+    // For lock_release and bool_compare_and_swap even that is not good
+    // enough, we have to key off the opcode.
     // Note that Intrinsic::getDeclaration expects the type list in reversed
     // order, while CreateCall expects the parameter list in normal order.
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_1: {
+    Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_char_type_node, true);
+    return true;
+  }
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_2: {
+    Result = BuildCmpAndSwapAtomicBuiltin(exp, short_unsigned_type_node, true);
+    return true;    
+  }
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_4: {
+    Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_type_node, true);
+    return true;    
+  }
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_8: {
+    Result = BuildCmpAndSwapAtomicBuiltin(exp, long_long_unsigned_type_node, 
+                                          true);
+    return true;    
+  }
+  case BUILT_IN_BOOL_COMPARE_AND_SWAP_16:
+    abort();      // not handled; should use SSE on x86
   case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_4:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
-  case BUILT_IN_VAL_COMPARE_AND_SWAP_16:
-  case BUILT_IN_BOOL_COMPARE_AND_SWAP_1:
-  case BUILT_IN_BOOL_COMPARE_AND_SWAP_2:
-  case BUILT_IN_BOOL_COMPARE_AND_SWAP_4:
-  case BUILT_IN_BOOL_COMPARE_AND_SWAP_8:
-  case BUILT_IN_BOOL_COMPARE_AND_SWAP_16: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[3] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
-    };
-    const Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-    C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
-
-    Result = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                   Intrinsic::atomic_cmp_swap, 
-                                                   Ty, 2),
-      C, C + 3);
-    if (((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_1) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_2) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_4) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_8) ||
-        ((DECL_FUNCTION_CODE(fndecl)) == BUILT_IN_BOOL_COMPARE_AND_SWAP_16))
-      Result = Builder.CreateICmpEQ(Result, C[1]);
-    else
-      Result = Builder.CreateIntToPtr(Result, ResultTy);
-    return true;
+  case BUILT_IN_VAL_COMPARE_AND_SWAP_16: {
+    tree type = TREE_TYPE(exp);
+    Result = BuildCmpAndSwapAtomicBuiltin(exp, type, false);
+    return true;    
   }
   case BUILT_IN_FETCH_AND_ADD_1:
   case BUILT_IN_FETCH_AND_ADD_2:

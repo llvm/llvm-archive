@@ -525,6 +525,8 @@ private:
   Value *BuildVector(Value *Elt, ...);
   Value *BuildVectorShuffle(Value *InVec1, Value *InVec2, ...);
   Value *BuildBinaryAtomicBuiltin(tree_node *exp, Intrinsic::ID id);
+  Value *BuildCmpAndSwapAtomicBuiltin(tree_node *exp, tree_node *type, 
+                                      bool isBool);
 
   // Builtin Function Expansion.
   bool EmitBuiltinCall(tree_node *exp, tree_node *fndecl, 

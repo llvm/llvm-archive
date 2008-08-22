@@ -612,7 +612,13 @@ init_optimization_passes (void)
   NEXT_PASS (pass_object_sizes);
   NEXT_PASS (pass_store_ccp);
   NEXT_PASS (pass_store_copy_prop);
+
+#endif
+  /* LLVM LOCAL end */
   NEXT_PASS (pass_fold_builtins);
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
+
   /* FIXME: May alias should a TODO but for 4.0.0,
      we add may_alias right after fold builtins
      which can create arbitrary GIMPLE.  */

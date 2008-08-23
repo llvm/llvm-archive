@@ -854,9 +854,7 @@ AC_ARG_ENABLE(llvm,
  esac
 
  LLVMBUILDMODE=""
- if test "x$checkingenabled_flag" != x; then
-     LLVMBUILDMODE="Debug"
- elif test -x "$LLVMBASEPATH/Release/bin/llc$EXEEXT"; then
+ if test -x "$LLVMBASEPATH/Release/bin/llc$EXEEXT"; then
      LLVMBUILDMODE="Release"
  elif test -x "$LLVMBASEPATH/Debug/bin/llc$EXEEXT"; then
      LLVMBUILDMODE="Debug"

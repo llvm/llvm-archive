@@ -817,9 +817,10 @@ Function *TreeToLLVM::FinishFunctionBody() {
   if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
   if (RetVals.empty())
     Builder.CreateRetVoid();
-  else if (RetVals.size() == 1)
+  else if (!Fn->getReturnType()->isAggregateType()) {
+    assert(RetVals.size() == 1 && "Non-aggregate return has multiple values!");
     Builder.CreateRet(RetVals[0]);
-  else
+  } else
     Builder.CreateAggregateRet(&RetVals[0], RetVals.size());
 
   // Emit pending exception handling code.

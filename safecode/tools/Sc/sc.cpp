@@ -51,8 +51,10 @@ Force("f", cl::desc("Overwrite output files"));
 static cl::opt<bool>
 FullPA("pa", cl::init(false), cl::desc("Use pool allocation"));
 
+/*
 static cl::opt<bool>
 DanglingPointerChecks("dpchecks", cl::init(false), cl::desc("Perform Dangling Pointer Checks"));
+*/
 
 static cl::opt<bool>
 EnableFastCallChecks("enable-fastcallchecks", cl::init(false),
@@ -133,7 +135,7 @@ int main(int argc, char **argv) {
 #endif
     Passes.add(new ABCPreProcess());
     Passes.add(new EmbeCFreeRemoval());
-    Passes.add(new InsertPoolChecks(DanglingPointerChecks));
+    Passes.add(new InsertPoolChecks());
     Passes.add(new MallocPass());
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());

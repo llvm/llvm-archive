@@ -37,8 +37,6 @@ struct PreInsertPoolChecks : public ModulePass {
       AU.addRequired<EmbeCFreeRemoval>();
       AU.addRequired<TargetData>();
       AU.addPreserved<PoolAllocateGroup>();
-      AU.addRequired<PreInsertPoolChecks>();
-      AU.addPreserved<PreInsertPoolChecks>();
 #else 
       AU.addRequired<TDDataStructures>();
 #endif

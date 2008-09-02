@@ -338,10 +338,12 @@ darwin_pragma_unused (cpp_reader *pfile ATTRIBUTE_UNUSED)
   tree decl, x;
   int tok;
 
-  if (pragma_lex (&x) != CPP_OPEN_PAREN)
+  /* APPLE LOCAL 5979888 */
+  if ((tok=pragma_lex (&x)) != CPP_OPEN_PAREN)
     BAD ("missing '(' after '#pragma unused', ignoring");
 
-  while (1)
+  /* APPLE LOCAL 5979888 */
+  while (tok != CPP_EOF && tok != CPP_CLOSE_PAREN)
     {
       tok = pragma_lex (&decl);
       if (tok == CPP_NAME && decl)
@@ -1083,12 +1085,14 @@ darwin_cpp_builtins (cpp_reader *pfile)
     }
   /* APPLE LOCAL end ObjC GC */
   /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
-  if (flag_blocks && !c_dialect_cxx ()) {
+  if (flag_blocks) {
     /* APPLE LOCAL radar 6096219 */
     builtin_define ("__byref=__attribute__((__blocks__(byref)))");
+    builtin_define ("__block=__attribute__((__blocks__(byref)))");
   }
   else {
     builtin_define ("__byref=");
+    builtin_define ("__block=");
   }
   /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 

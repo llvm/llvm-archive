@@ -74,7 +74,8 @@ free_path (struct cpp_dir *path, int reason)
     case REASON_DUP_SYS:
       fprintf (stderr, _("ignoring duplicate directory \"%s\"\n"), path->name);
       if (reason == REASON_DUP_SYS)
-	fprintf (stderr,
+	/* APPLE LOCAL default to Wformat-security 5764921 */
+	fprintf (stderr, "%s",
  _("  as it is a non-system directory that duplicates a system directory\n"));
       break;
 
@@ -483,11 +484,13 @@ merge_include_chains (cpp_reader *pfile, int verbose)
     {
       struct cpp_dir *p;
 
-      fprintf (stderr, _("#include \"...\" search starts here:\n"));
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      fprintf (stderr, "%s", _("#include \"...\" search starts here:\n"));
       for (p = heads[QUOTE];; p = p->next)
 	{
 	  if (p == heads[BRACKET])
-	    fprintf (stderr, _("#include <...> search starts here:\n"));
+	    /* APPLE LOCAL default to Wformat-security 5764921 */
+	    fprintf (stderr, "%s", _("#include <...> search starts here:\n"));
 	  if (!p)
 	    break;
 	  /* APPLE LOCAL begin 5033355 */
@@ -499,7 +502,8 @@ merge_include_chains (cpp_reader *pfile, int verbose)
 	    fprintf (stderr, " %s (framework directory)\n", p->name);
 	  /* APPLE LOCAL end 5033355 */
 	}
-      fprintf (stderr, _("End of search list.\n"));
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      fprintf (stderr, "%s", _("End of search list.\n"));
     }
 }
 

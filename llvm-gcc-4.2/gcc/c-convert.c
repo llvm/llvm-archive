@@ -80,7 +80,8 @@ convert (tree type, tree expr)
   if ((invalid_conv_diag
        = targetm.invalid_conversion (TREE_TYPE (expr), type)))
     {
-      error (invalid_conv_diag);
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      error (invalid_conv_diag, "");
       return error_mark_node;
     }
 

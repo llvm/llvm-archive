@@ -310,7 +310,8 @@ cgraph_default_inline_p (struct cgraph_node *n, const char **reason)
   if (!DECL_STRUCT_FUNCTION (decl)->cfg)
     {
       if (reason)
-	*reason = N_("function body not available");
+	/* APPLE LOCAL wording 4598393 */
+	*reason = N_("the function body must appear before caller");
       return false;
     }
 
@@ -1088,7 +1089,8 @@ cgraph_decide_inlining (void)
 		  if (altivec_infection (node->callers))
 		    {
 		      if (dump_file)
-			fprintf (dump_file, node->callers->inline_failed);
+			/* APPLE LOCAL default to Wformat-security 5764921 */
+			fprintf (dump_file, "%s", node->callers->inline_failed);
 		      continue;
 		    }
 		  /* APPLE LOCAL end Selective inlining of functions that use Altivec 3837835 */

@@ -282,9 +282,11 @@ Objective-C and Objective-C++ Dialects}.
 -Wconversion  -Wno-deprecated-declarations @gol
 -Wdisabled-optimization  -Wno-div-by-zero  -Wno-endif-labels @gol
 -Werror  -Werror=* -Werror-implicit-function-declaration @gol
--Wfatal-errors  -Wfloat-equal  -Wformat  -Wformat=2 @gol
+@c APPLE LOCAL default to Wformat-security 5764921
+-Wfatal-errors  -Wfloat-equal  -Wno-format  -Wformat=2 @gol
 -Wno-format-extra-args -Wformat-nonliteral @gol
--Wformat-security  -Wformat-y2k @gol
+@c APPLE LOCAL default to Wformat-security 5764921
+-Wno-format-security  -Wformat-y2k @gol
 -Wimplicit  -Wimplicit-function-declaration  -Wimplicit-int @gol
 -Wimport  -Wno-import  -Winit-self  -Winline @gol
 -Wno-int-to-pointer-cast @gol
@@ -2437,33 +2439,43 @@ to be unlocked properly.
 @item -fobjc-gc
 @opindex fobjc-gc
 Enable garbage collection (GC) in Objective-C and Objective-C++ programs.
-@c APPLE LOCAL begin ObjC GC
-The resulting binary requires additional runtime support which is not
-present in any released version of Mac OS X.
+@c APPLE LOCAL begin radar 5780114  - ObjC GC
+The resulting binary requires additional runtime support which is present on 
+Mac OS X Version 10.5 (Leopard) and later.  All Objective-C objects are presumed 
+to be garbage collected. To aid in this effort, compiler implements assignments 
+of Objective-C object pointers via runtime support functions. These functions work 
+correctly in non-GC environments as well, in case this code is used as part of a 
+library.  Assignments of objects into instance variables of other objects are 
+intercepted, so are assignments to global object variables. In general, assignments 
+through pointers to objects are intercepted. Additionally, assignments of objects 
+as fields within structures are intercepted.
 
-When the @option{-fobjc-gc} switch is specified, the compiler will replace
-assignments to instance variables (ivars) and to certain kinds of pointers to
-Objective-C object instances with calls to interceptor functions provided
-by the runtime garbage collector.  Two type qualifiers, @code{__strong} and
-@code{__weak}, also become available.  The @code{__strong} qualifier may be
-used to indicate that assignments to variables of this type should generate
-a GC interceptor call, e.g.:
+In addition, other pointer variables may be marked with the __strong storage class 
+modifier to indicate to the compiler that these assignments need to use the assignment 
+runtime functions as well, allowing the memory referenced by these pointers to be 
+allocated from the collector. A __weak storage class modifier for pointers is also 
+introduced to indicate a zero-ing weak reference. This is permitted only for instance 
+variables of an object or globals.  The compiler arranges for all reads as well as 
+writes to these variables to occur via runtime support functions.  Under garbage 
+collection these variables are not consulted when determining what is not garbage 
+and they are set to nil (zero) if the memory they reference is deemed garbage and is 
+collected.
 
 @smallexample
-  __strong void *p;  // assignments to 'p' will have interceptor calls
+  __strong void *p;  // assignments to 'p' will have runtime support calls
   int *q;            // assignments to 'q' ordinarly will not
     @dots{}
-  (__strong int *)q = 0;   // this assignment will call an interceptor
+  (__strong int *)q = 0;   // this assignment will call a runtime support function
 @end smallexample
 
-Conversely, the @code{__weak} type qualifier may be used to suppress
-interceptor call generation:
+Conversely, the @code{__weak} type qualifier may be used to call weak runtime 
+functions.
 
 @smallexample
-  __weak id q;      // assignments to 'q' will not have interceptor calls
-  id p;             // assignments to 'p' will have interceptor calls
+  __weak id q;      // assignments to 'q' will have the '__weak' semantics
+  id p;             // assignments to 'p' will have the "__strong' semantics
     @dots{}
-  (__weak id)p = 0;   // suppress interceptor call for this assignment
+  (__weak id)p = 0;   // Fall back to '__weak' semantics in this assignment.
 @end smallexample
 
 @item -fobjc-gc-only
@@ -2473,7 +2485,7 @@ collection (GC) only - that is, it does not contain retain/release logic.
 This flag implies @option{-fobjc-gc} as well. With this flag, framework
 is marked as not honoring retain/release.
 
-@c APPLE LOCAL end ObjC GC
+@c APPLE LOCAL end radar 5780114 - ObjC GC
 @item -freplace-objc-classes
 @opindex freplace-objc-classes
 Emit a special marker instructing @command{ld(1)} not to statically link in
@@ -2746,8 +2758,10 @@ This option causes the compiler to abort compilation on the first error
 occurred rather than trying to keep going and printing further error
 messages.
 
-@item -Wformat
-@opindex Wformat
+@c APPLE LOCAL begin default to Wformat-security 5764921
+@item -Wno-format
+@opindex Wno-format
+@c APPLE LOCAL end default to Wformat-security 5764921
 @opindex ffreestanding
 @opindex fno-builtin
 Check calls to @code{printf} and @code{scanf}, etc., to make sure that
@@ -2812,8 +2826,10 @@ If @option{-Wformat} is specified, also warn if the format string is not a
 string literal and so cannot be checked, unless the format function
 takes its format arguments as a @code{va_list}.
 
-@item -Wformat-security
-@opindex Wformat-security
+@c APPLE LOCAL begin default to Wformat-security 5764921
+@item -Wno-format-security
+@opindex Wno-format-security
+@c APPLE LOCAL end default to Wformat-security 5764921
 If @option{-Wformat} is specified, also warn about uses of format
 functions that represent possible security problems.  At present, this
 warns about calls to @code{printf} and @code{scanf} functions where the
@@ -3618,8 +3634,6 @@ casts like @code{(unsigned) -1}.
 @item -Wshorten-64-to-32
 @opindex Wshorten-64-to-32
 Warn if a value is implicitly converted from a 64 bit type to a 32 bit type.
-This option is deprecated in favor of the -Wconversion option in future
-releases.
 @c APPLE LOCAL end mainline
 
 @c APPLE LOCAL begin mainline

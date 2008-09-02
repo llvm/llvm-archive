@@ -6702,7 +6702,7 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	SET_DECL_ASSEMBLER_NAME (r, NULL_TREE);
         /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
-        SET_DECL_RTL (r, NULL_RTX);
+	SET_DECL_RTL (r, NULL_RTX);
 #else
         SET_DECL_LLVM (r, 0);
 #endif
@@ -8971,7 +8971,8 @@ tsubst_copy_and_build (tree t,
 				     /*template_arg_p=*/false,
 				     &error_msg);
 	if (error_msg)
-	  error (error_msg);
+	  /* APPLE LOCAL default to Wformat-security 5764921 */
+	  error ("%s", error_msg);
 	if (!function_p && TREE_CODE (decl) == IDENTIFIER_NODE)
 	  decl = unqualified_name_lookup_error (decl);
 	return decl;

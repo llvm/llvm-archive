@@ -1379,7 +1379,8 @@ print_target_help (void)
   for (i = 0; i < cl_options_count; i++)
     if ((cl_options[i].flags & (CL_TARGET | CL_UNDOCUMENTED)) == CL_TARGET)
       {
-	printf (_("\nTarget specific options:\n"));
+	/* APPLE LOCAL default to Wformat-security 5764921 */
+	printf ("%s", _("\nTarget specific options:\n"));
 	print_filtered_help (CL_TARGET);
 	break;
       }

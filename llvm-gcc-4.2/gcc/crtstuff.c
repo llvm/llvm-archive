@@ -192,7 +192,7 @@ STATIC func_ptr __CTOR_LIST__[1]
 #ifdef __llvm__
   __attribute__ ((__used__, section(".ctors"), aligned(sizeof(func_ptr))))
 #else  
-  __attribute__ ((__unused__, section(".ctors"), aligned(sizeof(func_ptr))))  
+  __attribute__ ((__unused__, section(".ctors"), aligned(sizeof(func_ptr))))
 #endif  
 /* LLVM LOCAL end */
   = { (func_ptr) (-1) };
@@ -529,7 +529,7 @@ STATIC func_ptr __DTOR_END__[1]
 /* FIXME: Remove when external weak linkage will be alive. */
   __attribute__((__used__, section(".dtors"), aligned(sizeof(func_ptr))))
 #else  
-  __attribute__((unused, section(".dtors"), aligned(sizeof(func_ptr))))  
+  __attribute__((unused, section(".dtors"), aligned(sizeof(func_ptr))))
 #endif  
 /* LLVM LOCAL end */
   = { (func_ptr) 0 };

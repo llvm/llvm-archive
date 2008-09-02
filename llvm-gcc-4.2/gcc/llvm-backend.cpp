@@ -209,6 +209,8 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 #endif
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
+  assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
+
   TheFolder = new TargetFolder(*TheTarget->getTargetData());
 
   // Install information about target datalayout stuff into the module for

@@ -302,7 +302,8 @@ int warn_unknown_pragmas; /* Tri state variable.  */
 /* Warn about format/argument anomalies in calls to formatted I/O functions
    (*printf, *scanf, strftime, strfmon, etc.).  */
 
-int warn_format;
+/* APPLE LOCAL default to Wformat-security 5764921 */
+int warn_format = 1;
 
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right
@@ -1228,7 +1229,20 @@ warnings_for_convert_and_check (tree type, tree expr, tree result ATTRIBUTE_UNUS
   if (warn_shorten_64_to_32
       && TYPE_PRECISION (TREE_TYPE (expr)) == 64
       && TYPE_PRECISION (type) == 32)
-    warning (0, "implicit conversion shortens 64-bit value into a 32-bit value");
+    /* APPLE LOCAL begin 64bit shorten warning 5429810 */
+    {
+      /* As a special case, don't warn when we are working with small
+	 constants as the enum forming code shortens them into smaller
+	 types.  */
+      if (TREE_CODE (expr) == INTEGER_CST)
+	{
+	  bool unsignedp = tree_int_cst_sgn (expr) >= 0;
+	  if (min_precision (expr, unsignedp) <= TYPE_PRECISION (type))
+	    return;
+	}
+      warning (0, "implicit conversion shortens 64-bit value into a 32-bit value");
+    }
+    /* APPLE LOCAL end 64bit shorten warning 5429810 */
 }
 
 /* Convert EXPR to TYPE, warning about conversion problems with constants.
@@ -6128,6 +6142,35 @@ handle_blocks_attribute (tree *node, tree name,
 /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 
 /* APPLE LOCAL begin blocks 6040305 */
+
+/* This routine builds:
+   *(id *)(EXP+20) expression which references the object id pointer.
+*/
+tree
+build_indirect_object_id_exp (tree exp)
+{
+  tree dst_obj;
+  int  int_size = int_cst_value (TYPE_SIZE_UNIT (unsigned_type_node));
+  int offset;
+  /* dst->object = [src->object retail]; In thid case 'object' is the field
+   of the object passed offset by: void* + int + int + void* + void *
+   This must match definition of Block_byref structs. */
+  offset = GET_MODE_SIZE (Pmode) + int_size + int_size + GET_MODE_SIZE (Pmode) +
+           GET_MODE_SIZE (Pmode);
+  dst_obj = build2 (PLUS_EXPR, ptr_type_node, exp,
+                    build_int_cst (NULL_TREE, offset));
+  /* APPLE LOCAL begin radar 6180456 */
+  if (c_dialect_objc ())
+    {
+      /* Type case to: 'id *' */
+      dst_obj = cast_to_pointer_to_id (dst_obj);
+      dst_obj = build_indirect_ref (dst_obj, "unary *");
+    }
+  /* APPLE LOCAL end radar 6180456 */
+  return dst_obj;
+}
+
+/* APPLE LOCAL begin radar 6180456 */
 static tree block_byref_release_decl;
 
 /* Build a: void _Block_byref_release (void *) if not done
@@ -6150,6 +6193,29 @@ build_block_byref_release_decl (void)
     TREE_NOTHROW (block_byref_release_decl) = 0;
   }
   return block_byref_release_decl;
+}
+/* APPLE LOCAL end radar 6180456 */
+
+static tree block_byref_assign_copy_decl;
+tree
+build_block_byref_assign_copy_decl (void)
+{
+  /* Build a: void _Block_byref_assign_copy (void *, void *) if not done already. */
+  if (!block_byref_assign_copy_decl
+      && !(block_byref_assign_copy_decl
+             = lookup_name (get_identifier ("_Block_byref_assign_copy"))))
+    {
+      tree func_type
+        = build_function_type (void_type_node,
+                               tree_cons (NULL_TREE, ptr_type_node,
+                                          tree_cons (NULL_TREE, ptr_type_node, void_list_node)));
+
+      block_byref_assign_copy_decl
+        = builtin_function ("_Block_byref_assign_copy", func_type,
+                            0, NOT_BUILT_IN, 0, NULL_TREE);
+      TREE_NOTHROW (block_byref_assign_copy_decl) = 0;
+    }
+  return block_byref_assign_copy_decl;
 }
 
 /* This routine builds call to:
@@ -6208,6 +6274,29 @@ bool in_block_global_byref_list (tree decl)
   return false;
 }
 /* APPLE LOCAL end radar 5803600 */
+
+/* APPLE LOCAL begin radar 6160536 */
+tree
+build_block_helper_name (int unique_count)
+{
+  char *buf;
+  if (!current_function_decl)
+    {
+      buf = (char *)alloca (32);
+      sprintf (buf, "__block_global_%d", unique_count);
+    }
+  else
+    {
+      tree outer_decl = current_function_decl;
+      while (outer_decl && DECL_CONTEXT (outer_decl))
+        outer_decl = DECL_CONTEXT (outer_decl);
+      buf = (char *)alloca (IDENTIFIER_LENGTH (DECL_NAME (outer_decl)) + 32); 
+      sprintf (buf, "__%s_block_invoke_%d", 
+	       IDENTIFIER_POINTER (DECL_NAME (outer_decl)), unique_count);
+    }
+   return get_identifier (buf); 
+}
+/* APPLE LOCAL end radar 6160536 */
 
 /* Handle a "sentinel" attribute.  */
 
@@ -6538,11 +6627,13 @@ c_parse_error (const char *gmsgid, enum cpp_ttype token, tree value)
       message = NULL;
     }
   else
-    error (gmsgid);
+    /* APPLE LOCAL default to Wformat-security 5764921 */
+    error (gmsgid, "");
 
   if (message)
     {
-      error (message);
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      error (message, "");
       free (message);
     }
 #undef catenate_messages
@@ -7266,9 +7357,10 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
       once = 1;
       /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-      for (i=0; i < sizeof (db) / sizeof(db[0]) - 2; ++i)
+      for (i=0; i + 2 < sizeof (db) / sizeof(db[0]); ++i)
 #else
-      for (i=0; i < sizeof (db) / sizeof(db[0]) - 1; ++i)
+      /* APPLE LOCAL 6141565 fix comparison always false warning */
+      for (i=0; i + 1 < sizeof (db) / sizeof(db[0]); ++i)
 #endif
       /* LLVM LOCAL end */
 	gcc_assert (iasm_op_comp (&db[i+1], &db[i]) >= 0);
@@ -8499,11 +8591,11 @@ iasm_label (tree labid, bool atsign)
 #ifdef ENABLE_LLVM
   tree stmt, label;
 #else
-   tree sexpr;
-   tree inputs = NULL_TREE, outputs = NULL_TREE, clobbers = NULL_TREE;
-   tree stmt;
-   tree label, l;
-   tree str, one;
+  tree sexpr;
+  tree inputs = NULL_TREE, outputs = NULL_TREE, clobbers = NULL_TREE;
+  tree stmt;
+  tree label, l;
+  tree str, one;
 #endif
 /* LLVM LOCAL end */
   STRIP_NOPS (labid);

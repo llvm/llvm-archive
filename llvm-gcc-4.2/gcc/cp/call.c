@@ -708,7 +708,7 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
 	  if (c_dialect_objc ())
 	    nfrom = objc_non_volatilized_type (nfrom);
 	  from = build_pointer_type
-	    (cp_build_qualified_type (void_type_node, 
+	    (cp_build_qualified_type (void_type_node,
 			              cp_type_quals (nfrom)));
 	  /* APPLE LOCAL end radar 4451818 */
 	  conv = build_conv (ck_ptr, from, conv);
@@ -758,8 +758,8 @@ standard_conversion (tree to, tree from, tree expr, bool c_cast_p,
 	       && COMPLETE_TYPE_P (TREE_TYPE (from)))
 	{
 	  /* APPLE LOCAL begin radar 4668465 */
-	  tree fr = c_dialect_objc () ? 
-		   objc_non_volatilized_type (TREE_TYPE (from)) 
+	  tree fr = c_dialect_objc () ?
+		   objc_non_volatilized_type (TREE_TYPE (from))
 		   : TREE_TYPE (from);
 	  from =
 	    cp_build_qualified_type (TREE_TYPE (to),
@@ -3576,11 +3576,10 @@ build_conditional_expr (tree arg1, tree arg2, tree arg3)
 	   /* APPLE LOCAL begin blocks 6040305 (co) */
 	       && (TYPE_PTR_P (arg2_type) || TYPE_PTR_TO_MEMBER_P (arg2_type)
 		   || TREE_CODE (arg2_type) == BLOCK_POINTER_TYPE))
-	   /* APPLE LOCAL end blocks 6040305 (co) */
-	   || (TYPE_PTR_P (arg2_type) && TYPE_PTR_P (arg3_type))
-	   /* APPLE LOCAL begin blocks 6040305 (co) */
-	   || (TREE_CODE (arg2_type) == BLOCK_POINTER_TYPE
-	       && TREE_CODE (arg3_type) == BLOCK_POINTER_TYPE)
+	   || ((TYPE_PTR_P (arg2_type)
+		||  TREE_CODE (arg2_type) == BLOCK_POINTER_TYPE)
+	       && (TYPE_PTR_P (arg3_type)
+		   || TREE_CODE (arg3_type) == BLOCK_POINTER_TYPE))
 	   /* APPLE LOCAL end blocks 6040305 (co) */
 	   || (TYPE_PTRMEM_P (arg2_type) && TYPE_PTRMEM_P (arg3_type))
 	   || (TYPE_PTRMEMFUNC_P (arg2_type) && TYPE_PTRMEMFUNC_P (arg3_type)))

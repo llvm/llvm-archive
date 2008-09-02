@@ -1,6 +1,7 @@
 /* APPLE LOCAL file 5932809 */
 /* { dg-options "-fblocks" } */
 /* { dg-do run } */
+void _Block_byref_release(void*src){}
 
 #include <stdio.h>
 

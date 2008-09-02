@@ -2143,6 +2143,8 @@ extern void branch_target_load_optimize (bool);
 /* In function.c */
 extern void reposition_prologue_and_epilogue_notes (rtx);
 extern void thread_prologue_and_epilogue_insns (rtx);
+    /* APPLE LOCAL async unwind info 5949350 */
+extern int epilogue_contains (rtx);
 extern int prologue_epilogue_contains (rtx);
 extern int sibcall_epilogue_contains (rtx);
 extern void mark_temp_addr_taken (rtx);

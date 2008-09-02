@@ -5837,13 +5837,20 @@ pro_epilogue_adjust_stack (rtx dest, rtx src, rtx offset, int style)
       gcc_assert (style);
       r11 = gen_rtx_REG (DImode, FIRST_REX_INT_REG + 3 /* R11 */);
       insn = emit_insn (gen_rtx_SET (DImode, r11, offset));
-      if (style < 0)
+      /* APPLE LOCAL async unwind info 5949469 */
+      if (style < 0 || flag_asynchronous_unwind_tables)
 	RTX_FRAME_RELATED_P (insn) = 1;
       insn = emit_insn (gen_pro_epilogue_adjust_stack_rex64_2 (dest, src, r11,
 							       offset));
     }
   if (style < 0)
     RTX_FRAME_RELATED_P (insn) = 1;
+  /* APPLE LOCAL begin async unwind info 5949350 5949469 */
+  else if (flag_asynchronous_unwind_tables
+	   && (src == hard_frame_pointer_rtx
+	       || src == stack_pointer_rtx))
+    RTX_FRAME_RELATED_P (insn) = 1;
+  /* APPLE LOCAL end async unwind info 5949350 5949469 */
 }
 
 /* Handle the TARGET_INTERNAL_ARG_POINTER hook.  */
@@ -6278,7 +6285,13 @@ ix86_expand_epilogue (int style)
       /* If not an i386, mov & pop is faster than "leave".  */
       else if (TARGET_USE_LEAVE || optimize_size
 	       || !cfun->machine->use_fast_prologue_epilogue)
-	emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
+	/* APPLE LOCAL begin async unwind info 5949350 */
+	{
+	  rtx insn = emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
+	  if (flag_asynchronous_unwind_tables)
+	    RTX_FRAME_RELATED_P (insn) = 1;
+	}
+	/* APPLE LOCAL end async unwind info 5949350 */
       else
 	{
 	  pro_epilogue_adjust_stack (stack_pointer_rtx,
@@ -6318,7 +6331,13 @@ ix86_expand_epilogue (int style)
 	  /* Leave results in shorter dependency chains on CPUs that are
 	     able to grok it fast.  */
 	  if (TARGET_USE_LEAVE)
-	    emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
+	    /* APPLE LOCAL begin async unwind info 5949350 */
+	    {
+	      rtx insn = emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
+	      if (flag_asynchronous_unwind_tables)
+		RTX_FRAME_RELATED_P (insn) = 1;
+	    }
+	  /* APPLE LOCAL end async unwind info 5949350 */
 	  else if (TARGET_64BIT)
 	    emit_insn (gen_popdi1 (hard_frame_pointer_rtx));
 	  else

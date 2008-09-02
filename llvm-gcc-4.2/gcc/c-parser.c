@@ -2401,6 +2401,7 @@ c_parser_typeof_specifier (c_parser *parser)
       ret.spec = TREE_TYPE (expr.value);
       /* APPLE LOCAL begin radar 4204796 (in 4.2 n) */
       if (c_dialect_objc() 
+	  && ret.spec != error_mark_node
 	  && lookup_attribute ("objc_volatilized", TYPE_ATTRIBUTES (ret.spec)))
 	ret.spec = build_qualified_type
 	  (ret.spec, (TYPE_QUALS (ret.spec) & ~TYPE_QUAL_VOLATILE));
@@ -9383,11 +9384,7 @@ c_parser_iasm_statement (c_parser* parser)
 /* APPLE LOCAL begin radar 5732232 - blocks (C++ ce) */
 static tree block_copy_assign_decl;
 static tree block_destroy_decl;
-/* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
-static tree block_byref_assign_copy_decl;
-/* APPLE LOCAL end radar 5932809 - copyable byref blocks (C++ ce) */
 
-/* APPLE LOCAL begin radar 6083129 - byref escapes (C++ ce) */
 void
 gen_block_byref_release_exp (tree var_decl)
 {
@@ -9395,7 +9392,6 @@ gen_block_byref_release_exp (tree var_decl)
   if (cleanup)
     add_stmt (cleanup);
 }
-/* APPLE LOCAL end radar 6083129 - byref escapes (C++ ce) */
 
 bool building_block_byref_decl = false;
 static bool
@@ -9417,10 +9413,8 @@ c_parser_block_byref_declarations (c_parser* parser)
     building_block_byref_decl = false;
     if (byref_decl_expr.value != error_mark_node &&
         !(TREE_CODE (byref_decl_expr.value) == VAR_DECL &&
-          /* APPLE LOCAL begin radar 5803600 (C++ ce) */
           (BLOCK_DECL_BYREF (byref_decl_expr.value) ||
            in_block_global_byref_list (byref_decl_expr.value))))
-          /* APPLE LOCAL end radar 5803600 (C++ ce) */
       error (
         "only a visible variable may be used in a block byref declaration");
   } while (c_parser_next_token_is (parser, CPP_COMMA));
@@ -9464,7 +9458,6 @@ build_block_struct_type (struct block_sema_info * block_impl)
       break;
     }
 
-  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
   /* Further check to see that we have __byref variables which require
      Copy/Dispose helpers. */
   for (chain = block_impl->block_byref_decl_list; chain;
@@ -9475,7 +9468,6 @@ build_block_struct_type (struct block_sema_info * block_impl)
 	block_impl->BlockHasByrefVar = TRUE;
 	break;
       }
-  /* APPLE LOCAL end radar 5932809 - copyable byref blocks (C++ ce) */
 
   sprintf(buffer, "__block_%d", ++unique_count);
   push_to_top_level ();
@@ -9484,7 +9476,6 @@ build_block_struct_type (struct block_sema_info * block_impl)
   field_decl = build_decl (FIELD_DECL, get_identifier ("impl"),
                            TREE_TYPE (invoke_impl_ptr_type));
   field_decl_chain = field_decl;
-  /* APPLE LOCAL radar 5932809 - copyable byref blocks (C++ ce) */
   if (block_impl->BlockHasCopyDispose)
   {
     /* void *CopyFuncPtr; */
@@ -9495,12 +9486,10 @@ build_block_struct_type (struct block_sema_info * block_impl)
     field_decl = build_decl (FIELD_DECL, get_identifier ("DestroyFuncPtr"),
                              ptr_type_node);
     chainon (field_decl_chain, field_decl);
-    /* APPLE LOCAL begin radar 5988451 (C++ ce) */
     /* If inner block of a nested block has BlockHasCopyDispose, so
        does its outer block. */
     if (block_impl->prev_block_info)
       block_impl->prev_block_info->BlockHasCopyDispose = TRUE;
-    /* APPLE LOCAL end radar 5988451 (C++ ce) */
   }
 
   /* int x; // ref variable list ... */
@@ -9531,8 +9520,8 @@ build_block_struct_type (struct block_sema_info * block_impl)
 
 /**
  build_block_struct_initlist - builds the initializer list:
- { &_NSConcreteStackBlock // isa,
- BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE // flags,
+ { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // isa,
+ BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
  sizeof(struct block_1),
  helper_1 },
  copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
@@ -9549,10 +9538,9 @@ build_block_struct_initlist (tree block_struct_type,
   int size;
   tree helper_addr, chain, fields;
   unsigned flags = 0;
-  /* APPLE LOCAL radar 5811599 (C++ ce) */
   static tree NSConcreteStackBlock_decl = NULL_TREE;
+  static tree NSConcreteGlobalBlock_decl = NULL_TREE;
 
-  /* APPLE LOCAL radar 5932809 - copyable byref blocks (C++ ce) */
   if (block_impl->BlockHasCopyDispose)
     /* Note! setting of this flag merely indicates to the runtime that
        we have destroy_helper_block/copy_helper_block helper
@@ -9565,25 +9553,48 @@ build_block_struct_initlist (tree block_struct_type,
 
   fields = TYPE_FIELDS (TREE_TYPE (invoke_impl_ptr_type));
 
-  /* APPLE LOCAL begin radar 5811599 (C++ ce) */
-  /* Find an existing declaration for _NSConcreteStackBlock or declare
-     extern void *_NSConcreteStackBlock; */
-  if (NSConcreteStackBlock_decl == NULL_TREE)
+  if (!current_function_decl)
     {
-      tree name_id = get_identifier("_NSConcreteStackBlock");
-      NSConcreteStackBlock_decl = lookup_name (name_id);
-      if (!NSConcreteStackBlock_decl)
+      /* This is a global block. */
+      /* Find an existing declaration for _NSConcreteGlobalBlock or declare
+	 extern void *_NSConcreteGlobalBlock; */
+      if (NSConcreteGlobalBlock_decl == NULL_TREE)
 	{
-	  NSConcreteStackBlock_decl = build_decl (VAR_DECL, name_id, ptr_type_node);
-	  DECL_EXTERNAL (NSConcreteStackBlock_decl) = 1;
-	  TREE_PUBLIC (NSConcreteStackBlock_decl) = 1;
-	  pushdecl_top_level (NSConcreteStackBlock_decl);
-	  rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
+	  tree name_id = get_identifier("_NSConcreteGlobalBlock");
+	  NSConcreteGlobalBlock_decl = lookup_name (name_id);
+	  if (!NSConcreteGlobalBlock_decl)
+	    {
+	      NSConcreteGlobalBlock_decl = build_decl (VAR_DECL, name_id, ptr_type_node);
+	      DECL_EXTERNAL (NSConcreteGlobalBlock_decl) = 1;
+	      TREE_PUBLIC (NSConcreteGlobalBlock_decl) = 1;
+	      pushdecl_top_level (NSConcreteGlobalBlock_decl);
+	      rest_of_decl_compilation (NSConcreteGlobalBlock_decl, 0, 0);
+	    }
 	}
+      initlist = build_tree_list (fields,
+				  build_fold_addr_expr (NSConcreteGlobalBlock_decl));
+      flags |= BLOCK_IS_GLOBAL;
     }
-  initlist = build_tree_list (fields,
-			      build_fold_addr_expr (NSConcreteStackBlock_decl));
-  /* APPLE LOCAL end radar 5811599 (C++ ce) */
+  else
+    {
+      /* Find an existing declaration for _NSConcreteStackBlock or declare
+	 extern void *_NSConcreteStackBlock; */
+      if (NSConcreteStackBlock_decl == NULL_TREE)
+	{
+	  tree name_id = get_identifier("_NSConcreteStackBlock");
+	  NSConcreteStackBlock_decl = lookup_name (name_id);
+	  if (!NSConcreteStackBlock_decl)
+	    {
+	      NSConcreteStackBlock_decl = build_decl (VAR_DECL, name_id, ptr_type_node);
+	      DECL_EXTERNAL (NSConcreteStackBlock_decl) = 1;
+	      TREE_PUBLIC (NSConcreteStackBlock_decl) = 1;
+	      pushdecl_top_level (NSConcreteStackBlock_decl);
+	      rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
+	    }
+	}
+      initlist = build_tree_list (fields,
+				  build_fold_addr_expr (NSConcreteStackBlock_decl));
+    }
   fields = TREE_CHAIN (fields);
 
   initlist = tree_cons (fields,
@@ -9603,7 +9614,6 @@ build_block_struct_initlist (tree block_struct_type,
                                           nreverse (initlist));
   fields = TYPE_FIELDS (block_struct_type);
   initlist = build_tree_list (fields, initlist);
-  /* APPLE LOCAL radar 5932809 - copyable byref blocks (C++ ce) */
   if (block_impl->BlockHasCopyDispose)
     {
       fields = TREE_CHAIN (fields);
@@ -9618,18 +9628,15 @@ build_block_struct_initlist (tree block_struct_type,
   for (chain = block_impl->block_original_ref_decl_list; chain;
        chain = TREE_CHAIN (chain))
     {
-      /* APPLE LOCAL begin radar 5834569 (C++ ce) */
       tree y = TREE_VALUE (chain);
       TREE_USED (y) = 1;
       fields = TREE_CHAIN (fields);
       initlist = tree_cons (fields, copy_in_object (y), initlist);
-      /* APPLE LOCAL end radar 5834569 (C++ ce) */
     }
   for (chain = block_impl->block_original_byref_decl_list; chain;
        chain = TREE_CHAIN (chain))
     {
       tree y = TREE_VALUE (chain);
-      /* APPLE LOCAL radar 5834569 (C++ ce) */
       TREE_USED (y) = 1;
       fields = TREE_CHAIN (fields);
       y = build_fold_addr_expr (y);
@@ -9655,8 +9662,8 @@ build_block_struct_initlist (tree block_struct_type,
 
  3) build the temporary initialization:
  struct block_1 I = {
- { &_NSConcreteStackBlock // isa,
-   BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE // flags,
+ { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // isa,
+   BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
    sizeof(struct block_1),
    helper_1 },
  copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
@@ -9698,6 +9705,12 @@ build_block_literal_tmp (const char *name,
   bind = build3 (BIND_EXPR, void_type_node, block_holder_tmp_decl, exp, NULL);
   TREE_SIDE_EFFECTS (bind) = 1;
   add_stmt (bind);
+  /* Temporary representing a global block is made global static.  */
+  if (global_bindings_p ()) {
+    TREE_PUBLIC (block_holder_tmp_decl) = 0;
+    TREE_STATIC (block_holder_tmp_decl) = 1;
+    finish_decl (block_holder_tmp_decl, constructor, NULL_TREE);
+  }
   return block_holder_tmp_decl;
 }
 
@@ -9790,7 +9803,6 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
       }
     }
 
-  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
   /* For each __byref declared variable used in |...| Must generate call to:
      _Block_byref_assign_copy(&_dest->myImportedBlock, _src->myImportedBlock)
   */
@@ -9807,30 +9819,13 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
 						   DECL_NAME (p));
 
 	/* _Block_byref_assign_copy(&_dest->myImportedClosure, _src->myImportedClosure) */
-	/* Build a: void _Block_byref_assign_copy (void *, void *) if
-	   not done already. */
-	if (!block_byref_assign_copy_decl
-	    && !(block_byref_assign_copy_decl
-		 = lookup_name (get_identifier ("_Block_byref_assign_copy"))))
-	  {
-	    tree func_type
-	      = build_function_type (void_type_node,
-				     tree_cons (NULL_TREE, ptr_type_node,
-						tree_cons (NULL_TREE, ptr_type_node, void_list_node)));
-
-	    block_byref_assign_copy_decl
-	      = builtin_function ("_Block_byref_assign_copy", func_type,
-				  0, NOT_BUILT_IN, 0, NULL_TREE);
-	    TREE_NOTHROW (block_byref_assign_copy_decl) = 0;
-	  }
 	dst_block_component = build_fold_addr_expr (dst_block_component);
 	func_params = tree_cons (NULL_TREE, dst_block_component,
 				 tree_cons (NULL_TREE, src_block_component,
 					    NULL_TREE));
-	call_exp = build_function_call (block_byref_assign_copy_decl, func_params);
+	call_exp = build_function_call (build_block_byref_assign_copy_decl (), func_params);
 	add_stmt (call_exp);
       }
-  /* APPLE LOCAL end radar 5932809 - copyable byref blocks (C++ ce) */
 
   fnbody = c_end_compound_stmt (stmt, true);
   add_stmt (fnbody);
@@ -9877,10 +9872,8 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
         /* _Block_destroy(_src->myImportedClosure); */
         /* _Block_destroy (void *); */
         /* Build a: void _Block_destroy (void *) if not done already. */
-	/* APPLE LOCAL begin radar 5992047 (C++ ce) */
         if (!block_destroy_decl &&
 	    !(block_destroy_decl = lookup_name (get_identifier ("_Block_destroy"))))
-	/* APPLE LOCAL end radar 5992047 (C++ ce) */
         {
           tree func_type =
           build_function_type (void_type_node,
@@ -9903,7 +9896,6 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
       }
     }
 
-  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ce) */
   /* For each __byref declared variable used in |...| Must generate call to:
    _Block_byref_release(_src->myImportedClosure)
    */
@@ -9924,7 +9916,6 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
       call_exp = build_function_call (build_block_byref_release_decl (), func_params);
       add_stmt (call_exp);
     }
-  /* APPLE LOCAL end radar 5932809 - copyable byref blocks (C++ ce) */
 
   fnbody = c_end_compound_stmt (stmt, true);
   add_stmt (fnbody);
@@ -9955,8 +9946,6 @@ c_parser_block_literal_expr (c_parser* parser)
   tree restype, resdecl;
   tree fnbody, typelist;
   tree helper_function_type;
-  /* APPLE LOCAL radar 5824092 (C++ ce) */
-  bool at_file_scope = global_bindings_p ();
   tree block;
 
   c_parser_consume_token (parser); /* eat '^' */
@@ -10019,7 +10008,6 @@ c_parser_block_literal_expr (c_parser* parser)
    function, even though we do not know its type yet. */
   self_arg = build_decl (PARM_DECL, get_identifier ("_self"),
                          ptr_type_node);
-  /* APPLE LOCAL radar 5925784 (C++ ce) */
   TREE_USED (self_arg) = 1;  /* Prevent unused parameter '_self' warning. */
   TREE_CHAIN (self_arg) = cur_block->arg_info->parms;
   cur_block->arg_info->types = tree_cons (NULL_TREE, ptr_type_node, arg_type);
@@ -10028,10 +10016,10 @@ c_parser_block_literal_expr (c_parser* parser)
   /* Build the declaration of the helper function (we do not know its result
      type yet, so assume it is 'void'). Treat this as a nested function and use
      nested function infrastructure for its generation. */
-  sprintf (name, "__helper_%d", unique_count);
 
   ftype = build_function_type (void_type_node, cur_block->arg_info->types);
-  block_helper_function_decl = build_helper_func_decl (get_identifier (name),
+  /* APPLE LOCAL radar 6160536 */
+  block_helper_function_decl = build_helper_func_decl (build_block_helper_name (unique_count),
                                                          ftype);
   DECL_CONTEXT (block_helper_function_decl) = current_function_decl;
   BLOCK_HELPER_FUNC (block_helper_function_decl) = 1;
@@ -10039,12 +10027,10 @@ c_parser_block_literal_expr (c_parser* parser)
 
   push_function_context ();
   start_block_helper_function (cur_block->helper_func_decl, false);
-  /* APPLE LOCAL begin radar 5988451 (C++ ce) */
   /* Set block's scope to the scope of the helper function's main body.
      This is primarily used when nested blocks are declared. */
   /* FIXME: Name of objc_get_current_scope needs to get changed. */
   cur_block->the_scope = (struct c_scope*)objc_get_current_scope ();
-  /* APPLE LOCAL end radar 5988451 (C++ ce) */
 
   /* Enter parameter list to the scope of the helper function. */
   store_parm_decls_from (cur_block->arg_info);
@@ -10066,7 +10052,6 @@ c_parser_block_literal_expr (c_parser* parser)
   else {
     struct c_expr expr;
     stmt = c_begin_compound_stmt (true);
-    /* APPLE LOCAL radar 6034839 */
     error ("blocks require { }");
     expr = c_parser_cast_expression (parser, NULL);
     body = expr.value;
@@ -10092,13 +10077,6 @@ c_parser_block_literal_expr (c_parser* parser)
 
   restype = !cur_block->return_type ? void_type_node
                                       : cur_block->return_type;
-  /* APPLE LOCAL begin radar 5824092 (C++ ce) */
-  if (at_file_scope)
-  {
-    error ("block literal cannot be declared at global scope");
-    return clean_and_exit (block);
-  }
-  /* APPLE LOCAL end radar 5824092 (C++ ce) */
   if (restype == error_mark_node)
     return clean_and_exit (block);
 
@@ -10117,13 +10095,33 @@ c_parser_block_literal_expr (c_parser* parser)
 
   fnbody = c_end_compound_stmt (stmt, true);
   add_stmt (fnbody);
+
+  /* We are done parsing of the block body. Return type of block is now known.
+     We also know all we need to know about the helper function. So, fix its
+    type here. */
+  /* We moved this here because for global blocks, helper function body is
+     not nested and is gimplified in call to finish_function() and return type 
+     of the function must be correct. */
+  ftype = build_function_type (restype, arg_type);
+  /* Declare helper function; as in:
+     double helper_1(struct block_1 *ii, int z); */
+  typelist = TYPE_ARG_TYPES (ftype);
+  /* (struct block_1 *ii, int z, ...) */
+  typelist = tree_cons (NULL_TREE, cur_block->block_arg_ptr_type,
+                        typelist);
+  helper_function_type = build_function_type (TREE_TYPE (ftype), typelist);
+  TREE_TYPE (cur_block->helper_func_decl) = helper_function_type;
+  /* Let tree builder know that we are done analyzing block's return type so it
+     does not do it twice (and produce bad return expression tree). This case is 
+     for global blocks as finish_function () for them builds AST for the entire
+     body of the function. */
+  cur_block->block_is_complete = true;
   finish_function ();
   pop_function_context ();
 
   /* Build the declaration for copy_helper_block and destroy_helper_block
    helper functions for later use. */
 
-  /* APPLE LOCAL radar 5932809 - copyable byref blocks (C++ ce) */
   if (cur_block->BlockHasCopyDispose)
   {
     /* void copy_helper_block (struct block*, struct block *); */
@@ -10146,20 +10144,6 @@ c_parser_block_literal_expr (c_parser* parser)
     build_helper_func_decl (get_identifier (name), s_ftype);
     synth_destroy_helper_block_func (cur_block);
   }
-
-
-  /* We are out of helper function scope and back in its enclosing scope.
-     We also know all we need to know about the helper function. So, fix its
-     type here. */
-  ftype = build_function_type (restype, arg_type);
-  /* Declare helper function; as in:
-     double helper_1(struct block_1 *ii, int z); */
-  typelist = TYPE_ARG_TYPES (ftype);
-  /* (struct block_1 *ii, int z, ...) */
-  typelist = tree_cons (NULL_TREE, cur_block->block_arg_ptr_type,
-                        typelist);
-  helper_function_type = build_function_type (TREE_TYPE (ftype), typelist);
-  TREE_TYPE (cur_block->helper_func_decl) = helper_function_type;
 
   block_impl = finish_block (block);
 

@@ -1124,7 +1124,9 @@ enum {
      BLOCK_NEEDS_FREE =        (1 << 24),
      BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
      BLOCK_NO_COPY =           (1 << 26), /* interim byref: no copies allowed */
-     BLOCK_IS_GC =             (1 << 27)
+     BLOCK_IS_GC =             (1 << 27),
+     /* APPLE LOCAL radar 5822844 */
+     BLOCK_IS_GLOBAL = 	       (1 << 28)
 };
 
 struct block_sema_info {
@@ -1145,6 +1147,8 @@ struct block_sema_info {
   bool isVariadic;
   bool BlockHasCopyDispose;
   bool BlockHasByrefVar;
+  /* APPLE LOCAL radar 5822844 */
+  bool block_is_complete; /* When true, we are done analyzing block. */
 
   /* the_scope - This is the scope for the block itself, which
      contains arguments etc.  Use only for C.  */
@@ -1198,12 +1202,19 @@ extern tree cast_to_pointer_to_id (tree);
 extern void gen_block_byref_release_exp (tree);
 extern tree build_block_byref_release_exp (tree);
 extern tree build_block_byref_release_decl (void);
+extern tree build_block_byref_assign_copy_decl (void);
 extern void release_all_local_byrefs_at_return (void);
 void diagnose_byref_var_in_current_scope (void);
 extern void release_local_byrefs_at_break (void);
 extern void in_bc_stmt_block (void);
 extern void outof_bc_stmt_block (void);
 /* APPLE LOCAL end radar 6083129 - byref escapes */
+
+/* APPLE LOCAL radar 6040305 - blocks */
+extern tree build_indirect_object_id_exp (tree);
+
+/* APPLE LOCAL radar 6160536 */
+extern tree build_block_helper_name (int);
 
 /* In c-omp.c  */
 extern tree c_finish_omp_master (tree);

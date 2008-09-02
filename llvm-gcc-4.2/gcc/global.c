@@ -2312,6 +2312,8 @@ set_preference (rtx dest, rtx src)
      then give the other a preference.  */
 
   if (dest_regno < FIRST_PSEUDO_REGISTER && src_regno >= FIRST_PSEUDO_REGISTER
+      /* APPLE LOCAL 6090616 avoid regno underflow */
+      && (offset <= 0 || dest_regno >= (unsigned)offset)
       && reg_allocno[src_regno] >= 0)
     {
       dest_regno -= offset;
@@ -2331,6 +2333,8 @@ set_preference (rtx dest, rtx src)
     }
 
   if (src_regno < FIRST_PSEUDO_REGISTER && dest_regno >= FIRST_PSEUDO_REGISTER
+      /* APPLE LOCAL 6090616 avoid regno underflow */
+      && (offset >= 0 || src_regno >= (unsigned)-offset)
       && reg_allocno[dest_regno] >= 0)
     {
       src_regno += offset;

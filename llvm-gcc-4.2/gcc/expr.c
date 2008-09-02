@@ -2055,7 +2055,9 @@ emit_group_store (rtx orig_dst, rtx src, tree type ATTRIBUTE_UNUSED, int ssize)
 	emit_move_insn (adjust_address (dest, mode, bytepos), tmps[i]);
       else
 	store_bit_field (dest, bytelen * BITS_PER_UNIT, bytepos * BITS_PER_UNIT,
-			 mode, tmps[i]);
+			 /* APPLE LOCAL begin 6020402 */
+			 mode, tmps[i], NULL_TREE);
+			 /* APPLE LOCAL end 6020402 */
     }
 
   /* Copy from the pseudo into the (probable) hard reg.  */
@@ -2139,7 +2141,10 @@ copy_blkmode_from_reg (rtx tgtblk, rtx srcreg, tree type)
       store_bit_field (dst, bitsize, bitpos % BITS_PER_WORD, word_mode,
 		       extract_bit_field (src, bitsize,
 					  xbitpos % BITS_PER_WORD, 1,
-					  NULL_RTX, word_mode, word_mode));
+		       /* APPLE LOCAL begin 6020402 */
+					  NULL_RTX, word_mode, word_mode),
+		       NULL_TREE);
+		       /* APPLE LOCAL end 6020402 */
     }
 
   return tgtblk;
@@ -2783,7 +2788,10 @@ write_complex_part (rtx cplx, rtx val, bool imag_p)
 	gcc_assert (MEM_P (cplx) && ibitsize < BITS_PER_WORD);
     }
 
-  store_bit_field (cplx, ibitsize, imag_p ? ibitsize : 0, imode, val);
+  /* APPLE LOCAL begin 6020402 */
+  store_bit_field (cplx, ibitsize, imag_p ? ibitsize : 0, imode, val,
+		   NULL_TREE);
+  /* APPLE LOCAL end 6020402 */
 }
 
 /* Extract one of the components of the complex value CPLX.  Extract the
@@ -5633,7 +5641,9 @@ store_field (rtx target, HOST_WIDE_INT bitsize, HOST_WIDE_INT bitpos,
 	}
 
       /* Store the value in the bitfield.  */
-      store_bit_field (target, bitsize, bitpos, mode, temp);
+      /* APPLE LOCAL begin 6020402 */
+      store_bit_field (target, bitsize, bitpos, mode, temp, type);
+      /* APPLE LOCAL end 6020402 */
 
       return const0_rtx;
     }

@@ -910,7 +910,9 @@ store_unaligned_arguments_into_pseudos (struct arg_data *args, int num_actuals)
 
 	    bytes -= bitsize / BITS_PER_UNIT;
 	    store_bit_field (reg, bitsize, endian_correction, word_mode,
-			     word);
+			     /* APPLE LOCAL begin 6020402 */
+			     word, NULL_TREE);
+			     /* APPLE LOCAL end 6020402 */
 	  }
       }
 }

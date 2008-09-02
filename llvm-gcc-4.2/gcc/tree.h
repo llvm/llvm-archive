@@ -3070,7 +3070,9 @@ struct tree_decl_with_vis GTY(())
  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
  unsigned copyable_byref_local_var : 1;
  unsigned copyable_byref_local_nonpod : 1;
- /* 6 unused bits. */
+ /* APPLE LOCAL radar 6172148 */
+ unsigned block_synthesized_function : 1;
+ /* 5 unused bits. */
  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
  /* APPLE LOCAL end radar 5732232 - blocks */
 };
@@ -3123,6 +3125,8 @@ extern void decl_init_priority_insert (tree, unsigned short);
 #define BLOCK_DECL_BYREF(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_byref)
 #define BLOCK_DECL_COPIED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_copied)
 /* APPLE LOCAL end radar 5732232 - blocks */
+/* APPLE LOCAL radar 6172148 */
+#define BLOCK_SYNTHESIZED_FUNC(NODE) (FUNCTION_DECL_CHECK (NODE)->decl_with_vis.block_synthesized_function)
 /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
 #define COPYABLE_BYREF_LOCAL_VAR(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.copyable_byref_local_var)
 #define COPYABLE_BYREF_LOCAL_NONPOD(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.copyable_byref_local_nonpod)
@@ -4850,6 +4854,6 @@ extern void note_alternative_entry_points (void);
 /* APPLE LOCAL end CW asm blocks */
 
 /* APPLE LOCAL radar 6113240 */
-extern tree invoke_impl_ptr_type;
+extern GTY(()) tree invoke_impl_ptr_type;
 
 #endif  /* GCC_TREE_H  */

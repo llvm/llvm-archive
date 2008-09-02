@@ -75,13 +75,13 @@ static int missing_braces_mentioned;
 static int require_constant_value;
 static int require_constant_elements;
 
-/* APPLE LOCAL begin radar 5732232 - blocks */
+/* APPLE LOCAL begin radar 5732232 - blocks (C++ cm) */
 /* APPLE LOCAL begin radar 5811943 - Fix type of pointers to Blocks  */
 /* Move declaration of invoke_impl_ptr_type to c-common.c  */
 /* APPLE LOCAL end radar 5811943 - Fix type of pointers to Blocks  */
 static bool types_are_block_compatible (tree lhptee, tree rhptee);
 static tree build_block_call (tree, tree, tree);
-/* APPLE LOCAL end radar 5732232 - blocks */
+/* APPLE LOCAL end radar 5732232 - blocks (C++ cm) */
 static bool null_pointer_constant_p (tree);
 static tree qualify_type (tree, tree);
 static int tagged_types_tu_compatible_p (tree, tree);
@@ -550,8 +550,12 @@ common_pointer_type (tree t1, tree t2)
   if (t2 == error_mark_node)
     return t1;
 
-  gcc_assert (TREE_CODE (t1) == POINTER_TYPE
-	      && TREE_CODE (t2) == POINTER_TYPE);
+  /* APPLE LOCAL begin blocks 6065211 */
+  gcc_assert ((TREE_CODE (t1) == POINTER_TYPE
+	       && TREE_CODE (t2) == POINTER_TYPE)
+	      || (TREE_CODE (t1) == BLOCK_POINTER_TYPE
+		  && TREE_CODE (t2) == BLOCK_POINTER_TYPE));
+  /* APPLE LOCAL end blocks 6065211 */
 
   /* Merge the attributes.  */
   attributes = targetm.merge_type_attributes (t1, t2);
@@ -566,10 +570,15 @@ common_pointer_type (tree t1, tree t2)
   if (TREE_CODE (mv2) != ARRAY_TYPE)
     mv2 = TYPE_MAIN_VARIANT (pointed_to_2);
   target = composite_type (mv1, mv2);
-  t1 = build_pointer_type (c_build_qualified_type
-			   (target,
-			    TYPE_QUALS (pointed_to_1) |
-			    TYPE_QUALS (pointed_to_2)));
+  /* APPLE LOCAL begin blocks 6065211 */
+  t1 = c_build_qualified_type (target,
+			       TYPE_QUALS (pointed_to_1) |
+			       TYPE_QUALS (pointed_to_2));
+  if (TREE_CODE (t2) == BLOCK_POINTER_TYPE)
+    t1 = build_block_pointer_type (t1);
+  else
+    t1 = build_pointer_type (t1);
+  /* APPLE LOCAL end blocks 6065211 */
   return build_type_attribute_variant (t1, attributes);
 }
 
@@ -951,6 +960,15 @@ comp_target_types (tree ttl, tree ttr)
 {
   int val;
   tree mvl, mvr;
+
+  /* APPLE LOCAL begin blocks 6065211 */
+  if (TREE_CODE (ttl) == BLOCK_POINTER_TYPE
+      && TREE_CODE (ttr) == BLOCK_POINTER_TYPE)
+    return types_are_block_compatible (TREE_TYPE (ttl),
+				       TREE_TYPE (ttr));
+  if (TREE_CODE (ttl) != TREE_CODE (ttr))
+    return 0;
+  /* APPLE LOCAL end blocks 6065211 */
 
   /* Do not lose qualifiers on element types of array types that are
      pointer targets by taking their TYPE_MAIN_VARIANT.  */
@@ -2057,7 +2075,12 @@ build_array_ref (tree array, tree index)
 	}
 
       type = TREE_TYPE (TREE_TYPE (array));
-      if (TREE_CODE (type) != ARRAY_TYPE)
+      /* APPLE LOCAL begin radar 6164211 */
+      /* The ObjC front-end uses TYPE_MAIN_VARIANT to tie together types differing
+         only in <protocol> qualifications.  But when constructing an array type,
+         the protocols do matter and must be kept around.  */
+      if (TREE_CODE (type) != ARRAY_TYPE && !objc_is_object_ptr (type))
+      /* APPLE LOCAL end radar 6164211 */
 	type = TYPE_MAIN_VARIANT (type);
       rval = build4 (ARRAY_REF, type, array, index, NULL_TREE, NULL_TREE);
       /* Array ref is const/volatile if the array elements are
@@ -2166,14 +2189,14 @@ build_external_ref (tree id, int fun, location_t loc)
 		      (TREE_CODE (decl) == VAR_DECL
 		       || TREE_CODE (decl) == PARM_DECL));
 	  gdecl = (TREE_CODE (decl) == VAR_DECL && 
-		   (DECL_EXTERNAL (decl)
-		    || (TREE_STATIC (decl) && !DECL_CONTEXT (decl))));
+	           /* APPLE LOCAL radar 6177162 */
+		   (DECL_EXTERNAL (decl) || TREE_STATIC (decl)));
 	  /* Treat all 'global' variables as 'byref' by default. */
-          /* APPLE LOCAL begin radar 6014138 */
+          /* APPLE LOCAL begin radar 6014138 (C++ ci) */
 	  if (building_block_byref_decl || gdecl 
               || (TREE_CODE (decl) == VAR_DECL 
                   && COPYABLE_BYREF_LOCAL_VAR (decl)))
-          /* APPLE LOCAL end radar 6014138 */
+          /* APPLE LOCAL end radar 6014138 (C++ ci) */
 	    {
 	      /* APPLE LOCAL begin radar 5803600 (C++ ci) */
 	      /* byref globals are directly accessed. */
@@ -2751,7 +2774,8 @@ convert_arguments (tree typelist, tree values, tree function, tree fundecl)
       else if ((invalid_func_diag =
 		targetm.calls.invalid_arg_for_unprototyped_fn (typelist, fundecl, val)))
 	{
-	  error (invalid_func_diag);
+	  /* APPLE LOCAL default to Wformat-security 5764921 */
+	  error (invalid_func_diag, "");
 	  return error_mark_node;
 	}
       else
@@ -3070,7 +3094,8 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
   if ((invalid_op_diag
        = targetm.invalid_unary_op (code, TREE_TYPE (xarg))))
     {
-      error (invalid_op_diag);
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      error (invalid_op_diag, "");
       return error_mark_node;
     }
 
@@ -3626,7 +3651,12 @@ build_conditional_expr (tree ifexp, tree op1, tree op2)
 	pedwarn ("ISO C forbids conditional expr with only one void side");
       result_type = void_type_node;
     }
-  else if (code1 == POINTER_TYPE && code2 == POINTER_TYPE)
+  /* APPLE LOCAL begin blocks 6065211 */
+  else if ((code1 == POINTER_TYPE
+	    || code1 == BLOCK_POINTER_TYPE)
+	   && (code2 == POINTER_TYPE
+	       || code2 == BLOCK_POINTER_TYPE))
+  /* APPLE LOCAL end blocks 6065211 */
     {
       if (comp_target_types (type1, type2))
 	result_type = common_pointer_type (type1, type2);
@@ -3634,6 +3664,14 @@ build_conditional_expr (tree ifexp, tree op1, tree op2)
 	result_type = qualify_type (type2, type1);
       else if (null_pointer_constant_p (orig_op2))
 	result_type = qualify_type (type1, type2);
+      /* APPLE LOCAL begin blocks 6065211 */
+      else if (code2 == BLOCK_POINTER_TYPE
+	       && VOID_TYPE_P (TREE_TYPE (type1)))
+	result_type = type2;
+      else if (code1 == BLOCK_POINTER_TYPE
+	       && VOID_TYPE_P (TREE_TYPE (type2)))
+	result_type = type1;
+      /* APPLE LOCAL end blocks 6065211 */
       else if (VOID_TYPE_P (TREE_TYPE (type1)))
 	{
 	  if (pedantic && TREE_CODE (TREE_TYPE (type2)) == FUNCTION_TYPE)
@@ -3684,27 +3722,27 @@ build_conditional_expr (tree ifexp, tree op1, tree op2)
     }
   /* APPLE LOCAL begin radar 5732232 - blocks (C++ co) */
   /* APPLE LOCAL radar 5957801 */
-  else if (code1 == BLOCK_POINTER_TYPE && (code2 == INTEGER_TYPE || code2 == POINTER_TYPE))
-  {
-    if (!null_pointer_constant_p (orig_op2))
-      error ("block pointer/integer type mismatch in conditional expression");
-    else
+  else if (code1 == BLOCK_POINTER_TYPE && code2 == INTEGER_TYPE)
     {
-      op2 = convert (type1, null_pointer_node);
+      if (!null_pointer_constant_p (orig_op2))
+	error ("block pointer/integer type mismatch in conditional expression");
+      else
+	{
+	  op2 = convert (type1, null_pointer_node);
+	}
+      result_type = type1;
     }
-    result_type = type1;
-  }
   /* APPLE LOCAL radar 5957801 */
-  else if (code2 == BLOCK_POINTER_TYPE && (code1 == INTEGER_TYPE || code1 == POINTER_TYPE))
-  {
-    if (!null_pointer_constant_p (orig_op1))
-      error ("block pointer/integer type mismatch in conditional expression");
-    else
+  else if (code2 == BLOCK_POINTER_TYPE && code1 == INTEGER_TYPE)
     {
-      op1 = convert (type2, null_pointer_node);
+      if (!null_pointer_constant_p (orig_op1))
+	error ("block pointer/integer type mismatch in conditional expression");
+      else
+	{
+	  op1 = convert (type2, null_pointer_node);
+	}
+      result_type = type2;
     }
-    result_type = type2;
-  }
   
   /* APPLE LOCAL end radar 5732232 - blocks (C++ co) */
   if (!result_type)
@@ -4039,15 +4077,15 @@ types_are_block_compatible (tree lhptee, tree rhptee)
     return true;
   if (TREE_CODE (lhptee) == FUNCTION_TYPE && TREE_CODE (rhptee) == FUNCTION_TYPE)
     return functiontypes_are_block_compatible (lhptee, rhptee);
-  /* APPLE LOCAL begin radar 5882266 */
+  /* APPLE LOCAL begin radar 5882266 (C++ cm) */
   if (TREE_CODE (lhptee) == POINTER_TYPE && TREE_CODE (rhptee) == POINTER_TYPE)
     return types_are_block_compatible (TREE_TYPE (lhptee), TREE_TYPE (rhptee));
-  /* APPLE LOCAL end radar 5882266 */
-  /* APPLE LOCAL begin radar 5988995 */
+  /* APPLE LOCAL end radar 5882266 (C++ cm) */
+  /* APPLE LOCAL begin radar 5988995 (C++ cm) */
   if (TREE_CODE (lhptee) == BLOCK_POINTER_TYPE
       && TREE_CODE (rhptee) == BLOCK_POINTER_TYPE)
     return types_are_block_compatible (TREE_TYPE (lhptee), TREE_TYPE (rhptee));
-  /* APPLE LOCAL end radar 5988995 */
+  /* APPLE LOCAL end radar 5988995 (C++ cm) */
   return false;
 }
 
@@ -5324,7 +5362,10 @@ digest_init (tree type, tree init, bool strict_string, int require_constant)
 	}
 
       /* Added to enable additional -Wmissing-format-attribute warnings.  */
-      if (TREE_CODE (TREE_TYPE (inside_init)) == POINTER_TYPE)
+      /* APPLE LOCAL begin radar 5822844 */
+      if (TREE_CODE (TREE_TYPE (inside_init)) == POINTER_TYPE ||
+	  TREE_CODE (TREE_TYPE (inside_init)) == BLOCK_POINTER_TYPE)
+      /* APPLE LOCAL end radar 5822844 */
 	inside_init = convert_for_assignment (type, inside_init, ic_init, NULL_TREE,
 					      NULL_TREE, 0);
       return inside_init;
@@ -7722,7 +7763,8 @@ c_finish_return (tree retval)
   tree valtype, ret_stmt;
   bool no_warning = false;
   
-  if (cur_block) {
+  /* APPLE LOCAL radar 5822844 */
+  if (cur_block && !cur_block->block_is_complete) {
     /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
     release_all_local_byrefs_at_return ();
     retval = c_finish_block_return_stmt (retval);
@@ -8651,7 +8693,8 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
   if ((invalid_op_diag
        = targetm.invalid_binary_op (code, type0, type1)))
     {
-      error (invalid_op_diag);
+      /* APPLE LOCAL default to Wformat-security 5764921 */
+      error (invalid_op_diag, "");
       return error_mark_node;
     }
 
@@ -8842,7 +8885,10 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 	  && (code1 == INTEGER_TYPE || code1 == REAL_TYPE
 	      || code1 == COMPLEX_TYPE))
 	short_compare = 1;
-      else if (code0 == POINTER_TYPE && code1 == POINTER_TYPE)
+      /* APPLE LOCAL begin blocks 6065211 */
+      else if ((code0 == POINTER_TYPE || code0 == BLOCK_POINTER_TYPE)
+	       && (code1 == POINTER_TYPE || code1 == BLOCK_POINTER_TYPE))
+      /* APPLE LOCAL end blocks 6065211 */
 	{
 	  tree tt0 = TREE_TYPE (type0);
 	  tree tt1 = TREE_TYPE (type1);
@@ -8851,6 +8897,12 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 	     and both must be object or both incomplete.  */
 	  if (comp_target_types (type0, type1))
 	    result_type = common_pointer_type (type0, type1);
+	  /* APPLE LOCAL begin blocks 6065211 */
+	  else if (code1 == BLOCK_POINTER_TYPE && VOID_TYPE_P (tt0))
+	    ;
+	  else if (code0 == BLOCK_POINTER_TYPE && VOID_TYPE_P (tt1))
+	    ;
+	  /* APPLE LOCAL end blocks 6065211 */
 	  else if (VOID_TYPE_P (tt0))
 	    {
 	      /* op0 != orig_op0 detects the case of something
@@ -8870,7 +8922,14 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 	  else
 	    /* Avoid warning about the volatile ObjC EH puts on decls.  */
 	    if (!objc_ok)
-	      pedwarn ("comparison of distinct pointer types lacks a cast");
+	      /* APPLE LOCAL begin blocks 6065211 */
+	      {
+		if (code0 == BLOCK_POINTER_TYPE || code1 == BLOCK_POINTER_TYPE)
+		  pedwarn ("comparison of distinct block types lacks a cast");
+		else
+		  pedwarn ("comparison of distinct pointer types lacks a cast");
+	      }
+	      /* APPLE LOCAL end blocks 6065211 */
 
 	  if (result_type == NULL_TREE)
 	    result_type = ptr_type_node;
@@ -8908,30 +8967,10 @@ build_binary_op (enum tree_code code, tree orig_op0, tree orig_op1,
 	  pedwarn ("comparison between pointer and integer");
 	}
       /* APPLE LOCAL begin radar 5732232 - blocks (C++ cl) */
-      if (code0 == BLOCK_POINTER_TYPE && null_pointer_constant_p (orig_op1))
+      else if (code0 == BLOCK_POINTER_TYPE && null_pointer_constant_p (orig_op1))
         result_type = type0;
-      else if (code1 == BLOCK_POINTER_TYPE 
-               && null_pointer_constant_p (orig_op0))
+      else if (code1 == BLOCK_POINTER_TYPE && null_pointer_constant_p (orig_op0))
         result_type = type1;
-      else if (code0 == BLOCK_POINTER_TYPE && code1 == BLOCK_POINTER_TYPE)
-	{
-	  if (!types_are_block_compatible (TREE_TYPE(type0), TREE_TYPE(type1)))
-	    error ("comparison of distinct block types (%qT and %qT)",
-		   type0, type1);
-	  result_type = type0;
-	}
-      else if (code0 == BLOCK_POINTER_TYPE && code1 == INTEGER_TYPE)
-	{
-	  result_type = type0;
-	  error ("comparison between pointer and integer (%qT and %qT)",
-		 type0, type1);
-	}
-      else if (code0 == INTEGER_TYPE && code1 == BLOCK_POINTER_TYPE)
-	{
-	  result_type = type1;
-	  error ("comparison between integer and pointer (%qT and %qT)",
-		 type0, type1);
-	}
       /* APPLE LOCAL end radar 5732232 - blocks (C++ cl) */
       break;
 

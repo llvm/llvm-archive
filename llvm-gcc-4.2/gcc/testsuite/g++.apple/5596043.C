@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5591491 */
 /* { dg-options "-O2" } */
-/* { dg-do run { target powerpc**-*-darwin* } } */
+/* { dg-do compile { target powerpc**-*-darwin* } } */
 
 struct T {
   volatile unsigned int word;

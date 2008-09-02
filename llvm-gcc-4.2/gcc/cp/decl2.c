@@ -1895,7 +1895,9 @@ constrain_class_visibility (tree type)
 	if (subvis == VISIBILITY_ANON)
           /* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
 	  {
+#ifdef ENABLE_LLVM
 	    if (!in_main_input_context ())
+#endif
 	      warning (0, "\
 %qT has a field %qD whose type uses the anonymous namespace",
 		   type, t);
@@ -1917,7 +1919,9 @@ constrain_class_visibility (tree type)
       if (subvis == VISIBILITY_ANON)
         /* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
         {
+#ifdef ENABLE_LLVM
 	  if (!in_main_input_context())
+#endif
 	    warning (0, "\
 %qT has a base %qT whose type uses the anonymous namespace",
 		 type, TREE_TYPE (t));

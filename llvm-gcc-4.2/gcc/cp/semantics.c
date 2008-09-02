@@ -774,11 +774,11 @@ finish_return_stmt (tree expr)
 
   expr = check_return_expr (expr, &no_warning);
 
-  /* APPLE LOCAL begin radar 6040305 - blocks */
+  /* APPLE LOCAL begin blocks 6040305 */
   if (current_function_decl && BLOCK_HELPER_FUNC (current_function_decl)
       && !cur_block)
     return expr;
-  /* APPLE LOCAL end radar 6040305 - blocks */
+  /* APPLE LOCAL end blocks 6040305 */
 
   if (flag_openmp && !check_omp_return ())
     return error_mark_node;
@@ -2942,12 +2942,10 @@ finish_id_expression (tree id_expression,
 		  (TREE_CODE (decl) == VAR_DECL
 		   || TREE_CODE (decl) == PARM_DECL));
       gdecl = (TREE_CODE (decl) == VAR_DECL && 
-	       (DECL_EXTERNAL (decl)
-		|| (TREE_STATIC (decl)
-		    && (!DECL_CONTEXT (decl)
-			|| DECL_NAMESPACE_SCOPE_P (decl)))));
+	       (DECL_EXTERNAL (decl) || TREE_STATIC (decl)));
       /* Treat all 'global' variables as 'byref' by default. */
-      if (gdecl)
+      if (gdecl
+	  || (TREE_CODE (decl) == VAR_DECL && COPYABLE_BYREF_LOCAL_VAR (decl)))
 	{
 	  /* byref globals are directly accessed. */
 	  if (!gdecl)
@@ -4073,7 +4071,12 @@ begin_block (void)
   struct block_sema_info *csi;
   tree block;
   /* push_scope (); */
+  current_stmt_tree ()->stmts_are_full_exprs_p = 1;
+#if 0
   block = do_pushlevel (sk_block);
+#else
+  block = NULL_TREE;
+#endif
   csi = (struct block_sema_info*)xcalloc (1, sizeof (struct block_sema_info));
   csi->prev_block_info = cur_block;
   cur_block = csi;
@@ -4086,7 +4089,12 @@ finish_block (tree block)
   struct block_sema_info *csi = cur_block;
   cur_block = cur_block->prev_block_info;
   /* pop_scope (); */
-  do_poplevel (block);
+#if 0
+  if (block)
+    do_poplevel (block);
+#else
+  block = 0;
+#endif
   return csi;
 }
 /* APPLE LOCAL end blocks 6040305 (ch) */

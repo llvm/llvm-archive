@@ -1944,7 +1944,12 @@ final_scan_insn (rtx insn, FILE *file, int optimizing ATTRIBUTE_UNUSED,
     case BARRIER:
 #if defined (DWARF2_UNWIND_INFO)
       if (dwarf2out_do_frame ())
-	dwarf2out_frame_debug (insn, false);
+	/* APPLE LOCAL begin async unwind info 5949350 */
+	{
+	  dwarf2out_frame_debug_noncall (epilogue_contains (insn));
+	  dwarf2out_frame_debug (insn, false);
+	}
+	/* APPLE LOCAL end async unwind info 5949350 */
 #endif
       break;
 
@@ -2529,6 +2534,10 @@ final_scan_insn (rtx insn, FILE *file, int optimizing ATTRIBUTE_UNUSED,
 #if defined (DWARF2_UNWIND_INFO)
 	if (CALL_P (insn) && dwarf2out_do_frame ())
 	  dwarf2out_frame_debug (insn, false);
+	/* APPLE LOCAL begin async unwind info 5949350 */
+	else if (dwarf2out_do_frame ())
+	  dwarf2out_frame_debug_noncall (epilogue_contains (insn));
+	/* APPLE LOCAL end async unwind info 5949350 */
 #endif
 
 	/* Find the proper template for this insn.  */

@@ -584,7 +584,7 @@ c_cpp_builtins (cpp_reader *pfile)
      options.  */
   /* APPLE LOCAL begin blocks */
   /* APPLE LOCAL radar 5868913 */
-  if (flag_blocks && !c_dialect_cxx ())
+  if (flag_blocks)
     cpp_define (pfile, "__BLOCKS__=1"); 
   /* APPLE LOCAL end blocks */
   if (optimize_size)

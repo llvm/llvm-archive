@@ -132,9 +132,11 @@ gcov_open (const char *name, int mode)
     }
   if (!gcov_var.file)
     return 0;
-#endif
+  /* APPLE LOCAL begin fread is way slow 6178552 */
 
   setbuf (gcov_var.file, (char *)0);
+#endif
+  /* APPLE LOCAL end fread is way slow 6178552 */
   
   return 1;
 }

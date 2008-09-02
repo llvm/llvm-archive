@@ -2040,8 +2040,10 @@ expand_call_inline (basic_block bb, tree stmt, tree *tp, void *data)
 	  /* Avoid warnings during early inline pass. */
 	  && (!flag_unit_at_a_time || cgraph_global_info_ready))
 	{
-	  sorry ("inlining failed in call to %q+F: %s", fn, reason);
-	  sorry ("called from here");
+	  /* APPLE LOCAL begin wording 4598393 */
+	  error ("%<always_inline%> function could not be inlined in call to %q+F: %s", fn, reason);
+	  error ("called from here");
+	  /* APPLE LOCAL end wording 4598393 */
 	}
       else if (warn_inline && DECL_DECLARED_INLINE_P (fn)
 	       && !DECL_IN_SYSTEM_HEADER (fn)
@@ -2652,7 +2654,7 @@ copy_decl_for_dup_finish (copy_body_data *id, tree decl, tree copy)
 #ifdef ENABLE_LLVM
     SET_DECL_LLVM (copy, 0);
 #else
-    SET_DECL_RTL (copy, NULL_RTX); 
+    SET_DECL_RTL (copy, NULL_RTX);
 #endif
   /* LLVM_LOCAL end */
   

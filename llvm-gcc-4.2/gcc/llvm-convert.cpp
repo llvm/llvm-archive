@@ -2270,9 +2270,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
       unsigned BitsInVal = ThisLastBitPlusOne - ThisFirstBit;
       unsigned FirstBitInVal = ThisFirstBit % ValSizeInBits;
 
-      // If this target has bitfields laid out in big-endian order, invert the
-      // bit in the word if needed.
-      if (BITS_BIG_ENDIAN)
+      if (BYTES_BIG_ENDIAN)
         FirstBitInVal = ValSizeInBits-FirstBitInVal-BitsInVal;
 
       // Mask the bits out by shifting left first, then shifting right.  The
@@ -2948,9 +2946,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     unsigned BitsInVal = ThisLastBitPlusOne - ThisFirstBit;
     unsigned FirstBitInVal = ThisFirstBit % ValSizeInBits;
 
-    // If this target has bitfields laid out in big-endian order, invert the bit
-    // in the word if needed.
-    if (BITS_BIG_ENDIAN)
+    if (BYTES_BIG_ENDIAN)
       FirstBitInVal = ValSizeInBits-FirstBitInVal-BitsInVal;
 
     // If not storing into the zero'th bit, shift the Src value to the left.
@@ -6414,7 +6410,7 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
     
     // Compute the value to insert, and the mask to use.
     uint64_t FieldMask;
-    if (BITS_BIG_ENDIAN) {
+    if (BYTES_BIG_ENDIAN) {
       FieldMask = ~0ULL >> (64-NumBitsToInsert);
       FieldMask   <<= FieldBitSize-(OffsetToBitFieldStart+NumBitsToInsert);
       ValToInsert <<= FieldBitSize-(OffsetToBitFieldStart+NumBitsToInsert);
@@ -6463,7 +6459,7 @@ static Constant *InsertBitFieldValue(uint64_t ValToInsert,
                                              NumBitsToInsert);
       
       uint64_t EltValToInsert;
-      if (BITS_BIG_ENDIAN) {
+      if (BYTES_BIG_ENDIAN) {
         // If this is a big-endian bit-field, take the top NumBitsToInsert
         // bits from the bitfield value.
         EltValToInsert = ValToInsert >> (NumBitsToInsert-NumEltBitsToInsert);
@@ -6562,7 +6558,7 @@ static void ProcessBitFieldInitialization(tree Field, Value *Val,
     // Compute the NumBitsToInsert-wide value that we are going to insert
     // into this field as an ulong integer constant value.
     uint64_t ValToInsert;
-    if (BITS_BIG_ENDIAN) {
+    if (BYTES_BIG_ENDIAN) {
       // If this is a big-endian bit-field, take the top NumBitsToInsert
       // bits from the bitfield value.
       ValToInsert = BitfieldVal >> (BitfieldSize-NumBitsToInsert);
@@ -6607,13 +6603,13 @@ static Constant *ConvertStructFieldInitializerToType(Constant *Val,
         uint64_t Val = CI->getZExtValue();
         for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
           unsigned char EltVal;
-         
-          if (TD.isLittleEndian()) {
-            EltVal = (Val >> 8*i) & 0xFF;
-          } else {
+
+          if (BYTES_BIG_ENDIAN) {
             EltVal = (Val >> 8*(e-i-1)) & 0xFF;
+          } else {
+            EltVal = (Val >> 8*i) & 0xFF;
           }
-          
+
           ArrayElts.push_back(ConstantInt::get(Type::Int8Ty, EltVal));
         }
 

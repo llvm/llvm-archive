@@ -624,8 +624,8 @@ do_compile_separately (void)
 
   /* Total number of arguments in separate compiler invocation is :
      total number of original arguments - total no input files + one input
-     file + "-o" + output file .  */
-  new_new_argv = (const char **) malloc ((new_argc - num_infiles + 4) * sizeof (const char *));
+     file + "-o" + output file + arch specific options + NULL .  */
+  new_new_argv = (const char **) malloc ((new_argc - num_infiles + 5) * sizeof (const char *));
   if (!new_new_argv)
     abort ();
 
@@ -711,7 +711,9 @@ filter_args_for_arch (const char **orig_argv, int orig_argc,
 }
 
 /* Replace -arch <blah> options with appropriate "-mcpu=<blah>" OR
-   "-march=<blah>".  INDEX is the index in arches[] table. */
+   "-march=<blah>".  INDEX is the index in arches[] table.  We cannot
+   return more than 1 as do_compile_separately only allocated one
+   extra slot for us.  */
 
 static int
 add_arch_options (int index, const char **current_argv, int arch_index)
@@ -1382,7 +1384,7 @@ main (int argc, const char **argv)
       else if (!strcmp (argv[i], "-o"))
 	{
 	  if (i + 1 >= argc)
-	    abort ();
+	    fatal ("argument to '-o' is missing");
 
 	  output_filename = argv[i+1];
 	  i++;

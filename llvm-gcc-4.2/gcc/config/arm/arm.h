@@ -2682,6 +2682,14 @@ extern int making_const_table;
   (TARGET_THUMB ? (MAX (BASIC_ALIGN, 4 * BITS_PER_UNIT)) : BASIC_ALIGN)
 #endif
 /* APPLE LOCAL end ARM 4-byte align stack objects */
+
+/* APPLE LOCAL begin ARM 6148015 */
+/* Tells us how to find the CFA == dwarf frame_base == address of stack
+   on entry to the function given the (virtual) arg-pointer.  */
+#define ARG_POINTER_CFA_OFFSET(FNDECL) 				\
+		((FIRST_PARM_OFFSET (FNDECL)) 			\
+		 + (DECL_STRUCT_FUNCTION (FNDECL))->pretend_args_size)
+/* APPLE LOCAL end ARM 6148015 */
 
 enum arm_builtins
 {

@@ -84,6 +84,7 @@ static bool arm_assemble_integer (rtx, unsigned int, int);
 static const char *fp_const_from_val (REAL_VALUE_TYPE *);
 static arm_cc get_arm_condition_code (rtx);
 static HOST_WIDE_INT int_log2 (HOST_WIDE_INT);
+static rtx is_jump_table (rtx);
 static const char *output_multi_immediate (rtx *, const char *, const char *,
 					   int, HOST_WIDE_INT);
 static const char *shift_op (rtx, HOST_WIDE_INT *);
@@ -12165,7 +12166,9 @@ arm_expand_prologue (void)
 					    & regs_above_fp;
 
 	  /* Save everything up to the FP, and the LR  */
-	  emit_multi_reg_push (initial_push_regs);
+	  insn = emit_multi_reg_push (initial_push_regs);
+	  /* rdar://6148015 */
+	  RTX_FRAME_RELATED_P (insn) = 1;
 
 	  /* Configure FP to point to the saved FP.  */
 	  insn = emit_insn (
@@ -12179,7 +12182,11 @@ arm_expand_prologue (void)
 
 	  /* Push remaining regs.  */
 	  if (second_push_regs)
-	    emit_multi_reg_push (second_push_regs);
+	    {
+	      insn = emit_multi_reg_push (second_push_regs);
+	      /* rdar://6148015 */
+	      RTX_FRAME_RELATED_P (insn) = 1;
+	    }
 	}
       else
 	{
@@ -12640,7 +12647,8 @@ arm_print_operand (FILE *stream, rtx x, int code)
 	      "wC12",  "wC13",  "wC14",  "wC15"
 	    };
 
-	  fprintf (stream, wc_reg_names [INTVAL (x)]);
+	  /* APPLE LOCAL default to Wformat-security 5764921 */
+	  fprintf (stream, "%s", wc_reg_names [INTVAL (x)]);
 	}
       return;
 

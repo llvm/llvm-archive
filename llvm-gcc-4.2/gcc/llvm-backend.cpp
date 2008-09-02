@@ -895,6 +895,9 @@ void reset_initializer_llvm(tree decl) {
   // Get or create the global variable now.
   GlobalVariable *GV = cast<GlobalVariable>(DECL_LLVM(decl));
   
+  // Visibility may also have changed.
+  handleVisibility(decl, GV);
+
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
 
@@ -915,6 +918,9 @@ void reset_type_and_initializer_llvm(tree decl) {
   // Get or create the global variable now.
   GlobalVariable *GV = cast<GlobalVariable>(DECL_LLVM(decl));
   
+  // Visibility may also have changed.
+  handleVisibility(decl, GV);
+
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
   GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
 

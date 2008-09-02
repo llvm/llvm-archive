@@ -6332,7 +6332,12 @@ expand_builtin (tree exp, rtx target, rtx subtarget, enum machine_mode mode,
 
     case BUILT_IN_INIT_TRAMPOLINE:
       return expand_builtin_init_trampoline (arglist);
-    /* LLVM LOCAL deleted 2 lines */
+    /* LLVM LOCAL begin deleted 2 lines */
+#ifndef ENABLE_LLVM
+    case BUILT_IN_ADJUST_TRAMPOLINE:
+      return expand_builtin_adjust_trampoline (arglist);
+#endif
+    /* LLVM LOCAL end deleted 2 lines */
 
     case BUILT_IN_FORK:
     case BUILT_IN_EXECL:

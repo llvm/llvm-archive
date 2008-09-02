@@ -1982,11 +1982,8 @@ do {							\
    subsequent accesses occur to other fields in the same word of the
    structure, but to different bytes.  */
 
-/* APPLE LOCAL begin radar 4287182 */
-/* Temporarily set it to two targets. Please sync it with main line
-   when its patch is approved. */
-#define SLOW_BYTE_ACCESS (TARGET_GENERIC | TARGET_NOCONA | TARGET_CORE2)
-/* APPLE LOCAL end radar 4287182 */
+/* APPLE LOCAL 6131435 */
+#define SLOW_BYTE_ACCESS (!flag_apple_kext && !flag_mkernel && !TARGET_64BIT)
 
 /* Nonzero if access to memory by shorts is slow and undesirable.  */
 #define SLOW_SHORT_ACCESS 0

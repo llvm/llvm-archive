@@ -1,3 +1,80 @@
+2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6160536
+	* parser.c (cp_parser_block_literal_expr): Call build_block_helper_name
+	to get pretty name for block helper function.
+
+2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6180456
+	* decl.c (synth_block_byref_id_object_copy_func): Use different
+	API when copying __block object in c language.
+	(synth_block_byref_id_object_dispose_func): Use different
+	API when releasing a __block object in c.
+	* parser.c (synth_copy_helper_block_func): Refactored to
+	call build_block_byref_assign_copy_decl().
+
+2008-08-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6087117
+	* typeck.c (convert_arguments): Takes an extra argument
+	for distiguinsing block call to function calls.
+	(build_function_call): Tell convert_arguments if we
+	are calling a block.
+
+2008-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6172148
+	* parser.c (build_helper_func_decl): Set BLOCK_SYNTHESIZED_FUNC
+	for all block helper functions; used by die generation.
+
+2008-08-24  Caroline Tice  <ctice@apple.com.
+
+        Radar 6144664
+        * parser.c (build_block_byref_decl):  Assign the 
+	source location for each byref decl to the source
+	location of the helper function decl.
+	(build_block_ref_decl):  Ditto for ref decls.
+
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in proggress.
+	* parser.c (clean_and_exit): Clean up if inside
+	a function.
+	(cp_parser_block_literal_expr): Set DECL_NO_STATIC_CHAIN
+	if inside a function.
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in progress.
+	* decl.c (cp_finish_decl): local static is treated just
+	like global static wrt __byref.
+	* semantics.c (finish_id_expression): Ditto.
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in progress.
+	* decl.c (init_byref_decl): Generate c-style helper
+	functions for compose/dispose helpers.
+
+2008-08-04  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in progress.
+	* decl.c (synth_block_byref_id_object_copy_func,
+	synth_block_byref_id_object_dispose_func,
+	block_start_struct, block_finish_struct,
+	new_block_byref_decl, init_byref_decl): New routines.
+	(cp_finish_decl): Build the APIed version of 
+	a __byref local vriable.
+	* semantics.c (finish_id_expression): Add a __byref
+	variable to the list of such variables for current
+	block.
+	* parser.c (build_component_ref): Fix to make it work.
+	(cp_parser_block_literal_expr): Push/pop language-c,
+	set context of the helper function.
+	(declare_block_prologue_local_vars): Mend tree for
+	the built-in local variables in the helper prologue.
+
 2008-07-31  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6040305 - work in progress

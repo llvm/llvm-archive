@@ -1,3 +1,17 @@
+2008-08-25  Josh Conner  <jconner@apple.com>
+
+	Radar 6162685
+	* build_libgcc: Strip libgcc.
+
+	Radar 6175043
+	* build_libgcc: Disable bootstrap if BOOTSTRAP is empty.
+
+2008-08-06  Eugene Marinelli  <marinelli@apple.com>
+
+	Radar 6123671
+	* driverdriver.c (main): Instead of aborting, print a fatal error when
+	there is no argument after -o.
+
 2008-06-04  Josh Conner  <jconner@apple.com>
 
 	Radar 5961147

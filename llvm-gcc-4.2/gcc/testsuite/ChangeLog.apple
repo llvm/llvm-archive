@@ -1,3 +1,126 @@
+2008-08-07  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6128170
+	* gcc/testsuite/objc.dg/6128170.m: New.
+
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6014138 
+	* gcc.apple/block-nested.c: Modified
+
+2008-08-07  Stuart Hastings  <stuart@apple.com>
+
+	* gcc.apple/5773922.c: Added -std=c99.
+
+2008-08-06  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 6013597
+	* g++.dg/inline-limit-1.C: Update number of calls needed to cause
+	inlining and non-inlining.
+
+2008-08-06  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 6020402
+	* gcc.apple/6020402-1.c: Check for orq exclusively (not xorq).
+	* gcc.apple/6020402-2.c: Check for orl exclusively (not xorl).
+
+2008-08-06  Jon Ziegler <jonz@apple.com>
+
+	Radar 5095227
+	Testing default, so don't run these tests
+	when -fstack-proctor[-all] is specified.
+	* g++.apple/kext-stackprotect-1.C
+	* g++.apple/kext-stackprotect-2.C
+
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6112131 - again (restore __byref again).
+	* gcc.apple/block-block-storageclass.c: Add
+	* g++.apple/block-block-storageclass.C: Add
+	
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in proggress.
+	* g++.apple/block-global-block.C: Add
+
+2008-08-06  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5774132.C
+	* g++.apple/5774132.C: New.
+
+2008-08-06  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5773922
+	* gcc.apple/5773922.c: New.
+
+2008-08-05  Jon Ziegler <jonz@apple.com>
+
+	Radar 6125032
+	* g++.apple/5596043.C: make compile only
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in proggress.
+	* g++.apple/block-ivar.C: Add
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress.
+	* g++.apple/block-error-global-byref.C: Add
+	* g++.apple/block-global-byref.C: Add
+	* g++.apple/block-global-implicit-byref.C: Modified
+	* g++.apple/block-blocks-test-1.C: Modified
+	* g++.apple/block-blocks-test-1.C: Modified
+	* g++.apple/block-readonly-diag.C: Modified
+	* g++.apple/block-assigngcglobal.C: Modified
+	* g++.apple/block-assigngcivar.C: Modified
+	
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress.
+ 	* g++.apple/block-byref.C
+	* g++.apple/block-byref-attribute.C
+	* g++.apple/block-implicit-byref.C
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress.
+	* g++.apple/block-blocks-test-8.C: Add
+
+2008-08-05  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5951276
+	* gcc.target/i386/20020616-1.c: Skip for Darwin.
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress.
+	* g++.apple/block-blocks-test-7.C: Add.
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 (More tests passed with previous patch).
+	* g++.apple/block-blocks-test-1.C: Add
+	* g++.apple/block-blocks-test-5.C: Add
+	* g++.apple/block-blocks-test-6.C: Add
+
+2008-08-04  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in progress.
+	* g++.apple/block-blocks-test-4.C: Add
+
+2008-08-04  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 6020402
+	* gcc.apple/6020402-1.c: Add
+	* gcc.apple/6020402-2.c: Add
+
+2008-08-04  Jon Ziegler <jonz@apple.com>
+
+	Radar 6112293
+	* gcc.c-torture/execute/builtins/lib/sprintf.c
+	* gcc.dg/cpp/trad/include.c
+
 2008-07-31  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6040305 - work in progress

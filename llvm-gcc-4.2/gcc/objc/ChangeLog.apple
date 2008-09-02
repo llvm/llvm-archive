@@ -1,3 +1,80 @@
+2008-08-26  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5595325 (minor addition)
+	* objc-act.c (objc_finish_message_expr): Do not warn
+	on invalid receiver type if receiver is an
+	NSObject.
+
+008-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5595325
+	* objc-act.c (objc_nsobject_attribute_type): New
+	(objc_compare_types): Allow NSObject pointers to match 'id'
+	(objc_is_object_ptr): An SObject pointer is a valid objective-c
+	object.
+	
+2008-08-20  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6157135
+	* objc-act.c (objc_delta_format_args): Don't change
+	number of first variarg if it is 0.
+
+2008-08-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5435299
+	* objc-act.c (objc_synthesize_new_getter): Do not call
+	objc_lookup_property_ivar with -fnew-property-ivar-synthesis
+	(objc_synthesize_new_setter): Ditto.
+	(objc_add_internal_ivar): Synthesize an ivar according to
+	new rules.
+	(lookup_property_impl_in_list): New
+	(lookup_ivar_in_property_list): New
+	(objc_declare_property_impl): Diagnose a corner case
+	of a missing 'ivar'. Synthesize 'ivar' at point
+	of @synthesize declaration. Issue more diagnostics.
+		
+2008-08-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5847641
+	* objc-act.c (objc_declare_property_impl): Warn if
+	undeclared ivar is specified on @synthesize.
+
+2008-08-18  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5424416
+	* objc-act.c (objc_start_method_definition): Issue 
+	diagnostics on methods returning array or function.
+
+2008-08-18  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5453108
+	* objc-act.c (property_method_in_class): New
+	(check_methods): Check on method being a property
+	method in current class by calling property_method_in_class.
+
+2008-08-14  Dale Johannesen <dalej@apple.com>
+
+        * objc-act.c (build_objc_string_decl):  Rename to
+        build_objc_string_ident throughout.  Make it return an
+        identifier instead of building a var_decl which gets
+        thrown away.
+        (add_objc_string):  Modify for interface change.
+
+2008-08-12  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6133042
+	* objc-act.c (block_pointer_strong_value): New
+	(objc_build_aggregate_ivar_layout): Find GCability of
+	block pointer by calling above routine.
+	(objc_is_gcable_type): Ditto.
+
+2008-08-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6040305 - work in proggress.
+
+	* objc-act.c (build_ivar_reference): treat 'self' as 
+	a copied in variable or ObjC++ as well.
+
 2008-07-28  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6049617

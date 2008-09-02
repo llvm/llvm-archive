@@ -1,3 +1,255 @@
+2008-08-28  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5023884
+	* gcc/config/darwin.h (LINK_SPEC): Remove "-multiply_defined
+          suppress".
+
+2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6160536
+	* c-commmon.c (build_block_helper_name): New
+	* c-common.h (build_block_helper_name): New decl.
+	* c-parser.c (c_parser_block_literal_expr): Call
+	build_block_helper_name to build pretty helper function
+	name.
+
+2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6180456
+	* c-decl.c (synth_block_byref_id_object_copy_func): Different
+	API for copying __block declared objects in c.
+	(synth_block_byref_id_object_dispose_func): Different API
+	for releasing __block declared objects in c.
+	* c-common.c (block_byref_assign_copy_decl): New
+	(build_indirect_object_id_exp): Cast to 'id *' in objective-c
+	mode only.
+	* c-common.h (build_block_byref_assign_copy_decl): New decl.
+	* c-parser.c (synth_copy_helper_block_func): Refactored code
+	to call build_block_byref_assign_copy_decl().
+	
+2008-08-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6177162
+	* c-typeck.c (build_external_ref): Allow local static as a byref
+	variable by default.
+
+2008-08-27  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5780114
+	* gcc/doc/extend.texi: Modify documentation for -fobjc-gc.
+
+2008-08-26  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6131435
+	* gcc/config/i386/i386.h (SLOW_BYTE_ACCESS): Remove check for
+          TARGET.
+
+2008-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6164211
+	* c-typeck.c (build_array_ref): Preserve element's
+	protocol list when building array type.
+
+2008-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6172148
+	* tree.h (BLOCK_SYNTHESIZED_FUNC): Define
+	* dwarf2out.c (dwarf2out_decl): Check for
+	block helpers and do not treat them as nested
+	functions.
+	* c-decl.c (build_helper_func_decl): Set BLOCK_SYNTHESIZED_FUNC
+	for all block helper functions.
+
+2008-08-25  Josh Conner  <jconner@apple.com>
+
+	Radar 6148015
+	* config/arm/arm.h (ARG_POINTER_CFA_OFFSET): Define.
+	* config/arm/arm.c (arm_expand_prologue): Mark pushes as
+	RTX_FRAME_RELATED_P.
+
+2008-08-24  Caroline Tice  <ctice@apple.com>
+
+	Radars 6144664, 6145471, 6144634
+	c-decl.c (build_block_byref_decl):  Assign the source
+	location for each byref decl to the source location of
+	the helper function decl.
+	(build_block_ref_decl):  Ditto for ref decls.
+
+2008-08-23  Josh Conner  <jconner@apple.com>
+
+	Radar 6162387
+	* config/darwin-sections.def (objc_v2_selector_refs_section):
+	Change section type to literal_pointers.
+
+2008-08-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5595325
+	* config/darwin-protos.h (darwin_handle_nsobject_attribute): New decl.
+	* config/darwin.c (darwin_handle_nsobject_attribute): New handler
+	for NSObject attribute.
+	* config/darwin.h: New entry for NSObject attribute table.
+
+2008-08-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5435299
+	* c.opt (fnew-property-ivar-synthesis): New option.
+
+2008-08-20  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6131435
+	* gcc/config/i386.h (SLOW_BYTE_ACCESS): Fix APPLE LOCAL.
+
+2008-08-19  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6131435
+	* gcc/config/i386.h (SLOW_BYTE_ACCESS): Set false under
+          -mkernel, -fapple-kext, or -m64.
+
+2008-08-18  Josh Conner  <jconner@apple.com>
+
+	Revert:
+	2008-08-14  Eugene Marinelli <marinelli@apple.com>
+        Radar 6149764
+        * Makefile.in: Add treecode-num-insns.def to tree-inline.o dependency
+        list.
+
+	2008-08-06  Eugene Marinelli <marinelli@apple.com>
+        Radar 6013597
+        * params.def: Change default PARAM_INLINE_CALL_COST from 16 to 2.
+        Multiply instruction-count related parameters by 0.55 to account
+        for new instruction count estimation.
+        * tree-inline.c (estimate_num_insns_1): Replace most cases with
+        addition of constants defined in treecode-num-insns.def.  Other cases
+        modified to return 1000 times the estimated number of instructions.
+        (estimate_num_insns): Divide result of estimate_num_insns_1 by 1000.
+        * treecode-num-insns.def: Add
+
+2008-08-14  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 6149764
+	* Makefile.in: Add treecode-num-insns.def to tree-inline.o dependency
+	list.
+
+2008-08-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5822844
+	* c-typeck.c (digest_init): Handler block as initializer.
+	(c_finish_return): check for completed block before
+	analyzing block's return expression.
+	* varasm.c (output_constant): Allow outputting block data.
+	* c-common.h (BLOCK_IS_GLOBAL): New flag.
+	(block_is_complete): New field in block data structure.
+	* c-parser.c (build_block_struct_initlist): New initializer and
+	flag for global block data.
+	(build_block_literal_tmp): Temporary data for global block is
+	declared as global static.
+	(c_parser_block_literal_expr): Removed diagnostics for global blocks.
+	Moved fixing helper function type earlier before its tree is built.
+	
+2008-08-11  Jim Grosbach <grosbach@apple.com>
+
+	Radar 6141565
+	* gcc/c-common.c (iasm_constraint_for): fix compiler warning
+
+2008-08-08  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6131435
+	* gcc/config/i386.h (SLOW_BYTE_ACCESS): Set false for all
+          targets.
+
+2008-08-08  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5971844
+	* gcc/config/i386/darwin.opt
+          (-mdarwin-rtl-pre-ignore-critical-edges): New flag.
+	* gcc/postreload-gcse.c (eliminate_partially_redundant_load):
+          Disable critical edge check under
+          -mdarwin-rtl-pre-ignore-critical-edges.
+
+2008-08-07  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6128170
+	* gcc/except.c (output_function_exception_table): Move .align
+          ahead of both labels.
+
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6014138 
+	* c-decl.c (build_block_byref_decl): In the presence of nested "{" 
+	  move up the scope chain until reaching the main function body's scope.
+
+2008-08-06  Eugene Marinelli <marinelli@apple.com>
+
+	Radar 6013597
+	* params.def: Change default PARAM_INLINE_CALL_COST from 16 to 2.
+	Multiply instruction-count related parameters by 0.55 to account
+	for new instruction count estimation.
+	* tree-inline.c (estimate_num_insns_1):	Replace most cases with
+	addition of constants defined in treecode-num-insns.def.  Other cases
+	modified to return 1000 times the estimated number of instructions.
+	(estimate_num_insns): Divide result of estimate_num_insns_1 by 1000.
+	* treecode-num-insns.def: Add
+
+2008-08-06  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6112131 - again (restore __byref again).
+	* config/darwin-c.c (darwin_cpp_builtins): Define __block.
+
+2008-08-05  Eugene Marinelli  <marinelli@apple.com>
+
+	Radar 6020402
+	Re-add fixed version of original patch for radar 6020402.
+
+2008-08-05   Jim Grosbach <grosbach@apple.com>
+
+	Radar 6110622
+	* config/arm/arm.md (soft_muldi3): Missing length attribute
+
+2008-08-05  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6102803
+	* flow.c (recompute_reg_usage): If targeting ppc with
+	-ftree-pre, clear existing reg-lifetime info to insure
+	thorough dead-code elimination.
+	* sbitmap.c (dump_sbitmap_vector): Avoid dumping uninitialized
+          memory.
+
+2008-08-04  Eugene Marinelli  <marinelli@apple.com>
+
+	Radar 6020402
+	Temporarily reverting previous fix because of compilation error.
+
+2008-08-04  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6040305 - work in progress.
+	* c-decl.c (build_indirect_object_id_exp): Removed.
+	* c-common.c (build_indirect_object_id_exp): Added
+	* c-common.h (build_indirect_object_id_exp): New decl.
+	* config/darwin-c.c (darwin_cpp_builtins): Define __byref
+	in c++ mode as well.
+
+2008-08-04  Eugene Marinelli  <marinelli@apple.com>
+
+	Radar 6020402
+	* calls.c (store_unaligned_arguments_into_pseudos): Add additional
+	argument to store_bit_field call.
+	* expmed.c (store_bit_field): Add argument for type of struct
+	containing the bit field.
+	(widest_mode_including_no_volatile_fields): Add.
+	(store_fixed_bit_field): Use widest_mode_including_no_volatile_fields
+	to set the maximum mode size to the size around the current field
+	that does not include any volatile fields.
+	* expr.c (emit_group_store, copy_blkmode_from_reg, write_complex_part):
+	Add arguments to store_bit_field calls.
+	* expr.h (store_bit_field): Add argument for struct type.
+	* ifcvt.c (noce_emit_move_insn): Add arguments to
+	store_bit_field calls.
+
+2008-08-4   Jim Grosbach <grosbach@apple.com>
+	Radar 6090616
+	* global.c (set_preference): Add checks to prevent integer underflow
+	of register numbers.
+
 2008-08-01  Geoff Keating  <geoffk@apple.com>
 
         Radar 5095227

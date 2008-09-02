@@ -95,6 +95,8 @@ extern section* darwin_set_section_for_var_p (tree, int, int, section*);
 
 /* APPLE LOCAL ObjC GC */
 extern tree darwin_handle_objc_gc_attribute (tree *, tree, tree, int, bool *);
+/* APPLE LOCAL file radar 5595352 */
+extern tree darwin_handle_nsobject_attribute (tree *, tree, tree, int, bool *);
 
 extern void darwin_file_start (void);
 extern void darwin_file_end (void);

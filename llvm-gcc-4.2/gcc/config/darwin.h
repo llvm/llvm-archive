@@ -453,9 +453,8 @@ do {					\
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \
-   %{!Zmultiply_defined*:%{shared-libgcc: \
-     %:version-compare(< 10.5 mmacosx-version-min= -multiply_defined) \
-     %:version-compare(< 10.5 mmacosx-version-min= suppress)}} \
+   "/* APPLE LOCAL begin deletion 5023884 */" \
+   "/* APPLE LOCAL end deletion 5023884 */" \
    %{Zmultiplydefinedunused*:-multiply_defined_unused %*} \
    "/* APPLE LOCAL mainline 2007-06-01 5238485 */" \
    %{fpie:-pie} \
@@ -1073,15 +1072,15 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
   } while (0)
 #else
 /* LLVM LOCAL end */
-#define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)                          \
-  do {                                                                  \
-    if (FILE) {                                                         \
-      fprintf (FILE, "\t");                                             \
-      assemble_name (FILE, NAME);					\
-      fprintf (FILE, "=0\n");                                           \
-      (*targetm.asm_out.globalize_label) (FILE, NAME);                  \
-    }                                                                   \
-  } while (0)
+#define ASM_DECLARE_CLASS_REFERENCE(FILE,NAME)				\
+    do {								\
+	 if (FILE) {							\
+	   fprintf (FILE, "\t");					\
+	   assemble_name (FILE, NAME);					\
+	   fprintf (FILE, "=0\n");					\
+	   (*targetm.asm_out.globalize_label) (FILE, NAME);		\
+	 }								\
+       } while (0)
 /* LLVM LOCAL */
 #endif /*ENABLE_LLVM*/
 
@@ -1109,6 +1108,8 @@ extern GTY(()) section * darwin_sections[NUM_DARWIN_SECTIONS];
     darwin_handle_kext_attribute },					     \
   /* APPLE LOCAL ObjC GC */						     \
   { "objc_gc", 1, 1, false, true, false, darwin_handle_objc_gc_attribute },  \
+  /* APPLE LOCAL radar 5595352 */					     \
+  { "NSObject", 0, 0, false, true, false, darwin_handle_nsobject_attribute },\
   { "weak_import", 0, 0, true, false, false,				     \
     darwin_handle_weak_import_attribute }
 

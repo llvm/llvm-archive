@@ -1772,6 +1772,40 @@ darwin_handle_objc_gc_attribute (tree *node,
 }
 /* APPLE LOCAL end ObjC GC */
 
+/* APPLE LOCAL begin radar 5595352 */
+tree
+darwin_handle_nsobject_attribute (tree *node,
+                                  tree name,
+                                  tree args ATTRIBUTE_UNUSED,
+                                  int flags ATTRIBUTE_UNUSED,
+                                  bool *no_add_attrs)
+{
+  tree orig = *node, type;
+  if (!POINTER_TYPE_P (orig) || TREE_CODE (TREE_TYPE (orig)) != RECORD_TYPE)
+    {
+      error ("__attribute ((NSObject)) is for pointer types only");
+      return NULL_TREE;
+    }
+  type = build_type_attribute_variant (orig,
+				       tree_cons (name, NULL_TREE,
+				       TYPE_ATTRIBUTES (orig)));
+  /* The main variant must be preserved no matter what. What ever
+     main variant comes out of the call to build_type_attribute_variant
+     is bogus here. */
+  if (TYPE_MAIN_VARIANT (orig) != TYPE_MAIN_VARIANT (type))
+    {
+      TYPE_MAIN_VARIANT (type) = TYPE_MAIN_VARIANT (orig);
+      TYPE_NEXT_VARIANT (type) = TYPE_NEXT_VARIANT (orig);
+      TYPE_NEXT_VARIANT (orig) = type;
+    }
+
+  *node = type;
+  /* No need to hang on to the attribute any longer.  */
+  *no_add_attrs = true;
+  return NULL_TREE;
+}
+/* APPLE LOCAL end radar 5595352 */
+
 /* APPLE LOCAL begin darwin_set_section_for_var_p  20020226 --turly  */
 
 /* This is specifically for any initialised static class constants

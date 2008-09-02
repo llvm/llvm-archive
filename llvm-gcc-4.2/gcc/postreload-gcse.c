@@ -1118,6 +1118,13 @@ eliminate_partially_redundant_load (basic_block bb, rtx insn,
 	}
     }
 
+  /* APPLE LOCAL begin 5971844 */
+#ifdef TARGET_MACHO
+  if (flag_darwin_rtl_pre_ignore_critical_edges)
+    critical_edge_split = false;
+#endif
+  /* APPLE LOCAL end 5971844 */
+
   if (/* No load can be replaced by copy.  */
       npred_ok == 0
       /* Prevent exploding the code.  */ 

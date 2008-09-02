@@ -70,3 +70,8 @@ Generate code for darwin loadable kernel extentions
 mkernel
 Target Report Var(flag_mkernel)
 Generate code for the kernel or loadable kernel extentions
+
+; APPLE LOCAL begin 5971844
+mdarwin-rtl-pre-ignore-critical-edges
+Target Report Var(flag_darwin_rtl_pre_ignore_critical_edges)
+; APPLE LOCAL end 5971844

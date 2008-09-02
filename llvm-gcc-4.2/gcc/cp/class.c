@@ -1481,9 +1481,9 @@ finish_struct_bits (tree t)
 	= TYPE_HAS_NONTRIVIAL_DESTRUCTOR (t);
 
       /* APPLE LOCAL begin omit calls to empty destructors 5559195 */
-      CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (variants) = 
+      CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (variants) =
 	CLASSTYPE_HAS_NONTRIVIAL_DESTRUCTOR_BODY (t);
-      CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE (variants) = 
+      CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE (variants) =
 	CLASSTYPE_DESTRUCTOR_NONTRIVIAL_BECAUSE_OF_BASE (t);
       /* APPLE LOCAL end omit calls to empty destructors 5559195 */
 
@@ -8011,7 +8011,7 @@ has_empty_operator_delete_p (tree class)
 /* APPLE LOCAL end KEXT double destructor */
 
 /* APPLE LOCAL begin 4167759 */
-/* Set DECL_IGNORED_P flag for ctors and dtors associated 
+/* Set DECL_IGNORED_P flag for ctors and dtors associated
    with TYPE using VALUE.  */
 
 void cp_set_decl_ignore_flag (tree type, int value)

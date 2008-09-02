@@ -150,4 +150,5 @@ finish_file (void)
 {
   cp_finish_file ();
 }
+
 #include "gtype-cp.h"

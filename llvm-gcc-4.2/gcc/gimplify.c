@@ -1148,7 +1148,7 @@ gimplify_return_expr (tree stmt, tree *pre_p)
   tree result_decl, result;
 
   if (!ret_expr || TREE_CODE (ret_expr) == RESULT_DECL
-      /* APPLE LOCAL begin radar 6040305 - blocks */
+      /* APPLE LOCAL radar 6040305 - blocks */
       || ret_expr == error_mark_node || cur_block)
     return GS_ALL_DONE;
 

@@ -213,4 +213,5 @@ finish_file (void)
 {
   objc_finish_file ();
 }
+
 #include "gtype-objcp.h"

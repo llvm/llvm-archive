@@ -259,10 +259,8 @@ int flag_signed_char;
 int flag_short_enums;
 
 /* LLVM LOCAL begin */
-
 /* Options to pass directly into the LLVM backend. */
 const char *llvm_optns = 0;
-
 /* LLVM LOCAL end */
 
 /* APPLE LOCAL begin -fast or -fastf or -fastcp */

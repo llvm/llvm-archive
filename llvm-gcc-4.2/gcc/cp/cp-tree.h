@@ -3134,8 +3134,8 @@ extern void decl_shadowed_for_var_insert (tree, tree);
 /* APPLE LOCAL begin for-fsf-4_4 3274130 5295549 */ \
 #define DO_ATTRIBUTES(NODE)	TREE_OPERAND (DO_STMT_CHECK (NODE), 2)
 /* APPLE LOCAL begin C* language */
-/* Used as a flag to indicate synthesized inner do-while loop of a 
-   foreach statement.  Used for generation of break/continue statement 
+/* Used as a flag to indicate synthesized inner do-while loop of a
+   foreach statement.  Used for generation of break/continue statement
    of the loop. */
 #define DO_FOREACH(NODE)           TREE_OPERAND (DO_STMT_CHECK (NODE), 3)
 /* APPLE LOCAL end C* language */

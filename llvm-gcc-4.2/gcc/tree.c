@@ -2883,7 +2883,7 @@ do { tree _node = (NODE); \
     }
   else if (CONSTANT_CLASS_P (node))
     ;
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* Support the "array ref with pointer base" extension.  If we have &p[i],
      treat this like we do a binop.
@@ -2898,7 +2898,7 @@ do { tree _node = (NODE); \
           TREE_SIDE_EFFECTS(TREE_OPERAND(node, 1));
   }
 #endif
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
   else
     {
       ti = tc = false;

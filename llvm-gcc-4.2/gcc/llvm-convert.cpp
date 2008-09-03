@@ -651,12 +651,15 @@ void TreeToLLVM::StartFunctionBody() {
     AttributeUsedGlobals.insert(Fn);
   
   // Handle noinline Functions
-  if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl))) {
+  if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl)))
+    Fn->setNotes(FN_NOTE_NoInline);
+  /* FIXME: Remove llvm.noinline related code. 
+  {
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
     AttributeNoinlineFunctions.push_back(
       Builder.getFolder().CreateBitCast(Fn, SBP)
     );
-  }
+  }*/
   
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))

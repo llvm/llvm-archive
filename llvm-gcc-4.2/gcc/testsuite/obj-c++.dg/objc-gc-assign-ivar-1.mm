@@ -20,21 +20,25 @@ ptrdiff_t WantedOffset;
 
 static
 id objc_assign_strongCast(id value, id *dest) {
-     printf("assign_ivar got value %p, dest %p\n", value, dest);
+    /* APPLE LOCAL default to Wformat-security 5764921 */
+     printf("assign_ivar got value %p, dest %p\n", (void*)value, (void*)dest);
      printf("wanted                %p,      %p\n", WantedVal, WantedDest);
      return nil;
 }
 static
 id objc_assign_global(id value, id *dest) {
-     printf("assign_ivar got value %p, dest %p\n", value, dest);
+     /* APPLE LOCAL default to Wformat-security 5764921 */
+     printf("assign_ivar got value %p, dest %p\n", (void*)value, (void*)dest);
      printf("wanted                %p,      %p\n", WantedVal, WantedDest);
      return nil;
 }
 
 static
 id objc_assign_ivar(id value, id dest, ptrdiff_t offset) {
-     printf("assign_ivar got value %p, dest %p, offset %ld\n", value, dest, offset);
-     printf("wanted                %p,      %p,        %ld\n", WantedVal, WantedDest, WantedOffset);
+     /* APPLE LOCAL default to Wformat-security 5764921 */
+     printf("assign_ivar got value %p, dest %p, offset %d\n", (void*)value, (void*)dest, (int)offset);
+     /* APPLE LOCAL default to Wformat-security 5764921 */
+     printf("wanted                %p,      %p,        %d\n", WantedVal, WantedDest, (int)WantedOffset);
      if (value != WantedVal)
 	abort ();
      if (dest != WantedDest)

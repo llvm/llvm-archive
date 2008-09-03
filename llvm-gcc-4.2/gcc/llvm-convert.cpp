@@ -660,7 +660,11 @@ void TreeToLLVM::StartFunctionBody() {
       Builder.getFolder().CreateBitCast(Fn, SBP)
     );
   }*/
-  
+
+  // Handle always_inline attribute
+  if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl)))
+    Fn->setNotes(FN_NOTE_AlwaysInline);
+
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);

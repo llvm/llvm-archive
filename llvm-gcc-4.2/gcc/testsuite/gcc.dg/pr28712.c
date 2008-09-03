@@ -2,6 +2,8 @@
 /* { dg-do compile } */
 /* { dg-options "--combine" } */
 /* { dg-additional-sources "pr28712.c pr28712.c" } */
+/* APPLE LOCAL 4881841 */
+/* { dg-skip-if "" { *-*-* } { "-ObjC" } { "" } } */
 
 struct A;
 

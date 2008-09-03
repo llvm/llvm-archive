@@ -1,7 +1,8 @@
 /* PR middle-end/30473 */
 /* Make sure this doesn't ICE.  */
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* APPLE LOCAL default to Wformat-security 5764921 */
+/* { dg-options "-O2 -Wno-format" } */
 
 extern int sprintf (char *, const char *, ...);
 

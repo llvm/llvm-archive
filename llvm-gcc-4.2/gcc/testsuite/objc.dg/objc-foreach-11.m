@@ -46,7 +46,7 @@ bool testHandwritten(char *style, char *test, char *message, id collection, NSSe
     }
     else {
         result = false;
-        printf("** failed: %s %s %s (%d vs %d)\n", style, test, message, counter, [reference count]);
+        printf("** failed: %s %s %s (%d vs %ld)\n", style, test, message, counter, (long)[reference count]);
         ++Errors;
     }
     return result;
@@ -67,7 +67,7 @@ bool testCompiler(char *style, char *test, char *message, id collection, NSSet *
     }
     else {
         result = false;
-        printf("** failed: %s %s %s (%d vs %d)\n", style, test, message, counter, [reference count]);
+        printf("** failed: %s %s %s (%d vs %ld)\n", style, test, message, counter, (long)[reference count]);
         ++Errors;
     }
     return result;

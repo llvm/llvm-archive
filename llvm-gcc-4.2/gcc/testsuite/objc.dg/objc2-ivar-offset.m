@@ -32,7 +32,8 @@ int main()
         const char *ivartype = ivar_getTypeEncoding(iv_list[i]);
         fprintf(stderr, "type: %s\n", ivartype);
         ptrdiff_t ivaroffset = ivar_getOffset(iv_list[i]);
-        fprintf(stderr, "offset: %p\n", ivaroffset);
+	/* APPLE LOCAL default to Wformat-security 5764921 */
+        fprintf(stderr, "offset: %x\n", (int)ivaroffset);
         fprintf(stderr, "\n");
     }
     return 0;

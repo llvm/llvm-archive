@@ -10,8 +10,10 @@ struct frob {
 
 template <class T>
 void frob<T>::print () {
-  printf ("this = %08x\n", this);
-  printf (" ptr = %08x\n", ptr);
+  /* APPLE LOCAL begin default to Wformat-security 5764921 */
+  printf ("this = %p\n", (void*)this);
+  printf (" ptr = %p\n", (void*)ptr);
+  /* APPLE LOCAL end default to Wformat-security 5764921 */
   printf (" values = %x %x %x ...\n", ptr[0], ptr[1], ptr[2]);
 }
 

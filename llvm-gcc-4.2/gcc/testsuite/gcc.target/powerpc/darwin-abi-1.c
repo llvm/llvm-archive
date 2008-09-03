@@ -1,6 +1,6 @@
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* { dg-options "-O" } */
-/* { dg-final { scan-assembler "li r3, *12345\n\t(bl|jbsr) " } } */
+/* { dg-final { scan-assembler "li r3,12345\n\t(bl|jbsr) " } } */
 
 /* Check that zero-size structures don't affect parameter passing.  */
 

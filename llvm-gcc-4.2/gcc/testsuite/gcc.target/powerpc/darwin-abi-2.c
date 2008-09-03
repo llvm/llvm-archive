@@ -1,4 +1,6 @@
 /* { dg-do run { target powerpc*-*-darwin* } } */
+/* APPLE LOCAL default to Wformat-security 5764921 */
+/* { dg-options "-Wno-format" } */
 
 /* You might think you'd need -maltivec for this, but actually you
    don't; GCC will happily do everything in GPRs, and it still

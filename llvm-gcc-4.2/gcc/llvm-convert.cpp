@@ -665,6 +665,9 @@ void TreeToLLVM::StartFunctionBody() {
   if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl)))
     Fn->setNotes(FN_NOTE_AlwaysInline);
 
+  if (optimize_size)
+    Fn->setNotes(FN_NOTE_OptimizeForSize);
+
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);

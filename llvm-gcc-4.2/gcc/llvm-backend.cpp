@@ -388,6 +388,19 @@ static void createOptimizationPasses() {
       PM->add(createPruneEHPass());               // Remove dead EH info
     if (flag_inline_trees > 1)                  // respect -fno-inline-functions
       PM->add(createFunctionInliningPass());    // Inline small functions
+    else {
+      // The inliner pass won't be inserted based on command line options.
+      // Use AlwaysInliner to handle functions that are marked as always_inline.
+      bool NeedAlwaysInliner = false;
+      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+         I != E; ++I)
+        if (!I->isDeclaration() && I->getNotes() == FN_NOTE_AlwaysInline) {
+          NeedAlwaysInliner = true;
+          break;
+        }
+      if (NeedAlwaysInliner)
+        PM->add(createAlwaysInlinerPass());
+    }
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     if (!flag_no_simplify_libcalls)
@@ -431,7 +444,7 @@ static void createOptimizationPasses() {
     if (optimize > 1 && flag_unit_at_a_time)
       PM->add(createConstantMergePass());       // Merge dup global constants 
   }
-  
+
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.

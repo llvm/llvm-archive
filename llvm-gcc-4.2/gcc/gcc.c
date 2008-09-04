@@ -825,10 +825,10 @@ static const char *cpp_debug_options = "%{d*}";
 /* LLVM LOCAL begin */
 static const char *llvm_options =
 #ifdef ENABLE_LLVM
-"%{O4|emit-llvm:%{S:-emit-llvm} \
-                %{!S:-emit-llvm-bc \
-                  %{c: %W{o*} %{!o*:-o %b%w.o}} \
-                  %{!c:-o %d%w%u%O}}}"
+"%{O4|emit-llvm|flto:%{S:-emit-llvm} \
+                     %{!S:-emit-llvm-bc \
+                     %{c: %W{o*} %{!o*:-o %b%w.o}} \
+                     %{!c:-o %d%w%u%O}}}"
 #else
   "%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"
 #endif
@@ -860,10 +860,10 @@ static const char *asm_options =
 static const char *invoke_as =
 #ifdef AS_NEEDS_DASH_FOR_PIPED_INPUT
 /* LLVM LOCAL */
-"%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %|.s %A }}}";
+"%{!O4:%{!emit-llvm:%{!flto:%{!S:-o %|.s |\n as %(asm_options) %|.s %A }}}}";
 #else
 /* LLVM LOCAL */
-"%{!O4:%{!emit-llvm:%{!S:-o %|.s |\n as %(asm_options) %m.s %A }}}";
+"%{!O4:%{!emit-llvm:%{!flto:%{!S:-o %|.s |\n as %(asm_options) %m.s %A }}}}";
 #endif
 
 /* Some compilers have limits on line lengths, and the multilib_select

@@ -4450,7 +4450,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZL:
   case BUILT_IN_CLZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctlz); 
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctlz); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
@@ -4459,7 +4459,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
@@ -4468,7 +4468,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_PARITYL:
   case BUILT_IN_PARITY: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop); 
     Result = Builder.CreateBinOp(Instruction::And, Result, 
                                  ConstantInt::get(Result->getType(), 1));
     return true;
@@ -4477,7 +4477,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_POPCOUNTL:
   case BUILT_IN_POPCOUNTLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::ctpop); 
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
@@ -4485,7 +4485,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_BSWAP32:
   case BUILT_IN_BSWAP64: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::bswap); 
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::bswap); 
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
     return true;
@@ -4506,13 +4506,58 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_POWIL:
     Result = EmitBuiltinPOWI(exp);
     return true;
+  case BUILT_IN_POW:
+  case BUILT_IN_POWF:
+  case BUILT_IN_POWL:
+    Result = EmitBuiltinPOW(exp);
+    return true;
+  case BUILT_IN_LOG:
+  case BUILT_IN_LOGF:
+  case BUILT_IN_LOGL: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log);
+    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
+  case BUILT_IN_LOG2:
+  case BUILT_IN_LOG2F:
+  case BUILT_IN_LOG2L: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log2);
+    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
+  case BUILT_IN_LOG10:
+  case BUILT_IN_LOG10F:
+  case BUILT_IN_LOG10L: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log10);
+    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
+  case BUILT_IN_EXP:
+  case BUILT_IN_EXPF:
+  case BUILT_IN_EXPL: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp);
+    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
+  case BUILT_IN_EXP2:
+  case BUILT_IN_EXP2F:
+  case BUILT_IN_EXP2L: {
+    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp2);
+    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+    return true;
+  }
   case BUILT_IN_FFS:  // These GCC builtins always return int.
   case BUILT_IN_FFSL:
   case BUILT_IN_FFSLL: {      // FFS(X) -> (x == 0 ? 0 : CTTZ(x)+1)
     // The argument and return type of cttz should match the argument type of
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryIntOp(Amt, Result, Intrinsic::cttz); 
+    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz); 
     Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1));
     Value *Cond =
       Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()));
@@ -4931,7 +4976,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   return false;
 }
 
-bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
+bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
                                        Intrinsic::ID Id) {
   // The intrinsic might be overloaded in which case the argument is of
   // varying type. Make sure that we specify the actual type for "iAny" 
@@ -4945,7 +4990,6 @@ bool TreeToLLVM::EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result,
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-  Intrinsic::ID Id = Intrinsic::not_intrinsic;
   const Type* Ty = Amt->getType();
   
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
@@ -4971,6 +5015,22 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
                             Args.begin(), Args.end());
 }
 
+Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
+  tree ArgList = TREE_OPERAND (exp, 1);
+  if (!validate_arglist(ArgList, REAL_TYPE, REAL_TYPE, VOID_TYPE))
+    return 0;
+
+  Value *Val = Emit(TREE_VALUE(ArgList), 0);
+  Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
+  const Type *Ty = Val->getType();
+
+  SmallVector<Value *,2> Args;
+  Args.push_back(Val);
+  Args.push_back(Pow);
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::pow, &Ty, 1),
+                            Args.begin(), Args.end());
+}
 
 bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {
   Result = Constant::getNullValue(ConvertType(TREE_TYPE(exp)));

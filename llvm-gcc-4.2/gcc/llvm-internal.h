@@ -533,9 +533,10 @@ private:
                        const MemRef *DestLoc, Value *&Result);
   bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
                                        const MemRef *DestLoc, Value *&Result);
-  bool EmitBuiltinUnaryIntOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
+  bool EmitBuiltinUnaryOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
   Value *EmitBuiltinSQRT(tree_node *exp);
   Value *EmitBuiltinPOWI(tree_node *exp);
+  Value *EmitBuiltinPOW(tree_node *exp);
 
   bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);
   bool EmitBuiltinAlloca(tree_node *exp, Value *&Result);

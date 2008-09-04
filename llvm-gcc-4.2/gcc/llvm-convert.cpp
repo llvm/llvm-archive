@@ -4509,48 +4509,67 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_POW:
   case BUILT_IN_POWF:
   case BUILT_IN_POWL:
-    Result = EmitBuiltinPOW(exp);
-    return true;
+    // If errno math has been disabled, expand these to llvm.pow calls.
+    if (!flag_errno_math) {
+      Result = EmitBuiltinPOW(exp);
+      return true;
+    }
+    break;
   case BUILT_IN_LOG:
   case BUILT_IN_LOGF:
-  case BUILT_IN_LOGL: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log);
-    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+  case BUILT_IN_LOGL:
+    // If errno math has been disabled, expand these to llvm.log calls.
+    if (!flag_errno_math) {
+      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log);
+      Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+      return true;
+    }
+    break;
   case BUILT_IN_LOG2:
   case BUILT_IN_LOG2F:
-  case BUILT_IN_LOG2L: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log2);
-    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+  case BUILT_IN_LOG2L:
+    // If errno math has been disabled, expand these to llvm.log2 calls.
+    if (!flag_errno_math) {
+      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log2);
+      Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+      return true;
+    }
+    break;
   case BUILT_IN_LOG10:
   case BUILT_IN_LOG10F:
-  case BUILT_IN_LOG10L: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log10);
-    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+  case BUILT_IN_LOG10L: 
+    // If errno math has been disabled, expand these to llvm.log10 calls.
+    if (!flag_errno_math) {
+      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log10);
+      Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+      return true;
+    }
+    break;
   case BUILT_IN_EXP:
   case BUILT_IN_EXPF:
-  case BUILT_IN_EXPL: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp);
-    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+  case BUILT_IN_EXPL:
+    // If errno math has been disabled, expand these to llvm.exp calls.
+    if (!flag_errno_math) {
+      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp);
+      Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+      return true;
+    }
+    break;
   case BUILT_IN_EXP2:
   case BUILT_IN_EXP2F:
-  case BUILT_IN_EXP2L: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp2);
-    Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+  case BUILT_IN_EXP2L:
+    // If errno math has been disabled, expand these to llvm.exp2 calls.
+    if (!flag_errno_math) {
+      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp2);
+      Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
+      return true;
+    }
+    break;
   case BUILT_IN_FFS:  // These GCC builtins always return int.
   case BUILT_IN_FFSL:
   case BUILT_IN_FFSLL: {      // FFS(X) -> (x == 0 ? 0 : CTTZ(x)+1)

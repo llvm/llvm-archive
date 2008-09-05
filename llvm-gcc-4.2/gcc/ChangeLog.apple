@@ -1,3 +1,8 @@
+2008-09-05  Josh Conner <jconner@apple.com>
+	* llvm-convert.cpp (EmitBuiltinDwarfCFA): ARG_POINTER_CFA_OFFSET
+	should take a function decl.
+	* config/arm/arm.c: Remove unnecessary declaration of is_jump_table.
+
 2008-08-28  Stuart Hastings  <stuart@apple.com>
 
 	Radar 5023884

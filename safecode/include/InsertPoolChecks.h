@@ -1,8 +1,11 @@
 #ifndef INSERT_BOUNDS_H
 #define INSERT_BOUNDS_H
 
-#include "safecode/Config/config.h"
+#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "safecode/Config/config.h"
 #include "ArrayBoundsCheck.h"
 #include "ConvertUnsafeAllocas.h"
 
@@ -122,6 +125,28 @@ struct InsertPoolChecks : public FunctionPass {
   void addLSChecks(Value *V, Instruction *I, Function *F);
   Value * getPoolHandle(const Value *V, Function *F);
 #endif  
+};
+
+/// Monotonic Loop Optimization
+struct MonotonicLoopOpt : public LoopPass {
+  static char ID;
+  const char *getPassName() const { return "Optimize SAFECode checkings in monotonic loops"; }
+  MonotonicLoopOpt() : LoopPass((intptr_t) &ID) {}
+  virtual bool doInitialization(Loop *L, LPPassManager &LPM); 
+  virtual bool doFinalization(); 
+  virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired<LoopInfo>();
+    AU.addRequired<ScalarEvolution>();
+  }
+  private:
+  LoopInfo * LI;
+  ScalarEvolution * scevPass;
+  bool isMonotonicLoop(Loop * L, Value * loopVar);
+  bool isHoistableGEP(GetElementPtrInst * GEP, Loop * L);
+  void insertEdgeBoundsCheck(int checkFunctionId, Loop * L, const CallInst * callInst, GetElementPtrInst * origGEP, Instruction *
+  ptIns, int type);
+  bool optimizeCheck(Loop *L);
 };
 }
 #endif

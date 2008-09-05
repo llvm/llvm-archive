@@ -140,6 +140,8 @@ int main(int argc, char **argv) {
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());
 
+	Passes.add(new MonotonicLoopOpt());
+
     // Verify the final result
     Passes.add(createVerifierPass());
 

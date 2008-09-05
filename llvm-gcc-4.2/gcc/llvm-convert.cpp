@@ -5271,7 +5271,7 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
   if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
     return false;
 
-  int cfa_offset = ARG_POINTER_CFA_OFFSET(0);
+  int cfa_offset = ARG_POINTER_CFA_OFFSET(exp);
 
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                       Intrinsic::eh_dwarf_cfa),

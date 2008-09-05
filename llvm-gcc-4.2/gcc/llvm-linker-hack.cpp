@@ -73,6 +73,7 @@ void dummy_function() {
   llvm::createGlobalOptimizerPass();
   llvm::createJumpThreadingPass();
   llvm::createFunctionInliningPass();
+  llvm::createAlwaysInlinerPass();
   llvm::createRaiseAllocationsPass();
   llvm::createSimplifyLibCallsPass();
   llvm::createArgumentPromotionPass();

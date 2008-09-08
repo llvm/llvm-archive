@@ -150,17 +150,11 @@ $ ../llvm-gcc4-x.y.source/configure --prefix=`pwd`/../install --program-prefix=l
     --enable-llvm=$LLVMOBJDIR --enable-languages=c,c++$EXTRALANGS $TARGETOPTIONS
 $ make $BUILDOPTIONS
 $ make install
-
-//===-----------------------
-Darwin/Mac OS X Specific part:
-
 $ ln -sf /usr/lib/libstdc++.6.dylib `pwd`/../install/lib
 $ ln -sf /usr/lib/libstdc++.6.dylib `pwd`/../install/lib/libstdc++.dylib
 
 That last step, "ln -sf ..." is required so that the linker (collect2) can find
 libstdc++ ('-lstdc++') and subsequently link C++ executables correctly.
-
-//===-----------------------
 
 Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc 
 executables have been compiled with llvm-gcc itself), replace "make" with

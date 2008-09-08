@@ -57,10 +57,7 @@ you are probably hitting http://llvm.org/PR896.  Please reconfigure with the
 //===-----------------------
 X86-64/AMD-64/EM64-T for any OS other than Darwin/Mac OS X:
 
-When targeting non-darwin X86-64/AMD-64/EM64-T, configure with
---disable-shared.  The LLVM X86-64 backend doesn't support PIC codegen on
-non-darwin systems yet.  If you get a build error, try configuring with
---disable-multilib.
+If you get a build error, try configuring with --disable-multilib.
 
 
 //===-----------------------

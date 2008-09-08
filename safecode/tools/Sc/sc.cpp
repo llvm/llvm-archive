@@ -60,6 +60,9 @@ static cl::opt<bool>
 EnableFastCallChecks("enable-fastcallchecks", cl::init(false),
                      cl::desc("Enable fast indirect call checks"));
 
+static cl::opt<bool>
+DisableMonotonicLoopOpt("disable-monotonic-loop-opt", cl::init(false), cl::desc("Disable optimization for checking monotonic loops"));
+
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -140,7 +143,8 @@ int main(int argc, char **argv) {
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());
 
-	Passes.add(new MonotonicLoopOpt());
+    if (!DisableMonotonicLoopOpt)
+     	Passes.add(new MonotonicLoopOpt());
 
     // Verify the final result
     Passes.add(createVerifierPass());

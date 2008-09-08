@@ -46,19 +46,20 @@ namespace {
     const int id; 
     const std::string name;
     // The operand position in the checking function, 0 means not applicable
+    const int argPoolHandlePos;
     const int argSrcPtrPos;
     const int argDestPtrPos;
-    explicit checkFunctionInfo(int id, const char * name, int argSrcPtrPos, int argDestPtrPos) :
-      id(id), name(name), argSrcPtrPos(argSrcPtrPos), argDestPtrPos(argDestPtrPos) {}
+    explicit checkFunctionInfo(int id, const char * name, int argPoolHandlePos, int argSrcPtrPos, int argDestPtrPos) :
+      id(id), name(name), argPoolHandlePos(argPoolHandlePos), argSrcPtrPos(argSrcPtrPos), argDestPtrPos(argDestPtrPos) {}
   };
   
   static const checkFunctionInfo checkFunctions[] = {
-    checkFunctionInfo(CHECK_FUNC_POOLCHECK, "poolcheck", 0, 2),
-    checkFunctionInfo(CHECK_FUNC_POOLCHECKUI, "poolcheckui", 0, 2),
-    checkFunctionInfo(CHECK_FUNC_EXACTCHECK, "exactcheck", 0, 3),
-    checkFunctionInfo(CHECK_FUNC_EXACTCHECK2, "exactcheck2", 1, 2),
-    checkFunctionInfo(CHECK_FUNC_BOUNDSCHECK, "boundscheck", 2, 3),
-    checkFunctionInfo(CHECK_FUNC_BOUNDSCHECKUI, "boundscheckui", 2, 3)
+    checkFunctionInfo(CHECK_FUNC_POOLCHECK,     "poolcheck",     1, 0, 2),
+    checkFunctionInfo(CHECK_FUNC_POOLCHECKUI,   "poolcheckui",   1, 0, 2),
+    checkFunctionInfo(CHECK_FUNC_EXACTCHECK,    "exactcheck",    0, 0, 3),
+    checkFunctionInfo(CHECK_FUNC_EXACTCHECK2,   "exactcheck2",   0, 1, 2),
+    checkFunctionInfo(CHECK_FUNC_BOUNDSCHECK,   "boundscheck",   0, 2, 3),
+    checkFunctionInfo(CHECK_FUNC_BOUNDSCHECKUI, "boundscheckui", 0, 2, 3)
   };
 
   typedef std::map<std::string, int> checkFuncMapType;
@@ -220,12 +221,19 @@ namespace llvm {
     const checkFunctionInfo & info = checkFunctions[checkFunctionId];
 
     if (info.argSrcPtrPos) {
-      // Move the srcPtr out if necessary
+      // Copy the srcPtr if necessary
       CastInst * newSrcPtr =
         CastInst::createPointerCast(origGEP->getPointerOperand(),
         PointerType::getUnqual(Type::Int8Ty), origGEP->getName() + ".casted",
         newGEP);
       checkInst->setOperand(info.argSrcPtrPos, newSrcPtr);
+    }
+    
+	if (info.argPoolHandlePos) {
+      // Copy the pool handle if necessary
+      Instruction * newPH = cast<Instruction>(checkInst->getOperand(1))->clone();
+	  newPH->insertBefore(ptIns);
+      checkInst->setOperand(info.argPoolHandlePos, newPH);
     }
     
     checkInst->setOperand(info.argDestPtrPos, castedNewGEP);
@@ -282,7 +290,9 @@ namespace llvm {
             CallInst * callInst = dyn_cast<CallInst>(it);
             if (!callInst) continue;
 
-            checkFuncMapType::iterator it = checkFuncMap.find(callInst->getCalledFunction()->getName());
+			Function * F = callInst->getCalledFunction();
+			if (!F) continue;
+            checkFuncMapType::iterator it = checkFuncMap.find(F->getName());
 
             if (it == checkFuncMap.end()) continue;
 

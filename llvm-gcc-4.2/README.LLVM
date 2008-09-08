@@ -58,7 +58,7 @@ you are probably hitting http://llvm.org/PR896.  Please reconfigure with the
 X86-64/AMD-64/EM64-T for any OS other than Darwin/Mac OS X:
 
 If you want to build multilib-enabled llvm-gcc (so, it will be able to generate
-32 and 64 bit executables) you need to consider you system default lib directory
+32 and 64 bit executables) you need to consider your system default lib directory
 layout. 
 
 Usually, your system uses one of these layouts:
@@ -92,7 +92,7 @@ Note, that usually you don't notice such patching with your native gcc, since
 it's done automatically by your favourite system package manager. Maybe we'll
 add some layout detection routine in the future.
 
-If you want just pure 64 bit compiler, configure with with --disable-multilib.
+If you want just pure 64 bit compiler, configure with --disable-multilib.
 
 //===-----------------------
 Darwin/Mac OS X Instructions:

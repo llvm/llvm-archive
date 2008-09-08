@@ -5273,9 +5273,10 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
 
   int cfa_offset = ARG_POINTER_CFA_OFFSET(exp);
 
+  // FIXME: is i32 always enough here?
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                      Intrinsic::eh_dwarf_cfa),
-                              ConstantInt::get(Type::Int32Ty, cfa_offset));
+							Intrinsic::eh_dwarf_cfa),
+			      ConstantInt::get(Type::Int32Ty, cfa_offset));
 
   return true;
 }
@@ -5324,17 +5325,21 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   if (!validate_arglist(arglist, INTEGER_TYPE, POINTER_TYPE, VOID_TYPE))
     return false;
 
+  const Type *IntPtr = TD.getIntPtrType();
   Value *Offset = Emit(TREE_VALUE(arglist), 0);
   Value *Handler = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
-  Offset = Builder.CreateIntCast(Offset, Type::Int32Ty, true);
+
+  Intrinsic::ID IID = (IntPtr == Type::Int32Ty ?
+		       Intrinsic::eh_return_i32 : Intrinsic::eh_return_i64);
+
+  Offset = Builder.CreateIntCast(Offset, IntPtr, true);
   Handler = BitCastToType(Handler, PointerType::getUnqual(Type::Int8Ty));
 
   SmallVector<Value *, 2> Args;
   Args.push_back(Offset);
   Args.push_back(Handler);
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                               Intrinsic::eh_return),
-                     Args.begin(), Args.end());
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
+		     Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
   EmitBlock(BasicBlock::Create(""));
 

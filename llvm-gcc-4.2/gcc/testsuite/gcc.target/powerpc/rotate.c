@@ -1,3 +1,5 @@
+/* LLVM LOCAL */
+/* { dg-do compile } */
 /* { dg-options "-O2" } */
 /* { dg-final { scan-assembler-not "slwi" } } */
 unsigned int foo (unsigned int x)

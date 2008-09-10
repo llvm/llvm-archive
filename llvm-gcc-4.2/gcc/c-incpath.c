@@ -33,6 +33,9 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL headermaps 3871393 */ 
 #include "errors.h"
 
+/* LLVM LOCAL fix MacOSX 10.5 SDK */
+extern char * mempcpy (char *dst, const char *src, size_t len);
+
 /* Windows does not natively support inodes, and neither does MSDOS.
    Cygwin's emulation can generate non-unique inodes, so don't use it.
    VMS has non-numeric inodes.  */
@@ -131,6 +134,8 @@ add_standard_paths (const char *sysroot, const char *iprefix,
 {
   const struct default_include *p;
   size_t len;
+  /* LLVM LOCAL begin fix MacOSX 10.5 SDK */
+  bool SDK10_5 = false;
 
   if (iprefix && (len = cpp_GCC_INCLUDE_DIR_len) != 0)
     {
@@ -157,6 +162,9 @@ add_standard_paths (const char *sysroot, const char *iprefix,
 	}
     }
 
+  /* LLVM LOCAL begin fix MacOSX 10.5 SDK */
+  if (sysroot && strstr(sysroot, "MacOSX10.5.sdk") != NULL) 
+    SDK10_5 = true;
   for (p = cpp_include_defaults; p->fname; p++)
     {
       if (!p->cplusplus || cxx_stdinc)
@@ -164,8 +172,32 @@ add_standard_paths (const char *sysroot, const char *iprefix,
 	  char *str;
 
 	  /* Should this directory start with the sysroot?  */
-	  if (sysroot && p->add_sysroot)
-	    str = concat (sysroot, p->fname, NULL);
+	  if (sysroot && p->add_sysroot) {
+            if (SDK10_5) {
+              char *d = strstr(p->fname, "apple-darwin");
+              if (d) {
+                /* Released 10.5 SDK uses header paths that include OS version
+                   number, for example 9 in 
+                   .../MacOSX10.5.sdk/.../lib/gcc/i686-apple-darwin9/4.2.1/include
+                   However the 9 is constructed based on the host OS version on
+                   which the compiler is built. This means, the compiler will
+                   not be able to use 10.5 SDK unless it is built on 10.5 system.
+                   Fix header path here to make it work.
+
+                   The p->fname includes "apple-darwinXYZ/" substring. Replace
+                   this substring with "apple-darwin9/". */
+                char *str1;
+                str = XNEWVEC(char, strlen(sysroot) + strlen(p->fname) + 2);
+                str1 = mempcpy(str, sysroot, strlen(sysroot));
+                str1 = mempcpy(str1, p->fname, d - p->fname);
+                str1 = mempcpy(str1, "apple-darwin9", strlen("apple-darwin9"));
+                d = strchr(d, '/');
+                str1 = mempcpy(str1, d, strlen(d));
+              } else
+                str = concat (sysroot, p->fname, NULL);
+            } else
+              str = concat (sysroot, p->fname, NULL);
+          }
 	  else
 	    str = update_path (p->fname, p->component);
 
@@ -175,6 +207,7 @@ add_standard_paths (const char *sysroot, const char *iprefix,
 	  add_path (str, SYSTEM, p->cxx_aware, false);
 	}
     }
+  /* LLVM LOCAL end fix MacOSX 10.5 SDK */
 }
 
 

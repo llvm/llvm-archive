@@ -562,8 +562,9 @@ if [ "x$LLVM_DEBUG" != "x1" ]; then
         | xargs strip || exit 1
     # APPLE LOCAL begin LLVM - Strip with -Sx instead of -SX
     find $DEST_DIR \( -name \*.a -or -name \*.dylib \) \
-        \! -name libgcc_s.10.*.dylib -type f -print \
-        | xargs strip -SX || exit 1
+        \! -name libgcc_s.10.*.dylib \! -name libstdc++.dylib -type f \
+	-print \
+       	| xargs strip -SX || exit 1
     # APPLE LOCAL end LLVM - Strip with -Sx instead of -SX
     find $DEST_DIR -name \*.a -type f -print \
         | xargs ranlib || exit 1

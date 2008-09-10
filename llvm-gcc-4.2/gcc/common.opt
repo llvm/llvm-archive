@@ -225,6 +225,13 @@ emit-llvm-bc
 Common Report Var(emit_llvm_bc)
 Emit LLVM IR to the output file instead of native machine code.
 
+; Calculate log, log2, log10, exp, exp2, pow(10,x) to a limited precision for
+; single-precision floating-point numbers.
+flimited-precision=
+Common RejectNegative Joined UInteger Var(flag_limited_precision) Init(0)
+Calculate the approximate value of logf, log2f, log10f, expf, exp2f, and
+powf(10,x) to the given bit precision.
+
 ; Debug pass manager
 fdebug-pass-structure
 Common Report Var(flag_debug_pass_structure)

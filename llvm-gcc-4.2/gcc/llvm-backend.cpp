@@ -159,6 +159,19 @@ void llvm_initialize_backend(void) {
   // directly from the command line, do so now.  This is mainly for debugging
   // purposes, and shouldn't really be for general use.
   std::vector<std::string> ArgStrings;
+
+  if (flag_limited_precision > 0) {
+    if (flag_limited_precision != 6 &&
+        flag_limited_precision != 12 &&
+        flag_limited_precision != 18) {
+      error ("only 6-, 12-, and 18-bit limited precision values supported.");
+    }
+
+    std::string Arg = "--limit-float-precision=";
+    Arg += utostr(flag_limited_precision);
+    ArgStrings.push_back(Arg);
+  }
+
   if (llvm_optns) {
     std::string Opts = llvm_optns;
     for (std::string Opt = getToken(Opts); !Opt.empty(); Opt = getToken(Opts))

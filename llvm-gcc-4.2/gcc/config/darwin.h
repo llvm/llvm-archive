@@ -1555,4 +1555,9 @@ extern void darwin_default_min_version (int * argc, char *** argv,
 #endif /* CROSS_DIRECTORY_STRUCTURE */
 /* APPLE LOCAL end mainline 2007-06-14 5235474 */
 
+/* LLVM LOCAL begin sysroot */
+char *darwin_build_sysroot_path(const char *sysroot, const char *path);
+#undef TARGET_BUILD_SYSROOT_PATH
+#define TARGET_BUILD_SYSROOT_PATH(S,P) darwin_build_sysroot_path((S), (P))
+/* LLVM LOCAL end sysroot */
 #endif /* CONFIG_DARWIN_H */

@@ -1534,6 +1534,46 @@ machopic_select_section (tree exp, int reloc,
 }
 
 /* LLVM LOCAL begin */
+extern char * mempcpy (char *dst, const char *src, size_t len);
+char *darwin_build_sysroot_path(const char *sysroot, const char *path) {
+  char *str = NULL;
+  char *str1 = NULL;
+  char *darwin = NULL;
+#ifndef ENABLE_LLVM
+  return concat (sysroot, path, NULL);
+#endif
+
+  /* FIXME : When time is appropriate, handle other sdks.  */
+  if (sysroot && strstr(sysroot, "MacOSX10.5.sdk") == NULL)
+    return concat (sysroot, path, NULL);
+
+  /* libstdc++ headers are fixed magically through sym link jungle.  */
+  if (strstr(path, "c++") != NULL)
+    return concat (sysroot, path, NULL);
+
+  darwin = strstr(path, "apple-darwin");
+  if (!darwin)
+    return concat (sysroot, path, NULL);
+
+  /* Released 10.5 SDK uses header paths that include OS version
+     number, for example 9 in 
+     .../MacOSX10.5.sdk/.../lib/gcc/i686-apple-darwin9/4.2.1/include
+     However the 9 is constructed based on the host OS version on
+     which the compiler is built. This means, the compiler will
+     not be able to use 10.5 SDK unless it is built on 10.5 system.
+     Fix header path here to make it work.
+     
+     Path includes "apple-darwinXYZ/" substring. Replace
+     this substring with "apple-darwin9/". */
+  str = XNEWVEC(char, strlen(sysroot) + strlen(path) + 2);
+  str1 = mempcpy(str, sysroot, strlen(sysroot));
+  str1 = mempcpy(str1, path, darwin - path);
+  str1 = mempcpy(str1, "apple-darwin9", strlen("apple-darwin9"));
+  darwin = strchr(darwin, '/');
+  str1 = mempcpy(str1, darwin, strlen(darwin));
+  return str;
+}
+
 #ifdef ENABLE_LLVM
 const char *darwin_objc_llvm_special_name_section(const char* name) {
   if (!strncmp (name, "CLASS_METHODS_", 14))

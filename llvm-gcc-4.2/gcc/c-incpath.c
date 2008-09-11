@@ -127,7 +127,8 @@ add_env_var_paths (const char *env_var, int chain)
 }
 
 /* LLVM LOCAL begin sysroot */
-static char *
+char *default_build_sysroot_path(const char *sysroot, const char *path);
+char *
 default_build_sysroot_path(const char *sysroot, const char *path) {
   return concat (sysroot, path, NULL);
 }

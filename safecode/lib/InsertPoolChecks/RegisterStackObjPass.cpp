@@ -42,7 +42,6 @@ namespace llvm {
     paPass = &getAnalysis<PoolAllocateGroup>();
     dsnPass = &getAnalysis<DSNodePass>();
 	DT = &getAnalysis<DominatorTree>();
-	DF = &getAnalysis<DominanceFrontier>();
     for (Function::iterator BI = F.begin(); BI != F.end(); ++BI) {
     for (BasicBlock::iterator I = BI->begin(); I != BI->end(); ++I) {
 	  DomTreeNode * DTN = DT->getNode(BI);
@@ -242,9 +241,9 @@ RegisterStackObjPass::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig, Dom
   args.push_back (CastedPH);
   args.push_back (Casted);
 
-  const DominanceFrontier::DomSetType & frontierSet = DF->calculate(*DT, DTN);
-  for (DominanceFrontier::DomSetType::const_iterator BB = frontierSet.begin(), E = frontierSet.end(); BB != E; ++BB) { 
-    iptI = (*BB)->getTerminator();
+  const std::vector<DomTreeNode*> &children = DTN->getChildren();
+  for (unsigned int i = 0; i < children.size(); ++i) { 
+    iptI = children[i]->getBlock()->getTerminator();
     if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
       CallInst::Create (StackFree, args.begin(), args.end(), "", iptI);
   }

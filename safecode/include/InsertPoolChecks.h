@@ -1,4 +1,4 @@
-#ifndef INSERT_BOUNDS_H
+
 #define INSERT_BOUNDS_H
 
 #include "llvm/Instructions.h"
@@ -187,7 +187,6 @@ struct RegisterStackObjPass : public FunctionPass {
       AU.addRequiredTransitive<PoolAllocateGroup>();
       AU.addRequired<DSNodePass>();
   	  AU.addRequired<DominatorTree>();
-  	  AU.addRequired<DominanceFrontier>();
       AU.addRequired<TargetData>();
 	  AU.setPreservesAll();
     };
@@ -196,9 +195,7 @@ struct RegisterStackObjPass : public FunctionPass {
     PoolAllocateGroup * paPass;
     TargetData * TD;
     DSNodePass * dsnPass;
-	DominanceFrontier * DF;
 	DominatorTree * DT;
     void registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig, DomTreeNode * DTN);
  };
 }
-#endif

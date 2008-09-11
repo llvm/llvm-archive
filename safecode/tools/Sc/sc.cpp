@@ -138,12 +138,16 @@ int main(int argc, char **argv) {
 #endif
     Passes.add(new ABCPreProcess());
     Passes.add(new EmbeCFreeRemoval());
+    Passes.add(new PreInsertPoolChecks());
     Passes.add(new InsertPoolChecks());
+	Passes.add(new RegisterStackObjPass());
     Passes.add(new MallocPass());
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());
+	
 
-    if (!DisableMonotonicLoopOpt)
+    Passes.add(createLICMPass());
+	if (!DisableMonotonicLoopOpt)
      	Passes.add(new MonotonicLoopOpt());
 
     // Verify the final result

@@ -11,12 +11,10 @@
 #include "llvm/Support/Debug.h"
 #include "VectorListHelper.h"
 
-#define REG_FUNC(var, ret, name, func_args...)do { var = M.getOrInsertFunction(name, FunctionType::get(ret, args<const Type*>::list(func_args), false)); } while (0);
+#define REG_FUNC(var, ret, name, ...)do { var = M.getOrInsertFunction(name, FunctionType::get(ret, args<const Type*>::list(__VA_ARGS__), false)); } while (0);
 
 char llvm::InsertPoolChecks::ID = 0;
-char llvm::PreInsertPoolChecks::ID = 0;
 
-static llvm::RegisterPass<PreInsertPoolChecks> pipcPass ("presafecode", "prepare for SAFECode");
 static llvm::RegisterPass<InsertPoolChecks> ipcPass ("safecode", "insert runtime checks");
 
 // Options for Enabling/Disabling the Insertion of Various Checks
@@ -70,18 +68,7 @@ namespace {
   STATISTIC (MissedGlobalChecks , "Missed global checks");
   STATISTIC (MissedNullChecks   , "Missed PD checks");
 #endif
-  // Object registration statistics
-  STATISTIC (StackRegisters,      "Stack registrations");
-  STATISTIC (SavedRegAllocs,      "Stack registrations avoided");
-  STATISTIC (SavedGlobals,        "Global object registrations avoided");
-
-  // Set of checked DSNodes
-  std::set<DSNode *> CheckedDSNodes;
-
-  // The set of values that already have run-time checks
-  std::set<Value *> CheckedValues;
 }
-
 
 namespace llvm {
 ////////////////////////////////////////////////////////////////////////////
@@ -91,6 +78,25 @@ namespace llvm {
 ////////////////////////////////////////////////////////////////////////////
 // Static Functions
 ////////////////////////////////////////////////////////////////////////////
+
+//
+// Function: getNextInst()
+//
+// Description:
+//  Get the next instruction following this instruction.
+//
+// Return value:
+//  0 - There is no instruction after this instruction in the Basic Block.
+//  Otherwise, a pointer to the next instruction is returned.
+//
+static Instruction *
+getNextInst (Instruction * Inst) {
+  BasicBlock::iterator i(Inst);
+  ++i;
+  if ((i) == Inst->getParent()->getInstList().end())
+    return 0;
+  return i;
+}
 
 //
 // Function: isEligableForExactCheck()
@@ -215,7 +221,7 @@ InsertPoolChecks::addExactCheck (Value * Pointer,
   //
   // Record that this value was checked.
   //
-  CheckedValues.insert (Pointer);
+  dsnPass->CheckedValues.insert (Pointer);
 
   //
   // Attempt to determine statically if this check will always pass; if so,
@@ -327,7 +333,7 @@ InsertPoolChecks::addExactCheck2 (Value * BasePointer,
   //
   // Record that this value was checked.
   //
-  CheckedValues.insert (Result);
+  dsnPass->CheckedValues.insert (Result);
 
 #if 0
   //
@@ -369,7 +375,7 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   // Get the DSNode for the instruction
   //
   Function *F   = GEP->getParent()->getParent();
-  DSNode * Node = getDSNode(GEP, F);
+  DSNode * Node = dsnPass->getDSNode(GEP, F);
   assert (Node && "boundscheck: DSNode is NULL!");
 
 #if 0
@@ -576,7 +582,7 @@ InsertPoolChecks::insertExactCheck (Instruction * I,
   //
 #if 1
   Function *F   = I->getParent()->getParent();
-  DSGraph & TDG = getDSGraph(*F);
+  DSGraph & TDG = dsnPass->getDSGraph(*F);
   DSNode * Node = TDG.getNodeForValue(I).getNode();
   if (!Node)
     return false;
@@ -686,7 +692,6 @@ void InsertPoolChecks::addCheckProto(Module &M) {
   FunctionType *FunctionCheckTy = FunctionType::get(Type::VoidTy, FArg3, true);
   FunctionCheck = M.getOrInsertFunction("funccheck", FunctionCheckTy);
   REG_FUNC (GetActualValue,   vpTy,   "pchk_getActualValue",vpTy, vpTy)
-  REG_FUNC (StackFree,        vpTy,   "poolunregister",     vpTy, vpTy)
   
   // Special cases for var args
 
@@ -700,409 +705,25 @@ void InsertPoolChecks::addCheckProto(Module &M) {
 
   bool
   InsertPoolChecks::runOnFunction(Function &F) {
-    pipc = &getAnalysis<PreInsertPoolChecks>();
     abcPass = &getAnalysis<ArrayBoundsCheck>();
 #ifndef LLVA_KERNEL  
-  paPass = getAnalysisToUpdate<PoolAllocateGroup>();
+  paPass = &getAnalysis<PoolAllocateGroup>();
+  // paPass = getAnalysisToUpdate<PoolAllocateGroup>();
   assert (paPass && "Pool Allocation Transform *must* be run first!");
-    efPass = &getAnalysis<EmbeCFreeRemoval>();
     TD  = &getAnalysis<TargetData>();
 #endif
+    dsnPass = &getAnalysis<DSNodePass>();
     addPoolChecks(F);
     return true;
 }
 
 bool InsertPoolChecks::doFinalization(Module &M) {
-	// Add stack registrations
-	registerStackObjects (M);
 	//
 	// Update the statistics.
 	//
 	PoolChecks = NullChecks + FullChecks;
 	return true;
   }
-  
-bool 
-PreInsertPoolChecks::runOnModule(Module & M) {
-  RuntimeInit = M.getOrInsertFunction("pool_init_runtime", Type::VoidTy, 
-      Type::Int32Ty, NULL); 
-#ifndef LLVA_KERNEL  
-  paPass = getAnalysisToUpdate<PoolAllocateGroup>();
-  assert (paPass && "Pool Allocation Transform *must* be run first!");
-    efPass = getAnalysisToUpdate<EmbeCFreeRemoval>();
-    TD  = getAnalysisToUpdate<TargetData>();
-  // Register global arrays and collapsed nodes with global pools
-  registerGlobalArraysWithGlobalPools(M);
-#endif
-  return true;
-}
-
-#ifndef LLVA_KERNEL
-void
-PreInsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
-  //
-  // Find the main() function.  For FORTRAN programs converted to C using the
-  // NAG f2c tool, the function is named MAIN__.
-  //
-  Function *MainFunc = M.getFunction("main");
-  if (MainFunc == 0 || MainFunc->isDeclaration()) {
-    MainFunc = M.getFunction("MAIN__");
-    if (MainFunc == 0 || MainFunc->isDeclaration()) {
-      std::cerr << "Cannot do array bounds check for this program"
-          << "no 'main' function yet!\n";
-      abort();
-    }
-  }
-
-  // First register, argc and argv
-  Function::arg_iterator AI = MainFunc->arg_begin(), AE = MainFunc->arg_end();
-  if (AI != AE) {
-    //There is argc and argv
-    Value *Argc = AI;
-    AI++;
-    Value *Argv = AI;
-    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*MainFunc);
-    Value *PH= getPoolHandle(Argv, MainFunc, *FI);
-    Constant *PoolRegister = paPass->PoolRegister;
-    BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-
-    // Insert the registration after all calls to poolinit().  Also skip
-    // cast, alloca, and binary operators.
-    while ((isa<CallInst>(InsertPt))  ||
-            isa<CastInst>(InsertPt)   ||
-            isa<AllocaInst>(InsertPt) ||
-            isa<BinaryOperator>(InsertPt)) {
-      if (CallInst * CI = dyn_cast<CallInst>(InsertPt))
-        if (Function * F = CI->getCalledFunction())
-          if (F->getName() == "poolinit")
-            ++InsertPt;
-          else
-            break;
-        else
-          break;
-      else
-        ++InsertPt;
-    }
-
-    if (PH) {
-      Type *VoidPtrType = PointerType::getUnqual(Type::Int8Ty); 
-      Instruction *GVCasted = CastInst::createPointerCast(Argv,
-					   VoidPtrType, Argv->getName()+"casted",InsertPt);
-      const Type* csiType = Type::Int32Ty;
-      Value *AllocSize = CastInst::createZExtOrBitCast(Argc,
-				      csiType, Argc->getName()+"casted",InsertPt);
-      AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
-					 ConstantInt::get(csiType, 4), "sizetmp", InsertPt);
-      std::vector<Value *> args;
-      args.push_back (PH);
-      args.push_back (GVCasted);
-      args.push_back (AllocSize);
-      CallInst::Create(PoolRegister, args.begin(), args.end(), "", InsertPt); 
-    } else {
-      std::cerr << "argv's pool descriptor is not present. \n";
-      //	abort();
-    }
-  }
-
-  // Now iterate over globals and register all the arrays
-  Type *VoidPtrType = PointerType::getUnqual(Type::Int8Ty); 
-  Type *PoolDescType = ArrayType::get(VoidPtrType, 50);
-  Type *PoolDescPtrTy = PointerType::getUnqual(PoolDescType);
-
-  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
-  for ( ; GI != GE; ++GI) {
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(GI)) {
-      // Don't register the llvm.used variable
-      if (GV->getName() == "llvm.used") continue;
-      if (GV->getType() != PoolDescPtrTy) {
-        DSGraph &G = paPass->getGlobalsGraph();
-        DSNode *DSN  = G.getNodeForValue(GV).getNode();
-
-        // Skip it if there is never a run-time check
-        if (CheckedDSNodes.find(DSN) == CheckedDSNodes.end()) {
-          ++SavedGlobals;
-          continue;
-        }
-
-        Value * AllocSize;
-        const Type* csiType = Type::Int32Ty;
-        const Type * GlobalType = GV->getType()->getElementType();
-        AllocSize = ConstantInt::get (csiType, TD->getABITypeSize(GlobalType));
-        Constant *PoolRegister = paPass->PoolRegister;
-        BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-        //skip the calls to poolinit
-        while ((isa<CallInst>(InsertPt))  ||
-                isa<CastInst>(InsertPt)   ||
-                isa<AllocaInst>(InsertPt) ||
-                isa<BinaryOperator>(InsertPt)) {
-          if (CallInst * CI = dyn_cast<CallInst>(InsertPt))
-            if (Function * F = CI->getCalledFunction())
-              if (F->getName() == "poolinit")
-                ++InsertPt;
-              else
-                break;
-            else
-              break;
-          else
-            ++InsertPt;
-        }
-
-        Value * PH = paPass->getGlobalPool (DSN);
-        if (PH) {
-          Instruction *GVCasted = CastInst::createPointerCast(GV,
-                 VoidPtrType, GV->getName()+"casted",InsertPt);
-          std::vector<Value *> args;
-          args.push_back (PH);
-          args.push_back (GVCasted);
-          args.push_back (AllocSize);
-          CallInst::Create(PoolRegister, args.begin(), args.end(), "", InsertPt); 
-        } else {
-          std::cerr << "pool descriptor not present for " << *GV << std::endl;
-    #if 0
-          abort();
-    #endif
-        }
-      }
-    }
-  }
-
-  //
-  // Initialize the runtime.
-  //
-  BasicBlock::iterator InsertPt = MainFunc->getEntryBlock().begin();
-
-  // Insert the registration after all calls to poolinit().  Also skip
-  // cast, alloca, and binary operators.
-  while ((isa<CallInst>(InsertPt))  ||
-          isa<CastInst>(InsertPt)   ||
-          isa<AllocaInst>(InsertPt) ||
-          isa<BinaryOperator>(InsertPt)) {
-    if (CallInst * CI = dyn_cast<CallInst>(InsertPt))
-      if (Function * F = CI->getCalledFunction())
-        if (F->getName() == "poolinit")
-          ++InsertPt;
-        else
-          break;
-      else
-        break;
-    else
-      ++InsertPt;
-  }
-
-  std::vector<Value *> args;
-  args.push_back (ConstantInt::get(Type::Int32Ty,DanglingChecks,0));
-  CallInst::Create(RuntimeInit, args.begin(), args.end(), "", InsertPt); 
-}
-#endif
-
-void
-InsertPoolChecks::registerStackObjects (Module &M) {
-  for (Module::iterator FI = M.begin(); FI != M.end(); ++FI)
-    for (Function::iterator BI = FI->begin(); BI != FI->end(); ++BI)
-      for (BasicBlock::iterator I = BI->begin(); I != BI->end(); ++I)
-        if (AllocaInst * AI = dyn_cast<AllocaInst>(I)) {
-          registerAllocaInst (AI, AI);
-        }
-}
-
-void
-InsertPoolChecks::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig) {
-  //
-  // Get the function information for this function.
-  //
-  Function *F = AI->getParent()->getParent();
-  PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-  Value *temp = FI->MapValueToOriginal(AI);
-  if (temp)
-    AIOrig = dyn_cast<AllocaInst>(temp);
-
-  //
-  // Get the pool handle for the node that this contributes to...
-  //
-  Function *FOrig  = AIOrig->getParent()->getParent();
-  DSNode *Node = getDSNode(AIOrig, FOrig);
-  if (!Node) return;
-  assert ((Node->isAllocaNode()) && "DSNode for alloca is missing stack flag!");
-
-  //
-  // Only register the stack allocation if it may be the subject of a run-time
-  // check.  This can only occur when the object is used like an array because:
-  //  1) GEP checks are only done when accessing arrays.
-  //  2) Load/Store checks are only done on collapsed nodes (which appear to be
-  //     used like arrays).
-  //
-#if 0
-  if (!(Node->isArray()))
-    return;
-#endif
-
-  //
-  // Determine if we have ever done a check on this alloca or a pointer
-  // aliasing this alloca.  If not, then we can forego the check (even if we
-  // can't trace through all the data flow).
-  //
-  if (CheckedDSNodes.find(Node) == CheckedDSNodes.end()) {
-    ++SavedRegAllocs;
-    return;
-  }
-
-  //
-  // Determine if any use (direct or indirect) escapes this function.  If not,
-  // then none of the checks will consult the MetaPool, and we can forego
-  // registering the alloca.
-  //
-  bool MustRegisterAlloca = false;
-  std::vector<Value *> AllocaWorkList;
-  AllocaWorkList.push_back (AI);
-  while ((!MustRegisterAlloca) && (AllocaWorkList.size())) {
-    Value * V = AllocaWorkList.back();
-    AllocaWorkList.pop_back();
-    Value::use_iterator UI = V->use_begin();
-    for (; UI != V->use_end(); ++UI) {
-      // We cannot handle PHI nodes or Select instructions
-      if (isa<PHINode>(UI) || isa<SelectInst>(UI)) {
-        MustRegisterAlloca = true;
-        continue;
-      }
-
-      // The pointer escapes if it's stored to memory somewhere.
-      StoreInst * SI;
-      if ((SI = dyn_cast<StoreInst>(UI)) && (SI->getOperand(0) == V)) {
-        MustRegisterAlloca = true;
-        continue;
-      }
-
-      // GEP instructions are okay, but need to be added to the worklist
-      if (isa<GetElementPtrInst>(UI)) {
-        AllocaWorkList.push_back (*UI);
-        continue;
-      }
-
-      // Cast instructions are okay as long as they cast to another pointer
-      // type
-      if (CastInst * CI = dyn_cast<CastInst>(UI)) {
-        if (isa<PointerType>(CI->getType())) {
-          AllocaWorkList.push_back (*UI);
-          continue;
-        } else {
-          MustRegisterAlloca = true;
-          continue;
-        }
-      }
-
-#if 0
-      if (ConstantExpr *cExpr = dyn_cast<ConstantExpr>(UI)) {
-        if (cExpr->getOpcode() == Instruction::Cast) {
-          AllocaWorkList.push_back (*UI);
-          continue;
-        } else {
-          MustRegisterAlloca = true;
-          continue;
-        }
-      }
-#endif
-
-      CallInst * CI1;
-      if ((CI1 = dyn_cast<CallInst>(UI))) {
-        if (!(CI1->getCalledFunction())) {
-          MustRegisterAlloca = true;
-          continue;
-        }
-
-        std::string FuncName = CI1->getCalledFunction()->getName();
-        if (FuncName == "exactcheck3") {
-          AllocaWorkList.push_back (*UI);
-          continue;
-        } else if ((FuncName == "llvm.memcpy.i32")    || 
-                   (FuncName == "llvm.memcpy.i64")    ||
-                   (FuncName == "llvm.memset.i32")    ||
-                   (FuncName == "llvm.memset.i64")    ||
-                   (FuncName == "llvm.memmove.i32")   ||
-                   (FuncName == "llvm.memmove.i64")   ||
-                   (FuncName == "llva_memcpy")        ||
-                   (FuncName == "llva_memset")        ||
-                   (FuncName == "llva_strncpy")       ||
-                   (FuncName == "llva_invokememcpy")  ||
-                   (FuncName == "llva_invokestrncpy") ||
-                   (FuncName == "llva_invokememset")  ||
-                   (FuncName == "memcmp")) {
-           continue;
-        } else {
-          MustRegisterAlloca = true;
-          continue;
-        }
-      }
-    }
-  }
-
-  if (!MustRegisterAlloca) {
-    ++SavedRegAllocs;
-    return;
-  }
-
-  //
-  // Insert the alloca registration.
-  //
-  Value *PH = getPoolHandle(AIOrig, FOrig, *FI);
-  if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
-
-  Value *AllocSize =
-    ConstantInt::get(Type::Int32Ty, TD->getABITypeSize(AI->getAllocatedType()));
-  
-  if (AI->isArrayAllocation())
-    AllocSize = BinaryOperator::create(Instruction::Mul, AllocSize,
-                                       AI->getOperand(0), "sizetmp", AI);
-
-  // Insert object registration at the end of allocas.
-  Instruction *iptI = AI;
-  BasicBlock::iterator InsertPt = AI;
-  iptI = ++InsertPt;
-  if (AI->getParent() == (&(AI->getParent()->getParent()->getEntryBlock()))) {
-    InsertPt = AI->getParent()->begin();
-    while (&(*(InsertPt)) != AI)
-      ++InsertPt;
-    while (isa<AllocaInst>(InsertPt))
-      ++InsertPt;
-    iptI = InsertPt;
-  }
-
-  //
-  // Insert a call to register the object.
-  //
-  Instruction *Casted = castTo (AI, PointerType::getUnqual(Type::Int8Ty),
-                                AI->getName()+".casted", iptI);
-  Value * CastedPH = PH;
-  std::vector<Value *> args;
-  args.push_back (CastedPH);
-  args.push_back (Casted);
-  args.push_back (AllocSize);
-  Constant *PoolRegister = paPass->PoolRegister;
-  CallInst::Create (PoolRegister, args.begin(), args.end(), "", iptI);
-
-  //
-  // FIXME:
-  //  Need to change the code below to use the dominator (post-dominator?)
-  //  frontier to determine when we can deregister an object.
-  //
-  // Insert a call to unregister the object whenever the function can exit.
-  //
-  CastedPH     = castTo (PH,
-                         PointerType::getUnqual(Type::Int8Ty),
-                         "allocph",Casted);
-  args.clear();
-  args.push_back (CastedPH);
-  args.push_back (Casted);
-  for (Function::iterator BB = AI->getParent()->getParent()->begin();
-                          BB != AI->getParent()->getParent()->end();
-                          ++BB) {
-    iptI = BB->getTerminator();
-    if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
-      CallInst::Create (StackFree, args.begin(), args.end(), "", iptI);
-  }
-
-  // Update statistics
-  ++StackRegisters;
-}
 
 void InsertPoolChecks::addPoolChecks(Function &F) {
   if (!DisableGEPChecks) {
@@ -1139,11 +760,11 @@ InsertPoolChecks::addGetActualValue (ICmpInst *SCI, unsigned operand) {
   if (Argument *arg = dyn_cast<Argument>(op)) {
     Fnew = arg->getParent();
     PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*Fnew);
-    PH = getPoolHandle(op, Fnew, *FI);
+    PH = dsnPass->getPoolHandle(op, Fnew, *FI);
   } else if (Instruction *Inst = dyn_cast<Instruction>(op)) {
     Fnew = Inst->getParent()->getParent();
     PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*Fnew);
-    PH = getPoolHandle(op, Fnew, *FI);
+    PH = dsnPass->getPoolHandle(op, Fnew, *FI);
   } else if (isa<Constant>(op)) {
     return;
     //      abort();
@@ -1194,7 +815,7 @@ void InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
     // Get the pool handle associated with this pointer.  If there is no pool
     // handle, use a NULL pointer value and let the runtime deal with it.
     PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-    Value *PH = getPoolHandle(V, F, *FI);
+    Value *PH = dsnPass->getPoolHandle(V, F, *FI);
 #ifdef DEBUG
 std::cerr << "LLVA: addLSChecks: Pool " << PH << " Node " << Node << std::endl;
 #endif
@@ -1310,15 +931,15 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
                                Function *F) {
 
   PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-  Value *PH = getPoolHandle(V, F, *FI );
-  DSNode* Node = getDSNode(V, F);
+  Value *PH = dsnPass->getPoolHandle(V, F, *FI );
+  DSNode* Node = dsnPass->getDSNode(V, F);
   if (!PH) {
     return;
   }
 
   if (isa<ConstantPointerNull>(PH)) {
     //we have a collapsed/Unknown pool
-    Value *PH = getPoolHandle(V, F, *FI, true); 
+    Value *PH = dsnPass->getPoolHandle(V, F, *FI, true); 
 #if 0
     assert (PH && "Null pool handle!\n");
 #else
@@ -1378,7 +999,7 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
       //
       // If we've already checked this pointer, don't bother checking it again.
       //
-      if (CheckedValues.find (Vnew) != CheckedValues.end())
+      if (dsnPass->CheckedValues.find (Vnew) != dsnPass->CheckedValues.end())
         return;
 
       bool indexed = true;
@@ -1410,8 +1031,8 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
         std::vector<Value *> args(1,CastPHI);
         args.push_back(CastVI);
 
-        CheckedDSNodes.insert (Node);
-        CheckedValues.insert (Vnew);
+        dsnPass->CheckedDSNodes.insert (Node);
+        dsnPass->CheckedValues.insert (Vnew);
         if (Node->isIncompleteNode())
           CallInst::Create(PoolCheckUI,args.begin(), args.end(), "", I);
         else
@@ -1511,7 +1132,7 @@ InsertPoolChecks::addGetElementPtrChecks (BasicBlock * BB) {
         Value *Fop = CI->getOperand(0);
         Function *F = CI->getParent()->getParent();
         if (Fop->getName() == "llva_memcpy") {
-          Value *PH = getPoolHandle(CI->getOperand(1), F); 
+          Value *PH = dsnPass->getPoolHandle(CI->getOperand(1), F); 
           Instruction *InsertPt = CI;
           if (!PH) {
             ++NullChecks;
@@ -1616,7 +1237,7 @@ std::cerr << "Ins   : " << *GEP << std::endl;
     }
 #endif
     if (GetElementPtrInst *GEPNew = dyn_cast<GetElementPtrInst>(Casted)) {
-      Value *PH = getPoolHandle(GEP, F, *FI);
+      Value *PH = dsnPass->getPoolHandle(GEP, F, *FI);
       if (PH && isa<ConstantPointerNull>(PH)) continue;
       if (insertExactCheck (GEPNew)) continue;
       if (!PH) {
@@ -1718,9 +1339,9 @@ std::cerr << "Ins   : " << *GEP << std::endl;
         args.push_back(Casted);
 
         // Insert it
-        DSNode * Node = getDSNode (GEP, F);
-        CheckedDSNodes.insert (Node);
-        CheckedValues.insert (Casted);
+        DSNode * Node = dsnPass->getDSNode (GEP, F);
+        dsnPass->CheckedDSNodes.insert (Node);
+        dsnPass->CheckedValues.insert (Casted);
         if (Node->isIncompleteNode())
           CallInst::Create(PoolCheckArrayUI, args.begin(), args.end(),
                            "", InsertPt);
@@ -1734,7 +1355,7 @@ std::cerr << "Ins   : " << *GEP << std::endl;
     //
     // Get the pool handle associated with the pointer operand.
     //
-    Value *PH = getPoolHandle(GEP->getPointerOperand(), F);
+    Value *PH = dsnPass->getPoolHandle(GEP->getPointerOperand(), F);
     GetElementPtrInst *GEPNew = GEP;
     Instruction *Casted = GEP;
 
@@ -1885,281 +1506,6 @@ std::cerr << "Ins   : " << *GEP << std::endl;
     CallInst * newCI = CallInst::Create(PoolCheckArray,args, "",InsertPt);
 #endif    
   }
-}
-
-//
-// Method: getDSGraph()
-//
-// Description:
-//  Return the DSGraph for the given function.  This method automatically
-//  selects the correct pass to query for the graph based upon whether we're
-//  doing user-space or kernel analysis.
-//
-DSGraph &
-InsertPoolChecks::getDSGraph(Function & F) {
-#ifndef LLVA_KERNEL
-  return paPass->getDSGraph(F);
-#else  
-  return TDPass->getDSGraph(F);
-#endif  
-}
-
-#ifndef LLVA_KERNEL
-Value *
-InsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI,
-                                bool collapsed) {
-#if 1
-  //
-  // JTC:
-  //  If this function has a clone, then try to grab the original.
-  //
-  if (!(paPass->getFuncInfo(*F)))
-  {
-    F = paPass->getOrigFunctionFromClone(F);
-    assert (F && "No Function Information from Pool Allocation!\n");
-  }
-#endif
-
-  //
-  // Get the DSNode for the value.
-  //
-  const DSNode *Node = getDSNode(V,F);
-  if (!Node) {
-    std::cerr << "JTC: Value " << *V << " has no DSNode!" << std::endl;
-    return 0;
-  }
-
-  // Get the pool handle for this DSNode...
-  //  assert(!Node->isUnknownNode() && "Unknown node \n");
-  const Type *PoolDescType = paPass->getPoolType();
-  const Type *PoolDescPtrTy = PointerType::getUnqual(PoolDescType);
-  if (Node->isUnknownNode()) {
-    //
-    // FIXME:
-    //  This should be in a top down pass or propagated like collapsed pools
-    //  below .
-    //
-    if (!collapsed) {
-#if 0
-      assert(!getDSNodeOffset(V, F) && " we don't handle middle of structs yet\n");
-#else
-      if (getDSNodeOffset(V, F))
-        std::cerr << "ERROR: we don't handle middle of structs yet"
-                  << std::endl;
-#endif
-std::cerr << "JTC: PH: Null 1: " << *V << std::endl;
-      return Constant::getNullValue(PoolDescPtrTy);
-    }
-  }
-
-  Value * PH = paPass->getPool (Node, *F);
-  map <Function *, set<Value *> > &
-    CollapsedPoolPtrs = efPass->CollapsedPoolPtrs;
-  
-  if (PH) {
-    // Check that the node pointed to by V in the TD DS graph is not
-    // collapsed
-    
-    if (!collapsed && CollapsedPoolPtrs.count(F)) {
-      Value *v = PH;
-      if (CollapsedPoolPtrs[F].find(PH) != CollapsedPoolPtrs[F].end()) {
-#ifdef DEBUG
-        std::cerr << "Collapsed pools \n";
-#endif
-        return Constant::getNullValue(PoolDescPtrTy);
-      } else {
-        if (Argument * Arg = dyn_cast<Argument>(v))
-          if ((Arg->getParent()) != F)
-            return Constant::getNullValue(PoolDescPtrTy);
-        return v;
-      }
-    } else {
-      if (Argument * Arg = dyn_cast<Argument>(PH))
-        if ((Arg->getParent()) != F)
-          return Constant::getNullValue(PoolDescPtrTy);
-      return PH;
-    } 
-  }
-
-std::cerr << "JTC: Value " << *V << " not in PoolDescriptor List!" << std::endl;
-  return 0;
-}
-#else
-Value *InsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
-  DSGraph &TDG =  TDPass->getDSGraph(*F);
-  const DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
-  // Get the pool handle for this DSNode...
-  //  assert(!Node->isUnknownNode() && "Unknown node \n");
-  //  if (Node->isUnknownNode()) {
-  //    return 0;
-  //  }
-  if ((TDG.getPoolDescriptorsMap()).count(Node)) 
-    return (TDG.getPoolDescriptorsMap()[Node]->getMetaPoolValue());
-  return 0;
-}
-#endif
-
-DSNode* InsertPoolChecks::getDSNode (const Value *VOrig, Function *F) {
-#ifndef LLVA_KERNEL
-  //
-  // JTC:
-  //  If this function has a clone, then try to grab the original.
-  //
-  Value * Vnew = (Value *)(VOrig);
-  if (!(paPass->getFuncInfo(*F))) {
-    F = paPass->getOrigFunctionFromClone(F);
-    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-    if (!FI->NewToOldValueMap.empty()) {
-      Vnew = FI->MapValueToOriginal (Vnew);
-    }
-    assert (F && "No Function Information from Pool Allocation!\n");
-  }
-
-  const Value * V = (Vnew) ? Vnew : VOrig;
-  DSGraph &TDG = paPass->getDSGraph(*F);
-#else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
-#endif  
-  DSNode *DSN = TDG.getNodeForValue((Value *)V).getNode();
-  return DSN;
-}
-
-unsigned InsertPoolChecks::getDSNodeOffset(const Value *V, Function *F) {
-#ifndef LLVA_KERNEL
-  DSGraph &TDG = paPass->getDSGraph(*F);
-#else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
-#endif  
-  return TDG.getNodeForValue((Value *)V).getOffset();
-}
-
-#ifndef LLVA_KERNEL
-Value *
-PreInsertPoolChecks::getPoolHandle(const Value *V, Function *F, PA::FuncInfo &FI,
-                                bool collapsed) {
-#if 1
-  //
-  // JTC:
-  //  If this function has a clone, then try to grab the original.
-  //
-  if (!(paPass->getFuncInfo(*F)))
-  {
-    F = paPass->getOrigFunctionFromClone(F);
-    assert (F && "No Function Information from Pool Allocation!\n");
-  }
-#endif
-
-  //
-  // Get the DSNode for the value.
-  //
-  const DSNode *Node = getDSNode(V,F);
-  if (!Node) {
-    std::cerr << "JTC: Value " << *V << " has no DSNode!" << std::endl;
-    return 0;
-  }
-
-  // Get the pool handle for this DSNode...
-  //  assert(!Node->isUnknownNode() && "Unknown node \n");
-  const Type *PoolDescType = paPass->getPoolType();
-  const Type *PoolDescPtrTy = PointerType::getUnqual(PoolDescType);
-  if (Node->isUnknownNode()) {
-    //
-    // FIXME:
-    //  This should be in a top down pass or propagated like collapsed pools
-    //  below .
-    //
-    if (!collapsed) {
-#if 0
-      assert(!getDSNodeOffset(V, F) && " we don't handle middle of structs yet\n");
-#else
-      if (getDSNodeOffset(V, F))
-        std::cerr << "ERROR: we don't handle middle of structs yet"
-                  << std::endl;
-#endif
-std::cerr << "JTC: PH: Null 1: " << *V << std::endl;
-      return Constant::getNullValue(PoolDescPtrTy);
-    }
-  }
-
-  Value * PH = paPass->getPool (Node, *F);
-  map <Function *, set<Value *> > &
-    CollapsedPoolPtrs = efPass->CollapsedPoolPtrs;
-  
-  if (PH) {
-    // Check that the node pointed to by V in the TD DS graph is not
-    // collapsed
-    
-    if (!collapsed && CollapsedPoolPtrs.count(F)) {
-      Value *v = PH;
-      if (CollapsedPoolPtrs[F].find(PH) != CollapsedPoolPtrs[F].end()) {
-#ifdef DEBUG
-        std::cerr << "Collapsed pools \n";
-#endif
-        return Constant::getNullValue(PoolDescPtrTy);
-      } else {
-        if (Argument * Arg = dyn_cast<Argument>(v))
-          if ((Arg->getParent()) != F)
-            return Constant::getNullValue(PoolDescPtrTy);
-        return v;
-      }
-    } else {
-      if (Argument * Arg = dyn_cast<Argument>(PH))
-        if ((Arg->getParent()) != F)
-          return Constant::getNullValue(PoolDescPtrTy);
-      return PH;
-    } 
-  }
-
-std::cerr << "JTC: Value " << *V << " not in PoolDescriptor List!" << std::endl;
-  return 0;
-}
-#else
-Value *PreInsertPoolChecks::getPoolHandle(const Value *V, Function *F) {
-  DSGraph &TDG =  TDPass->getDSGraph(*F);
-  const DSNode *Node = TDG.getNodeForValue((Value *)V).getNode();
-  // Get the pool handle for this DSNode...
-  //  assert(!Node->isUnknownNode() && "Unknown node \n");
-  //  if (Node->isUnknownNode()) {
-  //    return 0;
-  //  }
-  if ((TDG.getPoolDescriptorsMap()).count(Node)) 
-    return (TDG.getPoolDescriptorsMap()[Node]->getMetaPoolValue());
-  return 0;
-}
-#endif
-
-DSNode* PreInsertPoolChecks::getDSNode (const Value *VOrig, Function *F) {
-#ifndef LLVA_KERNEL
-  //
-  // JTC:
-  //  If this function has a clone, then try to grab the original.
-  //
-  Value * Vnew = (Value *)(VOrig);
-  if (!(paPass->getFuncInfo(*F))) {
-    F = paPass->getOrigFunctionFromClone(F);
-    PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-    if (!FI->NewToOldValueMap.empty()) {
-      Vnew = FI->MapValueToOriginal (Vnew);
-    }
-    assert (F && "No Function Information from Pool Allocation!\n");
-  }
-
-  const Value * V = (Vnew) ? Vnew : VOrig;
-  DSGraph &TDG = paPass->getDSGraph(*F);
-#else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
-#endif  
-  DSNode *DSN = TDG.getNodeForValue((Value *)V).getNode();
-  return DSN;
-}
-
-unsigned PreInsertPoolChecks::getDSNodeOffset(const Value *V, Function *F) {
-#ifndef LLVA_KERNEL
-  DSGraph &TDG = paPass->getDSGraph(*F);
-#else  
-  DSGraph &TDG = TDPass->getDSGraph(*F);
-#endif  
-  return TDG.getNodeForValue((Value *)V).getOffset();
 }
 
 #undef REG_FUNC

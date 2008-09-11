@@ -32,6 +32,8 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 #include "cppdefault.h"
 /* APPLE LOCAL headermaps 3871393 */ 
 #include "errors.h"
+/* LLVM LOCAL sysroot */
+#include "target-def.h"
 
 /* Windows does not natively support inodes, and neither does MSDOS.
    Cygwin's emulation can generate non-unique inodes, so don't use it.
@@ -124,6 +126,13 @@ add_env_var_paths (const char *env_var, int chain)
     }
 }
 
+/* LLVM LOCAL begin sysroot */
+static char *
+default_build_sysroot_path(const char *sysroot, const char *path) {
+  return concat (sysroot, path, NULL);
+}
+/* LLVM LOCAL end sysroot */
+
 /* Append the standard include chain defined in cppdefault.c.  */
 static void
 add_standard_paths (const char *sysroot, const char *iprefix,
@@ -165,7 +174,8 @@ add_standard_paths (const char *sysroot, const char *iprefix,
 
 	  /* Should this directory start with the sysroot?  */
 	  if (sysroot && p->add_sysroot)
-	    str = concat (sysroot, p->fname, NULL);
+            /* LLVM LOCAL sysroot */
+	    str = TARGET_BUILD_SYSROOT_PATH(sysroot, p->fname);
 	  else
 	    str = update_path (p->fname, p->component);
 

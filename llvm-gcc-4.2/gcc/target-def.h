@@ -759,5 +759,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   /* APPLE LOCAL end radar 5155743, mainline candidate */	\
 }
 
+/* LLVM LOCAL sysroot */
+#define TARGET_BUILD_SYSROOT_PATH(S,P) default_build_sysroot_path((S), (P))
 #include "hooks.h"
 #include "targhooks.h"

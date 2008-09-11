@@ -60,7 +60,7 @@ PreInsertPoolChecks::registerGlobalArraysWithGlobalPools(Module &M) {
 
   // First register, argc and argv
   Function::arg_iterator AI = MainFunc->arg_begin(), AE = MainFunc->arg_end();
-  if (AI != AE) {
+  if (MainFunc->arg_size() == 2) {
     //There is argc and argv
     Value *Argc = AI;
     AI++;

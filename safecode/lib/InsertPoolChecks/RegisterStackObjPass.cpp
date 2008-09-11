@@ -38,6 +38,7 @@ namespace llvm {
   bool
   RegisterStackObjPass::runOnFunction(Function & F) {
     // paPass = getAnalysisToUpdate<PoolAllocateGroup>();
+    TD = &getAnalysis<TargetData>();
     paPass = &getAnalysis<PoolAllocateGroup>();
     dsnPass = &getAnalysis<DSNodePass>();
 	DT = &getAnalysis<DominatorTree>();

@@ -30,6 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/PassManager.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/LoopPass.h"
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -429,6 +430,10 @@ static void createOptimizationPasses() {
     if (flag_unroll_loops)
       PM->add(createLoopUnrollPass());          // Unroll small loops
     PM->add(createInstructionCombiningPass());  // Clean up after the unroller
+    if (flag_unit_at_a_time) {
+      PM->add(createGlobalsModRefPass());       // Alias analysis of globals
+      PM->add(createMarkModRefPass());       // Mark functions readonly/readnone
+    }
     PM->add(createGVNPass());                   // Remove redundancies
     PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
     PM->add(createSCCPPass());                  // Constant prop with SCCP

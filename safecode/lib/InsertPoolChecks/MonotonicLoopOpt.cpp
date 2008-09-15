@@ -335,7 +335,20 @@ namespace llvm {
     }
     // TODO: we should run a bottom-up call graph analysis to identify the 
     // calls that are SAFE, i.e., calls that do not affect the bounds of arrays.
-    // 
+    //
+    // Currently we scan through the loop (including sub-loops), we
+    // don't do the optimization if there exists a call instruction in
+    // the loop.
+
+    for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+	 I != E; ++I) {
+      BasicBlock *BB = *I;
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+	if (isa<CallInst>(I)) {
+	  return false;
+	}
+      }
+    }     
     return true;
   }
 }

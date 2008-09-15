@@ -133,6 +133,7 @@ struct MonotonicLoopOpt : public LoopPass {
   void insertEdgeBoundsCheck(int checkFunctionId, Loop * L, const CallInst * callInst, GetElementPtrInst * origGEP, Instruction *
   ptIns, int type);
   bool optimizeCheck(Loop *L);
+  bool isEligibleForOptimization(const Loop * L);
 };
 
 /// Passes that holds DSNode and Pool Handle information
@@ -184,12 +185,12 @@ struct RegisterStackObjPass : public FunctionPass {
   virtual bool runOnFunction(Function &F);
   virtual const char * getPassName() const { return "Register stack variables into pool"; }
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequiredTransitive<PoolAllocateGroup>();
-      AU.addRequired<DSNodePass>();
-  	  AU.addRequired<DominatorTree>();
-      AU.addRequired<TargetData>();
-	  AU.setPreservesAll();
-    };
+    AU.addRequiredTransitive<PoolAllocateGroup>();
+    AU.addRequired<DSNodePass>();
+    AU.addRequired<DominatorTree>();
+    AU.addRequired<TargetData>();
+    AU.setPreservesAll();
+  };
 
   private:
     PoolAllocateGroup * paPass;

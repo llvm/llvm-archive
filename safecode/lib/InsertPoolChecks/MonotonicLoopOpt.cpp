@@ -262,12 +262,10 @@ namespace llvm {
   bool
     MonotonicLoopOpt::optimizeCheck(Loop *L) {
       bool changed = false;
+      if (!isEligibleForOptimization(L)) return false;
       // Get the preheader block to move instructions into...
       BasicBlock * Preheader = L->getLoopPreheader();
-      if (!Preheader) {
-        return false;
-      }
-
+      
       std::vector<PHINode *> loopVarList;
       getPossibleLoopVariable(L, loopVarList);
       PHINode * loopVar = NULL;
@@ -290,20 +288,19 @@ namespace llvm {
             CallInst * callInst = dyn_cast<CallInst>(it);
             if (!callInst) continue;
 
-			Function * F = callInst->getCalledFunction();
-			if (!F) continue;
-            checkFuncMapType::iterator it = checkFuncMap.find(F->getName());
+	    Function * F = callInst->getCalledFunction();
+	    if (!F) continue;
 
+            checkFuncMapType::iterator it = checkFuncMap.find(F->getName());
             if (it == checkFuncMap.end()) continue;
 
             int checkFunctionId = it->second;
-
             GetElementPtrInst * GEP = getGEPFromCheckCallInst(checkFunctionId, callInst);
 
             if (!GEP || !isHoistableGEP(GEP, L)) continue;
 
           
-          Instruction *ptIns = Preheader->getTerminator();
+	    Instruction *ptIns = Preheader->getTerminator();
 
             insertEdgeBoundsCheck(checkFunctionId, L, callInst, GEP, ptIns, 0);
             insertEdgeBoundsCheck(checkFunctionId, L, callInst, GEP, ptIns, 1);
@@ -319,5 +316,26 @@ namespace llvm {
         }
       }
       return changed;
-    } 
+    }
+
+  /// Test whether a loop is eligible for monotonic optmization
+  /// A loop should satisfy all these following conditions before optmization:
+  /// 1. Have an preheader
+  /// 2. There is only *one* exitblock in the loop
+  /// 3. There is no other instructions (actually we only handle call instruction) in the loop change the bounds of the check
+  bool
+  MonotonicLoopOpt::isEligibleForOptimization(const Loop * L) {
+    BasicBlock * Preheader = L->getLoopPreheader();
+    if (!Preheader) return false;
+    
+    SmallVector<BasicBlock*, 4> exitBlocks;
+    L->getExitingBlocks(exitBlocks);
+    if (exitBlocks.size() != 1) {
+      return false;
+    }
+    // TODO: we should run a bottom-up call graph analysis to identify the 
+    // calls that are SAFE, i.e., calls that do not affect the bounds of arrays.
+    // 
+    return true;
+  }
 }

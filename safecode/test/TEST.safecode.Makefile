@@ -7,14 +7,16 @@
 
 include $(PROJ_OBJ_ROOT)/Makefile.common
 
-CFLAGS = -O2 -fno-strict-aliasing
+CFLAGS = -O2 -fno-strict-aliasing -fno-unroll-loops
 
 
 CURDIR  := $(shell cd .; pwd)
 PROGDIR := $(shell cd $(LLVM_SRC_ROOT)/projects/llvm-test; pwd)/
 RELDIR  := $(subst $(PROGDIR),,$(CURDIR))
 GCCLD    = $(LLVM_OBJ_ROOT)/$(CONFIGURATION)/bin/gccld
+ifndef SC
 SC      := $(LLVM_OBJ_ROOT)/projects/safecode/$(CONFIGURATION)/bin/sc
+endif
 
 # Pool allocator pass shared object
 #PA_SO    := $(PROJECT_DIR)/Debug/lib/libaddchecks$(SHLIBEXT)
@@ -32,7 +34,7 @@ POOLSYSTEM := $(PROJECT_DIR)/$(CONFIGURATION)/lib/UserPoolSystem.o
 SC_STATS = $(SC) -stats -time-passes -info-output-file=$(CURDIR)/$@.info
 
 #OPTZN_PASSES := -globaldce -ipsccp -deadargelim -adce -instcombine -simplifycfg
-OPTZN_PASSES := -std-compile-opts
+OPTZN_PASSES := -std-compile-opts -unroll-threshold 0
 
 
 #
@@ -42,7 +44,8 @@ OPTZN_PASSES := -std-compile-opts
 $(PROGRAMS_TO_TEST:%=Output/%.$(TEST).bc): \
 Output/%.$(TEST).bc: Output/%.llvm.bc $(PA_SO) $(LOPT)
 	-@rm -f $(CURDIR)/$@.info
-	-$(SC_STATS) $< -f -o $@.sc 2>&1 > $@.out
+	-$(LOPT) $(OPTZN_PASSES) $< -f -o $<.opt 2>&1 > $@.out
+	-$(SC_STATS) $<.opt -f -o $@.sc 2>&1 > $@.out
 	-$(LLVMLDPROG) -o $@.sc.ld $@.sc $(PA_RT_BC) 2>&1 > $@.out
 	-$(LOPT) $(OPTZN_PASSES) $@.sc.ld.bc -o $@ -f 2>&1    >> $@.out
 

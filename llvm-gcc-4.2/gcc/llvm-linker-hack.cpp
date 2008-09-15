@@ -22,7 +22,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
@@ -86,8 +85,6 @@ void dummy_function() {
   llvm::createMemCpyOptPass();
   llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
-  llvm::createGlobalsModRefPass();
-  llvm::createMarkModRefPass();
 
   std::string Err;
   llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),

@@ -17,6 +17,11 @@
 #include "PoolAllocator.h"
 
 
+/// FIXME: the checking is not thread safe, so I use a lock here to 
+/// serialize everything
+
+static pthread_mutex_t mCheckLock;
+
 NAMESPACE_SC_BEGIN
 
 struct PoolCheckRequest {
@@ -46,36 +51,44 @@ SCSyncToken gSCSyncToken;
 class PoolCheckWrapper {
 public:
   void operator()(PoolCheckRequest & req) const {
-    gRequestQueuePoolCheck.dequeue(req);
+    pthread_mutex_lock(&mCheckLock);
+//    std::cerr << "poolcheck:" << req.Pool << " " << req.Node << std::endl;
     poolcheck(req.Pool, req.Node);
     --gSCSyncToken;
+    pthread_mutex_unlock(&mCheckLock);
   }
 };
 
 class PoolCheckUIWrapper {
 public:
   void operator()(PoolCheckRequest & req) const {
-    gRequestQueuePoolCheckUI.dequeue(req);
+    pthread_mutex_lock(&mCheckLock);
+//    std::cerr << "poolcheckui:" << req.Pool << " " << req.Node << std::endl;
     poolcheckui(req.Pool, req.Node);
     --gSCSyncToken;
+    pthread_mutex_unlock(&mCheckLock);
   }
 };
 
 class BoundsCheckWrapper {
 public:
   void operator()(BoundsCheckRequest & req) const {
-    gRequestQueueBoundsCheck.dequeue(req);
+    pthread_mutex_lock(&mCheckLock);
+//    std::cerr << "boundscheck:" << req.Pool << " " << req.Dest << std::endl;
     boundscheck(req.Pool, req.Source, req.Dest);
     --gSCSyncToken;
+    pthread_mutex_unlock(&mCheckLock);
   }
 };
 
 class BoundsCheckUIWrapper {
 public:
   void operator()(BoundsCheckRequest & req) const {
-    gRequestQueueBoundsCheckUI.dequeue(req);
+    pthread_mutex_lock(&mCheckLock);
+//    std::cerr << "boundscheckui:" << req.Pool << " " << req.Dest << std::endl;
     boundscheckui(req.Pool, req.Source, req.Dest);
     --gSCSyncToken;
+    pthread_mutex_unlock(&mCheckLock);
   }
 };
 
@@ -123,6 +136,7 @@ void __sc_wait_for_completion(SCSyncToken * token) {
 }
 
 void __sc_spec_runtime_init (void) {
+  pthread_mutex_init(&mCheckLock, NULL);
   llvm::safecode::gTaskPoolCheck.activate();
   llvm::safecode::gTaskPoolCheckUI.activate();
   llvm::safecode::gTaskBoundsCheck.activate();
@@ -130,8 +144,10 @@ void __sc_spec_runtime_init (void) {
 }
 
 void __sc_spec_runtime_cleanup (void) {
+// std::cerr << "Cleanup" << std::endl;
   llvm::safecode::gTaskPoolCheck.gracefulExit();
   llvm::safecode::gTaskPoolCheckUI.gracefulExit();
   llvm::safecode::gTaskBoundsCheck.gracefulExit();
   llvm::safecode::gTaskBoundsCheckUI.gracefulExit();
+  pthread_mutex_destroy(&mCheckLock);
 } 

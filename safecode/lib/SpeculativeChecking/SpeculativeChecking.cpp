@@ -71,7 +71,7 @@ namespace llvm {
 
 #undef REG_FUNC
 
-    sFuncWaitForSyncToken = M.getOrInsertFunction("__sc_wait_for_sync_token", FunctionType::get(VoidTy, args<const Type*>::list(vpTy), false));
+    sFuncWaitForSyncToken = M.getOrInsertFunction("__sc_wait_for_completion", FunctionType::get(VoidTy, args<const Type*>::list(vpTy), false));
     sFuncInitRuntime = M.getOrInsertFunction("__sc_spec_runtime_init", FunctionType::get(VoidTy, args<const Type*>::list(), false));
     sFuncCleanup = M.getOrInsertFunction("__sc_spec_runtime_cleanup", FunctionType::get(VoidTy, args<const Type*>::list(), false));
     addInitializationAndCleanupToMain(M);

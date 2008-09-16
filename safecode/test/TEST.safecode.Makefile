@@ -31,11 +31,14 @@ POOLSYSTEM := $(PROJECT_DIR)/$(CONFIGURATION)/lib/UserPoolSystem.o
 
 # SC_STATS - Run opt with the -stats and -time-passes options, capturing the
 # output to a file.
-SC_STATS = $(SC) -stats -time-passes -info-output-file=$(CURDIR)/$@.info
+SC_STATS = $(SC) $(SCFLAGS) -stats -time-passes -info-output-file=$(CURDIR)/$@.info
 
 #OPTZN_PASSES := -globaldce -ipsccp -deadargelim -adce -instcombine -simplifycfg
-OPTZN_PASSES := -std-compile-opts -unroll-threshold 0
 
+EXTRA_LOPT_OPTIONS = -loopsimplify -unroll-threshold 0 
+OPTZN_PASSES := -std-compile-opts $(EXTRA_LOPT_OPTIONS)
+#EXTRA_LINKTIME_OPT_FLAGS = $(EXTRA_LOPT_OPTIONS) 
+LDFLAGS += -lrt -lpthread
 
 #
 # This rule runs SAFECode on the .llvm.bc file to produce a new .bc

@@ -16,6 +16,9 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <cassert>
+#include <iostream>
+#include <errno.h>
 #include "Config.h"
 
 NAMESPACE_SC_BEGIN
@@ -28,24 +31,26 @@ class CircularQueue {
 public:
   typedef Ty element_t;
   void enqueue(const Ty & elem) {
-    sem_wait(&mSemQueueNotFull);
-    pthread_mutex_lock(&mLock);    
+    while (sem_wait(&mSemQueueNotFull)) {} 
+    pthread_mutex_lock(&mLock);   
     mTail = next(mTail);
     mQueue[mTail] = elem;
+//    fprintf(stderr, "en this:%p mTail:%d mHead:%d\n", this, mTail, mHead);
     pthread_mutex_unlock(&mLock);
-    sem_post(&mSemQueueNotEmpty);
+    while(sem_post(&mSemQueueNotEmpty)) {}
   };
 
   void dequeue(Ty & elem) {
-    sem_wait(&mSemQueueNotEmpty);
+    while(sem_wait(&mSemQueueNotEmpty)) {}
     pthread_mutex_lock(&mLock);    
     elem = mQueue[mHead];
     mHead = next(mHead);    
+//    fprintf(stderr, "de this:%p mTail:%d mHead:%d\n", this, mTail, mHead);
     pthread_mutex_unlock(&mLock);
-    sem_post(&mSemQueueNotFull);
+    while (sem_post(&mSemQueueNotFull)) {}
   };
 
-  CircularQueue() : mHead(0), mTail(N - 1) {
+  CircularQueue() : mHead(0), mTail(N-1) {
     sem_init(&mSemQueueNotFull, false, N);
     sem_init(&mSemQueueNotEmpty, false, 0);
   };
@@ -60,6 +65,11 @@ private:
   size_t next(size_t pos) {
     return (pos + 1) % (N);
   };
+  int sem_value(sem_t * sem) {
+    int i;
+    sem_getvalue(sem, &i);
+    return i;
+  };
   Ty mQueue[N];
   size_t mHead, mTail;
   pthread_mutex_t mLock;
@@ -71,8 +81,9 @@ private:
 template <class QueueTy, class FuncTy>
 class Task {
 public:
-  Task(QueueTy & queue) : mQueue(queue) {}
+  Task(QueueTy & queue) : mQueue(queue), mActive(false) {}
   void activate() {
+    mActive = true;
     typedef void * (*start_routine_t)(void*);
     pthread_t thr;
     pthread_create(&thr, NULL, (start_routine_t)(&Task::runHelper), this);
@@ -130,12 +141,14 @@ public:
   ConditionalCounter & operator++() {
     pthread_mutex_lock(&mLock);
     ++mCount;
+//    std::cerr << "++Counter" << mCount << std::endl;
     pthread_mutex_unlock(&mLock);
     return *this;
   }
 
   ConditionalCounter & operator--() {
     pthread_mutex_lock(&mLock);
+//    std::cerr << "Counter--" << mCount << std::endl;
     if (--mCount == 0) {
       pthread_cond_broadcast(&mCondVar);
     }
@@ -148,6 +161,7 @@ public:
     while (mCount)
       pthread_cond_wait(&mCondVar, &mLock);
     pthread_mutex_unlock(&mLock);
+//    std::cerr << "Pass" << std::endl;
   }
 
 private:

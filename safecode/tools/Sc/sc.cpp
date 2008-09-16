@@ -31,6 +31,7 @@
 #include "ABCPreProcess.h"
 #include "InsertPoolChecks.h"
 #include "IndirectCallChecks.h"
+#include "SpeculativeChecking.h"
 
 #include <fstream>
 #include <iostream>
@@ -63,6 +64,10 @@ EnableFastCallChecks("enable-fastcallchecks", cl::init(false),
 static cl::opt<bool>
 DisableMonotonicLoopOpt("disable-monotonic-loop-opt", cl::init(false), cl::desc("Disable optimization for checking monotonic loops"));
 
+static cl::opt<bool>
+EnableSpecChecking("spec-checking", cl::init(false), cl::desc("Use speculative checking"));
+
+
 // GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -94,7 +99,7 @@ int main(int argc, char **argv) {
     std::auto_ptr<Module> M;
     std::string ErrorMessage;
     if (MemoryBuffer *Buffer
-          = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
+	= MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
       M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
       delete Buffer;
     }
@@ -140,15 +145,18 @@ int main(int argc, char **argv) {
     Passes.add(new EmbeCFreeRemoval());
     Passes.add(new PreInsertPoolChecks());
     Passes.add(new InsertPoolChecks());
-	Passes.add(new RegisterStackObjPass());
+    Passes.add(new RegisterStackObjPass());
     Passes.add(new MallocPass());
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());
 	
 
     Passes.add(createLICMPass());
-	if (!DisableMonotonicLoopOpt)
-     	Passes.add(new MonotonicLoopOpt());
+    if (!DisableMonotonicLoopOpt)
+      Passes.add(new MonotonicLoopOpt());
+
+    if(EnableSpecChecking)
+      Passes.add(new SpeculativeCheckingPass());
 
     // Verify the final result
     Passes.add(createVerifierPass());
@@ -185,10 +193,10 @@ int main(int argc, char **argv) {
 
       if (!Force && std::ifstream(OutputFilename.c_str())) {
         // If force is not specified, make sure not to overwrite a file!
-          std::cerr << argv[0] << ": error opening '" << OutputFilename
-                    << "': file exists!\n"
-                    << "Use -f command line argument to force output\n";
-          return 1;
+	std::cerr << argv[0] << ": error opening '" << OutputFilename
+		  << "': file exists!\n"
+		  << "Use -f command line argument to force output\n";
+	return 1;
       }
       
       Out = new std::ofstream(OutputFilename.c_str());

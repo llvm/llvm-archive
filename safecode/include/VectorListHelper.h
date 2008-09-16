@@ -1,7 +1,7 @@
 ///
 /// A simple template helper to create Function Type Arguments
 /// 
-/// $Id: VectorListHelper.h,v 1.1 2008-08-29 03:04:42 mai4 Exp $
+/// $Id: VectorListHelper.h,v 1.1.2.1 2008-09-16 01:59:51 mai4 Exp $
 ///
 
 #ifndef _VECTOR_LIST_HELPER_H_
@@ -16,6 +16,9 @@ template <class T>
 struct args {
 	typedef T t_arg;
 	typedef std::vector<t_arg> t_list;
+	static t_list list() {
+		return t_list();
+	};
 	static t_list list(t_arg ty1) {
 		const t_arg arr[] = {ty1};
 		return t_list(arr, arr + sizeof(arr) / sizeof(t_arg)); 

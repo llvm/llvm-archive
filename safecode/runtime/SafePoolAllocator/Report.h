@@ -12,6 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef _REPORT_H_
+#define _REPORT_H_
+
+#include <stdint.h>
 static unsigned alertNum = 0;
 
 //
@@ -53,7 +57,7 @@ ReportDanglingPointer (void * addr,
 
   printf ("%04d: Dangling pointer access to memory address 0x%08x \n",
           id,
-          (unsigned)addr);
+          (uintptr_t)addr);
   printf ("%04d:                        at program counter 0x%08x\n", id, (unsigned)pc);
   printf ("%04d:\tObject allocated at program counter   : 0x%08x \n", id, (unsigned)allocpc);
   printf ("%04d:\tObject allocation generation number   : %d \n", id, allocgen);
@@ -142,3 +146,4 @@ ReportExactCheck (unsigned src,
   return;
 }
 
+#endif

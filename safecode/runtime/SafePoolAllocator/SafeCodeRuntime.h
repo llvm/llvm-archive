@@ -26,10 +26,10 @@ extern "C" {
 
 
   ///  All functions that perform checking return a synchronization token
-  SCSyncToken * __sc_poolcheck(PoolTy *Pool, void *Node);
-  SCSyncToken * __sc_poolcheckui(PoolTy *Pool, void *Node);
-  SCSyncToken * __sc_boundscheck   (PoolTy * Pool, void * Source, void * Dest);
-  SCSyncToken * __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) __attribute__ ((always_inline));
+  void __sc_poolcheck(PoolTy *Pool, void *Node);
+  void __sc_poolcheckui(PoolTy *Pool, void *Node);
+  void __sc_boundscheck   (PoolTy * Pool, void * Source, void * Dest);
+  void __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) __attribute__ ((always_inline));
   void __sc_wait_for_completion(SCSyncToken * token);
   void __sc_spec_runtime_init (void);
   void __sc_spec_runtime_cleanup (void);

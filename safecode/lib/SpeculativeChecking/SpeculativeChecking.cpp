@@ -18,34 +18,7 @@ static RegisterPass<SpeculativeCheckingPass> passSpeculativeChecking ("speculati
 namespace {
   typedef std::map<Function *, Function *> CheckFuncMapTy;
   CheckFuncMapTy sCheckFuncMap;
-  Constant * sFuncWaitForSyncToken, * sFuncInitRuntime,  * sFuncCleanup;
-  
-  /// Add initialization and cleanup to the main function
-  void
-  addInitializationAndCleanupToMain(Module &M) {
-    //
-    // Find the main() function.  For FORTRAN programs converted to C using the
-    // NAG f2c tool, the function is named MAIN__.
-    //
-    Function *MainFunc = M.getFunction("main");
-    if (MainFunc == 0 || MainFunc->isDeclaration()) {
-      MainFunc = M.getFunction("MAIN__");
-      if (MainFunc == 0 || MainFunc->isDeclaration()) {
-	std::cerr << "Cannot do array bounds check for this program"
-		  << "no 'main' function yet!\n";
-	abort();
-      }
-    }
-
-    CallInst::Create(sFuncInitRuntime, "", MainFunc->begin()->begin());
-
-    for (Function::iterator BI = MainFunc->begin(), BE = MainFunc->end(); BI != BE; ++BI) {
-      Instruction * instTerminator = BI->getTerminator();
-      if (isa<ReturnInst>(instTerminator) || isa<UnwindInst>(instTerminator)) {
-	CallInst::Create(sFuncCleanup, "", instTerminator);
-      }
-    }
-  }
+  Constant * sFuncWaitForSyncToken;
 }
 
 namespace llvm {
@@ -60,21 +33,18 @@ namespace llvm {
 
     #define REG_FUNC(name, ...) do {					\
 	Function * funcOrig = dyn_cast<Function>(M.getOrInsertFunction(name, FunctionType::get(VoidTy, args<const Type*>::list(__VA_ARGS__), false))); \
-	Function * funcSpec = dyn_cast<Function>(M.getOrInsertFunction("__sc_" name, FunctionType::get(vpTy, args<const Type*>::list(__VA_ARGS__), false))); \
+	Function * funcSpec = dyn_cast<Function>(M.getOrInsertFunction("__sc_" name, FunctionType::get(VoidTy, args<const Type*>::list(__VA_ARGS__), false))); \
       sCheckFuncMap[funcOrig] = funcSpec;				\
     } while (0)
 
-    REG_FUNC ("poolcheck",        vpTy, vpTy);
-    REG_FUNC ("poolcheckui",     vpTy, vpTy);
-    REG_FUNC ("boundscheck",    vpTy, vpTy, vpTy);
+    REG_FUNC ("poolcheck",     vpTy, vpTy);
+    REG_FUNC ("poolcheckui",   vpTy, vpTy);
+    REG_FUNC ("boundscheck",   vpTy, vpTy, vpTy);
     REG_FUNC ("boundscheckui", vpTy, vpTy, vpTy);
 
 #undef REG_FUNC
 
-    sFuncWaitForSyncToken = M.getOrInsertFunction("__sc_wait_for_completion", FunctionType::get(VoidTy, args<const Type*>::list(vpTy), false));
-    sFuncInitRuntime = M.getOrInsertFunction("__sc_spec_runtime_init", FunctionType::get(VoidTy, args<const Type*>::list(), false));
-    sFuncCleanup = M.getOrInsertFunction("__sc_spec_runtime_cleanup", FunctionType::get(VoidTy, args<const Type*>::list(), false));
-    addInitializationAndCleanupToMain(M);
+    sFuncWaitForSyncToken = M.getOrInsertFunction("__sc_wait_for_completion", FunctionType::get(VoidTy, args<const Type*>::list(), false));
     return true;
   }
 
@@ -113,9 +83,8 @@ namespace llvm {
       args.push_back(CI->getOperand(i));
     }
 
-    CallInst * SpecCheckingCI = CallInst::Create(it->second, args.begin(), args.end(), "", ptIns);
-
-    CallInst::Create(sFuncWaitForSyncToken, SpecCheckingCI, "", ptIns);
+    CallInst::Create(it->second, args.begin(), args.end(), "", ptIns);
+    CallInst::Create(sFuncWaitForSyncToken, "", ptIns);
     return true;
   }
 }

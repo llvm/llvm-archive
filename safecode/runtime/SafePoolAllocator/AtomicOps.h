@@ -86,7 +86,8 @@ public:
     mActive = true;
     typedef void * (*start_routine_t)(void*);
     pthread_t thr;
-    pthread_create(&thr, NULL, (start_routine_t)(&Task::runHelper), this);
+    int ret = pthread_create(&thr, NULL, (start_routine_t)(&Task::runHelper), this);
+    std::cerr << ret << std::endl;
   };
 
   void stop() {

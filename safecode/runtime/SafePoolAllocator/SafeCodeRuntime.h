@@ -14,7 +14,6 @@
 #ifndef _SAFECODE_RUNTIME_H_
 #define _SAFECODE_RUNTIME_H_
 
-#include "AtomicOps.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,17 +21,12 @@ extern "C" {
 
   struct PoolTy;
 
-  typedef llvm::safecode::ConditionalCounter SCSyncToken;
-
-
   ///  All functions that perform checking return a synchronization token
   void __sc_poolcheck(PoolTy *Pool, void *Node);
   void __sc_poolcheckui(PoolTy *Pool, void *Node);
   void __sc_boundscheck   (PoolTy * Pool, void * Source, void * Dest);
   void __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) __attribute__ ((always_inline));
-  void __sc_wait_for_completion(SCSyncToken * token);
-  void __sc_spec_runtime_init (void);
-  void __sc_spec_runtime_cleanup (void);
+  void __sc_wait_for_completion();
 #ifdef __cplusplus
 }
 #endif

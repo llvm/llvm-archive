@@ -15,7 +15,7 @@
 #include "Config.h"
 #include "SafeCodeRuntime.h"
 #include "PoolAllocator.h"
-
+#include "AtomicOps.h"
 
 NAMESPACE_SC_BEGIN
 
@@ -48,6 +48,8 @@ struct CheckRequest {
 
 typedef CircularQueue<CheckRequest, 4> CheckQueueTy;
 CheckQueueTy gCheckQueue;
+  
+typedef llvm::safecode::ConditionalCounter SCSyncToken;
 
 SCSyncToken gSCSyncToken;
 
@@ -72,12 +74,27 @@ public:
       break;
     default:
       break;
-    } 
+    }
     --gSCSyncToken;
   }
 };
 
-Task<CheckQueueTy, CheckWrapper> gCheckTask(gCheckQueue);
+
+namespace {
+  class SpeculativeCheckingGuard {
+  public:
+    SpeculativeCheckingGuard() : mCheckTask(gCheckQueue) {
+      mCheckTask.activate();
+    }
+    ~SpeculativeCheckingGuard() {
+      mCheckTask.gracefulExit(); 
+    }
+  private:
+    Task<CheckQueueTy, CheckWrapper> mCheckTask;
+  };
+  SpeculativeCheckingGuard g;
+}
+
 
 NAMESPACE_SC_END
 
@@ -119,14 +136,6 @@ void __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) {
   llvm::safecode::gCheckQueue.enqueue(req);
 }
 
-void __sc_wait_for_completion(SCSyncToken * token) {
-  token->wait();
+void __sc_wait_for_completion() {
+  llvm::safecode::gSCSyncToken.wait();
 }
-
-void __sc_spec_runtime_init (void) {
-  llvm::safecode::gCheckTask.activate();
- }
-
-void __sc_spec_runtime_cleanup (void) {
-  llvm::safecode::gCheckTask.gracefulExit();
-} 

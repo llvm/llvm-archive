@@ -20,6 +20,7 @@
 #include <iostream>
 #include <errno.h>
 #include "Config.h"
+#include <deque>
 
 NAMESPACE_SC_BEGIN
 
@@ -77,6 +78,42 @@ private:
   sem_t mSemQueueNotEmpty;
 };
 
+
+template<class Ty>
+class Queue {
+public:
+  typedef Ty element_t;
+  void enqueue(const Ty & elem) {
+    pthread_mutex_lock(&mLock);   
+    mQueue.push_back(elem);
+    pthread_cond_signal(&mQueueNotEmpty);
+    pthread_mutex_unlock(&mLock);
+  };
+
+  void dequeue(Ty & elem) {
+    pthread_mutex_lock(&mLock);
+    while (mQueue.empty())
+      pthread_cond_wait(&mQueueNotEmpty, &mLock);
+    elem = mQueue.front();
+    mQueue.pop_front();
+    pthread_mutex_unlock(&mLock);
+  };
+
+  Queue() {
+    pthread_mutex_init(&mLock, NULL);
+    pthread_cond_init(&mQueueNotEmpty, NULL);
+  };
+
+  ~Queue() {
+    pthread_mutex_destroy(&mLock);
+    pthread_cond_destroy(&mQueueNotEmpty);
+  };
+
+private:
+  std::deque<Ty> mQueue;
+  pthread_mutex_t mLock;
+  pthread_cond_t mQueueNotEmpty;
+};
 
 template <class QueueTy, class FuncTy>
 class Task {

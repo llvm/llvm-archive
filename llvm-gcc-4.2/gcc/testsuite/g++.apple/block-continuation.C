@@ -1,4 +1,5 @@
 /* APPLE LOCAL file radar 5732232 - blocks */
+/* Modified for radar 6169527 */
 /* { dg-do compile } */
 /* { dg-options "-fblocks" } */
 
@@ -10,9 +11,9 @@ int main() {
 	break;		/* { dg-error "break statement not within loop or switch" } */
 	while (1) break;/* ok */
 	goto label1;	/* { dg-error "goto not allowed in block literal" } */
-			/* { dg-error "label" "" { target *-*-* } 12 } */
-      });
-  label1:
+			/* { dg-error "label" "" { target *-*-* } 13 } */
+      });	/* { dg-error "enters" } */
+  label1:	/* { dg-error "jump to label" } */
     break; /* OK */
     if (1)
       continue; /* OK */
@@ -40,5 +41,5 @@ int main() {
 	  break;
     }
   };
-  goto label1;
+  goto label1; /* { dg-error "from here" } */
 }

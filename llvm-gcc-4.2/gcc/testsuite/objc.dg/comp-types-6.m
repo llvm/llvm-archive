@@ -1,3 +1,4 @@
+/* APPLE LOCAL file radar 5839123 */
 /* Test assignments and comparisons involving category protocols.  */
 /* Author: Nicola Pero <nicola@brainstorm.co.uk>.  */
 /* { dg-do compile } */
@@ -24,8 +25,8 @@ int main()
   MyClass *obj_cp = nil;
   MyOtherClass *obj_cp2 = nil;
 
-  obj_cp = obj_p;  /* { dg-warning "distinct Objective\\-C type" } */
-  obj_cp2 = obj_p; /* { dg-warning "distinct Objective\\-C type" } */
+  obj_cp = obj_p;  /* { dg-warning "incompatible Objective-C types assigning \\'id\\', expected \\'struct MyClass \\*\\'" } */
+  obj_cp2 = obj_p; /* { dg-warning "incompatible Objective-C types assigning \\'id\\', expected \\'struct MyOtherClass \\*\\'" } */
   obj_p = obj_cp;  /* Ok */
   obj_p = obj_cp2; /* Ok */
 

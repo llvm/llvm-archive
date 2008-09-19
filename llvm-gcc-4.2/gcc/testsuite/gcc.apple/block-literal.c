@@ -23,7 +23,8 @@ T somefunction() {
 
   I(^{ });
 
-  noop = ^noop /* { dg-error "blocks require" } */
+  noop = ^noop /* { dg-error "expected specifier" } */ 
+	       /*  { dg-error "blocks require" "" { target *-*-* } 26 } */
     ;  /* { dg-error "argument list is required for block expression literals" } */
 
   return ^{printf("\nBlock\n"); };  /* { dg-error "returning block that lives on the local stack" } */
@@ -35,7 +36,8 @@ void test2() {
   takeblock(^{ printf("%d\n", x); });
   takeblock(^{ x = 4; });  /* { dg-error "assignment of read-only variable" } */
 
-  takeblock(^test2() /* { dg-error "blocks require" } */
+  takeblock(^test2() /* { dg-error "expected specifier" } */  
+		     /* { dg-error "blocks require" "" { target *-*-* } 39 } */
 	    );	/* { dg-error "argument list is required for block expression literals" } */
 
   takeblock(^(void)(void)printf("hello world!\n")); /* { dg-error "blocks require" } */

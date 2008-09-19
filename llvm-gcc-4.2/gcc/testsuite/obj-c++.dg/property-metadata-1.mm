@@ -1,9 +1,9 @@
-/* APPLE LOCAL file radar 4695101 */
+/* APPLE LOCAL file radar 4695101 - radar 6064186 */
 /* Test that @implementation <protoname> syntax generates metadata for properties 
    declared in @protocol, as well as those declared in the @interface. */
-/* { dg-do compile { target *-*-darwin* } } */
+/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.6 -m64" } */
 
 @protocol GCObject
 @property(readonly) unsigned long int instanceSize;
@@ -23,6 +23,6 @@
 @end
 
 /* LLVM LOCAL begin accept llvm syntax */
-/* { dg-final { scan-assembler "L_.*OBJC_\\\$_PROP_LIST_GCObject:" } } */
-/* { dg-final { scan-assembler "L_.*OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
+/* { dg-final { scan-assembler "l_.*OBJC_\\\$_PROP_LIST_GCObject:" } } */
+/* { dg-final { scan-assembler "l_.*OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
 /* LLVM LOCAL end */

@@ -3062,8 +3062,6 @@ struct tree_decl_with_vis GTY(())
  ENUM_BITFIELD(tls_model) tls_model : 3;
 
  /* APPLE LOCAL begin radar 5732232 - blocks */
- /* Belongs to FUNCTION_DECL exclusively. */
- unsigned block_helper_func : 1;
  /* Belong to VAR_DECL exclusively. */
  unsigned block_decl_byref : 1;
  unsigned block_decl_copied : 1;
@@ -3072,7 +3070,7 @@ struct tree_decl_with_vis GTY(())
  unsigned copyable_byref_local_nonpod : 1;
  /* APPLE LOCAL radar 6172148 */
  unsigned block_synthesized_function : 1;
- /* 5 unused bits. */
+ /* 6 unused bits. */
  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
  /* APPLE LOCAL end radar 5732232 - blocks */
 };
@@ -3121,7 +3119,6 @@ extern void decl_init_priority_insert (tree, unsigned short);
 #define DECL_TLS_MODEL(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.tls_model)
 
 /* APPLE LOCAL begin radar 5732232 - blocks */
-#define BLOCK_HELPER_FUNC(NODE) (FUNCTION_DECL_CHECK (NODE)->decl_with_vis.block_helper_func)
 #define BLOCK_DECL_BYREF(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_byref)
 #define BLOCK_DECL_COPIED(NODE) (VAR_DECL_CHECK (NODE)->decl_with_vis.block_decl_copied)
 /* APPLE LOCAL end radar 5732232 - blocks */

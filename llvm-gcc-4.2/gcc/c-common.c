@@ -6118,6 +6118,8 @@ handle_blocks_attribute (tree *node, tree name,
                            int ARG_UNUSED (flags), bool *no_add_attrs)
 {
   tree arg_ident;
+  /* APPLE LOCAL radar 6217257 */
+  tree type;
   *no_add_attrs = true;
   if (!(*node) || TREE_CODE (*node) != VAR_DECL)
     {
@@ -6134,7 +6136,19 @@ handle_blocks_attribute (tree *node, tree name,
                name);
       return NULL_TREE;
     }
-
+  /* APPLE LOCAL begin radar 6217257 */
+  type = TREE_TYPE (*node);
+  if (TREE_CODE (type) == ERROR_MARK)
+    return NULL_TREE;
+  if (TREE_CODE (type) == ARRAY_TYPE)
+  {
+    if (!TYPE_SIZE (type) || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
+    {
+      error ("__block not allowed on a variable length array declaration");
+      return NULL_TREE;
+    }
+  }
+  /* APPLE LOCAL end radar 6217257 */
   COPYABLE_BYREF_LOCAL_VAR (*node) = 1;
   COPYABLE_BYREF_LOCAL_NONPOD (*node) = block_requires_copying (*node);
   return NULL_TREE;
@@ -6288,7 +6302,10 @@ build_block_helper_name (int unique_count)
   else
     {
       tree outer_decl = current_function_decl;
-      while (outer_decl && DECL_CONTEXT (outer_decl))
+      /* APPLE LOCAL begin radar 6169580 */
+      while (outer_decl &&
+             DECL_CONTEXT (outer_decl) && TREE_CODE (DECL_CONTEXT (outer_decl)) == FUNCTION_DECL)
+      /* APPLE LOCAL end radar 6169580 */
         outer_decl = DECL_CONTEXT (outer_decl);
       buf = (char *)alloca (IDENTIFIER_LENGTH (DECL_NAME (outer_decl)) + 32); 
       sprintf (buf, "__%s_block_invoke_%d", 

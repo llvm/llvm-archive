@@ -4731,16 +4731,6 @@ contains (rtx insn, VEC(int,heap) **vec)
   return 0;
 }
 
-/* APPLE LOCAL begin async unwind info 5949350 */
-int
-epilogue_contains (rtx insn)
-{
-  if (contains (insn, &epilogue))
-    return 1;
-  return 0;
-}
-/* APPLE LOCAL end async unwind info 5949350 */
-
 int
 prologue_epilogue_contains (rtx insn)
 {

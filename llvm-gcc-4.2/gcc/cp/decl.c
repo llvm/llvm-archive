@@ -5394,7 +5394,8 @@ synth_block_byref_id_object_copy_func (void)
   /* APPLE LOCAL end radar 6180456 */
 
   finish_compound_stmt (stmt);
-  finish_function (0);
+  /* APPLE LOCAL radar 6169580 */
+  finish_function (4);
   pop_function_context ();
 }
 
@@ -5447,7 +5448,8 @@ static void synth_block_byref_id_object_dispose_func (void)
   add_stmt (rel_exp);
 
   finish_compound_stmt (stmt);
-  finish_function (0);
+  /* APPLE LOCAL radar 6169580 */
+  finish_function (4);
   pop_function_context ();
 }
 
@@ -11881,6 +11883,8 @@ finish_function (int flags)
   tree fndecl = current_function_decl;
   tree fntype, ctype = NULL_TREE;
   int inclass_inline = (flags & 2) != 0;
+  /* APPLE LOCAL radar 6169580 */
+  int in_blocks_helper_function = (flags & 4) != 0;
   int nested;
 
   /* When we get some parse errors, we can end up without a
@@ -12076,7 +12080,8 @@ finish_function (int flags)
     maybe_end_member_template_processing ();
 
   /* Leave the scope of the class.  */
-  if (ctype)
+  /* APPLE LOCAL radar 6169580 */
+  if (ctype && !in_blocks_helper_function)
     pop_nested_class ();
 
   --function_depth;

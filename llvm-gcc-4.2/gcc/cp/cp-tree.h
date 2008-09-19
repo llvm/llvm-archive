@@ -4155,9 +4155,8 @@ extern void yyerror				(const char *);
 extern void yyhook				(int);
 extern bool cxx_init				(void);
 extern void cxx_finish				(void);
-/* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+/* APPLE LOCAL mainline radar 6194879 */
 extern bool in_main_input_context		(void);
-/* LLVM LOCAL end */
 
 /* in method.c */
 extern void init_method				(void);
@@ -4240,9 +4239,8 @@ extern tree build_non_dependent_args		(tree);
 extern bool reregister_specialization		(tree, tree, tree);
 extern tree fold_non_dependent_expr		(tree);
 extern bool explicit_class_specialization_p     (tree);
-/* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+/* APPLE LOCAL mainline radar 6194879 */
 extern tree outermost_tinst_level		(void);
-/* LLVM LOCAL end */
 
 /* in repo.c */
 extern void init_repo				(void);
@@ -4689,9 +4687,9 @@ extern void cp_cpp_error			(cpp_reader *, int,
 /* APPLE LOCAL radar 5741070  */
 extern tree c_return_interface_record_type (tree);
 
-/* APPLE LOCAL begin block 6040305 (cg) */
+/* APPLE LOCAL begin blocks 6040305 (cg) */
 extern cp_declarator* make_block_pointer_declarator (tree, cp_cv_quals,
 						     cp_declarator *);
-/* APPLE LOCAL end block 6040305 (cg) */
+/* APPLE LOCAL end blocks 6040305 (cg) */
 
 #endif /* ! GCC_CP_TREE_H */

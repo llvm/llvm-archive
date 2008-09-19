@@ -2157,8 +2157,11 @@ generate_v2_property_list (tree type, const char *name, int size, tree list)
   tree decl, initlist;
   int init_val = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (objc_v2_property_template));
 
-  decl = start_var_decl (type, synth_id_with_class_suffix
-			 (name, objc_implementation_context));
+  /* APPLE LOCAL begin radar 6064186 */
+  const char * ref_name = synth_id_with_class_suffix (name, objc_implementation_context);
+  decl = start_var_decl (type, ref_name);
+  set_user_assembler_name (decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   initlist = build_tree_list (NULL_TREE, build_int_cst (NULL_TREE, init_val));
   initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, size), initlist);
@@ -2932,8 +2935,10 @@ generate_v2_property_tables (tree protocol)
      name of property meta-data is unique for each case. */
   UOBJC_V2_PROPERTY_decl = generate_v2_property_list (
 			     property_list_template,
-			     protocol ? "_OBJC_$_PROP_PROTO_LIST"
-				      : "_OBJC_$_PROP_LIST",
+			     /* APPLE LOCAL begin radar 6064186 */
+			     protocol ? "l_OBJC_$_PROP_PROTO_LIST"
+				      : "l_OBJC_$_PROP_LIST",
+			     /* APPLE LOCAL end radar 6064186 */
 			     size, initlist);
 }
 
@@ -3784,25 +3789,33 @@ objc_compare_types (tree ltyp, tree rtyp, int argno, tree callee)
 	  return false;
 
 	/* APPLE LOCAL end 4175534 */
+        /* APPLE LOCAL begin radar 5839123 */
 	case -3:
-	  warning (0, "comparison of distinct Objective-C types lacks a cast");
+	  warning (0, "comparison of distinct Objective-C types %qT and %qT lacks a cast",
+                   orig_rtyp, orig_ltyp);
 	  break;
 
 	case -2:
-	  warning (0, "initialization from distinct Objective-C type");
+	  warning (0, "incompatible Objective-C types initializing %qT, expected %qT",
+                   orig_rtyp, orig_ltyp);
 	  break;
 
 	case -1:
-	  warning (0, "assignment from distinct Objective-C type");
+	  warning (0, "incompatible Objective-C types assigning %qT, expected %qT", 
+		   orig_rtyp, orig_ltyp);
 	  break;
 
 	case 0:
-	  warning (0, "distinct Objective-C type in return");
+	  warning (0, "incompatible Objective-C types returning %qT, expected %qT",
+                   orig_rtyp, orig_ltyp);
 	  break;
 
 	default:
-	  warning (0, "passing argument %d of %qE from distinct "
-		   "Objective-C type", argno, callee);
+	  warning (0, "incompatible Objective-C types %qT, expected %qT when"
+                       " passing argument %d of %qE from distinct "
+		       "Objective-C type"
+                        , orig_rtyp, orig_ltyp, argno, callee);
+          /* APPLE LOCAL end radar 5839123 */
 	  break;
 	}
     }
@@ -5297,10 +5310,14 @@ forward_declare_categories (void)
 	  /* APPLE LOCAL begin new ObjC abi v2 */
 	  if (flag_objc_abi == 2)
 	    {
-	      /* extern struct category_t _OBJC_$_CATEGORY_<name>; */
-	      impent->class_v2_decl = build_metadata_decl ("_OBJC_$_CATEGORY",
+	      /* APPLE LOCAL begin radar 6064186 */
+	      /* extern struct category_t l_OBJC_$_CATEGORY_<name>; */
+	      impent->class_v2_decl = build_metadata_decl ("l_OBJC_$_CATEGORY",
 							   /* APPLE LOCAL radar 5202926 */
 						           objc_v2_category_template, false); 
+	      set_user_assembler_name (impent->class_v2_decl, 
+				       IDENTIFIER_POINTER (DECL_NAME (impent->class_v2_decl)));
+	      /* APPLE LOCAL end radar 6064186 */
 	    }
 	  else
 	    {
@@ -5977,22 +5994,36 @@ build_selector_reference (tree ident)
 
 static GTY(()) int message_reference_idx;
 
+/* APPLE LOCAL begin radar 5575115 - radar 6064186 */
 static tree
-build_message_reference_decl (void)
+build_message_reference_decl (tree sel_name, tree message_func_ident)
 {
   tree decl;
-  char buf[256];
+  char *buf;
+  char *temp;
+  int fixed_prefix_size = 
+        2 + IDENTIFIER_LENGTH (message_func_ident) + 1;
+  buf = (char *)alloca (fixed_prefix_size + 
+                        strlen (IDENTIFIER_POINTER (sel_name)) + 1);
+  sprintf (buf, "l_%s_%s", IDENTIFIER_POINTER (message_func_ident),
+		IDENTIFIER_POINTER (sel_name));
+  for (temp = buf+fixed_prefix_size; *temp; temp++)
+    if (*temp == ':') *temp = '_';
 
-  sprintf (buf, "_OBJC_MESSAGE_REF_%d", message_reference_idx++);
-  decl = start_var_decl (objc_v2_message_ref_template, buf);
+  decl = create_hidden_decl (objc_v2_message_ref_template, buf);
+  DECL_WEAK (decl) = 1;
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-  /* These are 4-byte aligned in 32-byte, 16-byte in 64-bit, which does not
+  /* These are 4-byte aligned in 32-bit, 16-byte in 64-bit, which does not
      follow from the alignments of the component types. */
   DECL_ALIGN(decl) = BITS_PER_WORD==32 ? 32 : 128;
   DECL_USER_ALIGN(decl) = 1;
 #endif
+  /* LLVM LOCAL end */
+  set_user_assembler_name (decl, buf);
   return decl;
 }
+/* APPLE LOCAL end radar 5575115 - radar 6064186 */
 
 /* Build the list of (objc_msgSend_fixup_xxx, selector name) Used later on to
    initialize the table of 'struct message_ref_t' elements. */
@@ -6013,7 +6044,8 @@ build_selector_messenger_reference (tree sel_name, tree message_func_decl)
       chain = &TREE_CHAIN (*chain);
     }
 
-  mess_expr = build_message_reference_decl ();
+  /* APPLE LOCAL radar 5575115 - radar 6064186 */
+  mess_expr = build_message_reference_decl (sel_name, DECL_NAME (message_func_decl));
   *chain = tree_cons (mess_expr, message_func_decl, NULL_TREE);
 
   chain = &TREE_CHAIN (*chain);
@@ -9258,13 +9290,17 @@ generate_descriptor_table (tree type, const char *name, int size, tree list,
 			   tree proto, bool newabi)
 {
   tree decl, initlist;
-
-  decl = start_var_decl (type, synth_id_with_class_suffix (name, proto));
+  /* APPLE LOCAL begin radar 6064186 */
+  const char* ref_name = synth_id_with_class_suffix (name, proto);
+  decl = start_var_decl (type, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   /* APPLE LOCAL begin ObjC new abi */
   if (newabi)
     {
       int entsize;
+      /* APPLE LOCAL radar 6064186 */
+      set_user_assembler_name (decl, ref_name);
       entsize = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (objc_method_template));
       initlist = build_tree_list (NULL_TREE, build_int_cst (NULL_TREE, entsize));
       initlist = tree_cons (NULL_TREE, build_int_cst (NULL_TREE, size), initlist);
@@ -10995,9 +11031,11 @@ generate_v2_ivars_list (tree type, const char *name, int ivar_t_size,
 			    int size, tree list)
 {
   tree decl, initlist;
-
-  decl = start_var_decl (type, synth_id_with_class_suffix
-			       (name, objc_implementation_context));
+  /* APPLE LOCAL begin radar 6064186 */
+  const char *ref_name = synth_id_with_class_suffix (name, objc_implementation_context);
+  decl = start_var_decl (type, ref_name);
+  set_user_assembler_name (decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   initlist = build_tree_list (NULL_TREE, build_int_cst (NULL_TREE, ivar_t_size));
 
@@ -11052,7 +11090,8 @@ generate_v2_ivar_lists (void)
 						     objc_v2_ivar_template, chain);
 
       UOBJC_V2_INSTANCE_VARIABLES_decl
-        = generate_v2_ivars_list (ivar_list_template, "_OBJC_$_INSTANCE_VARIABLES",
+	/* APPLE LOCAL radar 6064186 */
+        = generate_v2_ivars_list (ivar_list_template, "l_OBJC_$_INSTANCE_VARIABLES",
 				      TREE_INT_CST_LOW (
 				   	TYPE_SIZE_UNIT (objc_v2_ivar_template)),
                                	      size, initlist);
@@ -11197,8 +11236,12 @@ generate_dispatch_table (tree type, const char *name, int size, tree list, bool 
 	         ? TREE_INT_CST_LOW (TYPE_SIZE_UNIT (objc_method_template)) 
 	         : 0;
   /* APPLE LOCAL end ObjC new abi */
-  decl = start_var_decl (type, synth_id_with_class_suffix
-			       (name, objc_implementation_context));
+  /* APPLE LOCAL begin radar 6064186 */
+  const char* ref_name = synth_id_with_class_suffix (name, objc_implementation_context);
+  decl = start_var_decl (type, ref_name);
+  if (newabi)
+    set_user_assembler_name (decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   /* LLVM LOCAL - begin make initializer size match type size */
   /* APPLE LOCAL ObjC new abi */
@@ -11328,8 +11371,10 @@ generate_v2_dispatch_tables (void)
 	= generate_dispatch_table (method_list_template,
 				   ((TREE_CODE (objc_implementation_context)
 				     == CLASS_IMPLEMENTATION_TYPE)
-				    ? "_OBJC_$_CLASS_METHODS"
-				    : "_OBJC_$_CATEGORY_CLASS_METHODS"),
+				    /* APPLE LOCAL begin radar 6064186 */
+				    ? "l_OBJC_$_CLASS_METHODS"
+				    : "l_OBJC_$_CATEGORY_CLASS_METHODS"),
+				    /* APPLE LOCAL end radar 6064186 */
 				   size, initlist, true);
     }
   else
@@ -11348,13 +11393,15 @@ generate_v2_dispatch_tables (void)
       if (TREE_CODE (objc_implementation_context) == CLASS_IMPLEMENTATION_TYPE)
 	UOBJC_V2_INSTANCE_METHODS_decl
 	  = generate_dispatch_table (method_list_template,
-				     "_OBJC_$_INSTANCE_METHODS",
+				     /* APPLE LOCAL radar 6064186 */
+				     "l_OBJC_$_INSTANCE_METHODS",
 				     size, initlist, true);
       else
 	/* We have a category.  */
 	UOBJC_V2_INSTANCE_METHODS_decl
 	  = generate_dispatch_table (method_list_template,
-				     "_OBJC_$_CATEGORY_INSTANCE_METHODS",
+				     /* APPLE LOCAL radar 6064186 */
+				     "l_OBJC_$_CATEGORY_INSTANCE_METHODS",
 				     size, initlist, true);
     }
   else
@@ -11404,12 +11451,13 @@ generate_v2_protocol_list (tree i_or_p)
 
   /* static struct protocol_list_t *list[size]; */
 
+  /* APPLE LOCAL begin radar 6064186 */
   if (TREE_CODE (i_or_p) == PROTOCOL_INTERFACE_TYPE)
-    ref_name = synth_id_with_class_suffix ("_OBJC_$_PROTOCOL_REFS", i_or_p);
+    ref_name = synth_id_with_class_suffix ("l_OBJC_$_PROTOCOL_REFS", i_or_p);
   else if (TREE_CODE (i_or_p) == CLASS_INTERFACE_TYPE)
-    ref_name = synth_id_with_class_suffix ("_OBJC_CLASS_PROTOCOLS_$", i_or_p);
+    ref_name = synth_id_with_class_suffix ("l_OBJC_CLASS_PROTOCOLS_$", i_or_p);
   else if (TREE_CODE (i_or_p) == CATEGORY_INTERFACE_TYPE)
-    ref_name = synth_id_with_class_suffix ("_OBJC_CATEGORY_PROTOCOLS_$", i_or_p);
+    ref_name = synth_id_with_class_suffix ("l_OBJC_CATEGORY_PROTOCOLS_$", i_or_p);
   else
     abort ();
 
@@ -11418,6 +11466,8 @@ generate_v2_protocol_list (tree i_or_p)
 	       (build_pointer_type (objc_v2_protocol_template),
 		build_index_type (build_int_cst (NULL_TREE, size))),
 	       ref_name);
+  set_user_assembler_name (refs_decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   finish_var_decl (refs_decl, objc_build_constructor (TREE_TYPE (refs_decl),
   						      nreverse (initlist)));
@@ -11494,12 +11544,14 @@ generate_v2_method_descriptors (tree protocol, bool is_optional)
       if (is_optional)
 	UOBJC_PROTOCOL_OPT_CLS_METHODS_decl
 	  = generate_descriptor_table (method_list_template,
-				       "_OBJC_$_PROTOCOL_CLASS_METHODS_OPT",
+				       /* APPLE LOCAL radar 6064186 */
+				       "l_OBJC_$_PROTOCOL_CLASS_METHODS_OPT",
 				       size, initlist, protocol, true);
       else
         UOBJC_V2_CLASS_METHODS_decl
 	  = generate_descriptor_table (method_list_template,
-			       	       "_OBJC_$_PROTOCOL_CLASS_METHODS",
+				       /* APPLE LOCAL radar 6064186 */
+			       	       "l_OBJC_$_PROTOCOL_CLASS_METHODS",
 				       size, initlist, protocol, true);
     }
   else
@@ -11524,12 +11576,14 @@ generate_v2_method_descriptors (tree protocol, bool is_optional)
       if (is_optional)
 	UOBJC_PROTOCOL_OPT_NST_METHODS_decl
 	  = generate_descriptor_table (method_list_template,
-				       "_OBJC_$_PROTOCOL_INSTANCE_METHODS_OPT",
+				       /* APPLE LOCAL radar 6064186 */
+				       "l_OBJC_$_PROTOCOL_INSTANCE_METHODS_OPT",
 				       size, initlist, protocol, true);
       else
         UOBJC_V2_INSTANCE_METHODS_decl
 	  = generate_descriptor_table (method_list_template,
-				       "_OBJC_$_PROTOCOL_INSTANCE_METHODS",
+				       /* APPLE LOCAL radar 6064186 */
+				       "l_OBJC_$_PROTOCOL_INSTANCE_METHODS",
 				       size, initlist, protocol, true);
     }
   else
@@ -12017,6 +12071,8 @@ newabi_append_ro (const char *name)
   dollar = strchr (name, '$');
   gcc_assert (dollar);
   p = string;
+  /* APPLE LOCAL radar 6064186 */
+  *p = 'l'; p++;
   *p = '_'; p++;
   strncpy (p, name, (int)(dollar - name));
   p += (int)(dollar - name);
@@ -12390,6 +12446,8 @@ generate_v2_shared_structures (int cls_flags)
   tree field, firstIvar;
   tree class_superclass_expr, metaclass_superclass_expr;
   unsigned int flags = 0x1; /* Start with CLS_META */
+  /* APPLE LOCAL radar 6064186 */
+  const char* ref_name;
   /* APPLE LOCAL begin radar 4705298, 4843145 */
   class_decl = objc_create_global_decl_for_class (
 		 objc_v2_class_template, 
@@ -12497,9 +12555,12 @@ generate_v2_shared_structures (int cls_flags)
   sc_spec = build_tree_list (NULL_TREE, ridpointers[(int) RID_STATIC]);
   decl_specs = tree_cons (NULL_TREE, objc_v2_class_ro_template, sc_spec);
 
-  decl = start_var_decl (objc_v2_class_ro_template,
-                         newabi_append_ro (IDENTIFIER_POINTER
-                                    (DECL_NAME (UOBJC_V2_METACLASS_decl))));
+  /* APPLE LOCAL begin radar 6064186 */
+  ref_name = newabi_append_ro (
+	       IDENTIFIER_POINTER (DECL_NAME (UOBJC_V2_METACLASS_decl))); 
+  decl = start_var_decl (objc_v2_class_ro_template, ref_name);
+  set_user_assembler_name (decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   initlist = build_class_ro_t_initializer
 	       (TREE_TYPE (decl),
@@ -12575,9 +12636,11 @@ generate_v2_shared_structures (int cls_flags)
 		  : instanceSize;
   /* APPLE LOCAL end ARM signedness mismatch */
 
-  decl = start_var_decl (objc_v2_class_ro_template,
-                         newabi_append_ro (IDENTIFIER_POINTER
-                         (DECL_NAME (UOBJC_V2_CLASS_decl))));  
+  /* APPLE LOCAL begin radar 6064186 */
+  ref_name = newabi_append_ro (IDENTIFIER_POINTER (DECL_NAME (UOBJC_V2_CLASS_decl)));
+  decl = start_var_decl (objc_v2_class_ro_template, ref_name);
+  set_user_assembler_name (decl, ref_name);
+  /* APPLE LOCAL end radar 6064186 */
 
   /* APPLE LOCAL begin radar 4695101 */
   ivarLayout = objc_build_ivar_layout (true);
@@ -19804,6 +19867,13 @@ lookup_ivar_in_property_list (tree chain, tree ivar_name)
 
 /* APPLE LOCAL end radar 5435299 */
 
+/* APPLE LOCAL begin radar 6209554 */
+static void error_previous_property_decl (tree x)
+{ tree decl = build_decl (VAR_DECL, DECL_NAME (x), TREE_TYPE (x));
+  DECL_SOURCE_LOCATION (decl) = DECL_SOURCE_LOCATION (x);
+  error ("previous property declaration of %q+D was here", decl);
+}
+/* APPLE LOCAL end radar 6209554 */
 /* This routine declares a new property implementation. Triggered by a @synthesize or
    @dynamic declaration. */
 void objc_declare_property_impl (int impl_code, tree tree_list)
@@ -19950,24 +20020,30 @@ void objc_declare_property_impl (int impl_code, tree tree_list)
 			    }
 			}
 		    }
-                  /* APPLE LOCAL begin radar 5435299 */
+                  /* APPLE LOCAL begin radar 5435299 - radar 6209554 */
                   else if (flag_new_property_ivar_synthesis)
                          objc_lookup_property_ivar (class, property_decl);
                   if (flag_new_property_ivar_synthesis &&
 		      (x = lookup_ivar_in_property_list (objc_implementation_context,
                                                          ivar_name)))
-                    error ("synthesized properties %qs and %qs both claim ivar %qs",
-                           IDENTIFIER_POINTER (property_name),
-                           IDENTIFIER_POINTER (DECL_NAME (x)),
-                           IDENTIFIER_POINTER (ivar_name));
-                  /* APPLE LOCAL end radar 5435299 */
+		    {
+                      error ("synthesized properties %qs and %qs both claim ivar %qs",
+                             IDENTIFIER_POINTER (property_name),
+                             IDENTIFIER_POINTER (DECL_NAME (x)),
+                             IDENTIFIER_POINTER (ivar_name));
+                      error_previous_property_decl (x);
+		    }
+                  /* APPLE LOCAL end radar 5435299 - radar 6209554 */
 		}
-              /* APPLE LOCAL begin radar 5435299 */
+              /* APPLE LOCAL begin radar 5435299 - radar 6209554 */
               if (flag_new_property_ivar_synthesis &&
-		  lookup_property_impl_in_list (objc_implementation_context, property_name))
-                error ("property %qs is already implemented",
-                       IDENTIFIER_POINTER (property_name));
-              /* APPLE LOCAL end radar 5435299 */
+		  (x = lookup_property_impl_in_list (objc_implementation_context, property_name)))
+	        {
+                  error ("property %qs is already implemented",
+                         IDENTIFIER_POINTER (property_name));
+		  error_previous_property_decl (x);
+		}
+              /* APPLE LOCAL end radar 5435299 - radar 6209554 */
 	     /* Add the property to the list of properties for current implementation. */
              TREE_CHAIN (property_decl) = IMPL_PROPERTY_DECL (objc_implementation_context);
              IMPL_PROPERTY_DECL (objc_implementation_context) = property_decl;

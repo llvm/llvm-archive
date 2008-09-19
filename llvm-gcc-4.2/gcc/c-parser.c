@@ -95,6 +95,9 @@ static int objc_foreach_context;
 #define IDENTIFIER 2
 /* APPLE LOCAL end CW asm blocks (in 4.2 g) */
 
+/* APPLE LOCAL radar 6185344 */
+static int parsing_block_return_type;
+
 /* The reserved keyword table.  */
 struct resword
 {
@@ -2611,7 +2614,8 @@ c_parser_direct_declarator (c_parser *parser, bool type_seen_p, c_dtr_syn kind,
   /* Either we are at the end of an abstract declarator, or we have
      parentheses.  */
 
-  if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
+  /* APPLE LOCAL radar 6185344 */
+  if (!parsing_block_return_type && c_parser_next_token_is (parser, CPP_OPEN_PAREN))
     {
       tree attrs;
       struct c_declarator *inner;
@@ -9465,7 +9469,6 @@ build_block_struct_type (struct block_sema_info * block_impl)
     if (COPYABLE_BYREF_LOCAL_VAR (TREE_VALUE (chain)))
       {
 	block_impl->BlockHasCopyDispose = TRUE;
-	block_impl->BlockHasByrefVar = TRUE;
 	break;
       }
 
@@ -9521,7 +9524,7 @@ build_block_struct_type (struct block_sema_info * block_impl)
 /**
  build_block_struct_initlist - builds the initializer list:
  { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // isa,
- BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
+   BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
  sizeof(struct block_1),
  helper_1 },
  copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
@@ -9546,10 +9549,6 @@ build_block_struct_initlist (tree block_struct_type,
        we have destroy_helper_block/copy_helper_block helper
        routines. */
     flags |= BLOCK_HAS_COPY_DISPOSE;
-  /* Set BLOCK_NO_COPY flag only if we are using the old byref,
-     indirect reference byref variables. */
-  if (block_impl->block_byref_decl_list && !block_impl->BlockHasByrefVar)
-    flags |= BLOCK_NO_COPY;
 
   fields = TYPE_FIELDS (TREE_TYPE (invoke_impl_ptr_type));
 
@@ -9663,7 +9662,7 @@ build_block_struct_initlist (tree block_struct_type,
  3) build the temporary initialization:
  struct block_1 I = {
  { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // isa,
-   BLOCK_NO_COPY | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
+   BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // flags,
    sizeof(struct block_1),
    helper_1 },
  copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
@@ -9752,7 +9751,7 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
                                           NULL_TREE));
   /* function header synthesis. */
   push_function_context ();
-  start_block_helper_function (cur_block->copy_helper_func_decl, true);
+  start_block_helper_function (cur_block->copy_helper_func_decl);
   store_parm_decls_from (arg_info);
 
   /* Body of the function. */
@@ -9852,7 +9851,7 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
 
   /* function header synthesis. */
   push_function_context ();
-  start_block_helper_function (cur_block->destroy_helper_func_decl, true);
+  start_block_helper_function (cur_block->destroy_helper_func_decl);
   store_parm_decls_from (arg_info);
 
   /* Body of the function. */
@@ -9943,12 +9942,29 @@ c_parser_block_literal_expr (c_parser* parser)
   struct block_sema_info *block_impl;
   tree tmp;
   bool open_paren_seen = false;
-  tree restype, resdecl;
+  tree restype;
   tree fnbody, typelist;
   tree helper_function_type;
   tree block;
+  /* APPLE LOCAL radar 6185344 */
+  tree declared_block_return_type = NULL_TREE;
 
   c_parser_consume_token (parser); /* eat '^' */
+
+  /* APPLE LOCAL begin radar 6185344 */
+  /* Parse user declared return type. */
+  if (!c_parser_next_token_is (parser, CPP_OPEN_PAREN) &&
+      !c_parser_next_token_is (parser, CPP_OPEN_BRACE))
+  {
+    struct c_type_name *type;
+    parsing_block_return_type = 1;
+    type = c_parser_type_name (parser);
+    parsing_block_return_type = 0;
+    if (type) {
+      declared_block_return_type = groktypename (type);
+    }
+  }
+  /* APPLE LOCAL end radar 6185344 */
 
   /* Parse the optional argument list */
   if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
@@ -9976,7 +9992,13 @@ c_parser_block_literal_expr (c_parser* parser)
   block = begin_block ();
 
   cur_block->arg_info = NULL;
-  cur_block->return_type = NULL_TREE;
+  if (declared_block_return_type)
+    {
+      cur_block->return_type = TYPE_MAIN_VARIANT (declared_block_return_type);
+      cur_block->block_has_return_type = true;
+  }
+  else
+    cur_block->return_type = NULL_TREE;
 
   if (args)
     {
@@ -10013,20 +10035,24 @@ c_parser_block_literal_expr (c_parser* parser)
   cur_block->arg_info->types = tree_cons (NULL_TREE, ptr_type_node, arg_type);
   cur_block->arg_info->parms = self_arg;
 
-  /* Build the declaration of the helper function (we do not know its result
-     type yet, so assume it is 'void'). Treat this as a nested function and use
-     nested function infrastructure for its generation. */
+  /* APPLE LOCAL begin radar 6185344 */
+  /* Build the declaration of the helper function (if we do not know its result
+     type yet, assume it is 'void'. If user provided it, use it).
+     Treat this as a nested function and use nested function infrastructure for
+     its generation. */
 
-  ftype = build_function_type (void_type_node, cur_block->arg_info->types);
+  ftype = build_function_type ((!cur_block->block_has_return_type
+                                ? void_type_node : cur_block->return_type),
+                               cur_block->arg_info->types);
+  /* APPLE LOCAL end radar 6185344 */
   /* APPLE LOCAL radar 6160536 */
   block_helper_function_decl = build_helper_func_decl (build_block_helper_name (unique_count),
                                                          ftype);
   DECL_CONTEXT (block_helper_function_decl) = current_function_decl;
-  BLOCK_HELPER_FUNC (block_helper_function_decl) = 1;
   cur_block->helper_func_decl = block_helper_function_decl;
 
   push_function_context ();
-  start_block_helper_function (cur_block->helper_func_decl, false);
+  start_block_helper_function (cur_block->helper_func_decl);
   /* Set block's scope to the scope of the helper function's main body.
      This is primarily used when nested blocks are declared. */
   /* FIXME: Name of objc_get_current_scope needs to get changed. */
@@ -10049,34 +10075,45 @@ c_parser_block_literal_expr (c_parser* parser)
     c_cont_label = save_c_cont_label;
     c_break_label = save_c_break_label;
   }
-  else {
-    struct c_expr expr;
-    stmt = c_begin_compound_stmt (true);
-    error ("blocks require { }");
-    expr = c_parser_cast_expression (parser, NULL);
-    body = expr.value;
-    if (body == error_mark_node)
-      return clean_and_exit (block);
+  else
+    {
+      struct c_expr expr;
+      stmt = c_begin_compound_stmt (true);
+      error ("blocks require { }");
+      expr = c_parser_cast_expression (parser, NULL);
+      body = expr.value;
+      if (body == error_mark_node)
+	return clean_and_exit (block);
 
-    if (cur_block->return_type) {
-      error ("return not allowed in block expression literal");
-      return clean_and_exit (block);
+      if (cur_block->return_type)
+	{
+	  error ("return not allowed in block expression literal");
+	  return clean_and_exit (block);
+	}
+      else if (!open_paren_seen)
+	{
+	  error ("argument list is required for block expression literals");
+	  return clean_and_exit (block);
+	}
+      else
+	{
+	  tree restype = TYPE_MAIN_VARIANT (TREE_TYPE (body));
+
+	  add_stmt (body);
+	  TREE_TYPE (current_function_decl)
+	    = build_function_type (restype,
+				   TYPE_ARG_TYPES (TREE_TYPE (current_function_decl)));
+	  TREE_TYPE (DECL_RESULT (current_function_decl)) = restype;
+	  relayout_decl (DECL_RESULT (current_function_decl));
+	  cur_block->return_type = restype;
+	}
     }
-    else if (!open_paren_seen) {
-      error ("argument list is required for block expression literals");
-      return clean_and_exit (block);
-    }
-    else {
-      add_stmt (body);
-      cur_block->return_type = TREE_TYPE (body);
-    }
-  }
 
   cur_block->block_arg_ptr_type =
     build_pointer_type (build_block_struct_type (cur_block));
 
   restype = !cur_block->return_type ? void_type_node
-                                      : cur_block->return_type;
+				    : cur_block->return_type;
   if (restype == error_mark_node)
     return clean_and_exit (block);
 
@@ -10084,11 +10121,9 @@ c_parser_block_literal_expr (c_parser* parser)
   TREE_TYPE (self_arg) = cur_block->block_arg_ptr_type;
   DECL_ARG_TYPE (self_arg) = cur_block->block_arg_ptr_type;
 
-  /* Now that we know helper's result type, fix its result variable decl. */
-  resdecl = build_decl (RESULT_DECL, NULL_TREE, restype);
-  DECL_ARTIFICIAL (resdecl) = 1;
-  DECL_IGNORED_P (resdecl) = 1;
-  DECL_RESULT (current_function_decl) = resdecl;
+  /* The DECL_RESULT should already have the correct type by now.  */
+  gcc_assert (TREE_TYPE (DECL_RESULT (current_function_decl))
+	      == restype);
 
   cur_block->block_body = stmt;
   block_build_prologue (cur_block);
@@ -10111,11 +10146,6 @@ c_parser_block_literal_expr (c_parser* parser)
                         typelist);
   helper_function_type = build_function_type (TREE_TYPE (ftype), typelist);
   TREE_TYPE (cur_block->helper_func_decl) = helper_function_type;
-  /* Let tree builder know that we are done analyzing block's return type so it
-     does not do it twice (and produce bad return expression tree). This case is 
-     for global blocks as finish_function () for them builds AST for the entire
-     body of the function. */
-  cur_block->block_is_complete = true;
   finish_function ();
   pop_function_context ();
 

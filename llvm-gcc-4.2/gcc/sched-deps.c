@@ -2132,6 +2132,7 @@ ds_merge (ds_t ds1, ds_t ds2)
 
   return ds;
 }
+/* LLVM LOCAL */
 #endif
 
 #ifdef INSN_SCHEDULING

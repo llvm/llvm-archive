@@ -2695,7 +2695,11 @@ eliminate_regs_1 (rtx x, enum machine_mode mem_mode, rtx insn,
 
     case CLOBBER:
     case ASM_OPERANDS:
+      /* APPLE LOCAL begin async unwind info 5976588 */
+      gcc_unreachable ();
     case SET:
+      break;
+      /* APPLE LOCAL end async unwind info 5976588 */
       gcc_unreachable ();
 
     default:

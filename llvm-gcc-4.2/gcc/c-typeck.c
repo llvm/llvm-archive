@@ -1518,7 +1518,8 @@ decl_constant_value_for_broken_optimization (tree decl)
 }
 
 /* Convert the array expression EXP to a pointer.  */
-static tree
+/* APPLE LOCAL radar 6212722 */
+tree
 array_to_pointer_conversion (tree exp)
 {
   tree orig_exp = exp;
@@ -1559,7 +1560,8 @@ array_to_pointer_conversion (tree exp)
 }
 
 /* Convert the function expression EXP to a pointer.  */
-static tree
+/* APPLE LOCAL radar 6212722 */
+tree
 function_to_pointer_conversion (tree exp)
 {
   tree orig_exp = exp;
@@ -7715,16 +7717,25 @@ c_finish_block_return_stmt (tree retval)
      the block from it. */
   if (cur_block->return_type == NULL_TREE)
     {
+      tree restype;
       if (retval)
-	cur_block->return_type = TYPE_MAIN_VARIANT (TREE_TYPE (retval));
+	{
+	  restype = TYPE_MAIN_VARIANT (TREE_TYPE (retval));
+          TREE_TYPE (current_function_decl)
+	    = build_function_type (restype,
+                                   TYPE_ARG_TYPES (TREE_TYPE (current_function_decl)));
+          TREE_TYPE (DECL_RESULT (current_function_decl)) = restype;
+          relayout_decl (DECL_RESULT (current_function_decl));
+	}
       else
-	cur_block->return_type = void_type_node;
-      return retval;
+	restype = void_type_node;
+      
+      cur_block->return_type = restype;
     }
 
-  /* Otherwise, verify that this result type matches the previous one.  We are
-     pickier with blocks than for normal functions because this is a new
-     feature and we set the rules. */
+  /* Verify that this result type matches the previous one.  We are
+     pickier with blocks than for normal functions because this is a
+     new feature and we set the rules. */
   if (TREE_CODE (cur_block->return_type) == VOID_TYPE)
     {
       if (retval)
@@ -7738,7 +7749,7 @@ c_finish_block_return_stmt (tree retval)
   if (!retval)
     {
       error ("non-void block should return a value");
-      return retval;
+      return error_mark_node;
     }
 
   /* We have a non-void block with an expression, continue checking.  */
@@ -7763,14 +7774,13 @@ c_finish_return (tree retval)
   tree valtype, ret_stmt;
   bool no_warning = false;
   
-  /* APPLE LOCAL radar 5822844 */
-  if (cur_block && !cur_block->block_is_complete) {
-    /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
-    release_all_local_byrefs_at_return ();
-    retval = c_finish_block_return_stmt (retval);
-    ret_stmt = build_stmt (RETURN_EXPR, retval);
-    return add_stmt (ret_stmt);
-  }
+  /* APPLE LOCAL radar 5822844 - radar 6185344 */
+  if (cur_block && !cur_block->block_has_return_type)
+    {
+      retval = c_finish_block_return_stmt (retval);
+      if (retval == error_mark_node)
+	return NULL_TREE;
+    }
   
   valtype = TREE_TYPE (TREE_TYPE (current_function_decl));
   /* APPLE LOCAL end radar 5732232 - blocks */
@@ -7842,17 +7852,18 @@ c_finish_return (tree retval)
 	    case ADDR_EXPR:
 	      inner = TREE_OPERAND (inner, 0);
 
-               /* LLVM LOCAL begin */
+              /* LLVM LOCAL begin */
   	      while (REFERENCE_CLASS_P (inner)
- 	             && TREE_CODE (inner) != INDIRECT_REF) {
+ 	             && TREE_CODE (inner) != INDIRECT_REF)
+                {
 #ifdef ENABLE_LLVM
-                 if (TREE_CODE (inner) == ARRAY_REF
-                     && (TREE_CODE (TREE_TYPE (TREE_OPERAND (inner, 0)))
-                         != ARRAY_TYPE))
-                   break;    /* Ignore pointer base of array ref extension. */
+                  if (TREE_CODE (inner) == ARRAY_REF
+                      && (TREE_CODE (TREE_TYPE (TREE_OPERAND (inner, 0)))
+                          != ARRAY_TYPE))
+                    break;    /* Ignore pointer base of array ref extension. */
 #endif
-                 inner = TREE_OPERAND (inner, 0);
-               }
+                  inner = TREE_OPERAND (inner, 0);
+                }
               /* LLVM LOCAL end */
  
 	      if (DECL_P (inner)
@@ -7879,12 +7890,6 @@ c_finish_return (tree retval)
 
       retval = build2 (MODIFY_EXPR, TREE_TYPE (res), res, t);
     }
-  /* APPLE LOCAL begin radar 5732232 - blocks */
-  /* When this routine is called for the helper function, during gimplification,
-     we are only interested in the actual return expression. */
-  if (current_function_decl && BLOCK_HELPER_FUNC (current_function_decl))
-    return retval;
-  /* APPLE LOCAL end radar 5732232 - blocks */
   /* APPLE LOCAL radar 6083129 - byref escapes (C++ cp) */
   release_all_local_byrefs_at_return ();
   ret_stmt = build_stmt (RETURN_EXPR, retval);

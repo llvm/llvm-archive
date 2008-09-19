@@ -1,3 +1,33 @@
+2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5839123
+	* objc-act.c (objc_compare_types): More detailed error
+	reporting.
+
+2008-09-10  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6209554
+	* objc-act.c (objc_declare_property_impl): Report on 
+	location of previous property decl.
+	(error_previous_property_decl): New.
+	
+2008-09-08 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6064186
+	* objc_act.c (generate_v2_property_list,
+		      forward_declare_categories,
+		      generate_descriptor_table,
+		      generate_v2_ivars_list,
+		      generate_dispatch_table,
+		      generate_v2_dispatch_tables,
+		      generate_v2_protocol_list,
+		      generate_v2_method_descriptors,
+		      newabi_append_ro,
+		      generate_v2_shared_structures): Symbols which end up in DATA
+	section now start with "l_".
+	(build_message_reference_decl): Each message ref symbol is now prefixed
+	by "l_". It is also becomes 'private extern'.
+		       
 2008-08-26  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5595325 (minor addition)

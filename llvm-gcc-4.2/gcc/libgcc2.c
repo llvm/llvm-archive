@@ -2091,6 +2091,7 @@ getpagesize (void)
 #endif
 }
 
+/* LLVM LOCAL */
 #if defined(__i386__) && ! defined(_WINBASE_H)
 extern int VirtualProtect (char *, int, int, int *) __attribute__((stdcall));
 #endif
@@ -2126,6 +2127,7 @@ TRANSFER_FROM_TRAMPOLINE
 #endif
 #endif /* L_trampoline */
 
+/* LLVM LOCAL */
 #if !defined (__CYGWIN__) && !defined(__MINGW32__)
 #ifdef L__main
 

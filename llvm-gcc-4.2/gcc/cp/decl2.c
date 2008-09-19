@@ -1893,16 +1893,14 @@ constrain_class_visibility (tree type)
 	int subvis = type_visibility (ftype);
 
 	if (subvis == VISIBILITY_ANON)
-          /* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+          /* APPLE LOCAL begin mainline radar 6194879 */
 	  {
-#ifdef ENABLE_LLVM
 	    if (!in_main_input_context ())
-#endif
 	      warning (0, "\
 %qT has a field %qD whose type uses the anonymous namespace",
 		   type, t);
 	  }
-	  /* LLVM LOCAL end */
+          /* APPLE LOCAL end mainline radar 6194879 */
 	else if (IS_AGGR_TYPE (ftype)
 		 && vis < VISIBILITY_HIDDEN
 		 && subvis >= VISIBILITY_HIDDEN)
@@ -1917,16 +1915,14 @@ constrain_class_visibility (tree type)
       int subvis = type_visibility (TREE_TYPE (t));
 
       if (subvis == VISIBILITY_ANON)
-        /* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+        /* APPLE LOCAL begin mainline radar 6194879 */
         {
-#ifdef ENABLE_LLVM
 	  if (!in_main_input_context())
-#endif
 	    warning (0, "\
 %qT has a base %qT whose type uses the anonymous namespace",
 		 type, TREE_TYPE (t));
 	}
-      /* LLVM LOCAL end */
+        /* APPLE LOCAL end mainline radar 6194879 */
       else if (vis < VISIBILITY_HIDDEN
 	       && subvis >= VISIBILITY_HIDDEN)
 	warning (OPT_Wattributes, "\

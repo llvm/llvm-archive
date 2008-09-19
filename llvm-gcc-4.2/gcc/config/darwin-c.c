@@ -1150,6 +1150,13 @@ objc_check_format_cfstring (tree argument,
                             bool *no_add_attrs)
 {
   unsigned HOST_WIDE_INT i;
+  /* APPLE LOCAL begin 6212507 */
+  if (format_num < 1)
+    {
+      error ("argument number of CFString format cannot be less than one");
+      return false;
+    }
+  /* APPLE LOCAL end 6212507 */
   for (i = 1; i != format_num; i++)
     {
       if (argument == 0)

@@ -877,8 +877,8 @@ make_aggr_type (enum tree_code code)
 
   return t;
 }
+/* APPLE LOCAL begin mainline radar 6194879 */
 
-/* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
 /* Returns true if we are currently in the main source file, or in a
    template instantiation started from the main source file.  */
 
@@ -893,4 +893,4 @@ in_main_input_context (void)
   else
     return strcmp (main_input_filename, input_filename) == 0;
 }
-/* LLVM LOCAL end */
+/* APPLE LOCAL end mainline radar 6194879 */

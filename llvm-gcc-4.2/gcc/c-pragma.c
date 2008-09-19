@@ -249,7 +249,6 @@ handle_pragma_pack (cpp_reader * ARG_UNUSED (dummy))
     }
 }
 #endif  /* HANDLE_PRAGMA_PACK */
-
 /* LLVM LOCAL begin */
 #endif /* ENABLE_LLVM && !TARGET_OVERRIDE_PRAGMA_PACK_HANDLER */
 /* LLVM LOCAL end */

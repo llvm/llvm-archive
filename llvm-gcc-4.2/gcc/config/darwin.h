@@ -310,6 +310,8 @@ do {					\
 	if (flag_mkernel)						\
 	  flag_no_builtin = 1;						\
 	/* APPLE LOCAL end 5731065 */					\
+	/* APPLE LOCAL xmmintrin.h for kernel 4123064 */					\
+	flag_hosted = 0;						\
       }									\
   } while (0)
 
@@ -535,7 +537,9 @@ do {					\
                                 %{!object:%{preload:-lcrt0.o}		    \
                                   %{!preload: %(darwin_crt1)		    \
 					      %(darwin_crt2)}}}}}}	    \
-  %{shared-libgcc:%:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}"
+  %{shared-libgcc:							    \
+    %{!miphoneos-version-min=*:						    \
+      %:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}}"
 /* APPLE LOCAL end mainline  */
 
 /* The native Darwin linker doesn't necessarily place files in the order

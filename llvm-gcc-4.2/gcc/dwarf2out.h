@@ -21,8 +21,6 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 
 extern void dwarf2out_decl (tree);
 extern void dwarf2out_frame_debug (rtx, bool);
-/* APPLE LOCAL async unwind info 5949350 */
-extern void dwarf2out_frame_debug_noncall (bool);
 
 extern void debug_dwarf (void);
 struct die_struct;

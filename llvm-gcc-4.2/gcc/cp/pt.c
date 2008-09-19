@@ -5288,7 +5288,7 @@ reopen_tinst_level (tree level)
   pop_tinst_level ();
 }
 
-/* LLVM LOCAL begin - Fix for GCC PR c++/29365 */
+/* APPLE LOCAL begin mainline radar 6194879 */
 /* Returns the TINST_LEVEL which gives the original instantiation
    context.  */
 
@@ -5297,8 +5297,8 @@ outermost_tinst_level (void)
 {
   return tree_last (current_tinst_level);
 }
-/* LLVM LOCAL end */
 
+/* APPLE LOCAL end mainline radar 6194879 */
 /* DECL is a friend FUNCTION_DECL or TEMPLATE_DECL.  ARGS is the
    vector of template arguments, as for tsubst.
 
@@ -7868,6 +7868,11 @@ tsubst (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 					     | cp_type_quals (type),
 					     complain);
       }
+
+      /* APPLE LOCAL begin blocks 6204446 */
+    case BLOCK_POINTER_TYPE:
+      return t;
+      /* APPLE LOCAL end blocks 6204446 */
 
     default:
       sorry ("use of %qs in template",

@@ -1,7 +1,95 @@
-2008-09-05  Josh Conner <jconner@apple.com>
-	* llvm-convert.cpp (EmitBuiltinDwarfCFA): ARG_POINTER_CFA_OFFSET
-	should take a function decl.
-	* config/arm/arm.c: Remove unnecessary declaration of is_jump_table.
+2008-09-17  Josh Conner  <jconner@apple.com>
+
+	Radar 6204451
+	* global.c (global_alloc): Remove code that ignores conflicts
+	on single-set tied pseudos.
+
+2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6214617
+	* c-common: New flag BLOCK_HAS_CXX_OBJ replaces BLOCK_NO_COPY.
+	(BlockImportsCxxObjects): New field replaces BlockHasByrefVar.
+	* c-parser.c (build_block_struct_type): Remove setting of
+	BLOCK_NO_COPY flag.
+
+2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6217257
+	* c-common.c (handle_blocks_attribute): Diagnose 
+	vla __block declarations.
+
+2008-09-13  Josh Conner  <jconner@apple.com>
+
+	Radar 6214296
+	* config/darwin.h (STARTFILE_SPEC): Don't add crt3.o to the link line
+	if -miphoneos-version-min was specified.
+
+2008-09-12  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6212507
+	* config/darwin-c.c (objc_check_format_cfstring): Check for
+	argument number value.
+
+2008-09-12  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6212722 (tweak)
+	* c-decl.c (build_block_ref_decl): Use array_to_pointer_conversion
+	and function_to_pointer_conversion.
+	* c-typeck.c (array_to_pointer_conversion, function_to_pointer_conversion):
+	Made them global.
+	* c-common.h (array_to_pointer_conversion, function_to_pointer_conversion):
+	Declare.
+	
+2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6212722
+	* c-decl.c (build_block_ref_decl): Add support for array referenced
+	as copied in objects in blocks.
+
+2008-09-11  Caroline Tice  <ctice@apple.com>
+
+        Radar 6066486
+        * dwarf2out.c  (add_sibling_attribute):  Move leaf-test return
+	statement to below the code that potentially removes the
+	DW_AT_MIPS_linkage_name attribute.
+
+2008-09-10  Caroline Tice  <ctice@apple.com>
+
+        Radar 6193416
+        * dwarf2out.c  (gen_subprogram_die):  Force Blocks helper
+	functions to be children of the comp_unit die.
+
+2008-09-09  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6169580
+	* c-commmon.c (build_block_helper_name): Fix bug in
+	block helper function name mangling.
+
+2008-09-08 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6064186
+	* config/darwin.c (machopic_select_section): Message refs
+	symbol prefixes changed now. Accomodate it.
+	* config/darwin-sections.def: __objc_msgrefs is now typed
+	as "coalesced".
+
+2008-09-08  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6070085
+	* gcc/tree-ssa-alias.c (group_aliases): Continue merging alias
+          sets until the changes converge.
+
+2008-09-03  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6185344
+	* c-typeck.c (c_finish_return): Don't do block specific
+	stuff when block has a return type.
+	* c-common.h (block_sema_info): block_has_return_type is
+	a new field.
+	* c-parser.c (c_parser_direct_declarator): Terminate type
+	parsing for block return types.
+	(c_parser_block_literal_expr): Added support to parse and
+	handle explicit return type for blocks.
 
 2008-08-28  Stuart Hastings  <stuart@apple.com>
 

@@ -6285,13 +6285,7 @@ ix86_expand_epilogue (int style)
       /* If not an i386, mov & pop is faster than "leave".  */
       else if (TARGET_USE_LEAVE || optimize_size
 	       || !cfun->machine->use_fast_prologue_epilogue)
-	/* APPLE LOCAL begin async unwind info 5949350 */
-	{
-	  rtx insn = emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
-	  if (flag_asynchronous_unwind_tables)
-	    RTX_FRAME_RELATED_P (insn) = 1;
-	}
-	/* APPLE LOCAL end async unwind info 5949350 */
+	emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
       else
 	{
 	  pro_epilogue_adjust_stack (stack_pointer_rtx,
@@ -6331,13 +6325,7 @@ ix86_expand_epilogue (int style)
 	  /* Leave results in shorter dependency chains on CPUs that are
 	     able to grok it fast.  */
 	  if (TARGET_USE_LEAVE)
-	    /* APPLE LOCAL begin async unwind info 5949350 */
-	    {
-	      rtx insn = emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
-	      if (flag_asynchronous_unwind_tables)
-		RTX_FRAME_RELATED_P (insn) = 1;
-	    }
-	  /* APPLE LOCAL end async unwind info 5949350 */
+	    emit_insn (TARGET_64BIT ? gen_leave_rex64 () : gen_leave ());
 	  else if (TARGET_64BIT)
 	    emit_insn (gen_popdi1 (hard_frame_pointer_rtx));
 	  else

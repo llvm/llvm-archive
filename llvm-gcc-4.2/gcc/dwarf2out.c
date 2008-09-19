@@ -214,8 +214,6 @@ dw_cfi_node;
 typedef struct cfa_loc GTY(())
 {
   HOST_WIDE_INT offset;
-  /* APPLE LOCAL async unwind info 5949350 */
-  HOST_WIDE_INT fp_offset;
   HOST_WIDE_INT base_offset;
   unsigned int reg;
   int indirect;            /* 1 if CFA is accessed via a dereference.  */
@@ -733,21 +731,6 @@ static HOST_WIDE_INT args_size;
 /* The last args_size we actually output.  */
 static HOST_WIDE_INT old_args_size;
 
-/* APPLE LOCAL begin async unwind info 5949350 */
-/* This routine should be called anytime the cfa.reg can be switched
-   away from the fp.  We record the offset used with the fp, so that
-   if we go from using the fp to the sp and then update the sp from
-   the fp, we know what offset to use instead of the current offset in
-   use for the sp.  */
-
-static inline void
-notice_cfa_fp_offset (void)
-{
-  if (cfa.reg == (unsigned) HARD_FRAME_POINTER_REGNUM)
-    cfa.fp_offset = cfa.offset;
-}
-/* APPLE LOCAL end async unwind info 5949350 */
-
 /* Entry point to update the canonical frame address (CFA).
    LABEL is passed to add_fde_cfi.  The value of CFA is now to be
    calculated from REG+OFFSET.  */
@@ -758,8 +741,6 @@ dwarf2out_def_cfa (const char *label, unsigned int reg, HOST_WIDE_INT offset)
   dw_cfa_location loc;
   loc.indirect = 0;
   loc.base_offset = 0;
-  /* APPLE LOCAL async unwind info 5949350 */
-  notice_cfa_fp_offset ();
   loc.reg = reg;
   loc.offset = offset;
   def_cfa_1 (label, &loc);
@@ -792,8 +773,6 @@ def_cfa_1 (const char *label, dw_cfa_location *loc_p)
   if (cfa_store.reg == loc.reg && loc.indirect == 0)
     cfa_store.offset = loc.offset;
 
-  /* APPLE LOCAL async unwind info 5949350 */
-  notice_cfa_fp_offset ();
   loc.reg = DWARF_FRAME_REGNUM (loc.reg);
   lookup_cfa (&old_cfa);
 
@@ -1129,20 +1108,7 @@ dwarf2out_stack_adjust (rtx insn, bool after_p)
      insns to be marked, and to be able to handle saving state around
      epilogues textually in the middle of the function.  */
   if (prologue_epilogue_contains (insn) || sibcall_epilogue_contains (insn))
-    /* APPLE LOCAL begin async unwind info 5949350 */
-    {
-      if (!flag_asynchronous_unwind_tables)
-	return;
-
-      /* We now handle epilogues for flag_asynchronous_unwind_tables.
-	 We do this by saving the cfa information around the epilogue
-	 instructions and restoring that information after the
-	 epilogue instructions.  See dwarf2out_frame_debug_noncall for
-	 the information that is saved and restored.  */
-      if (!epilogue_contains (insn))
-	return;
-    }
-    /* APPLE LOCAL end async unwind info 5949350 */
+    return;
 
   /* If only calls can throw, and we have a frame pointer,
      save up adjustments until we see the CALL_INSN.  */
@@ -1597,8 +1563,6 @@ dwarf2out_frame_debug_expr (rtx expr, const char *label)
 	case REG:
 	  if (cfa.reg == (unsigned) REGNO (src))
 	    {
-	      /* APPLE LOCAL async unwind info 5949350 */
-	      notice_cfa_fp_offset ();
 	      /* Rule 1 */
 	      /* Update the CFA rule wrt SP or FP.  Make sure src is
 		 relative to the current CFA register.
@@ -1645,24 +1609,8 @@ dwarf2out_frame_debug_expr (rtx expr, const char *label)
 
 	      if (XEXP (src, 0) == hard_frame_pointer_rtx)
 		{
-		  /* APPLE LOCAL begin async unwind info 5949350 */
-		  /* In the epilogue, sometimes we switch from fp to
-		     sp and then play with sp, then do another switch
-		     from fp to sp.  In order for this to work, we
-		     have to save a copy of the offset against fp, and
-		     restore that here, back into cfa.offset when we
-		     notice that we were using sp and not fp.  */
-		  if (cfa.reg == (unsigned) STACK_POINTER_REGNUM)
-		    {
-		      cfa.reg = HARD_FRAME_POINTER_REGNUM;
-		      cfa.offset = cfa.fp_offset;
-		    }
-		  /* APPLE LOCAL end async unwind info 5949350 */
-
 		  /* Restoring SP from FP in the epilogue.  */
 		  gcc_assert (cfa.reg == (unsigned) HARD_FRAME_POINTER_REGNUM);
-		  /* APPLE LOCAL async unwind info 5949350 */
-		  notice_cfa_fp_offset ();
 		  cfa.reg = STACK_POINTER_REGNUM;
 		}
 	      else if (GET_CODE (src) == LO_SUM)
@@ -1703,8 +1651,6 @@ dwarf2out_frame_debug_expr (rtx expr, const char *label)
 		  && REGNO (XEXP (src, 0)) == cfa.reg
 		  && GET_CODE (XEXP (src, 1)) == CONST_INT)
 		{
-		  /* APPLE LOCAL async unwind info 5949350 */
-		  notice_cfa_fp_offset ();
 		  /* Setting a temporary CFA register that will be copied
 		     into the FP later on.  */
 		  offset = - INTVAL (XEXP (src, 1));
@@ -1897,8 +1843,6 @@ dwarf2out_frame_debug_expr (rtx expr, const char *label)
 		x = XEXP (x, 0);
 	      gcc_assert (REG_P (x));
 
-	      /* APPLE LOCAL async unwind info 5949350 */
-	      notice_cfa_fp_offset ();
 	      cfa.reg = REGNO (x);
 	      cfa.base_offset = offset;
 	      cfa.indirect = 1;
@@ -1915,53 +1859,6 @@ dwarf2out_frame_debug_expr (rtx expr, const char *label)
       gcc_unreachable ();
     }
 }
-
-/* APPLE LOCAL begin async unwind info 5949350 */
-/* Mirror routine to dwarf2out_frame_debug_noncall, except this
-   routine is only called for all non-CALL_P instructions and only
-   before the instruction.  We use this to save and restore the cfa
-   state around epilogue instructions so that we can track frame
-   related instructions from the epilogue when
-   flag_asynchronous_unwind_tables is on.  */
-void
-dwarf2out_frame_debug_noncall (bool inside_epilogue)
-{
-  static dw_cfa_location saved_cfa;
-  static dw_cfa_location saved_cfa_store;
-  static dw_cfa_location saved_cfa_temp;
-  static HOST_WIDE_INT saved_args_size;
-
-  const char *label;
-
-  if (inside_epilogue)
-    {
-      if (saved_cfa.reg == 0)
-	{
-	  /* When we enter an epilogue, we save the current cfa so
-	     that we can restore it when we leave the epilogue.  */
-	  saved_cfa = cfa;
-	  saved_cfa_store = cfa_store;
-	  saved_cfa_temp = cfa_temp;
-	  saved_args_size = args_size;
-	}
-    }
-  else if (saved_cfa.reg != 0)
-    {
-      /* We have now left the epilogue, so restore the saved cfa.  */
-      cfa = saved_cfa;
-      cfa_store = saved_cfa_store;
-      cfa_temp = saved_cfa_temp;
-      args_size = saved_args_size;
-
-      label = dwarf2out_cfi_label ();
-      def_cfa_1 (label, &cfa);
-
-      /* Once restored, we might need to save it again.  */
-      saved_cfa.reg = 0;
-      return;
-    }
-}
-/* APPLE LOCAL end async unwind info 5949350 */
 
 /* Record call frame debugging information for INSN, which either
    sets SP or FP (adjusting how we calculate the frame address) or saves a
@@ -2012,14 +1909,19 @@ dwarf2out_frame_debug (rtx insn, bool after_p)
       return;
     }
 
-  label = dwarf2out_cfi_label ();
-  src = find_reg_note (insn, REG_FRAME_RELATED_EXPR, NULL_RTX);
-  if (src)
-    insn = XEXP (src, 0);
-  else
-    insn = PATTERN (insn);
+  /* APPLE LOCAL begin async unwind info 5976588 */
+  if (after_p)
+    {
+      label = dwarf2out_cfi_label ();
+      src = find_reg_note (insn, REG_FRAME_RELATED_EXPR, NULL_RTX);
+      if (src)
+	insn = XEXP (src, 0);
+      else
+	insn = PATTERN (insn);
 
-  dwarf2out_frame_debug_expr (insn, label);
+      dwarf2out_frame_debug_expr (insn, label);
+    }
+    /* APPLE LOCAL end async unwind info 5976588 */
 }
 
 #endif
@@ -6714,9 +6616,7 @@ add_sibling_attributes (dw_die_ref die)
 {
   dw_die_ref c;
 
-  if (! die->die_child)
-    return;
-
+  /* APPLE LOCAL radar 6066486 - move code further down.  */
   /* APPLE LOCAL begin radar 5636185  */
   /* As we are traversing the entire structure of dies, to add the
      sibling attributes, also check each die to see if it has the
@@ -6736,6 +6636,13 @@ add_sibling_attributes (dw_die_ref die)
       && contained_in_subroutine (die))
     remove_AT (die, DW_AT_MIPS_linkage_name);
   /* APPLE LOCAL end radar 5636185  */
+  /* APPLE LOCAL begin radar 6066486 - Code moved from above.  */
+  /* Don't return until after removing the DW_AT_MIPS_linkage_name,
+     if appropriate.  */
+  if (! die->die_child)
+    return;
+  /* APPLE LOCAL end radar 6066486  */
+
   if (die->die_parent && die != die->die_parent->die_child)
     add_AT_die_ref (die, DW_AT_sibling, die->die_sib);
 
@@ -12258,7 +12165,12 @@ gen_subprogram_die (tree decl, dw_die_ref context_die)
     }
   else
     {
-      subr_die = new_die (DW_TAG_subprogram, context_die, decl);
+      /* APPLE LOCAL begin radar 6193416  */
+      if (BLOCK_SYNTHESIZED_FUNC (decl))
+	subr_die = new_die (DW_TAG_subprogram, comp_unit_die, decl);
+      else
+	subr_die = new_die (DW_TAG_subprogram, context_die, decl);
+      /* APPLE LOCAL end radar 6193416  */
 
       if (TREE_PUBLIC (decl))
 	add_AT_flag (subr_die, DW_AT_external, 1);

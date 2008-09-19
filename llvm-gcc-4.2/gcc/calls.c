@@ -249,6 +249,8 @@ emit_call_1 (rtx funexp, tree fntree, tree fndecl ATTRIBUTE_UNUSED,
   rtx rounded_stack_size_rtx = GEN_INT (rounded_stack_size);
   rtx call_insn;
   int already_popped = 0;
+  /* APPLE LOCAL async unwind info 5976588 */
+  rtx dwarf = NULL_RTX;
   HOST_WIDE_INT n_popped = RETURN_POPS_ARGS (fndecl, funtype, stack_size);
 #if defined (HAVE_call) && defined (HAVE_call_value)
   rtx struct_value_size_rtx;
@@ -368,6 +370,18 @@ emit_call_1 (rtx funexp, tree fntree, tree fndecl ATTRIBUTE_UNUSED,
   /* Find the call we just emitted.  */
   call_insn = last_call_insn ();
 
+  /* APPLE LOCAL begin async unwind info 5976588 */
+  if (already_popped && n_popped
+      && flag_asynchronous_unwind_tables && ACCUMULATE_OUTGOING_ARGS)
+    {
+      dwarf = gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+			   plus_constant (stack_pointer_rtx, n_popped));
+      REG_NOTES (call_insn) = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR, dwarf,
+						 REG_NOTES (call_insn));
+      RTX_FRAME_RELATED_P (call_insn) = 1;
+    }
+  /* APPLE LOCAL end async unwind info 5976588 */
+
   /* Mark memory as used for "pure" function call.  */
   if (ecf_flags & ECF_PURE)
     call_fusage
@@ -480,7 +494,20 @@ emit_call_1 (rtx funexp, tree fntree, tree fndecl ATTRIBUTE_UNUSED,
      ??? It will be worthwhile to enable combine_stack_adjustments even for
      such machines.  */
   else if (n_popped)
-    anti_adjust_stack (GEN_INT (n_popped));
+    /* APPLE LOCAL begin async unwind info 5976588 */
+    {
+      anti_adjust_stack (GEN_INT (n_popped));
+      if (dwarf)
+	{
+	  rtx last_insn = get_last_nonnote_insn ();
+	  dwarf = gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+			       plus_constant (stack_pointer_rtx, -n_popped));
+	  REG_NOTES (last_insn) = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR, dwarf,
+						     REG_NOTES (last_insn));
+	  RTX_FRAME_RELATED_P (last_insn) = 1;
+	}
+    }
+    /* APPLE LOCAL end async unwind info 5976588 */
 }
 
 /* Determine if the function identified by NAME and FNDECL is one with

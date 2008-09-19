@@ -2775,6 +2775,7 @@ build_block_call (tree fntype, tree function, tree params)
   tree block_ptr_exp;
   tree function_ptr_exp;
   tree typelist;
+  tree result;
   
   /* (struct invok_impl *)BLOCK_PTR_VAR */
   /* First convert it to 'void *'. */
@@ -2792,8 +2793,11 @@ build_block_call (tree fntype, tree function, tree params)
   typelist = tree_cons (NULL_TREE, invoke_impl_ptr_type, typelist);
   fntype = build_function_type (TREE_TYPE (fntype), typelist);
   function_ptr_exp = convert (build_pointer_type (fntype), function_ptr_exp);
-  return  build3 (CALL_EXPR, TREE_TYPE (fntype),
-                  function_ptr_exp, params, NULL_TREE);
+  result = build3 (CALL_EXPR, TREE_TYPE (fntype),
+		   function_ptr_exp, params, NULL_TREE);
+  /* FIXME: should do more from build_cxx_call */
+  result = convert_from_reference (result);
+  return result;
 }
 /* APPLE LOCAL end blocks 6040305 (cm) */
 
@@ -6982,58 +6986,69 @@ check_return_expr (tree retval, bool *no_warning)
       return NULL_TREE;
     }
 
-  if (processing_template_decl)
-    {
-      current_function_returns_value = 1;
-      return retval;
-    }
-
   /* APPLE LOCAL begin blocks 6040305 (cm) */
-  if (cur_block)
+  /* APPLE LOCAL radar 6185344 */
+  if (cur_block && !cur_block->block_has_return_type)
     {
+      /* If this is the first return we've seen in the block, infer the type of
+	 the block from it. */
       if (cur_block->return_type == NULL_TREE)
 	{
 	  if (retval)
-	    cur_block->return_type = TYPE_MAIN_VARIANT (TREE_TYPE (retval));
+	    {
+	      tree restype;
+	      retval = decay_conversion (retval);
+	      restype = TYPE_MAIN_VARIANT (TREE_TYPE (retval));
+	      TREE_TYPE (current_function_decl)
+		= build_function_type (restype,
+				       TYPE_ARG_TYPES (TREE_TYPE (current_function_decl)));
+	      TREE_TYPE (DECL_RESULT (current_function_decl)) = restype;
+	      relayout_decl (DECL_RESULT (current_function_decl));
+	      cur_block->return_type = restype;
+	    }
 	  else
 	    cur_block->return_type = void_type_node;
-	  /* FIXME - is this copy ctor safe? */
-	  return retval;
 	}
 
-      /* Otherwise, verify that this result type matches the previous one.  We are
-	 pickier with blocks than for normal functions because this is a new
-	 feature and we set the rules. */
+      /* Verify that this result type matches the previous one.  We
+	 are pickier with blocks than for normal functions because
+	 this is a new feature and we set the rules. */
       if (TREE_CODE (cur_block->return_type) == VOID_TYPE)
 	{
 	  if (retval)
 	    {
 	      error ("void block should not return a value");
-	      retval = error_mark_node;
+	      return error_mark_node;
 	    }
-	  return retval;
 	}
-
-      if (!retval)
+      else if (!retval)
 	{
 	  error ("non-void block should return a value");
 	  return error_mark_node;
 	}
   
-      /* We have a non-void block with an expression, continue checking.  */
-      valtype = TREE_TYPE (retval);
-
-      /* For now, restrict multiple return statements in a block to have 
-	 strict compatible types only. */
-      if (!types_are_block_compatible (cur_block->return_type, valtype))
+      if (retval)
 	{
-	  error ("incompatible type returning %qT, expected %qT",
-		 valtype, cur_block->return_type);
-	  retval = error_mark_node;
+	  /* We have a non-void block with an expression, continue checking.  */
+	  valtype = TREE_TYPE (retval);
+
+	  /* For now, restrict multiple return statements in a block to have 
+	     strict compatible types only. */
+	  if (!types_are_block_compatible (cur_block->return_type, valtype))
+	    {
+	      error ("incompatible type returning %qT, expected %qT",
+		     valtype, cur_block->return_type);
+	      return error_mark_node;
+	    }
 	}
-      return retval;
     }
   /* APPLE LOCAL end blocks 6040305 (cm) */
+
+  if (processing_template_decl)
+    {
+      current_function_returns_value = 1;
+      return retval;
+    }
 
   /* When no explicit return-value is given in a function with a named
      return value, the named return value is used.  */
@@ -7568,17 +7583,3 @@ lvalue_or_else (tree* ref, enum lvalue_use use)
 
   return win;
 }
-
-/* APPLE LOCAL begin blocks 6040305 */
-tree c_finish_return (tree exp)
-{
-  /* Unlike c front-end, genericize gets called in the middle of
-     block parsing. Must not convert the expression tree at that
-     time. */
-  if (cur_block)
-    return exp;
-  gcc_assert (current_function_decl
-              && BLOCK_HELPER_FUNC (current_function_decl));
-  return finish_return_stmt (exp);
-}
-/* APPLE LOCAL end blocks 6040305 */

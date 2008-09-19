@@ -204,15 +204,6 @@ c_gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p ATTRIBUTE_UNUSED)
 
   switch (code)
     {
-    /* APPLE LOCAL begin radar 5732232 - blocks */
-    case RETURN_EXPR:
-        if (current_function_decl && 
-            BLOCK_HELPER_FUNC (current_function_decl)) {
-          tree ret_expr = TREE_OPERAND (*expr_p, 0);
-          TREE_OPERAND (*expr_p, 0) = c_finish_return (ret_expr);
-        }
-        return GS_UNHANDLED;
-    /* APPLE LOCAL end radar 5732232 - blocks */
     case DECL_EXPR:
       /* This is handled mostly by gimplify.c, but we have to deal with
 	 not warning about int x = x; as it is a GCC extension to turn off

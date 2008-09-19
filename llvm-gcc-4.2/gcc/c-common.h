@@ -1123,7 +1123,8 @@ extern tree vector_constructor_from_expr (tree, tree);
 enum {
      BLOCK_NEEDS_FREE =        (1 << 24),
      BLOCK_HAS_COPY_DISPOSE =  (1 << 25),
-     BLOCK_NO_COPY =           (1 << 26), /* interim byref: no copies allowed */
+     /* APPLE LOCAL radar 6214617 */
+     BLOCK_HAS_CXX_OBJ =       (1 << 26), 
      BLOCK_IS_GC =             (1 << 27),
      /* APPLE LOCAL radar 5822844 */
      BLOCK_IS_GLOBAL = 	       (1 << 28)
@@ -1146,9 +1147,10 @@ struct block_sema_info {
   bool hasPrototype;
   bool isVariadic;
   bool BlockHasCopyDispose;
-  bool BlockHasByrefVar;
-  /* APPLE LOCAL radar 5822844 */
-  bool block_is_complete; /* When true, we are done analyzing block. */
+  /* APPLE LOCAL radar 6214617 */
+  bool BlockImportsCxxObjects;
+  /* APPLE LOCAL radar 6185344 */
+  bool block_has_return_type; /* When true, block has a declared return type. */
 
   /* the_scope - This is the scope for the block itself, which
      contains arguments etc.  Use only for C.  */
@@ -1180,7 +1182,7 @@ extern bool lookup_name_in_block (tree, tree*);
 extern void build_block_internal_types (void);
 extern void push_to_top_level (void);
 extern void pop_from_top_level (void);
-extern void start_block_helper_function (tree func_decl, bool add_result_decl);
+extern void start_block_helper_function (tree func_decl);
 extern void block_build_prologue (struct block_sema_info *block_impl);
 extern tree c_finish_return (tree);
 extern tree copy_in_object (tree);
@@ -1212,6 +1214,10 @@ extern void outof_bc_stmt_block (void);
 
 /* APPLE LOCAL radar 6040305 - blocks */
 extern tree build_indirect_object_id_exp (tree);
+/* APPLE LOCAL begin radar 6212722 */
+extern tree array_to_pointer_conversion (tree);
+extern tree function_to_pointer_conversion (tree);
+/* APPLE LOCAL end radar 6212722 */
 
 /* APPLE LOCAL radar 6160536 */
 extern tree build_block_helper_name (int);

@@ -29,6 +29,10 @@ if [ "$BOOTSTRAP" != bootstrap ]; then
     bootstrap=--disable-bootstrap
 fi
 
+# Language front-ends to build. This also affects
+# whether the C++ driver and driver-driver are installed
+LANGUAGES=${LANGUAGES-c,objc,c++,obj-c++}
+
 # The B&I build srcript (~rc/bin/buildit) accepts an '-othercflags'
 # command-line flag, and captures the argument to that flag in
 # $RC_NONARCH_CFLAGS (and mysteriously prepends '-pipe' thereto).
@@ -108,7 +112,7 @@ MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 # For ARM, grab all system files from an SDK.
 ARM_SYSROOT="/Developer/SDKs/Extra"
 ARM_LIBSTDCXX_VERSION=4.2.1
-ARM_CONFIGFLAGS="--with-sysroot=\"$ARM_SYSROOT\" \
+ARM_CONFIGFLAGS="--with-build-sysroot=\"$ARM_SYSROOT\" \
                  --with-gxx-include-dir=\${prefix}/include/c++/$ARM_LIBSTDCXX_VERSION"
 # APPLE LOCAL end ARM ARM_CONFIGFLAGS
 
@@ -157,7 +161,7 @@ fi
 CONFIGFLAGS="$CHECKING_FLAGS \
   --prefix=$DEST_ROOT \
   --mandir=\${prefix}/share/man \
-  --enable-languages=c,objc,c++,obj-c++ \
+  --enable-languages=$LANGUAGES \
   --program-prefix=llvm- \
   --program-transform-name=/^[cg][^.-]*$/s/$/-$MAJ_VERS/ \
   --with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION \
@@ -186,6 +190,17 @@ fi
 
 # The $LOCAL_MAKEFLAGS variable can be used to override $MAKEFLAGS.
 MAKEFLAGS=${LOCAL_MAKEFLAGS-"-j $SYSCTL"}
+
+BUILD_CXX=0
+for lang in `echo $LANGUAGES | sed 's/,/ /g'`; do
+  if [ $lang = "c++" -o $lang = "obj-c++" ]; then
+    BUILD_CXX=1
+    break
+  fi
+done
+
+# Unset this, because GCC uses this variable in its makefiles
+unset LANGUAGES
 
 # LLVM LOCAL begin
 if [ "$ENABLE_LLVM" == true ]; then
@@ -438,6 +453,7 @@ for t in $LIBGOMP_TARGETS ; do
 done
 # APPLE LOCAL end native compiler support
 
+if [ $BUILD_CXX -eq 1 ]; then
 for t in $TARGETS ; do
     if [ "$t" == 'arm' ] ; then
         cp -p $ARM_SYSROOT/usr/lib/libstdc++.6.dylib \
@@ -451,6 +467,7 @@ for t in $TARGETS ; do
 # LLVM LOCAL
 #  strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
 done
+fi
 
 # include
 HEADERPATH=$DEST_ROOT/include/gcc/darwin/$MAJ_VERS
@@ -478,18 +495,25 @@ done
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
-# LLVM LOCAL
-ln -f $MDIR/llvm-g++.1 $MDIR/llvm-c++.1 || exit 1
+if [ $BUILD_CXX -eq 1 ]; then
+  # LLVM LOCAL
+  ln -f $MDIR/llvm-g++.1 $MDIR/llvm-c++.1 || exit 1
+fi
 for t in $TARGETS ; do
   # LLVM LOCAL begin
   ln -f $MDIR/llvm-gcc.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-gcc.1 \
       || exit 1
-  ln -f $MDIR/llvm-g++.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-g++.1 \
-      || exit 1
+  if [ $BUILD_CXX -eq 1 ]; then
+    ln -f $MDIR/llvm-g++.1 $MDIR/$t-apple-darwin$DARWIN_VERS-llvm-g++.1 \
+        || exit 1
+  fi
   # LLVM LOCAL end
 done
+
+# LLVM LOCAL begin
 # Compress manpages
 gzip -f $MDIR/*
+# LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers
 for h in $HOSTS ; do
@@ -504,29 +528,31 @@ for h in $HOSTS ; do
         -L$DIR/obj-$h-$BUILD/libiberty/                                        \
 	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-gcc-$MAJ_VERS || exit 1
 
-    $h-apple-darwin$DARWIN_VERS-gcc \
-	$ORIG_SRC_DIR/driverdriver.c                               \
-	-DPDN="\"-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS\""                                    \
-	-DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
-	-I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
-	-liberty -L$DIR/dst-$BUILD-$h$DEST_ROOT/lib/                           \
-	-L$DIR/dst-$BUILD-$h$DEST_ROOT/$h-apple-darwin$DARWIN_VERS/lib/                    \
-        -L$DIR/obj-$h-$BUILD/libiberty/                                        \
-	-o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-g++-$MAJ_VERS || exit 1
+    if [ $BUILD_CXX -eq 1 ]; then
+        $h-apple-darwin$DARWIN_VERS-gcc \
+	    $ORIG_SRC_DIR/driverdriver.c                               \
+	    -DPDN="\"-apple-darwin$DARWIN_VERS-llvm-g++-$MAJ_VERS\""                                    \
+	    -DIL="\"$DEST_ROOT/bin/\"" -I  $ORIG_SRC_DIR/include                   \
+	    -I  $ORIG_SRC_DIR/gcc -I  $ORIG_SRC_DIR/gcc/config                     \
+	    -liberty -L$DIR/dst-$BUILD-$h$DEST_ROOT/lib/                           \
+	    -L$DIR/dst-$BUILD-$h$DEST_ROOT/$h-apple-darwin$DARWIN_VERS/lib/                    \
+            -L$DIR/obj-$h-$BUILD/libiberty/                                        \
+	    -o $DEST_DIR/$DEST_ROOT/bin/tmp-$h-llvm-g++-$MAJ_VERS || exit 1
+    fi
     # LLVM LOCAL end
 done
 
 # LLVM LOCAL begin
 lipo -output $DEST_DIR/$DEST_ROOT/bin/llvm-gcc-$MAJ_VERS -create \
   $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-gcc-$MAJ_VERS || exit 1
-
-lipo -output $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS -create \
-  $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
-
-ln -f $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/llvm-c++-$MAJ_VERS || exit 1
-
 rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-gcc-$MAJ_VERS || exit 1
-rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
+
+if [ $BUILD_CXX -eq 1 ]; then
+    lipo -output $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS -create \
+        $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
+    ln -f $DEST_DIR/$DEST_ROOT/bin/llvm-g++-$MAJ_VERS $DEST_DIR/$DEST_ROOT/bin/llvm-c++-$MAJ_VERS || exit 1
+    rm $DEST_DIR/$DEST_ROOT/bin/tmp-*-llvm-g++-$MAJ_VERS || exit 1
+fi
 # LLVM LOCAL end
 
 ########################################

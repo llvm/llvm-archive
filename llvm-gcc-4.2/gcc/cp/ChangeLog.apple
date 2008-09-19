@@ -1,3 +1,63 @@
+2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6214617
+	* parser.c (cp_block_requires_copying): New
+	(build_block_struct_type): Set BlockImportsCxxObjects flag.
+	(build_block_struct_initlist): Set BLOCK_HAS_CXX_OBJ if need be.
+	(synth_copy_helper_block_func): Call copy ctor if copied in object has one.
+	(synth_destroy_helper_block_func): Call dtor on cxx object.
+	
+2008-09-12  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6212722 (tweak)
+	* parser.c (build_block_ref_decl): Use decay_conversion.
+
+2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6212722
+        * parser.c (build_block_ref_decl): Add support for arrays referenced
+        as copied in objects in blocks.
+	
+2008-09-09  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6169580
+	* decl.c (synth_block_byref_id_object_copy_func): Pass new flag 
+	to finish_function.
+	(synth_block_byref_id_object_): Ditto.
+	(finish_function): Don't pop the nested class when synthesizing
+	block helpers.
+	* semantics.c (finish_id_expression): Added logic to attach
+	copied-in "this" to stand-alone field reference in a block.
+	* parser.c (synth_copy_helper_block_func, synth_destroy_helper_block_func):
+	Pass new flag to finish_function.
+	(cp_parser_block_literal_expr): When block is in non-static member
+	function, need to import "this" as a read-only copied in variable.
+	
+	
+2008-09-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6169527
+	* parser.c (build_block_struct_type): Set CLASSTYPE_AS_BASE.
+	(build_block_internal_types): Ditto.
+	(build_block_struct_initlist): Rewritten.
+	(build_block_literal_tmp): Rewritten.
+	(build_block_ref_decl): Just add copied-in variable to
+	the scope.
+	(declare_block_prologue_local_vars): Rewritten.
+	(declare_block_prologue_local_byref_vars): New
+	(block_build_prologue): Call declare_block_prologue_local_byref_vars
+	for byref variables.
+
+2008-09-03  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6185344
+	* typeck.c (check_return_expr): Added extra check
+	for return type checking.
+	* parser.c (cp_parser_direct_declarator): Added
+	extra check for type used as block return type.
+	(cp_parser_block_literal_expr): Parse and handle
+	user provided block return type syntax.
+
 2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6160536

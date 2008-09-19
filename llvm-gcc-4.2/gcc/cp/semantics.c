@@ -774,12 +774,6 @@ finish_return_stmt (tree expr)
 
   expr = check_return_expr (expr, &no_warning);
 
-  /* APPLE LOCAL begin blocks 6040305 */
-  if (current_function_decl && BLOCK_HELPER_FUNC (current_function_decl)
-      && !cur_block)
-    return expr;
-  /* APPLE LOCAL end blocks 6040305 */
-
   if (flag_openmp && !check_omp_return ())
     return error_mark_node;
   if (!processing_template_decl)
@@ -2882,8 +2876,21 @@ finish_id_expression (tree id_expression,
 	     Access checking has been performed during name lookup
 	     already.  Turn off checking to avoid duplicate errors.  */
 	  push_deferring_access_checks (dk_no_check);
-	  decl = finish_non_static_data_member (decl, current_class_ref,
-						/*qualifying_scope=*/NULL_TREE);
+          /* APPLE LOCAL begin radar 6169580 */
+          if (cur_block)
+          {
+            tree exp;
+            tree this_copiedin_var = lookup_name (this_identifier);
+            gcc_assert (!current_class_ref);
+            gcc_assert (this_copiedin_var);
+            exp = build_x_arrow (this_copiedin_var);
+            decl = build_class_member_access_expr (exp, decl, TREE_TYPE (exp), 
+                                                   /*preserve_reference=*/false);
+          }
+          else
+	    decl = finish_non_static_data_member (decl, current_class_ref,
+                                                  /*qualifying_scope=*/NULL_TREE);
+          /* APPLE LOCAL end radar 6169580 */
 	  pop_deferring_access_checks ();
 	}
       else if (is_overloaded_fn (decl))

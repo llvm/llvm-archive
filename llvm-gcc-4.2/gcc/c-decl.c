@@ -3740,7 +3740,7 @@ synth_block_byref_id_object_copy_func (void)
                                           NULL_TREE));
   /* function header synthesis. */
   push_function_context ();
-  start_block_helper_function (block_byref_id_object_copy, true);
+  start_block_helper_function (block_byref_id_object_copy);
   store_parm_decls_from (arg_info);
 
   /* Body of the function. */
@@ -3805,7 +3805,7 @@ synth_block_byref_id_object_dispose_func (void)
                                NULL_TREE);
   /* function header synthesis. */
   push_function_context ();
-  start_block_helper_function (block_byref_id_object_dispose, true);
+  start_block_helper_function (block_byref_id_object_dispose);
   store_parm_decls_from (arg_info);
 
   /* Body of the function. */
@@ -8003,6 +8003,8 @@ build_block_ref_decl (tree name, tree decl)
 {
   struct c_scope *scope = current_scope;
   tree ref_decl;
+  /* APPLE LOCAL radar 6212722 */
+  tree type, exp;
   /* APPLE LOCAL begin radar 5932809 - copyable byref blocks (C++ ch) */
   /* 'decl' was previously declared as __byref. Simply, copy the value
      embedded in the above variable. */
@@ -8049,10 +8051,20 @@ build_block_ref_decl (tree name, tree decl)
     /* APPLE LOCAL end radar 5988451 (C++ ch) */
   }
   /* APPLE LOCAL end radar 5932809 - copyable byref blocks (C++ ch) */
-
+  /* APPLE LOCAL begin radar 6212722 */
+  exp = decl;
+  type = TREE_TYPE (exp);
+  if (TREE_CODE (type) == ARRAY_TYPE) {
+    exp = array_to_pointer_conversion (decl);
+    type = TREE_TYPE (exp);
+  }
+  else if (TREE_CODE (type) == FUNCTION_TYPE) {
+    exp = function_to_pointer_conversion (exp);
+    type = TREE_TYPE (exp);
+  }
   ref_decl = build_decl (VAR_DECL, name,
-                         build_qualified_type (TREE_TYPE (decl),
-                                               TYPE_QUAL_CONST));
+                         build_qualified_type (type, TYPE_QUAL_CONST));
+  /* APPLE LOCAL end radar 6212722 */
   /* APPLE LOCAL begin radars 6144664 & 6145471  */
   DECL_SOURCE_LOCATION (ref_decl) = DECL_SOURCE_LOCATION 
                                                (cur_block->helper_func_decl);
@@ -8075,7 +8087,8 @@ build_block_ref_decl (tree name, tree decl)
   cur_block->block_ref_decl_list =
     tree_cons (NULL_TREE, ref_decl, cur_block->block_ref_decl_list);
   cur_block->block_original_ref_decl_list =
-    tree_cons (NULL_TREE, decl, cur_block->block_original_ref_decl_list);
+    /* APPLE LOCAL radar 6212722 */
+    tree_cons (NULL_TREE, exp, cur_block->block_original_ref_decl_list);
   return ref_decl;
 }
 
@@ -8277,10 +8290,11 @@ build_helper_func_decl (tree ident, tree type)
  It has removed all the fuss in the start_function().
  */
 void
-start_block_helper_function (tree decl1, bool add_result_decl)
+start_block_helper_function (tree decl1)
 {
   struct c_label_context_se *nstack_se;
   struct c_label_context_vm *nstack_vm;
+  tree restype, resdecl;
 
   current_function_returns_value = 0;  /* Assume, until we see it does.  */
   current_function_returns_null = 0;
@@ -8337,14 +8351,12 @@ start_block_helper_function (tree decl1, bool add_result_decl)
   push_scope ();
   declare_parm_level ();
 
-  if (add_result_decl)
-  {
-    tree restype = TREE_TYPE (TREE_TYPE (current_function_decl));
-    tree resdecl = build_decl (RESULT_DECL, NULL_TREE, restype);
-    DECL_ARTIFICIAL (resdecl) = 1;
-    DECL_IGNORED_P (resdecl) = 1;
-    DECL_RESULT (current_function_decl) = resdecl;
-  }
+  restype = TREE_TYPE (TREE_TYPE (current_function_decl));
+  resdecl = build_decl (RESULT_DECL, NULL_TREE, restype);
+  DECL_ARTIFICIAL (resdecl) = 1;
+  DECL_IGNORED_P (resdecl) = 1;
+  DECL_RESULT (current_function_decl) = resdecl;
+
   start_fname_decls ();
 }
 

@@ -85,6 +85,7 @@ void dummy_function() {
   llvm::createMemCpyOptPass();
   llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
+  llvm::createAddReadAttrsPass();
 
   std::string Err;
   llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),

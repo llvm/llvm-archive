@@ -46,36 +46,34 @@ struct CheckRequest {
   };
 };
 
-typedef CircularQueue<CheckRequest, 4> CheckQueueTy;
+typedef LockFreeFifo<CheckRequest*, 32> CheckQueueTy;
 CheckQueueTy gCheckQueue;
   
-typedef llvm::safecode::ConditionalCounter SCSyncToken;
-
-SCSyncToken gSCSyncToken;
+SimpleSlabAllocator<CheckRequest> gCheckRequestAllocator;
 
 class CheckWrapper {
 public:
-  void operator()(CheckRequest & req) const {
-    switch (req.type) {
+  void operator()(CheckRequest * req) const {
+    switch (req->type) {
     case CHECK_POOL_CHECK:
-      poolcheck(req.poolcheck.Pool, req.poolcheck.Node);
+      poolcheck(req->poolcheck.Pool, req->poolcheck.Node);
       break;
 
     case CHECK_POOL_CHECK_UI:
-      poolcheckui(req.poolcheck.Pool, req.poolcheck.Node);
+      poolcheckui(req->poolcheck.Pool, req->poolcheck.Node);
       break;
 
     case CHECK_BOUNDS_CHECK:
-      boundscheck(req.boundscheck.Pool, req.boundscheck.Source, req.boundscheck.Dest);
+      boundscheck(req->boundscheck.Pool, req->boundscheck.Source, req->boundscheck.Dest);
       break;
 
     case CHECK_BOUNDS_CHECK_UI:
-      boundscheckui(req.boundscheck.Pool, req.boundscheck.Source, req.boundscheck.Dest);
+      boundscheckui(req->boundscheck.Pool, req->boundscheck.Source, req->boundscheck.Dest);
       break;
     default:
       break;
     }
-    --gSCSyncToken;
+    gCheckRequestAllocator.deallocate(req);
   }
 };
 
@@ -87,7 +85,9 @@ namespace {
       mCheckTask.activate();
     }
     ~SpeculativeCheckingGuard() {
-      mCheckTask.gracefulExit(); 
+      mCheckTask.stop();
+      gCheckQueue.enqueue(gCheckRequestAllocator.allocate());
+      __sc_wait_for_completion();
     }
   private:
     Task<CheckQueueTy, CheckWrapper> mCheckTask;
@@ -98,44 +98,42 @@ namespace {
 
 NAMESPACE_SC_END
 
+using namespace llvm::safecode;
+
 void __sc_poolcheck(PoolTy *Pool, void *Node) {
-  ++llvm::safecode::gSCSyncToken;
-  llvm::safecode::CheckRequest req;
-  req.type = llvm::safecode::CHECK_POOL_CHECK;
-  req.poolcheck.Pool = Pool;
-  req.poolcheck.Node = Node;
-  llvm::safecode::gCheckQueue.enqueue(req);
+  CheckRequest * req = gCheckRequestAllocator.allocate();
+  req->type = CHECK_POOL_CHECK;
+  req->poolcheck.Pool = Pool;
+  req->poolcheck.Node = Node;
+  gCheckQueue.enqueue(req);
 }
 
 void __sc_poolcheckui(PoolTy *Pool, void *Node) {
-  ++llvm::safecode::gSCSyncToken;
-  llvm::safecode::CheckRequest req;
-  req.type = llvm::safecode::CHECK_POOL_CHECK_UI;
-  req.poolcheck.Pool = Pool;
-  req.poolcheck.Node = Node;
-  llvm::safecode::gCheckQueue.enqueue(req);
+  CheckRequest * req = gCheckRequestAllocator.allocate();
+  req->type = CHECK_POOL_CHECK_UI;
+  req->poolcheck.Pool = Pool;
+  req->poolcheck.Node = Node;
+  gCheckQueue.enqueue(req);
 }
 
 void __sc_boundscheck   (PoolTy * Pool, void * Source, void * Dest) {
-  ++llvm::safecode::gSCSyncToken;
-  llvm::safecode::CheckRequest req;
-  req.type = llvm::safecode::CHECK_BOUNDS_CHECK;
-  req.boundscheck.Pool = Pool;
-  req.boundscheck.Source = Source;
-  req.boundscheck.Dest = Dest;
-  llvm::safecode::gCheckQueue.enqueue(req);
+  CheckRequest * req = gCheckRequestAllocator.allocate();
+  req->type = CHECK_BOUNDS_CHECK;
+  req->boundscheck.Pool = Pool;
+  req->boundscheck.Source = Source;
+  req->boundscheck.Dest = Dest;
+  gCheckQueue.enqueue(req);
 }
 
 void __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) {
-  ++llvm::safecode::gSCSyncToken;
-  llvm::safecode::CheckRequest req;
-  req.type = llvm::safecode::CHECK_BOUNDS_CHECK_UI;
-  req.boundscheck.Pool = Pool;
-  req.boundscheck.Source = Source;
-  req.boundscheck.Dest = Dest;
-  llvm::safecode::gCheckQueue.enqueue(req);
+  CheckRequest * req = gCheckRequestAllocator.allocate();
+  req->type = CHECK_BOUNDS_CHECK_UI;
+  req->boundscheck.Pool = Pool;
+  req->boundscheck.Source = Source;
+  req->boundscheck.Dest = Dest;
+  gCheckQueue.enqueue(req);
 }
 
 void __sc_wait_for_completion() {
-  llvm::safecode::gSCSyncToken.wait();
+  SPIN_AND_YIELD(!gCheckQueue.empty());
 }

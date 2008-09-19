@@ -17,114 +17,130 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <cassert>
-#include <iostream>
 #include <errno.h>
 #include "Config.h"
 #include <deque>
 
 NAMESPACE_SC_BEGIN
 
-/// Implementation of a circular queue
-/// TODO: use lock-free alogirthm to improve the performance
+#define LOCK_PREFIX "lock "
+#define ADDR "+m" (*(volatile long *) addr)
 
-template<class Ty, size_t N>
-class CircularQueue {
-public:
-  typedef Ty element_t;
-  void enqueue(const Ty & elem) {
-    while (sem_wait(&mSemQueueNotFull)) {} 
-    pthread_mutex_lock(&mLock);   
-    mTail = next(mTail);
-    mQueue[mTail] = elem;
-//    fprintf(stderr, "en this:%p mTail:%d mHead:%d\n", this, mTail, mHead);
-    pthread_mutex_unlock(&mLock);
-    while(sem_post(&mSemQueueNotEmpty)) {}
-  };
+#define SPIN_AND_YIELD(COND) do { int counter = 0; \
+  while (COND) { if (++counter == 1024) { sched_yield(); counter = 0;} } \
+  } while (0)
 
-  void dequeue(Ty & elem) {
-    while(sem_wait(&mSemQueueNotEmpty)) {}
-    pthread_mutex_lock(&mLock);    
-    elem = mQueue[mHead];
-    mHead = next(mHead);    
-//    fprintf(stderr, "de this:%p mTail:%d mHead:%d\n", this, mTail, mHead);
-    pthread_mutex_unlock(&mLock);
-    while (sem_post(&mSemQueueNotFull)) {}
-  };
+/// FIXME: These codes are from linux header file, it should be rewritten
+/// to avoid license issues.
+/// JUST FOR EXPERIMENTAL USE!!!
+static inline void clear_bit(int nr, volatile void *addr)
+{
+  asm volatile(LOCK_PREFIX "btr %1,%0"
+	       : ADDR
+	       : "Ir" (nr));
+}
+static inline void set_bit(int nr, volatile void *addr)
+{
+  asm volatile(LOCK_PREFIX "bts %1,%0"
+	       : ADDR
+	       : "Ir" (nr) : "memory");
+}
+/**
 
-  CircularQueue() : mHead(0), mTail(N-1) {
-    sem_init(&mSemQueueNotFull, false, N);
-    sem_init(&mSemQueueNotEmpty, false, 0);
-  };
-
-  ~CircularQueue() {
-    pthread_mutex_destroy(&mLock);
-    sem_destroy(&mSemQueueNotFull);
-    sem_destroy(&mSemQueueNotEmpty);
-  };
-
-private:
-  size_t next(size_t pos) {
-    return (pos + 1) % (N);
-  };
-  int sem_value(sem_t * sem) {
-    int i;
-    sem_getvalue(sem, &i);
-    return i;
-  };
-  Ty mQueue[N];
-  size_t mHead, mTail;
-  pthread_mutex_t mLock;
-  sem_t mSemQueueNotFull;
-  sem_t mSemQueueNotEmpty;
-};
-
+* __ffs - find first bit in word.
+* @word: The word to search
+*
+* Undefined if no bit exists, so code should check against 0 first.
+*/
+static inline unsigned long __ffs(unsigned long word)
+{
+  __asm__("bsfl %1,%0"
+	  :"=r" (word)
+	  :"rm" (word));
+  return word;
+}
 
 template<class Ty>
-class Queue {
+class SimpleSlabAllocator {
 public:
-  typedef Ty element_t;
-  void enqueue(const Ty & elem) {
-    pthread_mutex_lock(&mLock);   
-    mQueue.push_back(elem);
-    pthread_cond_signal(&mQueueNotEmpty);
-    pthread_mutex_unlock(&mLock);
+  uint32_t m_mask;
+  Ty * mMemory;
+  pthread_spinlock_t mLock;
+  SimpleSlabAllocator() : m_mask((uint32_t)(-1)) {
+    mMemory = reinterpret_cast<Ty*>(::operator new[](sizeof(Ty) * sizeof(m_mask) * 8));
+    pthread_spin_init(&mLock, false);
+  }
+
+  ~SimpleSlabAllocator() {
+    pthread_spin_destroy(&mLock);
+    ::operator delete[](reinterpret_cast<void*>(mMemory));
+  }
+
+  Ty * allocate() {
+    pthread_spin_lock(&mLock);
+    while(m_mask == 0) {
+      pthread_spin_unlock(&mLock);
+//      sched_yield();
+      pthread_spin_lock(&mLock);
+    }
+    unsigned long pos = __ffs(m_mask);
+    clear_bit(pos, &m_mask);
+    pthread_spin_unlock(&mLock);
+    return mMemory + pos;
   };
 
-  void dequeue(Ty & elem) {
-    pthread_mutex_lock(&mLock);
-    while (mQueue.empty())
-      pthread_cond_wait(&mQueueNotEmpty, &mLock);
-    elem = mQueue.front();
-    mQueue.pop_front();
-    pthread_mutex_unlock(&mLock);
-  };
+  void deallocate(Ty * ptr) {
+    pthread_spin_lock(&mLock);
+    uint32_t pos = ptr - mMemory;
+    set_bit(pos, &m_mask);
+    pthread_spin_unlock(&mLock);
+  }
+};
 
-  Queue() {
-    pthread_mutex_init(&mLock, NULL);
-    pthread_cond_init(&mQueueNotEmpty, NULL);
-  };
+/// Based on
+/// http://www.talkaboutprogramming.com/group/comp.programming.threads/messages/40308.html
 
-  ~Queue() {
-    pthread_mutex_destroy(&mLock);
-    pthread_cond_destroy(&mQueueNotEmpty);
-  };
+template<class T, size_t N> class LockFreeFifo
+{
+public:
+  typedef  T element_t;
+  LockFreeFifo () : readidx(0), writeidx(0) {}
+
+  T dequeue (void)
+  {
+    SPIN_AND_YIELD(empty());
+    T result = buffer[readidx];
+    readidx = (readidx + 1) % N;
+    return result;
+  }
+
+  void enqueue (T datum)
+  {
+    unsigned newidx = (writeidx + 1) % N;
+    SPIN_AND_YIELD(newidx == readidx);
+    buffer[writeidx] = datum;
+    writeidx = newidx;
+  }
+
+  bool empty() const {
+    return readidx == writeidx;
+  }
 
 private:
-  std::deque<Ty> mQueue;
-  pthread_mutex_t mLock;
-  pthread_cond_t mQueueNotEmpty;
+  volatile unsigned  readidx, writeidx;
+  T buffer[N];
 };
 
 template <class QueueTy, class FuncTy>
 class Task {
 public:
+  typedef typename QueueTy::element_t ElemTy;
   Task(QueueTy & queue) : mQueue(queue), mActive(false) {}
   void activate() {
     mActive = true;
     typedef void * (*start_routine_t)(void*);
     pthread_t thr;
-    int ret = pthread_create(&thr, NULL, (start_routine_t)(&Task::runHelper), this);
-    std::cerr << ret << std::endl;
+    pthread_create(&thr, NULL, (start_routine_t)(&Task::runHelper), this);
   };
 
   void stop() {
@@ -135,12 +151,6 @@ public:
     return mQueue;
   };
 
-  void gracefulExit() {
-    typedef typename QueueTy::element_t element_t;
-    stop();
-    mQueue.enqueue(element_t());
-  };
-
 private:
   static void * runHelper(Task * this_) {
     this_->run();
@@ -149,8 +159,7 @@ private:
 
   void run() {
     while(true) {
-      typename QueueTy::element_t e;
-      mQueue.dequeue(e);
+      typename QueueTy::element_t e = mQueue.dequeue();
       if (mActive) {
 	mFunctor(e);
       } else {
@@ -160,52 +169,8 @@ private:
   };
 
   QueueTy & mQueue;
-  bool mActive;
   FuncTy mFunctor;
-};
-
-struct ConditionalCounter {
-public:
-  ConditionalCounter() : mCount(0) {
-    pthread_mutex_init(&mLock, NULL);
-    pthread_cond_init(&mCondVar, NULL);
-  }
-
-  ~ConditionalCounter() {
-    pthread_mutex_destroy(&mLock);
-    pthread_cond_destroy(&mCondVar);
-  }
-
-  ConditionalCounter & operator++() {
-    pthread_mutex_lock(&mLock);
-    ++mCount;
-//    std::cerr << "++Counter" << mCount << std::endl;
-    pthread_mutex_unlock(&mLock);
-    return *this;
-  }
-
-  ConditionalCounter & operator--() {
-    pthread_mutex_lock(&mLock);
-//    std::cerr << "Counter--" << mCount << std::endl;
-    if (--mCount == 0) {
-      pthread_cond_broadcast(&mCondVar);
-    }
-    pthread_mutex_unlock(&mLock);
-    return *this;
-  }
-
-  void wait() {
-    pthread_mutex_lock(&mLock);
-    while (mCount)
-      pthread_cond_wait(&mCondVar, &mLock);
-    pthread_mutex_unlock(&mLock);
-//    std::cerr << "Pass" << std::endl;
-  }
-
-private:
-  int mCount;
-  pthread_mutex_t mLock;
-  pthread_cond_t mCondVar;
+  bool mActive;
 };
 
 NAMESPACE_SC_END

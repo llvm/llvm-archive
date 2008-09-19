@@ -155,8 +155,10 @@ int main(int argc, char **argv) {
     if (!DisableMonotonicLoopOpt)
       Passes.add(new MonotonicLoopOpt());
 
-    if(EnableSpecChecking)
+    if(EnableSpecChecking) {
       Passes.add(new SpeculativeCheckingPass());
+      Passes.add(new SpeculativeCheckingInsertSyncPoints());
+    }
 
     // Verify the final result
     Passes.add(createVerifierPass());

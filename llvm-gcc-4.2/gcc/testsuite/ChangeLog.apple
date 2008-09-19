@@ -1,3 +1,96 @@
+2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6214617
+	* g++.apple/blocks-recovercpp.C: Add
+
+2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6217257
+	* gcc.apple/block-byref-dynamic-array.c: Add
+
+2008-09-12  Fariborz Jahanian <fjahanian@apple.com>
+	
+	Radar 6212507
+	* gcc.apple/format-security-attribute-3.c: Add
+
+2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6212722
+	* gcc.apple/block-dynamic-array.c: Add
+	* g++.apple/block-dynamic-array.C: Add
+
+2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5839123
+	* objc.dg/comp-types-1.m: Modified
+	* objc.dg/comp-types-10.m: Modified
+	* objc.dg/comp-types-11.m: Modified
+	* objc.dg/method-9.m: Modified
+	* objc.dg/class-protocol-1.m: Modified
+	* objc.dg/comp-types-6.m: Modified
+	* obj-c++.dg/comp-types-7.mm: Modified
+	* obj-c++.dg/comp-types-2.mm: Modified
+	* obj-c++.dg/comp-types-11.mm: Modified
+	* obj-c++.dg/comp-types-12.mm: Modified
+	* obj-c++.dg/class-protocol-1.mm: Modified
+
+2008-09-11  Caroline Tice  <ctice@apple.com>
+
+        Radar 6066486
+	* g++.apple/mips-linkage-name.C:  New testcase.
+
+2008-09-10  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6209554
+	* objc.dg/property-synthesize-ivar-3.m: Modified
+	* objc.dg/property-synthesize-ivar-10.m: New
+	* objc.dg/property-synthesize-ivar-32-5.m: Modified
+	* objc.dg/property-synthesize-ivar-5.m: Modified
+	* obj-c++.dg/property-synthesize-ivar-5.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-32-5.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-3.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-10.mm: New
+
+2008-09-09  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6191227
+	*  objc.dg/objc2-warn-prev-osx-1.m: Modified.
+
+2008-09-09  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6169580
+	* g++.apple/block-reference-in-method.C: Add
+	
+2008-09-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6169527
+	* g++.apple/block-copyconstructor.C: Add
+	* g++.apple/block-continuation.C: Modified
+
+2008-09-08 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6064186
+	* objc.dg/property-metadata-1.m: Modified
+	* objc.dg/message-metadata-1.m: Modified
+	* obj-c++.dg/property-metadata-1.mm: Modified
+	* obj-c++.dg/objc2-instanceSizeStart-1.mm: Modified
+	* obj-c++.dg/message-metadata-1.mm: Modified
+
+2008-09-05  Bill Wendling  <wendling@apple.com>
+
+        Radar 6194879
+        * g++.dg/warn/anonymous-namespace-1.C: New.
+        * g++.dg/warn/anonymous-namespace-1.h: New.
+        * g++.dg/warn/anonymous-namespace-2.C: New.
+        * g++.dg/warn/anonymous-namespace-2.h: New.
+
+2008-09-03  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6185344
+	* gcc.apple/block-explicit-return-type.c: Add
+	* gcc.apple/block-literal.c: Modified
+	* g++.apple/block-explicit-return-type.C: Add
+
 2008-08-28  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6180456

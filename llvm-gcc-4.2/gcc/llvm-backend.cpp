@@ -192,6 +192,13 @@ void llvm_initialize_backend(void) {
       TargetTriple = Arch + TargetTriple.substr(DashPos);
   }
 #endif
+#ifdef LLVM_OVERRIDE_TARGET_VERSION
+  char *NewTriple;
+  bool OverRidden = LLVM_OVERRIDE_TARGET_VERSION(TargetTriple.c_str(),
+                                                 &NewTriple);
+  if (OverRidden)
+    TargetTriple = std::string(NewTriple);
+#endif
   TheModule->setTargetTriple(TargetTriple);
   
   TheTypeConverter = new TypeConverter();

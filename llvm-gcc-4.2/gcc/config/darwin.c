@@ -2671,4 +2671,43 @@ darwin_cfstring_type_node (tree type_node)
   return type_node == ccfstring_type_node;
 }
 /* APPLE LOCAL end radar 4985544 */
+
+/* APPLE LOCAL begin radar 6230142 */
+bool darwin_llvm_override_target_version(const char *triple, char **new_triple) {
+  int len = 0, version = 0;
+
+  if (!darwin_macosx_version_min)
+    return false;
+  
+  /* Triple string is expected to look something like 'i386-apple-darwin?'. */
+  len = strlen (triple);
+  if (len < 7)
+    return false;
+  if (strncmp (&triple[len - 7], "darwin", 6) != 0)
+    return (char *)triple;
+
+  /* llvm-gcc doesn't support pre-10.0 systems. */
+  version = strverscmp (darwin_macosx_version_min, "10.0");
+  if (version < 0)
+    return false;
+
+  /* 10.0 is darwin4. */
+  version += 4;
+  
+  /* Darwin version number will be 2 digits for 10.6 and up.  */
+  if (version >= 10)
+    ++len;
+  *new_triple = ggc_alloc (len+1);
+  strcpy (*new_triple, triple);
+  if (version >= 10)
+    {
+      (*new_triple)[len-2] = '1';
+      version -= 10;
+    }
+  (*new_triple)[len-1] = '0' + version;
+  (*new_triple)[len] = '\0';
+  
+  return true;
+}
+/* APPLE LOCAL end radar 6230142 */
 #include "gt-darwin.h"

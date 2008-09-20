@@ -1567,10 +1567,8 @@ char *darwin_build_sysroot_path(const char *sysroot, const char *path);
 
 /* APPLE LOCAL begin radar 6230142 */
 /* libgcc2 is strict c90; bool doesn't work. */
-#ifndef IN_LIBGCC2
-extern bool darwin_llvm_override_target_version(const char*, char**);
+extern unsigned darwin_llvm_override_target_version(const char*, char**);
 #define LLVM_OVERRIDE_TARGET_VERSION(T,N)        \
   darwin_llvm_override_target_version(T,N)
-#endif /* IN_LIBGCC2 */
 /* APPLE LOCAL end radar 6230142 */
 #endif /* CONFIG_DARWIN_H */

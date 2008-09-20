@@ -2684,8 +2684,8 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
   len = strlen (triple);
   if (len < 7)
     return 0;
-  if ((strncmp (&triple[len - 7], "darwin", 6) != 0) &&
-      (len < 11 || strncmp (&triple[len - 11], "darwin", 6) != 0))
+  if (strncmp (&triple[len - 7], "darwin", 6) != 0 ||
+      (len > 11 && strncmp (&triple[len - 11], "darwin", 6) != 0))
     return 0;
 
   /* llvm-gcc doesn't support pre-10.0 systems. */

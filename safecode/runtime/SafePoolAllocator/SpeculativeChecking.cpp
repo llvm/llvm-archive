@@ -70,6 +70,7 @@ public:
     case CHECK_BOUNDS_CHECK_UI:
       boundscheckui(req->boundscheck.Pool, req->boundscheck.Source, req->boundscheck.Dest);
       break;
+
     default:
       break;
     }
@@ -87,7 +88,8 @@ namespace {
     ~SpeculativeCheckingGuard() {
       mCheckTask.stop();
       gCheckQueue.enqueue(gCheckRequestAllocator.allocate());
-      __sc_wait_for_completion();
+      // Since the whole program stops, just skip the undone checks..
+//      __sc_wait_for_completion();
     }
   private:
     Task<CheckQueueTy, CheckWrapper> mCheckTask;

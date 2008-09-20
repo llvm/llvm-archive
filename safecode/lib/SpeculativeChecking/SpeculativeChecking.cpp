@@ -111,7 +111,7 @@ cl::opt<bool> OptimisticSyncPoint ("optimistic-sync-point",
 			    );
     const char * safeFuncList[]
       = {
-      "pool_init_runtime", "poolregister", "poolunregister",
+      "poolinit", "pool_init_runtime", "poolregister", "poolunregister",
       "exactcheck", "exactcheck2"
     };
 
@@ -142,10 +142,15 @@ cl::opt<bool> OptimisticSyncPoint ("optimistic-sync-point",
   SpeculativeCheckingInsertSyncPoints::insertSyncPointsBeforeExternalCall(CallInst * CI) {
     Function *F = CI->getCalledFunction();
     if (!F || F->isIntrinsic() || isSafeFunction(F)) return false;
-    if (F->hasExternalLinkage()) {
+
+    // TODO: we might omit the synchronization points of a var-arg 
+    // function if all actuals are values
+
+    if (F->isDeclaration() || F->isVarArg()) {
       CallInst::Create(sFuncWaitForSyncToken, "", CI);
+      return true;
     }
-    return true;
+    return false;
   }
 
   bool

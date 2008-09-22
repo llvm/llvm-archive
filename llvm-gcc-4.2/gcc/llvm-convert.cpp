@@ -3284,10 +3284,42 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
   bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
+
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
 
-  return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
+  // If it's And, Or, or Xor, may sure the oeprands are casted to the right
+  // integer types first.
+  bool isLogicalOp = Opc == Instruction::And || Opc == Instruction::Or ||
+    Opc == Instruction::Xor;
+  const Type *ResTy = Ty;
+  if (isLogicalOp &&
+      (Ty->isFloatingPoint() ||
+       (isa<VectorType>(Ty) && 
+        cast<VectorType>(Ty)->getElementType()->isFloatingPoint()))) {
+    if (Ty == Type::FloatTy)
+      Ty = Type::Int32Ty;
+    else if (Ty == Type::DoubleTy)
+      Ty = Type::Int64Ty;
+    else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      unsigned NumElements = VTy->getNumElements();
+      const Type *EltTy = VTy->getElementType();
+      if (EltTy == Type::FloatTy)
+        Ty = VectorType::get(Type::Int32Ty, NumElements);
+      else if (EltTy == Type::DoubleTy)
+        Ty = VectorType::get(Type::Int64Ty, NumElements);
+      else
+        abort();
+    } else
+      abort();
+    LHS = BitCastToType(LHS, Ty);
+    RHS = BitCastToType(RHS, Ty);
+  }
+
+  Value * V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
+  if (ResTy != Ty)
+    V = BitCastToType(V, ResTy);
+  return V;
 }
 
 /// EmitPtrBinOp - Handle binary expressions involving pointers, e.g. "P+4".

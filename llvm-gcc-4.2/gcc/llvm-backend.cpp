@@ -161,8 +161,7 @@ void llvm_initialize_backend(void) {
   std::vector<std::string> ArgStrings;
 
   if (flag_limited_precision > 0) {
-    std::string Arg = "--limit-float-precision=";
-    Arg += utostr(flag_limited_precision);
+    std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
     ArgStrings.push_back(Arg);
   }
 

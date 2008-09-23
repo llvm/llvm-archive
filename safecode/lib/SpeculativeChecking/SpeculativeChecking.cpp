@@ -11,6 +11,7 @@
 #include "VectorListHelper.h"
 
 using namespace llvm;
+
 char SpeculativeCheckingPass::ID = 0;
 char SpeculativeCheckingInsertSyncPoints::ID = 0;
 
@@ -138,19 +139,17 @@ cl::opt<bool> OptimisticSyncPoint ("optimistic-sync-point",
   }
 
   // FIXME: Handle the indirect call cases.
+
   bool
   SpeculativeCheckingInsertSyncPoints::insertSyncPointsBeforeExternalCall(CallInst * CI) {
     Function *F = CI->getCalledFunction();
-    if (!F || F->isIntrinsic() || isSafeFunction(F)) return false;
+    if (F && isSafeFunction(F)) return false;
+    if (F && !(F->isDeclaration())) return false;
 
-    // TODO: we might omit the synchronization points of a var-arg 
-    // function if all actuals are values
+    // TODO: Skip some intrinsic, like pow / exp
 
-    if (F->isDeclaration() || F->isVarArg()) {
-      CallInst::Create(sFuncWaitForSyncToken, "", CI);
-      return true;
-    }
-    return false;
+    CallInst::Create(sFuncWaitForSyncToken, "", CI);
+    return true;
   }
 
   bool
@@ -163,13 +162,16 @@ cl::opt<bool> OptimisticSyncPoint ("optimistic-sync-point",
     return true;
   }
 
-  bool SpeculativeCheckingInsertSyncPoints::isCheckingCall(Function *F) {
-   CheckFuncSetTy::const_iterator it = sCheckFuncSet.find(F);
-   return it != sCheckFuncSet.end();
+  bool
+  SpeculativeCheckingInsertSyncPoints::isCheckingCall(Function *F) {
+    CheckFuncSetTy::const_iterator it = sCheckFuncSet.find(F);
+    return it != sCheckFuncSet.end();
   }
 
   /// A "Safe" function means that we don't have to insert
   /// synchronization points before the functions
+  // TODO: we might omit the synchronization points of a var-arg 
+  // function if all actuals are values
   bool 
   SpeculativeCheckingInsertSyncPoints::isSafeFunction(Function * F) {
     if (isCheckingCall(F)) return true;

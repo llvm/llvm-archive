@@ -20,14 +20,15 @@
 #include <errno.h>
 #include "Config.h"
 #include <stdint.h>
+#include <unistd.h>
 
 NAMESPACE_SC_BEGIN
 
 #define LOCK_PREFIX "lock "
 #define ADDR "+m" (*(volatile long *) addr)
 
-#define SPIN_AND_YIELD(COND) do { int counter = 0; \
-  while (COND) { if (++counter == 1024) { sched_yield(); counter = 0;} } \
+#define SPIN_AND_YIELD(COND) do { unsigned short counter = 0; \
+  while (COND) { if (++counter == 0) { sched_yield();} } \
   } while (0)
 
 /// FIXME: These codes are from linux header file, it should be rewritten
@@ -96,61 +97,38 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
 }
 
 /* Copied from include/asm-x86_64 for use by userspace. */
-#define mb()    asm volatile("mfence":::"memory")
+//#define mb()    asm volatile("mfence":::"memory")
+#define mb()  asm volatile ("" ::: "memory")
+
 /// A very simple allocator works on single-reader / single-writer cases
-
-template<class Ty>
-class SimpleSlabAllocator {
-public:
-  uint32_t m_mask;
-  Ty * mMemory;
-  SimpleSlabAllocator() : m_mask((uint32_t)(-1)) {
-    mMemory = reinterpret_cast<Ty*>(::operator new[](sizeof(Ty) * sizeof(m_mask) * 8));
-  }
-
-  ~SimpleSlabAllocator() {
-    ::operator delete[](reinterpret_cast<void*>(mMemory));
-  }
-
-  Ty * allocate() {
-    SPIN_AND_YIELD(m_mask == 0);
-    // Since there is only one thread for allocation, 
-    // we don't need to lock here
-    unsigned long pos = __ffs(m_mask);
-    // clear_bit has lock prefix so we don't need a mb
-    clear_bit(pos, &m_mask);
-    return mMemory + pos;
-  };
-
-  void deallocate(Ty * ptr) {
-    uint32_t pos = ptr - mMemory;
-    // set_bit has lock prefix so we don't need a mb
-    set_bit(pos, &m_mask);
-  }
-};
-
 /// Based on
 /// http://www.talkaboutprogramming.com/group/comp.programming.threads/messages/40308.html
 /// Only for single-reader, single-writer cases.
 
-template<class T, size_t N> class LockFreeFifo
+template<class T> class LockFreeFifo
 {
+  static const int N = 256;
 public:
   typedef  T element_t;
   LockFreeFifo () : readidx(0), writeidx(0) {}
 
-  T dequeue (void)
-  {
+  T & front (void) {
     SPIN_AND_YIELD(empty());
-    T result = buffer[readidx];
-    mb();
-    readidx = (readidx + 1) % N;
-    return result;
+    return buffer[readidx];
   }
 
-  void enqueue (T datum)
+  void dequeue (void)
   {
-    unsigned newidx = (writeidx + 1) % N;
+    // CAUTION: always supposes the queue is not empty.
+    //    SPIN_AND_YIELD(empty());
+    // Use overflow to wrap the queue
+    ++readidx;
+    //    asm volatile (LOCK_PREFIX "incb %0" : "+m" (readidx));
+  }
+
+  void enqueue (T & datum)
+  {
+    unsigned char newidx = writeidx + 1;
     SPIN_AND_YIELD(newidx == readidx);
     buffer[writeidx] = datum;
     mb();
@@ -162,7 +140,7 @@ public:
   }
 
 private:
-  volatile unsigned readidx, writeidx;
+  volatile unsigned char readidx, writeidx;
   T buffer[N];
 };
 
@@ -194,10 +172,12 @@ private:
 
   void run() {
     while(true) {
-      typename QueueTy::element_t e = mQueue.dequeue();
+      typename QueueTy::element_t & e = mQueue.front();
       if (mActive) {
 	mFunctor(e);
+	mQueue.dequeue();
       } else {
+	mQueue.dequeue();
 	break;
       }
     }
@@ -209,5 +189,39 @@ private:
 };
 
 NAMESPACE_SC_END
+
+/// Deprecated code
+
+/*
+template<class Ty>
+class SimpleSlabAllocator {
+public:
+  uint32_t m_mask;
+  Ty * mMemory;
+  SimpleSlabAllocator() : m_mask((uint32_t)(-1)) {
+    mMemory = reinterpret_cast<Ty*>(::operator new[](sizeof(Ty) * sizeof(m_mask) * 8));
+  }
+
+  ~SimpleSlabAllocator() {
+    ::operator delete[](reinterpret_cast<void*>(mMemory));
+  }
+
+  Ty * allocate() {
+    SPIN_AND_YIELD(m_mask == 0);
+    // Since there is only one thread for allocation, 
+    // we don't need to lock here
+    unsigned long pos = __ffs(m_mask);
+    // clear_bit has lock prefix so we don't need a mb
+    clear_bit(pos, &m_mask);
+    return mMemory + pos;
+  };
+
+  void deallocate(Ty * ptr) {
+    uint32_t pos = ptr - mMemory;
+    // set_bit has lock prefix so we don't need a mb
+    set_bit(pos, &m_mask);
+  }
+};
+*/
 
 #endif

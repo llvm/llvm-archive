@@ -1025,7 +1025,7 @@ namespace {
 }
 
 
-static ParameterAttributes HandleArgumentExtension(tree ArgTy) {
+static Attributes HandleArgumentExtension(tree ArgTy) {
   if (TREE_CODE(ArgTy) == BOOLEAN_TYPE) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE)
       return ParamAttr::ZExt;
@@ -1061,7 +1061,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   SmallVector<ParamAttrsWithIndex, 8> Attrs;
 
   // Compute whether the result needs to be zext or sext'd.
-  ParameterAttributes RAttributes = HandleArgumentExtension(ReturnType);
+  Attributes RAttributes = HandleArgumentExtension(ReturnType);
 
   if (RAttributes != ParamAttr::None)
     Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
@@ -1085,7 +1085,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     tree ArgTy = TREE_TYPE(Args);
 
     // Determine if there are any attributes for this param.
-    ParameterAttributes Attributes = ParamAttr::None;
+    Attributes Attributes = ParamAttr::None;
 
     ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
 
@@ -1119,7 +1119,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   // Compute attributes for return type (and function attributes).
   SmallVector<ParamAttrsWithIndex, 8> Attrs;
-  ParameterAttributes RAttributes = ParamAttr::None;
+  Attributes RAttributes = ParamAttr::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
 
@@ -1211,7 +1211,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     }
     
     // Determine if there are any attributes for this param.
-    ParameterAttributes Attributes = ParamAttr::None;
+    Attributes Attributes = ParamAttr::None;
     
     ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
 
@@ -1253,7 +1253,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // write through the byval pointer argument, which LLVM does not allow for
   // readonly/readnone functions.
   if (HasByVal && Attrs[0].Index == 0) {
-    ParameterAttributes &RAttrs = Attrs[0].Attrs;
+    Attributes &RAttrs = Attrs[0].Attrs;
     RAttrs &= ~(ParamAttr::ReadNone | ParamAttr::ReadOnly);
     if (RAttrs == ParamAttr::None)
       Attrs.erase(Attrs.begin());

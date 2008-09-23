@@ -2696,11 +2696,11 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       Client.pushAddress(ArgVal.Ptr);
     }
 
-    ParameterAttributes Attributes = ParamAttr::None;
+    Attributes Attrs = ParamAttr::None;
     ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
-                                &Attributes);
-    if (Attributes != ParamAttr::None)
-      PAL = PAL.addAttr(CallOperands.size(), Attributes);
+                                &Attrs);
+    if (Attrs != ParamAttr::None)
+      PAL = PAL.addAttr(CallOperands.size(), Attrs);
 
     Client.clear();
   }

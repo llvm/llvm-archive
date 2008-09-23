@@ -32,7 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-internal.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
+#include "llvm/Attributes.h"
 #include "llvm/Target/TargetData.h"
 
 namespace llvm {
@@ -413,7 +413,7 @@ public:
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
   void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
-                      ParameterAttributes *Attributes = NULL) {
+                      Attributes *Attributes = NULL) {
     unsigned Size = 0;
     bool DontCheckAlignment = false;
     const Type *Ty = ConvertType(type);

@@ -652,7 +652,7 @@ void TreeToLLVM::StartFunctionBody() {
   
   // Handle noinline Functions
   if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl)))
-    Fn->setNotes(ParamAttr::FN_NOTE_NoInline);
+    Fn->setNotes(FN_NOTE_NoInline);
   /* FIXME: Remove llvm.noinline related code. 
   {
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
@@ -663,10 +663,10 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Handle always_inline attribute
   if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl)))
-    Fn->setNotes(ParamAttr::FN_NOTE_AlwaysInline);
+    Fn->setNotes(FN_NOTE_AlwaysInline);
 
   if (optimize_size)
-    Fn->setNotes(ParamAttr::FN_NOTE_OptimizeForSize);
+    Fn->setNotes(FN_NOTE_OptimizeForSize);
 
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))

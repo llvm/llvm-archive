@@ -386,7 +386,7 @@ static void createOptimizationPasses() {
   // marked as always_inline.
   for (Module::iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    if (I->hasNote(FN_NOTE_AlwaysInline)) {
+    if (I->hasNote(FnAttr::AlwaysInline)) {
       NeedAlwaysInliner = true;
       break;
     }

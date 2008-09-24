@@ -3204,12 +3204,41 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   return Call;
 }
 
+/// getSuitableBitCastIntType - Given Ty is a floating point type or a vector
+/// type with floating point elements, return an integer type to bitcast to.
+/// e.g. 4 x float -> 4 x i32
+static const Type *getSuitableBitCastIntType(const Type *Ty) {
+  if (Ty == Type::FloatTy)
+    return Type::Int32Ty;
+  else if (Ty == Type::DoubleTy)
+    return Type::Int64Ty;
+  else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    unsigned NumElements = VTy->getNumElements();
+    const Type *EltTy = VTy->getElementType();
+    if (EltTy == Type::FloatTy)
+      return VectorType::get(Type::Int32Ty, NumElements);
+    else if (EltTy == Type::DoubleTy)
+      return VectorType::get(Type::Int64Ty, NumElements);
+  }
+  return NULL;
+}
+
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   if (isa<PointerType>(Op->getType())) {
     assert (TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE &&
             "Expected integer type here");
     Op = CastToType(Instruction::PtrToInt, Op, TREE_TYPE(exp));
+  }
+
+  const Type *Ty = Op->getType();
+  if (Ty->isFloatingPoint() ||
+      (isa<VectorType>(Ty) && 
+       cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
+    Ty = getSuitableBitCastIntType(Ty);
+    if (!Ty)
+      abort();
+    Op = BitCastToType(Op, Ty);
   }
   return Builder.CreateNot(Op, (Op->getName()+"not").c_str());
 }
@@ -3297,20 +3326,8 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
       (Ty->isFloatingPoint() ||
        (isa<VectorType>(Ty) && 
         cast<VectorType>(Ty)->getElementType()->isFloatingPoint()))) {
-    if (Ty == Type::FloatTy)
-      Ty = Type::Int32Ty;
-    else if (Ty == Type::DoubleTy)
-      Ty = Type::Int64Ty;
-    else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-      unsigned NumElements = VTy->getNumElements();
-      const Type *EltTy = VTy->getElementType();
-      if (EltTy == Type::FloatTy)
-        Ty = VectorType::get(Type::Int32Ty, NumElements);
-      else if (EltTy == Type::DoubleTy)
-        Ty = VectorType::get(Type::Int64Ty, NumElements);
-      else
-        abort();
-    } else
+    Ty = getSuitableBitCastIntType(Ty);
+    if (!Ty)
       abort();
     LHS = BitCastToType(LHS, Ty);
     RHS = BitCastToType(RHS, Ty);

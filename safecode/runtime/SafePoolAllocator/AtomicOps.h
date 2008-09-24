@@ -15,12 +15,12 @@
 #define _ATOMIC_OPS_H_
 
 #include <pthread.h>
-#include <semaphore.h>
 #include <cassert>
 #include <errno.h>
-#include "Config.h"
 #include <stdint.h>
 #include <unistd.h>
+#include <stdio.h>
+#include "Config.h"
 
 NAMESPACE_SC_BEGIN
 
@@ -28,7 +28,7 @@ NAMESPACE_SC_BEGIN
 #define ADDR "+m" (*(volatile long *) addr)
 
 #define SPIN_AND_YIELD(COND) do { unsigned short counter = 0; \
-  while (COND) { if (++counter == 0) { sched_yield();} } \
+    while (COND) { if (++counter == 0) { sched_yield(); /* printf("yielding: %s\n", #COND); */}} \
   } while (0)
 
 /// FIXME: These codes are from linux header file, it should be rewritten
@@ -107,7 +107,7 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
 
 template<class T> class LockFreeFifo
 {
-  static const int N = 256;
+  static const int N = 65536;
 public:
   typedef  T element_t;
   LockFreeFifo () : readidx(0), writeidx(0) {}
@@ -140,7 +140,7 @@ public:
   }
 
 private:
-  volatile unsigned char readidx, writeidx;
+  volatile unsigned short readidx, writeidx;
   T buffer[N];
 };
 

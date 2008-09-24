@@ -1058,18 +1058,18 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   // Builtins are always prototyped, so this isn't one.
   ABIConverter.HandleReturnType(ReturnType, current_function_decl, false);
 
-  SmallVector<ParamAttrsWithIndex, 8> Attrs;
+  SmallVector<FnAttributeWithIndex, 8> Attrs;
 
   // Compute whether the result needs to be zext or sext'd.
   Attributes RAttributes = HandleArgumentExtension(ReturnType);
 
   if (RAttributes != ParamAttr::None)
-    Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+    Attrs.push_back(FnAttributeWithIndex::get(0, RAttributes));
 
   // If this function returns via a shadow argument, the dest loc is passed
   // in as a pointer.  Mark that pointer as struct-ret and noalias.
   if (ABIConverter.isShadowReturn())
-    Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
+    Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
 
   std::vector<const Type*> ScalarArgs;
@@ -1077,7 +1077,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
-    Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(),
+    Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(),
                                              ParamAttr::Nest));
   }
 
@@ -1093,7 +1093,7 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
     Attributes |= HandleArgumentExtension(ArgTy);
 
     if (Attributes != ParamAttr::None)
-      Attrs.push_back(ParamAttrsWithIndex::get(ArgTys.size(), Attributes));
+      Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(), Attributes));
   }
 
   PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
@@ -1118,7 +1118,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 #endif
 
   // Compute attributes for return type (and function attributes).
-  SmallVector<ParamAttrsWithIndex, 8> Attrs;
+  SmallVector<FnAttributeWithIndex, 8> Attrs;
   Attributes RAttributes = ParamAttr::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
@@ -1162,12 +1162,12 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
   if (RAttributes != ParamAttr::None)
-    Attrs.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+    Attrs.push_back(FnAttributeWithIndex::get(0, RAttributes));
 
   // If this function returns via a shadow argument, the dest loc is passed
   // in as a pointer.  Mark that pointer as struct-ret and noalias.
   if (ABIConverter.isShadowReturn())
-    Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
+    Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(),
                                     ParamAttr::StructRet | ParamAttr::NoAlias));
 
   std::vector<const Type*> ScalarArgs;
@@ -1175,7 +1175,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
-    Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(),
+    Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(),
                                              ParamAttr::Nest));
   }
 
@@ -1240,7 +1240,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     
     if (Attributes != ParamAttr::None) {
       HasByVal |= Attributes & ParamAttr::ByVal;
-      Attrs.push_back(ParamAttrsWithIndex::get(ArgTypes.size(), Attributes));
+      Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(), Attributes));
     }
       
     if (DeclArgs)

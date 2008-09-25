@@ -386,7 +386,7 @@ static void createOptimizationPasses() {
   // marked as always_inline.
   for (Module::iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    if (I->hasNote(FnAttr::AlwaysInline)) {
+    if (I->hasNote(Attribute::AlwaysInline)) {
       NeedAlwaysInliner = true;
       break;
     }
@@ -1239,13 +1239,13 @@ void make_decl_llvm(tree decl) {
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
       unsigned CC;
-      PAListPtr PAL;
+      AttrListPtr PAL;
       const FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
                                               CC, PAL);
       FnEntry = Function::Create(Ty, Function::ExternalLinkage, Name, TheModule);
       FnEntry->setCallingConv(CC);
-      FnEntry->setParamAttrs(PAL);
+      FnEntry->setAttributes(PAL);
 
       // Check for external weak linkage
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))

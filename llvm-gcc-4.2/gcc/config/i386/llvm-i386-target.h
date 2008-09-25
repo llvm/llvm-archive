@@ -59,7 +59,7 @@ extern int ix86_regparm;
       local_fp_regparm = 3;                                     \
   }
 
-#define LLVM_ADJUST_REGPARM_ATTRIBUTE(Attribute, Type, Size,    \
+#define LLVM_ADJUST_REGPARM_ATTRIBUTE(PAttribute, Type, Size,   \
                                       local_regparm,            \
                                       local_fp_regparm)         \
   {                                                             \
@@ -69,7 +69,7 @@ extern int ix86_regparm;
            TYPE_PRECISION(Type)==64)) {                         \
           local_fp_regparm -= 1;                                \
           if (local_fp_regparm >= 0)                            \
-            Attribute |= ParamAttr::InReg;                      \
+            PAttribute |= Attribute::InReg;                     \
           else                                                  \
             local_fp_regparm = 0;                               \
       } else if (TREE_CODE(Type) == INTEGER_TYPE ||             \
@@ -78,7 +78,7 @@ extern int ix86_regparm;
                   (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
           local_regparm -= words;                               \
           if (local_regparm>=0)                                 \
-            Attribute |= ParamAttr::InReg;                      \
+            PAttribute |= Attribute::InReg;                     \
           else                                                  \
             local_regparm = 0;                                  \
       }                                                         \

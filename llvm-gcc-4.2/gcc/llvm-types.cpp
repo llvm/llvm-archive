@@ -866,7 +866,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       
     // No declaration to pass through, passing NULL.
     unsigned CallingConv;
-    PAListPtr PAL;
+    AttrListPtr PAL;
     return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
                                                     CallingConv, PAL));
   }
@@ -1028,16 +1028,16 @@ namespace {
 static Attributes HandleArgumentExtension(tree ArgTy) {
   if (TREE_CODE(ArgTy) == BOOLEAN_TYPE) {
     if (TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE)
-      return ParamAttr::ZExt;
+      return Attribute::ZExt;
   } else if (TREE_CODE(ArgTy) == INTEGER_TYPE && 
              TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)) < INT_TYPE_SIZE) {
     if (TYPE_UNSIGNED(ArgTy))
-      return ParamAttr::ZExt;
+      return Attribute::ZExt;
     else
-      return ParamAttr::SExt;
+      return Attribute::SExt;
   }
 
-  return ParamAttr::None;
+  return Attribute::None;
 }
 
 /// ConvertParamListToLLVMSignature - This method is used to build the argument
@@ -1048,7 +1048,7 @@ static Attributes HandleArgumentExtension(tree ArgTy) {
 /// specified result type for the function.
 const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
-                       unsigned &CallingConv, PAListPtr &PAL) {
+                       unsigned &CallingConv, AttrListPtr &PAL) {
   std::vector<PATypeHolder> ArgTys;
   PATypeHolder RetTy(Type::VoidTy);
   
@@ -1058,51 +1058,51 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   // Builtins are always prototyped, so this isn't one.
   ABIConverter.HandleReturnType(ReturnType, current_function_decl, false);
 
-  SmallVector<FnAttributeWithIndex, 8> Attrs;
+  SmallVector<AttributeWithIndex, 8> Attrs;
 
   // Compute whether the result needs to be zext or sext'd.
   Attributes RAttributes = HandleArgumentExtension(ReturnType);
 
-  if (RAttributes != ParamAttr::None)
-    Attrs.push_back(FnAttributeWithIndex::get(0, RAttributes));
+  if (RAttributes != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(0, RAttributes));
 
   // If this function returns via a shadow argument, the dest loc is passed
   // in as a pointer.  Mark that pointer as struct-ret and noalias.
   if (ABIConverter.isShadowReturn())
-    Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(),
-                                    ParamAttr::StructRet | ParamAttr::NoAlias));
+    Attrs.push_back(AttributeWithIndex::get(ArgTys.size(),
+                                    Attribute::StructRet | Attribute::NoAlias));
 
   std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
-    Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(),
-                                             ParamAttr::Nest));
+    Attrs.push_back(AttributeWithIndex::get(ArgTys.size(),
+                                             Attribute::Nest));
   }
 
   for (; Args && TREE_TYPE(Args) != void_type_node; Args = TREE_CHAIN(Args)) {
     tree ArgTy = TREE_TYPE(Args);
 
     // Determine if there are any attributes for this param.
-    Attributes Attributes = ParamAttr::None;
+    Attributes PAttributes = Attribute::None;
 
-    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
+    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &PAttributes);
 
     // Compute zext/sext attributes.
-    Attributes |= HandleArgumentExtension(ArgTy);
+    PAttributes |= HandleArgumentExtension(ArgTy);
 
-    if (Attributes != ParamAttr::None)
-      Attrs.push_back(FnAttributeWithIndex::get(ArgTys.size(), Attributes));
+    if (PAttributes != Attribute::None)
+      Attrs.push_back(AttributeWithIndex::get(ArgTys.size(), PAttributes));
   }
 
-  PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
+  PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
   return GetFunctionType(RetTy, ArgTys, false);
 }
 
 const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
-                    unsigned &CallingConv, PAListPtr &PAL) {
+                    unsigned &CallingConv, AttrListPtr &PAL) {
   PATypeHolder RetTy = Type::VoidTy;
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
@@ -1118,18 +1118,18 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 #endif
 
   // Compute attributes for return type (and function attributes).
-  SmallVector<FnAttributeWithIndex, 8> Attrs;
-  Attributes RAttributes = ParamAttr::None;
+  SmallVector<AttributeWithIndex, 8> Attrs;
+  Attributes RAttributes = Attribute::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
 
   // Check for 'noreturn' function attribute.
   if (flags & ECF_NORETURN)
-    RAttributes |= ParamAttr::NoReturn;
+    RAttributes |= Attribute::NoReturn;
 
   // Check for 'nounwind' function attribute.
   if (flags & ECF_NOTHROW)
-    RAttributes |= ParamAttr::NoUnwind;
+    RAttributes |= Attribute::NoUnwind;
 
   // Check for 'readnone' function attribute.
   // Both PURE and CONST will be set if the user applied
@@ -1140,43 +1140,43 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // accepts it).  But llvm IR does not allow both, so
   // set only ReadNone.
   if (flags & ECF_CONST)
-    RAttributes |= ParamAttr::ReadNone;
+    RAttributes |= Attribute::ReadNone;
 
   // Check for 'readonly' function attribute.
   if (flags & ECF_PURE && !(flags & ECF_CONST))
-    RAttributes |= ParamAttr::ReadOnly;
+    RAttributes |= Attribute::ReadOnly;
 
   // Since they write the return value through a pointer,
   // 'sret' functions cannot be 'readnone' or 'readonly'.
   if (ABIConverter.isShadowReturn())
-    RAttributes &= ~(ParamAttr::ReadNone|ParamAttr::ReadOnly);
+    RAttributes &= ~(Attribute::ReadNone|Attribute::ReadOnly);
 
   // Demote 'readnone' nested functions to 'readonly' since
   // they may need to read through the static chain.
-  if (static_chain && (RAttributes & ParamAttr::ReadNone)) {
-    RAttributes &= ~ParamAttr::ReadNone;
-    RAttributes |= ParamAttr::ReadOnly;
+  if (static_chain && (RAttributes & Attribute::ReadNone)) {
+    RAttributes &= ~Attribute::ReadNone;
+    RAttributes |= Attribute::ReadOnly;
   }
 
   // Compute whether the result needs to be zext or sext'd.
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
-  if (RAttributes != ParamAttr::None)
-    Attrs.push_back(FnAttributeWithIndex::get(0, RAttributes));
+  if (RAttributes != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(0, RAttributes));
 
   // If this function returns via a shadow argument, the dest loc is passed
   // in as a pointer.  Mark that pointer as struct-ret and noalias.
   if (ABIConverter.isShadowReturn())
-    Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(),
-                                    ParamAttr::StructRet | ParamAttr::NoAlias));
+    Attrs.push_back(AttributeWithIndex::get(ArgTypes.size(),
+                                    Attribute::StructRet | Attribute::NoAlias));
 
   std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
     // Mark it as the chain argument.
-    Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(),
-                                             ParamAttr::Nest));
+    Attrs.push_back(AttributeWithIndex::get(ArgTypes.size(),
+                                             Attribute::Nest));
   }
 
   // If the target has regparam parameters, allow it to inspect the function
@@ -1211,12 +1211,12 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     }
     
     // Determine if there are any attributes for this param.
-    Attributes Attributes = ParamAttr::None;
+    Attributes PAttributes = Attribute::None;
     
-    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &Attributes);
+    ABIConverter.HandleArgument(ArgTy, ScalarArgs, &PAttributes);
 
     // Compute zext/sext attributes.
-    Attributes |= HandleArgumentExtension(ArgTy);
+    PAttributes |= HandleArgumentExtension(ArgTy);
 
     // Compute noalias attributes. If we have a decl for the function
     // inspect it for restrict qualifiers, otherwise try the argument
@@ -1226,21 +1226,21 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
         TREE_CODE(RestrictArgTy) == REFERENCE_TYPE ||
         TREE_CODE(RestrictArgTy) == BLOCK_POINTER_TYPE) {
       if (TYPE_RESTRICT(RestrictArgTy))
-        Attributes |= ParamAttr::NoAlias;
+        PAttributes |= Attribute::NoAlias;
     }
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
     // Allow the target to mark this as inreg.
     if (TREE_CODE(ArgTy) == INTEGER_TYPE || TREE_CODE(ArgTy) == POINTER_TYPE ||
         TREE_CODE(ArgTy) == REAL_TYPE)
-      LLVM_ADJUST_REGPARM_ATTRIBUTE(Attributes, ArgTy,
+      LLVM_ADJUST_REGPARM_ATTRIBUTE(PAttributes, ArgTy,
                                     TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)),
                                     local_regparam, local_fp_regparam);
 #endif // LLVM_TARGET_ENABLE_REGPARM
     
-    if (Attributes != ParamAttr::None) {
-      HasByVal |= Attributes & ParamAttr::ByVal;
-      Attrs.push_back(FnAttributeWithIndex::get(ArgTypes.size(), Attributes));
+    if (PAttributes != Attribute::None) {
+      HasByVal |= PAttributes & Attribute::ByVal;
+      Attrs.push_back(AttributeWithIndex::get(ArgTypes.size(), PAttributes));
     }
       
     if (DeclArgs)
@@ -1254,8 +1254,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // readonly/readnone functions.
   if (HasByVal && Attrs[0].Index == 0) {
     Attributes &RAttrs = Attrs[0].Attrs;
-    RAttrs &= ~(ParamAttr::ReadNone | ParamAttr::ReadOnly);
-    if (RAttrs == ParamAttr::None)
+    RAttrs &= ~(Attribute::ReadNone | Attribute::ReadOnly);
+    if (RAttrs == Attribute::None)
       Attrs.erase(Attrs.begin());
   }
 
@@ -1264,7 +1264,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   assert(RetTy && "Return type not specified!");
 
   // Finally, make the function type and result attributes.
-  PAL = PAListPtr::get(Attrs.begin(), Attrs.end());
+  PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
   return GetFunctionType(RetTy, ArgTypes, isVarArg);
 }
 

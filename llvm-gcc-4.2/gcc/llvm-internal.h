@@ -164,7 +164,7 @@ public:
                                           tree_node *decl,
                                           tree_node *static_chain,
                                           unsigned &CallingConv,
-                                          PAListPtr &PAL);
+                                          AttrListPtr &PAL);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
   /// return the LLVM type corresponding to the function.  This is useful for
@@ -173,7 +173,7 @@ public:
                                              tree_node *arglist,
                                              tree_node *static_chain,
                                              unsigned &CallingConv,
-                                             PAListPtr &PAL);
+                                             AttrListPtr &PAL);
   
 private:
   const Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
@@ -486,7 +486,7 @@ private:
   Value *EmitOBJ_TYPE_REF(tree_node *exp);
   Value *EmitCALL_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc,
-                    const PAListPtr &PAL);
+                    const AttrListPtr &PAL);
   Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitNOP_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);

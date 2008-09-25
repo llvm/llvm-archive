@@ -560,7 +560,7 @@ void TreeToLLVM::StartFunctionBody() {
   tree static_chain = cfun->static_chain_decl;
   const FunctionType *FTy;
   unsigned CallingConv;
-  PAListPtr PAL;
+  AttrListPtr PAL;
 
   // If the function has no arguments and is varargs (...), turn it into a
   // non-varargs function by scanning the param list for the function.  This
@@ -609,7 +609,7 @@ void TreeToLLVM::StartFunctionBody() {
     Fn = Function::Create(FTy, Function::ExternalLinkage, Name, TheModule);
     assert(Fn->getName() == Name && "Preexisting fn with the same name!");
     Fn->setCallingConv(CallingConv);
-    Fn->setParamAttrs(PAL);
+    Fn->setAttributes(PAL);
 
     // If a previous proto existed with the wrong type, replace any uses of it
     // with the actual function and delete the proto.
@@ -652,7 +652,7 @@ void TreeToLLVM::StartFunctionBody() {
   
   // Handle noinline Functions
   if (lookup_attribute ("noinline", DECL_ATTRIBUTES (FnDecl)))
-    Fn->setNotes(FnAttr::NoInline);
+    Fn->setNotes(Attribute::NoInline);
   /* FIXME: Remove llvm.noinline related code. 
   {
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
@@ -663,10 +663,10 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Handle always_inline attribute
   if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl)))
-    Fn->setNotes(FnAttr::AlwaysInline);
+    Fn->setNotes(Attribute::AlwaysInline);
 
   if (optimize_size)
-    Fn->setNotes(FnAttr::OptimizeForSize);
+    Fn->setNotes(Attribute::OptimizeForSize);
 
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
@@ -2352,7 +2352,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
   unsigned CallingConv;
-  PAListPtr PAL;
+  AttrListPtr PAL;
 
   const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
                                                          fndecl,
@@ -2616,19 +2616,19 @@ namespace {
 /// in the CALL_EXP 'exp'.  If the result of the call is a scalar, return the
 /// result, otherwise store it in DestLoc.
 Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
-                              const PAListPtr &InPAL) {
+                              const AttrListPtr &InPAL) {
   BasicBlock *LandingPad = 0; // Non-zero indicates an invoke.
 
-  PAListPtr PAL = InPAL;
+  AttrListPtr PAL = InPAL;
   if (PAL.isEmpty() && isa<Function>(Callee))
-    PAL = cast<Function>(Callee)->getParamAttrs();
+    PAL = cast<Function>(Callee)->getAttributes();
 
   // Work out whether to use an invoke or an ordinary call.
   if (!tree_could_throw_p(exp))
     // This call does not throw - mark it 'nounwind'.
-    PAL = PAL.addAttr(0, ParamAttr::NoUnwind);
+    PAL = PAL.addAttr(0, Attribute::NoUnwind);
 
-  if (!PAL.paramHasAttr(0, ParamAttr::NoUnwind)) {
+  if (!PAL.paramHasAttr(0, Attribute::NoUnwind)) {
     // This call may throw.  Determine if we need to generate
     // an invoke rather than a simple call.
     int RegionNo = lookup_stmt_eh_region(exp);
@@ -2696,10 +2696,10 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       Client.pushAddress(ArgVal.Ptr);
     }
 
-    Attributes Attrs = ParamAttr::None;
+    Attributes Attrs = Attribute::None;
     ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
                                 &Attrs);
-    if (Attrs != ParamAttr::None)
+    if (Attrs != Attribute::None)
       PAL = PAL.addAttr(CallOperands.size(), Attrs);
 
     Client.clear();
@@ -2732,13 +2732,13 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (!LandingPad) {
     Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
-    cast<CallInst>(Call)->setParamAttrs(PAL);
+    cast<CallInst>(Call)->setAttributes(PAL);
   } else {
     BasicBlock *NextBlock = BasicBlock::Create("invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
                                 CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
-    cast<InvokeInst>(Call)->setParamAttrs(PAL);
+    cast<InvokeInst>(Call)->setAttributes(PAL);
     EmitBlock(NextBlock);
   }
 
@@ -4422,7 +4422,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         Intrinsic::getDeclaration(TheModule, IntrinsicID);
     }
 
-    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, PAListPtr());
+    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, AttrListPtr());
     return true;
   }
   

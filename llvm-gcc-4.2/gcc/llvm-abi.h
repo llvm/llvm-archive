@@ -430,9 +430,9 @@ public:
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
         C.HandleByValArgument(Ty, type);
         if (Attributes) {
-          *Attributes |= ParamAttr::ByVal;
+          *Attributes |= Attribute::ByVal;
           *Attributes |= 
-            ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+            Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
         }
       } else {
         C.HandleScalarArgument(Ty, type);
@@ -447,17 +447,17 @@ public:
       else {
         C.HandleByValArgument(Ty, type);
         if (Attributes) {
-          *Attributes |= ParamAttr::ByVal;
+          *Attributes |= Attribute::ByVal;
           *Attributes |= 
-            ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+            Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
         }
       }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
       C.HandleByValArgument(Ty, type);
       if (Attributes) {
-        *Attributes |= ParamAttr::ByVal;
+        *Attributes |= Attribute::ByVal;
         *Attributes |= 
-          ParamAttr::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+          Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size,
                                                      &DontCheckAlignment)) {

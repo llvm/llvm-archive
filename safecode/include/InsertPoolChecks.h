@@ -1,4 +1,3 @@
-
 #define INSERT_BOUNDS_H
 
 #include "llvm/Instructions.h"
@@ -41,7 +40,7 @@ struct PreInsertPoolChecks : public ModulePass {
       AU.addRequiredTransitive<PoolAllocateGroup>();
       AU.addPreserved<PoolAllocateGroup>();
       AU.addRequired<DSNodePass>();
-	  AU.addPreserved<DSNodePass>();
+      AU.addPreserved<DSNodePass>();
       AU.setPreservesCFG();
     };
     private :

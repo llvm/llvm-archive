@@ -34,8 +34,6 @@
 #include <signal.h>
 #include <ucontext.h>
 #include <sys/mman.h>
-#include <strings.h>
-#include <string.h>
 //#include <sys/ucontext.h>
 #define DEBUG(x) 
 
@@ -47,6 +45,11 @@ static void * globalTemp = 0;
 static PoolTy dummyPool;
 static unsigned dummyInitialized = 0;
 unsigned poolmemusage = 0;
+
+FILE * ReportLog;
+
+// Global Configuration Information
+extern ConfigData ConfigData;
 
 // Invalid address range
 #if !defined(__linux__)
@@ -284,7 +287,7 @@ PoolSlab::createSingleArray(PoolTy *Pool, unsigned NumNodes) {
       Pool->Slabs->insert((void *) Pool->SlabAddressArray[i]);
   } else {
     // Insert it in the array
-    Pool->SlabAddressArray[Pool->NumSlabs] = (uintptr_t) PS;
+    Pool->SlabAddressArray[Pool->NumSlabs] = (unsigned) PS;
   }
   Pool->NumSlabs++;
   
@@ -725,7 +728,6 @@ pool_init_runtime (unsigned Dangling) {
   //
   // Configure the allocator.
   //
-  extern ConfigData ConfigData;
   ConfigData.RemapObjects = Dangling;
 
   //
@@ -744,6 +746,15 @@ pool_init_runtime (unsigned Dangling) {
   InvalidLower = (unsigned int) Addr;
   InvalidUpper = (unsigned int) Addr + invalidsize;
 #endif
+
+  //
+  // Open up an additional file for error reporting.
+  //
+  ReportLog = fopen ("sclogfile", "a");
+  fprintf (ReportLog, "\n");
+  fprintf (ReportLog, "New Run of Program\n");
+  fprintf (ReportLog, "====================================================\n");
+  fflush (ReportLog);
 
   //
   // Install hooks for catching allocations outside the scope of SAFECode
@@ -893,15 +904,15 @@ poolallocarray(PoolTy* Pool, unsigned Size) {
       fflush(stderr);
     }
     globalTemp = (PoolSlab*) PoolSlab::createSingleArray(Pool, Size);
-    uintptr_t offset = (uintptr_t)globalTemp & (PPageSize - 1);
-    void * retAddress = (void *)((uintptr_t)(globalTemp) & ~(PPageSize - 1));
+    unsigned offset = (unsigned)globalTemp & (PPageSize - 1);
+    void * retAddress = (void *)((unsigned)(globalTemp) & ~(PPageSize - 1));
 
     if (logregs) {
-      fprintf(stderr, " poolallocarray:704: globalTemp = 0x%p, offset = 0x%x, retAddress = 0x%p\n",
-          globalTemp, offset, retAddress);
+      fprintf(stderr, " poolallocarray:704: globalTemp = 0x%08x, offset = 0x%08x, retAddress = 0x%08x\n",
+          (unsigned)globalTemp, offset, (unsigned)retAddress);
       fflush(stderr);
     }
-    return (void*) ((uintptr_t)retAddress + offset);
+    return (void*) ((unsigned)retAddress + offset);
   }
  
   PoolSlab *PS = (PoolSlab*)Pool->Ptr1;
@@ -921,18 +932,18 @@ poolallocarray(PoolTy* Pool, unsigned Size) {
       // insert info into adl splay tree for poolcheck runtime
       //unsigned NodeSize = Pool->NodeSize;
       globalTemp = PS->getElementAddress(Element, Pool->NodeSize);
-      offset = (uintptr_t)globalTemp & (PPageSize - 1); 
+      offset = (unsigned)globalTemp & (PPageSize - 1); 
       //adl_splay_insert(&(Pool->Objects), globalTemp, 
       //          (unsigned)((Size*NodeSize) - NodeSize + 1), (Pool));
       if(logregs) {fprintf(stderr, " poolallocarray:731:before RemapObject\n");}
       //  remap the page to get a shadow page (dangling pointer detection library)
       PS = (PoolSlab *) RemapObject(globalTemp, Size*Pool->NodeSize);
       if (logregs) {
-        fprintf(stderr, " poolallocarray:735: globalTemp = 0x%x\n", (uintptr_t)globalTemp);
-        fprintf(stderr ," poolallocarray:736: PS = 0x%p, offset = 0x%p, retAddress = 0x%p\n",
-              (uintptr_t)PS, offset, (uintptr_t)PS + offset);
+        fprintf(stderr, " poolallocarray:735: globalTemp = 0x%x\n", (unsigned)globalTemp);
+        fprintf(stderr ," poolallocarray:736: PS = 0x%08x, offset = 0x%08x, retAddress = 0x%08x\n",
+              (unsigned)PS, offset, (unsigned)PS + offset);
       }
-      return (void*) ((uintptr_t)PS + offset);
+      return (void*) ((unsigned)PS + offset);
     }
   }
   
@@ -949,7 +960,7 @@ poolallocarray(PoolTy* Pool, unsigned Size) {
   }
   else {
     // Insert it in the array
-    Pool->SlabAddressArray[Pool->NumSlabs] = (uintptr_t) New;
+    Pool->SlabAddressArray[Pool->NumSlabs] = (unsigned) New;
   }
   
   Pool->NumSlabs++;
@@ -965,13 +976,13 @@ poolallocarray(PoolTy* Pool, unsigned Size) {
   
   // remap page to get a shadow page (dangling pointer detection library)
   New = (PoolSlab *) RemapObject(globalTemp, Size*Pool->NodeSize);
-  offset = (uintptr_t)globalTemp & (PPageSize - 1);
+  offset = (unsigned)globalTemp & (PPageSize - 1);
   if (logregs) {
-    fprintf(stderr, " poolallocarray:774: globalTemp = 0x%x\n, offset = 0x%x\n", (uintptr_t)globalTemp, offset);
+    fprintf(stderr, " poolallocarray:774: globalTemp = 0x%x\n, offset = 0x%x\n", (unsigned)globalTemp, offset);
     fprintf(stderr, " poolallocarray:775: New = 0x%08x, Size = %d, retAddress = 0x%08x\n",
-        (uintptr_t)New, Size, (uintptr_t)New + offset);
+        (unsigned)New, Size, (unsigned)New + offset);
   }
-  return (void*) ((uintptr_t)New + offset);
+  return (void*) ((unsigned)New + offset);
 }
 
 void
@@ -998,7 +1009,7 @@ poolregister(PoolTy *Pool, void * allocaptr, unsigned NumBytes) {
 #endif
   adl_splay_insert(&(Pool->Objects), allocaptr, NumBytes, 0);
   if (logregs) {
-    fprintf (stderr, "poolregister: %x %d\n", (uintptr_t)allocaptr, NumBytes);
+    fprintf (stderr, "poolregister: %x %d\n", (unsigned)allocaptr, NumBytes);
   }
 #endif
 }
@@ -1086,8 +1097,8 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
     //  logregs = 1;
     
     if (logregs) {
-      fprintf(stderr, " poolalloc:863: retAddress = 0x%p NumBytes = %d globalTemp = 0x%p\n",
-          (uintptr_t)retAddress, NumBytes, (uintptr_t)globalTemp); fflush(stderr);
+      fprintf(stderr, " poolalloc:863: Pool=%x, retAddress = 0x%08x NumBytes = %d globalTemp = 0x%08x pc = 0x%08x\n", (unsigned) (Pool),
+          (unsigned)retAddress, NumBytes, (unsigned)globalTemp, __builtin_return_address(0)); fflush(stderr);
     }
     assert (retAddress && "poolalloc(1): Returning NULL!\n");
     return retAddress;
@@ -1107,15 +1118,15 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
       }
       
       globalTemp = PS->getElementAddress(Element, NodeSize);
-      offset = (uintptr_t)globalTemp & (PPageSize - 1);
+      offset = (unsigned)globalTemp & (PPageSize - 1);
       if (logregs) {
-        fprintf(stderr, " poolalloc:885: canonical page = 0x%p offset = 0x%p\n", (uintptr_t)globalTemp, offset);
+        fprintf(stderr, " poolalloc:885: canonical page = 0x%08x offset = 0x%08x\n", (unsigned)globalTemp, offset);
       }
       //adl_splay_insert(&(Pool->Objects), globalTemp, NumBytes, (Pool));
       
       // remap page to get a shadow page for dangling pointer library
       PS = (PoolSlab *) RemapObject(globalTemp, NumBytes);
-      retAddress = (void*) ((uintptr_t)PS + offset);
+      retAddress = (void*) ((unsigned)PS + offset);
       // for the use of dangling pointer runtime
       globalallocID++;
       debugmetadataPtr = createPtrMetaData(globalallocID, globalfreeID,
@@ -1124,7 +1135,7 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
       
       adl_splay_insert(&(Pool->Objects), retAddress, NumBytes, debugmetadataPtr);
       if (logregs) {
-        fprintf(stderr, " poolalloc:900: retAddress = 0x%08x, NumBytes = %d\n", (uintptr_t)retAddress, NumBytes);
+        fprintf(stderr, " poolalloc:900: Pool=%x, retAddress = 0x%08x, NumBytes = %d\n", (unsigned)(Pool), (unsigned)retAddress, NumBytes);
       }
       assert (retAddress && "poolalloc(2): Returning NULL!\n");
       return retAddress;
@@ -1142,12 +1153,12 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
         }
         
         globalTemp = PS->getElementAddress(Element, NodeSize);
-        offset = (uintptr_t)globalTemp & (PPageSize - 1);
+        offset = (unsigned)globalTemp & (PPageSize - 1);
         //adl_splay_insert(&(Pool->Objects), globalTemp, NumBytes, (Pool));
       
         // remap page to get a shadow page for dangling pointer library
         PS = (PoolSlab *) RemapObject(globalTemp, NumBytes);
-        retAddress = (void*) ((uintptr_t)PS + offset);
+        retAddress = (void*) ((unsigned)PS + offset);
         //printf(" returning the address %x",retAddress);
         // for the use of dangling pointer runtime
         globalallocID++;
@@ -1158,7 +1169,7 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
         adl_splay_insert(&(Pool->Objects), retAddress, NumBytes, debugmetadataPtr);
         if (logregs) {
           fprintf (stderr, " poolalloc:932: PS = 0x%08x, retAddress = 0x%08x, NumBytes = %d, offset = 0x%08x\n",
-                (uintptr_t)PS, (uintptr_t)retAddress, NumBytes, offset);
+                (unsigned)PS, (unsigned)retAddress, NumBytes, offset);
         }
         assert (retAddress && "poolalloc(3): Returning NULL!\n");
         return retAddress;
@@ -1185,7 +1196,7 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
   }
   else {
     // Insert it in the array
-    Pool->SlabAddressArray[Pool->NumSlabs] = (uintptr_t) New;
+    Pool->SlabAddressArray[Pool->NumSlabs] = (unsigned) New;
   }
   Pool->NumSlabs++;
 
@@ -1193,22 +1204,22 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
   int Idx = New->allocateSingle();
   assert(Idx == 0 && "New allocation didn't return zero'th node?");
   if (logregs) {
-    fprintf(stderr, " poolalloc:967: canonical page at 0x%08x from underlying allocator\n", (uintptr_t)New);
+    fprintf(stderr, " poolalloc:967: canonical page at 0x%08x from underlying allocator\n", (unsigned)New);
   }
   globalTemp = New->getElementAddress(0, 0);
-  offset = (uintptr_t)globalTemp & (PPageSize - 1);
+  offset = (unsigned)globalTemp & (PPageSize - 1);
   
   if (logregs) {
-    fprintf(stderr, " poolalloc:973: element at 0x%08x, offset=0x%08x\n", (uintptr_t)globalTemp, offset);
+    fprintf(stderr, " poolalloc:973: element at 0x%08x, offset=0x%08x\n", (unsigned)globalTemp, offset);
   }
   //adl_splay_insert(&(Pool->Objects), globalTemp, NumBytes, (Pool));
   
   // remap  page to get a shadow page for dangling pointer library
   New = (PoolSlab *) RemapObject(globalTemp, NumBytes);
-  offset = (uintptr_t)globalTemp & (PPageSize - 1);
-  //printf(" shadow page at 0x%x through remapping\n", (uintptr_t)New);
-  retAddress = (void*) ((uintptr_t)New + offset);
-  //printf(" returning the address 0x%x\n", (uintptr_t)retAddress);
+  offset = (unsigned)globalTemp & (PPageSize - 1);
+  //printf(" shadow page at 0x%x through remapping\n", (unsigned)New);
+  retAddress = (void*) ((unsigned)New + offset);
+  //printf(" returning the address 0x%x\n", (unsigned)retAddress);
   // for the use of dangling pointer runtime
   globalallocID++;
   debugmetadataPtr = createPtrMetaData(globalallocID, globalfreeID, __builtin_return_address(0), 0, globalTemp);
@@ -1216,8 +1227,8 @@ poolalloc(PoolTy *Pool, unsigned NumBytes) {
   
   adl_splay_insert(&(Pool->Objects), retAddress, NumBytes, debugmetadataPtr);
   if (logregs) {
-    fprintf (stderr, " poolalloc:990: New = 0x%08x, retAddress = 0x%08x, NumBytes = %d, offset = 0x%08x\n",
-          (uintptr_t)New, (uintptr_t)retAddress, NumBytes, offset);
+    fprintf (stderr, " poolalloc:990: New = 0x%08x, retAddress = 0x%08x, NumBytes = %d, offset = 0x%08x pc=0x%08x\n",
+          (unsigned)New, (unsigned)retAddress, NumBytes, offset, __builtin_return_address(0));
   }
   assert (retAddress && "poolalloc(4): Returning NULL!\n");
   return retAddress;
@@ -1453,7 +1464,7 @@ poolcheck(PoolTy *Pool, void *Node) {
    * The node is not found or is not within bounds; fail!
    */
   fprintf (stderr, "Poolcheck failed(%x:%x): %x %x from %x\n", 
-      (uintptr_t)Pool, fs, (uintptr_t)Node, len, (uintptr_t)__builtin_return_address(0));
+      (unsigned)Pool, fs, (unsigned)Node, len, (unsigned)__builtin_return_address(0));
   fflush (stderr);
   abort ();
   return;
@@ -1488,7 +1499,7 @@ poolcheckui (PoolTy *Pool, void *Node) {
    * going.
    */
   fprintf (stderr, "PoolcheckUI failed(%x:%x): %x %x from %x\n", 
-      (uintptr_t)Pool, fs, (uintptr_t)Node, len, (uintptr_t)__builtin_return_address(0));
+      (unsigned)Pool, fs, (unsigned)Node, len, (unsigned)__builtin_return_address(0));
   fflush (stderr);
   return;
 }
@@ -1516,22 +1527,21 @@ boundscheck (PoolTy * Pool, void * Source, void * Dest) {
    * Handle the case where a pointer is allowed to move just beyond the end of
    * the allocated space.
    */
-  if ((fs) && (((char *) Dest) == ((char*)S + len))) {
-    if (logregs)
-      fprintf (stderr, "boundscheck  : rewrite: %x %x %x %x, pc=%x\n",
-               S, Source, Dest, len, (void*)__builtin_return_address(0));
-    if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
-    ++invalidptr;
-    void* P = invalidptr;
-    if ((uintptr_t)P & ~(InvalidUpper - 1)) {
-      fprintf (stderr, "boundscheck: out of rewrite ptrs: %x %x: %x %x, pc=%x\n",
-               Source, Dest, InvalidLower, invalidptr, (void*)__builtin_return_address(0));
-      fflush (stderr);
+  if (fs) {
+    if ((ConfigData.StrictIndexing == false) ||
+        (((char *) Dest) == ((char*)S + len))) {
+      if (logregs)
+        fprintf (stderr, "boundscheck  : rewrite: %x %x %x %x, pc=%x\n",
+                 S, Source, Dest, len, (void*)__builtin_return_address(0));
+      return rewrite_ptr (Pool, Dest);
+    } else {
+      ReportBoundsCheck ((unsigned)Source,
+                         (unsigned)Dest,
+                         (unsigned)__builtin_return_address(0),
+                         (unsigned)S,
+                         (unsigned)len);
       return Dest;
     }
-
-    adl_splay_insert (&(Pool->OOB), P, 1, Dest);
-    return invalidptr;
   }
 
   /*
@@ -1549,7 +1559,7 @@ boundscheck (PoolTy * Pool, void * Source, void * Dest) {
       if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
       ++invalidptr;
       void* P = invalidptr;
-      if ((uintptr_t)P & ~(InvalidUpper - 1)) {
+      if ((unsigned)P & ~(InvalidUpper - 1)) {
         fprintf (stderr, "boundscheck: out of rewrite ptrs: %x %x: %x %x, pc=%x\n",
                  Source, Dest, InvalidLower, invalidptr, (void*)__builtin_return_address(0));
         fflush (stderr);
@@ -1561,158 +1571,192 @@ boundscheck (PoolTy * Pool, void * Source, void * Dest) {
     }
   }
 
+  if (logregs) {
+    fprintf (stderr, "boundscheck: %x %x %x\n", Pool, Source, Dest);
+    fflush (stderr);
+  }
+
   /*
    * The node is not found or is not within bounds; fail!
    */
   if (fs) {
-    ReportBoundsCheck ((uintptr_t)Source,
-                       (uintptr_t)Dest,
-                       (uintptr_t)__builtin_return_address(0),
-                       (uintptr_t)S,
-                       (uintptr_t)len);
+    ReportBoundsCheck ((unsigned)Source,
+                       (unsigned)Dest,
+                       (unsigned)__builtin_return_address(0),
+                       (unsigned)S,
+                       (unsigned)len);
   } else {
-    ReportBoundsCheck ((uintptr_t)Source,
-                       (uintptr_t)Dest,
-                       (uintptr_t)__builtin_return_address(0),
-                       (uintptr_t)0,
-                       (uintptr_t)0);
+    ReportBoundsCheck ((unsigned)Source,
+                       (unsigned)Dest,
+                       (unsigned)__builtin_return_address(0),
+                       (unsigned)0,
+                       (unsigned)0);
   }
   fflush (stderr);
-  abort ();
   return Dest;
 }
 
 int
-boundscheckui_lookup (PoolTy * Pool, void * Source ) {
+boundscheckui_lookup (PoolTy * Pool, void ** Source ) {
   //search for object for Source in splay tree, return length 
-  return adl_splay_lookup (&(Pool->Objects), &Source);
+  return adl_splay_lookup (&(Pool->Objects), Source);
 }
 
+//
+// Function: boundscheckui_check()
+//
+// Description:
+//  This is the slow patch for a boundcheckui() call.
+//
+// Inputs:
+//  ObjStart - The start of the object.
+//  ObjLen   - The length of the object.
+//  Pool     - The pool in which the pointer belong.
+//  Source   - The source pointer used in the indexing operation (the GEP).
+//  Dest     - The result pointer of the indexing operation (the GEP).
+//
+// Note:
+//  If ObjLen is zero, then the lookup says that Source was not found within
+//  any valid object.
+//
 void *
-boundscheckui_check (int len, PoolTy * Pool, void * Source, void * Dest) {
-  /*
-   * First, attempt to find the pointer within a valid object.  If the source
-   * pointer is within a valid object but the destination pointer is not, then
-   * rewrite the pointer.
-   */
-  void* S = Source;
-  //unsigned len = 0;
-
-  if (len) {
-    if ((S <= Dest) && (((char*)S + len) > (char*)Dest)) {
-      return Dest;
-    } else {
+boundscheckui_check (void * ObjStart, int ObjLen, PoolTy * Pool,
+                     void * Source, void * Dest) {
+  //
+  // First, we know that the pointer is out of bounds.  If we indexed off the
+  // beginning or end of a valid object, determine if we can rewrite the
+  // pointer into an OOB pointer.  Whether we can or not depends upon the
+  // SAFECode configuration.
+  //
+  if (ObjLen) {
+    if ((ConfigData.StrictIndexing == false) ||
+        (((char *) Dest) == ((char*)ObjStart + ObjLen))) {
       if (logregs)
-        fprintf (stderr, "boundscheckui: rewrite: %x %x %x %x, pc=%x\n",
-                 S, Source, Dest, len, (void*)__builtin_return_address(0));
-      if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
-      ++invalidptr;
-      void* P = invalidptr;
-      //if ((uintptr_t)P & ~(InvalidUpper - 1)) {
-      if ((uintptr_t) P == InvalidUpper) {
-        fprintf (stderr, "boundscheckui: out of rewrite ptrs: %x %x, pc=%x\n",
-                 InvalidLower, InvalidUpper, invalidptr);
-                 //Source, Dest, (void*)__builtin_return_address(0));
-        fflush (stderr);
-        abort();
-      }
-      adl_splay_insert (&(Pool->OOB), P, 1, Dest);
-      return invalidptr;
+        fprintf (ReportLog, "boundscheckui: rewrite: %x %x %x %x, pc=%x\n",
+                 ObjStart, Source, Dest, ObjLen, (void*)__builtin_return_address(0));
+        fflush (ReportLog);
+      return rewrite_ptr (Pool, Dest);
+    } else {
+      ReportBoundsCheck ((unsigned)Source,
+                         (unsigned)Dest,
+                         (unsigned)__builtin_return_address(0),
+                         (unsigned)ObjStart,
+                         (unsigned)ObjLen);
+      return Dest;
     }
   }
-
 
   /*
    * Allow pointers to the first page in memory provided that they remain
    * within that page.  Loads and stores using such pointers will fault.  This
    * allows indexing of NULL pointers without error.
    */
+#if 0
   if (Source < (unsigned char *)(4096)) {
     if (Dest < (unsigned char *)(4096)) {
       return Dest;
     } else {
-      if (logregs)
-        fprintf (stderr, "boundscheckui: rewrite: %x %x %x %x, pc=%x\n",
-                 S, Source, Dest, len, (void*)__builtin_return_address(0));
-      if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
-      ++invalidptr;
-      void* P = invalidptr;
-      //if ((uintptr_t)P & ~(InvalidUpper - 1)) {
-      if ((uintptr_t) P == InvalidUpper) {
-        fprintf (stderr, "boundscheckui: out of rewrite ptrs: %x %x, pc=%x\n",
-                 InvalidLower, InvalidUpper, invalidptr);
-                 //Source, Dest, (void*)__builtin_return_address(0));
-        fflush (stderr);
-        abort();
+      if (ConfigData.StrictIndexing == false) {
+        return rewrite_ptr (Pool, Dest);
+      } else {
+        ReportBoundsCheck ((unsigned)Source,
+                           (unsigned)Dest,
+                           (unsigned)__builtin_return_address(0),
+                           (unsigned)0,
+                           (unsigned)4096);
       }
-      adl_splay_insert (&(Pool->OOB), P, 1, Dest);
-      return invalidptr;
     }
   }
+#endif
 
   /*
    * Attempt to look for the object in the external object splay tree.
    */
-  S = Source;
+#if 0
+  void * S = Source;
   unsigned len_new = 0;
   int fs = adl_splay_retrieve (&(ExternalObjects), &S, &len_new, 0);
   if (fs) {
     if ((S <= Dest) && (((char*)S + len_new) > (char*)Dest)) {
       return Dest;
     } else {
-      ReportBoundsCheck ((uintptr_t)Source,
-                         (uintptr_t)Dest,
-                         (uintptr_t)__builtin_return_address(0),
-                         (uintptr_t)S,
-                         (uintptr_t)len);
+      if (logregs) {
+        fprintf (stderr, "boundscheckui: %x %x %x\n", Pool, Source, Dest);
+        fflush (stderr);
+      }
+
+      ReportBoundsCheck ((unsigned)Source,
+                         (unsigned)Dest,
+                         (unsigned)__builtin_return_address(0),
+                         (unsigned)S,
+                         (unsigned)ObjLen);
     }
   }
+#endif
 
-  /*
-   * We cannot find the object.  Print a warning and continue execution.
-   */
-  
+  //
+  // We cannot find the object.  Continue execution.
+  //
  return Dest;
 }
 
+//
+// Function: boundscheckui()
+//
+// Description:
+//  Perform a bounds check (with lookup) on the given pointers.
+//
+// Inputs:
+//  Pool - The pool to which the pointers (Source and Dest) should belong.
+//  Source - The Source pointer of the indexing operation (the GEP).
+//  Dest   - The result of the indexing operation (the GEP).
+//
 void *
 boundscheckui (PoolTy * Pool, void * Source, void * Dest) {
   // This code is inlined at all boundscheckui calls
 
   // Search the splay for Source and return the bounds of the object
-  int len = boundscheckui_lookup (Pool, Source); 
-  
+  void * ObjStart = Source;
+  int ObjLen = boundscheckui_lookup (Pool, &ObjStart); 
+
   // Check if destination lies in the same object
-  if (__builtin_expect (len &&
-                        ((Source <= Dest) &&
-                        ((char*)Source + len) > (char*)Dest), 1)) {
+  if (__builtin_expect (ObjLen &&
+                        ((ObjStart <= Dest) &&
+                        ((char*)ObjStart + ObjLen) > (char*)Dest), 1)) {
     return Dest;
   } else {
     //
-    // Valid object not found in splay tree or Dest is not within the valid
-    // object
+    // Either:
+    //  1) A valid object was not found in splay tree, or
+    //  2) Dest is not within the valid object that Source was found in
     //
-    return boundscheckui_check( len, Pool, Source, Dest );  
+    return boundscheckui_check (ObjStart, ObjLen, Pool, Source, Dest);  
   }
 }
 
+/*
+ * Function: rewrite_ptr()
+ *
+ * Description:
+ *  Take the given pointer and rewrite it to an Out Of Bounds (OOB) pointer.
+ */
 void *
-rewrite_ptr (void * p) {
-  static void * OOBTree;
+rewrite_ptr (PoolTy * Pool, void * p) {
+  // Used for exactcheck calls in which no pool is specified.
+  static PoolTy OOBPool;
 
   if (invalidptr == 0) invalidptr = (unsigned char*)InvalidLower;
   ++invalidptr;
   void* P = invalidptr;
-  //if ((uintptr_t)P & ~(InvalidUpper - 1)) {
-  if ((uintptr_t) P == InvalidUpper) {
+  if ((unsigned) P == InvalidUpper) {
     fprintf (stderr, "rewrite: out of rewrite ptrs: %x %x, pc=%x\n",
              InvalidLower, InvalidUpper, invalidptr);
-             //Source, Dest, (void*)__builtin_return_address(0));
     fflush (stderr);
-    abort();
+    return p;
   }
 
-  adl_splay_insert (&(OOBTree), P, 1, p);
+  if (!Pool) Pool = &OOBPool;
+  adl_splay_insert (&(Pool->OOB), P, 1, p);
   return invalidptr;
 }
 
@@ -1724,19 +1768,19 @@ rewrite_ptr (void * p) {
  */
 void *
 pchk_getActualValue (PoolTy * Pool, void * src) {
-  if ((uintptr_t)src <= InvalidLower) return src;
+  if ((unsigned)src <= InvalidLower) return src;
 
   void* tag = 0;
 
   /* outside rewrite zone */
-  if ((uintptr_t)src & ~(InvalidUpper - 1)) return src;
+  if ((unsigned)src & ~(InvalidUpper - 1)) return src;
   if (adl_splay_retrieve(&(Pool->OOB), &src, 0, &tag)) {
     return tag;
   }
 
   /* Lookup has failed */
-  fprintf (stderr, "GetActualValue failure: src = %p, pc = %p", (uintptr_t) src,
-           (uintptr_t) __builtin_return_address(0));
+  fprintf (stderr, "GetActualValue failure: src = %x, pc = %x", (unsigned) src,
+           (unsigned) __builtin_return_address(0));
   fflush (stderr);
   abort ();
   return tag;
@@ -1755,9 +1799,9 @@ poolcheckalign (PoolTy *Pool, void *Node, unsigned StartOffset,
 
   if (Pool->AllocadPool > 0) {
     if (Pool->allocaptr <= Node) {
-     unsigned diffPtr = (uintptr_t)Node - (uintptr_t)Pool->allocaptr;
+     unsigned diffPtr = (unsigned)Node - (unsigned)Pool->allocaptr;
      unsigned offset = diffPtr % Pool->NodeSize;
-     if ((diffPtr  < (uintptr_t)Pool->AllocadPool ) && (offset >= StartOffset) &&
+     if ((diffPtr  < (unsigned)Pool->AllocadPool ) && (offset >= StartOffset) &&
          (offset <= EndOffset))
        return;
     }
@@ -1823,7 +1867,7 @@ poolcheckalign (PoolTy *Pool, void *Node, unsigned StartOffset,
   } else {
     bool found = false;
     for (unsigned i = 0; i < AddrArrSize && !found; ++i) {
-      if ((uintptr_t)Pool->SlabAddressArray[i] == (uintptr_t) PS) {
+      if ((unsigned)Pool->SlabAddressArray[i] == (unsigned) PS) {
         found = true;
         Pool->prevPage[Pool->lastUsed] = PS;
         Pool->lastUsed = (Pool->lastUsed + 1) % 4;
@@ -1869,7 +1913,7 @@ poolcheckalign (PoolTy *Pool, void *Node, unsigned StartOffset,
         }
       } else {
         fprintf(stderr, "poolcheck5: node being checked not found in pool with right"
-               " alignment %p %p\n", (uintptr_t)Pool, (uintptr_t)Node);
+               " alignment %x %x\n", (unsigned)Pool, (unsigned)Node);
         fflush(stderr);
     abort();
       }
@@ -1888,7 +1932,7 @@ poolfree(PoolTy *Pool, void *Node) {
   
   
   if (logregs) {
-    printf(" poolfree:1368: poolfree to addr 0x%08x\n", (uintptr_t)Node);
+    printf(" poolfree:1368: poolfree to addr 0x%08x\n", (unsigned)Node);
   }
   // update DebugMetaData
   globalfreeID++;
@@ -1897,7 +1941,7 @@ poolfree(PoolTy *Pool, void *Node) {
   void * mykey;
   unsigned len = 1;
   unsigned NumPPage = 0;
-  unsigned offset = (uintptr_t)((long)Node & (PPageSize - 1));
+  unsigned offset = (unsigned)((long)Node & (PPageSize - 1));
   PDebugMetaData debugmetadataptr;
   mykey = Node;
   
@@ -1906,7 +1950,7 @@ poolfree(PoolTy *Pool, void *Node) {
   adl_splay_retrieve (&(Pool->Objects), &mykey, &len, (void **) &debugmetadataptr);
   
   if (logregs) {
-    printf(" poolfree:1387: mykey = 0x%08x offset = 0x%08x\n", (uintptr_t)mykey, offset);
+    printf(" poolfree:1387: mykey = 0x%08x offset = 0x%08x\n", (unsigned)mykey, offset);
     printf(" poolfree:1388: len = %d\n", len);
   }
 
@@ -1927,7 +1971,7 @@ poolfree(PoolTy *Pool, void *Node) {
   
   if (logregs) {
     printf(" poolfree:1397: NumPPage = %d\n", NumPPage);
-    printf(" poolfree:1398: canonical address is 0x%x\n", (uintptr_t)globalTemp);
+    printf(" poolfree:1398: canonical address is 0x%x\n", (unsigned)globalTemp);
   }
   updatePtrMetaData(debugmetadataptr, globalfreeID, __builtin_return_address(0));
 
@@ -2101,14 +2145,15 @@ bus_error_handler (int sig, siginfo_t * info, void * context) {
   int fs = 0;
   if (0 == (fs = adl_splay_retrieve(&(dummyPool.DPTree), &faultAddr, &len, (void **) &debugmetadataptr)))
   {
-    fprintf(stderr, "signal handler: retrieving debug meta data failed");
-    fflush(stderr);
+    extern FILE * ReportLog;
+    fprintf(ReportLog, "signal handler: retrieving debug meta data failed");
+    fflush(ReportLog);
     abort();
   }
  
   // FIXME: Correct the semantics for calculating NumPPage 
   unsigned NumPPage;
-  unsigned offset = (uintptr_t) ((long)info->si_addr & (PPageSize - 1) );
+  unsigned offset = (unsigned) ((long)info->si_addr & (PPageSize - 1) );
   NumPPage = (len / PPageSize) + 1;
   if ( (len - (NumPPage-1) * PPageSize) > (PPageSize - offset) )
     NumPPage++;
@@ -2130,8 +2175,8 @@ bus_error_handler (int sig, siginfo_t * info, void * context) {
 #if defined(i386) || defined(__i386__) || defined(__x86__)
   program_counter = mycontext->uc_mcontext->__ss.__eip;
 #endif
-  alloc_pc = ((uintptr_t) (debugmetadataptr->allocPC)) - 5;
-  free_pc  = ((uintptr_t) (debugmetadataptr->freePC)) - 5;
+  alloc_pc = ((unsigned) (debugmetadataptr->allocPC)) - 5;
+  free_pc  = ((unsigned) (debugmetadataptr->freePC)) - 5;
   allocID  = debugmetadataptr->allocID;
   freeID   = debugmetadataptr->freeID;
 #endif

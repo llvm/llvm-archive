@@ -24,7 +24,8 @@ PA_SO    := $(PROJECT_DIR)/Debug/lib/addchecks.o
 
 # Pool allocator runtime library
 PA_RT_O  := $(PROJECT_DIR)/$(CONFIGURATION)/lib/poolalloc_safe_rt.o
-PA_RT_BC := $(PROJECT_DIR)/$(CONFIGURATION)/lib/libpoolalloc_safe_rt.bca
+#PA_RT_BC := $(PROJECT_DIR)/$(CONFIGURATION)/lib/libpoolalloc_safe_rt.bca
+PA_RT_BC :=
 
 # Pool System library for interacting with the system
 POOLSYSTEM := $(PROJECT_DIR)/$(CONFIGURATION)/lib/UserPoolSystem.o
@@ -40,6 +41,10 @@ OPTZN_PASSES := -std-compile-opts $(EXTRA_LOPT_OPTIONS)
 #EXTRA_LINKTIME_OPT_FLAGS = $(EXTRA_LOPT_OPTIONS) 
 LDFLAGS += -lrt -lpthread
 
+# DEBUGGING
+#CFLAGS += -g
+#LLVMLDFLAGS= -disable-opts
+
 #
 # This rule runs SAFECode on the .llvm.bc file to produce a new .bc
 # file
@@ -49,7 +54,7 @@ Output/%.$(TEST).bc: Output/%.llvm.bc $(PA_SO) $(LOPT)
 	-@rm -f $(CURDIR)/$@.info
 	-$(LOPT) $(OPTZN_PASSES) $< -f -o $<.opt 2>&1 > $@.out
 	-$(SC_STATS) $<.opt -f -o $@.sc 2>&1 > $@.out
-	-$(LLVMLDPROG) -o $@.sc.ld $@.sc $(PA_RT_BC) 2>&1 > $@.out
+	-$(LLVMLDPROG) $(LLVMLDFLAGS) -o $@.sc.ld $@.sc $(PA_RT_BC) 2>&1 > $@.out
 	-$(LOPT) $(OPTZN_PASSES) $@.sc.ld.bc -o $@ -f 2>&1    >> $@.out
 
 $(PROGRAMS_TO_TEST:%=Output/%.nonsc.bc): \

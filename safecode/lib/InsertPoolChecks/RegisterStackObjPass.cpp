@@ -174,7 +174,7 @@ RegisterStackObjPass::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig, Dom
                    (FuncName == "llva_invokestrncpy") ||
                    (FuncName == "llva_invokememset")  ||
                    (FuncName == "memcmp")) {
-           continue;
+	  continue;
         } else {
           MustRegisterAlloca = true;
           continue;
@@ -228,34 +228,33 @@ RegisterStackObjPass::registerAllocaInst(AllocaInst *AI, AllocaInst *AIOrig, Dom
   CallInst::Create (PoolRegister, args.begin(), args.end(), "", iptI);
 
   //
-  // FIXME:
-  //  Need to change the code below to use the dominator (post-dominator?)
-  //  frontier to determine when we can deregister an object.
-  //
   // Insert a call to unregister the object whenever the function can exit.
   //
+  // TODO:
+  //  While the code below fixes some test cases, it is still incomplete. We
+  //  may have a basic block that does not dominate *any* basic block that ends
+  //  with a ret or unwind instruction.  What the code should do (I think) is:
+  //    a) Insert poolunregister() calls before all return/unwind instructions
+  //       dominated by the alloca's basic block
+  //    b) Use the dominance frontier to find other basic blocks which should
+  //       also call poolunregister() to unregister the alloca instruction.
+  //
+  //  Also, there may be even more issues with alloca's inside of loops.
+  //
   CastedPH     = castTo (PH,
-                         PointerType::getUnqual(Type::Int8Ty),
-                         "allocph",Casted);
+			 PointerType::getUnqual(Type::Int8Ty),
+			 "allocph",Casted);
   args.clear();
   args.push_back (CastedPH);
   args.push_back (Casted);
-
   const std::vector<DomTreeNode*> &children = DTN->getChildren();
-  for (unsigned int i = 0; i < children.size(); ++i) { 
+  for (unsigned int i = 0; i < children.size(); ++i) {
     iptI = children[i]->getBlock()->getTerminator();
     if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
       CallInst::Create (StackFree, args.begin(), args.end(), "", iptI);
   }
-/*  for (Function::iterator BB = AI->getParent()->getParent()->begin();
-                          BB != AI->getParent()->getParent()->end();
-                          ++BB) {
-    iptI = BB->getTerminator();
-    if (isa<ReturnInst>(iptI) || isa<UnwindInst>(iptI))
-      CallInst::Create (StackFree, args.begin(), args.end(), "", iptI);
-  }
-*/
+
   // Update statistics
   ++StackRegisters;
-  }
+}
 }

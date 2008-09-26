@@ -31,6 +31,7 @@ struct BoundsCheckRequest {
 };
 
 typedef enum {
+  CHECK_EMPTY = 0,
   CHECK_POOL_CHECK,
   CHECK_POOL_CHECK_UI,
   CHECK_BOUNDS_CHECK,
@@ -44,6 +45,15 @@ struct CheckRequest {
     PoolCheckRequest poolcheck;
     BoundsCheckRequest boundscheck;
   };
+  bool is_free() const {
+    return type == CHECK_EMPTY;
+  }
+  void set_type(RequestTy t) {
+    type = t;
+  }
+  void set_free() {
+    type = CHECK_EMPTY;
+  }
 }; 
 
 // Seems not too many differences
@@ -87,9 +97,9 @@ namespace {
     }
     ~SpeculativeCheckingGuard() {
       mCheckTask.stop();
-      CheckRequest req;
-      req.type = CHECK_REQUEST_COUNT;
-      gCheckQueue.enqueue(req);
+//      CheckRequest req;
+//      req.type = CHECK_REQUEST_COUNT;
+//      gCheckQueue.enqueue(req);
       // Since the whole program stops, just skip the undone checks..
 //      __sc_wait_for_completion();
     }
@@ -106,36 +116,36 @@ using namespace llvm::safecode;
 
 void __sc_poolcheck(PoolTy *Pool, void *Node) {
   CheckRequest req;
-  req.type = CHECK_POOL_CHECK;
+  req.type = CHECK_EMPTY;
   req.poolcheck.Pool = Pool;
   req.poolcheck.Node = Node;
-  gCheckQueue.enqueue(req);
+  gCheckQueue.enqueue(req, CHECK_POOL_CHECK);
 }
 
 void __sc_poolcheckui(PoolTy *Pool, void *Node) {
   CheckRequest req;
-  req.type = CHECK_POOL_CHECK_UI;
+  req.type = CHECK_EMPTY;
   req.poolcheck.Pool = Pool;
   req.poolcheck.Node = Node;
-  gCheckQueue.enqueue(req);
+  gCheckQueue.enqueue(req, CHECK_POOL_CHECK_UI);
 }
 
 void __sc_boundscheck   (PoolTy * Pool, void * Source, void * Dest) {
   CheckRequest req;
-  req.type = CHECK_BOUNDS_CHECK;
+  req.type = CHECK_EMPTY;
   req.boundscheck.Pool = Pool;
   req.boundscheck.Source = Source;
   req.boundscheck.Dest = Dest;
-  gCheckQueue.enqueue(req);
+  gCheckQueue.enqueue(req, CHECK_BOUNDS_CHECK);
 }
 
 void __sc_boundscheckui (PoolTy * Pool, void * Source, void * Dest) {
   CheckRequest req;
-  req.type = CHECK_BOUNDS_CHECK_UI;
+  req.type = CHECK_EMPTY;
   req.boundscheck.Pool = Pool;
   req.boundscheck.Source = Source;
   req.boundscheck.Dest = Dest;
-  gCheckQueue.enqueue(req);
+  gCheckQueue.enqueue(req, CHECK_BOUNDS_CHECK_UI);
 }
 
 void __sc_wait_for_completion() {

@@ -28,8 +28,10 @@ NAMESPACE_SC_BEGIN
 #define ADDR "+m" (*(volatile long *) addr)
 
 #define SPIN_AND_YIELD(COND) do { unsigned short counter = 0; \
-    while (COND) { if (++counter == 0) { sched_yield(); /* printf("yielding: %s\n", #COND); */}} \
-  } while (0)
+  while (COND) { if (++counter == 0) {                      \
+    sched_yield();                                        \
+    /* fprintf(stderr, "yielding: %s\n", #COND); fflush(stderr); */ }}       \
+} while (0)
 
 /// FIXME: These codes are from linux header file, it should be rewritten
 /// to avoid license issues.
@@ -107,13 +109,12 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
 
 template<class T> class LockFreeFifo
 {
-  static const int N = 65536;
 public:
   typedef  T element_t;
   LockFreeFifo () : readidx(0), writeidx(0) {}
 
   T & front (void) {
-    SPIN_AND_YIELD(empty());
+    SPIN_AND_YIELD(buffer[readidx].is_free());
     return buffer[readidx];
   }
 
@@ -121,18 +122,20 @@ public:
   {
     // CAUTION: always supposes the queue is not empty.
     //    SPIN_AND_YIELD(empty());
+    buffer[readidx].set_free();
     // Use overflow to wrap the queue
     ++readidx;
     //    asm volatile (LOCK_PREFIX "incb %0" : "+m" (readidx));
   }
 
-  void enqueue (T & datum)
+  template <class U>
+  void enqueue (T & datum, U type)
   {
-    unsigned char newidx = writeidx + 1;
-    SPIN_AND_YIELD(newidx == readidx);
+    SPIN_AND_YIELD(!buffer[writeidx].is_free());
     buffer[writeidx] = datum;
     mb();
-    writeidx = newidx;
+    buffer[writeidx].set_type(type);
+    ++writeidx;
   }
 
   bool empty() const {
@@ -140,8 +143,16 @@ public:
   }
 
 private:
-  volatile unsigned short readidx, writeidx;
+
+  // Cache alignment suggested by Andrew
+  static const int N = 65536;
+  volatile unsigned short __attribute__((aligned(128))) dummy1;
+  volatile unsigned short __attribute__((aligned(128))) readidx;
+  volatile unsigned short __attribute__((aligned(128))) writeidx;
+  volatile unsigned short __attribute__((aligned(128))) dummy2; 
   T buffer[N];
+
+
 };
 
 template <class QueueTy, class FuncTy>
@@ -174,11 +185,10 @@ private:
     while(true) {
       typename QueueTy::element_t & e = mQueue.front();
       if (mActive) {
-	mFunctor(e);
-	mQueue.dequeue();
+        mFunctor(e);
+        mQueue.dequeue();
       } else {
-	mQueue.dequeue();
-	break;
+        return;
       }
     }
   };
@@ -189,39 +199,5 @@ private:
 };
 
 NAMESPACE_SC_END
-
-/// Deprecated code
-
-/*
-template<class Ty>
-class SimpleSlabAllocator {
-public:
-  uint32_t m_mask;
-  Ty * mMemory;
-  SimpleSlabAllocator() : m_mask((uint32_t)(-1)) {
-    mMemory = reinterpret_cast<Ty*>(::operator new[](sizeof(Ty) * sizeof(m_mask) * 8));
-  }
-
-  ~SimpleSlabAllocator() {
-    ::operator delete[](reinterpret_cast<void*>(mMemory));
-  }
-
-  Ty * allocate() {
-    SPIN_AND_YIELD(m_mask == 0);
-    // Since there is only one thread for allocation, 
-    // we don't need to lock here
-    unsigned long pos = __ffs(m_mask);
-    // clear_bit has lock prefix so we don't need a mb
-    clear_bit(pos, &m_mask);
-    return mMemory + pos;
-  };
-
-  void deallocate(Ty * ptr) {
-    uint32_t pos = ptr - mMemory;
-    // set_bit has lock prefix so we don't need a mb
-    set_bit(pos, &m_mask);
-  }
-};
-*/
 
 #endif

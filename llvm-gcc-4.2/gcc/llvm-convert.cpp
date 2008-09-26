@@ -568,13 +568,10 @@ void TreeToLLVM::StartFunctionBody() {
   // "T foo(void) {}" and allows us to handle functions with K&R-style
   // definitions correctly.
   if (TYPE_ARG_TYPES(TREE_TYPE(FnDecl)) == 0) {
-    FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(TREE_TYPE(FnDecl)),
+    FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(FnDecl),
                                                    DECL_ARGUMENTS(FnDecl),
                                                    static_chain,
                                                    CallingConv, PAL);
-#ifdef TARGET_ADJUST_LLVM_CC
-    TARGET_ADJUST_LLVM_CC(CallingConv, TREE_TYPE(FnDecl));
-#endif
   } else {
     // Otherwise, just get the type from the function itself.
     FTy = TheTypeConverter->ConvertFunctionType(TREE_TYPE(FnDecl),

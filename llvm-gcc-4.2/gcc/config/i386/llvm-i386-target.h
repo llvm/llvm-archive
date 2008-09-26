@@ -28,12 +28,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
       CC = CallingConv::X86_StdCall;                            \
     } else if (lookup_attribute("fastcall", type_attributes)) { \
       CC = CallingConv::X86_FastCall;                           \
-    } else if (!TARGET_64BIT &&                                 \
-               (TARGET_SSEREGPARM ||                            \
-                lookup_attribute("sseregparm",                  \
-                                 type_attributes))){            \
-      CC = CallingConv::X86_SSECall;                            \
     }                                                           \
+  }
+
+#define TARGET_ADJUST_LLVM_RETATTR(Rattributes, type)           \
+  {                                                             \
+    tree type_attributes = TYPE_ATTRIBUTES (type);              \
+    if (!TARGET_64BIT && (TARGET_SSEREGPARM ||                  \
+               lookup_attribute("sseregparm", type_attributes)))\
+      RAttributes |= Attribute::InReg;                          \
   }
 
 /* LLVM specific stuff for converting gcc's `regparm` attribute to LLVM's

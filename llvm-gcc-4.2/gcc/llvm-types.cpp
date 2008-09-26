@@ -1047,8 +1047,9 @@ static Attributes HandleArgumentExtension(tree ArgTy) {
 /// fills in Result with the argument types for the function.  It returns the
 /// specified result type for the function.
 const FunctionType *TypeConverter::
-ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
+ConvertArgListToFnType(tree type, tree Args, tree static_chain,
                        unsigned &CallingConv, AttrListPtr &PAL) {
+  tree ReturnType = TREE_TYPE(type);
   std::vector<PATypeHolder> ArgTys;
   PATypeHolder RetTy(Type::VoidTy);
   
@@ -1058,10 +1059,19 @@ ConvertArgListToFnType(tree ReturnType, tree Args, tree static_chain,
   // Builtins are always prototyped, so this isn't one.
   ABIConverter.HandleReturnType(ReturnType, current_function_decl, false);
 
+#ifdef TARGET_ADJUST_LLVM_CC
+    TARGET_ADJUST_LLVM_CC(CallingConv, type);
+#endif
+
   SmallVector<AttributeWithIndex, 8> Attrs;
 
   // Compute whether the result needs to be zext or sext'd.
   Attributes RAttributes = HandleArgumentExtension(ReturnType);
+
+  // Allow the target to change the attributes.
+#ifdef TARGET_ADJUST_LLVM_RETATTR
+  TARGET_ADJUST_LLVM_RETATTR(RAttributes, type);
+#endif
 
   if (RAttributes != Attribute::None)
     Attrs.push_back(AttributeWithIndex::get(0, RAttributes));
@@ -1160,6 +1170,11 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   // Compute whether the result needs to be zext or sext'd.
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
+
+  // Allow the target to change the attributes.
+#ifdef TARGET_ADJUST_LLVM_RETATTR
+  TARGET_ADJUST_LLVM_RETATTR(RAttributes, type);
+#endif
 
   if (RAttributes != Attribute::None)
     Attrs.push_back(AttributeWithIndex::get(0, RAttributes));

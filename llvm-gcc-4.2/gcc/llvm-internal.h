@@ -169,7 +169,7 @@ public:
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
   /// return the LLVM type corresponding to the function.  This is useful for
   /// turning "T foo(...)" functions into "T foo(void)" functions.
-  const FunctionType *ConvertArgListToFnType(tree_node *retty,
+  const FunctionType *ConvertArgListToFnType(tree_node *type,
                                              tree_node *arglist,
                                              tree_node *static_chain,
                                              unsigned &CallingConv,

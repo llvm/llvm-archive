@@ -3208,18 +3208,15 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
 /// type with floating point elements, return an integer type to bitcast to.
 /// e.g. 4 x float -> 4 x i32
 static const Type *getSuitableBitCastIntType(const Type *Ty) {
-  if (Ty == Type::FloatTy)
-    return Type::Int32Ty;
-  else if (Ty == Type::DoubleTy)
-    return Type::Int64Ty;
-  else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     unsigned NumElements = VTy->getNumElements();
     const Type *EltTy = VTy->getElementType();
     if (EltTy == Type::FloatTy)
       return VectorType::get(Type::Int32Ty, NumElements);
     else if (EltTy == Type::DoubleTy)
       return VectorType::get(Type::Int64Ty, NumElements);
-  }
+  } else
+    return IntegerType::get(Ty->getPrimitiveSizeInBits());
   return NULL;
 }
 
@@ -3317,7 +3314,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
 
-  // If it's And, Or, or Xor, may sure the oeprands are casted to the right
+  // If it's And, Or, or Xor, make sure the operands are casted to the right
   // integer types first.
   bool isLogicalOp = Opc == Instruction::And || Opc == Instruction::Or ||
     Opc == Instruction::Xor;

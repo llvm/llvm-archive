@@ -1909,19 +1909,14 @@ dwarf2out_frame_debug (rtx insn, bool after_p)
       return;
     }
 
-  /* APPLE LOCAL begin async unwind info 5976588 */
-  if (after_p)
-    {
-      label = dwarf2out_cfi_label ();
-      src = find_reg_note (insn, REG_FRAME_RELATED_EXPR, NULL_RTX);
-      if (src)
-	insn = XEXP (src, 0);
-      else
-	insn = PATTERN (insn);
+  label = dwarf2out_cfi_label ();
+  src = find_reg_note (insn, REG_FRAME_RELATED_EXPR, NULL_RTX);
+  if (src)
+    insn = XEXP (src, 0);
+  else
+    insn = PATTERN (insn);
 
-      dwarf2out_frame_debug_expr (insn, label);
-    }
-    /* APPLE LOCAL end async unwind info 5976588 */
+  dwarf2out_frame_debug_expr (insn, label);
 }
 
 #endif

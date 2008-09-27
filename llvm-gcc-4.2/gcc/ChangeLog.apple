@@ -1,3 +1,79 @@
+2008-09-26  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5919583
+	* config/i386/emmintin.h (_mm_srli_si128, _mm_srli_si128):
+          Remove parameters and move multiplication by 8 from here...
+	* config/i386/i386.c (ix86_expand_builtin): ...to here.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6244520 - minor addition
+	* c-common.c (build_indirect_object_id_exp): offset needs
+	be updated to accomodate addition of the new field.
+
+2008-09-26  Caroline Tice  <ctice@apple.com>
+
+	Radar 6163705
+	* cp/parser.c (declare_block_prologue_local_byref_vars):  Assign the
+       decl_stmt a line number of one before the declaration of the function.
+       * c-decl.c (declare_block_prologue_local_vars):  Likewise.
+       * function.c (find_and_extract_block_prologue_insns):  New function.
+       (append_insn_list):  New function.
+       (thread_prologue_and_epilogue_insns):  If the function is a Block
+       helper function, call find_and_extract_block_prologue_insns;  If that
+       function call returned a list of insns, call append_insn_list to add
+       them to the end of the "normal" prologue.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6246965
+	* c-typeck.c (functiontypes_are_block_compatible): Use
+	existing API for argument-list type checking.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6244520
+	* c-decl.c (new_block_byref_decl): New field added to
+	struct __Block_byref_x.
+	(init_byref_decl): Above field initialized to NULL.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6237713
+	* c-common.c (handle_noreturn_attribute): Add 'noreturn'
+	attribute to block pointer decls.
+	* c-parser.c (c_parser_block_literal_expr): Parse and set
+	attributes on block literals.
+
+2008-09-24  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6025404
+	* config/i386/sse.md (ssse3_pmaddubswv8hi3,
+	  ssse3_pmaddubswv4hi3): Not commutative.
+
+2008-09-23  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6196572
+	* c-typeck.c (functiontypes_are_block_compatible): Assignment to
+	variadic block pointer is ok.
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6173152
+	* c.opt (-fnew-property-ivar-synthesis): Is now the default.
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6230656
+	* config/darwin-c.c (darwin_cpp_builtins): Don't define __block
+	macro with -fno-blocks.
+
+2008-09-19  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6119849
+	* gcc/builtins.c (fold_builtin_classify): Under -ffast-math,
+          finite() should return 1.
+
 2008-09-17  Josh Conner  <jconner@apple.com>
 
 	Radar 6204451

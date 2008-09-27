@@ -1,3 +1,16 @@
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6244520
+        * decl.c (new_block_byref_decl): New field added to
+        struct __Block_byref_x.
+        (init_byref_decl): Above field initialized to NULL.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6237713
+	* parser.c (cp_parser_block_literal_expr): Parse
+	and set attribute on block literals.
+
 2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6214617

@@ -6175,9 +6175,11 @@ build_indirect_object_id_exp (tree exp)
   int  int_size = int_cst_value (TYPE_SIZE_UNIT (unsigned_type_node));
   int offset;
   /* dst->object = [src->object retail]; In thid case 'object' is the field
-   of the object passed offset by: void* + int + int + void* + void *
+   of the object passed offset by: void * + void* + int + int + void* + void *
    This must match definition of Block_byref structs. */
-  offset = GET_MODE_SIZE (Pmode) + int_size + int_size + GET_MODE_SIZE (Pmode) +
+  /* APPLE LOCAL radar 6244520 */
+  offset = GET_MODE_SIZE (Pmode) + GET_MODE_SIZE (Pmode) 
+           + int_size + int_size + GET_MODE_SIZE (Pmode) +
            GET_MODE_SIZE (Pmode);
   dst_obj = build2 (PLUS_EXPR, ptr_type_node, exp,
                     build_int_cst (NULL_TREE, offset));

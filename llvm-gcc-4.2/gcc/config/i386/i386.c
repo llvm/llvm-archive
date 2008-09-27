@@ -5838,7 +5838,7 @@ pro_epilogue_adjust_stack (rtx dest, rtx src, rtx offset, int style)
       r11 = gen_rtx_REG (DImode, FIRST_REX_INT_REG + 3 /* R11 */);
       insn = emit_insn (gen_rtx_SET (DImode, r11, offset));
       /* APPLE LOCAL async unwind info 5949469 */
-      if (style < 0 || flag_asynchronous_unwind_tables)
+      if (style < 0 /* || flag_asynchronous_unwind_tables*/)
 	RTX_FRAME_RELATED_P (insn) = 1;
       insn = emit_insn (gen_pro_epilogue_adjust_stack_rex64_2 (dest, src, r11,
 							       offset));
@@ -5846,10 +5846,12 @@ pro_epilogue_adjust_stack (rtx dest, rtx src, rtx offset, int style)
   if (style < 0)
     RTX_FRAME_RELATED_P (insn) = 1;
   /* APPLE LOCAL begin async unwind info 5949350 5949469 */
+#if 0
   else if (flag_asynchronous_unwind_tables
 	   && (src == hard_frame_pointer_rtx
 	       || src == stack_pointer_rtx))
     RTX_FRAME_RELATED_P (insn) = 1;
+#endif
   /* APPLE LOCAL end async unwind info 5949350 5949469 */
 }
 
@@ -18176,6 +18178,17 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       mode1 = insn_data[icode].operand[1].mode;
       mode2 = insn_data[icode].operand[2].mode;
 
+      /* APPLE LOCAL begin 591583 */
+      if (! CONST_INT_P (op1))
+	{
+	  error ("shift must be an immediate");
+	  return const0_rtx;
+	}
+      /* The _mm_srli_si128/_mm_slli_si128 primitives are defined with
+	 a byte-shift count; inside of GCC, we prefer to specify the
+	 width of a shift in bits.  */
+      op1 = gen_rtx_CONST_INT (SImode, INTVAL (op1) * 8);
+      /* APPLE LOCAL end 591583 */
       if (! (*insn_data[icode].operand[1].predicate) (op0, mode1))
 	{
 	  op0 = copy_to_reg (op0);

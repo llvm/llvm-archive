@@ -7492,7 +7492,8 @@ objc_v2_build_ivar_ref (tree datum, tree component)
 #endif
      ))
     {
-      error ("Illegal reference to 'none-fragile' ivar");
+      /* APPLE LOCAL radar 6230800 */
+      error ("Illegal reference to non-fragile ivar");
       return error_mark_node;
     }
   /* APPLE LOCAL end radar 4954480 */
@@ -14259,6 +14260,20 @@ objc_build_encode_expr (tree type)
   return result;
 }
 
+/* APPLE LOCAL begin radar 6230701 */
+/* Find a 'self' declaration in this block.  If not found,
+   add a 'const' copy in current block. */
+static void
+access_block_ref_self_decl (tree *decl)
+{
+  if (lookup_name_in_block (DECL_NAME (*decl), decl))
+    *decl = lookup_name (DECL_NAME (*decl));
+  else
+    *decl = build_block_ref_decl (DECL_NAME (*decl), *decl);
+  gcc_assert (*decl);
+}
+/* APPLE LOCAL end radar 6230701 */
+
 static tree
 build_ivar_reference (tree id)
 {
@@ -14289,18 +14304,7 @@ build_ivar_reference (tree id)
   {
     /* Find a 'self' declaration in this block.  If not found,
        add a 'const' copy in current block. */
-    if (lookup_name_in_block (DECL_NAME (decl), &decl))
-      decl = lookup_name (DECL_NAME (decl));
-    else {
-#ifndef OBJCPLUS
-      if (building_block_byref_decl) {
-        warning (0, "ivar %qs may not be declared inside the 'byref' block - ignored",
-                 IDENTIFIER_POINTER (id));
-        return error_mark_node;
-      }
-#endif
-      decl = build_block_ref_decl (DECL_NAME (decl), decl);
-    }
+    access_block_ref_self_decl (&decl);
     gcc_assert (decl);
   }
   base = build_indirect_ref (decl, "->");
@@ -17506,9 +17510,11 @@ encode_type (tree type, int curtype, int format)
       switch (GET_MODE_BITSIZE (TYPE_MODE (type)))
 	{
 	case 32:  c = 'f'; break;
-	case 64:
+        /* APPLE LOCAL begin radar 4900615 */
+	case 64:  c = 'd'; break;
 	case 96:
-	case 128: c = 'd'; break;
+	case 128: c = 'D'; break;
+        /* APPLE LOCAL end radar 4900615 */
 	default: abort ();
 	}
       obstack_1grow (&util_obstack, c);
@@ -18211,7 +18217,16 @@ get_super_receiver (void)
 
       /* Set receiver to self.  */
       super_expr = objc_build_component_ref (UOBJC_SUPER_decl, self_id);
-      super_expr = build_modify_expr (super_expr, NOP_EXPR, self_decl);
+      /* APPLE LOCAL begin radar 6230701 */
+      if (cur_block)
+      {
+        tree local_self_decl = self_decl;
+        access_block_ref_self_decl (&local_self_decl);
+        super_expr = build_modify_expr (super_expr, NOP_EXPR, local_self_decl);
+      }
+      else
+        super_expr = build_modify_expr (super_expr, NOP_EXPR, self_decl);
+       /* APPLE LOCAL end radar 6230701 */
       super_expr_list = super_expr;
 
       /* Set class to begin searching.  */

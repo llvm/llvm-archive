@@ -1,3 +1,22 @@
+2008-09-23  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6230701
+	* objc-act.c (access_block_ref_self_decl): New
+	(build_ivar_reference): Call it, instead of inline code.
+	(get_super_receiver): Call access_block_ref_self_decl to get
+	copied-in version of 'self' when building 'super'
+	messaging.
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6230800
+	* objc-act.c (objc_v2_build_ivar_ref): Better text for diagnostic.
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 4900615
+	* objc-act.c (encode_type): Encode long double as 'D'.
+
 2008-09-11  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5839123

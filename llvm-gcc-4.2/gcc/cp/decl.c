@@ -5488,6 +5488,8 @@ block_finish_struct (tree t, tree fieldlist)
 /* new_block_byref_decl - This routine changes a 'typex x' declared variable into:
 
   struct __Block_byref_x {
+    // APPLE LOCAL radar 6244520
+    void *isa;			// NULL for everything except __weak pointers
     struct Block_byref_x *forwarding;
     int32_t flags;
     int32_t size;
@@ -5511,13 +5513,21 @@ new_block_byref_decl (tree decl)
            IDENTIFIER_POINTER (DECL_NAME (decl)));
 
   push_to_top_level ();
+    
   /* Block_byref_type = start_struct (RECORD_TYPE, get_identifier (string)); */
   Block_byref_type = block_start_struct (get_identifier (string));
+  
+  /* APPLE LOCAL begin radar 6244520 */
+  /* void *isa; */
+  field = build_decl (FIELD_DECL, get_identifier ("isa"), ptr_type_node);
+  fields = field;
+  /* APPLE LOCAL end radar 6244520 */  
 
   /* struct Block_byref_x *forwarding; */
   field = build_decl (FIELD_DECL, get_identifier ("forwarding"),
                       build_pointer_type (Block_byref_type));
-  fields = field;
+  /* APPLE LOCAL radar 6244520 */
+  chainon (fields, field);
 
   /* int32_t flags; */
   field = build_decl (FIELD_DECL, get_identifier ("flags"),
@@ -5559,16 +5569,16 @@ new_block_byref_decl (tree decl)
 
 /* init_byref_decl - This routine builds the initializer for the __Block_byref_x
    type in the form of:
-   { &x, 0, sizeof(struct __Block_byref_x), initializer-expr};
+   { NULL, &x, 0, sizeof(struct __Block_byref_x), initializer-expr};
 
    or:
-   { &x, 0, sizeof(struct __Block_byref_x)};
+   { NULL, &x, 0, sizeof(struct __Block_byref_x)};
    when INIT is NULL_TREE
 
    For __byref ObjC objects, it also adds "byref_keep" and "byref_destroy"
    Funtion pointers. So the most general initializers would be:
 
-   { &x, 0, sizeof(struct __Block_byref_x), &byref_keep, &byref_destroy,
+   { NULL, &x, 0, sizeof(struct __Block_byref_x), &byref_keep, &byref_destroy,
      &initializer-expr};
  */
 static tree
@@ -5584,8 +5594,14 @@ init_byref_decl (tree decl, tree init)
     flags = BLOCK_HAS_COPY_DISPOSE;
 
   fields = TYPE_FIELDS (block_byref_type);
+  /* APPLE LOCAL begin radar 6244520 */
+  initlist = tree_cons (fields, fold_convert (ptr_type_node, integer_zero_node), 
+                        0);
+  fields = TREE_CHAIN (fields);
+  
   initlist = tree_cons (fields,
-                        build_unary_op (ADDR_EXPR, decl, 0), 0);
+                        build_unary_op (ADDR_EXPR, decl, 0), initlist);
+   /* APPLE LOCAL end radar 6244520 */
   fields = TREE_CHAIN (fields);
 
   initlist = tree_cons (fields, build_int_cst (TREE_TYPE (fields), flags),

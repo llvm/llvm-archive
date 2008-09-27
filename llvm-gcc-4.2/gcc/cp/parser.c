@@ -21101,17 +21101,31 @@ cp_parser_block_literal_expr (cp_parser* parser)
   tree block;
   /* APPLE LOCAL radar 6185344 */
   tree declared_block_return_type = NULL_TREE;
+  /* APPLE LOCAL radar 6237713 */
+  tree attributes = NULL_TREE;
   /* APPLE LOCAL radar 6169580 */
   int context_is_nonstatic_method;
 
   cp_lexer_consume_token (parser->lexer); /* eat '^' */
 
+  /* APPLE LOCAL begin radar 6237713 */
+  if (cp_lexer_peek_token (parser->lexer)->keyword == RID_ATTRIBUTE)
+    attributes = cp_parser_attributes_opt (parser);
+  /* APPLE LOCAL end radar 6237713 */
+  
   /* APPLE LOCAL begin radar 6185344 */
   /* Parse user declared return type. */
   if (!cp_lexer_next_token_is (parser->lexer, CPP_OPEN_PAREN) &&
       !cp_lexer_next_token_is (parser->lexer, CPP_OPEN_BRACE))
   {
     tree type;
+    /* APPLE LOCAL begin radar 6237713 */
+    if (attributes)
+    {
+      warning (0, "attribute before block type is ignored");
+      attributes = NULL_TREE;
+    }
+    /* APPLE LOCAL end radar 6237713 */    
     parsing_block_return_type = 1;
     type = cp_parser_type_id (parser);
     parsing_block_return_type = 0;
@@ -21222,6 +21236,11 @@ cp_parser_block_literal_expr (cp_parser* parser)
   start_preparsed_function (cur_block->helper_func_decl,
 			    /*attrs*/NULL_TREE,
 			    SF_PRE_PARSED);
+  /* APPLE LOCAL begin radar 6237713 */
+  if (cp_lexer_peek_token (parser->lexer)->keyword == RID_ATTRIBUTE)
+    attributes = cp_parser_attributes_opt (parser);
+  decl_attributes (&cur_block->helper_func_decl, attributes, 0);
+  /* APPLE LOCAL end radar 6237713 */  
 
   /* Start parsing body or expression part of the block literal. */
   {

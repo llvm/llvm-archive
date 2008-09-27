@@ -4504,6 +4504,14 @@ handle_noreturn_attribute (tree *node, tree name, tree ARG_UNUSED (args),
       = build_pointer_type
 	(build_type_variant (TREE_TYPE (type),
 			     TYPE_READONLY (TREE_TYPE (type)), 1));
+  /* APPLE LOCAL begin radar 6237713 */
+  else if (TREE_CODE (type) == BLOCK_POINTER_TYPE
+	   && TREE_CODE (TREE_TYPE (type)) == FUNCTION_TYPE)
+    TREE_TYPE (*node)
+      = build_block_pointer_type
+	(build_type_variant (TREE_TYPE (type),
+			     TYPE_READONLY (TREE_TYPE (type)), 1));
+  /* APPLE LOCAL end radar 6237713 */
   else
     {
       warning (OPT_Wattributes, "%qE attribute ignored", name);

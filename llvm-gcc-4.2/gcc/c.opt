@@ -773,11 +773,11 @@ C C++ ObjC ObjC++ Var(flag_objc_new_property) Init(1)
 Enable Objective-C new property syntax and semantics
 ; APPLE LOCAL end objc new property - not for  merge to the FSF
 
-; APPLE LOCAL begin radar 5435299 
+; APPLE LOCAL begin radar 5435299 - radar 6173152 
 fnew-property-ivar-synthesis
-ObjC ObjC++ Var(flag_new_property_ivar_synthesis) Init(0)
+ObjC ObjC++ Var(flag_new_property_ivar_synthesis) Init(1)
 Enable new style of fragile-ivar synthesis for properties
-; APPLE LOCAL end radar 5435299 
+; APPLE LOCAL end radar 5435299 - radar 6173152 
 
 ; APPLE LOCAL begin radar 4810609
 fobjc-gc-only

@@ -1090,10 +1090,8 @@ darwin_cpp_builtins (cpp_reader *pfile)
     builtin_define ("__byref=__attribute__((__blocks__(byref)))");
     builtin_define ("__block=__attribute__((__blocks__(byref)))");
   }
-  else {
-    builtin_define ("__byref=");
-    builtin_define ("__block=");
-  }
+  /* APPLE LOCAL radar 6230656 */
+  /* code removed */
   /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 
   /* APPLE LOCAL begin C* warnings to easy porting to new abi */

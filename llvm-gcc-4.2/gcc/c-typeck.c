@@ -4053,23 +4053,8 @@ functiontypes_are_block_compatible (tree f1, tree f2)
     return false;
   arg1 = TYPE_ARG_TYPES (f1);
   arg2 = TYPE_ARG_TYPES (f2);
-  while (arg1 && arg2)
-    {
-      tree a1, a2;
-      a1 = TREE_VALUE (arg1);
-      a2 = TREE_VALUE (arg2);
-      if (TREE_CODE (a1) == BLOCK_POINTER_TYPE
-	  && TREE_CODE (a2) == BLOCK_POINTER_TYPE)
-	{
-	  a1 = TREE_TYPE (a1);
-	  a2 = TREE_TYPE (a2);
-	}
-      if (!types_are_block_compatible (a1, a2))
-	return false;
-      arg1 = TREE_CHAIN (arg1);
-      arg2 = TREE_CHAIN (arg2);
-    }
-  return !arg1 && !arg2;
+  /* APPLE LOCAL radar 6246965, 6196572 */
+  return (!arg1) || (type_lists_compatible_p (arg1, arg2) == 1);
 }
 
 static bool

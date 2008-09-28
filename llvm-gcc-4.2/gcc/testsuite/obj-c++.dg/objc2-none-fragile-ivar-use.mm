@@ -15,6 +15,6 @@
 
 int LKLayerFreeTransaction ()
 {
-	return __builtin_offsetof (LKLayerTransaction, next); /* { dg-error "Illegal reference to 'none-fragile' ivar" } */
+	return __builtin_offsetof (LKLayerTransaction, next); /* { dg-error "Illegal reference to non-fragile ivar" } */
 }
 @end

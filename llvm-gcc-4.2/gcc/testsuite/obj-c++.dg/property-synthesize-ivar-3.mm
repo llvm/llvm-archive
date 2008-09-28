@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5435299 */
 /* Multiple @synthesize of a single property is error. */
-/* { dg-options "-mmacosx-version-min=10.5 -fnew-property-ivar-synthesis" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-fnew-property-ivar-synthesis -fobjc-new-property" { target arm*-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #import <objc/Object.h>

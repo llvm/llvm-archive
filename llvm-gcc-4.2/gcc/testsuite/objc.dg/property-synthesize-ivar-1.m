@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5435299 */
 /* Test for synthesizing of one ivar for a synthesized property. */
-/* { dg-options "-fnew-property-ivar-synthesis -m64 -std=c99 -lobjc" { target i?86*-*-darwin* } } */
-/* { dg-options "-fnew-property-ivar-synthesis -fobjc-new-property -std=c99 -lobjc" { target arm*-*-darwin* } } */
+/* { dg-options "-m64 -std=c99 -lobjc" { target i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -std=c99 -lobjc" { target arm*-*-darwin* } } */
 /* { dg-do run { target i?86*-*-darwin* arm*-*-darwin* } } */
 
 #ifdef __OBJC2__

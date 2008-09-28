@@ -10,7 +10,7 @@ int main() {
 	PFR = II;
 
 
-	int (^IFP) () = PFR;	/* { dg-error "incompatible block pointer types initializing" } */
+	int (^IFP) () = PFR;	/* This is now ok in c (radar 6196572) */
 
 
 	const int (^CIC) () = IFP;
@@ -50,5 +50,14 @@ int blah() {
 
 	char ch = PCP(1.0, 2.0, 'a');
 	return PCP(1.0, 2.0);	/* { dg-error "too few arguments to block" } */
+}
+
+void foo() {
+
+  /*  compare with: int (*xx1)(char *s);
+      int (*xx2)(const char *s) = xx1; */
+  /* APPLE LOCAL radar 6246965 */
+  int (^xx)(const char *s) = ^(char *s) { return 1; };  /* { dg-error "incompatible block pointer types initializing" } */
+
 }
 

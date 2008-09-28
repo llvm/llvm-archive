@@ -44,8 +44,6 @@ struct Block_basic {
 
 
     void (^myBlock)(void) = ^{
-        | /* { dg-warning "has been deprecated in blocks" } */
-	 aSlot|		/* { dg-warning "ivar" } */
         printf("[aSlot retainCount] == %d\n", (int)[aSlot retainCount]);
     };
     struct Block_basic *basic = (struct Block_basic *)(void *)myBlock;

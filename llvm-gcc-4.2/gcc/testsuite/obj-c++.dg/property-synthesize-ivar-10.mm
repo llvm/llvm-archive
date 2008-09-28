@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 6209554 */
 /* Better messages for bad property declarations. */
-/* { dg-options "-fnew-property-ivar-synthesis -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-fnew-property-ivar-synthesis -fobjc-new-property" { target arm*-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface I

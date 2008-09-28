@@ -24,6 +24,8 @@
 
 @interface Test : NSObject <Test> {
   int ivar;
+  int ivar1;
+  int ivar2;
 }
 @property int required;
 @property int optional_to_be_defined;
@@ -33,8 +35,8 @@
 
 @implementation Test
 @synthesize required = ivar;
-@synthesize required1 = ivar;
-@synthesize optional_to_be_defined = ivar;
+@synthesize required1 = ivar1;
+@synthesize optional_to_be_defined = ivar2;
 - (int) optional_preexisting_setter_getter { return ivar; }
 - (void) setOptional_preexisting_setter_getter:(int)value
 	   {
@@ -47,13 +49,13 @@ int main ()
 {
 	Test *x = [[Test alloc] init];
 	/* 1. Test of a requred property */
-	x.required = 100;
+	x.required1 = 100;
   	if (x.required1 != 100)
 	  abort ();
 
 	/* 2. Test of a synthesize optional property */
   	x.optional_to_be_defined = 123;
-	if (x.required1 != 123)
+	if (x.optional_to_be_defined != 123)
 	  abort ();
 
 	/* 3. Test of optional property with pre-sxisting defined setter/getter */

@@ -11,6 +11,7 @@
 
 @implementation MyStupidClass
 @synthesize foo = _foo;  /* { dg-warning "ivar name \'_foo\' specified on the synthesized property" } */
+			 /* { dg-error "synthesized property 'foo' must either be named the same as a compatible" "" { target *-*-* } 13 } */
 
 - (id)foo {
    return _bar;

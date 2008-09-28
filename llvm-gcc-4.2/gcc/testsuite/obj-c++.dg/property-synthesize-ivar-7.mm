@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5435299 */
 /* Test that synthesize ivar visibility is @private */
-/* { dg-options "-fnew-property-ivar-synthesis -mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-fnew-property-ivar-synthesis -fobjc-new-property" { target arm*-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 #ifdef __OBJC2__

@@ -13,6 +13,7 @@ struct MyStruct
 @interface MyClass
 {
         MyStruct foo;
+        MyStruct foo1;
 }
 
 @property (assign, readwrite) const MyStruct& foo;
@@ -23,6 +24,6 @@ struct MyStruct
 @implementation MyClass
 
 @synthesize Myfoo = foo;
-@synthesize foo;
+@synthesize foo = foo1;
 
 @end

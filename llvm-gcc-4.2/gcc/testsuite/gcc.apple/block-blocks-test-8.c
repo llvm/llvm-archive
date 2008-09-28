@@ -59,7 +59,7 @@ struct Block_basic {
     //long params[0];  // generic space for const & byref hidden params, return value, variable on needs of course
 };
 struct Block_byref {
-    //long reserved;
+    void* isa;
     struct Block_byref *forwarding;
     int flags;//refcount;
     int size;

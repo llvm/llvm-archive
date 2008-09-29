@@ -18178,17 +18178,6 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       mode1 = insn_data[icode].operand[1].mode;
       mode2 = insn_data[icode].operand[2].mode;
 
-      /* APPLE LOCAL begin 591583 */
-      if (! CONST_INT_P (op1))
-	{
-	  error ("shift must be an immediate");
-	  return const0_rtx;
-	}
-      /* The _mm_srli_si128/_mm_slli_si128 primitives are defined with
-	 a byte-shift count; inside of GCC, we prefer to specify the
-	 width of a shift in bits.  */
-      op1 = gen_rtx_CONST_INT (SImode, INTVAL (op1) * 8);
-      /* APPLE LOCAL end 591583 */
       if (! (*insn_data[icode].operand[1].predicate) (op0, mode1))
 	{
 	  op0 = copy_to_reg (op0);

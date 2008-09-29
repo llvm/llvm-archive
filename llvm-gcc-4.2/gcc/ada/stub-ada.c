@@ -22,3 +22,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 /* Needed when building with GNAT GPL 2006.  */
 char system__restrictions__run_time_restrictions[1024] __attribute__ ((weak));
+
+/* Needed when building with GNAT GPL 2007 on x86-64.  */
+int __gl_leap_seconds_support __attribute__ ((weak));

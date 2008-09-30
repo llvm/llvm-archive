@@ -70,6 +70,7 @@ extern "C" {
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
+#include "c-common.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -164,6 +165,9 @@ void llvm_initialize_backend(void) {
     std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
     ArgStrings.push_back(Arg);
   }
+
+  if (flag_no_builtin)
+    ArgStrings.push_back(std::string("--no-builtin"));
 
   if (llvm_optns) {
     std::string Opts = llvm_optns;

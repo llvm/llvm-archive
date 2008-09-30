@@ -2674,19 +2674,17 @@ darwin_cfstring_type_node (tree type_node)
 
 /* LLVM LOCAL begin radar 6230142 */
 unsigned darwin_llvm_override_target_version(const char *triple, char **new_triple) {
-  int len = 0, version = 0;
+  int len = 0, pad = 0, version = 0;
 
   if (!darwin_macosx_version_min)
     return 0;
   
-  /* Triple string is expected to look something like 'i386-apple-darwin?' or
-     'i386-apple-darwin9.5.0'  */
-  len = strlen (triple);
-  if (len < 7)
+  /* Triple string is expected to look something like 'i386-*-darwin?' or
+     'i386-*-darwin9.5.0'  */
+  char *substr = strstr(triple, "darwin");
+  if (!substr)
     return 0;
-  if (strncmp (&triple[len - 7], "darwin", 6) != 0 ||
-      (len > 11 && strncmp (&triple[len - 11], "darwin", 6) != 0))
-    return 0;
+  len = substr + 6 - triple;
 
   /* llvm-gcc doesn't support pre-10.0 systems. */
   version = strverscmp (darwin_macosx_version_min, "10.0");
@@ -2698,16 +2696,17 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
   
   /* Darwin version number will be 2 digits for 10.6 and up.  */
   if (version >= 10)
-    ++len;
-  *new_triple = ggc_alloc (len+1);
-  strcpy (*new_triple, triple);
+    pad = 1;
+  *new_triple = ggc_alloc (len+pad+1);
+  strncpy (*new_triple, triple, len);
   if (version >= 10)
     {
-      (*new_triple)[len-2] = '1';
+      (*new_triple)[len] = '1';
       version -= 10;
+      ++len;
     }
-  (*new_triple)[len-1] = '0' + version;
-  (*new_triple)[len] = '\0';
+  (*new_triple)[len] = '0' + version;
+  (*new_triple)[len+1] = '\0';
   
   return 1;
 }

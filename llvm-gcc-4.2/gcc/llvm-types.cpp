@@ -1129,17 +1129,17 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   // Compute attributes for return type (and function attributes).
   SmallVector<AttributeWithIndex, 8> Attrs;
-  Attributes RAttributes = Attribute::None;
+  Attributes FnAttributes = Attribute::None;
 
   int flags = flags_from_decl_or_type(decl ? decl : type);
 
   // Check for 'noreturn' function attribute.
   if (flags & ECF_NORETURN)
-    RAttributes |= Attribute::NoReturn;
+    FnAttributes |= Attribute::NoReturn;
 
   // Check for 'nounwind' function attribute.
   if (flags & ECF_NOTHROW)
-    RAttributes |= Attribute::NoUnwind;
+    FnAttributes |= Attribute::NoUnwind;
 
   // Check for 'readnone' function attribute.
   // Both PURE and CONST will be set if the user applied
@@ -1150,25 +1150,26 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // accepts it).  But llvm IR does not allow both, so
   // set only ReadNone.
   if (flags & ECF_CONST)
-    RAttributes |= Attribute::ReadNone;
+    FnAttributes |= Attribute::ReadNone;
 
   // Check for 'readonly' function attribute.
   if (flags & ECF_PURE && !(flags & ECF_CONST))
-    RAttributes |= Attribute::ReadOnly;
+    FnAttributes |= Attribute::ReadOnly;
 
   // Since they write the return value through a pointer,
   // 'sret' functions cannot be 'readnone' or 'readonly'.
   if (ABIConverter.isShadowReturn())
-    RAttributes &= ~(Attribute::ReadNone|Attribute::ReadOnly);
+    FnAttributes &= ~(Attribute::ReadNone|Attribute::ReadOnly);
 
   // Demote 'readnone' nested functions to 'readonly' since
   // they may need to read through the static chain.
-  if (static_chain && (RAttributes & Attribute::ReadNone)) {
-    RAttributes &= ~Attribute::ReadNone;
-    RAttributes |= Attribute::ReadOnly;
+  if (static_chain && (FnAttributes & Attribute::ReadNone)) {
+    FnAttributes &= ~Attribute::ReadNone;
+    FnAttributes |= Attribute::ReadOnly;
   }
 
   // Compute whether the result needs to be zext or sext'd.
+  Attributes RAttributes = Attribute::None;
   RAttributes |= HandleArgumentExtension(TREE_TYPE(type));
 
   // Allow the target to change the attributes.
@@ -1277,6 +1278,9 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // If the argument list ends with a void type node, it isn't vararg.
   isVarArg = (Args == 0);
   assert(RetTy && "Return type not specified!");
+
+  if (FnAttributes != Attribute::None)
+    Attrs.push_back(AttributeWithIndex::get(~0, FnAttributes));
 
   // Finally, make the function type and result attributes.
   PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());

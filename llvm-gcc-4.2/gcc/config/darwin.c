@@ -2675,13 +2675,14 @@ darwin_cfstring_type_node (tree type_node)
 /* LLVM LOCAL begin radar 6230142 */
 unsigned darwin_llvm_override_target_version(const char *triple, char **new_triple) {
   int len = 0, pad = 0, version = 0;
+  char *substr;
 
   if (!darwin_macosx_version_min)
     return 0;
   
   /* Triple string is expected to look something like 'i386-*-darwin?' or
      'i386-*-darwin9.5.0'  */
-  char *substr = strstr(triple, "darwin");
+  substr = strstr(triple, "darwin");
   if (!substr)
     return 0;
   len = substr + 6 - triple;

@@ -2674,7 +2674,7 @@ darwin_cfstring_type_node (tree type_node)
 
 /* LLVM LOCAL begin radar 6230142 */
 unsigned darwin_llvm_override_target_version(const char *triple, char **new_triple) {
-  int len = 0, pad = 0, version = 0;
+  int len = 0, pad1 = 0, pad2 = 0, version = 0;
   char *substr;
 
   if (!darwin_macosx_version_min)
@@ -2694,11 +2694,21 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
 
   /* 10.0 is darwin4. */
   version += 4;
-  
+
   /* Darwin version number will be 2 digits for 10.6 and up.  */
   if (version >= 10)
-    pad = 1;
-  *new_triple = ggc_alloc (len+pad+1);
+    pad1 = 1;
+
+  /* If darwin_macosx_version_min is something like 10.4.9, we need to append
+     the .9 to the new triple. */
+  substr = strchr(darwin_macosx_version_min, '.');
+  if (!substr)
+    return 0;
+  substr = strchr(substr+1, '.');
+  if (substr)
+    pad2 = strlen(substr);
+  
+  *new_triple = ggc_alloc (len+pad1+pad2+1);
   strncpy (*new_triple, triple, len);
   if (version >= 10)
     {
@@ -2707,6 +2717,13 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
       ++len;
     }
   (*new_triple)[len] = '0' + version;
+  if (substr)
+    {
+      int i;
+      for (i = 0; i < pad2; ++i)
+        (*new_triple)[len+1+i] = substr[i];
+      len += pad2;
+    }
   (*new_triple)[len+1] = '\0';
   
   return 1;

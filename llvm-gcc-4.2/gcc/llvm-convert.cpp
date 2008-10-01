@@ -67,7 +67,6 @@ extern "C" {
 #include "libfuncs.h"
 #include "tree-flow.h"
 #include "tree-gimple.h"
-#include "c-common.h"
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
@@ -1471,15 +1470,9 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::Int32Ty, Align)
   };
 
-  if (!flag_no_builtin && !builtin_function_disabled_p("memcpy")) {
-    Intrinsic::ID IID = 
-      (IntPtr == Type::Int32Ty) ? Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops + 4);
-  } else {
-    Builder.CreateCall(TheModule->getOrInsertFunction("memcpy", SBP, SBP, SBP,
-                                                      IntPtr, (Type*)0),
-                       Ops, Ops + 3);
-  }
+  Intrinsic::ID IID = 
+    (IntPtr == Type::Int32Ty) ? Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
@@ -1493,16 +1486,9 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::Int32Ty, Align)
   };
 
-  if (!flag_no_builtin && !builtin_function_disabled_p("memmove")) {
-    Intrinsic::ID IID = 
-      (IntPtr == Type::Int32Ty) ?
-        Intrinsic::memmove_i32 : Intrinsic::memmove_i64;
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops + 4);
-  } else {
-    Builder.CreateCall(TheModule->getOrInsertFunction("memmove", SBP, SBP, SBP,
-                                                      IntPtr, (Type*)0),
-                       Ops, Ops + 3);
-  }
+  Intrinsic::ID IID = 
+    (IntPtr == Type::Int32Ty) ? Intrinsic::memmove_i32 : Intrinsic::memmove_i64;
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
@@ -1516,17 +1502,12 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
     ConstantInt::get(Type::Int32Ty, Align)
   };
 
-  if (!flag_no_builtin && !builtin_function_disabled_p("memset")) {
-    Intrinsic::ID IID = 
-      (IntPtr == Type::Int32Ty) ? Intrinsic::memset_i32 : Intrinsic::memset_i64;
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops + 4);
-  } else {
-    Builder.CreateCall(TheModule->getOrInsertFunction("memset", SBP, SBP,
-                                                      Type::Int8Ty, IntPtr,
-                                                      (Type*)0),
-                       Ops, Ops + 3);
-  }
+  Intrinsic::ID IID = 
+    (IntPtr == Type::Int32Ty) ? Intrinsic::memset_i32 : Intrinsic::memset_i64;
+  
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
 }
+
 
 // Emits code to do something for a type attribute
 void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
@@ -5058,88 +5039,24 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 }
 
 bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
-                                    Intrinsic::ID Id) {
+                                       Intrinsic::ID Id) {
   // The intrinsic might be overloaded in which case the argument is of
   // varying type. Make sure that we specify the actual type for "iAny" 
   // by passing it as the 3rd and 4th parameters. This isn't needed for
   // most intrinsics, but is needed for ctpop, cttz, ctlz.
   const Type *Ty = InVal->getType();
-  const char *Name = 0;
-
-#define CASE(ID, NAME)                                          \
-  case Intrinsic::ID:                                           \
-    if (flag_no_builtin || builtin_function_disabled_p(NAME))   \
-      Name = NAME;                                              \
-    break
-
-  if (Ty == Type::DoubleTy) {
-    switch (Id) {
-    default: break;
-    CASE(log,   "log");
-    CASE(log2,  "log2");
-    CASE(log10, "log10");
-    CASE(exp,   "exp");
-    CASE(exp2,  "exp2");
-    }
-  } else if (Ty == Type::FloatTy) {
-    switch (Id) {
-    default: break;
-    CASE(log,   "logf");
-    CASE(log2,  "log2f");
-    CASE(log10, "log10f");
-    CASE(exp,   "expf");
-    CASE(exp2,  "exp2f");
-    }
-  } else {
-    switch (Id) {
-    default: break;
-    CASE(log,   "logl");
-    CASE(log2,  "log2l");
-    CASE(log10, "log10l");
-    CASE(exp,   "expl");
-    CASE(exp2,  "exp2l");
-    }
-  }
-
-#undef CASE
-
-  if (!Name)
-    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id,
-                                                          &Ty, 1),
-                                InVal);
-  else
-    Result = Builder.CreateCall(TheModule->getOrInsertFunction(Name, Ty, Ty,
-                                                               NULL),
-                                InVal);
-
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
+                              InVal);
   return true;
 }
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
   const Type* Ty = Amt->getType();
-  const char *Name = 0;
-
-  if (Ty == Type::DoubleTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("sqrt"))
-      Name = "sqrt";
-  } else if (Ty == Type::FloatTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("sqrtf"))
-      Name = "sqrtf";
-  } else {
-    if (flag_no_builtin || builtin_function_disabled_p("sqrtl"))
-      Name = "sqrtl";
-  }
-
-  if (!Name)
-    return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                        Intrinsic::sqrt,
-                                                        &Ty, 1),
-                              Amt);
-  else
-    return Builder.CreateCall(TheModule->getOrInsertFunction(Name, Ty, Ty,
-                                                             NULL),
-                              Amt);
+  
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::sqrt, &Ty, 1),
+                            Amt);
 }
 
 Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
@@ -5155,30 +5072,9 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   SmallVector<Value *,2> Args;
   Args.push_back(Val);
   Args.push_back(Pow);
-
-  const char *Name = 0;
-
-  if (Ty == Type::DoubleTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("powi"))
-      Name = "powi";
-  } else if (Ty == Type::FloatTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("powif"))
-      Name = "powif";
-  } else {
-    if (flag_no_builtin || builtin_function_disabled_p("powil"))
-      Name = "powil";
-  }
-
-  if (!Name)
-    return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                        Intrinsic::powi,
-                                                        &Ty, 1),
-                              Args.begin(), Args.end());
-  else
-    return Builder.CreateCall(TheModule->getOrInsertFunction(Name, Ty, Ty,
-                                                             Type::Int32Ty,
-                                                             NULL),
-                              Args.begin(), Args.end());
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::powi, &Ty, 1),
+                            Args.begin(), Args.end());
 }
 
 Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
@@ -5193,29 +5089,9 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
   SmallVector<Value *,2> Args;
   Args.push_back(Val);
   Args.push_back(Pow);
-
-  const char *Name = 0;
-
-  if (Ty == Type::DoubleTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("pow"))
-      Name = "pow";
-  } else if (Ty == Type::FloatTy) {
-    if (flag_no_builtin || builtin_function_disabled_p("powf"))
-      Name = "powf";
-  } else {
-    if (flag_no_builtin || builtin_function_disabled_p("powl"))
-      Name = "powl";
-  }
-
-  if (!Name)
-    return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                        Intrinsic::pow, &Ty, 1),
-                              Args.begin(), Args.end());
-  else
-    return Builder.CreateCall(TheModule->getOrInsertFunction(Name, Ty, Ty,
-                                                             Type::Int32Ty,
-                                                             NULL),
-                              Args.begin(), Args.end());
+  return Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
+                                                      Intrinsic::pow, &Ty, 1),
+                            Args.begin(), Args.end());
 }
 
 bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {

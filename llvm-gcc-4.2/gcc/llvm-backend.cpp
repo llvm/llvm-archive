@@ -170,10 +170,8 @@ void llvm_initialize_backend(void) {
     for (std::string Opt = getToken(Opts); !Opt.empty(); Opt = getToken(Opts))
       ArgStrings.push_back(Opt);
   }
-
   for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
     Args.push_back(ArgStrings[i].c_str());
-
   Args.push_back(0);  // Null terminator.
   
   int pseudo_argc = Args.size()-1;

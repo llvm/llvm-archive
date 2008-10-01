@@ -70,7 +70,6 @@ extern "C" {
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
-#include "c-common.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -166,16 +165,15 @@ void llvm_initialize_backend(void) {
     ArgStrings.push_back(Arg);
   }
 
-  if (flag_no_builtin)
-    ArgStrings.push_back(std::string("--no-builtin"));
-
   if (llvm_optns) {
     std::string Opts = llvm_optns;
     for (std::string Opt = getToken(Opts); !Opt.empty(); Opt = getToken(Opts))
       ArgStrings.push_back(Opt);
   }
+
   for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
     Args.push_back(ArgStrings[i].c_str());
+
   Args.push_back(0);  // Null terminator.
   
   int pseudo_argc = Args.size()-1;

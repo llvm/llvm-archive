@@ -1268,12 +1268,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   // write to struct arguments passed by value, but in LLVM this becomes a
   // write through the byval pointer argument, which LLVM does not allow for
   // readonly/readnone functions.
-  if (HasByVal && Attrs[0].Index == 0) {
-    Attributes &RAttrs = Attrs[0].Attrs;
-    RAttrs &= ~(Attribute::ReadNone | Attribute::ReadOnly);
-    if (RAttrs == Attribute::None)
-      Attrs.erase(Attrs.begin());
-  }
+  if (HasByVal)
+    FnAttributes &= ~(Attribute::ReadNone | Attribute::ReadOnly);
 
   // If the argument list ends with a void type node, it isn't vararg.
   isVarArg = (Args == 0);

@@ -246,7 +246,6 @@ void llvm_initialize_backend(void) {
 void performLateBackendInitialization(void) {
   // The Ada front-end sets flag_exceptions only after processing the file.
   ExceptionHandling = flag_exceptions;
-  OptimizeForSize = optimize_size;
 }
 
 void llvm_lang_dependent_init(const char *Name) {

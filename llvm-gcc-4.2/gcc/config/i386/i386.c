@@ -16858,11 +16858,15 @@ ix86_init_mmx_sse_builtins (void)
   def_builtin (MASK_SSE2, "__builtin_ia32_psrad128", v4si_ftype_v4si_v4si, IX86_BUILTIN_PSRAD128);
 
   def_builtin (MASK_SSE2, "__builtin_ia32_pslldqi128", v2di_ftype_v2di_int, IX86_BUILTIN_PSLLDQI128);
+  /* APPLE LOCAL 5919583 */
+  def_builtin (MASK_SSE2, "__builtin_ia32_pslldqi128_byteshift", v2di_ftype_v2di_int, IX86_BUILTIN_PSLLDQI128_BYTESHIFT);
   def_builtin (MASK_SSE2, "__builtin_ia32_psllwi128", v8hi_ftype_v8hi_int, IX86_BUILTIN_PSLLWI128);
   def_builtin (MASK_SSE2, "__builtin_ia32_pslldi128", v4si_ftype_v4si_int, IX86_BUILTIN_PSLLDI128);
   def_builtin (MASK_SSE2, "__builtin_ia32_psllqi128", v2di_ftype_v2di_int, IX86_BUILTIN_PSLLQI128);
 
   def_builtin (MASK_SSE2, "__builtin_ia32_psrldqi128", v2di_ftype_v2di_int, IX86_BUILTIN_PSRLDQI128);
+  /* APPLE LOCAL 5919583 */
+  def_builtin (MASK_SSE2, "__builtin_ia32_psrldqi128_byteshift", v2di_ftype_v2di_int, IX86_BUILTIN_PSRLDQI128_BYTESHIFT);
   def_builtin (MASK_SSE2, "__builtin_ia32_psrlwi128", v8hi_ftype_v8hi_int, IX86_BUILTIN_PSRLWI128);
   def_builtin (MASK_SSE2, "__builtin_ia32_psrldi128", v4si_ftype_v4si_int, IX86_BUILTIN_PSRLDI128);
   def_builtin (MASK_SSE2, "__builtin_ia32_psrlqi128", v2di_ftype_v2di_int, IX86_BUILTIN_PSRLQI128);
@@ -18166,10 +18170,16 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       emit_insn (pat);
       return target;
 
+      /* APPLE LOCAL begin 5919583 */
     case IX86_BUILTIN_PSLLDQI128:
     case IX86_BUILTIN_PSRLDQI128:
-      icode = (fcode == IX86_BUILTIN_PSLLDQI128 ? CODE_FOR_sse2_ashlti3
+    case IX86_BUILTIN_PSLLDQI128_BYTESHIFT:
+    case IX86_BUILTIN_PSRLDQI128_BYTESHIFT:
+      icode = ((fcode == IX86_BUILTIN_PSLLDQI128
+		|| fcode == IX86_BUILTIN_PSLLDQI128_BYTESHIFT)
+	       ? CODE_FOR_sse2_ashlti3
 	       : CODE_FOR_sse2_lshrti3);
+      /* APPLE LOCAL end 5919583 */
       arg0 = TREE_VALUE (arglist);
       arg1 = TREE_VALUE (TREE_CHAIN (arglist));
       op0 = expand_normal (arg0);
@@ -18178,6 +18188,23 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       mode1 = insn_data[icode].operand[1].mode;
       mode2 = insn_data[icode].operand[2].mode;
 
+      /* APPLE LOCAL begin 591583 */
+      if (! CONST_INT_P (op1))
+	{
+	  error ("shift must be an immediate");
+	  return const0_rtx;
+	}
+      /* The _mm_srli_si128/_mm_slli_si128 primitives are defined with
+	 a byte-shift count; inside of GCC, we prefer to specify the
+	 width of a shift in bits.  The original non-BYTESHIFT
+	 primitives were problematic due to the "*8" in their macro
+	 bodies; we have moved the "*8" here to resolve this.  The
+	 original builtins are still supported because many developers
+	 rely upon them.  */
+      if (fcode == IX86_BUILTIN_PSLLDQI128_BYTESHIFT
+	  || fcode == IX86_BUILTIN_PSRLDQI128_BYTESHIFT)
+	op1 = gen_rtx_CONST_INT (SImode, INTVAL (op1) * 8);
+      /* APPLE LOCAL end 591583 */
       if (! (*insn_data[icode].operand[1].predicate) (op0, mode1))
 	{
 	  op0 = copy_to_reg (op0);

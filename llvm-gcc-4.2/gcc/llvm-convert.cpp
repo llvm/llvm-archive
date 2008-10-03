@@ -2361,7 +2361,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   // parameter for the chain.
   Callee = BitCastToType(Callee, PointerType::getUnqual(Ty));
 
-  //EmitCall(exp, DestLoc);
+  // EmitCall(exp, DestLoc);
   Value *Result = EmitCallOf(Callee, exp, DestLoc, PAL);
 
   // If the function has the volatile bit set, then it is a "noreturn" function.
@@ -2694,8 +2694,19 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
 
     Attributes Attrs = Attribute::None;
-    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
-                                &Attrs);
+    // See EmitEXC_PTR_EXPR and EmitFILTER_EXPR. Rather than handle the
+    // arguments themselves, process eh_value and eh_select.
+    if (TREE_CODE(TREE_VALUE(arg)) == EXC_PTR_EXPR) {
+      const Type *Ty = ExceptionValue->getType();
+      Ty = cast<PointerType>(Ty)->getElementType();
+      Client.HandleScalarArgument(Ty, 0);
+    } else if (TREE_CODE(TREE_VALUE(arg)) == FILTER_EXPR) {
+      const Type *Ty = ExceptionSelectorValue->getType();
+      Ty = cast<PointerType>(Ty)->getElementType();
+      Client.HandleScalarArgument(Ty, 0);
+    } else
+      ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
+                                  &Attrs);
     if (Attrs != Attribute::None)
       PAL = PAL.addAttr(CallOperands.size(), Attrs);
 

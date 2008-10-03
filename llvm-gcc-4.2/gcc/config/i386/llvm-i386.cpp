@@ -1094,6 +1094,11 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
   if (NumClasses == 1 && Class[0] == X86_64_INTEGER_CLASS)
      assert(0 && "This type does not need multiple return registers!");
 
+  // classify_argument uses a single X86_64_NO_CLASS as a special case for
+  // empty structs. Recognize it and don't add any return values in that
+  // case.
+  if (NumClasses == 1 && Class[0] == X86_64_NO_CLASS)
+     return;
 
   for (int i = 0; i < NumClasses; ++i) {
     switch (Class[i]) {

@@ -1817,9 +1817,18 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   // Emit the conditional expression.
   Value *Cond = Emit(COND_EXPR_COND(exp), 0);
   // If its not already a bool, insert a comparison against zero to make it so.
-  if (Cond->getType() != Type::Int1Ty)
-    Cond = Builder.CreateICmpNE(Cond, Constant::getNullValue(Cond->getType()),
-                                "toBool");
+  if (Cond->getType() != Type::Int1Ty) {
+    // Handle the common case where a boolean expression was evaluated as our
+    // operand, but was then zero extended to a larger integer type.  At -O0, we
+    // don't really want to emit "a = icmp...; b = zext a to i8; c = icmp b, 0"
+    if (ZExtInst *CondI = dyn_cast<ZExtInst>(Cond))
+      if (CondI->getOperand(0)->getType() == Type::Int1Ty)
+        Cond = CondI->getOperand(0);
+    
+    // Otherwise, emit a simple comparison.
+    if (Cond->getType() != Type::Int1Ty)
+      Cond = Builder.CreateIsNotNull(Cond, "toBool");
+  }
 
   tree Then = COND_EXPR_THEN(exp);
   tree Else = COND_EXPR_ELSE(exp);

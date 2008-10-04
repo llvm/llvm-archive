@@ -1814,22 +1814,65 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
 }
 
 Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
-  // Emit the conditional expression.
-  Value *Cond = Emit(COND_EXPR_COND(exp), 0);
-  // If its not already a bool, insert a comparison against zero to make it so.
-  if (Cond->getType() != Type::Int1Ty) {
-    // Handle the common case where a boolean expression was evaluated as our
-    // operand, but was then zero extended to a larger integer type.  At -O0, we
-    // don't really want to emit "a = icmp...; b = zext a to i8; c = icmp b, 0"
-    if (ZExtInst *CondI = dyn_cast<ZExtInst>(Cond))
-      if (CondI->getOperand(0)->getType() == Type::Int1Ty)
-        Cond = CondI->getOperand(0);
-    
-    // Otherwise, emit a simple comparison.
-    if (Cond->getType() != Type::Int1Ty)
-      Cond = Builder.CreateIsNotNull(Cond, "toBool");
+  tree exp_cond = COND_EXPR_COND(exp);
+  
+  // Emit the conditional expression.  Special case comparisons since they are
+  // very common and we want to avoid an extension to 'int' of the intermediate
+  // result.
+  unsigned UIPred = 0, SIPred = 0, FPPred = ~0;
+  Value *Cond;
+  switch (TREE_CODE(exp_cond)) {
+  default: break;
+  case LT_EXPR: 
+    UIPred = ICmpInst::ICMP_ULT;
+    SIPred = ICmpInst::ICMP_SLT;
+    FPPred = FCmpInst::FCMP_OLT;
+    break;
+  case LE_EXPR:
+    UIPred = ICmpInst::ICMP_ULE;
+    SIPred = ICmpInst::ICMP_SLE;
+    FPPred = FCmpInst::FCMP_OLE;
+    break;
+  case GT_EXPR:
+    UIPred = ICmpInst::ICMP_UGT;
+    SIPred = ICmpInst::ICMP_SGT;
+    FPPred = FCmpInst::FCMP_OGT;
+    break;
+  case GE_EXPR:
+    UIPred = ICmpInst::ICMP_UGE;
+    SIPred = ICmpInst::ICMP_SGE;
+    FPPred = FCmpInst::FCMP_OGE;
+    break;
+  case EQ_EXPR:
+    UIPred = SIPred = ICmpInst::ICMP_EQ;
+    FPPred = FCmpInst::FCMP_OEQ;
+    break;
+  case NE_EXPR:
+    UIPred = SIPred = ICmpInst::ICMP_NE;
+    FPPred = FCmpInst::FCMP_UNE;
+    break;
+  case UNORDERED_EXPR: FPPred = FCmpInst::FCMP_UNO; break;
+  case ORDERED_EXPR:   FPPred = FCmpInst::FCMP_ORD; break;
+  case UNLT_EXPR:      FPPred = FCmpInst::FCMP_ULT; break;
+  case UNLE_EXPR:      FPPred = FCmpInst::FCMP_ULE; break;
+  case UNGT_EXPR:      FPPred = FCmpInst::FCMP_UGT; break;
+  case UNGE_EXPR:      FPPred = FCmpInst::FCMP_UGE; break;
+  case UNEQ_EXPR:      FPPred = FCmpInst::FCMP_UEQ; break;
+  case LTGT_EXPR:      FPPred = FCmpInst::FCMP_ONE; break;
   }
 
+  // If the operand wasn't a compare, emit it fully generally.  If it was, emit
+  // it with EmitCompare to get the result as an i1.
+  if (FPPred == ~0U) {
+    Cond = Emit(exp_cond, 0);
+    // Ccomparison against zero to convert the result to i1.
+    if (Cond->getType() != Type::Int1Ty)
+      Cond = Builder.CreateIsNotNull(Cond, "toBool");
+  } else {
+    Cond = EmitCompare(exp_cond, UIPred, SIPred, FPPred, Type::Int1Ty);
+    assert(Cond->getType() == Type::Int1Ty);
+  }
+  
   tree Then = COND_EXPR_THEN(exp);
   tree Else = COND_EXPR_ELSE(exp);
   assert(TREE_CODE(Then) == GOTO_EXPR && TREE_CODE(Else) == GOTO_EXPR
@@ -3269,42 +3312,52 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
 /// comparison to use.  isUnord is true if this is a floating point comparison
 /// that should also be true if either operand is a NaN.  Note that Opc can be
 /// set to zero for special cases.
+///
+/// If DestTy is specified, make sure to return the result with the specified
+/// integer type.  Otherwise, return the expression as whatever TREE_TYPE(exp)
+/// corresponds to.
 Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc, 
-                               unsigned FPPred) {
+                               unsigned FPPred, const Type *DestTy) {
   // Get the type of the operands
   tree Op0Ty = TREE_TYPE(TREE_OPERAND(exp,0));
 
+  Value *Result;
+
   // Deal with complex types
-  if (TREE_CODE(Op0Ty) == COMPLEX_TYPE)
-    return EmitComplexBinOp(exp, 0);  // Complex ==/!=
+  if (TREE_CODE(Op0Ty) == COMPLEX_TYPE) {
+    Result = EmitComplexBinOp(exp, 0);  // Complex ==/!=
+  } else {
+    // Get the compare operands, in the right type. Comparison of struct is not
+    // allowed, so this is safe as we already handled complex (struct) type.
+    Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+    Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+    bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
+    bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
+    RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
+    assert(LHS->getType() == RHS->getType() && "Binop type equality failure!");
 
-  // Get the compare operands, in the right type. Comparison of struct is not
-  // allowed, so this is safe as we already handled complex (struct) type.
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
-  assert(LHS->getType() == RHS->getType() && "Binop type equality failure!");
+    if (FLOAT_TYPE_P(Op0Ty)) {
+      // Handle floating point comparisons, if we get here.
+      Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
+    } else {
+      // Handle the integer/pointer cases.  Determine which predicate to use based
+      // on signedness.
+      ICmpInst::Predicate pred = 
+        ICmpInst::Predicate(TYPE_UNSIGNED(Op0Ty) ? UIOpc : SIOpc);
 
-  // Handle the integer/pointer cases
-  if (!FLOAT_TYPE_P(Op0Ty)) {
-    // Determine which predicate to use based on signedness
-    ICmpInst::Predicate pred = 
-      ICmpInst::Predicate(TYPE_UNSIGNED(Op0Ty) ? UIOpc : SIOpc);
-
-    // Get the compare instructions
-    Value *Result = Builder.CreateICmp(pred, LHS, RHS);
-    
-    // The GCC type is probably an int, not a bool.
-    return CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
+      // Get the compare instructions
+      Result = Builder.CreateICmp(pred, LHS, RHS);
+    }
   }
-
-  // Handle floating point comparisons, if we get here.
-  Value *Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
+  assert(Result->getType() == Type::Int1Ty && "Expected i1 result for compare");
   
-  // The GCC type is probably an int, not a bool.
-  return CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
+  if (DestTy == 0)
+    DestTy = ConvertType(TREE_TYPE(exp));
+  
+  // The GCC type is probably an int, not a bool.  ZExt to the right size.
+  if (Result->getType() == DestTy)
+    return Result;
+  return Builder.CreateZExt(Result, DestTy);
 }
 
 /// EmitBinOp - 'exp' is a binary operator.

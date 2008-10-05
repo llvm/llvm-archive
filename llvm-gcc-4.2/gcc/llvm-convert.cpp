@@ -1865,7 +1865,7 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   // it with EmitCompare to get the result as an i1.
   if (FPPred == ~0U) {
     Cond = Emit(exp_cond, 0);
-    // Ccomparison against zero to convert the result to i1.
+    // Comparison against zero to convert the result to i1.
     if (Cond->getType() != Type::Int1Ty)
       Cond = Builder.CreateIsNotNull(Cond, "toBool");
   } else {

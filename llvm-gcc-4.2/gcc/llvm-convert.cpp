@@ -3271,13 +3271,10 @@ static const Type *getSuitableBitCastIntType(const Type *Ty) {
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
     unsigned NumElements = VTy->getNumElements();
     const Type *EltTy = VTy->getElementType();
-    if (EltTy == Type::FloatTy)
-      return VectorType::get(Type::Int32Ty, NumElements);
-    else if (EltTy == Type::DoubleTy)
-      return VectorType::get(Type::Int64Ty, NumElements);
-  } else
-    return IntegerType::get(Ty->getPrimitiveSizeInBits());
-  return NULL;
+    return VectorType::get(IntegerType::get(EltTy->getPrimitiveSizeInBits()),
+                           NumElements);
+  }
+  return IntegerType::get(Ty->getPrimitiveSizeInBits());
 }
 
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {

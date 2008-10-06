@@ -2746,19 +2746,8 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
 
     Attributes Attrs = Attribute::None;
-    // See EmitEXC_PTR_EXPR and EmitFILTER_EXPR. Rather than handle the
-    // arguments themselves, process eh_value and eh_select.
-    if (TREE_CODE(TREE_VALUE(arg)) == EXC_PTR_EXPR) {
-      const Type *Ty = ExceptionValue->getType();
-      Ty = cast<PointerType>(Ty)->getElementType();
-      Client.HandleScalarArgument(Ty, 0);
-    } else if (TREE_CODE(TREE_VALUE(arg)) == FILTER_EXPR) {
-      const Type *Ty = ExceptionSelectorValue->getType();
-      Ty = cast<PointerType>(Ty)->getElementType();
-      Client.HandleScalarArgument(Ty, 0);
-    } else
-      ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
-                                  &Attrs);
+    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
+                                &Attrs);
     if (Attrs != Attribute::None)
       PAL = PAL.addAttr(CallOperands.size(), Attrs);
 
@@ -3749,14 +3738,18 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
 Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
   CreateExceptionValues();
   // Load exception address.
-  return Builder.CreateLoad(ExceptionValue, "eh_value");
+  Value *V = Builder.CreateLoad(ExceptionValue, "eh_value");
+  // Cast the address to the right pointer type.
+  return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
 }
 
 /// EmitFILTER_EXPR - Handle FILTER_EXPR.
 Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
   CreateExceptionValues();
   // Load exception selector.
-  return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
+  Value *V = Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
+  // Cast the address to the right pointer type.
+  return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
 }
 
 /// EmitRESX_EXPR - Handle RESX_EXPR.
@@ -6190,12 +6183,15 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
 
 LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
   CreateExceptionValues();
-  return ExceptionValue;
+  // Cast the address pointer to the expected type.
+  return BitCastToType(ExceptionValue,
+                       PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
 }
 
 LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
   CreateExceptionValues();
-  return ExceptionSelectorValue;
+  return BitCastToType(ExceptionSelectorValue,
+                       PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
 }
 
 //===----------------------------------------------------------------------===//

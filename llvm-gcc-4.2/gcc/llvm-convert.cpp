@@ -3747,9 +3747,7 @@ Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
 Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
   CreateExceptionValues();
   // Load exception selector.
-  Value *V = Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
-  // Cast the address to the right pointer type.
-  return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
+  return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
 }
 
 /// EmitRESX_EXPR - Handle RESX_EXPR.
@@ -6190,8 +6188,7 @@ LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
 
 LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
   CreateExceptionValues();
-  return BitCastToType(ExceptionSelectorValue,
-                       PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
+  return ExceptionSelectorValue;
 }
 
 //===----------------------------------------------------------------------===//

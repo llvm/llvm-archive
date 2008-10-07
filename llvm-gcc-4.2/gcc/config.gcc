@@ -248,6 +248,9 @@ m32c*-*-*)
 alpha*-*-*)
 	cpu_type=alpha
 	need_64bit_hwint=yes
+# LLVM LOCAL begin
+	out_cxx_file=alpha/llvm-alpha.cpp
+# LLVM LOCAL end                               
 	;;
 am33_2.0-*-linux*)
 	cpu_type=mn10300

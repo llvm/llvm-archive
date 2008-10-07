@@ -103,13 +103,13 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       std::vector<Value*> &Ops) {
   switch (FnCode) {
   case ALPHA_BUILTIN_UMULH: {
-    Function *f =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::alpha_umulh);
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
-    Value *CallOps[2] = { Arg0, Arg1};
-    Result = Builder.CreateCall(f, CallOps, CallOps+2, "tmp");
-    Result = Builder.CreateBitCast(Result, ResultType, "tmp");
+    Arg0 = Builder.CreateZExt(Arg0, IntegerType::get(128));
+    Arg1 = Builder.CreateZExt(Arg1, IntegerType::get(128));
+    Result = Builder.CreateMul(Arg0, Arg1);
+    Result = Builder.CreateLShr(Result, ConstantInt::get(Type::Int64Ty, 64));
+    Result = Builder.CreateTrunc(Result, Type::Int64Ty);
     return true;
   }
   default: break;

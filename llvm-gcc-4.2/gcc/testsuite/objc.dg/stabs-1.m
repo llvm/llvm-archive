@@ -4,6 +4,8 @@
 /* { dg-do compile } */
 /* { dg-skip-if "No stabs" { mmix-*-* *-*-aix* alpha*-*-* hppa*64*-*-* ia64-*-* } { "*" } { "" } } */
 /* { dg-options "-gstabs" } */
+/* LLVM LOCAL llvm doesn't currently support stabs. */
+/* { dg-require-stabs "" } */
 
 @interface MyClass
 + newWithArg: arg;

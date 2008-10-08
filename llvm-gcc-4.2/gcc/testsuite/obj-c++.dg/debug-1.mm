@@ -4,6 +4,8 @@
 /* { dg-do compile }  */
 /* { dg-options "-gstabs+ -gfull" } */
 /* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* LLVM LOCAL llvm doesn't currently support stabs. */
+/* { dg-require-stabs "" } */
 
 class A
 {

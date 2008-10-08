@@ -4,12 +4,15 @@
 /* { dg-skip-if "" { i?86-*-* } { "-m64" } { "" } } */
 /* { dg-final { scan-assembler "and.*(0xffffff00|4294967040)" } } */
 unsigned char lut[256];
+/* LLVM LOCAL make these global */
+unsigned int *srcptr, *dstptr;
 
 void foo( int count )
 {
   int j;
 	
-  unsigned int *srcptr, *dstptr;
+  /* LLVM LOCAL begin remove uninitialized srcptr, dstptr */
+  /* LLVM LOCAL end */
   for (j = 0; j < count; j++) {
     unsigned int tmp = *srcptr;
     unsigned int alpha = (tmp&255);

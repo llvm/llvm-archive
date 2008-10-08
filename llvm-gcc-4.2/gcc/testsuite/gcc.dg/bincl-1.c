@@ -5,6 +5,8 @@
 /* { dg-do compile } */
 /* { dg-skip-if "No stabs" { mmix-*-* *-*-aix* *-*-netware* alpha*-*-* hppa*64*-*-* ia64-*-* } { "*" } { "" } } */
 /* { dg-options "-gstabs -fno-eliminate-unused-debug-symbols" } */
+/* LLVM LOCAL llvm doesn't currently support stabs. */
+/* { dg-require-stabs "" } */
 
 #include "bincl-1.h"
 int

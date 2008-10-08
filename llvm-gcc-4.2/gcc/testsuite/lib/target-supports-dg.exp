@@ -97,6 +97,14 @@ proc dg-require-holes-deterministic { args } {
     }
 }    
 
+# Skip tests that use stabs; llvm doesn't currently support these.
+proc dg-require-stabs { args } {
+    if { [ is_llvm ] } {
+	upvar dg-do-what dg-do-what
+	set dg-do-what [list [lindex ${dg-do-what} 0] "N" "P"]
+    }
+}    
+
 # LLVM LOCAL end
 
 # If this target does not support DLL attributes skip this test.

@@ -2,14 +2,14 @@
 // PR darwin/25908
 
 // { dg-do compile { target *-*-darwin* } }
-// { dg-final { scan-assembler ".globl __ZTV1f\\n	.weak_definition __ZTV1f\\n	.section __DATA,__const_coal,coalesced" } }
-// { dg-final { scan-assembler ".globl __ZTS1f\\n	.weak_definition __ZTS1f\\n	.section __TEXT,__const_coal,coalesced" } }
-// LLVM LOCAL begin
+// LLVM LOCAL begin rearrange tests to check current syntax
+// { dg-final { scan-assembler "	.section 	__DATA,__const_coal,coalesced\\n	.globl __ZTV1f\\n	.weak_definition __ZTV1f\\n" } }
+// { dg-final { scan-assembler "	.section 	__TEXT,__const_coal,coalesced\\n	.globl __ZTS1f\\n	.weak_definition __ZTS1f\\n" } }
 //  With llvm ZTI1f is in the right place, but the ordering is different
 // so the .section directive is not needed.  Do the best we can.
 // (It belongs in the same place as ZTV1f.)
-// LLVM LOCAL end
 // { dg-final { scan-assembler ".globl __ZTI1f\\n	.weak_definition __ZTI1f\\n" } }
+// LLVM LOCAL end
 
 class f
 {

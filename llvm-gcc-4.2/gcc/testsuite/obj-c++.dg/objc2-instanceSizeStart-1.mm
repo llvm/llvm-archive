@@ -11,4 +11,5 @@
 @implementation SubNoIvars @end
 
 int main() { return 0; }
-/* { dg-final { scan-assembler "l_OBJC_CLASS_RO_\\\$_SubNoIvars:\n\t.long\t0\n\t.long\t8\n\t.long\t8" } } */
+/* LLVM LOCAL adjust for different syntax */
+/* { dg-final { scan-assembler "l_OBJC_CLASS_RO_\\\$_SubNoIvars:.*\n\t(.space\t4|.long\t0)\n\t.long\t8.*\n\t.long\t8" } } */

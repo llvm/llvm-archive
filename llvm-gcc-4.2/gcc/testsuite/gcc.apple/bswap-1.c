@@ -58,6 +58,7 @@ int main() {
 }
 /* The capital R's throughout are so these match only instructions: */
 /* { dg-final { if [ istarget arm*-*-darwin* ] { global compiler_flags; if [string match "*-march=armv6*" $compiler_flags] { scan-assembler-times "\\\trev" 9 } } } } */
-/* { dg-final { if [ istarget i?86-*-darwin* ] { global compiler_flags; if ![string match "*-m64 *" $compiler_flags] { scan-assembler-times "\\\tbswap" 3 } } } } */
+/* LLVM LOCAL llvm-gcc reduces more cases than gcc */
+/* { dg-final { if [ istarget i?86-*-darwin* ] { global compiler_flags; if ![string match "*-m64 *" $compiler_flags] { scan-assembler-times "\\\tbswap" 9 } } } } */
 /* { dg-final { if [ istarget i?86-*-darwin* ] { global compiler_flags; if [string match "*-m64 *" $compiler_flags] { scan-assembler-times "\\\tbswap" 6 } } } } */
 

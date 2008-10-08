@@ -17,8 +17,14 @@ uint64 llReverse6 (uint64) __attribute__((noinline));
 
 static int count = 0;
 static int llcount = 0; 
-uint32 f(uint32 x) { count++; return x; }
-uint64 llf(uint64 x) { llcount++; return x; }
+/* LLVM LOCAL begin llvm-gcc is smart enough to figure out f() returns its
+   argument and does optimizations based on that.  Undefine these to preserve
+   the point of the test. */
+/*extern uint32 f(){ count++; return x; }*/
+/*uint64 llf(uint64 x) { llcount++; return x; }*/
+extern uint32 f();
+extern uint64 llf();
+/* LLVM LOCAL end */
 
 unsigned int Reverse4 (volatile unsigned int x) {   /* does NOT produce Rev */
   return ((x & 0x0000ff00) <<8) | ((x & 0x00ff0000) >> 8) | ((x & 0xff000000) >> 24) | ((x & 0x000000ff) << 24);

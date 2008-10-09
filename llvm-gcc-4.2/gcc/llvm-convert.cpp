@@ -903,7 +903,7 @@ Function *TreeToLLVM::EmitFunction() {
 
 Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
-          TREE_CODE(exp) == MODIFY_EXPR) &&
+          TREE_CODE(exp) == MODIFY_EXPR || TREE_CODE(exp) == INIT_EXPR) &&
          "Didn't pass DestLoc to an aggregate expr, or passed it to scalar!");
   
   Value *Result = 0;
@@ -954,6 +954,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case OBJ_TYPE_REF:   Result = EmitOBJ_TYPE_REF(exp); break;
   case ADDR_EXPR:      Result = EmitADDR_EXPR(exp); break;
   case CALL_EXPR:      Result = EmitCALL_EXPR(exp, DestLoc); break;
+  case INIT_EXPR:
   case MODIFY_EXPR:    Result = EmitMODIFY_EXPR(exp, DestLoc); break;
   case ASM_EXPR:       Result = EmitASM_EXPR(exp); break;
   case NON_LVALUE_EXPR: Result = Emit(TREE_OPERAND(exp, 0), DestLoc); break;
@@ -1799,7 +1800,8 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
   tree retval = TREE_OPERAND(exp, 0);
 
   assert((!retval || TREE_CODE(retval) == RESULT_DECL ||
-          (TREE_CODE(retval) == MODIFY_EXPR &&
+          ((TREE_CODE(retval) == MODIFY_EXPR 
+             || TREE_CODE(retval) == INIT_EXPR) &&
            TREE_CODE(TREE_OPERAND(retval, 0)) == RESULT_DECL)) &&
          "RETURN_EXPR not gimple!");
 
@@ -2889,6 +2891,8 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
 }
 
 /// EmitMODIFY_EXPR - Note that MODIFY_EXPRs are rvalues only!
+/// We also handle INIT_EXPRs here; these are built by the C++ FE on rare
+/// occasions, and have slightly different semantics that don't affect us here.
 ///
 Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   tree lhs = TREE_OPERAND (exp, 0);

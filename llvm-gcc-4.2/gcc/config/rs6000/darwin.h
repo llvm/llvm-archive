@@ -113,8 +113,13 @@
   %{static: %{Zdynamic: %e conflicting code gen style switches are used}}\
   "/* APPLE LOCAL ARM 5683689 */"\
   %{!mmacosx-version-min=*: %{!miphoneos-version-min=*: %(darwin_cc1_minversion)}} \
-  "/* APPLE LOCAL enable format security warnings */"\
-  %{!Wno-format:-Wformat -Wformat-security} \
+  "/* APPLE LOCAL begin enable format security warnings */"\
+  %{!Wno-format:-Wformat \
+                 %{!-Wno-format-security:-Wformat-security} \
+                 %{!-Wformat-extra-args:-Wno-format-extra-args} \
+                 %{!-Wformat-zero-length:-Wno-format-zero-length} \
+                 %{!-Wnonnull:-Wno-nonnull}} \
+  "/* APPLE LOCAL end enable format security warnings */"\
   "/* APPLE LOCAL -fast or -fastf or -fastcp */"\
   %{!mkernel:%{!static:%{!fast:%{!fastf:%{!fastcp:%{!mdynamic-no-pic:-fPIC}}}}}}"
 

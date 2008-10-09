@@ -246,9 +246,11 @@ Wformat-y2k
 C ObjC C++ ObjC++ Var(warn_format_y2k)
 Warn about strftime formats yielding 2-digit years
 
+; LLVM LOCAL begin enable for C++
 Wformat-zero-length
-C ObjC Var(warn_format_zero_length)
+C ObjC C++ ObjC++ Var(warn_format_zero_length)
 Warn about zero-length formats
+; LLVM LOCAL end enable for C++
 
 Wformat=
 C ObjC C++ ObjC++ Joined

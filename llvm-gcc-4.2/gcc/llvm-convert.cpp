@@ -882,7 +882,8 @@ Function *TreeToLLVM::EmitFunction() {
       // If this stmt returns an aggregate value (e.g. a call whose result is
       // ignored), create a temporary to receive the value.  Note that we don't
       // do this for MODIFY_EXPRs as an efficiency hack.
-      if (isAggregateTreeType(TREE_TYPE(stmt)) && TREE_CODE(stmt)!= MODIFY_EXPR)
+      if (isAggregateTreeType(TREE_TYPE(stmt)) && 
+          TREE_CODE(stmt)!= MODIFY_EXPR && TREE_CODE(stmt)!=INIT_EXPR)
         DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
 
       Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);

@@ -368,6 +368,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_VEC_EXT_V4SI:
   case IX86_BUILTIN_VEC_EXT_V4SF:
   case IX86_BUILTIN_VEC_EXT_V8HI:
+  case IX86_BUILTIN_VEC_EXT_V16QI:
     Result = Builder.CreateExtractElement(Ops[0], Ops[1], "tmp");
     return true;
   case IX86_BUILTIN_VEC_SET_V4HI:

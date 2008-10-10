@@ -1,5 +1,7 @@
 /* { dg-do compile } */
 /* { dg-options "-O1 -fdump-tree-original" } */
+/* LLVM LOCAL llvm doesn't support tree dumps. */
+/* { dg-require-fdump "" } */
 
 
 char *a;

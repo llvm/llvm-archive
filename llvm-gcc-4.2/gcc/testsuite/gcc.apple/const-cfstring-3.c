@@ -26,5 +26,7 @@ void foo(void) {
   s0 = s1;
 }
 
-/* { dg-final { scan-assembler "\\.long\[ \\t\]+___CFConstantStringClassReference\n\[ \\t\]*\\.long\[ \\t\]+1992\n\[ \\t\]*\\.long\[ \\t\]+LC.*\n\[ \\t\]*\\.long\[ \\t\]+4\n" } } */
-/* { dg-final { scan-assembler "\\.long\[ \\t\]+___CFConstantStringClassReference\n\[ \\t\]*\\.long\[ \\t\]+1992\n\[ \\t\]*\\.long\[ \\t\]+LC.*\n\[ \\t\]*\\.long\[ \\t\]+10\n" } } */
+/* LLVM LOCAL begin allow for comment after numbers */
+/* { dg-final { scan-assembler "\\.long\[ \\t\]+___CFConstantStringClassReference\n\[ \\t\]*\\.long\[ \\t\]+1992.*\n\[ \\t\]*\\.long\[ \\t\]+LC.*\n\[ \\t\]*\\.long\[ \\t\]+4.*\n" } } */
+/* { dg-final { scan-assembler "\\.long\[ \\t\]+___CFConstantStringClassReference\n\[ \\t\]*\\.long\[ \\t\]+1992.*\n\[ \\t\]*\\.long\[ \\t\]+LC.*\n\[ \\t\]*\\.long\[ \\t\]+10.*\n" } } */
+/* LLVM LOCAL end */

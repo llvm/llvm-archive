@@ -11,5 +11,7 @@ int main(void) {
 	return 0;
 }
 /* { dg-final { scan-assembler ".section __TEXT,__ustring" } } */
-/* { dg-final { scan-assembler "___utf16_string_1:\n\t.byte\t-110\n\t.byte\t33\n\t.byte\t32\n\t.byte\t0" } } */
-/* { dg-final { scan-assembler "___utf16_string_2:\n\t.byte\t1\n\t.byte\t-40\n\t.byte\t0\n\t.byte\t-36" } } */
+/* LLVM LOCAL begin same data, very different syntax */
+/* { dg-final { scan-assembler "___utf16_string_1:.*\n\t(.byte\t-110\n\t.byte\t33\n\t.byte\t32\n\t.byte\t0|.asciz\t\"\\\\622! \\\\000)" } } */
+/* { dg-final { scan-assembler "___utf16_string_2:.*\n\t(.byte\t1\n\t.byte\t-40\n\t.byte\t0\n\t.byte\t-36|.asciz\t\"\\\\001\\\\730\\\\000\\\\734)" } } */
+/* LLVM LOCAL end */

@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 4734562 */
 /* { dg-options "-gdwarf-2 -dA" } */
-/* { dg-final { scan-assembler "\"main\\\\0\".*DW_AT_name" } } */
+/* LLVM LOCAL allow for asciz instead of ascii */
+/* { dg-final { scan-assembler "\"main(\\\\0)?\".*DW_AT_name" } } */
 
 #include <objc/objc.h>
 /* APPLE LOCAL radar 4894756 */

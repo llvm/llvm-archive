@@ -3,7 +3,8 @@
 /* { dg-options "-mmacosx-version-min=10.5 -gdwarf-2 -dA" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-gdwarf-2 -dA" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-final { scan-assembler "\"_prop\\\\0\".*DW_AT_name" } } */
+/* LLVM LOCAL begin allow for asciz instead of ascii */
+/* { dg-final { scan-assembler "\"_prop(\\\\0)?\".*DW_AT_name" } } */
 @interface Foo 
 {
   id isa;

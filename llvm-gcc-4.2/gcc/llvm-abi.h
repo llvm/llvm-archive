@@ -255,9 +255,8 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
     false
 #endif
 
-// LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
-// value should be passed by value as a first class aggregate. The default is
-// false.
+// LLVM_SHOULD_PASS_AGGREGATE_AS_FCA - Return true if this aggregate value
+// should be passed by value as a first class aggregate. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_AS_FCA
 #define LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(X, TY) \
     false

@@ -1021,6 +1021,12 @@ namespace {
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
       HandleScalarArgument(PointerType::getUnqual(LLVMTy), type);
     }
+
+    /// HandleFCAArgument - This callback is invoked if the aggregate function
+    /// argument is a first class aggregate passed by value.
+    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+      ArgTypes.push_back(LLVMTy);
+    }
   };
 }
 

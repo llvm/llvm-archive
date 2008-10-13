@@ -619,9 +619,28 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   return true;
 }  
 
+/* It returns true if an aggregate of the specified type should be passed as a
+   first class aggregate. */
+bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
+  if (TREE_CODE(type) != COMPLEX_TYPE)
+    return false;
+  const StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy || STy->isPacked()) return false;
+
+  // FIXME: Currently codegen isn't lowering _Complex char / short and _Complex
+  // int in x86-64 in a way that makes it ABI compatible.
+  const Type *EltTy = STy->getElementType(0);
+  return !((TARGET_64BIT && EltTy == Type::Int32Ty) ||
+           EltTy == Type::Int16Ty ||
+           EltTy == Type::Int8Ty);
+}
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. */
 bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
+  if (llvm_x86_should_pass_aggregate_as_fca(TreeType, Ty))
+    return false;
+
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
@@ -723,6 +742,9 @@ llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
 bool
 llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
                                                 std::vector<const Type*> &Elts){
+  if (llvm_x86_should_pass_aggregate_as_fca(TreeType, Ty))
+    return false;
+
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
   bool totallyEmpty = true;
@@ -1362,9 +1384,9 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 /// llvm_store_scalar_argument - Store scalar argument ARGVAL of type
 /// LLVMTY at location LOC.
 void llvm_x86_store_scalar_argument(Value *Loc, Value *ArgVal,
-                                const llvm::Type *LLVMTy,
-                                unsigned RealSize,
-                                LLVMBuilder &Builder) {
+                                    const llvm::Type *LLVMTy,
+                                    unsigned RealSize,
+                                    LLVMBuilder &Builder) {
   if (RealSize) {
     // Do byte wise store because actaul argument type does not match LLVMTy.
     Loc = Builder.CreateBitCast(Loc, 
@@ -1413,8 +1435,7 @@ Value *llvm_x86_load_scalar_argument(Value *L,
 /// register.  This means we'll be loading bytes off the end of the object
 /// in some cases.  That's what gcc does, so it must be OK, right?  Right?
 bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
-                                                    bool *DontCheckAlignment)
-{
+                                                    bool *DontCheckAlignment) {
   *size = 0;
   if (TARGET_64BIT) {
     enum x86_64_reg_class Class[MAX_CLASSES];

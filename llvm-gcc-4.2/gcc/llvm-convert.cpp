@@ -513,6 +513,15 @@ namespace {
       abort();
     }
 
+    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+      // Store the FCA argument into alloca.
+      assert(!LocStack.empty());
+      Value *Loc = LocStack.back();
+      Builder.CreateStore(AI, Loc);
+      AI->setName(NameStack.back());
+      ++AI;
+    }
+
     void HandleAggregateResultAsScalar(const Type *ScalarTy, unsigned Offset=0){
       this->Offset = Offset;
     }
@@ -2270,7 +2279,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     // value out of the specified register.
     return EmitReadOfRegisterVariable(exp, DestLoc);
   }
-  
+
   LValue LV = EmitLV(exp);
   bool isVolatile = TREE_THIS_VOLATILE(exp);
   const Type *Ty = ConvertType(TREE_TYPE(exp));
@@ -2649,6 +2658,14 @@ namespace {
       CallOperands.push_back(Loc);
     }
 
+    /// HandleFCAArgument - This callback is invoked if the aggregate function
+    /// argument is passed as a first class aggregate.
+    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+      Value *Loc = getAddress();
+      assert(PointerType::getUnqual(LLVMTy) == Loc->getType());
+      CallOperands.push_back(Builder.CreateLoad(Loc));
+    }
+
     /// EnterField - Called when we're about the enter the field of a struct
     /// or union.  FieldNo is the number of the element we are entering in the
     /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
@@ -2735,12 +2752,17 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   // Loop over the arguments, expanding them and adding them to the op list.
   std::vector<const Type*> ScalarArgs;
   for (tree arg = TREE_OPERAND(exp, 1); arg; arg = TREE_CHAIN(arg)) {
-    const Type *ArgTy = ConvertType(TREE_TYPE(TREE_VALUE(arg)));
+    tree type = TREE_TYPE(TREE_VALUE(arg));
+    const Type *ArgTy = ConvertType(type);
 
     // Push the argument.
     if (ArgTy->isSingleValueType()) {
       // A scalar - push the value.
       Client.pushValue(Emit(TREE_VALUE(arg), 0));
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, ArgTy)) {
+      // A first class aggregate - push the value.
+      LValue ArgVal = EmitLV(TREE_VALUE(arg));
+      Client.pushValue(Builder.CreateLoad(ArgVal.Ptr));
     } else {
       // An aggregate - push the address.
       LValue ArgVal = EmitLV(TREE_VALUE(arg));
@@ -2749,8 +2771,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
 
     Attributes Attrs = Attribute::None;
-    ABIConverter.HandleArgument(TREE_TYPE(TREE_VALUE(arg)), ScalarArgs,
-                                &Attrs);
+    ABIConverter.HandleArgument(type, ScalarArgs, &Attrs);
     if (Attrs != Attribute::None)
       PAL = PAL.addAttr(CallOperands.size(), Attrs);
 
@@ -5848,7 +5869,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
         mark_referenced(ID);
     }
   }
-  
+
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   // If we have "extern void foo", make the global have type {} instead of
   // type void.

@@ -94,6 +94,10 @@ struct DefaultABIClient {
   /// argument is passed by value.
   void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {}
 
+  /// HandleFCAArgument - This callback is invoked if the aggregate function
+  /// argument is passed by value as a first class aggregate.
+  void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {}
+
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the
   /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
@@ -248,6 +252,14 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // attribute bit set. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY) \
+    false
+#endif
+
+// LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
+// value should be passed by value as a first class aggregate. The default is
+// false.
+#ifndef LLVM_SHOULD_PASS_AGGREGATE_AS_FCA
+#define LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(X, TY) \
     false
 #endif
 
@@ -441,6 +453,8 @@ public:
     } else if (Ty->isSingleValueType()) {
       C.HandleScalarArgument(Ty, type);
       ScalarElts.push_back(Ty);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
+      C.HandleFCAArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
       if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts))
         PassInMixedRegisters(type, Ty, Elts, ScalarElts);

@@ -1224,6 +1224,12 @@ decode_d_option (const char *arg)
 	setup_core_dumping();
 	break;
 
+      /* LLVM LOCAL begin */
+      case 'M':
+         /* Ignore -dM. This is overloaded for rtl pass that 
+            does not exist in llvm-gcc.  */
+         break;
+      /* LLVM LOCAL end */
       case 'a':
       default:
 	if (!enable_rtl_dump_file (c))

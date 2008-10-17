@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<hlvm xmlns="http://hlvm.org/src/hlvm/Reader/XML/HLVM.rng" pubid="http://hlvm.org/src/hlvm/test/invalid/badoct.hlx">
-  <bundle id="badoct">
-    <constant id="0000" type="s8"><oct>29</oct></constant>
-  </bundle>
-</hlvm>

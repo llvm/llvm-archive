@@ -5151,10 +5151,15 @@ make_rtl_for_nonlocal_decl (tree decl, tree init, const char* asmspec)
   if (DECL_LANG_SPECIFIC (decl) && DECL_IN_AGGR_P (decl))
     {
       gcc_assert (TREE_STATIC (decl));
+      /* APPLE LOCAL begin templated static data 6298605 */
       /* An in-class declaration of a static data member should be
-	 external; it is only a declaration, and not a definition.  */
-      if (init == NULL_TREE)
+	 external if the decl is accessible from outside this
+	 translation unit (eg something not in an anonymous
+	 namespace); it is only a declaration, and not a
+	 definition.  */
+      if (init == NULL_TREE && TREE_PUBLIC (decl))
 	gcc_assert (DECL_EXTERNAL (decl));
+      /* APPLE LOCAL end templated static data 6298605 */
     }
 
   /* We don't create any RTL for local variables.  */

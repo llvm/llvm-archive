@@ -190,7 +190,7 @@ void readLLVMValues() {
     Value *Va = ValuesFromPCH->getOperand(i);
 
     if (!Va) {
-      // If V is empty then nsert NULL to represent empty entries.
+      // If V is empty then insert NULL to represent empty entries.
       LLVMValues.push_back(Va);
       continue;
     }

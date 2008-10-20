@@ -1184,6 +1184,8 @@ compile_file (void)
 #else
   if (!flag_pch_file)
     llvm_asm_file_end();
+  /* Release LLVM global state. */
+  llvm_call_llvm_shutdown();
 #endif
   /* LLVM LOCAL end */
 }

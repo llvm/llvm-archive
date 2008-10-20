@@ -574,7 +574,6 @@ static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
 // llvm_asm_file_end - Finish the .s file.
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
-  llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
 
   performLateBackendInitialization();
   createOptimizationPasses();
@@ -690,6 +689,11 @@ void llvm_asm_file_end(void) {
   delete AsmOutFile;
   AsmOutFile = 0;
   timevar_pop(TV_LLVM_PERFILE);
+}
+
+// llvm_call_llvm_shutdown - Release LLVM global state.
+void llvm_call_llvm_shutdown(void) {
+  llvm_shutdown();
 }
 
 // llvm_emit_code_for_current_function - Top level interface for emitting a

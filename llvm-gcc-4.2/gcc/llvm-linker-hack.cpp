@@ -23,6 +23,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
@@ -86,6 +87,7 @@ void dummy_function() {
   llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
   llvm::createAddReadAttrsPass();
+  llvm::createPrintModulePass(0);
 
   std::string Err;
   llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),

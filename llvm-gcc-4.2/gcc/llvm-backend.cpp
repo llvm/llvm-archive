@@ -469,7 +469,7 @@ static void createOptimizationPasses() {
   } else if (emit_llvm) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
     // -emit-llvm -S to the GCC driver.
-    PerModulePasses->add(createPrintModulePass(AsmOutFile));
+    PerModulePasses->add(createPrintModulePass(AsmOutRawStream));
     HasPerModulePasses = true;
   } else {
     FunctionPassManager *PM;
@@ -653,11 +653,16 @@ void llvm_asm_file_end(void) {
     FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
     AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
     AsmIntermediateOutFile = new OStream(*AsmIntermediateOutStream);
+    raw_ostream *AsmIntermediateRawOutStream = 
+      new raw_os_ostream(*AsmIntermediateOutStream);
     if (emit_llvm_bc)
       IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
     if (emit_llvm)
-      IntermediatePM->add(createPrintModulePass(AsmIntermediateOutFile));
+      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
     IntermediatePM->run(*TheModule);
+    AsmIntermediateRawOutStream->flush();
+    delete AsmIntermediateRawOutStream;
+    AsmIntermediateRawOutStream = 0;
     AsmIntermediateOutStream->flush();
     fflush(asm_intermediate_out_file);
     delete AsmIntermediateOutStream;

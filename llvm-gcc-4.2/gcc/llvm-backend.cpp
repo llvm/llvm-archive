@@ -379,19 +379,8 @@ static void createOptimizationPasses() {
   // FIXME: AT -O0/O1, we should stream out functions at a time.
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
-  bool HasPerModulePasses = false;
-  bool NeedAlwaysInliner = false;
-  // Check if AlwaysInliner is needed to handle functions that are 
-  // marked as always_inline.
-  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-       I != E; ++I)
-    if (I->hasFnAttr(Attribute::AlwaysInline)) {
-      NeedAlwaysInliner = true;
-      break;
-    }
 
   if (optimize > 0 && !DisableLLVMOptimizations) {
-    HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
     if (flag_unit_at_a_time)
       PM->add(createRaiseAllocationsPass());      // call %malloc -> malloc inst
@@ -412,7 +401,7 @@ static void createOptimizationPasses() {
     }
     if (flag_inline_trees > 1)                    // respect -fno-inline-functions
       PM->add(createFunctionInliningPass());      // Inline small functions
-    else if (NeedAlwaysInliner)
+    else
       PM->add(createAlwaysInlinerPass());         // Inline always_inline functions
     if (optimize > 2)
       PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
@@ -456,21 +445,18 @@ static void createOptimizationPasses() {
 
     if (optimize > 1 && flag_unit_at_a_time)
       PM->add(createConstantMergePass());       // Merge dup global constants 
-  }
-
-  if (!HasPerModulePasses && NeedAlwaysInliner)
+  } else {
     PerModulePasses->add(createAlwaysInlinerPass());
+  }
 
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
     PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
-    HasPerModulePasses = true;
   } else if (emit_llvm) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
     // -emit-llvm -S to the GCC driver.
     PerModulePasses->add(createPrintModulePass(AsmOutRawStream));
-    HasPerModulePasses = true;
   } else {
     FunctionPassManager *PM;
     
@@ -478,7 +464,7 @@ static void createOptimizationPasses() {
     // as a separate "pass" after that happens.
     // FIXME: This is disabled right now until bugs can be worked out.  Reenable
     // this for fast -O0 compiles!
-    if (HasPerModulePasses || 1) {
+    if (1) {
       CodeGenPasses = PM =
         new FunctionPassManager(new ExistingModuleProvider(TheModule));
       PM->add(new TargetData(*TheTarget->getTargetData()));
@@ -513,10 +499,6 @@ static void createOptimizationPasses() {
   } else {
     delete PerFunctionPasses;
     PerFunctionPasses = 0;
-  }
-  if (!HasPerModulePasses) {
-    delete PerModulePasses;
-    PerModulePasses = 0;
   }
 }
 

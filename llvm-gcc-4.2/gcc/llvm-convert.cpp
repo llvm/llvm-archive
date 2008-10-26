@@ -90,8 +90,13 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 static std::vector<Value *> LLVMValues;
 typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
 static LLVMValuesMapTy LLVMValuesMap;
+
 /// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
-/// this allows us to efficiently identify and remove them.
+/// this allows us to efficiently identify and remove them.  Local IDs are IDs
+/// for values that are local to the current function being processed.  These do
+/// not need to go into the PCH file, but DECL_LLVM still needs a valid index
+/// while converting the function.  Using "Local IDs" allows the IDs for
+/// function-local decls to be recycled after the function is done.
 static std::vector<unsigned> LocalLLVMValueIDs;
 
 // Remember the LLVM value for GCC tree node.
@@ -242,7 +247,7 @@ void eraseLocalLLVMValues() {
     LocalLLVMValueIDs.pop_back();
     
     if (Value *V = LLVMValues[Idx]) {
-      assert(!isa<Constant>(V) && "Found local value");
+      assert(!isa<Constant>(V) && "Found global value");
       LLVMValuesMap.erase(V);
     }
 

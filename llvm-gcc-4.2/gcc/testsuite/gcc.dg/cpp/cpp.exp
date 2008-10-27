@@ -28,6 +28,10 @@ file mkdir d
 foreach header { A.h bA.h c.h d/d.h } {
     remote_download host $srcdir/$subdir/inc/$header $header
 }
+# LLVM LOCAL the timestamp of this file must be newer than that of 
+# a file it includes, or the test fails.
+exec touch $srcdir/$subdir/_Pragma3.c
+
 # APPLE LOCAL end headermaps
 
 # Load support procs.

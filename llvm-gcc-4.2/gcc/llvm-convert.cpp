@@ -6023,38 +6023,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       BitStart -= SL->getElementOffset(MemberIndex) * 8;
     }
 
-    // Type conversion does not ensure that there is always an LLVM field
-    // starting at the same byte as the gcc field.  Correct for this now.
-    // An example of how this can occur is:
-    //   Field A: offset 0, length 1
-    //   Field B: offset 4, length 4 (4 byte alignment)
-    //   Field C: offset 6
-    // Since field C overlaps field B, we delete field B and replace it with
-    // padding:
-    //   LLVM A: offset 0, length 1
-    //   LLVM B: offset 1, length 5 (1 byte alignment) - padding array
-    //   LLVM C: offset 6
-    // A COMPONENT_REF for gcc field B will get LLVM field B which has
-    // offset 1 not 4.
-    unsigned ByteStart = BitStart/8;
-    if (ByteStart && !isBitfield(FieldDecl)) {
-      const Type *ContainingType =
-        cast<StructType>(StructTy)->getTypeAtIndex(MemberIndex);
-      Value *Offset = ConstantInt::get(TD.getIntPtrType(), ByteStart);
-
-      const ArrayType *ATy = dyn_cast<ArrayType>(ContainingType);
-      if (ATy && ATy->getElementType() == Type::Int8Ty) {
-        // Only known case: the LLVM field is an array of bytes.
-        FieldPtr = Builder.CreateGEP(FieldPtr, Offset);
-      } else {
-        // Do pointer arithmetic.
-        FieldPtr = Builder.CreatePtrToInt(FieldPtr, Offset->getType());
-        FieldPtr = Builder.CreateAdd(FieldPtr, Offset);
-        FieldPtr = Builder.CreateIntToPtr(FieldPtr,
-                                          PointerType::getUnqual(Type::Int8Ty));
-      }
-      BitStart -= ByteStart * 8;
-    }
   } else {
     Value *Offset = Emit(field_offset, 0);
 

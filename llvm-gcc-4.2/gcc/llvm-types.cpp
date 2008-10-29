@@ -1425,10 +1425,22 @@ struct StructTypeConversionInfo {
       SavedTy = Elements.back();
       if (ElementOffsetInBytes.back()+ElementSizeInBytes.back() > ByteOffset) {
         // The last element overlapped with this one, remove it.
+        uint64_t PoppedOffset = ElementOffsetInBytes.back();
         Elements.pop_back();
         ElementOffsetInBytes.pop_back();
         ElementSizeInBytes.pop_back();
         PaddingElement.pop_back();
+        uint64_t EndOffset = getNewElementByteOffset(1);
+        if (EndOffset < PoppedOffset) {
+          // Make sure that some field starts at the position of the
+          // field we just popped.  Otherwise we might end up with a
+          // gcc non-bitfield being mapped to an LLVM field with a
+          // different offset.
+          const Type *Pad = Type::Int8Ty;
+          if (PoppedOffset != EndOffset + 1)
+            Pad = ArrayType::get(Pad, PoppedOffset - EndOffset);
+          addElement(Pad, EndOffset, PoppedOffset - EndOffset);
+        }
       }
     }
 
@@ -2132,6 +2144,10 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       unsigned FieldNo =
         Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
       SetFieldIndex(Field, FieldNo);
+
+      assert((isBitfield(Field) || FieldNo == ~0U ||
+             FieldOffsetInBits == 8*Info->ElementOffsetInBytes[FieldNo]) &&
+             "Wrong LLVM field offset!");
     }
 
   // Put the original gcc struct back the way it was; necessary to prevent the

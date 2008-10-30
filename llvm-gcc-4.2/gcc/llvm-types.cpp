@@ -1553,22 +1553,22 @@ struct StructTypeConversionInfo {
     // Handle zero sized fields now.
 
     // Skip over LLVM fields that start and end before the GCC field starts.
-    // Such fields are always nonzero sized, and we don't want to skip past 
+    // Such fields are always nonzero sized, and we don't want to skip past
     // zero sized ones as well, which happens if you use only the Offset
     // comparison.
     while (CurFieldNo < ElementOffsetInBytes.size() &&
-           getFieldEndOffsetInBytes(CurFieldNo)*8 <= FieldOffsetInBits &&
-           ElementSizeInBytes[CurFieldNo] != 0)
+           getFieldEndOffsetInBytes(CurFieldNo)*8 <
+           FieldOffsetInBits + (ElementSizeInBytes[CurFieldNo] != 0))
       ++CurFieldNo;
 
-    // If the next field is zero sized, advance past this one.  This is a nicety 
-    // that causes us to assign C fields different LLVM fields in cases like 
+    // If the next field is zero sized, advance past this one.  This is a nicety
+    // that causes us to assign C fields different LLVM fields in cases like
     // struct X {}; struct Y { struct X a, b, c };
     if (CurFieldNo+1 < ElementOffsetInBytes.size() &&
         ElementSizeInBytes[CurFieldNo+1] == 0) {
       return CurFieldNo++;
     }
-    
+
     // Otherwise, if this is a zero sized field, return it.
     if (CurFieldNo < ElementOffsetInBytes.size() &&
         ElementSizeInBytes[CurFieldNo] == 0) {

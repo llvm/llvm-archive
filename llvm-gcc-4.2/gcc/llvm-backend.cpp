@@ -807,14 +807,14 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
         error ("%J%qD aliased to undefined symbol %qs", decl, decl, AliaseeName);
         timevar_pop(TV_LLVM_GLOBALS);
         return;
-      } 
+      }
     }
   }
-  
+
   GlobalValue::LinkageTypes Linkage;
 
-  // Check for external weak linkage
-  if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
+  // A weak alias has TREE_PUBLIC set but not the other bits.
+  if (DECL_WEAK(decl))
     Linkage = GlobalValue::WeakLinkage;
   else if (!TREE_PUBLIC(decl))
     Linkage = GlobalValue::InternalLinkage;

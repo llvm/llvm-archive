@@ -481,7 +481,11 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
 	  case CPP_N_INVALID:
 	    /* cpplib has issued an error.  */
 	    *value = error_mark_node;
-	    errorcount++;
+	    /* APPLE LOCAL begin CW asm blocks 6276214 */
+	    /* If errors are deferred, they don't count as errors yet.  */
+	    if (!flag_ms_asms)
+	      errorcount++;
+	    /* APPLE LOCAL end CW asm blocks 6276214 */
 	    break;
 
 	  case CPP_N_INTEGER:

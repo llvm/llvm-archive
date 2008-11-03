@@ -36,7 +36,7 @@ void (^__weak Henry)(void);
 
 int main(char *argc, char *argv[]) {
   // an object should not be retained within a stack Block
-  __byref int i = 0;
+  __block int i = 0;
   void (^local)(void);
   Foo *foo = [[Foo alloc] init];
   foo->ivar = ^ { ++i; };

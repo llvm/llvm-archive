@@ -233,7 +233,7 @@ main (void)
   D(600)
   /* LLVM LOCAL */
   D(601) D(602)
- if (num_failed)
+  if (num_failed)
     abort ();
 
   return 0;

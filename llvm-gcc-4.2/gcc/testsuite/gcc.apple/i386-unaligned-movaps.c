@@ -1,6 +1,6 @@
 /* APPLE LOCAL begin radar 4614623 */
 /* { dg-do run { target i?86-*-* } } */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* { dg-options "-O -mmmx -fomit-frame-pointer -march=pentium-m" } */
 #include <signal.h>
 extern void abort (void);

@@ -15,33 +15,33 @@ static void _Block_byref_release(void * arg) {
 }
 
 int foo(int p, int q) {
-  __byref int O1;
+  __block int O1;
   switch (p) {
   case 1:
     {
-      __byref int I1;
+      __block int I1;
       I1 += 1;
       break;
     }
   case 10:
     {
-      __byref int J1;
+      __block int J1;
       break;
     }
   default :
     {
-      __byref int D1;
-      __byref int D2;
+      __block int D1;
+      __block int D2;
       switch (q) {
       case 11:
 	{
-	  __byref int  Q1;
+	  __block int  Q1;
 	  break;
 	}
       default:
 	{
-	  __byref int  ID1;
-	  __byref int  ID2;
+	  __block int  ID1;
+	  __block int  ID2;
 	}
       };
       break;

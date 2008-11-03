@@ -1,5 +1,5 @@
 /* APPLE LOCAL file radar 6014138 */
-/* Test use of __byref on locals which will be used as 'byref' variables in blocks. */
+/* Test use of __block on locals which will be used as 'byref' variables in blocks. */
 /* { dg-do run } */
 /* { dg-options "-mmacosx-version-min=10.5 -fblocks" { target *-*-darwin* } } */
 
@@ -14,9 +14,9 @@ void CallBlock (void (^voidvoidBlock)(void)) {
 
 
 int foo() {
-    __byref int local_byref_1 = 10;
-    __byref int local_byref_2 = 10;
-    __byref int local_byref_3 = 10;
+    __block int local_byref_1 = 10;
+    __block int local_byref_2 = 10;
+    __block int local_byref_3 = 10;
 
     CallBlock( ^ { ++local_byref_1; ++local_byref_2; ++local_byref_3; 
 	          CallBlock(^ { ++local_byref_1; ++local_byref_2; ++local_byref_3; }); 

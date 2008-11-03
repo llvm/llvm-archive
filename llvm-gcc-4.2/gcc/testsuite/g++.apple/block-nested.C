@@ -22,12 +22,12 @@ double test(myblock I) {
 }
 
 int main() {
-  __byref enum numbers x = one;
-  __byref enum numbers y = two;
+  __block enum numbers x = one;
+  __block enum numbers y = two;
 
   myblock CL = ^(enum numbers z)
 		{ enum numbers savex = x;
-		  { __byref enum numbers x = savex;
+		  { __block enum numbers x = savex;
 		  y = z;
 		  if (y != three)
 		    exit (6);

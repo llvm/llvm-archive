@@ -10,7 +10,7 @@ void _Block_byref_release(void*src){}
 };
 
 int main() {
-   __byref  int X = 1234;
+   __block  int X = 1234;
 
    int (^CP)(void) = ^{ X = X+1;  return X; }; 
    CP();

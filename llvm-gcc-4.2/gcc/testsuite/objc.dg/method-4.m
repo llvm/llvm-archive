@@ -4,7 +4,7 @@
 /* { dg-options "-fnext-runtime" } */
 /* { dg-do compile } */
 /* APPLE LOCAL begin objc2 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 /* APPLE LOCAL end objc2 */
 

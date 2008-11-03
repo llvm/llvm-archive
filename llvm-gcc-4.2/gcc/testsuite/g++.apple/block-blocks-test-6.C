@@ -16,8 +16,8 @@ double test(myblock I) {
 }
 
 int main() {
-  __byref int x = 1;
-  __byref int y = 2;
+  __block int x = 1;
+  __block int y = 2;
   double res = test(^(int z){ y = x+z; return (double)x; }); 
   printf("result = %f  x = %d y = %d\n", res, x, y);
   if (x != 1 || y != 43)

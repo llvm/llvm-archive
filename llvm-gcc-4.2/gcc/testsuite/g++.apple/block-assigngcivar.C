@@ -48,7 +48,7 @@ id objc_assign_strongCast(id val, id *dest) {
 
 
 int main(char *argc, char *argv[]) {
-  __byref int i = 0;
+  __block int i = 0;
   TestObject *to = [[TestObject alloc] init];
   // assigning a Block into an ivar should elicit a  write-barrier under GC
   to->ivarBlock =  ^ { ++i; };		// fails to gen write-barrier

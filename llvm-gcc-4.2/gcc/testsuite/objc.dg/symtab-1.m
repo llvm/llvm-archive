@@ -3,7 +3,7 @@
 /* { dg-options "-fnext-runtime" } */
 /* { dg-do compile { target *-*-darwin* } } */
 /* APPLE LOCAL radar 4492976 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* APPLE LOCAL ARM not available on arm-darwin targets */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 

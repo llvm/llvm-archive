@@ -3,6 +3,7 @@
    support code. */
 /* { dg-do run } */
 /* { dg-options "-mmacosx-version-min=10.6 " { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #import <Block.h>
 #include <stdio.h>

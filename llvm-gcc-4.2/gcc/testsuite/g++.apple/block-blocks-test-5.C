@@ -17,8 +17,8 @@ double test(myblock I) {
 
 int main() {
   int x = 1;
-  __byref int y = 2;
-  __byref int br_x;
+  __block int y = 2;
+  __block int br_x;
   int y1;
   double res = test(^(int z){ y = x+z; return (double)x; }); 
   printf("result = %f  x = %d y = %d\n", res, x, y);

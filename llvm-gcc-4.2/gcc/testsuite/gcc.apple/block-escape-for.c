@@ -7,19 +7,19 @@ extern void abort(void);
 
 static int count;
 static void _Block_byref_release(void * arg) {
-	++count;
+  ++count;
 }
 
-int main()
-{
-    __byref int O1;
+int main() {
+  {
+    __block int O1;
     int i;
     for (i = 1; i <= 5; i++)
-    {
-            __byref int I1;
-    }
+      {
+	__block int I1;
+      }
     if (count != 5)
-	abort();
-    return count - 6;
+      abort();
+  }
+  return count - 6;
 }
-

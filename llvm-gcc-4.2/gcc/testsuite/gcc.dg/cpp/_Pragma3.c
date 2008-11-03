@@ -3,7 +3,7 @@
 /* { dg-do preprocess } */
 
 /* Pragma buffers have a NULL "inc" member, which we would dereference
-   when getting a file's date and time.  
+   when getting a file's date and time.
 
    Based on PR 7526.  14 Aug 2002.  */
 

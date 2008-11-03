@@ -25,8 +25,8 @@ void (^__weak Henry)(void);
 int main(char *argc, char *argv[]) {
     // an object should not be retained within a stack Block
     void (^local)(void);
-    int i = 10;
-    Henry = ^ { | i | ++i; }; /* { dg-warning "has been deprecated in blocks" } */
+    __block int i = 10;
+    Henry = ^ { ++i; }; 
     local = Henry;
     if (GlobalInt2 == 1) {
         printf("%s: success\n", argv[0]);

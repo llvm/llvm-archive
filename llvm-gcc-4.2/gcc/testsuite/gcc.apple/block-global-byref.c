@@ -15,8 +15,8 @@ static int stat = 10;
 
 int foo() {
     static int local = 10;
-    CallBlock( ^ {| glob, stat, local| ++glob; ++stat; ++local; /* { dg-warning "has been deprecated in blocks" } */
-		  CallBlock(^ { |glob, stat, local| ++glob; ++stat; ++local; }); /* { dg-warning "has been deprecated in blocks" } */
+    CallBlock( ^ {++glob; ++stat; ++local; 
+		  CallBlock(^ { ++glob; ++stat; ++local; }); 
 		  ++glob; ++stat; ++local; });
 
     if (glob != 13 || stat != 13 || local != 13)

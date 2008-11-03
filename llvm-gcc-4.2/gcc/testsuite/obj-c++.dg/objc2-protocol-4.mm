@@ -1,4 +1,4 @@
-/* APPLE LOCAL file 5465109 */
+/* APPLE LOCAL file 5465109 - modified for radar 6255913 */
 /*
 The following test program should emit metadata for _OBJC_PROTOCOL_$_Proto2 and _OBJC_PROTOCOL_$__Proto1. 
  This root emits both protocols and puts them both in __protocol_list.
@@ -21,6 +21,6 @@ long foo ()
 	return (long)@protocol(Proto2);
 }
 /* LLVM LOCAL begin llvm syntax */
-/* { dg-final { scan-assembler "L_.*OBJC_PROTOCOL_\\\$_Proto1:" } } */
-/* { dg-final { scan-assembler "L_.*OBJC_PROTOCOL_\\\$_Proto2:" } } */
+/* { dg-final { scan-assembler "l_.*OBJC_PROTOCOL_\\\$_Proto1:" } } */
+/* { dg-final { scan-assembler "l_.*OBJC_PROTOCOL_\\\$_Proto2:" } } */
 /* LLVM LOCAL end */

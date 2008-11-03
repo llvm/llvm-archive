@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 6185344 */
+/* APPLE LOCAL file radar 6185344 - updated for radar 6230297 */
 /* Test for blocks with explicit return type specified. */
 /* { dg-options "-mmacosx-version-min=10.6 -ObjC++" { target *-*-darwin* } } */
 /* { dg-do compile } */
@@ -75,9 +75,10 @@ void func()
 int (^(^block)(double x))(char, short);
 
 void foo() {
-   block = ^(double x){ return ^int(char c, short y) { return c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
+   int one = 1;
+   block = ^(double x){ return ^int(char c, short y) { return one + c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
    // or:
-   block = ^(double x){ return ^(char c, short y) { return (int)c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
+   block = ^(double x){ return ^(char c, short y) { return one + (int)c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
 }
 
 

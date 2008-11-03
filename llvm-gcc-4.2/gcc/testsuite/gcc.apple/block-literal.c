@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 5732232, 6034839 - blocks */
+/* APPLE LOCAL file radar 5732232, 6034839, 6230297 - blocks */
 /* { dg-do compile } */
 /* { dg-options "-fblocks" } */
 
@@ -27,7 +27,7 @@ T somefunction() {
 	       /*  { dg-error "blocks require" "" { target *-*-* } 26 } */
     ;  /* { dg-error "argument list is required for block expression literals" } */
 
-  return ^{printf("\nBlock\n"); };  /* { dg-error "returning block that lives on the local stack" } */
+  return ^{printf("\nBlock\n"); };  
 }
 
 void test2() {
@@ -44,7 +44,8 @@ void test2() {
 }
 
 void (^test3())(void) {
-  return ^{};    /* { dg-error "returning block that lives on the local stack" } */
+  /* APPLE LOCAL radar 6230297 */
+  return ^{};    
 }
 
 void test4() {

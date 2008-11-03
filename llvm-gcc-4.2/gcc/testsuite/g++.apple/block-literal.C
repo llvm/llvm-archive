@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 5732232, 6034839 - blocks */
+/* APPLE LOCAL file radar 5732232, 6034839, 6230297 - blocks */
 /* { dg-do compile } */
 /* { dg-options "-fblocks" } */
 
@@ -25,7 +25,7 @@ T somefunction() {
 
   noop = ^; /* { dg-error "expected" } */
 
-  return ^{printf("\nBlock\n"); };  /* { dg-error "returning block that lives on the local stack" } */
+  return ^{printf("\nBlock\n"); };  
 }
 
 void test2() {
@@ -36,7 +36,8 @@ void test2() {
 }
 
 void (^test3())(void) {
-  return ^{};    /* { dg-error "returning block that lives on the local stack" } */
+  __block int i;
+  return ^{ i = 1; };    /* { dg-error "returning block that lives on the local stack" } */
 }
 
 void test4() {

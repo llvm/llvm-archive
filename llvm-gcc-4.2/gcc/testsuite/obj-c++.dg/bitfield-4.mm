@@ -5,7 +5,7 @@
 /* { dg-options "-lobjc -Wpadded" } */
 /* { dg-do run } */
 /* APPLE LOCAL radar 4894756 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */ 
+/* { dg-require-effective-target ilp32 } */
 /* APPLE LOCAL ARM objc2 */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 

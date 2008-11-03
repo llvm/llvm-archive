@@ -12,10 +12,11 @@ extern bar(double (^cp)(int));
 @implementation Root
 
 - (void)example {
- int y, x;
+ int x;
+ __block int y;
  NSAutoreleasePool *pool = [NSAutoreleasePool new];
  NSAutoreleasePool *relpool = [NSAutoreleasePool new];
- bar(^(int z){ |y| y = x+z;  [pool drain]; if (y) y++; [relpool release]; return y+2.0; }); /* { dg-warning "has been deprecated in blocks" } */
+ bar(^(int z){ y = x+z;  [pool drain]; if (y) y++; [relpool release]; return y+2.0; }); 
 }
 @end
 

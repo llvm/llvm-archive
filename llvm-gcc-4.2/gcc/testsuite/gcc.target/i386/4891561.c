@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4891561 */
 /* { dg-do compile { target i?86-*-darwin* } } */
 /* { dg-options "-O1 -std=gnu99 -fno-inline -fschedule-insns -mtune=pentium-m" } */
-/* { dg-skip-if "" { i?86-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 static inline unsigned char ceq (unsigned char a, unsigned char b)
 {

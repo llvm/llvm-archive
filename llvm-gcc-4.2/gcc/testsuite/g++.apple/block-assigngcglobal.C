@@ -31,7 +31,7 @@ void (^GlobalVoidVoid)(void);
 
 
 int main(char *argc, char *argv[]) {
-  __byref int i = 0;
+  __block int i = 0;
    // assigning a Block into a global should elicit a global write-barrier under GC
    GlobalVoidVoid = ^ { ++i; };
    return GlobalInt - 1;

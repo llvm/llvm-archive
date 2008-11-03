@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 5831920 */
+/* APPLE LOCAL file radar 5831920 - Modified for radar 6255671 */
 #import <Foundation/Foundation.h>
 /* Test a property with block type. */
 /* { dg-do run } */
@@ -15,8 +15,8 @@ int (^getIntCopy)(void);
 int (^getIntRetain)(void);
 
 }
-@property int (^getIntCopy)(void);
-@property int (^getIntRetain)(void);
+@property (assign) int (^getIntCopy)(void);
+@property (assign) int (^getIntRetain)(void);
 @end
 
 @implementation TestObject
@@ -34,7 +34,7 @@ int DoBlock (int (^getIntCopy)(void))
 
 int main(char *argc, char *argv[]) {
   int count;
-  __byref int val = 0;
+  __block int val = 0;
   TestObject *to = [[TestObject alloc] init];
   to.getIntRetain = ^ { printf("\n Hello(%d)\n", val); return ++val; };
   to.getIntCopy = to.getIntRetain;

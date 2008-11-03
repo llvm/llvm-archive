@@ -16,14 +16,14 @@ double test(myblock I) {
 }
 
 int main() {
-  __byref int x = 1;
-  __byref int y = 2;
-  double res = test(^(int z){|y| y = x+z; return (double)x; }); /* { dg-warning "has been deprecated in blocks" } */
+  __block int x = 1;
+  __block int y = 2;
+  double res = test(^(int z){y = x+z; return (double)x; }); 
   printf("result = %f  x = %d y = %d\n", res, x, y);
   if (x != 1 || y != 43)
    exit(1);
 
-  res = test(^(int z){|x| x = x+z; return (double)y; }); /* { dg-warning "has been deprecated in blocks" } */
+  res = test(^(int z){x = x+z; return (double)y; }); 
   printf("result = %f  x = %d y = %d\n", res, x, y);
   if (x != 43 || y != 43)
     exit(1);

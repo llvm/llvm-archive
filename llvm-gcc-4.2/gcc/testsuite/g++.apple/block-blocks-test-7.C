@@ -12,27 +12,27 @@ void _Block_byref_release(void*src){}
 int i;
 
 int foo() {
-   __byref  id FFFFFF;
-   __byref  id Q;
+   __block  id FFFFFF;
+   __block  id Q;
    ^{ FFFFFF = 0; }; 
 
    if (i)
    {
-     __byref  id FFFFFF;
-     __byref  id Q;
+     __block  id FFFFFF;
+     __block  id Q;
      ^{ FFFFFF = 0; }; 
    }
 }
 
 int main() {
-   __byref  id X;
-   __byref  id X1;
+   __block  id X;
+   __block  id X1;
    ^{  X = 0; }; 
 
    if (i)
    {
-     __byref  id X;
-     __byref  id X1;
+     __block  id X;
+     __block  id X1;
      ^{ X = 0; }; 
    }
    return 0;

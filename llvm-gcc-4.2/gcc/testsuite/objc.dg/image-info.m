@@ -6,7 +6,7 @@
 /* APPLE LOCAL ARM objc2 */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* APPLE LOCAL radar 4894756 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 #ifndef __NEXT_RUNTIME__
 #error Feature not currently supported by the GNU runtime

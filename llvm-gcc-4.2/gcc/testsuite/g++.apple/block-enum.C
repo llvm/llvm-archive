@@ -23,8 +23,8 @@ enum numbers test(myblock I) {
 }
 
 int main() {
-  __byref enum numbers x = one;
-  __byref enum numbers y = two;
+  __block enum numbers x = one;
+  __block enum numbers y = two;
 
   enum numbers res = test(^(enum numbers z){ y = z; return x; }); 
 

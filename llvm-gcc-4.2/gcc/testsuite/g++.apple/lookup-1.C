@@ -7,7 +7,7 @@ class A {
 void A::foo(const char* basename) {
   class B {
     friend class C;
-    static void WaitForSinks(C:: /* { dg-error "has not been declared" } */
-          D* data);  /* { dg-error "expected" } */
+    static void WaitForSinks(C::	/* { dg-error "has not been declared" } */
+			     D* data);	/* { dg-error "expected" } */
   };
 }

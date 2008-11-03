@@ -20,15 +20,15 @@ double test(myblock I) {
 }
 
 int main() {
-  enum numbers x = one;
-  enum numbers y = two;
+  __block enum numbers x = one;
+  __block enum numbers y = two;
 
-  enum numbers res = test(^(enum numbers z){|y| y = z; return x; }); /* { dg-warning "has been deprecated in blocks" } */
+  enum numbers res = test(^(enum numbers z){y = z; return x; }); 
 
   if (x != one || y != three || res != one)
    exit(1);
 
-  res = test(^(enum numbers z){|x| x = z; return x; }); /* { dg-warning "has been deprecated in blocks" } */
+  res = test(^(enum numbers z){x = z; return x; }); 
   if (x != three || res != three)
     exit(1);
   return 0;

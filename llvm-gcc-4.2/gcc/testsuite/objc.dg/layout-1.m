@@ -3,7 +3,7 @@
 /* { dg-do compile } */
 /* { dg-options "-Wpadded -Wpacked" } */
 /* APPLE LOCAL radar 4894756 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

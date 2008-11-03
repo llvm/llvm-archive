@@ -1,6 +1,6 @@
 /* APPLE LOCAL file 4380289 */
 /* { dg-do compile { target powerpc*-*-darwin* } } */
-/* { dg-skip-if "Not valid on 64-bit" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* { dg-options "-mlongcall -mkernel" } */
 /* { dg-final { scan-assembler "\tjmp" } } */
 /* { dg-final { scan-assembler "\tjbsr" } } */

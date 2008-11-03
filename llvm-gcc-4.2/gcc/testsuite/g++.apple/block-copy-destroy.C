@@ -12,7 +12,7 @@ extern void bar(double (^cp)(int));
 @implementation Root
 
 - (void)example {
- __byref int y, x;
+ __block int y, x;
  NSAutoreleasePool *pool = [NSAutoreleasePool new];
  NSAutoreleasePool *relpool = [NSAutoreleasePool new];
  bar(^(int z){ y = x+z;  [pool drain]; if (y) y++; [relpool release]; return y+2.0; }); 

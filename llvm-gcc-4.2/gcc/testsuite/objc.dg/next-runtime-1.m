@@ -7,7 +7,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fnext-runtime" } */
 /* APPLE LOCAL 64-bit 4492976 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

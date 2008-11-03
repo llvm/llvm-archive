@@ -1,5 +1,5 @@
 /* APPLE LOCAL file radar 6083129 byref escapes */
-/* Test for generation of escape _Block_byref_release call when a __byref
+/* Test for generation of escape _Block_byref_release call when a __block
    variable inside a block is declared and used. */
 /* { dg-options "-fblocks" } */
 /* { dg-do run } */
@@ -21,7 +21,7 @@ void junk(void (^block)(void)) {
 }
 
 int test() {
-  void (^dummy)(void) = ^{ int __byref i = 10; printf("i = %d\n", i); };
+  void (^dummy)(void) = ^{ int __block i = 10; printf("i = %d\n", i); };
   junk(dummy);
   return count;
 }

@@ -19,9 +19,11 @@ void junk(void (^block)(void)) {
 }
 
 int test() {
-  int __byref i = 10;
-  void (^dummy)(void) = ^{ | i | ++i; };	/* { dg-warning "has been deprecated in blocks" } */
+  {
+  int __block i = 10;
+  void (^dummy)(void) = ^{ ++i; };	
   junk(dummy);
+  }
   return count;
 }
 

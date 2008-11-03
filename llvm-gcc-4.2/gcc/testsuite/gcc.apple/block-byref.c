@@ -4,38 +4,26 @@
 /* { dg-options "-fblocks" } */
 
 int main() {
+	__block int a;
+	__block int b;
 	int x, y;
 	^{ };
-	^{|x|}; /* { dg-warning "has been deprecated in blocks" } */
+	^{}; 
 
-	^{ |x,y| int r; return x+y+r; }; /* { dg-warning "has been deprecated in blocks" } */
-	^{ |x,y|; int r; return x+y+r; }; /* { dg-warning "has been deprecated in blocks" } */
+	^{ int r; return x+y+r; }; 
+	^{ int r; return x+y+r; }; 
 
-	^{ |x,y|; int r; return x+y+r; /* { dg-warning "has been deprecated in blocks" } */
+	^{ int r; return x+y+r; 
            ^{
-	   |x,y|; int r; return x+y; /* { dg-warning "has been deprecated in blocks" } */
+	   int r; return x+y; 
 	    };
          };
 
-	^{ |x,y|; int r; return x+y+r; /* { dg-warning "has been deprecated in blocks" } */
-           ^{
-              { |x,y|; int r; return x+y; }; /* { dg-error "expected expression before" } */
-            };
-         };
+	^{a = 1;}; 
 
-	^ { int r;
-	    |x, y|    /* { dg-error "expected expression before" } */
-	  };
-
-	^{| /* { dg-warning "has been deprecated in blocks" } */
-	   main()|};  /* { dg-error "only a visible variable may be used in a block byref declaration" } */
-
-	/* Assigning to byref variables. */
-	^{|x| x = 1;}; /* { dg-warning "has been deprecated in blocks" } */
-
-	^{ |x,y| /* { dg-warning "has been deprecated in blocks" } */
-	   if (x != y)
-	     x = y = 100;
+	^{ 
+	   if (a != b)
+	     a = b = 100;
 	 };
 
 

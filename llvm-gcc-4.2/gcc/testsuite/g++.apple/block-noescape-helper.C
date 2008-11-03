@@ -20,7 +20,7 @@ void junk(void (^block)(void)) {
 
 int test() {
   {
-    __byref int i = 10;
+    __block int i = 10;
     void (^dummy)(void) = ^{ ++i; };
     junk(dummy);
   }

@@ -13,22 +13,20 @@ static void _Block_byref_release(void * arg) {
 }
 
 int main() {
-  __byref int O1;
-  int p = 0;
-  do
-    {
-      __byref int I1;
-      do
-	{
-	  __byref int J1;
-	  if (p == 2)
-	    break;
-	}
-      while ( ++p < 3);
+  {
+    __block int O1;
+    int p = 0;
+    do {
+      __block int I1;
+      do {
+	__block int J1;
+	if (p == 2)
+	  break;
+      } while ( ++p < 3);
       if (p == 4)
 	break;
-    }
-  while (++p != 5);
+    } while (++p != 5);
+  }
 
   return count-7;
 }

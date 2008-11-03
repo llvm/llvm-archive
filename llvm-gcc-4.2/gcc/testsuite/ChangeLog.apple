@@ -1,3 +1,629 @@
+2008-10-31  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5813291
+	* gcc.apple/5813291.c: New.
+
+2008-10-31  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6175959
+	* gcc.apple/block-5992047.c: Modified
+	* gcc.apple/block-objectassign.c: Add
+	* g++.apple/block-objectassign.C: Add
+	* g++.apple/block-5992047.C: Modified
+
+2008-10-28  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6329245
+	* gcc.apple/block-nullblockisa.c: Modified
+	* gcc.apple/block-blocks-test-8.c: Modified
+	* gcc.apple/block-6116917.c: Modified
+	* g++.apple/block-nullblockisa.C: Modified
+	* g++.apple/block-blocks-test-8.C: Modified
+	* g++.apple/blocks-recovercpp.C: Modified
+
+2008-10-28  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6261630
+	* obj-c++.dg/method-type-attribute.mm: Add
+
+2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6231433
+	* objc.dg/cond-expr-warn.m: Add
+	* obj-c++.dg/cond-expr-warn.mm: Add
+
+2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6302949
+	* objc.dg/property-missing-comma.m: Add
+	* obj-c++.dg/property-missing-comma.mm: Add
+
+2008-10-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6305545
+	* g++.apple/block-in_structors.C: Add
+
+2008-10-24  Stuart Hastings  <stuart@apple.com>
+
+	Radar 308664 6310728 6311054 6311100
+	* gcc.apple/6310728.c: New.
+	* gcc.apple/6308664.c: New.
+	* objc.dg/6311054.m: New.
+
+2008-10-24  Josh Conner  <jconner@apple.com>
+
+	Radar 6305331
+	* gcc.apple/longcall-2.c: New test.
+
+2008-10-22  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6310599
+	* gcc.apple/block-duplicate-err.c: Add
+	* g++.apple/block-duplicate-err.C: Add
+
+2008-10-21  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6187262
+	* gcc.apple/6187262.c: New.
+
+2008-10-21  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4746503
+	* gcc.apple/no-nested-deprecated-warn.c: Add
+
+2008-10-20  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6222167
+	* gcc.apple/6222167.c: New.
+
+2008-10-20  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6255595
+	* objc.dg/objc2-newmetadata-sections.m: New
+	
+2008-10-17  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6289031
+	* gcc.apple/block-escape-do.c: Modified
+	* gcc.apple/block-escape-goto.c: Modified
+	* gcc.apple/block-escape-return.c: Modified
+	* gcc.apple/block-escape-while.c: Modified
+	* gcc.apple/block-noescape-helper.c: Modified
+	* gcc.apple/block-escape-for.c: Modified
+	* gcc.apple/block-escape-for1.c: Modified
+	* gcc.apple/block-noescape-helper-1.c: Modified
+	* gcc.apple/block-noescape-helper-2.c: Modified
+
+2008-10-15  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6255801
+	* objc.dg/6255801.m: New.
+
+2008-10-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6276695
+	* gcc.apple/block-blocks-test-4.c: Modified
+	* gcc.apple/block-byref.c: Modified
+	* gcc.apple/block-noescape-helper-3.c: Modified
+	* gcc.apple/block-error-global-byref.c: Modified
+	* gcc.apple/block-block-property-2.c: Modified
+	* gcc.apple/block-blocks-test-5.c: Modified
+	* gcc.apple/block-escape-do.c: Modified
+	* gcc.apple/block-escape-switch.c: Modified
+	* gcc.apple/block-enum.c: Modified
+	* gcc.apple/block-assignweakgc-1.c: Modified
+	* gcc.apple/block-assigngcstrongcast.c: Modified
+	* gcc.apple/block-unused-parameter.c: Modified
+	* gcc.apple/block-blocks-test-6.c: Modified
+	* gcc.apple/block-escape-goto.c: Modified
+	* gcc.apple/block-escape-return.c: Modified
+	* gcc.apple/block-global-byref.c: Modified
+	* gcc.apple/block-byref-attribute.c: Modified
+	* gcc.apple/block-unused-warn.c: Modified
+	* gcc.apple/block-blocks-test-7.c: Modified
+	* gcc.apple/block-readweakgc.c: Modified
+	* gcc.apple/block-blocks-test-8.c: Modified
+	* gcc.apple/block-escape-while.c: Modified
+	* gcc.apple/block-codegen-1.c: Modified
+	* gcc.apple/block-assignweakgc.c: Modified
+	* gcc.apple/block-readweakgcivar.c: Modified
+	* gcc.apple/block-blocks-test-1.c: Modified
+	* gcc.apple/block-noescape-helper.c: Modified
+	* gcc.apple/block-escape-for.c: Modified
+	* gcc.apple/block-escape-nested-while.c: Modified
+	* gcc.apple/block-escape-for1.c: Modifie.c: Modified
+	* gcc.apple/block-blocks-test-2.c: Modified
+	* gcc.apple/block-noescape-helper-1.c: Modified
+	* gcc.apple/block-assigngcglobal.c: Modified
+	* gcc.apple/block-copy-destroy.c: Modified
+	* gcc.apple/block-global-byref-1.c: Modified
+	* gcc.apple/block-assigngcivar.c: Modified
+	* gcc.apple/block-blocks-test-3.c: Modified
+	* gcc.apple/block-escape-return1.c: Modified
+	* gcc.apple/block-noescape-helper-2.c: Modified
+	* gcc.apple/block-assignweakgcivar.c: Modified
+	* gcc.apple/block-dup-invoke_impl.c: Modified
+	* gcc.apple/block-global-byref-2.c: Modified
+	* g++.apple/block-byref.C: Modified
+	* g++.apple/block-noescape-helper-3.C: Modified
+	* g++.apple/block-block-property-2.C: Modified
+	* g++.apple/block-blocks-test-5.C: Modified
+	* g++.apple/block-escape-do.C: Modified
+	* g++.apple/block-escape-switch.C: Modified
+	* g++.apple/block-enum.C: Modified
+	* g++.apple/block-assignweakgc-1.C: Modified
+	* g++.apple/block-assigngcstrongcast.C: Modified
+	* g++.apple/block-unused-parameter.C: Modified
+	* g++.apple/block-blocks-test-6.C: Modified
+	* g++.apple/block-escape-goto.C: Modified
+	* g++.apple/block-escape-return.C: Modified
+	* g++.apple/block-unused-warn.C: Modified
+	* g++.apple/block-byref-attribute.C: Modified
+	* g++.apple/block-nested.C: Modified
+	* g++.apple/block-blocks-test-7.C: Modified
+	* g++.apple/block-readweakgc.C: Modified
+	* g++.apple/block-blocks-test-8.C: Modified
+	* g++.apple/block-escape-while.C: Modified
+	* g++.apple/block-codegen-1.C: Modified
+	* g++.apple/block-assignweakgc.C: Modified
+	* g++.apple/block-readweakgcivar.C: Modified
+	* g++.apple/block-blocks-test-1.C: Modified
+	* g++.apple/block-noescape-helper.C: Modified
+	* g++.apple/block-escape-for.C: Modified
+	* g++.apple/block-escape-nested-while.C: Modified
+	* g++.apple/block-escape-for1.C: Modified
+	* g++.apple/block-blocks-test-2.C: Modified
+	* g++.apple/block-noescape-helper-1.C: Modified
+	* g++.apple/block-assigngcglobal.C: Modified
+	* g++.apple/block-copy-destroy.C: Modified
+	* g++.apple/block-assigngcivar.C: Modified
+	* g++.apple/block-blocks-test-3.C: Modified
+	* g++.apple/block-escape-return1.C: Modified
+	* g++.apple/block-noescape-helper-2.C: Modified
+	* g++.apple/block-assignweakgcivar.C: Modified
+	* g++.apple/block-dup-invoke_impl.C: Modified
+	* g++.apple/block-global-byref-2.C: Modified
+	* g++.apple/block-blocks-test-4.C: Modified
+2008-10-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6017984
+	* objc.dg/unimplemented-anon-category.m: Add
+
+2008-10-15  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6285794
+	* objc.dg/symtab-1-64bit.m: Modified
+
+2008-10-15  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6271728
+	* obj-c++.dg/syntax-error-7.mm: Modified
+	* obj-c++.dg/syntax-error-9.mm: Add
+
+2008-10-14  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6275956
+	* g++.apple/block-explicit-this.C: Add
+
+2008-10-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6286881
+	* gcc.apple/6286881.c: New
+
+2008-10-13  Devang Patel  <dpatel@apple.com>
+
+       Radar 6184418
+       * gcc.apple/block-nested.c: Undo previous fix.
+       * gcc.apple/block-byref-block.c: Undo previous fix.
+       * gcc.apple/block-6116917.c: Undo previous fix.
+       * gcc.apple/align-test-5c.c: Undo previous fix.
+       * g++.apple/block-byref-block.c: Undo previous fix.
+       * objc-c++.dg/objc-gc-5.mm: Undo previous fix.
+       * objc.dg/objc-gc-3.m: Undo previous fix.
+
+2008-10-13  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6255913
+	* objc.dg/objc2-protocol-1.m: Modifed
+	* objc.dg/objc2-protocol-9.m: Modifed
+	* objc.dg/objc2-protocol-2.m: Modifed
+	* objc.dg/objc2-protocol-4.m: Modifed
+	* objc.dg/objc2-protocol-5.m: Modifed
+	* obj-c++.dg/objc2-protocol-9.mm: Modifed
+	* obj-c++.dg/objc2-protocol-4.mm: Modifed
+	* obj-c++.dg/objc2-protocol-5.mm: Modifed
+	* obj-c++.dg/objc2-protocol-1.mm: Modifed
+	* obj-c++.dg/objc2-protocol-2.mm: Modifed
+	
+2008-10-10  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5847213 - New block ABI
+
+	* gcc.apple/block-nullblockisa.c: Modified
+	* gcc.apple/block-blocks-test-8.c: Modified
+	* gcc.apple/block-6116917.c: Modified
+	* gcc.apple/block-nested-block-var.c: Modified
+	* g++.apple/block-nullblockisa.C: Modified
+	* g++.apple/block-blocks-test-8.C: Modified
+	* g++.apple/blocks-recovercpp.C: Modified
+	* g++.apple/block-nested-block-var.C: Modified
+ 
+2008-10-10  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6227434
+	* gcc.apple/6227434.c: New.
+
+2008-10-10  Caroline Tice  <ctice@apple.com>a
+
+       Radar 6275985
+       * obj-c++.dg/dwarf-1.mm : Modify to expect function name
+       to be in __debug_str section.
+       * gcc.apple/debug-inlined-section.c: New testcase.
+       * gcc.apple/debug-inlined-section.h: New testcase.
+       * g++.apple/debug-inlined-section.C: New testcase.
+
+2008-10-09  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6269491
+	* objc.dg/objc-gc-lvalue-cast-warn.m: Add
+	* objc.dg/objc-gc-7.m: Modified
+	* objc.dg/objc-gc-weak-1.m: Modified
+	* objc.dg/objc-gc-1.m: Modified
+	* objc.dg/objc-gc-2.m: Modified
+	* obj-c++.dg/objc-gc-2.mm: Modified
+	* obj-c++.dg/objc-gc-weak-1.mm: Modified
+	* obj-c++.dg/objc-gc-8.mm: Modified
+	* obj-c++.dg/objc-gc-1.mm: Modified
+
+
+2008-10-09  Devang Patel  <dpatel@apple.com>
+
+       Radar 6184418
+       * gcc.target/powerpc/darwin-bool-1.c: Require ilp32.
+       * gcc.target/i386/4891561.c: Require ilp32.
+       * gcc.target/i386/stack-prot-kernel.c: Require ilp32.
+       * gcc.target/i386/reload-1.c: Require ilp32.
+       * gcc.apple/asm-block-18.c: Require ilp32.
+       * gcc.apple/align-test-5d.c: Require ilp32.
+       * gcc.apple/block-byref-block.c: Require ilp32.
+       * gcc.apple/4525731-2.c: Require ilp32.
+       * gcc.apple/asm-block-6.c: Require ilp32.
+       * gcc.apple/i386-ssetype-6.c: Require ilp32.
+       * gcc.apple/asm-block-36.c: Require ilp32.
+       * gcc.apple/asm-block-45.c: Require ilp32.
+       * gcc.apple/4182984.c: Require ilp32.
+       * gcc.apple/bswap-1.c: Require ilp32.
+       * gcc.apple/asm-block-7.c: Require ilp32.
+       * gcc.apple/asm-block-54.c: Require ilp32.
+       * gcc.apple/4603883.c: Require ilp32.
+       * gcc.apple/default-x86_32-sse3.c: Require ilp32.
+       * gcc.apple/i386-att-stub-1.c: Require ilp32.
+       * gcc.apple/asm-block-13.c: Require ilp32.
+       * gcc.apple/asm-block-55.c: Require ilp32.
+       * gcc.apple/i386-bitmask1.c: Require ilp32.
+       * gcc.apple/block-nested.c: Require ilp32.
+       * gcc.apple/asm-block-31.c: Require ilp32.
+       * gcc.apple/i386-regparmandstackparm-1.c: Require ilp32.
+       * gcc.apple/block-blocks-test-8.c: Require ilp32.
+       * gcc.apple/asm-block-32.c: Require ilp32.
+       * gcc.apple/asm-block-57.c: Require ilp32.
+       * gcc.apple/asm-block-41.c: Require ilp32.
+       * gcc.apple/asm-block-24.c: Require ilp32.
+       * gcc.apple/i386-unaligned-movaps.c: Require ilp32.
+       * gcc.apple/i386-deep-branch-predict-1.c: Require ilp32.
+       * gcc.apple/asm-block-50.c: Require ilp32.
+       * gcc.apple/asm-block-33.c: Require ilp32.
+       * gcc.apple/default-cpu-1.c: Require ilp32.
+       * gcc.apple/opt-size-2.c: Require ilp32.
+       * gcc.apple/align-test-5b.c: Require ilp32.
+       * gcc.apple/4104248.c: Require ilp32.
+       * gcc.apple/asm-block-25.c: Require ilp32.
+       * gcc.apple/4167459.c: Require ilp32.
+       * gcc.apple/const-cfstring-3.c: Require ilp32.
+       * gcc.apple/4115609.c: Require ilp32.
+       * gcc.apple/asm-block-17.c: Require ilp32.
+       * gcc.apple/default-cpu-2.c: Require ilp32.
+       * gcc.apple/align-test-5c.c: Require ilp32.
+       * gcc.apple/4113078.c: Require ilp32.
+       * gcc.apple/4525731-1.c: Require ilp32.
+       * gcc.apple/dynamic-no-pic-1.c: Require ilp32.
+       * gcc.apple/asm-test-nofralloc.c: Require ilp32.
+       * gcc.apple/block-6116917.c: Require ilp32.
+       * gcc.apple/asm-block-35.c: Require ilp32.
+       * g++.dg/kext4.C: Require ilp32.
+       * g++.dg/apple-longcall-2.C: Require ilp32.
+       * g++.dg/kext7.C: Require ilp32.
+       * g++.dg/apple-longcall-3.C: Require ilp32.
+       * objc.dg/objc-fast-4.m: Require ilp32.
+       * objc.dg/objc-dir-dispatch.m: Require ilp32.
+       * objc.dg/objc-fpret-2.m: Require ilp32.
+       * objc.dg/objc-gc-3.m: Require ilp32.
+       * objc.dg/const-str-10.m: Require ilp32.
+       * objc.dg/try-catch-17.m: Require ilp32.
+       * objc.dg/objc2-alignment-test-1.m: Require ilp32.
+       * objc.dg/const-str-11.m: Require ilp32.
+       * objc.dg/objc-visibility-hidden-1.m: Require ilp32.
+       * objc.dg/selector-3.m: Require ilp32.
+       * objc.dg/objc-gc-section-1.m: Require ilp32.
+       * objc.dg/const-str-12.m: Require ilp32.
+       * objc.dg/symtab-1.m: Require ilp32.
+       * objc.dg/objc-gc-section-2.m: Require ilp32.
+       * objc.dg/volatile-1.m: Require ilp32.
+       * objc.dg/const-str-13.m: Require ilp32.
+       * objc.dg/stubify-2.m: Require ilp32.
+       * objc.dg/special/unclaimed-category-1.m: Require ilp32.
+       * objc.dg/encode-7a.m: Require ilp32.
+       * objc.dg/layout-1.m: Require ilp32.
+       * objc.dg/bitfield-3.m: Require ilp32.
+       * objc.dg/defs-warn-1.m: Require ilp32.
+       * objc.dg/objc-fast-1.m: Require ilp32.
+       * objc.dg/stret-2.m: Require ilp32.
+       * objc.dg/zero-link-2.m: Require ilp32.
+       * objc.dg/objc-fast-2.m: Require ilp32.
+       * objc.dg/method-4.m: Require ilp32.
+       * objc.dg/sync-objc-exception.m: Require ilp32.
+       * objc.dg/next-runtime-1.m: Require ilp32.
+       * objc.dg/image-info.m: Require ilp32.
+       * objc.dg/bitfield-5.m: Require ilp32.
+       * objc.dg/objc-fast-3.m: Require ilp32.
+       * objc.dg/try-catch-15.m: Require ilp32.
+       * objc.dg/objc-fpret-1.m: Require ilp32.
+       * objc.dg/const-str-6.m: Require ilp32.
+       * objc.dg/objc-gc-2.m: Require ilp32.
+       * objc.dg/const-cfstring-4.m: Require ilp32.
+       * objc.dg/defs.m: Require ilp32.
+       * obj-c++.dg/template-4.m: Require ilp32.
+       * obj-c++.dg/defs.m: Require ilp32.
+       * obj-c++.dg/const-str-12.m: Require ilp32.
+       * obj-c++.dg/cxx-ivars-3.m: Require ilp32.
+       * obj-c++.dg/const-cfstring-4.mm: Require ilp32.
+       * obj-c++.dg/objc-fast-2.mm: Require ilp32.
+       * obj-c++.dg/layout-1.mm: Require ilp32.
+       * obj-c++.dg/const-str-13.mm: Require ilp32.
+       * obj-c++.dg/try-catch-20.mm: Require ilp32.
+       * obj-c++.dg/bitfield-1.mm: Require ilp32.
+       * obj-c++.dg/objc-fast-3.mm: Require ilp32.
+       * obj-c++.dg/debug-1.mm: Require ilp32.
+       * obj-c++.dg/const-str-9.mm: Require ilp32.
+       * obj-c++.dg/objc-fpret-1.mm: Require ilp32.
+       * obj-c++.dg/method-11.mm: Require ilp32.
+       * obj-c++.dg/objc-gc-4.mm: Require ilp32.
+       * obj-c++.dg/objc-gc-section-1.mm: Require ilp32.
+       * obj-c++.dg/objc-fast-4.mm: Require ilp32.
+       * obj-c++.dg/objc-gc-5.mm: Require ilp32.
+       * obj-c++.dg/const-str-10.mm: Require ilp32.
+       * obj-c++.dg/objc-gc-section-2.mm: Require ilp32.
+       * obj-c++.dg/objc-visibility-hidden-1.mm: Require ilp32.
+       * obj-c++.dg/objc-stret-1.mm: Require ilp32.
+       * obj-c++.dg/defs-warn-1.mm: Require ilp32.
+       * obj-c++.dg/const-str-11.mm: Require ilp32.
+       * obj-c++.dg/bitfield-4.mm: Require ilp32.
+       * obj-c++.dg/sync-objc-exception.mm: Require ilp32.
+       * obj-c++.dg/objc-fast-1.mm: Require ilp32.
+       * g++.apple/block-blocks-test-8.C: Require ilp32.
+       * g++.apple/block-byref-block.C: Require ilp32.
+
+2008-10-07  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6258941
+	* gcc.apple/6258941.c: New.
+
+2008-10-06  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6268817
+	* gcc.apple/block-in-foreach-header.c: Add
+	* g++.apple/block-in-foreach-header.C: Add
+	
+2008-10-03  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6267049
+	* objc.dg/objc2-property-typedefprotocol.m: Add
+
+2008-10-03  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6264448
+	* objc.dg/objc-property-enumtype.m: Add
+	* obj-c++.dg/objc-property-enumtype.mm: Add
+
+2008-10-02  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6230656
+
+	* gcc.apple/block-no-block-def.c: Add
+
+2008-10-02  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6246527
+	* gcc.apple/block-printf-attribute-1.c: Add
+	* gcc.apple/block-sentinel-attribute.c: Add
+	* g++.apple/block-sentinel-attribute.C: Add
+	* g++.apple/block-printf-attribute-1.C: Add
+
+2008-10-02  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5919583
+	* gcc.apple/5919583.c: New.
+
+2008-10-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6252174
+	* objc.dg/objc2-sendsuper_msg.m: Add
+
+2008-10-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6255671
+	* gcc.apple/block-block-property-2.c: Add
+	* g++.apple/block-block-property-2.C: Add
+
+2008-09-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6230297
+	* g++.apple/block-localisglobal.C: New
+	* gcc.apple/block-localisglobal.c: New
+	* gcc.apple/block-complicated-type.c: Modified
+	* gcc.apple/block-explicit-return-type.c: Modified
+	* gcc.apple/block-local-stack.c: Modified
+	* gcc.apple/block-literal.c: Modified
+	* g++.apple/block-continuation.C: Modified
+	* g++.apple/block-explicit-return-type.C: Modified
+	* g++.apple/block-literal.C: Modified
+	* g++.apple/block-local-stack.C: Modified
+	* g++.apple/block-complicated-type.C: Modified
+	* gcc.apple/block-attributes-1.c: Modified
+	* g++.apple/block-attributes-1.C: Modified
+
+
+2008-09-30  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6225809
+	* gcc.apple/block-nested-block-var.c: Add
+	* g++.apple/block-nested-block-var.C: Add
+
+2008-09-30  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5919583
+	Revert 2008-09-26 patch.
+
+2008-09-30  Caroline Tice  <ctice@apple.com>
+
+      Radars 6237086 & 6237616
+      g++.apple/cp-block-byref-2.C:  Make minor fix to testcase.
+
+2008-09-30  Caroline Tice  <ctice@apple.com>
+
+      Radars 6237086 & 6237616
+      gcc.apple/block-byref-2.c:  New testcase.
+      g++.apple/cp-block-byref-2.C:  New testcase
+
+2008-09-29  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6154598
+	* g++.apple/blocks-method-call.C: Add
+
+2008-09-26  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6243400
+	* g++.apple/block-destructors.C: New
+
+2008-09-28  Caroline Tice  <ctice@apple.com>
+
+        Radar 6163705
+        * gcc.apple/block-byref-3.c:  Fix to work properly with -m64.
+
+2008-09-26  Stuart Hastings  <stuart@apple.com>
+
+	Radar 5919583
+	* gcc.apple/5919583.c: New.
+
+2008-09-26  Caroline Tice  <ctice@apple.com>
+
+        Radar 6163705
+	* gcc.apple/block-byref-3.c:  New testcase.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6246965
+	* gcc.apple/block-call.c : Added more tests.
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6244520
+	* gcc.apple/block-nullblockisa.c: Add
+	* gcc.apple/block-blocks-test-8.c: Modified
+	* g++.apple/block-nullblockisa.C: Add
+
+2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6237713
+	* gcc.apple/block-attributes-1.c: New
+	* g++.apple/block-attributes-1.C: New
+
+2008-09-24  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6025404
+	* gcc.apple/6025404.c: New.
+
+2008-09-24  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6119849
+	* gcc.apple/6119849.c: Added return.
+
+2008-09-23  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6196572
+	* gcc.apple/block-call.c: Modified
+
+2008-09-23  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6230701
+	* gcc.apple/block-no-trampoline.c: New
+	* gcc.apple/block-implicit-byref.c: Modified
+	* g++.apple/block-no-trampoline.C: New
+
+2008-09-22  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6185789
+	* g++.apple/6185789.C: New.
+
+2008-09-22  Josh Conner  <jconner@apple.com>
+
+	Radar 6204451
+	* objc.dg/6204451.m: New test.
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6230800
+	* obj-c++.dg/objc2-none-fragile-ivar-use.mm: Modified
+	* objc.dg/objc2-none-fragile-ivar-use.m: Modified
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 4900615
+	* objc.dg/encode-ld.m: Add
+
+2008-09-19  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6173152
+	* objc.dg/enhanced-proto-4.m: Modified
+	* objc.dg/newproperty-type-conv-1.m: Modified
+	* objc.dg/property-synthesize-ivar-1.m: Modified
+	* objc.dg/property-synthesize-ivar-9.m: Add
+	* objc.dg/newproperty-syntax-1.m: Modified
+	* objc.dg/newproperty-weak-attribute-3.m: Modified
+	* objc.dg/property-synthesize-ivar-2.m: Modified
+	* objc.dg/property-synthesize-ivar-3.m: Modified
+	* objc.dg/property-synthesize-ivar-4.m: Modified
+	* objc.dg/property-synthesize-ivar-32-5.m: Add
+	* objc.dg/property-synthesize-ivar-5.m: Modified
+	* objc.dg/property-synthesize-ivar-6.m: Add
+	* objc.dg/newproperty-nowarn-compound-exp.m: Modified
+	* objc.dg/newproperty-neg-ivar-check-1.m: Modified
+	* objc.dg/synthesized-unknown-ivar-warn.m: Modified
+	* objc.dg/property-synthesize-ivar-7.m: Modified
+	* obj-c++.dg/newproperty-type-conv-1.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-5.mm: Add
+	* obj-c++.dg/property-synthesize-ivar-32-5.mm: Add
+	* obj-c++.dg/newproperty-syntax-1.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-6.mm: Add
+	* obj-c++.dg/property-synthesize-ivar-1.mm: Modified
+	* obj-c++.dg/newproperty-weak-attribute-3.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-7.mm: Modified
+	* obj-c++.dg/enhanced-proto-4.mm: Modified
+	* obj-c++.dg/newproperty-nowarn-compound-exp.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-2.mm: Modified
+	* obj-c++.dg/newproperty-neg-ivar-check-1.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-8.mm: Add
+	* obj-c++.dg/property-synthesize-ivar-3.mm: Modified
+	* obj-c++.dg/property-synthesize-ivar-10.mm: Add
+	* obj-c++.dg/property-synthesize-ivar-9.mm: Add
+	* objc.dg/property-synthesize-ivar-8.m: Add
+	* obj-c++.dg/property-synthesize-ivar-4.mm: Modified
+
+2008-09-19  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6119849
+	* gcc.apple/6119849.c: New.
+
 2008-09-16  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6214617

@@ -5,13 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define HASISA 1
-
 void check(void *ptr) {
     struct inner {
-#if HASISA
         void* isa; // should be zero
-#endif
         long forwarding;
         int flags;
         int size;
@@ -19,20 +15,30 @@ void check(void *ptr) {
         // long disposehelper not needed
         int i;  //
     };
+/* APPLE LOCAL begin radar 5847213 - radar 6329245 */
     struct block_with_blocki {
-        long isa;
-        int flags;
-        int size;
-        long impl;
-        long copyhelper;
-        long destroyhelper;
-        struct inner *blocki;
+    void *isa; // initialized to &_NSConcreteStackBlock or &_NSConcreteGlobalBlock
+    int Block_flags;
+    int reserved;
+    void (*Block_invoke)(void *);
+
+    struct Block_descriptor_1 {
+        unsigned long int reserved;     // NULL
+        unsigned long int size;  // sizeof(struct Block_literal_1)
+
+        // optional helper functions
+        void (*Block_copy)(void *dst, void *src);
+        void (*Block_dispose)(void *src);
+    } *descriptor;
+    struct inner *blocki;
     } *block = (struct block_with_blocki *)ptr;
+/* APPLE LOCAL end radar 5847213 - radar 6329245 */
+
     // sanity checks
-    if (block->size != sizeof(struct block_with_blocki)) {
+    if (block->descriptor->size != sizeof(struct block_with_blocki)) {
         // layout funny
         printf("layout is funny, struct size is %d vs runtime size %ld\n",
-                    block->size,
+                    (int)block->descriptor->size,
                     sizeof(struct block_with_blocki));
         exit(1);
     }
@@ -41,12 +47,10 @@ void check(void *ptr) {
             block->blocki->size);
         exit(1);
     }
-#if HASISA
     if (block->blocki->isa != (void*)NULL) {
         printf("not a NULL __block isa\n");
         exit(1);
     }
-#endif
     return;
 }
         

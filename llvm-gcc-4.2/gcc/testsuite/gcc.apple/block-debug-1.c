@@ -4,7 +4,8 @@
 
 /* { dg-do compile } */
 /* { dg-options "-g -O0 -fblocks -dA" } */
-/* { dg-final { scan-assembler "invoke_impl.*DW_AT_name" } } */
+/* { dg-final { scan-assembler "__block_descriptor.*DW_AT_name" } } */
+/* { dg-final { scan-assembler "__block_literal_generic.*DW_AT_name" } } */
 
 struct inStruct {
   void (^genericBlockPtr)();

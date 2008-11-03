@@ -5,7 +5,7 @@
 // APPLE LOCAL radar 4842158
 // { dg-options "-fnext-runtime -mmacosx-version-min=10.3" }
 /* APPLE LOCAL radar 4280641 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 #include <objc/objc-runtime.h>
 #include <stdlib.h>

@@ -15,14 +15,14 @@ static void _Block_byref_release(void * arg) {
 
 int main() {
   {
-    __byref int O1;
+    __block int O1;
     int i;
     int p;
     for (i = 1; i <= 5; i++) {
-      __byref int I1;
+      __block int I1;
       p = 0;
       while (p != 10) {
-	__byref int II1;
+	__block int II1;
 	if (p == 2)
 	  break;
 	++p;

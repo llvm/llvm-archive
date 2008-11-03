@@ -3,7 +3,7 @@
 /* { dg-options "-O3 -msse2 -fdump-rtl-csa" } */
 /* LLVM LOCAL fdump not supported */
 /* { dg-require-fdump "" } */
-/* { dg-skip-if "" { i?86-*-* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* { dg-final { scan-rtl-dump "deleted 5 dead insns" "csa" } }*/
 #include <emmintrin.h>
 typedef __SIZE_TYPE__ size_t;

@@ -30,10 +30,10 @@ id objc_read_weak(id *location) {
 
 int main(char *argc, char *argv[]) {
     // an object should not be retained within a stack Block
-    int i = 0;
+    __block int i = 0;
     void (^local)(void);
     Foo *foo = [[Foo alloc] init];
-    foo->ivar = ^ { | i | ++i; }; /* { dg-warning "has been deprecated in blocks" } */
+    foo->ivar = ^ { ++i; }; 
     local = foo->ivar;
     if (GlobalInt2 == 1) {
         printf("%s: success\n", argv[0]);

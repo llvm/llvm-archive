@@ -2,7 +2,7 @@
 /* Test the __byreg runtime features. */
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC++ -framework Foundation" { target i?86-*-darwin*  } } */
 /* { dg-do run { target i?86-*-darwin* } } */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 #include <objc/Object.h>
 #import <Foundation/Foundation.h>
@@ -48,17 +48,28 @@ enum {
     BLOCK_IS_GC =             (1 << 27),
 };
 
+/* APPLE LOCAL begin radar 5847213 - radar 6329245 */
 struct Block_basic {
-    void *isa;
-    int Block_flags;  // int32_t
-    int Block_size; // XXX should be packed into Block_flags
+    void *isa; // initialized to &_NSConcreteStackBlock or &_NSConcreteGlobalBlock
+    int Block_flags;
+    int reserved;
     void (*Block_invoke)(void *);
-    void (*Block_copy)(void *dst, void *src);
-    void (*Block_dispose)(void *);
-    //long params[0];  // generic space for const & byref hidden params, return value, variable on needs of course
+
+    struct Block_descriptor_1 {
+        unsigned long int reserved;     // NULL
+        unsigned long int Block_size;  // sizeof(struct Block_literal_1)
+
+        // optional helper functions
+        void (*Block_copy)(void *dst, void *src);
+        void (*Block_dispose)(void *src);
+    } *descriptor;
+
+    // imported variables
 };
+/* APPLE LOCAL end radar 5847213 - radar 6329245 */
+
 struct Block_byref {
-    //long reserved;
+    void* isa;
     struct Block_byref *forwarding;
     int flags;//refcount;
     int size;
@@ -89,7 +100,7 @@ void _Block_byref_release(void *source) {
 }
 
 int main(int argc, char *argv[]) {
-    id __byref dumbo = newDumbObject(); //[DumbObject new];
+    id __block dumbo = newDumbObject(); //[DumbObject new];
     void (^dummy)(void) = ^{ 
         [dumbo self];
     };
@@ -101,8 +112,8 @@ int main(int argc, char *argv[]) {
     }
 
     char result[200];
-    printf("calling out to copy support helper at %p\n", aBlock->Block_copy);
-    (*aBlock->Block_copy)(result, aBlock); // do fixup
+    printf("calling out to copy support helper at %p\n", aBlock->descriptor->Block_copy);
+    (*aBlock->descriptor->Block_copy)(result, aBlock); // do fixup
 
     // The copy/destroy helper should have had a callout  to _Block_byref_assign_copy for its byref block
     if (! ByrefAssignCopy) {
@@ -116,7 +127,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    (*aBlock->Block_dispose)(aBlock);
+    (*aBlock->descriptor->Block_dispose)(aBlock);
 
     return 0;
 }

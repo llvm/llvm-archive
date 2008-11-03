@@ -16,8 +16,8 @@ static void _Block_byref_release(void * arg) {
 void objc_get_type_qualifiers (int flag, int type) {
   while (flag--)
     while (type++ < 4) {
-      __byref int W1;
-      __byref int W2;
+      __block int W1;
+      __block int W2;
       if (type == 2)
 	break;
     }

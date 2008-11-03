@@ -3,7 +3,7 @@
    -mmacosx-version-min=10.4. */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.4" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

@@ -17,10 +17,10 @@ double test(myblock I) {
 
 int main() {
   int x = 1;
-  __byref int y = 2;
-  __byref br_x;
+  __block int y = 2;
+  __block br_x;
   int y1;
-  double res = test(^(int z){|y| y = x+z; return (double)x; }); /* { dg-warning "has been deprecated in blocks" } */
+  double res = test(^(int z){y = x+z; return (double)x; }); 
   printf("result = %f  x = %d y = %d\n", res, x, y);
   if (x != 1 || y != 43)
    exit(1);
@@ -28,7 +28,7 @@ int main() {
   br_x = x;
   y1 = y;
 
-  res = test(^(int z){|br_x| br_x = br_x+z; return (double)y1; }); /* { dg-warning "has been deprecated in blocks" } */
+  res = test(^(int z){br_x = br_x+z; return (double)y1; }); 
   printf("result = %f  br_x = %d y1 = %d\n", res, br_x, y1);
   if (br_x != 43 || y1 != 43)
     exit(1);

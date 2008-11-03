@@ -1,4 +1,4 @@
-/* APPLE LOCAL file radar 6083129 byref escapes */
+/* APPLE LOCAL file radar 6083129 block escapes */
 /* { dg-options "-fblocks" } */
 /* { dg-do run } */
 
@@ -17,13 +17,13 @@ static void _Block_byref_release(void * arg) {
 void *_NSConcreteStackBlock;
 
 void FOO(int arg) {
-  __byref  int X = 1234;
+  __block  int X = 1234;
   if (arg) {
-    __byref int local_BYREF = 100;
+    __block int local_BYREF = 100;
     X += 100 + local_BYREF;
     return;
   }
-  ^{ |X| X++; };	/* { dg-warning "has been deprecated in blocks" } */
+  ^{ X++; };	
   X = 1000;
 }
 

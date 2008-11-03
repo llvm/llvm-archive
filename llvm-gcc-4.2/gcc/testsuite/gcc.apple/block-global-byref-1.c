@@ -1,5 +1,5 @@
 /* APPLE LOCAL file radar 5803005 */
-/* Test that all global variables referenced in blocks are treated as 'byref' as default. */
+/* Test that all global variables referenced in blocks are treated as 'block' as default. */
 /* { dg-do run } */
 /* { dg-options "-mmacosx-version-min=10.5 -fblocks" { target *-*-darwin* } } */
 
@@ -15,8 +15,8 @@ static int stat = 10;
 
 int foo() {
     static int local = 10;
-    CallBlock( ^ {| local| ++glob; ++stat; ++local; /* { dg-warning "has been deprecated in blocks" } */
-	          CallBlock(^ { |local| ++glob; ++stat; ++local; }); /* { dg-warning "has been deprecated in blocks" } */
+    CallBlock( ^ {++glob; ++stat; ++local; 
+	          CallBlock(^ { ++glob; ++stat; ++local; }); 
 		  ++glob; ++stat; ++local; });
 
     if (glob != 13 || stat != 13 || local != 13)

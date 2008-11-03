@@ -16,9 +16,9 @@ static void _Block_byref_release(void * arg) {
 
 
 int main1() {
-  __byref  int X = 1234;
+  __block  int X = 1234;
   if (X) {
-    __byref int local_BYREF = 100;
+    __block int local_BYREF = 100;
     X += 100 + local_BYREF;
     return count-2;
   }

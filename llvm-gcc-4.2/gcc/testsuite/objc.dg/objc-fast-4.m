@@ -3,7 +3,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* APPLE LOCAL ObjC direct dispatch */
 /* { dg-options "-O0 -fobjc-direct-dispatch -fnext-runtime" } */
-/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* Radar 4015820 */
 
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */

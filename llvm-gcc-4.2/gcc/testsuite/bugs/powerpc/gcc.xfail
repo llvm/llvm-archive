@@ -12,6 +12,24 @@
 ###------------------------------------------------------------------
 5066141: gcc.dg/pr30643.c scan-assembler-not undefined
 5951276: gcc.target/i386/20020616-1.c execution test
+# temporary failures due to new linker messages
+6312070: gcc.dg/compat/scalar-by-value-1 c_compat_x_tst.o-c_compat_y_tst.o link
+6312070: gcc.dg/compat/scalar-by-value-3 c_compat_x_tst.o-c_compat_y_tst.o link
+6312070: gcc.dg/darwin-ld-1.c (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -O0  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -O1  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -O2  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -O3 -g  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -Os  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-float80-timode.c  -fast  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -O0  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -O1  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -O2  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -O3 -g  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -Os  (test for excess errors)
+6312070: gcc.dg/torture/fp-int-convert-timode.c  -fast  (test for excess errors)
 #
 # ppc only
 3906375: gcc.dg/debug/debug-1.c -gstabs -fast scan-assembler xyzzy
@@ -27,6 +45,40 @@
 4875164: gcc.dg/vect/section-anchors-vect-69.c (test for excess errors)
 4875164: gcc.dg/vect/section-anchors-vect-69.c scan-tree-dump-times Alignment of access forced using peeling 4
 4875176: gcc.target/powerpc/stabs-attrib-vect-darwin.c scan-assembler .stabs.*vi:\\(0,[0-9]+\\)=@V
+6186620: gcc.dg/builtins-18.c (test for excess errors)
+6186620: gcc.dg/builtins-20.c (test for excess errors)
+6186620: gcc.dg/builtins-55.c (test for excess errors)
+6186620: gcc.dg/darwin-minversion-2.c (test for excess errors)
+6186620: gcc.dg/darwin64-abi.c (test for excess errors)
+6186620: gcc.dg/single-precision-constant.c (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -O0  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -O1  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -O2  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -O3 -g  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -Os  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-1.c  -fast  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -O0  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -O1  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -O2  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -O3 -g  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -Os  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-2.c  -fast  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -O0  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -O1  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -O2  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -O3 -g  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -Os  (test for excess errors)
+6186620: gcc.dg/torture/builtin-convert-3.c  -fast  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -O0  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -O1  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -O2  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -O3 -fomit-frame-pointer  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -O3 -g  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -Os  (test for excess errors)
+6186620: gcc.dg/torture/builtin-power-1.c  -fast  (test for excess errors)
 #
 # x86 only
 4874504: gcc.dg/tree-ssa/gen-vect-11b.c scan-tree-dump-times vectorized 0 loops 1

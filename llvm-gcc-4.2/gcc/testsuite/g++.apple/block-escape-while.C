@@ -12,10 +12,10 @@ static void _Block_byref_release(void * arg) {
 
 int main() {
   {
-    __byref int O1;
+    __block int O1;
     int i = 0;
     while (++i != 5) {
-      __byref int I1;
+      __block int I1;
     }
     if (count != 4)
       abort();

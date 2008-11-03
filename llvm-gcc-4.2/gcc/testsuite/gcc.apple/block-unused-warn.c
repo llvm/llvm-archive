@@ -5,10 +5,10 @@
 
 int main()
 {
-int x = 10;
+__block int x = 10;
 int y = 1;
 
-int (^myBlock)(void) = ^{ |x| return x+y; }; /* { dg-warning "has been deprecated in blocks" } */
+int (^myBlock)(void) = ^{ return x+y; }; 
 
 myBlock();
 

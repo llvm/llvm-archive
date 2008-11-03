@@ -7,7 +7,7 @@
 /* { dg-options "-Wpadded" } */
 /* { dg-do run } */
 /* APPLE LOCAL begin objc2 */
-/* { dg-skip-if "" { *-*-darwin* } { "-m64" } { "" } } */
+/* { dg-require-effective-target ilp32 } */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 /* APPLE LOCAL end objc2 */
 

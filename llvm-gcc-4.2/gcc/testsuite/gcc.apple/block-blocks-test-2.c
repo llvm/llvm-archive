@@ -6,8 +6,8 @@
 void _Block_byref_release(void*src){}
 
 int main() {
-   __byref  int X = 1234;
-   __byref  const char * message = "HELLO";
+   __block  int X = 1234;
+   __block  const char * message = "HELLO";
 
    X = X - 1234;
 

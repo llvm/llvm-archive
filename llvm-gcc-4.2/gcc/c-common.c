@@ -201,8 +201,6 @@ cpp_reader *parse_in;		/* Declared in c-pragma.h.  */
 	tree saved_function_name_decls;
 
 */
-/* APPLE LOCAL radar 6300081  */
-tree generic_block_literal_struct_type = NULL;
 
 tree c_global_trees[CTI_MAX];
 

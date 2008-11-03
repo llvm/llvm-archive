@@ -180,3 +180,11 @@ create_init_utf16_var (const unsigned char * inbuf  ATTRIBUTE_UNUSED,
 {
   gcc_assert(0);
 }
+
+/* APPLE LOCAL begin radar 6300081  */
+tree
+build_generic_block_struct_type (void)
+{
+  return NULL_TREE;
+}
+/* APPLE LOCAL end radar 6300081  */

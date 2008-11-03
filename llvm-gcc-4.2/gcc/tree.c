@@ -71,6 +71,8 @@ const char *const tree_code_class_strings[] =
 
 /* obstack.[ch] explicitly declined to prototype this.  */
 extern int _obstack_allocated_p (struct obstack *h, void *obj);
+/* APPLE LOCAL radar 6300081  */
+tree generic_block_literal_struct_type = NULL;
 
 #ifdef GATHER_STATISTICS
 /* Statistics-gathering stuff.  */

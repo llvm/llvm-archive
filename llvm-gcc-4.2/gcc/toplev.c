@@ -938,6 +938,11 @@ warn_deprecated_use (tree node)
   if (node == 0 || !warn_deprecated_decl)
     return;
 
+  /* APPLE LOCAL begin radar 4746503 */
+  if (current_function_decl && TREE_DEPRECATED (current_function_decl))
+    return;
+  /* APPLE LOCAL end radar 4746503 */
+
   if (DECL_P (node))
     {
       expanded_location xloc = expand_location (DECL_SOURCE_LOCATION (node));
@@ -1713,8 +1718,19 @@ general_init (const char *argv0)
   /* Register the language-independent parameters.  */
   add_params (lang_independent_params, LAST_PARAM);
 
-  /* This must be done after add_params but before argument processing.  */
-  init_ggc_heuristics();
+  /* APPLE LOCAL begin retune gc params 6124839 */
+  { int i = 0;
+    bool opt = false;
+    while (save_argv[++i])
+      {
+	if (strncmp (save_argv[i], "-O", 2) == 0
+	    && strcmp (save_argv[i], "-O0") != 0)
+	  opt = true;
+      }
+    /* This must be done after add_params but before argument processing.  */
+    init_ggc_heuristics(opt);
+  }
+  /* APPLE LOCAL end retune gc params 6124839 */
   init_optimization_passes ();
 }
 

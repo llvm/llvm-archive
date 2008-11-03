@@ -4850,7 +4850,10 @@ extern bool has_alternative_entry_points (void);
 extern void note_alternative_entry_points (void);
 /* APPLE LOCAL end CW asm blocks */
 
-/* APPLE LOCAL radar 6113240 */
-extern GTY(()) tree invoke_impl_ptr_type;
+/* APPLE LOCAL begin radar 6300081  */
+extern GTY(()) tree generic_block_literal_struct_type;
+
+extern tree build_generic_block_struct_type (void);
+/* APPLE LOCAL end radar 6300081  */
 
 #endif  /* GCC_TREE_H  */

@@ -148,6 +148,10 @@ output_objc_section_asm_op (const void *directive)
       static const enum darwin_section_enum tomarkv2[] =
 	{
 	  objc_v2_message_refs_section,
+	  /* APPLE LOCAL begin radar 6255595 */
+	  objc_v2_classdefs_section,
+	  objc_v2_metadata_section,
+	  /* APPLE LOCAL end radar 6255595 */
 	  objc_v2_classrefs_section,
 	  objc_v2_classlist_section,
 	  objc_v2_categorylist_section,
@@ -1325,6 +1329,30 @@ machopic_reloc_rw_mask (void)
   return MACHOPIC_INDIRECT ? 3 : 0;
 }
 
+/* APPLE LOCAL begin radar 5575115, 6255595 */
+/* This routine returns TRUE if EXP is a variable representing
+   on objective C meta data. */
+static inline bool
+objc_internal_variable_name (tree exp)
+{
+  if (TREE_CODE (exp) == VAR_DECL)
+    {
+      tree decl_name = DECL_NAME (exp);
+      if (decl_name && TREE_CODE (decl_name) == IDENTIFIER_NODE
+	  && IDENTIFIER_POINTER (decl_name))
+	{
+	  const char* name = IDENTIFIER_POINTER (decl_name);
+	  return 
+	   (!strncmp (name, "_OBJC_", 6)
+	    || !strncmp (name, "OBJC_", 5)
+	    || !strncmp (name, "l_OBJC_", 7)
+            || !strncmp (name, "l_objc_", 7));
+	}
+    }
+  return false;
+}
+/* APPLE LOCAL end radar 5575115, 6255595 */
+
 section *
 machopic_select_section (tree exp, int reloc,
 			 unsigned HOST_WIDE_INT align ATTRIBUTE_UNUSED)
@@ -1423,14 +1451,9 @@ machopic_select_section (tree exp, int reloc,
       else
 	return base_section;
     }
-  else if (TREE_CODE (exp) == VAR_DECL &&
-	   DECL_NAME (exp) &&
-	   TREE_CODE (DECL_NAME (exp)) == IDENTIFIER_NODE &&
-	   IDENTIFIER_POINTER (DECL_NAME (exp)) &&
-           /* APPLE LOCAL begin radar 5575115 */
-	   (!strncmp (IDENTIFIER_POINTER (DECL_NAME (exp)), "_OBJC_", 6)
-            || !strncmp (IDENTIFIER_POINTER (DECL_NAME (exp)), "l_objc_", 7)))
-           /* APPLE LOCAL end radar 5575115 */
+  /* APPLE LOCAL begin radar 5575115, 6255595 */
+  else if (objc_internal_variable_name (exp))
+  /* APPLE LOCAL end radar 5575115, 6255595 */
     {
       const char *name = IDENTIFIER_POINTER (DECL_NAME (exp));
       /* APPLE LOCAL begin radar 4792158 */
@@ -1505,8 +1528,8 @@ machopic_select_section (tree exp, int reloc,
             return darwin_sections[objc_v2_classrefs_section];
           else if (!strncmp (name, "_OBJC_CLASSLIST_SUP_REFS_", 25))
             return darwin_sections[objc_v2_super_classrefs_section];
-          /* APPLE LOCAL radar 5575115 */
-          else if (!strncmp (name, "l_objc_msgSend_", 15))
+          /* APPLE LOCAL radar 5575115 - radar 6252174 */
+          else if (!strncmp (name, "l_objc_msgSend", 14))
             return darwin_sections[objc_v2_message_refs_section];
           else if (!strncmp (name, "_OBJC_LABEL_CLASS_", 18))
             return darwin_sections[objc_v2_classlist_section];
@@ -1524,8 +1547,14 @@ machopic_select_section (tree exp, int reloc,
             return darwin_sections[objc_v2_selector_refs_section];
           else if (!strncmp (name, "_OBJC_IMAGE_INFO", 16))
             return darwin_sections[objc_v2_image_info_section];
+	    /* APPLE LOCAL begin radar 6255595 */
+	  else if (!strncmp (name, "OBJC_CLASS_$_", 13)
+		   || !strncmp (name, "OBJC_METACLASS_$_", 17))
+	    return darwin_sections[objc_v2_classdefs_section];
           else
-            return base_section;
+            return  (base_section == data_section) ? 
+		      darwin_sections[objc_v2_metadata_section] : base_section;
+    	  /* APPLE LOCAL end radar 6255595 */
 	}
       /* APPLE LOCAL end radar 4792158 */
     }
@@ -2158,6 +2187,8 @@ darwin_file_start (void)
 	  /* APPLE LOCAL begin pubtypes, approved for 4.3 4535968  */
 	  DEBUG_PUBTYPES_SECTION,
 	  /* APPLE LOCAL end pubtypes, approved for 4.3 4535968  */
+	  /* APPLE LOCAL radar 6275985 debug inlined section  */
+	  DEBUG_INLINED_SECTION,
 	  DEBUG_STR_SECTION,
 	  DEBUG_RANGES_SECTION
 	};

@@ -102,19 +102,23 @@ objc_common_type (tree ARG_UNUSED (type1), tree ARG_UNUSED (type2))
 
 bool
 objc_compare_types (tree ARG_UNUSED (ltyp), tree ARG_UNUSED (rtyp),
-		    int ARG_UNUSED (argno), tree ARG_UNUSED (callee))
+		    /* APPLE LOCAL begin radar 6231433 */
+		    int ARG_UNUSED (argno), tree ARG_UNUSED (callee),
+		    const char * ARG_UNUSED (message))
+		    /* APPLE LOCAL end radar 6231433 */
 {
   return false;
 }
 
-/* APPLE LOCAL begin radar 4229905 */
+/* APPLE LOCAL begin radar 4229905 - radar 6231433 */
 bool
 objc_have_common_type (tree ARG_UNUSED (ltyp), tree ARG_UNUSED (rtyp),
-		       int ARG_UNUSED (argno), tree ARG_UNUSED (callee))
+		       int ARG_UNUSED (argno), tree ARG_UNUSED (callee),
+		       const char * ARG_UNUSED (message))
 {
   return false;
 }
-/* APPLE LOCAL end radar 4229905 */
+/* APPLE LOCAL end radar 4229905 - radar 6231433 */
 
 void
 objc_volatilize_decl (tree ARG_UNUSED (decl))
@@ -592,7 +596,12 @@ tree release_block_component (tree ARG_UNUSED (exp))
 }
 bool block_requires_copying (tree exp)
 {
-  return TREE_CODE (TREE_TYPE (exp)) == BLOCK_POINTER_TYPE;
+  /* APPLE LOCAL begin radar 6175959 */
+  tree type = TREE_TYPE (exp);
+  return TREE_CODE (type) == BLOCK_POINTER_TYPE
+	 || (POINTER_TYPE_P (type) 
+	     && lookup_attribute ("NSObject", TYPE_ATTRIBUTES (type)));
+  /* APPLE LOCAL end radar 6175959 */
 }
 /* APPLE LOCAL end radar 5782740 - blocks */
 

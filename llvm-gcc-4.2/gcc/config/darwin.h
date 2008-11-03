@@ -156,7 +156,8 @@ extern GTY(()) int darwin_ms_struct;
   { "-seg_addr_table_filename", "-Zfn_seg_addr_table_filename" }, \
   /* APPLE LOCAL mainline */ \
   { "-umbrella", "-Zumbrella" }, \
-  { "-fapple-kext", "-fapple-kext -static -Wa,-static" }, \
+  /* APPLE LOCAL kext weak_import 5935650 */ \
+  { "-fapple-kext", "-fapple-kext -static" }, \
   { "-filelist", "-Xlinker -filelist -Xlinker" },  \
   { "-findirect-virtual-calls", "-fapple-kext" }, \
   { "-flat_namespace", "-Zflat_namespace" },  \
@@ -169,17 +170,20 @@ extern GTY(()) int darwin_ms_struct;
   { "-install_name", "-Zinstall_name" },  \
   /* LLVM LOCAL */ \
   LLVM_FLAG  \
-  { "-mkernel", "-mkernel -static -Wa,-static" }, \
+  /* APPLE LOCAL kext weak_import 5935650 */ \
+  { "-mkernel", "-mkernel -static" }, \
   { "-multiply_defined_unused", "-Zmultiplydefinedunused" },  \
   { "-multiply_defined", "-Zmultiply_defined" },  \
   { "-multi_module", "-Zmulti_module" },  \
-  { "-static", "-static -Wa,-static" },  \
+  /* APPLE LOCAL begin kext weak_import 5935650 */ \
+  /* Removed -static */ \
+  /* APPLE LOCAL end kext weak_import 5935650 */ \
   /* APPLE LOCAL mainline */ \
   { "-shared", "-Zdynamiclib" }, \
   { "-single_module", "-Zsingle_module" },  \
   { "-unexported_symbols_list", "-Zunexported_symbols_list" }, \
-  /* APPLE LOCAL ObjC GC */ \
-  { "-fobjc-gc", "-fobjc-gc -Wno-non-lvalue-assign" }, \
+  /* APPLE LOCAL radar 6269491 */ \
+  /* code removed. */ \
   /* APPLE LOCAL begin constant cfstrings */	\
   { "-fconstant-cfstrings", "-mconstant-cfstrings" }, \
   { "-fno-constant-cfstrings", "-mno-constant-cfstrings" }, \
@@ -576,11 +580,14 @@ do {					\
 /* APPLE LOCAL end ARM 5683689 */
 
 /* Default Darwin ASM_SPEC, very simple.  */
+/* APPLE LOCAL begin kext weak_import 5935650 */
 /* APPLE LOCAL begin radar 4161346 */
 #define ASM_SPEC "-arch %(darwin_arch) \
   %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL} \
-  %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}}"
+  %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}} \
+  %{mkernel|static|fapple-kext:%{!Zdynamic:-static}}"
 /* APPLE LOCAL end radar 4161346 */
+/* APPLE LOCAL end kext weak_import 5935650 */
 /* APPLE LOCAL begin mainline 4.3 2006-10-31 4370143 */
 /* We still allow output of STABS.  */
 
@@ -614,6 +621,8 @@ do {					\
 /* APPLE LOCAL begin pubtypes, approved for 4.3  4535968 */
 #define DEBUG_PUBTYPES_SECTION  "__DWARF,__debug_pubtypes,regular,debug"
 /* APPLE LOCAL end pubtypes, approved for 4.3 4535968 */
+/* APPLE LOCAL radar 6275985 debug inlined section */
+#define DEBUG_INLINED_SECTION   "__DWARF,__debug_inlined,regular,debug"
 #define DEBUG_STR_SECTION	"__DWARF,__debug_str,regular,debug"
 #define DEBUG_RANGES_SECTION	"__DWARF,__debug_ranges,regular,debug"
 
@@ -857,6 +866,13 @@ do {					\
 	       MESSAGE);						\
   } while (0)
 /* APPLE LOCAL end radar 4531086 */
+
+/* APPLE LOCAL begin radar 6307941 */
+#undef OBJC2_ABI_DISPATCH
+#define OBJC2_ABI_DISPATCH						\
+(darwin_macosx_version_min						\
+ && strverscmp (darwin_macosx_version_min, "10.6") < 0)
+/* APPLE LOCAL end radar 6307941 */
 
 /* The RTTI data (e.g., __ti4name) is common and public (and static),
    but it does need to be referenced via indirect PIC data pointers.
@@ -1238,7 +1254,8 @@ enum machopic_addr_class {
 
 #undef ASM_PREFERRED_EH_DATA_FORMAT
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL)  \
-  (((CODE) == 2 && (GLOBAL) == 1) \
+  /* APPLE LOCAL EH __TEXT __gcc_except_tab 5819051 */	      \
+  ((((CODE) == 2 || (CODE) == 0) && (GLOBAL) == 1)	      \
    ? (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4) : \
      ((CODE) == 1 || (GLOBAL) == 0) ? DW_EH_PE_pcrel : DW_EH_PE_absptr)
 

@@ -5108,6 +5108,11 @@ build_block_pointer_type (tree to_type)
 {
   tree t;
   
+  /* APPLE LOCAL begin radar 6300081  */
+  if (!generic_block_literal_struct_type)
+    generic_block_literal_struct_type = build_generic_block_struct_type ();
+  /* APPLE LOCAL end radar 6300081  */
+
   t = make_node (BLOCK_POINTER_TYPE);
 
   TREE_TYPE (t) = to_type;

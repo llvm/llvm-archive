@@ -201,11 +201,8 @@ cpp_reader *parse_in;		/* Declared in c-pragma.h.  */
 	tree saved_function_name_decls;
 
 */
-
-/* APPLE LOCAL begin radar 5811943 - Fix type of pointers to Blocks  */
-/* Move declaration of invoke_impl_ptr_type from c-typeck.c  */
-tree invoke_impl_ptr_type;
-/* APPLE LOCAL end radar 5811943 - Fix type of pointers to Blocks  */
+/* APPLE LOCAL radar 6300081  */
+tree generic_block_literal_struct_type = NULL;
 
 tree c_global_trees[CTI_MAX];
 
@@ -302,7 +299,8 @@ int warn_unknown_pragmas; /* Tri state variable.  */
 /* Warn about format/argument anomalies in calls to formatted I/O functions
    (*printf, *scanf, strftime, strfmon, etc.).  */
 
-int warn_format;
+/* APPLE LOCAL default to Wformat-security 5764921 */
+int warn_format = 1;
 
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right
@@ -6130,7 +6128,7 @@ handle_blocks_attribute (tree *node, tree name,
   *no_add_attrs = true;
   if (!(*node) || TREE_CODE (*node) != VAR_DECL)
     {
-      warning (OPT_Wattributes, "byref attribute can be specified on variables only - ignored");
+      warning (OPT_Wattributes, "__block attribute can be specified on variables only - ignored");
       return NULL_TREE;
     }
   arg_ident = TREE_VALUE (args);
@@ -6242,7 +6240,7 @@ build_block_byref_assign_copy_decl (void)
 }
 
 /* This routine builds call to:
- _Block_byref_release(VAR_DECL.forwarding);
+ _Block_byref_release(VAR_DECL.__forwarding);
  and adds it to the statement list.
  */
 tree
@@ -6250,9 +6248,9 @@ build_block_byref_release_exp (tree var_decl)
 {
   tree exp = var_decl, call_exp, func_params;
   tree type = TREE_TYPE (var_decl);
-  /* __byref variables imported into Blocks are not _Block_byref_released()
+  /* __block variables imported into Blocks are not _Block_byref_released()
    from within the Block statement itself; otherwise, each envokation of
-   the block causes a release. Make sure to release __byref variables declared 
+   the block causes a release. Make sure to release __block variables declared 
    and used locally in the block though. */
   if (cur_block 
       && (BLOCK_DECL_COPIED (var_decl) || BLOCK_DECL_BYREF (var_decl)))
@@ -6266,7 +6264,7 @@ build_block_byref_release_exp (tree var_decl)
   TREE_USED (var_decl) = 1;
 
   /* Declare: _Block_byref_release(void*) if not done already. */
-  exp = build_component_ref (exp, get_identifier ("forwarding"));
+  exp = build_component_ref (exp, get_identifier ("__forwarding"));
   func_params = tree_cons (NULL_TREE, exp, NULL_TREE);
   call_exp = build_function_call (build_block_byref_release_decl (), func_params);
   return call_exp;
@@ -9141,5 +9139,55 @@ warn_array_subscript_with_type_char (tree index)
     warning (OPT_Wchar_subscripts, "array subscript has type %<char%>");
 }
 
+/* APPLE LOCAL begin radar 6246527 */
+/* This routine is called for a "format" attribute. It adds the number of
+ hidden argument ('1') to the format's 2nd and 3rd argument to compensate
+ for these two arguments. This is to make rest of the "format" attribute
+ processing done in the middle-end to work seemlessly. */
+
+static void
+block_delta_format_args (tree format)
+{
+  tree format_num_expr, first_arg_num_expr;
+  int val; 
+  tree args = TREE_VALUE (format);
+  gcc_assert (TREE_CHAIN (args) && TREE_CHAIN (TREE_CHAIN (args)));
+  format_num_expr = TREE_VALUE (TREE_CHAIN (args));
+  first_arg_num_expr = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (args)));
+  if (format_num_expr && TREE_CODE (format_num_expr) == INTEGER_CST)
+  {
+    val = TREE_INT_CST_LOW (format_num_expr);
+    TREE_VALUE (TREE_CHAIN (args)) = build_int_cst (NULL_TREE, val+1);
+  }
+  if (first_arg_num_expr && TREE_CODE (first_arg_num_expr) == INTEGER_CST)
+  {
+    val = TREE_INT_CST_LOW (first_arg_num_expr);
+    if (val != 0)
+      TREE_VALUE (TREE_CHAIN (TREE_CHAIN (args))) = 
+                                              build_int_cst (NULL_TREE, val+1);
+  }
+}
+
+/* This routine recognizes legal block attributes. In case of block's "format" 
+ attribute, it calls block_delta_format_args to compensate for hidden 
+ argument _self getting passed to block's helper function. */
+bool
+any_recognized_block_attribute (tree attributes)
+{
+  tree chain;
+  bool res = false;
+  for (chain = attributes; chain; chain = TREE_CHAIN (chain))
+  {
+    if (is_attribute_p ("format", TREE_PURPOSE (chain)))
+    {
+      block_delta_format_args (chain);
+      res = true;
+    }
+    else if (is_attribute_p ("sentinel", TREE_PURPOSE (chain)))
+      res = true;	
+  }
+  return res;
+}
+/* APPLE LOCAL end radar 6246527 */
 
 #include "gt-c-common.h"

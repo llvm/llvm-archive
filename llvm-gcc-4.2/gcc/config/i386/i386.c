@@ -6880,6 +6880,20 @@ legitimate_pic_address_disp_p (rtx disp)
 	  /* TLS references should always be enclosed in UNSPEC.  */
 	  if (SYMBOL_REF_TLS_MODEL (op0))
 	    return false;
+	  /* APPLE LOCAL begin 6227434 */
+#if TARGET_MACHO
+	  /* ObjC machinery always has a legitimate PIC
+	     address.  */
+	  if (objc_anonymous_local_objc_name (XSTR (op0, 0))
+	      || SYMBOL_REF_LOCAL_P (op0))
+	    return true;
+	  /* Under -mfix-and-continue, even local storage is
+	     addressed via the GOT, so that the value of local
+	     statics is preserved when a function is "fixed."  */
+	  if (TARGET_FIX_AND_CONTINUE)
+	    return false;
+#endif
+	  /* APPLE LOCAL end 6227434 */
 	  if (!SYMBOL_REF_FAR_ADDR_P (op0) && SYMBOL_REF_LOCAL_P (op0))
 	    return true;
 	  break;
@@ -9615,10 +9629,7 @@ ix86_expand_move (enum machine_mode mode, rtx operands[])
 {
   int strict = (reload_in_progress || reload_completed);
   /* APPLE LOCAL dynamic-no-pic */
-#if TARGET_MACHO
-  rtx insn;
-#endif
-  rtx op0, op1;
+  rtx insn, op0, op1;
   enum tls_model model;
 
   op0 = operands[0];
@@ -15923,14 +15934,14 @@ static const struct builtin_description bdesc_2arg[] =
   /* SSE4.1 */
   { MASK_SSE4_1, CODE_FOR_sse4_1_packusdw, "__builtin_ia32_packusdw128", IX86_BUILTIN_PACKUSDW128, UNKNOWN, 0 },
   { MASK_SSE4_1, CODE_FOR_sse4_1_eqv2di3, "__builtin_ia32_pcmpeqq", IX86_BUILTIN_PCMPEQQ, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_smaxv16qi3, "__builtin_ia32_pmaxsb128", IX86_BUILTIN_PMAXSB128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_smaxv4si3, "__builtin_ia32_pmaxsd128", IX86_BUILTIN_PMAXSD128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_umaxv4si3, "__builtin_ia32_pmaxud128", IX86_BUILTIN_PMAXUD128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_umaxv8hi3, "__builtin_ia32_pmaxuw128", IX86_BUILTIN_PMAXUW128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_sminv16qi3, "__builtin_ia32_pminsb128", IX86_BUILTIN_PMINSB128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_sminv4si3, "__builtin_ia32_pminsd128", IX86_BUILTIN_PMINSD128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_uminv4si3, "__builtin_ia32_pminud128", IX86_BUILTIN_PMINUD128, UNKNOWN, 0 },
-  { MASK_SSE4_1, CODE_FOR_uminv8hi3, "__builtin_ia32_pminuw128", IX86_BUILTIN_PMINUW128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_smaxv16qi3, "__builtin_ia32_pmaxsb128", IX86_BUILTIN_PMAXSB128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_smaxv4si3, "__builtin_ia32_pmaxsd128", IX86_BUILTIN_PMAXSD128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_umaxv4si3, "__builtin_ia32_pmaxud128", IX86_BUILTIN_PMAXUD128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_umaxv8hi3, "__builtin_ia32_pmaxuw128", IX86_BUILTIN_PMAXUW128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_sminv16qi3, "__builtin_ia32_pminsb128", IX86_BUILTIN_PMINSB128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_sminv4si3, "__builtin_ia32_pminsd128", IX86_BUILTIN_PMINSD128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_uminv4si3, "__builtin_ia32_pminud128", IX86_BUILTIN_PMINUD128, UNKNOWN, 0 },
+  { MASK_SSE4_1, CODE_FOR_sse4_1_uminv8hi3, "__builtin_ia32_pminuw128", IX86_BUILTIN_PMINUW128, UNKNOWN, 0 },
   { MASK_SSE4_1, CODE_FOR_sse4_1_mulv2siv2di3, 0, IX86_BUILTIN_PMULDQ128, UNKNOWN, 0 },
   { MASK_SSE4_1, CODE_FOR_mulv4si3, "__builtin_ia32_pmulld128", IX86_BUILTIN_PMULLD128, UNKNOWN, 0 },
 

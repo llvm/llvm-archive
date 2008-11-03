@@ -1,3 +1,131 @@
+2008-10-31  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6175959
+	* parser.c (synth_copy_helper_block_func): Use the new API
+	_Block_object_assign for ObjC object copying.
+	(block_object_dispose): New
+	(synth_destroy_helper_block_func): Call block_object_dispose
+	to use new _Block_object_dispose API for ObjC object release.
+
+2008-10-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6329245
+	* typeck.c (build_block_call): Block call is reverted back
+	to old ABI.
+	(build_block_descriptor_type): Removed "FuncPtr" field.
+	(build_generic_block_struct_type): This struct is partially reverted
+	to define a layout matching old ABI.
+	(build_block_struct_type): Ditto
+	(build_block_struct_initlist): Initializer list reflects the new
+	primary block layout.
+	
+2008-10-28  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6261630
+	* parser.c (cp_parser_objc_typename): Parse trailing attribute
+	in method type.
+
+2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6231433
+        * typeck.c (objc_compare_types, objc_have_common_type):
+        Take an extra argument for better diagnostics.
+	* call.c: Ditto
+
+2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6302949
+        * parser.c (objc_cp_parser_at_property): Warn on missing
+        ',' separator for property attribute list.
+
+2008-10-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6305545
+	* semantics.c (expand_or_defer_fn): Lower nested function
+	of the structors.
+
+2008-10-24  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5847213 (minor tweak)
+        * parser.c (build_block_descriptor_type):
+        Make descriptor_ptr_type and descriptor_ptr_type_with_copydispose
+        visible to pch.
+
+2008-10-22  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6310599
+        * typeck.c.c: All internal field names in block internal types
+        have '__' prefix.
+	* decl.c: Ditto
+	* semantics.c: Ditto
+	* pafrser.c: Ditto
+
+2008-10-17  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6289031
+        * decl.c: Removed all code related to
+        radar 6083129 (byref escapes).
+
+2008-10-15  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6271728
+	* parser.c (cp_parser_objc_method_definition_list): Method
+	definition always start with '{', or it is error.
+
+2008-10-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6275956
+	* semantics.c (finish_this_expr): Reference to "this" in a block
+	must be looked up.
+
+2008-10-10  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5847213 - New Block ABI
+	
+	* typeck.c (build_block_call): New code gen for block call.
+	* parser.c (build_descriptor_block_decl) New
+	(build_block_struct_type): New block literal type.
+	(build_block_struct_initlist): New block literal initializers.
+	(build_block_literal_tmp): New block literal variable initialization.
+	(synth_copy_helper_block_func): Fixed a minor bug (unrelated to this radar).
+	(build_block_internal_types): Removed.
+	(build_block_descriptor_type): New routine to build build descriptor type.
+	(make_block_pointer_declarator): Unnecessary code is removed.
+	
+2008-10-02  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6246527
+        * parser.c (cp_parser_block_literal_expr): Call to do the delta
+        on printf attribute.
+
+2008-09-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6230297
+        * parser.c (build_block_struct_initlist): 'trivial' 
+        block temporary can be static as well.
+        (build_block_literal_tmp): Accomodate 'trivial' block
+        literal temporary variable as static.
+
+2008-09-30  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6225809
+        * parser.c (build_block_byref_decl): Add __block vaiables
+        to intervening blocks.
+
+2008-09-29  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6154598
+	tree.c (maybe_dummy_object): Build expression for
+        copied in "this" in the block.
+
+2008-09-26  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6243400
+	* parser.c (build_block_struct_type): Mostly rewritten
+	to use C++'s API for building block's main struct so structors
+	for those data members requiring them are synthesized and
+	used.
+
 2008-09-25  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6244520

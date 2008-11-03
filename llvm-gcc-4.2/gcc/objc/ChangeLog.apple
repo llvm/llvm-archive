@@ -1,3 +1,68 @@
+2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6231433
+	* objc-act.c (objc_compare_types, objc_have_common_type):
+	Take an extra argument for better diagnostics.
+
+2008-10-23  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6307941
+	* objc-act.c (build_objc_method_call, build_v2_build_objc_method_call,
+	get_arg_type_list): Take selector name as new argument.
+	(objc_init): Remove check for flag_objc_legacy_dispatch.
+	(objc_legacy_dispatched_selector_p): New
+	(objc_finish_message_expr): Call objc_legacy_dispatched_selector_p
+	to check on legacy dispatch message or objc2 abi.
+	
+2008-10-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6017984
+	* objc-act.c (objc_merge_protocol_methods): New
+	(finish_class): Call objc_merge_protocol_methods for
+	anonymous categories.
+
+2008-10-16  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6285794 (tweak)
+	* objc-act.c:  Replace all build_int_cst (NULL_TREE, 0)
+		       with integer_zero_node.
+
+2008-10-15  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6285794
+	* objc-act.c: All 0 initializers are converted to
+	pointer type of the initialized field, to suit
+	llvm-gcc restriction.
+
+2008-10-13  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6255913
+	* objc-act.c (build_protocollist_translation_table): Generate a
+	coalessable name for protocol meta-data reference with "l_OBJC" prefix.
+	(build_v2_protocol_reference): declare a 'weak' 'extern hidden'
+	symbol for protocol meta-data.
+
+2008-10-03  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6267049
+	* objc-act.c (objc_get_protocol_qualified_type): Issue error on bogus
+	protocol qualified syntax.
+
+2008-10-03  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6264448
+	* objc-act.c (objc_build_compound_setter_call): Do the default conversion 
+	on temporary after it is passed to the setter call.
+
+2008-10-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6255671
+	* objc-act.c (managed_objc_object_pointer): block pointer
+	is also an ObjC pointer for property purposes.
+	(objc_add_property_variable): Issue hard error when
+	property of block pointer type is defaulted to 
+	'assign' attribute.
+
 2008-09-23  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6230701

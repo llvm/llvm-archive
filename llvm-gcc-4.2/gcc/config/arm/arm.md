@@ -8585,7 +8585,7 @@
    (match_operand:SI 3 "" "")			; table label
    (match_operand:SI 4 "" "")]			; Out of range label
 ;; APPLE LOCAL compact switch tables
-  "TARGET_EITHER"
+  "TARGET_ARM || TARGET_COMPACT_SWITCH_TABLES"
   "
   {
     rtx reg;
@@ -8667,7 +8667,7 @@
 	      (clobber (reg:SI IP_REGNUM))
 	      (use (reg:SI 0))
 	      (use (label_ref (match_dup 2)))])]
-  "TARGET_THUMB"
+  "TARGET_COMPACT_SWITCH_TABLES"
   "*
     {
       rtx body = PATTERN (next_real_insn (insn));

@@ -70,6 +70,7 @@ extern "C" {
 #include "tree-inline.h"
 #include "langhooks.h"
 #include "cgraph.h"
+#include "params.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -162,6 +163,13 @@ void llvm_initialize_backend(void) {
 
   if (flag_limited_precision > 0) {
     std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
+    ArgStrings.push_back(Arg);
+  }
+
+  if (flag_stack_protect > 0) {
+    std::string Arg("--enable-stack-protector=" + utostr(flag_stack_protect));
+    ArgStrings.push_back(Arg);
+    Arg = "--ssp-buffer-size=" + utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE));
     ArgStrings.push_back(Arg);
   }
 

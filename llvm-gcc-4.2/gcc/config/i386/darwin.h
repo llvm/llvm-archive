@@ -101,8 +101,6 @@ Boston, MA 02110-1301, USA.  */
   %{!mmacosx-version-min=*: %{!miphoneos-version-min=*: %(darwin_cc1_minversion)}} \
   "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
   %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5 \
-  "/* LLVM LOCAL enable format security warnings */"\
-  %{!Wno-format:-Wformat -Wformat-security} \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }}"
 
 /* APPLE LOCAL AltiVec */

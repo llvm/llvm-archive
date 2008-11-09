@@ -297,8 +297,10 @@ int warn_unknown_pragmas; /* Tri state variable.  */
 /* Warn about format/argument anomalies in calls to formatted I/O functions
    (*printf, *scanf, strftime, strfmon, etc.).  */
 
+/* LLVM LOCAL begin */
 /* APPLE LOCAL default to Wformat-security 5764921 */
-int warn_format = 1;
+int warn_format;
+/* LLVM LOCAL end */
 
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right

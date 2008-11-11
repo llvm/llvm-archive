@@ -2686,12 +2686,22 @@ darwin_override_options (void)
   /* APPLE LOCAL begin stack-protector default 5095227 */
   /* Default flag_stack_protect to 1 if on 10.5 or later for user code,
      or 10.6 or later for code identified as part of the kernel.  */
+  /* LLVM LOCAL begin - Don't enable stack protectors by default for Leopard. */
+#ifndef ENABLE_LLVM
   if (flag_stack_protect == -1
       && darwin_macosx_version_min
       && ((! flag_mkernel && ! flag_apple_kext
 	   && strverscmp (darwin_macosx_version_min, "10.5") >= 0)
 	  || strverscmp (darwin_macosx_version_min, "10.6") >= 0))
     flag_stack_protect = 1;
+#else
+  if (flag_stack_protect == -1 && darwin_macosx_version_min)
+    if (strverscmp (darwin_macosx_version_min, "10.5") >= 0)
+      flag_stack_protect = 0;
+    else if (strverscmp (darwin_macosx_version_min, "10.6") >= 0)
+      flag_stack_protect = 1;
+#endif
+  /* LLVM LOCAL end - Don't enable stack protectors by default for Leopard. */
   /* APPLE LOCAL end stack-protector default 5095227 */
 /* APPLE LOCAL diff confuses me */
 }

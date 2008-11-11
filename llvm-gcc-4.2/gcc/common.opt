@@ -1018,9 +1018,8 @@ Common RejectNegative Joined
 -fstack-limit-symbol=<name>	Trap if the stack goes past symbol <name>
 
 ; APPLE LOCAL begin stack-protector default 5095227
-; LLVM LOCAL FIXME Don't add Init just yet
 fstack-protector
-Common Report Var(flag_stack_protect, 1)
+Common Report Var(flag_stack_protect, 1) Init(-1)
 Use propolice as a stack protection method
 ; APPLE LOCAL end stack-protector default 5095227
 

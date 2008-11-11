@@ -2695,13 +2695,14 @@ darwin_override_options (void)
 	  || strverscmp (darwin_macosx_version_min, "10.6") >= 0))
     flag_stack_protect = 1;
 #else
-  if (flag_stack_protect == -1 && darwin_macosx_version_min)
+  if (flag_stack_protect == -1 && darwin_macosx_version_min) {
     {
       if (strverscmp (darwin_macosx_version_min, "10.5") >= 0)
         flag_stack_protect = 0;
       else if (strverscmp (darwin_macosx_version_min, "10.6") >= 0)
         flag_stack_protect = 1;
     }
+  }
 #endif
   /* LLVM LOCAL end - Don't enable stack protectors by default for Leopard. */
   /* APPLE LOCAL end stack-protector default 5095227 */

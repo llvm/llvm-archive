@@ -6022,7 +6022,59 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
       BitStart -= SL->getElementOffset(MemberIndex) * 8;
     }
-
+      
+    // If the FIELD_DECL has an annotate attribute on it, emit it.
+      
+    // Handle annotate attribute on global.
+    if (tree AnnotateAttr = 
+        lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl))) {
+        
+        const Type *OrigPtrTy = FieldPtr->getType();
+        
+        Function *Fn = Intrinsic::getDeclaration(TheModule, 
+                                                 Intrinsic::ptr_annotation,
+                                                 &OrigPtrTy, 1);
+        
+        // Get file and line number.  FIXME: Should this be for the decl or the
+        // use.  Is there a location info for the use?
+        Constant *LineNo = ConstantInt::get(Type::Int32Ty,
+                                            DECL_SOURCE_LINE(FieldDecl));
+        Constant *File = ConvertMetadataStringToGV(DECL_SOURCE_FILE(FieldDecl));
+        const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
+        File = TheFolder->CreateBitCast(File, SBP);
+        
+        // There may be multiple annotate attributes. Pass return of lookup_attr 
+        //  to successive lookups.
+        while (AnnotateAttr) {
+            // Each annotate attribute is a tree list.
+            // Get value of list which is our linked list of args.
+            tree args = TREE_VALUE(AnnotateAttr);
+            
+            // Each annotate attribute may have multiple args.
+            // Treat each arg as if it were a separate annotate attribute.
+            for (tree a = args; a; a = TREE_CHAIN(a)) {
+                // Each element of the arg list is a tree list, so get value
+                tree val = TREE_VALUE(a);
+                
+                // Assert its a string, and then get that string.
+                assert(TREE_CODE(val) == STRING_CST &&
+                       "Annotate attribute arg should always be a string");
+                
+                const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
+                Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
+                Value *Ops[4] = {
+                    FieldPtr, BitCastToType(strGV, SBP), File,  LineNo
+                };
+                
+                FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
+            }
+            
+            // Get next annotate attribute.
+            AnnotateAttr = TREE_CHAIN(AnnotateAttr);
+            if (AnnotateAttr)
+                AnnotateAttr = lookup_attribute("annotate", AnnotateAttr);
+        }
+    }      
   } else {
     Value *Offset = Emit(field_offset, 0);
 
@@ -7242,6 +7294,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
       BitStart -= SL->getElementOffset(MemberIndex) * 8;
     }
+      
   } else {
     Constant *Offset = Convert(field_offset);
     Constant *Ptr = TheFolder->CreatePtrToInt(StructAddrLV, Offset->getType());

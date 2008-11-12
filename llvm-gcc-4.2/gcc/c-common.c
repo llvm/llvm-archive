@@ -6380,6 +6380,7 @@ handle_annotate_attribute (tree *node, tree name, tree args,
   id = TREE_VALUE (args);
 
   if (TREE_CODE (*node) == FUNCTION_DECL ||
+      TREE_CODE (*node) == FIELD_DECL ||
       TREE_CODE (*node) == VAR_DECL || TREE_CODE (*node) == PARM_DECL)  
   {
   

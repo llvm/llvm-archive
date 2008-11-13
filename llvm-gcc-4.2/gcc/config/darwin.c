@@ -1608,70 +1608,113 @@ char *darwin_build_sysroot_path(const char *sysroot, const char *path) {
 }
 
 #ifdef ENABLE_LLVM
-const char *darwin_objc_llvm_special_name_section(const char* name) {
-  if (!strncmp (name, "CLASS_METHODS_", 14))
-    return "__OBJC,__cls_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "INSTANCE_METHODS_", 17))
-    return "__OBJC,__inst_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "CATEGORY_CLASS_METHODS_", 23))
-    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "CATEGORY_INSTANCE_METHODS_", 26))
-    return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "CLASS_VARIABLES_", 16))
-    return "__OBJC,__class_vars,regular,no_dead_strip";
-  else if (!strncmp (name, "INSTANCE_VARIABLES_", 19))
-    return "__OBJC,__instance_vars,regular,no_dead_strip";
-  else if (!strncmp (name, "CLASS_PROTOCOLS_", 16))
-    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "CLASS_NAME_", 11))
-    return "__TEXT,__cstring,cstring_literals";
-  else if (!strncmp (name, "METH_VAR_NAME_", 14))
-    return "__TEXT,__cstring,cstring_literals";
-  else if (!strncmp (name, "METH_VAR_TYPE_", 14))
-    return "__TEXT,__cstring,cstring_literals";
-  else if (!strncmp (name, "PROP_NAME_ATTR_", 15))
-    return "__TEXT,__cstring,cstring_literals";
-  else if (!strncmp (name, "CLASS_REFERENCES", 16))
-    return "__OBJC,__cls_refs,literal_pointers,no_dead_strip";
-  else if (!strncmp (name, "CLASS_", 6))
-    return (flag_objc_abi == 1 ? 
-            "__OBJC,__class,regular,no_dead_strip" :
-            "__DATA,__data");
-  else if (!strncmp (name, "METACLASS_", 10))
-    return (flag_objc_abi == 1 ?
-            "__OBJC,__meta_class,regular,no_dead_strip" :
-            "__DATA,__data");
-  else if (!strncmp (name, "CATEGORY_", 9))
-    return "__OBJC,__category,regular,no_dead_strip";
-  else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
-    return (flag_objc_abi == 1 ? 
-            "__OBJC,__message_refs,literal_pointers,no_dead_strip" :
-            "__DATA, __objc_selrefs, regular, no_dead_strip");
-  else if (!strncmp (name, "SELECTOR_FIXUP", 14))
-    return "__OBJC,__sel_fixup,regular";/*,no_dead_strip";*/
-  else if (!strncmp (name, "SYMBOLS", 7))
-    return "__OBJC,__symbols,regular,no_dead_strip";
-  else if (!strncmp (name, "MODULES", 7))
-    return "__OBJC,__module_info,regular,no_dead_strip";
-  else if (!strncmp (name, "IMAGE_INFO", 10))
-    return (flag_objc_abi == 1 ? 
-            "__OBJC, __image_info,regular" /*,no_dead_strip";*/ :
-            "__DATA, __objc_imageinfo, regular, no_dead_strip");
-  else if (!strncmp (name, "PROTOCOL_INSTANCE_METHODS_", 26))
-    return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "PROTOCOL_CLASS_METHODS_", 23))
-    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "PROTOCOL_REFS_", 14))
-    return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
-  else if (!strncmp (name, "PROTOCOL_", 9))
-    return "__OBJC,__protocol,regular,no_dead_strip";
-  else if (flag_objc_abi == 2) {
-    if (!strncmp (name, "CLASSLIST_REFERENCES_", 21))
-    return "__DATA, __objc_classrefs, regular, no_dead_strip";
+static const char *skip_objc_prefix(const char *name)
+{
+  if (!strncmp (name, "_OBJC_", 6))
+    return name + 6;
+  else if (!strncmp (name, "OBJC_", 5))
+    return name + 5;
+
+  return name + 7;
+}
+
+static const char *
+darwin_objc_llvm_special_name_section_help(tree decl) {
+  /* Get a pointer to the name, past the L_OBJC_ prefix. */
+  const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
+  const char *base_section = 0;
+  const char *section = 0;
+  bool weak_p = (DECL_P (decl) && DECL_WEAK (decl)
+		 && (lookup_attribute ("weak", DECL_ATTRIBUTES (decl))
+		     || ! lookup_attribute ("weak_import",
+					    DECL_ATTRIBUTES (decl))));
+
+  if (TREE_READONLY (decl) || TREE_CONSTANT (decl))
+    base_section = weak_p ? "__DATA,__const_coal,coalesced" : "__DATA,__const";
+  else
+    base_section = weak_p ? "__DATA,__datacoal_nt,coalesced" : "__DATA,__data";
+
+  name = skip_objc_prefix(name);
+  section = darwin_objc_llvm_special_name_section(name);
+
+  if (!section && flag_objc_abi == 2)
+    section = strcmp(base_section, "__DATA,__data") == 0 ?
+      "__DATA, __objc_const" : base_section;
+
+  return section ? section : base_section;
+}
+
+const char *darwin_objc_llvm_special_name_section(const char *name) {
+  if (flag_objc_abi == 1) {
+    if (!strncmp (name, "CLASS_METHODS_", 14))
+      return "__OBJC,__cls_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "INSTANCE_METHODS_", 17))
+      return "__OBJC,__inst_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "CATEGORY_CLASS_METHODS_", 23))
+      return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "CATEGORY_INSTANCE_METHODS_", 26))
+      return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "CLASS_VARIABLES_", 16))
+      return "__OBJC,__class_vars,regular,no_dead_strip";
+    else if (!strncmp (name, "INSTANCE_VARIABLES_", 19))
+      return "__OBJC,__instance_vars,regular,no_dead_strip";
+    else if (!strncmp (name, "CLASS_PROTOCOLS_", 16))
+      return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "CLASS_NAME_", 11))
+      return "__TEXT,__cstring,cstring_literals";
+    else if (!strncmp (name, "METH_VAR_NAME_", 14))
+      return "__TEXT,__cstring,cstring_literals";
+    else if (!strncmp (name, "METH_VAR_TYPE_", 14))
+      return "__TEXT,__cstring,cstring_literals";
+    else if (!strncmp (name, "PROP_NAME_ATTR_", 15))
+      return "__TEXT,__cstring,cstring_literals";
+    else if (!strncmp (name, "CLASS_REFERENCES", 16))
+      return "__OBJC,__cls_refs,literal_pointers,no_dead_strip";
+    else if (!strncmp (name, "CLASS_", 6))
+      return "__OBJC,__class,regular,no_dead_strip";
+    else if (!strncmp (name, "METACLASS_", 10))
+      return "__OBJC,__meta_class,regular,no_dead_strip";
+    else if (!strncmp (name, "CATEGORY_", 9))
+      return "__OBJC,__category,regular,no_dead_strip";
+    else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
+      return "__OBJC,__message_refs,literal_pointers,no_dead_strip";
+    else if (!strncmp (name, "SELECTOR_FIXUP", 14))
+      return "__OBJC,__sel_fixup,regular";/*,no_dead_strip";*/
+    else if (!strncmp (name, "SYMBOLS", 7))
+      return "__OBJC,__symbols,regular,no_dead_strip";
+    else if (!strncmp (name, "MODULES", 7))
+      return "__OBJC,__module_info,regular,no_dead_strip";
+    else if (!strncmp (name, "IMAGE_INFO", 10))
+      return "__OBJC, __image_info,regular" /*,no_dead_strip";*/;
+    else if (!strncmp (name, "PROTOCOL_INSTANCE_METHODS_", 26))
+      return "__OBJC,__cat_inst_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "PROTOCOL_CLASS_METHODS_", 23))
+      return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "PROTOCOL_REFS_", 14))
+      return "__OBJC,__cat_cls_meth,regular,no_dead_strip";
+    else if (!strncmp (name, "PROTOCOL_", 9))
+      return "__OBJC,__protocol,regular,no_dead_strip";
+    else if (!strncmp (name, "CLASSEXT_", 9))
+      return "__OBJC,__class_ext,regular,no_dead_strip";
+    else if (!strncmp (name, "$_PROP_LIST", 11)
+             || !strncmp (name, "$_PROP_PROTO", 12))
+      return "__OBJC,__property,regular,no_dead_strip";
+    else if (!strncmp (name, "PROTOCOLEXT", 11))
+      return "__OBJC,__protocol_ext,regular,no_dead_strip";
+    else if (!strncmp (name, "PROP_NAME_ATTR_", 15))
+      return "__TEXT,__cstring,cstring_literals";
+  } else if (flag_objc_abi == 2) {
+    if (!strncmp (name, "PROP_NAME_ATTR_", 15)
+        || !strncmp (name, "CLASS_NAME_", 11)
+        || !strncmp (name, "METH_VAR_NAME_", 14)
+        || !strncmp (name, "METH_VAR_TYPE_", 14))
+      return "__TEXT,__cstring,cstring_literals";
+    else if (!strncmp (name, "CLASSLIST_REFERENCES_", 21))
+      return "__DATA, __objc_classrefs, regular, no_dead_strip";
     else if (!strncmp (name, "CLASSLIST_SUP_REFS_", 19))
       return "__DATA, __objc_superrefs, regular, no_dead_strip"; 
-    else if (!strncmp (name, "MESSAGE_REF", 11))
-      return "__DATA, __objc_msgrefs, regular, no_dead_strip"; 
+    else if (!strncmp (name, "msgSend", 7))
+      return "__DATA, __objc_msgrefs, coalesced";
     else if (!strncmp (name, "LABEL_CLASS_", 12))
       return "__DATA, __objc_classlist, regular, no_dead_strip"; 
     else if (!strncmp (name, "LABEL_PROTOCOL_", 15))
@@ -1684,13 +1727,18 @@ const char *darwin_objc_llvm_special_name_section(const char* name) {
       return "__DATA, __objc_nlcatlist, regular, no_dead_strip";
     else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
       return "__DATA, __objc_protorefs, regular, no_dead_strip";
+    else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
+      return "__DATA, __objc_selrefs, regular, no_dead_strip";
+    else if (!strncmp (name, "IMAGE_INFO", 10))
+      return "__DATA, __objc_imageinfo, regular, no_dead_strip";
+    else if (!strncmp (name, "CLASS_$_", 8)
+             || !strncmp (name, "METACLASS_$_", 12))
+      return "__DATA, __objc_data";
   }
   return 0;
 }
 
 const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
-  const char *name;
-
   if (TREE_CODE(decl) == CONST_DECL) {
     extern int flag_next_runtime;
     tree typename = TYPE_NAME(TREE_TYPE(decl));
@@ -1709,10 +1757,7 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
     }
   }
   
-  /* Get a pointer to the name, past the L_OBJC_ prefix. */
-  name = IDENTIFIER_POINTER (DECL_NAME (decl))+7;
-
-  return darwin_objc_llvm_special_name_section(name);
+  return darwin_objc_llvm_special_name_section_help(decl);
 }
 #endif
 /* LLVM LOCAL end */

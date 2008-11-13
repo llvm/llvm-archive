@@ -679,6 +679,12 @@ void TreeToLLVM::StartFunctionBody() {
   if (optimize_size)
     Fn->addFnAttr(Attribute::OptimizeForSize);
 
+  // Handle stack smashing protection.
+  if (flag_stack_protect == 1)
+    Fn->addFnAttr(Attribute::StackProtect);
+  else if (flag_stack_protect == 2)
+    Fn->addFnAttr(Attribute::StackProtectReq);
+
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);

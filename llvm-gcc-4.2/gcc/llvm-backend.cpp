@@ -167,16 +167,8 @@ void llvm_initialize_backend(void) {
   }
 
   if (flag_stack_protect > 0) {
-    std::string Arg;
-
-    if (flag_stack_protect == 1)
-      Arg = "--enable-stack-protector=some";
-    else
-      Arg = "--enable-stack-protector=all";
-
-    ArgStrings.push_back(Arg);
-    Arg = "--stack-protector-buffer-size=" +
-      utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE));
+    std::string Arg("--stack-protector-buffer-size=" +
+                    utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE)));
     ArgStrings.push_back(Arg);
   }
 

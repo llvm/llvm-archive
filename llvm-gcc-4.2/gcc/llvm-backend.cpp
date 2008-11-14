@@ -1013,6 +1013,11 @@ void emit_global_to_llvm(tree decl) {
   if (TREE_CODE(decl) == VAR_DECL && DECL_REGISTER(decl))
     return;
 
+  // If tree nodes says defer output then do not emit global yet.
+  if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS) 
+      && (DECL_DEFER_OUTPUT(decl)))
+      return;
+
   timevar_push(TV_LLVM_GLOBALS);
 
   // Get or create the global variable now.

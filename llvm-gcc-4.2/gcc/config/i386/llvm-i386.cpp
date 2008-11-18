@@ -627,10 +627,13 @@ bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
   const StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return false;
 
-  // FIXME: Currently codegen isn't lowering _Complex char / short and _Complex
-  // int in x86-64 in a way that makes it ABI compatible.
+  // FIXME: Currently codegen isn't lowering most _Complex types in a way that
+  // makes it ABI compatible for x86-64. Same for _Complex char and _Complex
+  // short in 32-bit.
   const Type *EltTy = STy->getElementType(0);
-  return !((TARGET_64BIT && EltTy == Type::Int32Ty) ||
+  return !((TARGET_64BIT && (EltTy->isInteger() ||
+                             EltTy == Type::FloatTy ||
+                             EltTy == Type::DoubleTy)) ||
            EltTy == Type::Int16Ty ||
            EltTy == Type::Int8Ty);
 }

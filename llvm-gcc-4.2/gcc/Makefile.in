@@ -937,7 +937,7 @@ INCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 ifneq ($(LLVMOBJDIR),)
 # If LLVM is built srcdir != objdir, include the objdir headers for configured
 # headers, like DataTypes.h.
-ifneq (($LLVMOBJDIR),$(LLVMSRCDIR))
+ifneq ($(LLVMOBJDIR),$(LLVMSRCDIR))
 INCLUDES += -I$(LLVMOBJDIR)/include
 endif
 

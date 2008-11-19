@@ -20023,7 +20023,7 @@ rs6000_sched_finish (FILE *dump, int sched_verbose)
 }
 
 /* LLVM LOCAL - Disable scheduler. */
-#endif ENABLE_LLVM
+#endif /* ENABLE_LLVM */
 
 /* Length in units of the trampoline for entering a nested function.  */
 

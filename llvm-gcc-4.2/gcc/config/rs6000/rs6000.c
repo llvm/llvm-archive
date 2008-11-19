@@ -1561,8 +1561,12 @@ rs6000_override_options (const char *default_cpu)
       flag_reorder_blocks = 1;
       if (flag_branch_probabilities && !flag_exceptions)
 	flag_reorder_blocks_and_partition = 1;
+/* LLVM LOCAL begin compile on non-darwin targets */
+#if TARGET_MACHO
       if (!flag_pic)
 	target_flags |= MASK_MACHO_DYNAMIC_NO_PIC;
+#endif
+/* LLVM LOCAL end */
         
       if (mcpu_cpu == PROCESSOR_POWER4)
       {
@@ -16871,7 +16875,13 @@ rs6000_emit_prologue (void)
 	     If we're saving AltiVec regs via a function, we're not last.  */
 	  && (info->first_altivec_reg_save > LAST_ALTIVEC_REGNO
 	      || VECTOR_SAVE_INLINE (info->first_altivec_reg_save)))
-	gen_following_label = lr_already_set_up_for_pic = 1;
+/* LLVM LOCAL begin compile on non-darwin targets */
+	gen_following_label = 
+#if TARGET_MACHO
+        lr_already_set_up_for_pic = 
+#endif
+        1;
+/* LLVM LOCAL end */
       /* APPLE LOCAL end reduce code size */
 
       /* APPLE LOCAL begin +2 (could be conditionalized) */
@@ -18324,6 +18334,8 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
       /* APPLE LOCAL end 3910248, 3915171 */
       if (insn)
 	line_number = NOTE_LINE_NUMBER (insn);
+/* LLVM LOCAL begin compile on non-darwin targets */
+#if TARGET_MACHO
       /* APPLE LOCAL begin 4380289 */
       /* This JMP is in a coalesced section, and Mach-O forbids us to
 	 directly reference anything else in a coalesced section; if
@@ -18335,6 +18347,8 @@ rs6000_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
       insn = emit_jump_insn (gen_longjump (label_rtx (label_decl),
 					   XEXP (DECL_RTL (function), 0)));
       /* APPLE LOCAL end 4380289 */
+#endif
+/* LLVM LOCAL end */
     }
   /* APPLE LOCAL end 4299630 */
   emit_barrier ();

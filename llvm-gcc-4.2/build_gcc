@@ -619,6 +619,12 @@ for t in $TARGETS ; do
     rm libllvmgcc.dylib
     ln -s ../../libllvmgcc.dylib
 done
+
+if [ "x$RC_XBS" != "x" ]; then
+    mkdir -p $DEST_DIR/usr/bin
+    ln -s $DEST_DIR$LLVM_BIN_DIR/llvm-gcc $DEST_DIR/usr/bin/llvm-gcc 
+    ln -s $DEST_DIR$LLVM_BIN_DIR/llvm-g++ $DEST_DIR/usr/bin/llvm-g++ 
+fi
 # LLVM LOCAL end
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1

@@ -6068,8 +6068,17 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
                  "Annotate attribute arg should always be a string");
           
           Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
+          
+          // We can not use the IRBuilder because it will constant fold away
+          // the GEP that is critical to distinguish between an annotate 
+          // attribute on a whole struct from one on the first element of the
+          // struct.
+          BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP, 
+                                                      FieldPtr->getNameStart());
+          Builder.Insert(CastFieldPtr);
+          
           Value *Ops[4] = {
-            BitCastToType(FieldPtr, SBP), BitCastToType(strGV, SBP), 
+            CastFieldPtr, BitCastToType(strGV, SBP), 
             File,  LineNo
           };
           

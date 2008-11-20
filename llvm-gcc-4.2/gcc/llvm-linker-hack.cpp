@@ -28,7 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/ScheduleDAGSDNodes.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Streams.h"

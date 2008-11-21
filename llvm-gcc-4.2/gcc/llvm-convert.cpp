@@ -1492,9 +1492,8 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::Int32Ty, Align)
   };
 
-  Intrinsic::ID IID = 
-    (IntPtr == Type::Int32Ty) ? Intrinsic::memcpy_i32 : Intrinsic::memcpy_i64;
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memcpy,
+                                               &IntPtr, 1), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
@@ -1508,9 +1507,8 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::Int32Ty, Align)
   };
 
-  Intrinsic::ID IID = 
-    (IntPtr == Type::Int32Ty) ? Intrinsic::memmove_i32 : Intrinsic::memmove_i64;
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memmove,
+                                               &IntPtr, 1), Ops, Ops+4);
 }
 
 void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
@@ -1523,11 +1521,9 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
     CastToSIntType(Size, IntPtr),
     ConstantInt::get(Type::Int32Ty, Align)
   };
-
-  Intrinsic::ID IID = 
-    (IntPtr == Type::Int32Ty) ? Intrinsic::memset_i32 : Intrinsic::memset_i64;
   
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Ops, Ops+4);
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memset,
+                                               &IntPtr, 1), Ops, Ops+4);
 }
 
 

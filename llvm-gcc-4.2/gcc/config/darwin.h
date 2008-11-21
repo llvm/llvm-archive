@@ -1441,7 +1441,9 @@ void add_framework_path (char *);
   (((DECL_NAME (decl) &&                                                \
      TREE_CODE (DECL_NAME (decl)) == IDENTIFIER_NODE &&                 \
      IDENTIFIER_POINTER (DECL_NAME (decl)) &&                           \
-     (!strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "L_OBJC_", 7) || \
+     (!strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "_OBJC_", 6) ||  \
+      !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "OBJC_", 5) ||   \
+      !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "L_OBJC_", 7) || \
       !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "l_OBJC_", 7) || \
       !strncmp (IDENTIFIER_POINTER (DECL_NAME (decl)), "l_objc_", 7))) || \
     TREE_CODE(decl) == CONST_DECL) ?                                    \

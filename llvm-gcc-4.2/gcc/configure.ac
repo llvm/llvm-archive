@@ -3622,7 +3622,7 @@ echo "source ${srcdir}/gdbinit.in" >> .gdbinit
 # make and thus we'd get different behavior depending on where we built the
 # sources.
 if test x$exec_prefix = xNONE -o x$exec_prefix = x$prefix; then
-    gcc_tooldir='$(libsubdir)/$(unlibsubdir)/../$(target_noncanonical)'
+    gcc_tooldir='$(libsubdir)/$(unlibsubdir)/../$(target_noncanonical)/$(version)'
 else
 changequote(<<, >>)dnl
 # An explanation of the sed strings:
@@ -3647,7 +3647,7 @@ changequote(<<, >>)dnl
 #   /foo        /foo/bar/ugg      ../../
 #
     dollar='$$'
-    gcc_tooldir="\$(libsubdir)/\$(unlibsubdir)/\`echo \$(exec_prefix) | sed -e 's|^\$(prefix)||' -e 's|/\$(dollar)||' -e 's|^[^/]|/|' -e 's|/[^/]*|../|g'\`\$(target_noncanonical)"
+    gcc_tooldir="\$(libsubdir)/\$(unlibsubdir)/\`echo \$(exec_prefix) | sed -e 's|^\$(prefix)||' -e 's|/\$(dollar)||' -e 's|^[^/]|/|' -e 's|/[^/]*|../|g'\`\$(target_noncanonical)/$(version)"
 changequote([, ])dnl
 fi
 AC_SUBST(gcc_tooldir)

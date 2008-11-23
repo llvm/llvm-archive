@@ -1728,7 +1728,7 @@ const char *darwin_objc_llvm_special_name_section(const char *name) {
     else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
       return "__DATA, __objc_protorefs, regular, no_dead_strip";
     else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
-      return "__DATA, __objc_selrefs, regular, no_dead_strip";
+      return "__DATA, __objc_selrefs, literal_pointers, no_dead_strip";
     else if (!strncmp (name, "IMAGE_INFO", 10))
       return "__DATA, __objc_imageinfo, regular, no_dead_strip";
     else if (!strncmp (name, "CLASS_$_", 8)

@@ -695,6 +695,7 @@ do {					\
     }                                                                   \
   } while (0)
 
+/* LLVM LOCAL - begin radar 6389998 */
 /* A const CFString is created as an anonymous global variable. LLVM then gives
    it the name '__unnamed_#_#'. This causes troubles with the runtime, which
    expects the name to be internal. Give it an internal name here.  */
@@ -708,6 +709,7 @@ do {					\
       GV->setName(N);                                                   \
     }                                                                   \
   } while (0)
+/* LLVM LOCAL - end radar 6389998 */
 
 #endif
 /* LLVM LOCAL end */

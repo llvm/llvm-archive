@@ -701,7 +701,8 @@ do {					\
    expects the name to be internal. Give it an internal name here.  */
 #define TARGET_ADJUST_CFSTRING_NAME(GV, SEC)                            \
   do {                                                                  \
-    if (strcmp((SEC), "__DATA, __cfstring") == 0) {                     \
+    if (!GV->hasName() && GV->hasInternalLinkage() &&                   \
+        strcmp((SEC), "__DATA, __cfstring") == 0) {                     \
       static unsigned i = 0;                                            \
       const char *fmt = "\01L_unnamed_cfstring_%d";                     \
       char *N = (char *)alloca(strlen(fmt) + 37);                       \

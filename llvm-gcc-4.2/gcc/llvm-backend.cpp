@@ -1136,8 +1136,7 @@ void emit_global_to_llvm(tree decl) {
 
       /* LLVM LOCAL - begin radar 6389998 */
 #ifdef TARGET_ADJUST_CFSTRING_NAME
-      if (!GV->hasName() && GV->hasInternalLinkage())
-        TARGET_ADJUST_CFSTRING_NAME(GV, Section);
+      TARGET_ADJUST_CFSTRING_NAME(GV, Section);
 #endif
       /* LLVM LOCAL - end radar 6389998 */
     }

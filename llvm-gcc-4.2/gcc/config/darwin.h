@@ -694,6 +694,21 @@ do {					\
       (FN)->setLinkage(Function::ExternalLinkage);                      \
     }                                                                   \
   } while (0)
+
+/* A const CFString is created as an anonymous global variable. LLVM then gives
+   it the name '__unnamed_#_#'. This causes troubles with the runtime, which
+   expects the name to be internal. Give it an internal name here.  */
+#define TARGET_ADJUST_CFSTRING_NAME(GV, SEC)                            \
+  do {                                                                  \
+    if (strcmp((SEC), "__DATA, __cfstring") == 0) {                     \
+      static unsigned i = 0;                                            \
+      const char *fmt = "\01L_unnamed_cfstring_%d";                     \
+      char *N = (char *)alloca(strlen(fmt) + 37);                       \
+      sprintf(N, fmt, i++);                                             \
+      GV->setName(N);                                                   \
+    }                                                                   \
+  } while (0)
+
 #endif
 /* LLVM LOCAL end */
 

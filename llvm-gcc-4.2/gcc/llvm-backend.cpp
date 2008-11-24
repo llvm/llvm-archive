@@ -1133,6 +1133,11 @@ void emit_global_to_llvm(tree decl) {
     if (const char *Section = 
         LLVM_IMPLICIT_TARGET_GLOBAL_VAR_SECTION(decl)) {
       GV->setSection(Section);
+
+#ifdef TARGET_ADJUST_CFSTRING_NAME
+      if (!GV->hasName() && GV->hasInternalLinkage())
+        TARGET_ADJUST_CFSTRING_NAME(GV, Section);
+#endif
     }
 #endif
   }

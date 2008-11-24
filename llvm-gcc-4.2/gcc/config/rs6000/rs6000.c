@@ -20567,10 +20567,13 @@ rs6000_fatal_bad_address (rtx op)
   fatal_insn ("bad address", op);
 }
 
+/* LLVM LOCAL begin move branch_island_list outside #if */
+static GTY (()) tree branch_island_list = 0;
+
 #if TARGET_MACHO
 
 /* APPLE LOCAL mlongcall long names 4271187 */
-static GTY (()) tree branch_island_list = 0;
+/* LLVM LOCAL end move branch_island_list outside #if */
 
 /* APPLE LOCAL begin 4380289 */
 /* Remember to generate a branch island for far calls to the given

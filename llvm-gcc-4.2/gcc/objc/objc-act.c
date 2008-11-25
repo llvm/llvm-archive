@@ -18296,6 +18296,11 @@ really_start_method (tree method,
 			   get_arg_type_list (METHOD_SEL_NAME (method), method, METHOD_DEF, 0));
   /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
   objc_start_function (method_id, meth_type, NULL_TREE, parmlist, method);
+/* LLVM LOCAL begin prevent llvm from adding leading _ */
+#ifdef ENABLE_LLVM
+  set_user_assembler_name(current_function_decl, buf);
+#endif
+/* LLVM LOCAL end prevent llvm from adding leading _ */
 
   /* Set self_decl from the first argument.  */
   self_decl = DECL_ARGUMENTS (current_function_decl);

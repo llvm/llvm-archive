@@ -1533,7 +1533,8 @@ machopic_select_section (tree exp, int reloc,
             return darwin_sections[objc_v2_message_refs_section];
           else if (!strncmp (name, "_OBJC_LABEL_CLASS_", 18))
             return darwin_sections[objc_v2_classlist_section];
-          else if (!strncmp (name, "_OBJC_LABEL_PROTOCOL_", 21))
+          /* APPLE LOCAL radar 6351990 */
+          else if (!strncmp (name, "l_OBJC_LABEL_PROTOCOL_", 22))
             return darwin_sections[objc_v2_protocollist_section];
           else if (!strncmp (name, "_OBJC_LABEL_CATEGORY_", 21))
             return darwin_sections[objc_v2_categorylist_section];
@@ -1718,7 +1719,7 @@ const char *darwin_objc_llvm_special_name_section(const char *name) {
     else if (!strncmp (name, "LABEL_CLASS_", 12))
       return "__DATA, __objc_classlist, regular, no_dead_strip"; 
     else if (!strncmp (name, "LABEL_PROTOCOL_", 15))
-      return "__DATA, __objc_protolist, regular, no_dead_strip"; 
+      return "__DATA, __objc_protolist, coalesced, no_dead_strip"; 
     else if (!strncmp (name, "LABEL_CATEGORY_", 15))
       return "__DATA, __objc_catlist, regular, no_dead_strip"; 
     else if (!strncmp (name, "LABEL_NONLAZY_CLASS_", 20))
@@ -1726,7 +1727,7 @@ const char *darwin_objc_llvm_special_name_section(const char *name) {
     else if (!strncmp (name, "LABEL_NONLAZY_CATEGORY_", 23))
       return "__DATA, __objc_nlcatlist, regular, no_dead_strip";
     else if (!strncmp (name, "PROTOCOL_REFERENCE_", 19))
-      return "__DATA, __objc_protorefs, regular, no_dead_strip";
+      return "__DATA, __objc_protorefs, coalesced, no_dead_strip";
     else if (!strncmp (name, "SELECTOR_REFERENCES", 19))
       return "__DATA, __objc_selrefs, literal_pointers, no_dead_strip";
     else if (!strncmp (name, "IMAGE_INFO", 10))

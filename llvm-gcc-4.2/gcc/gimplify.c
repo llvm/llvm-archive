@@ -180,7 +180,7 @@ pop_gimplify_context (tree body)
 #ifndef ENABLE_LLVM
   /* LLVM wants to know about gimple formal temps. */
   for (t = c->temps; t ; t = TREE_CHAIN (t))
-        DECL_GIMPLE_FORMAL_TEMP_P (t) = 0;
+    DECL_GIMPLE_FORMAL_TEMP_P (t) = 0;
 #else
   t = 0; 
 #endif

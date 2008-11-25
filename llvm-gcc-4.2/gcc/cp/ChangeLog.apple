@@ -1,3 +1,23 @@
+008-11-07  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5847976
+	* decl.c (synth_block_byref_id_object_copy_func): Takes new 'flag' argument
+	and produces the new much simplified API.
+	(synth_block_byref_id_object_dispose_func): Ditto.
+	(new_block_byref_decl): Turn off -fobjc-gc so we don't get
+	bogus warning on field declared as __weak.
+	(init_byref_decl): Takes a new 'flag' argument and passes
+	it down to synth_block_byref_id_object_copy_func and
+	synth_block_byref_id_object_dispose_func.
+	(cp_finish_decl): Calculates the flag for the block 
+	variable declaration and passes it down to init_byref_decl.
+	* parser.c (build_block_struct_initlist): Removes call to	
+	copy_in_object (not needed).
+	(synth_copy_helper_block_func): Produce the new, simplified
+	API.
+	(synth_destroy_helper_block_func): Ditto.
+	(build_block_byref_decl): Copy over COPYABLE_WEAK_BLOCK flag.
+	
 2008-10-31  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6175959

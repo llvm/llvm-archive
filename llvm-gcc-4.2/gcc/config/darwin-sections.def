@@ -117,10 +117,12 @@ DEF_SECTION (objc_v2_nonlazy_class_section, 0,
 	     ".section __DATA, __objc_nlclslist, regular, no_dead_strip", 1)
 DEF_SECTION (objc_v2_nonlazy_category_section, 0,
 	     ".section __DATA, __objc_nlcatlist, regular, no_dead_strip", 1)
+/* APPLE LOCAL begin radar 6351990 */
 DEF_SECTION (objc_v2_protocollist_section, 0,
-	     ".section __DATA, __objc_protolist, regular, no_dead_strip", 1)
+	     ".section __DATA, __objc_protolist, coalesced, no_dead_strip", 1)
 DEF_SECTION (objc_v2_protocolrefs_section, 0,
-	     ".section __DATA, __objc_protorefs, regular, no_dead_strip", 1)
+	     ".section __DATA, __objc_protorefs, coalesced, no_dead_strip", 1)
+/* APPLE LOCAL end radar 6351990 */
 DEF_SECTION (objc_v2_super_classrefs_section, 0,
 	     ".section __DATA, __objc_superrefs, regular, no_dead_strip", 1)
 DEF_SECTION (objc_v2_image_info_section, 0,

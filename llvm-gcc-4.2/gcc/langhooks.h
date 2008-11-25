@@ -468,6 +468,13 @@ struct lang_hooks
      TREE_SIDE_EFFECTS need updating.  */
   tree (*expr_to_decl) (tree expr, bool *tc, bool *ti, bool *se);
 
+
+  /* APPLE LOCAL begin radar 6353006  */
+  /*  For c-based languages, builds a generic type for Blocks pointers (for
+      emitting debug information.  For other languages, returns NULL.  */
+  tree (*build_generic_block_struct_type) (void);
+  /* APPLE LOCAL end radar 6353006  */
+
   /* Whenever you add entries here, make sure you adjust langhooks-def.h
      and langhooks.c accordingly.  */
 };

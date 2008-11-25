@@ -372,7 +372,8 @@ cb_undef (cpp_reader * ARG_UNUSED (pfile), source_location loc,
    non-NULL.  */
 
 enum cpp_ttype
-c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
+/* APPLE LOCAL CW asm blocks C++ comments 6338079 */
+c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags, int defer)
 {
   static bool no_more_pch;
   const cpp_token *tok;
@@ -474,18 +475,24 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
 
     case CPP_NUMBER:
       {
-	unsigned int flags = cpp_classify_number (parse_in, tok);
+	/* APPLE LOCAL CW asm blocks C++ comments 6338079 */
+	unsigned int flags = cpp_classify_number (parse_in, tok, defer);
 
 	switch (flags & CPP_N_CATEGORY)
 	  {
 	  case CPP_N_INVALID:
+	    /* APPLE LOCAL begin CW asm blocks C++ comments 6338079 */
+	    if (flags & CPP_N_DEFER)
+	      {
+		add_flags = ERROR_DEFERRED;
+		*value = error_mark_node;
+		break;
+	      }
+	    /* APPLE LOCAL end CW asm blocks C++ comments 6338079 */
+
 	    /* cpplib has issued an error.  */
 	    *value = error_mark_node;
-	    /* APPLE LOCAL begin CW asm blocks 6276214 */
-	    /* If errors are deferred, they don't count as errors yet.  */
-	    if (!flag_ms_asms)
-	      errorcount++;
-	    /* APPLE LOCAL end CW asm blocks 6276214 */
+	    errorcount++;
 	    break;
 
 	  case CPP_N_INTEGER:
@@ -611,7 +618,7 @@ c_lex_with_flags (tree *value, location_t *loc, unsigned char *cpp_flags)
 	/* Because we don't recognize inline asm commments during
 	   lexing, we have to pass this back to the parser to error
 	   out with or eat as a comment as appropriate.  */
-	if (flag_iasm_blocks_local)
+	if (defer && flag_iasm_blocks_local)
 	  {
 	    *value = build_int_cst_wide (char_type_node, c, 0);
 	    break;

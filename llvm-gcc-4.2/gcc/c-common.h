@@ -1022,6 +1022,11 @@ extern void objc_start_class_implementation (tree, tree);
 extern void objc_start_category_implementation (tree, tree);
 /* APPLE LOCAL radar 4592503 */
 extern void objc_checkon_weak_attribute (tree);
+/* APPLE LOCAL begin radar 5847976 */
+extern tree build_block_object_assign_call_exp (tree, tree, int);
+extern tree build_block_object_dispose_call_exp (tree, int);
+extern int objc_is_gcable_type (tree);
+/* APPLE LOCAL end radar 5847976 */
 extern void objc_continue_implementation (void);
 extern void objc_finish_implementation (void);
 extern void objc_set_visibility (int);
@@ -1120,6 +1125,15 @@ extern bool check_missing_format_attribute (tree, tree);
 extern tree vector_constructor_from_expr (tree, tree);
 /* APPLE LOCAL end AltiVec */
 
+/* APPLE LOCAL begin radar 5847976 */
+/* Runtime support functions used by compiler when generating copy/dispose helpers */
+enum {
+    BLOCK_FIELD_IS_OBJECT   =  3,  /* id, NSObject, __attribute__((NSObject)), block, ... */
+    BLOCK_FIELD_IS_BLOCK    =  7,  /* a block variable */
+    BLOCK_FIELD_IS_BYREF    =  8,  /* the on stack structure holding the __block variable */
+    BLOCK_FIELD_IS_WEAK     = 16   /* declared __weak, only used in byref copy helpers */
+};
+/* APPLE LOCAL end radar 5847976 */
 /* APPLE LOCAL begin radar 5732232 - blocks */
 enum {
      BLOCK_NEEDS_FREE =        (1 << 24),
@@ -1183,10 +1197,7 @@ extern void pop_from_top_level (void);
 extern void start_block_helper_function (tree func_decl);
 extern void block_build_prologue (struct block_sema_info *block_impl);
 extern tree c_finish_return (tree);
-extern tree copy_in_object (tree);
 extern bool block_requires_copying (tree);
-extern tree retain_block_component (tree);
-extern tree release_block_component (tree);
 /* APPLE LOCAL begin radar 5803600 */
 extern void add_block_global_byref_list (tree);
 extern bool in_block_global_byref_list (tree);
@@ -1195,7 +1206,6 @@ extern bool in_block_global_byref_list (tree);
 /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
 extern tree build_byref_local_var_access (tree, tree);
 extern tree do_digest_init (tree, tree);
-extern tree cast_to_pointer_to_id (tree);
 /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 /* APPLE LOCAL begin radar 6237713 */
 extern bool any_recognized_block_attribute (tree);
@@ -1206,8 +1216,6 @@ extern tree build_block_descriptor_type (bool);
 /* APPLE LOCAL end radar 5847213 */
 /* APPLE LOCAL begin radar 6083129 - byref escapes */
 extern tree build_block_byref_release_exp (tree);
-extern tree build_block_byref_release_decl (void);
-extern tree build_block_byref_assign_copy_decl (void);
 /* APPLE LOCAL end radar 6083129 - byref escapes */
 
 /* APPLE LOCAL radar 6040305 - blocks */
@@ -1219,6 +1227,9 @@ extern tree function_to_pointer_conversion (tree);
 
 /* APPLE LOCAL radar 6160536 */
 extern tree build_block_helper_name (int);
+
+/* APPLE LOCAL radar 6353006  */
+extern tree c_build_generic_block_struct_type (void);
 
 /* In c-omp.c  */
 extern tree c_finish_omp_master (tree);

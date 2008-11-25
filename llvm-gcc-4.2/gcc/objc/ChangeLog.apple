@@ -1,3 +1,39 @@
+2008-11-14  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6370136
+	* objc-act.c (objc_merge_protocol_methods): Merge copied
+	list of protocol's methods into class.
+
+2008-11-13  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6351990 (minor tweak).
+	* objc-act.c (build_protocol_list_address_table): Move couple
+	of variables out of the loop.
+
+2008-11-11  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6351990
+	* objc-act.c (build_protocollist_reference_decl): Builds
+	a weak visibility hidder symbol for protocol reference
+	meta-data symbols.
+	(objc_add_to_protocol_list_chain): Takes addition argument
+	and builds a tree using this argument.
+	(build_protocol_list_address_table): Now builds a list
+	of protocol label and address of generated protocol symbol.
+	
+2008-11-07  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5847976
+	* objc-act.c (objc_is_gcable_type): Made global.
+	(objc_build_weak_reference_tree): Quick return if
+	-fobjc-gc unspecified.
+	(objc_checkon_weak_attribute): Ditto.
+	(objc_generate_write_barrier): Generate write-barrier for
+	a __block variable declared as __weak.
+	(retain_block_component, release_block_component,
+	 copy_in_object): Removed.
+	(cast_to_pointer_to_id): Removed.
+
 2008-10-27  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6231433

@@ -224,7 +224,6 @@ static tree is_ivar (tree, tree);
 
 /* APPLE LOCAL begin objc new property */
 static bool objc_lookup_protocol (tree, tree, tree, bool);
-static int objc_is_gcable_type (tree);
 /* APPLE LOCAL radar 5277239 */
 static tree lookup_method_static (tree, tree, int, bool, bool);
 /* APPLE LOCAL radar 4817072 */
@@ -272,8 +271,8 @@ static void build_v2_protocol_reference (tree);
 static void init_UOBJC2_EHTYPE_decls (void);
 static void create_ivar_offset_name (char *, tree, tree);
 static void build_v2_category_template (void);
-/* APPLE LOCAL radar 4533974 - ObjC new protocol */
-static tree build_protocollist_reference_decl (void);
+/* APPLE LOCAL radar 4533974 - ObjC new protocol - radar 6351990 */
+static tree build_protocollist_reference_decl (tree);
 static void objc_add_to_category_list_chain (tree);
 static void objc_add_to_nonlazy_category_list_chain (tree);
 /* APPLE LOCAL begin radar 4441049 */
@@ -1081,7 +1080,6 @@ objc_start_category_implementation (tree class, tree categ)
 
 void
 objc_continue_implementation (void)
-
 {
   objc_ivar_chain
     = continue_class (objc_implementation_context);
@@ -4531,6 +4529,8 @@ synth_module_prologue (void)
   tree type;
   enum debug_info_type save_write_symbols = write_symbols;
   const struct gcc_debug_hooks *const save_hooks = debug_hooks;
+  /* APPLE LOCAL 6348516 */
+  int save_warn_padded;
 
   /* Suppress outputting debug symbols, because
      dbxout_init hasn'r been called yet.  */
@@ -4871,12 +4871,18 @@ synth_module_prologue (void)
     }
   /* APPLE LOCAL end ObjC new abi */
   build_protocol_template ();
+  /* APPLE LOCAL begin 6348516 */
+  save_warn_padded = warn_padded;
+  warn_padded = 0;
+  /* APPLE LOCAL end 6348516 */
   build_category_template ();
   build_objc_exception_stuff ();
 
   if (flag_next_runtime)
     build_next_objc_exception_stuff ();
 
+  /* APPLE LOCAL 6348516 */
+  warn_padded = save_warn_padded;
   /* static SEL _OBJC_SELECTOR_TABLE[]; */
 
   if (! flag_next_runtime)
@@ -6775,7 +6781,8 @@ objc_is_object_ptr (tree type)
    they are pointers to types that are themselves GC-able.  */
 
 /* APPLE LOCAL end ObjC GC */
-static int
+/* APPLE LOCAL radar 5847976 */
+int
 /* APPLE LOCAL ObjC GC */
 objc_is_gcable_type (tree type)
 {
@@ -7049,6 +7056,10 @@ objc_tree_is_weak_expr (tree expr)
 tree
 objc_build_weak_reference_tree (tree expr)
 {
+  /* APPLE LOCAL begin radar 5847976 */
+  if (!flag_objc_gc)
+    return expr;
+  /* APPLE LOCAL end radar 5847976 */
   return objc_tree_is_weak_expr (expr) ?
          build1 (OBJC_WEAK_REFERENCE_EXPR, TREE_TYPE (expr), expr) : expr;
 }
@@ -7087,6 +7098,10 @@ objc_build_strong_cast_assignment (tree lhs, tree rhs)
 void
 objc_checkon_weak_attribute (tree decl)
 {
+  /* APPLE LOCAL begin radar 5747976 */
+  if (!flag_objc_gc)
+    return;
+  /* APPLE LOCAL end radar 5747976 */
   if (decl && DECL_P (decl))
     {
       if (objc_collecting_ivars
@@ -7094,7 +7109,8 @@ objc_checkon_weak_attribute (tree decl)
 	      && (TREE_STATIC (decl) || DECL_EXTERNAL (decl))))
 	return;
 
-      if ((TREE_CODE (decl) == FIELD_DECL || TREE_CODE (decl) == VAR_DECL)
+      /* APPLE LOCAL radar 5847976 */
+      if ((TREE_CODE (decl) == FIELD_DECL || (TREE_CODE (decl) == VAR_DECL && !COPYABLE_BYREF_LOCAL_VAR (decl)))
 	  && objc_is_gcable_type (TREE_TYPE (decl)) == -1)
 	{
 	  location_t saved_location = input_location;
@@ -7448,7 +7464,20 @@ objc_generate_write_barrier (tree lhs, enum tree_code modifycode, tree rhs)
     }
   /* APPLE LOCAL begin radar 4426814 */
   if (strong == -1)
-    return NULL_TREE;
+    {
+      /* APPLE LOCAL begin radar 5847976 */
+      /* Must generate write barrier for __block objects which are __weak
+         and used in an assignment. */
+      if (TREE_CODE (outer) == COMPONENT_REF && TREE_OPERAND (outer, 0)
+	  && TREE_CODE (TREE_OPERAND (outer, 0)) == VAR_DECL)
+        {
+	  tree var_decl = TREE_OPERAND (outer, 0);
+	  if (COPYABLE_WEAK_BLOCK (var_decl))
+	    return objc_build_global_assignment (lhs, rhs, -1);
+        }
+      /* APPLE LOCAL end radar 5847976 */
+      return NULL_TREE;
+    }
   /* APPLE LOCAL end radar 4426814 */
 
   /* LLVM LOCAL - begin 5541393 */
@@ -12364,12 +12393,13 @@ build_class_ro_t_initializer (tree type, tree name,
    in the __protocol_list section. */
 
 static void
-objc_add_to_protocol_list_chain (tree protocol_decl)
+/* APPLE LOCAL begin radar 6351990 */
+objc_add_to_protocol_list_chain (tree protocol_interface_decl, tree protocol_decl)
 {
   tree *chain;
   for (chain = &protocol_list_chain; *chain; chain = &TREE_CHAIN (*chain))
     ;
-  *chain = tree_cons (NULL_TREE, protocol_decl, NULL_TREE);
+  *chain = tree_cons (protocol_interface_decl, protocol_decl, NULL_TREE);
 }
 
 /* Build the __protocol_list section table containing address of all generate protocol_t 
@@ -12379,34 +12409,34 @@ static void
 build_protocol_list_address_table (void)
 {
   tree chain;
-  int count=0;
-  tree type;
-  tree initlist = NULL_TREE;
-  tree decl;
-  tree expr;
   tree list_chain = protocol_list_chain;
-  const char *label_name = "_OBJC_LABEL_PROTOCOL_$";
+  char *string = NULL;
+  unsigned int  buf_size = 0;
 
   for (chain = list_chain; chain; chain = TREE_CHAIN (chain))
     {
-      tree purpose = NULL_TREE;
-      expr = TREE_VALUE (chain);
+      tree decl = TREE_PURPOSE (chain);
+      tree expr = TREE_VALUE (chain);
+      gcc_assert (decl && TREE_CODE (decl) == PROTOCOL_INTERFACE_TYPE);
+      if ((strlen ("l_OBJC_LABEL_PROTOCOL_$_") + strlen (IDENTIFIER_POINTER (PROTOCOL_NAME (decl))) + 1) > buf_size)
+        {
+	  if (!buf_size)
+	    buf_size = BUFSIZE;
+	  else
+	    buf_size = strlen ("l_OBJC_LABEL_PROTOCOL_$_") + strlen (IDENTIFIER_POINTER (PROTOCOL_NAME (decl))) + 1;
+	  string = (char *)alloca (buf_size);
+	} 
+      sprintf (string,  "l_OBJC_LABEL_PROTOCOL_$_%s", IDENTIFIER_POINTER (PROTOCOL_NAME (decl)));
+      decl = create_hidden_decl (objc_protocol_type, string);
+      DECL_WEAK (decl) = 1;
+      set_user_assembler_name (decl, string);
       expr = convert (objc_protocol_type, build_fold_addr_expr (expr));
-#ifndef OBJCPLUS
-      purpose = build_int_cst (NULL_TREE, count);
-#endif
-      ++count;
-      initlist = tree_cons (purpose, expr, initlist);
+      /* APPLE LOCAL radar 4561192 */
+      objc_set_alignment_attribute (decl, objc_protocol_type);
+      finish_var_decl (decl, expr);
     }
-  gcc_assert (count > 0);
-  type = build_array_type (objc_protocol_type, 
-			   build_index_type (build_int_cst (NULL_TREE, count - 1)));
-  decl = start_var_decl (type, label_name);
-  expr = objc_build_constructor (type, nreverse (initlist));
-  /* APPLE LOCAL radar 4561192 */
-  objc_set_alignment_attribute (decl, objc_protocol_type);
-  finish_var_decl (decl, expr);
 }
+/* APPLE LOCAL end radar 6351990 */
 
 /* Build decl = initializer; for each protocol referenced in @protocol(MyProtole) expression. */
 
@@ -12480,33 +12510,39 @@ objc_v2_get_protocol_reference (tree ident)
     if (TREE_VALUE (*chain) == ident)
       {
         if (! TREE_PURPOSE (*chain))
-          TREE_PURPOSE (*chain) = build_protocollist_reference_decl ();
+	  /* APPLE LOCAL radar 6351990 */
+          TREE_PURPOSE (*chain) = build_protocollist_reference_decl (ident);
 
         return TREE_PURPOSE (*chain);
       }
 
-  decl = build_protocollist_reference_decl ();
+  /* APPLE LOCAL radar 6351990 */
+  decl = build_protocollist_reference_decl (ident);
   *chain = tree_cons (decl, ident, NULL_TREE);
   return decl;
 }
-
-static GTY(()) int protocollist_reference_idx;
 
 /* This routine creates a static variable used to implement @protocol(MyProtocol) 
    expression. This variable will be initialized to global protocol_t meta-data
    pointer. */
 
+/* APPLE LOCAL begin radar 6351990 */
 static tree
-build_protocollist_reference_decl (void)
+build_protocollist_reference_decl (tree protocol)
 {
   tree decl;
-  char buf[BUFSIZE];
+  tree protocol_ident = PROTOCOL_NAME (protocol);
+  char *buf = (char *)alloca (strlen ("l_OBJC_PROTOCOL_REFERENCE_$_") + 
+	       		      IDENTIFIER_LENGTH (protocol_ident) + 1);
 
-  sprintf (buf, "_OBJC_PROTOCOL_REFERENCE_$_%d", protocollist_reference_idx++);
-  decl = start_var_decl (objc_protocol_type, buf);
+  sprintf (buf, "l_OBJC_PROTOCOL_REFERENCE_$_%s", IDENTIFIER_POINTER (protocol_ident));
+  decl = create_hidden_decl (objc_protocol_type, buf);
+  DECL_WEAK (decl) = 1;
+  set_user_assembler_name (decl, buf);
 
   return decl;
 }
+/* APPLE LOCAL end radar 6351990 */
 /* APPLE LOCAL end radar 4533974 - ObjC new protocol */
 
 /* Add the global class meta-data declaration to the list which later on ends up 
@@ -14214,8 +14250,8 @@ generate_v2_protocols (void)
         reset_initializer_llvm(decl);
 #endif
       /* LLVM LOCAL end */
-      /* APPLE LOCAL radar 4533974 - ObjC new protocol */
-      objc_add_to_protocol_list_chain (decl);
+      /* APPLE LOCAL radar 4533974 - ObjC new protocol - radar 6351990 */
+      objc_add_to_protocol_list_chain (p, decl);
     }
 }
 
@@ -16878,8 +16914,13 @@ objc_merge_protocol_methods (tree class, tree rproto_list)
       tree p = TREE_VALUE (rproto);
       if (TREE_CODE (p) == PROTOCOL_INTERFACE_TYPE)
         {
-	  objc_merge_methods (class, PROTOCOL_CLS_METHODS (p), '+');
-	  objc_merge_methods (class, PROTOCOL_NST_METHODS (p), '-');
+	  /* APPLE LOCAL begin radar 6370136 */
+	  /* Call objc_merge_methods on copied list of methods, as insertion
+	     of methods in class's method list has side-effect of modifying
+	     protocol's method list which must not change. */
+	  objc_merge_methods (class, copy_list (PROTOCOL_CLS_METHODS (p)), '+');
+	  objc_merge_methods (class, copy_list (PROTOCOL_NST_METHODS (p)), '-');
+	  /* APPLE LOCAL end radar 6370136 */
           /* Search in nested protocols also. */
           objc_merge_proto_properties_in_class (class, PROTOCOL_LIST (p));
         }
@@ -19324,7 +19365,7 @@ generate_objc_image_info (void)
   DECL_CONTEXT (decl) = 0;
   DECL_ARTIFICIAL (decl) = 1;
   DECL_INITIAL (decl) = initlist;
-      /* APPLE LOCAL begin LLVM */
+  /* APPLE LOCAL begin LLVM */
 #ifdef ENABLE_LLVM
   /* Let optimizer know that this decl is not removable.  */
   set_user_assembler_name(decl, IDENTIFIER_POINTER (DECL_NAME(decl)));
@@ -20356,63 +20397,10 @@ objc_warn_direct_ivar_access (tree basetype, tree component)
 }
 /* APPLE LOCAL end radar 5376125 */
 /* APPLE LOCAL begin radar 5782740 - blocks */
-tree retain_block_component (tree exp)
-{
-  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
-  /* We do not want to warn on [id retain] message because we know what we
-   are doing. */
-  tree ret_exp;
-  donot_warn_missing_methods = 1;
-  ret_exp =  objc_finish_message_expr (exp, get_identifier ("retain"), NULL_TREE);
-  donot_warn_missing_methods = 0;
-  return ret_exp;
-  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
-}
-
-tree release_block_component (tree exp)
-{
-  /* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
-  /* We do not want to warn on [id release] message because we know what we
-     are doing. */
-  tree ret_exp;
-  donot_warn_missing_methods = 1;
-  ret_exp =  objc_finish_message_expr (exp, get_identifier ("release"), NULL_TREE);
-  donot_warn_missing_methods = 0;
-  return ret_exp;
-  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
-}
-
-/** copy_in_object - This routine for objective-c object pointers, returns
-    [ [EXP retain] autorelease ] expression which is used in initialization
-    of copied in variable used to set up a block literal struct.
-*/
-tree copy_in_object (tree exp)
-{
-/* APPLE LOCAL begin radar 5808305 */
-  return exp;
-#if 0
-  tree msg_exp;
-  tree type = TREE_TYPE (exp);  
-  if (!objc_is_object_ptr (type))
-    return exp;
-  msg_exp = retain_block_component (exp);
-  msg_exp = objc_finish_message_expr (msg_exp, get_identifier ("autorelease"), NULL_TREE);
-  return msg_exp;
-#endif
-/* APPLE LOCAL end radar 5808305 */
-}
-
 bool block_requires_copying (tree exp)
 {
   return TREE_CODE (TREE_TYPE (exp)) == BLOCK_POINTER_TYPE ||
 	 objc_is_object_ptr (TREE_TYPE (exp));
 }
 /* APPLE LOCAL end radar 5782740 - blocks */
-/* APPLE LOCAL begin radar 5932809 - copyable byref blocks */
-tree cast_to_pointer_to_id (tree exp)
-{
-  tree type = build_pointer_type (objc_object_type);
-  return build_c_cast (type, exp);
-}
-/* APPLE LOCAL end radar 5932809 - copyable byref blocks */
 #include "gt-objc-objc-act.h"

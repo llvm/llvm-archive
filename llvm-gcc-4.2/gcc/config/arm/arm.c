@@ -84,6 +84,7 @@ static bool arm_assemble_integer (rtx, unsigned int, int);
 static const char *fp_const_from_val (REAL_VALUE_TYPE *);
 static arm_cc get_arm_condition_code (rtx);
 static HOST_WIDE_INT int_log2 (HOST_WIDE_INT);
+static rtx is_jump_table (rtx);
 static const char *output_multi_immediate (rtx *, const char *, const char *,
 					   int, HOST_WIDE_INT);
 static const char *shift_op (rtx, HOST_WIDE_INT *);
@@ -3859,6 +3860,10 @@ legitimize_pic_address (rtx orig, enum machine_mode mode, rtx reg)
       offset = legitimize_pic_address (XEXP (XEXP (orig, 0), 1), Pmode,
 				       base == reg ? 0 : reg);
 
+      /* APPLE LOCAL begin 6327222 */
+      /* #if 0 for now so it's here for reference since this is a tricky
+         bit. */
+#if 0
       if (GET_CODE (offset) == CONST_INT)
 	{
 	  /* The base register doesn't really matter, we only want to
@@ -3872,7 +3877,8 @@ legitimize_pic_address (rtx orig, enum machine_mode mode, rtx reg)
 	  if (GET_CODE (offset) == CONST_INT)
 	    return plus_constant (base, INTVAL (offset));
 	}
-
+#endif
+      /* APPLE LOCAL end 6327222 */
       if (GET_MODE_SIZE (mode) > 4
 	  && (GET_MODE_CLASS (mode) == MODE_INT
 	      || TARGET_SOFT_FLOAT))

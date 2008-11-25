@@ -5298,14 +5298,16 @@ static tree block_byref_id_object_dispose;
 
  void __Block_byref_id_object_copy(struct Block_byref_id_object *dst,
 				   struct Block_byref_id_object *src) {
-   dst->object = [src->object retain];
+   _Block_object_assign (&_dest->object, _src->object, BLOCK_FIELD_IS_OBJECT[|BLOCK_FIELD_IS_WEAK]) // objects
+   _Block_object_assign(&_dest->object, _src->object, BLOCK_FIELD_IS_BLOCK[|BLOCK_FIELD_IS_WEAK])  //  blocks
  }  */
 static void
-synth_block_byref_id_object_copy_func (void)
+synth_block_byref_id_object_copy_func (int flag)
 {
   tree stmt;
   tree dst_arg, src_arg;
   tree dst_obj, src_obj;
+  tree call_exp;
 
   gcc_assert (block_byref_id_object_copy);
   /* Set up: (void* _dest, void*_src) parameters. */
@@ -5342,23 +5344,10 @@ synth_block_byref_id_object_copy_func (void)
   /* src_obj is: _src->object. */
   src_obj = build_indirect_object_id_exp (src_arg);
   /* APPLE LOCAL begin radar 6180456 */
-  if (c_dialect_objc ())
-    {
-      tree retain_exp = retain_block_component (src_obj);
-
-      /* dst->object = [src->object retain]; */
-      tree store = build_modify_expr (dst_obj, NOP_EXPR, retain_exp);
-      add_stmt (store);
-    }
-  else
-    {
-      /* _Block_byref_assign_copy(&_dest->object, _src->object) */
-      tree func_params = tree_cons (NULL_TREE, build_fold_addr_expr (dst_obj),
-                                    tree_cons (NULL_TREE, src_obj,
-                                               NULL_TREE));
-      tree call_exp = build_function_call (build_block_byref_assign_copy_decl (), func_params);
-      add_stmt (call_exp);
-    }
+  /* _Block_object_assign (&_dest->object, _src->object, BLOCK_FIELD_IS_OBJECT) or:
+     _Block_object_assign (&_dest->object, _src->object, BLOCK_FIELD_IS_BLOCK) */
+  call_exp = build_block_object_assign_call_exp (build_fold_addr_expr (dst_obj), src_obj, flag);
+  add_stmt (call_exp);
   /* APPLE LOCAL end radar 6180456 */
 
   finish_compound_stmt (stmt);
@@ -5371,10 +5360,10 @@ synth_block_byref_id_object_copy_func (void)
   This routine builds:
 
   void __Block_byref_id_object_dispose(struct Block_byref_id_object *_src) {
-    [_src->object release];  // objective-c++ or:
-    _Block_byref_release(_src->object) // c++ language
+    _Block_object_dispose(_src->object, BLOCK_FIELD_IS_OBJECT[|BLOCK_FIELD_IS_WEAK]) // objects
+    _Block_object_dispose(_src->object, BLOCK_FIELD_IS_BLOCK[|BLOCK_FIELD_IS_WEAK]) // blocks
   }  */
-static void synth_block_byref_id_object_dispose_func (void)
+static void synth_block_byref_id_object_dispose_func (int flag)
 {
   tree stmt;
   tree src_arg, src_obj, rel_exp;
@@ -5403,15 +5392,9 @@ static void synth_block_byref_id_object_dispose_func (void)
   src_obj = build_indirect_object_id_exp (src_arg);
 
   /* APPLE LOCAL begin radar 6180456 */
-  if (c_dialect_objc ())
-    /* [_src->object release]; */
-    rel_exp = release_block_component (src_obj);
-  else
-    {
-      /* _Block_byref_release(_src->object) */
-      tree func_params = tree_cons (NULL_TREE, src_obj, NULL_TREE);
-      rel_exp = build_function_call (build_block_byref_release_decl (), func_params);
-    }
+  /* _Block_object_dispose(_src->object, BLOCK_FIELD_IS_OBJECT) or:
+     _Block_object_dispose(_src->object, BLOCK_FIELD_IS_BLOCK) */
+  rel_exp = build_block_object_dispose_call_exp (src_obj, flag);
   /* APPLE LOCAL end radar 6180456 */
   add_stmt (rel_exp);
 
@@ -5471,6 +5454,8 @@ static tree
 new_block_byref_decl (tree decl)
 {
   static int unique_count;
+  /* APPLE LOCAL radar 5847976 */
+  int save_flag_objc_gc;
   tree Block_byref_type;
   tree fields = NULL_TREE, field;
   const char *prefix = "__Block_byref_";
@@ -5524,8 +5509,14 @@ new_block_byref_decl (tree decl)
   field = build_decl (FIELD_DECL, DECL_NAME (decl), TREE_TYPE (decl));
   chainon (fields, field);
 
+  /* APPLE LOCAL begin radar 5847976 */
+  /* Hack so we don't issue warning on a field_decl having __weak attribute */
+  save_flag_objc_gc = flag_objc_gc;
+  flag_objc_gc = 0;
   /* finish_struct (Block_byref_type, field_decl_chain, NULL_TREE); */
   block_finish_struct (Block_byref_type, fields);
+  flag_objc_gc = save_flag_objc_gc;
+  /* APPLE LOCAL end radar 5847976 */
   pop_from_top_level ();
 
   TREE_TYPE (decl) = Block_byref_type;
@@ -5550,7 +5541,7 @@ new_block_byref_decl (tree decl)
      &initializer-expr};
  */
 static tree
-init_byref_decl (tree decl, tree init)
+init_byref_decl (tree decl, tree init, int flag)
 {
   tree initlist;
   tree block_byref_type = TREE_TYPE (decl);
@@ -5563,7 +5554,8 @@ init_byref_decl (tree decl, tree init)
 
   fields = TYPE_FIELDS (block_byref_type);
   /* APPLE LOCAL begin radar 6244520 */
-  initlist = tree_cons (fields, fold_convert (ptr_type_node, integer_zero_node), 
+  initlist = tree_cons (fields, fold_convert (ptr_type_node, ((flag & BLOCK_FIELD_IS_WEAK) != 0) ? integer_one_node
+                                                                                : integer_zero_node), 
                         0);
   fields = TREE_CHAIN (fields);
   
@@ -5599,7 +5591,7 @@ init_byref_decl (tree decl, tree init)
 							       func_type);
 	  DECL_CONTEXT (block_byref_id_object_copy) = current_function_decl;
 	  /* Synthesize function definition. */
-	  synth_block_byref_id_object_copy_func ();
+	  synth_block_byref_id_object_copy_func (flag);
 	  pop_lang_context ();
 	}
       initlist = tree_cons (fields,
@@ -5621,7 +5613,7 @@ init_byref_decl (tree decl, tree init)
 								  func_type);
 	  DECL_CONTEXT (block_byref_id_object_dispose) = current_function_decl;
 	  /* Synthesize function definition. */
-	  synth_block_byref_id_object_dispose_func ();
+	  synth_block_byref_id_object_dispose_func (flag);
 	  pop_lang_context ();
 	}
       initlist = tree_cons (fields,
@@ -5786,10 +5778,23 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
 	  }
         else
 	  {
+	    /* APPLE LOCAL begin radar 5847976 */
+	    int flag = 0;
+	    if (objc_is_gcable_type (TREE_TYPE (decl)) == -1)
+              flag = BLOCK_FIELD_IS_WEAK;
+            if (block_requires_copying (decl))
+            {
+              if (TREE_CODE (TREE_TYPE (decl)) == BLOCK_POINTER_TYPE)
+                flag |= BLOCK_FIELD_IS_BLOCK;
+              else
+                flag |= BLOCK_FIELD_IS_OBJECT;
+            }
 	    decl = new_block_byref_decl (decl);
 	    if (! flag_objc_gc_only)
 	      push_cleanup (decl, build_block_byref_release_exp (decl), false);
-	    init = init_byref_decl (decl, init);
+            COPYABLE_WEAK_BLOCK (decl) = ((flag & BLOCK_FIELD_IS_WEAK) != 0);
+            init = init_byref_decl (decl, init, flag);
+            /* APPLE LOCAL end radar 5847976 */
 	  }
       }
       /* APPLE LOCAL end blocks 6040305 (cq) */

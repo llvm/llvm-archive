@@ -6161,7 +6161,7 @@ handle_blocks_attribute (tree *node, tree name,
 /* APPLE LOCAL begin blocks 6040305 */
 
 /* This routine builds:
-   *(id *)(EXP+20) expression which references the object id pointer.
+   *(void **)(EXP+20) expression which references the object pointer.
 */
 tree
 build_indirect_object_id_exp (tree exp)
@@ -6169,7 +6169,7 @@ build_indirect_object_id_exp (tree exp)
   tree dst_obj;
   int  int_size = int_cst_value (TYPE_SIZE_UNIT (unsigned_type_node));
   int offset;
-  /* dst->object = [src->object retail]; In thid case 'object' is the field
+  /* dst->object In thid case 'object' is the field
    of the object passed offset by: void * + void* + int + int + void* + void *
    This must match definition of Block_byref structs. */
   /* APPLE LOCAL radar 6244520 */
@@ -6179,74 +6179,23 @@ build_indirect_object_id_exp (tree exp)
   dst_obj = build2 (PLUS_EXPR, ptr_type_node, exp,
                     build_int_cst (NULL_TREE, offset));
   /* APPLE LOCAL begin radar 6180456 */
-  if (c_dialect_objc ())
-    {
-      /* Type case to: 'id *' */
-      dst_obj = cast_to_pointer_to_id (dst_obj);
-      dst_obj = build_indirect_ref (dst_obj, "unary *");
-    }
+  /* Type case to: 'void **' */
+  dst_obj = build_c_cast (build_pointer_type (ptr_type_node), dst_obj);
+  dst_obj = build_indirect_ref (dst_obj, "unary *");
   /* APPLE LOCAL end radar 6180456 */
   return dst_obj;
 }
 
-/* APPLE LOCAL begin radar 6180456 */
-static tree block_byref_release_decl;
-
-/* Build a: void _Block_byref_release (void *) if not done
-  already. */
-tree
-build_block_byref_release_decl (void)
-{
-  if (!block_byref_release_decl &&
-      !(block_byref_release_decl =
-        lookup_name (get_identifier ("_Block_byref_release"))))
-  {
-    tree func_type =
-    build_function_type (void_type_node,
-                         tree_cons (NULL_TREE, ptr_type_node, void_list_node));
-
-    block_byref_release_decl =
-      builtin_function ("_Block_byref_release", func_type, 0, NOT_BUILT_IN, 
-			0, NULL_TREE);
-
-    TREE_NOTHROW (block_byref_release_decl) = 0;
-  }
-  return block_byref_release_decl;
-}
-/* APPLE LOCAL end radar 6180456 */
-
-static tree block_byref_assign_copy_decl;
-tree
-build_block_byref_assign_copy_decl (void)
-{
-  /* Build a: void _Block_byref_assign_copy (void *, void *) if not done already. */
-  if (!block_byref_assign_copy_decl
-      && !(block_byref_assign_copy_decl
-             = lookup_name (get_identifier ("_Block_byref_assign_copy"))))
-    {
-      tree func_type
-        = build_function_type (void_type_node,
-                               tree_cons (NULL_TREE, ptr_type_node,
-                                          tree_cons (NULL_TREE, ptr_type_node, void_list_node)));
-
-      block_byref_assign_copy_decl
-        = builtin_function ("_Block_byref_assign_copy", func_type,
-                            0, NOT_BUILT_IN, 0, NULL_TREE);
-      TREE_NOTHROW (block_byref_assign_copy_decl) = 0;
-    }
-  return block_byref_assign_copy_decl;
-}
-
 /* This routine builds call to:
- _Block_byref_release(VAR_DECL.__forwarding);
+ _Block_object_dispose(VAR_DECL.__forwarding, BLOCK_FIELD_IS_BYREF);
  and adds it to the statement list.
  */
 tree
 build_block_byref_release_exp (tree var_decl)
 {
-  tree exp = var_decl, call_exp, func_params;
+  tree exp = var_decl, call_exp;
   tree type = TREE_TYPE (var_decl);
-  /* __block variables imported into Blocks are not _Block_byref_released()
+  /* __block variables imported into Blocks are not _Block_object_dispose()
    from within the Block statement itself; otherwise, each envokation of
    the block causes a release. Make sure to release __block variables declared 
    and used locally in the block though. */
@@ -6261,10 +6210,9 @@ build_block_byref_release_exp (tree var_decl)
   }
   TREE_USED (var_decl) = 1;
 
-  /* Declare: _Block_byref_release(void*) if not done already. */
+  /* Declare: _Block_object_dispose(void*, BLOCK_FIELD_IS_BYREF) if not done already. */
   exp = build_component_ref (exp, get_identifier ("__forwarding"));
-  func_params = tree_cons (NULL_TREE, exp, NULL_TREE);
-  call_exp = build_function_call (build_block_byref_release_decl (), func_params);
+  call_exp = build_block_object_dispose_call_exp (exp, BLOCK_FIELD_IS_BYREF);
   return call_exp;
 }
 /* APPLE LOCAL end blocks 6040305 */
@@ -9189,4 +9137,81 @@ any_recognized_block_attribute (tree attributes)
 }
 /* APPLE LOCAL end radar 6246527 */
 
+/* APPLE LOCAL begin radar 5847976 */
+static GTY(()) tree block_object_assign_decl;
+static GTY(()) tree block_object_dispose_func_decl;
+/* This routine declares:
+   void _Block_object_assign (void *, void *, int) or uses an
+   existing one.
+*/
+static tree
+build_block_object_assign_decl (void)
+{
+  tree func_type;
+  if (block_object_assign_decl)
+    return block_object_assign_decl;
+  block_object_assign_decl = lookup_name (get_identifier ("_Block_object_assign"));
+  if (block_object_assign_decl)
+    return block_object_assign_decl;
+  func_type =
+            build_function_type (void_type_node,
+              tree_cons (NULL_TREE, ptr_type_node,
+                         tree_cons (NULL_TREE, ptr_type_node,
+                                    tree_cons (NULL_TREE, integer_type_node, void_list_node))));
+
+  block_object_assign_decl = builtin_function ("_Block_object_assign", func_type,
+                                               0, NOT_BUILT_IN, 0, NULL_TREE);
+  TREE_NOTHROW (block_object_assign_decl) = 0;
+  return block_object_assign_decl;
+}
+
+/* This routine builds:
+   _Block_object_assign(dest, src, flag)
+*/
+tree build_block_object_assign_call_exp (tree dst, tree src, int flag)
+{
+  tree func_params = tree_cons (NULL_TREE, dst,
+                               tree_cons (NULL_TREE, src,
+                                          tree_cons (NULL_TREE,
+                                                     build_int_cst (integer_type_node, flag),
+                                                     NULL_TREE)));
+  return build_function_call (build_block_object_assign_decl (), func_params);
+}
+
+/* This routine declares:
+   void _Block_object_dispose (void *, int) or uses an
+   existing one.
+*/
+static tree
+build_block_object_dispose_decl (void)
+{
+  tree func_type;
+  if (block_object_dispose_func_decl)
+    return block_object_dispose_func_decl;
+  block_object_dispose_func_decl = lookup_name (get_identifier ("_Block_object_dispose"));
+  if (block_object_dispose_func_decl)
+    return block_object_dispose_func_decl;
+  func_type =
+      build_function_type (void_type_node,
+                           tree_cons (NULL_TREE, ptr_type_node,
+                                      tree_cons (NULL_TREE, integer_type_node, void_list_node)));
+
+  block_object_dispose_func_decl = builtin_function ("_Block_object_dispose", func_type,
+                                       		     0, NOT_BUILT_IN, 0, NULL_TREE);
+  TREE_NOTHROW (block_object_dispose_func_decl) = 0;
+  return block_object_dispose_func_decl;
+}
+
+/* This routine builds the call tree:
+   _Block_object_dispose(src, flag)
+*/
+tree build_block_object_dispose_call_exp (tree src, int flag)
+{
+  tree func_params = tree_cons (NULL_TREE, src, 
+			        tree_cons (NULL_TREE,
+                                           build_int_cst (integer_type_node, flag),
+                                           NULL_TREE));
+  return build_function_call (build_block_object_dispose_decl (), func_params);
+}
+/* APPLE LOCAL end radar 5847976 */
 #include "gt-c-common.h"

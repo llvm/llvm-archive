@@ -389,7 +389,7 @@ c_lex_one_token (c_token *token, c_parser *parser)
   timevar_push (TV_LEX);
 
   /* APPLE LOCAL CW asm blocks */
-  token->type = c_lex_with_flags (&token->value, &token->location, &token->flags);
+  token->type = c_lex_with_flags (&token->value, &token->location, &token->flags, 0);
   token->id_kind = C_ID_NONE;
   token->keyword = RID_MAX;
   token->pragma_kind = PRAGMA_NONE;
@@ -5499,15 +5499,6 @@ c_parser_postfix_expression (c_parser *parser)
   switch (c_parser_peek_token (parser)->type)
     {
     case CPP_NUMBER:
-      /* APPLE LOCAL begin CW asm blocks (in 4.2 ak) */
-      if (cpp_get_options (parse_in)->h_suffix
-	  && c_parser_peek_token (parser)->value == error_mark_node)
-	{
-	  /* This was previously deferred.  */
-	  cpp_error (parse_in, CPP_DL_ERROR, "invalid suffix on integer constant");
-	  c_parser_consume_token (parser);
-	}
-      /* APPLE LOCAL end CW asm blocks (in 4.2 ak) */
     case CPP_CHAR:
     case CPP_WCHAR:
       expr.value = c_parser_peek_token (parser)->value;
@@ -9326,7 +9317,9 @@ c_parser_iasm_statement (c_parser* parser)
 	{
 	  /* (in 4.2 an) */
 	  aname = c_parser_iasm_identifier (parser);
-	  if (c_parser_next_token_is (parser, CPP_COLON))
+	  if (aname == error_mark_node)
+	    c_parser_consume_token (parser);
+	  else if (c_parser_next_token_is (parser, CPP_COLON))
 	    {
 	      c_parser_consume_token (parser);
 	      iasm_label (aname, false);
@@ -9366,12 +9359,6 @@ c_parser_iasm_statement (c_parser* parser)
 }
 /* APPLE LOCAL end CW asm blocks */
 /* APPLE LOCAL begin radar 5732232 - blocks (C++ ce) */
-/* APPLE LOCAL begin radar 6175959 */
-static GTY(()) tree block_copy_assign_decl;
-static GTY(()) tree block_object_assign_decl;
-static GTY(()) tree block_destroy_decl;
-static GTY(()) tree block_object_dispose_func_decl;
-/* APPLE LOCAL end radar 6175959 */
 
 /* APPLE LOCAL begin radar 6300081  */
 
@@ -9406,7 +9393,8 @@ static GTY(()) tree block_object_dispose_func_decl;
 */
 
 tree
-build_generic_block_struct_type (void)
+/* APPLE LOCAL radar 6353006  */
+c_build_generic_block_struct_type (void)
 {
   tree field_decl_chain;
   tree field_decl;
@@ -9728,7 +9716,7 @@ build_block_struct_initlist (tree block_struct_type,
       tree y = TREE_VALUE (chain);
       TREE_USED (y) = 1;
       fields = TREE_CHAIN (fields);
-      initlist = tree_cons (fields, copy_in_object (y), initlist);
+      initlist = tree_cons (fields, y, initlist);
     }
   for (chain = block_impl->block_byref_decl_list; chain;
        chain = TREE_CHAIN (chain))
@@ -9898,8 +9886,8 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
     if (block_requires_copying (TREE_VALUE (chain)))
     {
       /* APPLE LOCAL begin radar 6175959 */
-      tree which_function_decl;
-      tree func_params, call_exp;
+      int flag;
+      tree call_exp;
       tree p = TREE_VALUE (chain);
       tree dst_block_component, src_block_component;
       dst_block_component = build_component_ref (build_indirect_ref (dst_arg, "->"),
@@ -9908,66 +9896,26 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
 						 DECL_NAME (p));
 
       if (TREE_CODE (TREE_TYPE (p)) == BLOCK_POINTER_TYPE)
-      {
-        /* _Block_copy_assign(&_dest->myImportedBlock, _src->myImportedClosure, 0) */
-        /* Build a: void _Block_copy_assign (void *, void *, int) if not done
-           already. */
-        /* APPLE LOCAL begin radar 6310599 */
-        if (!block_copy_assign_decl &&
-	    !(block_copy_assign_decl = lookup_name (get_identifier ("_Block_copy_assign"))))
-        /* APPLE LOCAL end radar 6310599 */
-        {
-          tree func_type =
-            build_function_type (void_type_node,
-              tree_cons (NULL_TREE, ptr_type_node,
-                         tree_cons (NULL_TREE, ptr_type_node, 
-				    tree_cons (NULL_TREE, integer_type_node, void_list_node))));
-
-          block_copy_assign_decl = builtin_function ("_Block_copy_assign", func_type,
-						     0, NOT_BUILT_IN, 0, NULL_TREE);
-          TREE_NOTHROW (block_copy_assign_decl) = 0;
-        }
-	which_function_decl = block_copy_assign_decl;
-      }
+        /* _Block_object_assign(&_dest->myImportedBlock, _src->myImportedClosure, BLOCK_FIELD_IS_BLOCK) */
+        flag = BLOCK_FIELD_IS_BLOCK;
       else
-      {
-        /* _Block_object_assign(&_dest->myImportedBlock, _src->myImportedClosure, 0) */
-        /* Build a: void _Block_object_assign (void *, void *, int) if not done
-           already. */
-        if (!block_object_assign_decl &&
-	    !(block_object_assign_decl = lookup_name (get_identifier ("_Block_object_assign"))))
-        {
-          tree func_type =
-            build_function_type (void_type_node,
-              tree_cons (NULL_TREE, ptr_type_node,
-                         tree_cons (NULL_TREE, ptr_type_node, 
-				    tree_cons (NULL_TREE, integer_type_node, void_list_node))));
-
-          block_object_assign_decl = builtin_function ("_Block_object_assign", func_type,
-						     0, NOT_BUILT_IN, 0, NULL_TREE);
-          TREE_NOTHROW (block_object_assign_decl) = 0;
-        }
-	which_function_decl = block_object_assign_decl;
-      }
+        /* _Block_object_assign(&_dest->myImportedBlock, _src->myImportedClosure, BLOCK_FIELD_IS_OBJECT) */
+        flag = BLOCK_FIELD_IS_OBJECT;
       dst_block_component = build_fold_addr_expr (dst_block_component);
-      func_params = tree_cons (NULL_TREE, dst_block_component,
-                               tree_cons (NULL_TREE, src_block_component,
-                                          tree_cons (NULL_TREE, 
-				                     build_int_cst (integer_type_node, 0), 
-				       		     NULL_TREE)));
-      call_exp = build_function_call (which_function_decl, func_params);
+      call_exp = build_block_object_assign_call_exp (dst_block_component, src_block_component, flag);
       add_stmt (call_exp);
       /* APPLE LOCAL end radar 6175959 */
     }
 
   /* For each __block declared variable must generate call to:
-     _Block_byref_assign_copy(&_dest->myImportedBlock, _src->myImportedBlock)
+     _Block_object_assign(&_dest->myImportedBlock, _src->myImportedBlock, BLOCK_FIELD_IS_BYREF [|BLOCK_FIELD_IS_WEAK])
   */
   for (chain = block_impl->block_byref_decl_list; chain;
          chain = TREE_CHAIN (chain))
     if (COPYABLE_BYREF_LOCAL_VAR (TREE_VALUE (chain)))
       {
-	tree func_params, call_exp;
+        int flag = BLOCK_FIELD_IS_BYREF;
+	tree call_exp;
 	tree p = TREE_VALUE (chain);
 	tree dst_block_component, src_block_component;
 	dst_block_component = build_component_ref (build_indirect_ref (dst_arg, "->"),
@@ -9975,12 +9923,12 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
 	src_block_component = build_component_ref (build_indirect_ref (src_arg, "->"),
 						   DECL_NAME (p));
 
-	/* _Block_byref_assign_copy(&_dest->myImportedClosure, _src->myImportedClosure) */
+	/* _Block_object_assign(&_dest->myImportedClosure, _src->myImportedClosure, BLOCK_FIELD_IS_BYREF [|BLOCK_FIELD_IS_WEAK]) */
+        if (COPYABLE_WEAK_BLOCK (p))
+	  flag |= BLOCK_FIELD_IS_WEAK;
+        
 	dst_block_component = build_fold_addr_expr (dst_block_component);
-	func_params = tree_cons (NULL_TREE, dst_block_component,
-				 tree_cons (NULL_TREE, src_block_component,
-					    NULL_TREE));
-	call_exp = build_function_call (build_block_byref_assign_copy_decl (), func_params);
+	call_exp = build_block_object_assign_call_exp (dst_block_component, src_block_component, flag);
 	add_stmt (call_exp);
       }
 
@@ -9990,30 +9938,6 @@ synth_copy_helper_block_func (struct block_sema_info * block_impl)
   pop_function_context ();
   free (arg_info);
 }
-
-/* APPLE LOCAL begin radar 6175959 */
-static tree 
-block_object_dispose (tree src_block_component)
-{
-  tree func_params;
-  if (!block_object_dispose_func_decl &&
-      !(block_object_dispose_func_decl = lookup_name (get_identifier ("_Block_object_dispose"))))
-    {
-      tree func_type =
-      build_function_type (void_type_node,
-                           tree_cons (NULL_TREE, ptr_type_node,
-                                      tree_cons (NULL_TREE, integer_type_node, void_list_node)));
-
-      block_object_dispose_func_decl = builtin_function ("_Block_object_dispose", func_type,
-                                       0, NOT_BUILT_IN, 0, NULL_TREE);
-     TREE_NOTHROW (block_object_dispose_func_decl) = 0;
-    }
-    func_params = tree_cons (NULL_TREE, src_block_component,
-                             tree_cons (NULL_TREE,
-                                        build_int_cst (integer_type_node, 0), NULL_TREE));
-    return build_function_call (block_object_dispose_func_decl, func_params);
-}
-/* APPLE LOCAL end radar 6175959 */
 
 static void
 synth_destroy_helper_block_func (struct block_sema_info * block_impl)
@@ -10042,64 +9966,41 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
        chain = TREE_CHAIN (chain))
     if (block_requires_copying (TREE_VALUE (chain)))
     {
-      /* APPLE LOCAL begin radar 6175959 */
+      int flag;
+      tree rel_exp;
       tree p = TREE_VALUE (chain);
       tree src_block_component;
       src_block_component = build_component_ref (build_indirect_ref (src_arg, "->"),
 						 DECL_NAME (p));
 
       if (TREE_CODE (TREE_TYPE (p)) == BLOCK_POINTER_TYPE)
-      {
-        tree func_params, call_exp;
-        /* _Block_destroy(_src->myImportedClosure); */
-        /* _Block_destroy (void *); */
-        /* Build a: void _Block_destroy (void *) if not done already. */
-        if (!block_destroy_decl &&
-	    !(block_destroy_decl = lookup_name (get_identifier ("_Block_destroy"))))
-        {
-          tree func_type =
-          build_function_type (void_type_node,
-                               tree_cons (NULL_TREE, ptr_type_node, 
-					  tree_cons (NULL_TREE, integer_type_node, void_list_node)));
-
-          block_destroy_decl = builtin_function ("_Block_destroy", func_type,
-						 0, NOT_BUILT_IN, 0, NULL_TREE);
-          TREE_NOTHROW (block_destroy_decl) = 0;
-        }
-        func_params = tree_cons (NULL_TREE, src_block_component, 
-				 tree_cons (NULL_TREE, 
-					    build_int_cst (integer_type_node, 0), NULL_TREE));
-        call_exp = build_function_call (block_destroy_decl, func_params);
-        add_stmt (call_exp);
-      }
+	/* _Block_object_dispose(_src->imported_object_0, BLOCK_FIELD_IS_BLOCK); */
+        flag = BLOCK_FIELD_IS_BLOCK;
       else
-      {
-        tree rel_exp;
-	/* _Block_object_dispose(_src->imported_object_0, 0); */
-        rel_exp = block_object_dispose (src_block_component);
-        add_stmt (rel_exp);
-      }
-      /* APPLE LOCAL end radar 6175959 */
+	/* _Block_object_dispose(_src->imported_object_0, BLOCK_FIELD_IS_OBJECT); */
+	flag = BLOCK_FIELD_IS_OBJECT;
+      rel_exp = build_block_object_dispose_call_exp (src_block_component, flag);
+      add_stmt (rel_exp);
     }
 
   /* For each __block declared variable must generate call to:
-   _Block_byref_release(_src->myImportedClosure)
+   _Block_object_dispose(_src->myImportedClosure, BLOCK_FIELD_IS_BYREF[|BLOCK_FIELD_IS_WEAK])
    */
   for (chain = block_impl->block_byref_decl_list; chain;
        chain = TREE_CHAIN (chain))
     if (COPYABLE_BYREF_LOCAL_VAR (TREE_VALUE (chain)))
       {
-	tree func_params, call_exp;
+	tree call_exp;
+        int flag = BLOCK_FIELD_IS_BYREF;
 	tree p = TREE_VALUE (chain);
 	tree src_block_component;
 
 	src_block_component = build_component_ref (build_indirect_ref (src_arg, "->"),
 						   DECL_NAME (p));
-      /* _Block_byref_release(_src->myImportedClosure) */
-      /* Build a: void _Block_byref_release (void *) if not done
-	 already. */
-      func_params = tree_cons (NULL_TREE, src_block_component, NULL_TREE);
-      call_exp = build_function_call (build_block_byref_release_decl (), func_params);
+        if (COPYABLE_WEAK_BLOCK (p))
+          flag |= BLOCK_FIELD_IS_WEAK;
+      /* _Block_object_dispose(_src->myImportedClosure, BLOCK_FIELD_IS_BYREF[|BLOCK_FIELD_IS_WEAK]) */
+      call_exp = build_block_object_dispose_call_exp (src_block_component, flag);
       add_stmt (call_exp);
     }
 

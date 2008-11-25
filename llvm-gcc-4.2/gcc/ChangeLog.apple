@@ -1,3 +1,100 @@
+2008-11-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6353006
+	* tree.c (generic_block_literal_struct_type): Fix APPLE LOCAL.
+	* langhooks-def.h (lhd_build_generic_block_struct_type): Fix
+          APPLE LOCAL.
+
+2008-11-12  Caroline Tice  <ctice@apple.com>
+
+       * tree.c (generic_block_literal_struct_type):  Move global variable
+       decl here from  c-common.c.
+       (build_block_pointer_type):  Change call to
+       build_generic_block_struct_type to go through lang_hooks.
+       * tree.h:  Remove extern function dec, for
+       build_generic_block_struct_type.
+       * cp/cp-objcp-common.h:  Define c++-specific version of
+       LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE.
+       * cp/parser.c (build_generic_block_struct_type):  Rename function to
+       c_build_generic_block_struct_type.
+       * c-objc-common.h:  Define c-specific version of
+       LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE.
+       * langhooks.c (lhd_build_generic_block_struct_type):  New generic
+       function.
+       * langhooks.h (struct lang_hooks):  Add new function field,
+       build_generic_block_struct_type.
+       * c-common.c (generic_block_literal_struct_type): Move global variable
+       decl from here to tree.c.
+       * c-common.h  (c_build_generic_block_struct_type):  New extern
+       function decl.
+       * c-parser.c (build_generic_block_struct_type):  Rename function to
+       c_build_generic_block_struct_type.
+       * langhooks-def.h (lhd_build_generic_block_struct_type):  New extern
+       function decl.
+       (LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE):  New variable
+       definition.
+       (LANG_HOOKS_INITIALIZER):  Initialize new field to
+       LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE
+
+2008-11-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6351990
+	* config/darwin.c (machopic_select_section): Accomodate change
+	for meta-data prefix name.
+	* config/darwin-sections.def (__objc_protorefs, __objc_protolist):
+	These sections are now coalesced.
+
+2008-11-11  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4299257
+	* config/i386/i386.c (bdesc_com): Move ucomXX instructions
+	  from here...  (bdesc_ucomi): ...to here.  New.
+	  (ix86_init_mmx_sse_builtins): Add a loop to walk
+	  bdesc_ucomi[] and instantiate ucomiXX builtins.
+	  (ix86_expand_sse_ucomi): New.  (ix86_expand_builtin): Call
+	  it.
+
+2008-11-07  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 5847976
+	* c-decl.c (synth_block_byref_id_object_copy_func): Takes a new
+	'flag' argument and generates the much simplified API.
+	(synth_block_byref_id_object_dispose_func): Ditto.
+	(new_block_byref_decl): Hack to prevent issuing bogus warning
+	on a field declared as __weak.
+	(init_byref_decl): Takes an additional 'flag' argument
+	and passes it down to synth_block_byref_id_object_copy_func and
+	synth_block_byref_id_object_dispose_func.
+	(finish_decl): Computes the flag for the block variable declaration.
+	* c-common.c (build_block_byref_release_decl, 
+	build_block_byref_assign_copy_decl): Removed.
+	(build_block_byref_release_exp): Use the new API.
+	(build_block_object_assign_decl, build_block_object_assign_call_exp,
+	build_block_object_dispose_decl, build_block_object_dispose_call_exp): New.			
+	(build_indirect_object_id_exp): Fixed a code gen bug which was exposed in
+	c/c++ mode, but not in ObjC/ObjC++ mode.
+	* c-common.h (build_block_object_assign_call_exp,
+	build_block_object_dispose_call_exp,
+	objc_is_gcable_type): New decls.
+	Declaration of several new flags.
+	(cast_to_pointer_to_id): Removed.
+	* stub-objc.c (objc_is_gcable_type): New
+	(copy_in_object, retain_block_component, release_block_component): Removed.
+	(cast_to_pointer_to_id): Removed.
+	* c-parser.c (build_block_struct_initlist): Remove call to copy_in_object.
+	(synth_copy_helper_block_func): Generates much simplified API.
+	(synth_destroy_helper_block_func): Ditto.
+	(block_object_dispose): Removed.
+	* config/darwin-c.c (darwin_cpp_builtins): Define __weak even when
+	-fobjc-gc is off.
+
+2008-11-4   Jim Grosbach <grosbach@apple.com>
+
+	Radar 6327222
+	* config/arm/arm.c (legitimize_pic_address): Be more generous about
+	constants when the operand is of the form  (const (plus (something)
+	(const)).
+
 2008-10-31  Stuart Hastings  <stuart@apple.com>
 
 	Radar 5813921

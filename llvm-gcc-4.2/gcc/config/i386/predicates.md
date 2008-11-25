@@ -464,8 +464,14 @@
   if (SYMBOL_REF_TLS_MODEL (op) != 0)
     return 0;
 
+/* APPLE LOCAL begin fix-and-continue 6358507 */
   if (SYMBOL_REF_LOCAL_P (op))
-    return 1;
+    {
+      if (!TARGET_FIX_AND_CONTINUE
+          || machopic_data_defined_p (op))  
+      return 1;
+    }
+/* APPLE LOCAL end fix-and-continue 6358507 */
 
   /* There is, however, a not insubstantial body of code in the rest of
      the compiler that assumes it can just stick the results of

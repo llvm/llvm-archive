@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 void *_NSConcreteStackBlock;
-void _Block_byref_assign_copy(void * dst, void *src){}
+void _Block_object_assign(void * dst, void *src, int flag){}
 
 extern "C" void abort(void);
 
 static int count;
-static void _Block_byref_release(void * arg) {
+static void _Block_object_dispose(void * arg, int flag) {
   ++count;
 }
 

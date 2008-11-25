@@ -126,6 +126,12 @@
 3904235: gcc.dg/wtr-unary-plus-1.c unary plus operator (test for warnings, line 13)
 5275911: gcc.dg/invalid-call-1.c non-compatible type (test for warnings, line 18)
 0000000: compiler driver --coverage option(s) (compiler options)
+6348516: gcc.dg/20050607-1.c (test for excess errors)
+6348516: gcc.dg/Wpadded.c (test for excess errors)
+6348517: gcc.dg/darwin-weakimport-1.c scan-assembler-not weak_[a-z \t]*_b
+6348517: gcc.dg/darwin-weakimport-3.c scan-assembler-not coalesced
+6348519: gcc.dg/pch/valid-2.c -O... -g  (test for errors, line 3)  [ 7 tests ]
+6348519: gcc.dg/pch/valid-2.c -O0 -g  (test for errors, line 3) #1  [ 7 duplicate tests ]
 #
 # -fasm-blocks only
 5087183: gcc.dg/cpp/19951227-1.c  (test for errors, line 2)

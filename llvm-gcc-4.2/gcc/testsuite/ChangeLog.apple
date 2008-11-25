@@ -1,3 +1,62 @@
+2008-11-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6385223
+	* gcc.apple/6025404.c: Check for SSSE3 support.
+
+2008-11-14  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6370136
+	* objc.dg/ok-unimplemented-anon-category.m: Add
+
+2008-11-11  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6351990
+	* objc.dg/objc2-objc2-protocol-3.m: New
+	* obj-c++.dg/objc2-objc2-protocol-3.mm: New
+
+2008-11-11  Stuart Hastings  <stuart@apple.com>
+
+	Radar 4299257
+	* gcc.target/i386/4299257.c: New.
+
+2008-11-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 5847976
+	* gcc.apple/block-weakblockassign.c: New
+	* gcc.apple/block-blocks-test-8.c: Removed
+	* gcc.apple/block-noescape-helper-3.c: Modified
+	* gcc.apple/block-escape-do.c: Modified
+	* gcc.apple/block-escape-switch.c: Modified
+	* gcc.apple/block-escape-return.c: Modified
+	* gcc.apple/block-escape-while.c: Modified
+	* gcc.apple/block-noescape-helper.c: Modified
+	* gcc.apple/block-escape-for.c: Modified
+	* gcc.apple/block-escape-nested-while.c: Modified
+	* gcc.apple/block-escape-for1.c: Modified
+	* gcc.apple/block-weakblock.c: Modified
+	* gcc.apple/block-noescape-helper-1.c: Modified
+	* gcc.apple/block-escape-return1.c: Modified
+	* gcc.apple/block-noescape-helper-2.c: Modified
+	* g++.apple/block-weakblockassign.C: New
+	* g++.apple/block-blocks-test-8.C: Removed
+	* g++.apple/block-noescape-helper-3.C: Modified
+	* g++.apple/block-escape-do.C: Modified
+	* g++.apple/block-escape-switch.C: Modified
+	* g++.apple/block-escape-return.C: Modified
+	* g++.apple/block-escape-while.C: Modified
+	* g++.apple/block-noescape-helper.C: Modified
+	* g++.apple/block-escape-for.C: Modified
+	* g++.apple/block-escape-nested-while.C: Modified
+	* g++.apple/block-escape-for1.C: Modified
+	* g++.apple/block-weakblock.C: Modified
+	* g++.apple/block-noescape-helper-1.C: Modified
+	* g++.apple/block-escape-return1.C: Modified
+	* g++.apple/block-noescape-helper-2.C: Modified
+
+2008-11-05  Stuart Hastings  <stuart@apple.com>
+
+	* gcc.apple/6308664.c: Tweak to tolerate -fstack-protector-all.
+
 2008-10-31  Stuart Hastings  <stuart@apple.com>
 
 	Radar 5813291

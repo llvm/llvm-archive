@@ -6,7 +6,7 @@
 extern "C" void abort(void);
 
 static int count;
-static void _Block_byref_release(void * arg) {
+static void _Block_object_dispose(void * arg, int flag) {
   ++count;
 }
 

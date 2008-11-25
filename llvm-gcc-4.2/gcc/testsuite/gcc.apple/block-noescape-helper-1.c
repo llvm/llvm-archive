@@ -1,5 +1,5 @@
 /* APPLE LOCAL file radar 6083129 byref escapes */
-/* Test for generation of escape _Block_byref_release call when a local
+/* Test for generation of escape _Block_object_dispose call when a local
    __block variable is copied in. */
 /* { dg-options "-fblocks" } */
 /* { dg-do run } */
@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 void *_NSConcreteStackBlock;
-void _Block_byref_assign_copy(void * dst, void *src){}
+void _Block_object_assign(void * dst, void *src, int flag){}
 
 extern void abort(void);
 
 static int count;
-static void _Block_byref_release(void * arg) {
+static void _Block_object_dispose(void * arg, int flag) {
   ++count;
 }
 

@@ -5,7 +5,7 @@
    Contributed by Hans-Peter Nilsson  <hp@bitrange.com>  */
 
 /* { dg-do run } */
-/* APPLE LOCAL 5886557 explicitly disable inlining. */
+/* LLVM LOCAL 5886557 explicitly disable inlining. */
 /* { dg-options "-O2 -foptimize-sibling-calls -fno-inline-functions" } */
 
 /* The option -foptimize-sibling-calls is the default, but serves as

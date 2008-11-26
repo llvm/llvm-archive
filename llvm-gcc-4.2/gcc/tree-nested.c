@@ -1703,6 +1703,11 @@ construct_reverse_callgraph (tree *tp, int *walk_subtrees, void *data)
       if (TREE_CODE (decl) != FUNCTION_DECL)
         break;
 
+      /* LLVM LOCAL - begin radar 6394879 */
+      if (BLOCK_SYNTHESIZED_FUNC (decl))
+        break;
+      /* LLVM LOCAL - end radar 6394879 */
+
       if (!decl_function_context (decl))
         break;
 

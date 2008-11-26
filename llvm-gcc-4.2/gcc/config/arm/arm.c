@@ -84,7 +84,9 @@ static bool arm_assemble_integer (rtx, unsigned int, int);
 static const char *fp_const_from_val (REAL_VALUE_TYPE *);
 static arm_cc get_arm_condition_code (rtx);
 static HOST_WIDE_INT int_log2 (HOST_WIDE_INT);
+#ifndef ENABLE_LLVM
 static rtx is_jump_table (rtx);
+#endif
 static const char *output_multi_immediate (rtx *, const char *, const char *,
 					   int, HOST_WIDE_INT);
 static const char *shift_op (rtx, HOST_WIDE_INT *);
@@ -97,7 +99,6 @@ static int handle_thumb_pushpop (FILE *, unsigned long, int, int *, unsigned lon
 /* APPLE LOCAL end compact switch tables */
 /* LLVM LOCAL */
 #ifndef ENABLE_LLVM
-static rtx is_jump_table (rtx);
 static HOST_WIDE_INT get_jump_table_size (rtx);
 static Mnode *move_minipool_fix_forward_ref (Mnode *, Mnode *, HOST_WIDE_INT);
 static Mnode *add_minipool_forward_ref (Mfix *);

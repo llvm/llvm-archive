@@ -467,9 +467,13 @@
 /* APPLE LOCAL begin fix-and-continue 6358507 */
   if (SYMBOL_REF_LOCAL_P (op))
     {
+/* LLVM LOCAL begin non-Darwin hack. */
+#ifdef TARGET_FIX_AND_CONTINUE
       if (!TARGET_FIX_AND_CONTINUE
-          || machopic_data_defined_p (op))  
-      return 1;
+          || machopic_data_defined_p (op))
+#endif
+/* LLVM LOCAL end non-Darwin hack */
+        return 1;
     }
 /* APPLE LOCAL end fix-and-continue 6358507 */
 

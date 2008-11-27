@@ -174,8 +174,15 @@ void llvm_initialize_backend(void) {
 
   for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
     Args.push_back(ArgStrings[i].c_str());
+
+  std::vector<std::string> LLVM_Optns; // Avoid deallocation before opts parsed!
+  if (llvm_optns) {
+    SplitString(llvm_optns, LLVM_Optns);
+    for(unsigned i = 0, e = LLVM_Optns.size(); i != e; ++i)
+      Args.push_back(LLVM_Optns[i].c_str());
+  }
+ 
   Args.push_back(0);  // Null terminator.
-  
   int pseudo_argc = Args.size()-1;
   cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
 
@@ -239,19 +246,7 @@ void llvm_initialize_backend(void) {
     RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
   else
     RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
-  
-  Args.clear();
-  if (llvm_optns) {
-    std::string Opts = llvm_optns;
-    for (std::string Opt = getToken(Opts); !Opt.empty(); Opt = getToken(Opts))
-      Args.push_back(Opt.c_str());
-  }
-  if (!Args.empty()) {
-    Args.push_back(0);  // Null terminator.
-    pseudo_argc = Args.size()-1;
-    cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
-  }
- 
+
   if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 }

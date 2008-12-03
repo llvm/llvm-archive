@@ -619,6 +619,13 @@ for t in $TARGETS ; do
     rm libllvmgcc.dylib
     ln -s ../../libllvmgcc.dylib
 done
+
+if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+    mkdir -p $DEST_DIR/usr/bin
+    cd $DEST_DIR/usr/bin
+    ln -s /Developer/usr/bin/llvm-gcc llvm-gcc
+    ln -s /Developer/usr/bin/llvm-g++ llvm-g++
+fi
 # LLVM LOCAL end
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1

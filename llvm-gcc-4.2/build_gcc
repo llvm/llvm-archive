@@ -622,8 +622,8 @@ done
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
     mkdir -p $DEST_DIR/usr/bin
     cd $DEST_DIR/usr/bin
-    ln -s /Developer/usr/bin/llvm-gcc llvm-gcc
-    ln -s /Developer/usr/bin/llvm-g++ llvm-g++
+    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi
 # LLVM LOCAL end
 

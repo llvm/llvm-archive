@@ -869,6 +869,10 @@ CompileUnitDesc *DebugInfo::getOrCreateCompileUnit(const std::string &FullPath){
     Unit->setLanguage(DW_LANG_Pascal83);
   else if (LanguageName == "GNU Java")
     Unit->setLanguage(DW_LANG_Java);
+  else if (LanguageName == "GNU Objective-C")
+    Unit->setLanguage(DW_LANG_ObjC);
+  else if (LanguageName == "GNU Objective-C++") 
+    Unit->setLanguage(DW_LANG_ObjC_plus_plus);
   else
     Unit->setLanguage(DW_LANG_C89);
     

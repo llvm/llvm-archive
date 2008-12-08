@@ -594,21 +594,9 @@ do {					\
 
 #define DBX_DEBUGGING_INFO 1
 
-/* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-/* Prefer DWARF only if appropriate dsymutil is available.  */
-#define DWARF2_DEBUGGING_INFO
-#ifdef HAVE_DSYMUTIL
-  #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-#else
-  #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
-#endif
-#else
 /* Prefer DWARF2.  */
 #define DWARF2_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-#endif
-/* LLVM LOCAL end */
 
 /* APPLE LOCAL end mainline 4.3 2006-10-31 4370143 */
 #define DEBUG_FRAME_SECTION	"__DWARF,__debug_frame,regular,debug"

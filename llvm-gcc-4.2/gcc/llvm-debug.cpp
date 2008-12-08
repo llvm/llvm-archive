@@ -445,9 +445,6 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
               "Not a type.");
   if (type == NULL_TREE || type == error_mark_node) return NULL;
 
-  // Ignore variants such as const, volatile, or restrict.
-  type = TYPE_MAIN_VARIANT(type);
-
   // Should only be void if a pointer/reference/return type.  Returning NULL
   // allows the caller to produce a non-derived type.
   if (TREE_CODE(type) == VOID_TYPE) return NULL;

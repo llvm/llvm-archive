@@ -417,18 +417,24 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
 
 /// AddTypeQualifiers - Add const/volatile qualifiers prior to the type
 /// descriptor.
-static TypeDesc *AddTypeQualifiers(tree_node *type, CompileUnitDesc *Unit,
-                                   TypeDesc *TyDesc) {
+TypeDesc *DebugInfo::AddTypeQualifiers(tree_node *type, CompileUnitDesc *Unit,
+                                       TypeDesc *TyDesc) {
   if (TYPE_READONLY(type)) {
     DerivedTypeDesc *DerivedTy = new DerivedTypeDesc(DW_TAG_const_type);
     DerivedTy->setContext(Unit);
     DerivedTy->setFromType(TyDesc);
+    TypeDesc *Slot = TypeCache[TYPE_MAIN_VARIANT(type)];
+    if (!Slot)
+      TypeCache[TYPE_MAIN_VARIANT(type)] = TyDesc;
     TyDesc = DerivedTy;
   }
   if (TYPE_VOLATILE(type)) {
     DerivedTypeDesc *DerivedTy = new DerivedTypeDesc(DW_TAG_volatile_type);
     DerivedTy->setContext(Unit);
     DerivedTy->setFromType(TyDesc);
+    TypeDesc *Slot = TypeCache[TYPE_MAIN_VARIANT(type)];
+    if (!Slot)
+      TypeCache[TYPE_MAIN_VARIANT(type)] = TyDesc;
     TyDesc = DerivedTy;
   }
   

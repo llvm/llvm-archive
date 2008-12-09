@@ -120,6 +120,11 @@ public:
   /// necessary.
   TypeDesc *getOrCreateType(tree_node *type, CompileUnitDesc *Unit);
 
+  /// AddTypeQualifiers - Add const/volatile qualifiers prior to the type
+  /// descriptor.
+  TypeDesc *AddTypeQualifiers(tree_node *type, CompileUnitDesc *Unit,
+                              TypeDesc *TyDesc);
+
   /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
   /// new one if necessary.
   CompileUnitDesc *getOrCreateCompileUnit(const std::string &FullPath);

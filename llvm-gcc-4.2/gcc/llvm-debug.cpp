@@ -457,7 +457,13 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
   
   // Check to see if the compile unit already has created this type.
   TypeDesc *Slot = TypeCache[type];
-  if (Slot) return Slot;
+  if (Slot && !(Slot->isForwardDecl() && TYPE_SIZE(type) != 0))
+    // FIXME: If previously created type is just a forward declaration, emit
+    // a new descriptor for the type definition. The correct fix is to *fix*
+    // up the llvm ir (since MMI may have already been converted to llvm). But
+    // that's correctly not doable. We'll fix this when we convert to the new
+    // API in DebugInfo.h
+    return Slot;
   
   // Ty will have contain the resulting type.
   TypeDesc *Ty = NULL;
@@ -642,6 +648,13 @@ TypeDesc *DebugInfo::getOrCreateType(tree type, CompileUnitDesc *Unit) {
       // Set the slot early to prevent recursion difficulties.
       // Any other use of the type should include the qualifiers.
       TypeCache[type] = AddTypeQualifiers(type, Unit, StructTy);
+
+      // If it's a forward declaration, mark it as such.
+      if (TYPE_SIZE(type) == 0) {
+        StructTy->setIsForwardDecl();
+        break;
+      }
+
       // Prepare to add the fields.
       std::vector<DebugInfoDesc *> &Elements = StructTy->getElements();
       

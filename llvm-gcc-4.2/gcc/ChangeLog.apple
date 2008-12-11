@@ -1,3 +1,10 @@
+2008-12-10   Jim Grosbach <grosbach@applecom>
+
+	Radar 6387939
+	* config/arm/arm.md (builtin_setjmp_setup): Properly terminate
+	the code snipped to prevent the rtl template from adding an
+	extraneous "use" insn into the instruction list.
+
 2008-11-18  Stuart Hastings  <stuart@apple.com>
 
 	Radar 6353006

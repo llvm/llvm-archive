@@ -469,7 +469,7 @@ namespace {
       SET_DECL_LLVM(ResultDecl, Tmp);
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(ResultDecl,
-                                  llvm::dwarf::DW_TAG_return_variable,
+                                  dwarf::DW_TAG_return_variable,
                                   "agg.result", RetTy, Tmp,
                                   Builder.GetInsertBlock());
       }
@@ -735,7 +735,7 @@ void TreeToLLVM::StartFunctionBody() {
       AI->setName(Name);
       SET_DECL_LLVM(Args, AI);
       if (!isInvRef && TheDebugInfo)
-        TheDebugInfo->EmitDeclare(Args, llvm::dwarf::DW_TAG_arg_variable,
+        TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args),
                                   AI, Builder.GetInsertBlock());
       ++AI;
@@ -747,7 +747,7 @@ void TreeToLLVM::StartFunctionBody() {
       Tmp->setName(std::string(Name)+"_addr");
       SET_DECL_LLVM(Args, Tmp);
       if (TheDebugInfo) {
-        TheDebugInfo->EmitDeclare(Args, llvm::dwarf::DW_TAG_arg_variable,
+        TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args), Tmp, 
                                   Builder.GetInsertBlock());
       }
@@ -1727,11 +1727,11 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   
   if (TheDebugInfo) {
     if (DECL_NAME(decl)) {
-      TheDebugInfo->EmitDeclare(decl, llvm::dwarf::DW_TAG_auto_variable,
+      TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_auto_variable,
                                 Name, TREE_TYPE(decl), AI,
                                 Builder.GetInsertBlock());
     } else if (TREE_CODE(decl) == RESULT_DECL) {
-      TheDebugInfo->EmitDeclare(decl, llvm::dwarf::DW_TAG_return_variable,
+      TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_return_variable,
                                 Name, TREE_TYPE(decl), AI,
                                 Builder.GetInsertBlock());
     }

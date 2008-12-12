@@ -4813,7 +4813,7 @@
   resume_reg = force_reg (Pmode, resume_addr);
   resume_reg = gen_rtx_IOR (Pmode, resume_reg, GEN_INT (1));
   emit_move_insn (resume_addr, resume_reg);
-  ;; APPLE LOCAL 6387939
+  /* APPLE LOCAL 6387939 */
   DONE;
 })
 

@@ -588,12 +588,18 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
           tree FieldNodeType = FieldType(Member);
           DIType MemberType = getOrCreateType(FieldNodeType, Unit);
           const char *MemberName = GetNodeName(Member);
-          
+          unsigned Flags = 0;
+          if (TREE_PROTECTED(Member))
+            Flags = DW_ACCESS_protected;
+          else if (TREE_PRIVATE(Member))
+            Flags = DW_ACCESS_private;
+          else
+            Flags = DW_ACCESS_public;
           DIType DTy =
             DebugFactory.CreateDerivedType(DW_TAG_member, Unit, MemberName,
                                            Unit, MemLoc.line, NodeSizeInBits(Member),
                                            NodeAlignInBits(FieldNodeType),
-                                           0, 0, MemberType);
+                                           0, Flags, MemberType);
           EltTys.push_back(DTy);
         } else {
           DEBUGASSERT(0 && "Unsupported member tree code!");

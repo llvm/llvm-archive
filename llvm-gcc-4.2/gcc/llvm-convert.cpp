@@ -4411,8 +4411,8 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(tree exp, tree fndecl,
   return false;
 }
 
-/// TargetBuiltinCache - A cache of builtin intrisics indexed by the GCC builtin
-/// number.
+/// TargetBuiltinCache - A cache of builtin intrinsics indexed by the GCC
+/// builtin number.
 static std::vector<Constant*> TargetBuiltinCache;
 
 void clearTargetBuiltinCache() {
@@ -4509,7 +4509,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         Intrinsic::getDeclaration(TheModule, IntrinsicID);
     }
 
-    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc, AttrListPtr());
+    Result = EmitCallOf(TargetBuiltinCache[FnCode], exp, DestLoc,
+                        AttrListPtr());
     return true;
   }
   

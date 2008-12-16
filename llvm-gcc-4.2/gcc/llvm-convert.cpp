@@ -4496,7 +4496,6 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         if (EmitFrontendExpandedBuiltinCall(exp, fndecl, DestLoc, Result))
           return true;
         
-        std::cerr << "TYPE: " << *ConvertType(TREE_TYPE(fndecl)) << "\n";
         error("%Hunsupported target builtin %<%s%> used", &EXPR_LOCATION(exp),
               BuiltinName);
         const Type *ResTy = ConvertType(TREE_TYPE(exp));

@@ -4066,6 +4066,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // StoreCallResultAddr - The pointer to store the result of the call through.
   SmallVector<Value *, 4> StoreCallResultAddrs;
   SmallVector<const Type *, 4> CallResultTypes;
+  SmallVector<bool, 4> CallResultIsSigned;
   
   // Process outputs.
   int ValNum = 0;
@@ -4123,6 +4124,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     }
     
     LValue Dest = EmitLV(Operand);
+    CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
     const Type *DestValTy =
       cast<PointerType>(Dest.Ptr->getType())->getElementType();
     
@@ -4190,9 +4192,47 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           Op = LV.Ptr;
         }
       }
+
+      const Type *OpTy = Op->getType();
+      // If this input operand is matching an output operand, e.g. '0', check if
+      // this is something that llvm supports. If the operand types are
+      // different, then emit an error if 1) one of the types is not integer,
+      // 2) if size of input type is larger than the output type. If the size
+      // of the integer input size is smaller than the integer output type, then
+      // cast it to the larger type and shift the value if the target is big
+      // endian.
+      if (ISDIGIT(Constraint[0])) {
+        unsigned Match = atoi(Constraint);
+        const Type *OTy = CallResultTypes[Match];
+        if (OTy != OpTy) {
+          if (!OTy->isInteger() || !OpTy->isInteger()) {
+            error("%HUnsupported inline asm: input constraint with a matching "
+                  "output constraint of incompatible type!",
+                  &EXPR_LOCATION(exp));
+            return 0;
+          }
+          unsigned OTyBits = OTy->getPrimitiveSizeInBits();
+          unsigned OpTyBits = OpTy->getPrimitiveSizeInBits();
+          if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
+            error("%HUnsupported inline asm: input constraint with a matching "
+                  "output constraint of incompatible type!",
+                  &EXPR_LOCATION(exp));
+            return 0;
+          } else if (OTyBits > OpTyBits) {
+            Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
+                               OTy, CallResultIsSigned[Match]);
+            if (BYTES_BIG_ENDIAN) {
+              Constant *ShAmt = ConstantInt::get(Op->getType(), 
+                                                 OTyBits-OpTyBits);
+              Op = Builder.CreateLShr(Op, ShAmt);
+            }
+            OpTy = Op->getType();
+          }
+        }
+      }
       
       CallOps.push_back(Op);
-      CallArgTypes.push_back(Op->getType());
+      CallArgTypes.push_back(OpTy);
     } else {                          // Memory operand.
       lang_hooks.mark_addressable(TREE_VALUE(Input));
       isIndirect = true;

@@ -468,9 +468,10 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
 
       // There will be ARRAY_TYPE nodes for each rank.  Followed by the derived
       // type.
-      tree EltTy = TREE_TYPE(type);
-      for (; TREE_CODE(type) == ARRAY_TYPE; type = TREE_TYPE(type)) {
-        tree Domain = TYPE_DOMAIN(type);
+      tree atype = type;
+      tree EltTy = TREE_TYPE(atype);
+      for (; TREE_CODE(atype) == ARRAY_TYPE; atype = TREE_TYPE(atype)) {
+        tree Domain = TYPE_DOMAIN(atype);
         if (Domain) {
           // FIXME - handle dynamic ranges
           tree MinValue = TYPE_MIN_VALUE(Domain);
@@ -482,7 +483,7 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
             Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
           }
         }
-        EltTy = TREE_TYPE(type);
+        EltTy = TREE_TYPE(atype);
       }
 
       llvm::DIArray SubscriptArray =

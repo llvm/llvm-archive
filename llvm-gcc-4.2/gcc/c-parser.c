@@ -9662,8 +9662,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteGlobalBlock_decl, 0, 0);
 	    }
 	}
+      /* LLVM LOCAL begin radar 5865221 */
       initlist = build_tree_list (fields,
-				  build_fold_addr_expr (NSConcreteGlobalBlock_decl));
+                                  convert (ptr_type_node,
+                                           build_fold_addr_expr (NSConcreteGlobalBlock_decl)));
+      /* LLVM LOCAL end radar 5865221 */
       flags |= BLOCK_IS_GLOBAL;
     }
   else
@@ -9683,8 +9686,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
 	    }
 	}
+      /* LLVM LOCAL begin radar 5865221 */
       initlist = build_tree_list (fields,
-				  build_fold_addr_expr (NSConcreteStackBlock_decl));
+                                  convert (ptr_type_node,
+                                           build_fold_addr_expr (NSConcreteStackBlock_decl)));
+      /* LLVM LOCAL end radar 5865221 */
     }
   fields = TREE_CHAIN (fields);
 
@@ -9707,9 +9713,11 @@ build_block_struct_initlist (tree block_struct_type,
   fields = TREE_CHAIN (fields);
 
   /* __descriptor */
+  /* LLVM LOCAL begin radar 5865221 */
   initlist = tree_cons (fields,
-			convert (ptr_type_node, build_fold_addr_expr (descriptor_block_decl)),
+			build_fold_addr_expr (descriptor_block_decl),
 			initlist);
+  /* LLVM LOCAL end radar 5865221 */
   for (chain = block_impl->block_original_ref_decl_list; chain;
        chain = TREE_CHAIN (chain))
     {
@@ -9833,6 +9841,8 @@ build_block_literal_tmp (const char *name,
     TREE_STATIC (block_holder_tmp_decl) = 1;
     finish_decl (block_holder_tmp_decl, constructor, NULL_TREE);
   }
+  /* LLVM LOCAL radar 5865221 */
+  TREE_CONSTANT (block_holder_tmp_decl) = 1;
   return block_holder_tmp_decl;
 }
 /* APPLE LOCAL end radar 5847213 - radar 6329245 */

@@ -20876,7 +20876,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteGlobalBlock_decl, 0, 0);
 	    }
 	}
-      CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE, build_fold_addr_expr (NSConcreteGlobalBlock_decl));
+      /* LLVM LOCAL begin radar 5865221 */
+      CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE,
+                             convert (ptr_type_node,
+                                      build_fold_addr_expr (NSConcreteGlobalBlock_decl)));
+      /* LLVM LOCAL end radar 5865221 */
       flags |= BLOCK_IS_GLOBAL;
     }
   else
@@ -20896,7 +20900,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
 	    }
 	}
-      CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE, build_fold_addr_expr (NSConcreteStackBlock_decl));
+      /* LLVM LOCAL begin radar 5865221 */
+      CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE,
+                             convert (ptr_type_node,
+                                      build_fold_addr_expr (NSConcreteStackBlock_decl)));
+      /* LLVM LOCAL end radar 5865221 */
     }
 
   /* __flags */
@@ -21029,6 +21037,8 @@ build_block_literal_tmp (const char *name,
     TREE_PUBLIC (block_holder_tmp_decl) = 0;
     TREE_STATIC (block_holder_tmp_decl) = 1;
   }
+  /* LLVM LOCAL radar 5865221 */
+  TREE_CONSTANT (block_holder_tmp_decl) = 1;
   cp_finish_decl (block_holder_tmp_decl, constructor, 0, 0, LOOKUP_ONLYCONVERTING);
   return block_holder_tmp_decl;
 }

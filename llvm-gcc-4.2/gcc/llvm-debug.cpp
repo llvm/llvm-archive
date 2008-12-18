@@ -416,7 +416,7 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
                                            NodeAlignInBits(type),
                                            0 /*offset */, 
                                            0 /* flags */, 
-                                           MainTy);
+                                           FromTy);
       
       break;
     }

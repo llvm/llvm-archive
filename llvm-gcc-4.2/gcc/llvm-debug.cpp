@@ -325,8 +325,14 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
   
   // Check to see if the compile unit already has created this type.
   DIType &Slot = TypeCache[type];
-  if (!Slot.isNull())
-    return Slot;
+  bool SlotIsFwdDecl = false;
+  if (!Slot.isNull()) {
+    if (Slot.getFlags() == DW_AT_declaration
+        && TYPE_SIZE(type) != 0)
+      SlotIsFwdDecl = true;
+    if (!SlotIsFwdDecl)
+      return Slot;
+  }
   
   DIType MainTy;
   if (type != TYPE_MAIN_VARIANT(type))
@@ -528,15 +534,17 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
       unsigned Tag = TREE_CODE(type) == RECORD_TYPE ? DW_TAG_structure_type :
                                                       DW_TAG_union_type;
 
-      // Records and classes and unions can all be recursive.  To handle them, we
-      // first generate a debug descriptor for the struct as a forward declaration.
-      // Then (if it is a definition) we go through and get debug info for all of
-      // its members.  Finally, we create a descriptor for the complete type (which
-      // may refer to the forward decl if the struct is recursive) and replace all
-      // uses of the forward declaration with the final definition.
+      // Records and classes and unions can all be recursive.  To handle them,
+      // we first generate a debug descriptor for the struct as a forward 
+      // declaration. Then (if it is a definition) we go through and get debug 
+      // info for all of its members.  Finally, we create a descriptor for the
+      // complete type (which may refer to the forward decl if the struct is 
+      // recursive) and replace all  uses of the forward declaration with the 
+      // final definition. 
       expanded_location Loc = GetNodeLocation(type, false);
-      llvm::DIType FwdDecl =
-        DebugFactory.CreateCompositeType(Tag, Unit, TypeName, Unit, Loc.line, 0, 0, 0, 0,
+      llvm::DIType FwdDecl = SlotIsFwdDecl ? Slot :
+        DebugFactory.CreateCompositeType(Tag, Unit, TypeName, Unit, Loc.line, 
+                                         0, 0, 0, DW_AT_declaration,
                                          llvm::DIType(), llvm::DIArray());
   
 

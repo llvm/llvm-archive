@@ -600,7 +600,8 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
             DebugFactory.CreateDerivedType(DW_TAG_member, Unit, MemberName,
                                            Unit, MemLoc.line, NodeSizeInBits(Member),
                                            NodeAlignInBits(FieldNodeType),
-                                           0, Flags, MemberType);
+                                           int_bit_position(Member), 
+                                           Flags, MemberType);
           EltTys.push_back(DTy);
         } else {
           DEBUGASSERT(0 && "Unsupported member tree code!");

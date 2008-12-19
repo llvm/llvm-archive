@@ -519,11 +519,14 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
       llvm::DIArray EltArray =
         DebugFactory.GetOrCreateArray(&Elements[0], Elements.size());
 
-      expanded_location Loc = GetNodeLocation(type, false);
+      expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
+      std::string Filename, Directory;
+      DirectoryAndFile(Loc.file, Directory, Filename);
       Ty = DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
                                             Unit, TypeName, Unit, Loc.line,
                                             Size, Align, 0, 0,
-                                            llvm::DIType(), EltArray);
+                                            llvm::DIType(), EltArray,
+                                            &Filename, &Directory);
       break;
     }
     
@@ -541,11 +544,14 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
       // complete type (which may refer to the forward decl if the struct is 
       // recursive) and replace all  uses of the forward declaration with the 
       // final definition. 
-      expanded_location Loc = GetNodeLocation(type, false);
+      expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
+      std::string Filename, Directory;
+      DirectoryAndFile(Loc.file, Directory, Filename);
       llvm::DIType FwdDecl = SlotIsFwdDecl ? Slot :
         DebugFactory.CreateCompositeType(Tag, Unit, TypeName, Unit, Loc.line, 
                                          0, 0, 0, DW_AT_declaration,
-                                         llvm::DIType(), llvm::DIArray());
+                                         llvm::DIType(), llvm::DIArray(),
+                                         &Filename, &Directory);
   
 
       // forward declaration, 
@@ -583,20 +589,22 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
         // Should we skip.
         if (DECL_P(Member) && DECL_IGNORED_P(Member)) continue;
 
-        // Get the location of the member.
-        expanded_location MemLoc = GetNodeLocation(Member, false);
-        DICompileUnit MemFile = getOrCreateCompileUnit(MemLoc.file);
-
         if (TREE_CODE(Member) == FIELD_DECL) {
           if (DECL_FIELD_OFFSET(Member) == 0 ||
               TREE_CODE(DECL_FIELD_OFFSET(Member)) != INTEGER_CST)
             // FIXME: field with variable position, skip it for now.
             continue;
 
+          // Get the location of the member.
+          expanded_location MemLoc = GetNodeLocation(Member, false);
+          std::string MemFilename, MemDirectory;
+          DirectoryAndFile(MemLoc.file, MemDirectory, MemFilename);
+
           // Field type is the declared type of the field.
           tree FieldNodeType = FieldType(Member);
           DIType MemberType = getOrCreateType(FieldNodeType, Unit);
           const char *MemberName = GetNodeName(Member);
+          DICompileUnit MemFile = getOrCreateCompileUnit(MemLoc.file);
           unsigned Flags = 0;
           if (TREE_PROTECTED(Member))
             Flags = DW_ACCESS_protected;
@@ -609,7 +617,8 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
                                            Unit, MemLoc.line, NodeSizeInBits(Member),
                                            NodeAlignInBits(FieldNodeType),
                                            int_bit_position(Member), 
-                                           Flags, MemberType);
+                                           Flags, MemberType,
+                                           &MemFilename, &MemDirectory);
           EltTys.push_back(DTy);
         } else {
           DEBUGASSERT(0 && "Unsupported member tree code!");
@@ -621,13 +630,18 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
                 
         if (DECL_ABSTRACT_ORIGIN (Member)) continue;
 
-        const char *MemberName = GetNodeName(Member);                
+        // Get the location of the member.
         expanded_location MemLoc = GetNodeLocation(Member, false);
+        std::string MemFilename, MemDirectory;
+        DirectoryAndFile(MemLoc.file, MemDirectory, MemFilename);
+        
+        const char *MemberName = GetNodeName(Member);                
         DIType SPTy = getOrCreateType(TREE_TYPE(Member), Unit);
         DISubprogram SP = 
           DebugFactory.CreateSubprogram(Unit, MemberName, MemberName,
                                         MemberName, Unit, MemLoc.line,
-                                        SPTy, false, false);
+                                        SPTy, false, false,
+                                        &MemFilename, &MemDirectory);
 
         EltTys.push_back(SP);
       }
@@ -637,7 +651,8 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
       
       llvm::DIType RealDecl =
         DebugFactory.CreateCompositeType(Tag, Unit, TypeName, Unit, Loc.line, Size,
-                                         Align, 0, 0, llvm::DIType(), Elements);
+                                         Align, 0, 0, llvm::DIType(), Elements,
+                                         &Filename, &Directory);
 
       // Now that we have a real decl for the struct, replace anything using the
       // old decl with the new one.  This will recursively update the debug info.

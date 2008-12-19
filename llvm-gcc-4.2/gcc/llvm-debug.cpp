@@ -325,14 +325,8 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
   
   // Check to see if the compile unit already has created this type.
   DIType &Slot = TypeCache[type];
-  bool SlotIsFwdDecl = false;
-  if (!Slot.isNull()) {
-    if (Slot.getFlags() == DW_AT_declaration
-        && TYPE_SIZE(type) != 0)
-      SlotIsFwdDecl = true;
-    if (!SlotIsFwdDecl)
-      return Slot;
-  }
+  if (!Slot.isNull())
+    return Slot;
   
   DIType MainTy;
   if (type != TYPE_MAIN_VARIANT(type))
@@ -551,7 +545,7 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
       expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
       std::string Filename, Directory;
       DirectoryAndFile(Loc.file, Directory, Filename);
-      llvm::DIType FwdDecl = SlotIsFwdDecl ? Slot :
+      llvm::DIType FwdDecl =
         DebugFactory.CreateCompositeType(Tag, Unit, TypeName, Unit, Loc.line, 
                                          0, 0, 0, DW_AT_declaration,
                                          llvm::DIType(), llvm::DIArray(),
@@ -752,4 +746,3 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const std::string &FullPath){
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */
-

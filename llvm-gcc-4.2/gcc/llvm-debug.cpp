@@ -351,13 +351,17 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
   // Do we have a typedef?
   if (tree Name = TYPE_NAME(type)) {
     if (TREE_CODE(Name) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(Name)) {
-      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, Unit, "", 
-                                          DICompileUnit(), Loc.line,
+      expanded_location TypeDefLoc = GetNodeLocation(Name);
+      std::string Filename, Directory;
+      DirectoryAndFile(TypeDefLoc.file, Directory, Filename);
+      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, Unit, 
+                                          GetNodeName(Name), 
+                                          Unit, TypeDefLoc.line,
                                           0 /*size*/,
                                           0 /*align*/,
                                           0 /*offset */, 
                                           0 /*flags*/, 
-                                          MainTy);
+                                          MainTy, &Filename, &Directory);
       // Set the slot early to prevent recursion difficulties.
       TypeCache[type] = Ty;
       return Ty;

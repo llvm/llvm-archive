@@ -4196,25 +4196,26 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const Type *OpTy = Op->getType();
       // If this input operand is matching an output operand, e.g. '0', check if
       // this is something that llvm supports. If the operand types are
-      // different, then emit an error if 1) one of the types is not integer,
-      // 2) if size of input type is larger than the output type. If the size
-      // of the integer input size is smaller than the integer output type, then
-      // cast it to the larger type and shift the value if the target is big
-      // endian.
+      // different, then emit an error if 1) one of the types is not integer or
+      // pointer, 2) if size of input type is larger than the output type. If
+      // the size of the integer input size is smaller than the integer output
+      // type, then cast it to the larger type and shift the value if the target
+      // is big endian.
       if (ISDIGIT(Constraint[0])) {
         unsigned Match = atoi(Constraint);
         const Type *OTy = CallResultTypes[Match];
         if (OTy != OpTy) {
-          if (!OTy->isInteger() || !OpTy->isInteger()) {
-            error("%HUnsupported inline asm: input constraint with a matching "
+          if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
+              !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
+            error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
             return 0;
           }
-          unsigned OTyBits = OTy->getPrimitiveSizeInBits();
-          unsigned OpTyBits = OpTy->getPrimitiveSizeInBits();
+          unsigned OTyBits = TD.getTypeSizeInBits(OTy);
+          unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
           if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
-            error("%HUnsupported inline asm: input constraint with a matching "
+            error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
             return 0;

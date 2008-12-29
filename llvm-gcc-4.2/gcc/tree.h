@@ -4513,7 +4513,9 @@ extern bool tree_expr_nonzero_warnv_p (tree, bool *);
 
 /* In builtins.c */
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 extern int validate_arglist (tree, ...);
+#endif
 /* LLVM LOCAL end */
 extern tree fold_builtin (tree, tree, bool);
 extern tree fold_builtin_fputs (tree, bool, bool, tree);

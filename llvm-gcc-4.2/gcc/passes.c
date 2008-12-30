@@ -482,13 +482,11 @@ init_optimization_passes (void)
   /* Interprocedural optimization passes.  */
   p = &all_ipa_passes;
   /* LLVM local begin */
+  NEXT_PASS (pass_early_ipa_inline); /* PR2353.  */
 #ifndef ENABLE_LLVM
-  NEXT_PASS (pass_early_ipa_inline);
   NEXT_PASS (pass_early_local_passes);
   NEXT_PASS (pass_ipa_cp);
-#endif
-  NEXT_PASS (pass_ipa_inline); /* LLVM: inline functions marked always_inline */
-#ifndef ENABLE_LLVM
+  NEXT_PASS (pass_ipa_inline);
   NEXT_PASS (pass_ipa_reference);
   NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);

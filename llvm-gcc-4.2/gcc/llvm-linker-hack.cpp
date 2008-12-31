@@ -87,7 +87,7 @@ void dummy_function() {
   llvm::createMemCpyOptPass();
   llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
-  llvm::createAddReadAttrsPass();
+  llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
 
   llvm::DIFactory::DIFactory(*MP->getModule());

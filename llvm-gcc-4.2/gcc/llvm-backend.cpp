@@ -413,7 +413,7 @@ static void createOptimizationPasses() {
     if (flag_unit_at_a_time) {
       if (flag_exceptions)
         PM->add(createPruneEHPass());             // Remove dead EH info
-      PM->add(createAddReadAttrsPass());          // Set readonly/readnone attrs
+      PM->add(createFunctionAttrsPass());         // Deduce function attrs
     }
     if (flag_inline_trees > 1)                    // respect -fno-inline-functions
       PM->add(createFunctionInliningPass());      // Inline small functions

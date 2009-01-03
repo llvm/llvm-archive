@@ -4124,7 +4124,6 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     }
     
     LValue Dest = EmitLV(Operand);
-    CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
     const Type *DestValTy =
       cast<PointerType>(Dest.Ptr->getType())->getElementType();
     
@@ -4134,6 +4133,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;
       CallResultTypes.push_back(DestValTy);
+      CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
     } else {
       ConstraintStr += ",=*";
       ConstraintStr += SimplifiedConstraint;
@@ -4203,8 +4203,9 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       // is big endian.
       if (ISDIGIT(Constraint[0])) {
         unsigned Match = atoi(Constraint);
-        const Type *OTy = CallResultTypes[Match];
-        if (OTy != OpTy) {
+        const Type *OTy = (Match > CallResultTypes.size())
+          ? CallResultTypes[Match] : 0;
+        if (OTy && OTy != OpTy) {
           if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
               !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
             error("%Hunsupported inline asm: input constraint with a matching "

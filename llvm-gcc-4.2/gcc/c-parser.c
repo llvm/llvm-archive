@@ -9841,8 +9841,12 @@ build_block_literal_tmp (const char *name,
     TREE_STATIC (block_holder_tmp_decl) = 1;
     finish_decl (block_holder_tmp_decl, constructor, NULL_TREE);
   }
-  /* LLVM LOCAL radar 5865221 */
+  /* LLVM LOCAL begin radar 5865221 */
+#ifdef ENABLE_LLVM
   TREE_CONSTANT (block_holder_tmp_decl) = 1;
+  TREE_READONLY (block_holder_tmp_decl) = 1;
+#endif
+  /* LLVM LOCAL end radar 5865221 */
   return block_holder_tmp_decl;
 }
 /* APPLE LOCAL end radar 5847213 - radar 6329245 */

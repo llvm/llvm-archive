@@ -4203,7 +4203,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       // is big endian.
       if (ISDIGIT(Constraint[0])) {
         unsigned Match = atoi(Constraint);
-        const Type *OTy = (Match > CallResultTypes.size())
+        const Type *OTy = (Match < CallResultTypes.size())
           ? CallResultTypes[Match] : 0;
         if (OTy && OTy != OpTy) {
           if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||

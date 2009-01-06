@@ -1595,6 +1595,8 @@ cgraph_preserve_function_body_p (tree decl)
   return false;
 }
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 static void
 ipa_passes (void)
 {
@@ -1604,6 +1606,8 @@ ipa_passes (void)
   execute_ipa_pass_list (all_ipa_passes);
   bitmap_obstack_release (NULL);
 }
+#endif
+/* LLVM LOCAL end */
 
 /* Perform simple optimizations based on callgraph.  */
 
@@ -1641,9 +1645,13 @@ cgraph_optimize (void)
       dump_cgraph (cgraph_dump_file);
     }
     
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   /* Don't run the IPA passes if there was any error or sorry messages.  */
   if (errorcount == 0 && sorrycount == 0)
     ipa_passes ();
+#endif
+  /* LLVM LOCAL end */
 
   /* This pass remove bodies of extern inline functions we never inlined.
      Do this later so other IPA passes see what is really going on.  */

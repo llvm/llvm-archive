@@ -387,6 +387,10 @@ DIType DebugInfo::getOrCreateType(tree type, DICompileUnit Unit) {
     return Ty;
   }
 
+  // If, for some reason, main type varaint type is seen then use it.
+  if (!MainTy.isNull())
+    return MainTy;
+
   // Work out details of type.
   switch (TREE_CODE(type)) {
     case ERROR_MARK:

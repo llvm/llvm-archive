@@ -4440,7 +4440,7 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(tree exp, tree fndecl,
                                                  const MemRef *DestLoc,
                                                  Value *&Result) {
 #ifdef LLVM_TARGET_INTRINSIC_LOWER
-  // Get the result type and oeprand line in an easy to consume format.
+  // Get the result type and operand line in an easy to consume format.
   const Type *ResultType = ConvertType(TREE_TYPE(TREE_TYPE(fndecl)));
   std::vector<Value*> Operands;
   for (tree Op = TREE_OPERAND(exp, 1); Op; Op = TREE_CHAIN(Op))

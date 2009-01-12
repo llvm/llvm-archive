@@ -59,9 +59,7 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  std::map<std::string, DICompileUnit> CompileUnitCache;
-                                        // Cache of previously constructed 
-                                        // CompileUnits.
+  DICompileUnit MainCompileUnit;
   std::map<tree_node *, DIType> TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
@@ -108,11 +106,10 @@ public:
 
   /// getOrCreateType - Get the type from the cache or create a new type if
   /// necessary.
-  DIType getOrCreateType(tree_node *type, DICompileUnit Unit);
+  DIType getOrCreateType(tree_node *type);
 
-  /// getOrCreateCompileUnit - Get the compile unit from the cache or create a
-  /// new one if necessary.
-  DICompileUnit getOrCreateCompileUnit(const std::string &FullPath);
+  /// createCompileUnit - Create a new compile unit.
+  DICompileUnit createCompileUnit(const std::string &FullPath);
   
 };
 

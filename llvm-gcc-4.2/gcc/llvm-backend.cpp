@@ -246,7 +246,9 @@ void llvm_initialize_backend(void) {
   else
     RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
 
-  if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
+  // FIXME - Do not disable debug info while writing pch.
+  if (!flag_pch_file &&
+      !optimize && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
@@ -282,7 +284,9 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   TheModule = ParseBitcodeFile(MB, &ErrMsg);
   delete MB;
 
-  if (!optimize && debug_info_level > DINFO_LEVEL_NONE)
+  // FIXME - Do not disable debug info while writing pch.
+  if (!flag_pch_file &&
+      !optimize && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 
   if (!TheModule) {

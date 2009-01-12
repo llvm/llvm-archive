@@ -1019,7 +1019,7 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
 const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
   *Offset = 0;
   const Type *Ty = ConvertType(type);
-  unsigned Size = getTargetData().getABITypeSize(Ty);
+  unsigned Size = getTargetData().getTypePaddedSize(Ty);
   if (Size == 0)
     return Type::VoidTy;
   else if (Size == 1)

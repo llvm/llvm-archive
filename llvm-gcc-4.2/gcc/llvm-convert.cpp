@@ -1150,18 +1150,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
 
   // Constants.
-  case LABEL_DECL: {
-    Value *Ptr = TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-    return LValue(Ptr, DECL_ALIGN(exp) / 8);
-  }
-  case COMPLEX_CST: {
-    Value *Ptr = TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
-  }
-  case STRING_CST: {
-    Value *Ptr = TreeConstantToLLVM::EmitLV_STRING_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
-  }
+  case LABEL_DECL:   return TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
+  case COMPLEX_CST:  return LValue(TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp));
+  case STRING_CST:   return LValue(TreeConstantToLLVM::EmitLV_STRING_CST(exp));
 
   // Type Conversion.
   case VIEW_CONVERT_EXPR: return EmitLV_VIEW_CONVERT_EXPR(exp);
@@ -1174,11 +1165,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case WITH_SIZE_EXPR:
     // The address is the address of the operand.
     return EmitLV(TREE_OPERAND(exp, 0));
-  case INDIRECT_REF: {
+  case INDIRECT_REF:
     // The lvalue is just the address.
-    tree Op = TREE_OPERAND(exp, 0);
-    return LValue(Emit(Op, 0), expr_align(Op) / 8);
-  }
+    return Emit(TREE_OPERAND(exp, 0), 0);
   }
 }
 
@@ -2301,7 +2290,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   LValue LV = EmitLV(exp);
   bool isVolatile = TREE_THIS_VOLATILE(exp);
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  unsigned Alignment = LV.getAlignment();
+  unsigned Alignment = expr_align(exp) / 8;
   if (TREE_CODE(exp) == COMPONENT_REF) 
     if (const StructType *STy = 
         dyn_cast<StructType>(ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)))))
@@ -2974,7 +2963,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
 
   LValue LV = EmitLV(lhs);
   bool isVolatile = TREE_THIS_VOLATILE(lhs);
-  unsigned Alignment = LV.getAlignment();
+  unsigned Alignment = expr_align(lhs) / 8;
   if (TREE_CODE(lhs) == COMPONENT_REF) 
     if (const StructType *STy = 
         dyn_cast<StructType>(ConvertType(TREE_TYPE(TREE_OPERAND(lhs, 0)))))
@@ -3168,7 +3157,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
       LValue LV = EmitLV(Op);
       assert(!LV.isBitfield() && "Expected an aggregate operand!");
       bool isVolatile = TREE_THIS_VOLATILE(Op);
-      unsigned Alignment = LV.getAlignment();
+      unsigned Alignment = expr_align(Op) / 8;
 
       EmitAggregateCopy(Target, MemRef(LV.Ptr, Alignment, isVolatile),
                         TREE_TYPE(exp));
@@ -5896,10 +5885,9 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   Value *Decl = DECL_LLVM(exp);
   if (Decl == 0) {
     if (errorcount || sorrycount) {
-      const Type *Ty = ConvertType(TREE_TYPE(exp));
-      const PointerType *PTy = PointerType::getUnqual(Ty);
-      LValue LV(ConstantPointerNull::get(PTy), 1);
-      return LV;
+      const PointerType *Ty =
+        PointerType::getUnqual(ConvertType(TREE_TYPE(exp)));
+      return ConstantPointerNull::get(Ty);
     }
     assert(0 && "INTERNAL ERROR: Referencing decl that hasn't been laid out");
     abort();
@@ -5936,13 +5924,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   // type void.
   if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
   const PointerType *PTy = PointerType::getUnqual(Ty);
-  unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
-  if (DECL_ALIGN_UNIT(exp)) {
-    if (DECL_USER_ALIGN(exp) || Alignment < (unsigned)DECL_ALIGN_UNIT(exp))
-      Alignment = DECL_ALIGN_UNIT(exp);
-  }
-
-  return LValue(BitCastToType(Decl, PTy), Alignment);
+  return BitCastToType(Decl, PTy);
 }
 
 LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
@@ -5950,23 +5932,22 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // of ElementTy in the case of ARRAY_RANGE_REF.
 
   tree Array = TREE_OPERAND(exp, 0);
-  tree ArrayTreeType = TREE_TYPE(Array);
+  tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
   tree IndexType = TREE_TYPE(Index);
-  tree ElementType = TREE_TYPE(ArrayTreeType);
+  tree ElementType = TREE_TYPE(ArrayType);
 
-  assert((TREE_CODE (ArrayTreeType) == ARRAY_TYPE ||
-          TREE_CODE (ArrayTreeType) == POINTER_TYPE ||
-          TREE_CODE (ArrayTreeType) == REFERENCE_TYPE ||
-          TREE_CODE (ArrayTreeType) == BLOCK_POINTER_TYPE) &&
+  assert((TREE_CODE (ArrayType) == ARRAY_TYPE ||
+          TREE_CODE (ArrayType) == POINTER_TYPE ||
+          TREE_CODE (ArrayType) == REFERENCE_TYPE ||
+          TREE_CODE (ArrayType) == BLOCK_POINTER_TYPE) &&
          "Unknown ARRAY_REF!");
 
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
   // operand.  This construct maps directly to a getelementptr instruction.
   Value *ArrayAddr;
-  unsigned ArrayAlign;
 
-  if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE) {
+  if (TREE_CODE(ArrayType) == ARRAY_TYPE) {
     // First subtract the lower bound, if any, in the type of the index.
     tree LowerBound = array_ref_low_bound(exp);
     if (!integer_zerop(LowerBound))
@@ -5975,10 +5956,8 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     LValue ArrayAddrLV = EmitLV(Array);
     assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
     ArrayAddr = ArrayAddrLV.Ptr;
-    ArrayAlign = ArrayAddrLV.Alignment;
   } else {
     ArrayAddr = Emit(Array, 0);
-    ArrayAlign = expr_align(ArrayTreeType) / 8;
   }
 
   Value *IndexVal = Emit(Index, 0);
@@ -5992,27 +5971,20 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     IndexVal = CastToSIntType(IndexVal, IntPtrTy);
 
   // If this is an index into an LLVM array, codegen as a GEP.
-  if (isArrayCompatible(ArrayTreeType)) {
+  if (isArrayCompatible(ArrayType)) {
     Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), IndexVal };
     Value *Ptr = Builder.CreateGEP(ArrayAddr, Idxs, Idxs + 2);
-    const Type *ATy = cast<PointerType>(ArrayAddr->getType())->getElementType();
-    const Type *ElementTy = cast<ArrayType>(ATy)->getElementType();
-    unsigned Alignment = MinAlign(ArrayAlign, TD.getTypePaddedSize(ElementTy));
-    return LValue(BitCastToType(Ptr,
-                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
-                  Alignment);
+    return BitCastToType(Ptr,
+                         PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
   }
 
   // If we are indexing over a fixed-size type, just use a GEP.
-  if (isSequentialCompatible(ArrayTreeType)) {
-    const Type *ElementTy = ConvertType(ElementType);
-    const Type *PtrElementTy = PointerType::getUnqual(ElementTy);
+  if (isSequentialCompatible(ArrayType)) {
+    const Type *PtrElementTy = PointerType::getUnqual(ConvertType(ElementType));
     ArrayAddr = BitCastToType(ArrayAddr, PtrElementTy);
     Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
-    unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));
-    return LValue(BitCastToType(Ptr,
-                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
-                  Alignment);
+    return BitCastToType(Ptr,
+                         PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
   }
 
   // Otherwise, just do raw, low-level pointer arithmetic.  FIXME: this could be
@@ -6020,21 +5992,14 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   //   float foo(int w, float A[][w], int g) { return A[g][0]; }
 
   ArrayAddr = BitCastToType(ArrayAddr, PointerType::getUnqual(Type::Int8Ty));
-  if (VOID_TYPE_P(TREE_TYPE(ArrayTreeType))) {
-    unsigned Alignment = MinAlign(ArrayAlign,
-                                  TD.getABITypeAlignment(Type::Int8Ty));
-    return LValue(Builder.CreateGEP(ArrayAddr, IndexVal), Alignment);
-  }
+  if (VOID_TYPE_P(TREE_TYPE(ArrayType)))
+    return Builder.CreateGEP(ArrayAddr, IndexVal);
 
   Value *TypeSize = Emit(array_ref_element_size(exp), 0);
   TypeSize = CastToUIntType(TypeSize, IntPtrTy);
   IndexVal = Builder.CreateMul(IndexVal, TypeSize);
   Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
-  unsigned Alignment = MinAlign(ArrayAlign,
-                                cast<ConstantInt>(IndexVal)->getZExtValue());
-  return LValue(BitCastToType(Ptr,
-                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
-                Alignment);
+  return BitCastToType(Ptr,PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
 }
 
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
@@ -6063,9 +6028,8 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
 
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
-  tree FieldDecl = TREE_OPERAND(exp, 1); 
-  unsigned LVAlign = DECL_PACKED(FieldDecl) ? 1 : StructAddrLV.Alignment;
- 
+  tree FieldDecl = TREE_OPERAND(exp, 1);
+
   assert((TREE_CODE(DECL_CONTEXT(FieldDecl)) == RECORD_TYPE ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE  ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == QUAL_UNION_TYPE));
@@ -6100,9 +6064,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // the offset from BitStart.
     if (MemberIndex) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
-      unsigned Offset = SL->getElementOffset(MemberIndex);
-      BitStart -= Offset * 8;
-      LVAlign = MinAlign(LVAlign, Offset);
+      BitStart -= SL->getElementOffset(MemberIndex) * 8;
     }
     
     // If the FIELD_DECL has an annotate attribute on it, emit it.
@@ -6188,7 +6150,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       Offset = Builder.CreateAdd(Offset,
         ConstantInt::get(Offset->getType(), ByteOffset));
       BitStart -= ByteOffset*8;
-      LVAlign = MinAlign(LVAlign, ByteOffset);
     }
 
     Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr, 
@@ -6260,7 +6221,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
       // Compute the byte offset, and add it to the pointer.
       unsigned ByteOffset = NumAlignmentUnits*ByteAlignment;
-      LVAlign = MinAlign(LVAlign, ByteOffset);
 
       Constant *Offset = ConstantInt::get(TD.getIntPtrType(), ByteOffset);
       FieldPtr = CastToType(Instruction::PtrToInt, FieldPtr,
@@ -6282,18 +6242,17 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
     // Okay, everything is good.  Return this as a bitfield if we can't
     // return it as a normal l-value. (e.g. "struct X { int X : 32 };" ).
-    // Conservatively return LValue with alignment 1.
     if (BitfieldSize != LLVMValueBitSize || BitStart != 0)
-      return LValue(FieldPtr, 1, BitStart, BitfieldSize);
+      return LValue(FieldPtr, BitStart, BitfieldSize);
   } else {
     // Make sure we return a pointer to the right type.
-    const Type *EltTy = ConvertType(TREE_TYPE(exp));
-    FieldPtr = BitCastToType(FieldPtr, PointerType::getUnqual(EltTy));
+    FieldPtr = BitCastToType(FieldPtr,
+                          PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
   }
   
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");
-  return LValue(FieldPtr, LVAlign);
+  return LValue(FieldPtr);
 }
 
 LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
@@ -6325,28 +6284,17 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   }
   
   // If this is referring to the whole field, return the whole thing.
-  if (BitStart == 0 && BitSize == ValueSizeInBits) {
-    return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)),
-                  Ptr.Alignment);
-  }
+  if (BitStart == 0 && BitSize == ValueSizeInBits)
+    return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)));
   
-  return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)), 1,
-                BitStart, BitSize);
+  return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)), BitStart,
+                BitSize);
 }
 
 LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
-  assert(!Ptr.isBitfield() &&
-         "REALPART_EXPR / IMAGPART_EXPR operands cannot be bitfields!");
-  unsigned Alignment;
-  if (Idx == 0)
-    // REALPART alignment is same as the complex operand.
-    Alignment = Ptr.Alignment;
-  else
-    // IMAGPART alignment = MinAlign(Ptr.Alignment, sizeof field);
-    Alignment = MinAlign(Ptr.Alignment,
-                         TD.getTypePaddedSize(Ptr.Ptr->getType()));
-  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
+  assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
+  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx));
 }
 
 LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
@@ -6362,30 +6310,24 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
   } else {
     // If the input is a scalar, emit to a temporary.
     Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
-    StoreInst *S = Builder.CreateStore(Emit(Op, 0), Dest);
+    Builder.CreateStore(Emit(Op, 0), Dest);
     // The type is the type of the expression.
     Dest = BitCastToType(Dest,  
                          PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
-    return LValue(Dest, S->getAlignment());
+    return LValue(Dest);
   }
 }
 
 LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
   CreateExceptionValues();
   // Cast the address pointer to the expected type.
-  unsigned Alignment = TD.getABITypeAlignment(cast<PointerType>(ExceptionValue->
-                                                  getType())->getElementType());
-  return LValue(BitCastToType(ExceptionValue,
-                              PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
-                Alignment);
+  return BitCastToType(ExceptionValue,
+                       PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
 }
 
 LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
   CreateExceptionValues();
-  unsigned Alignment =
-    TD.getABITypeAlignment(cast<PointerType>(ExceptionSelectorValue->
-                                             getType())->getElementType());
-  return LValue(ExceptionSelectorValue, Alignment);
+  return ExceptionSelectorValue;
 }
 
 //===----------------------------------------------------------------------===//

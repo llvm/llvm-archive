@@ -17,13 +17,13 @@ Alternatively, if you have commit access, use this form:
 Once you've checked out llvm-top, you can then check out a module (and all its
 dependencies) with the "get" script located here. For example:
 
-  ./get llvm-gcc-4-0
+  ./get llvm-gcc-4.2
 
-which will check out both llvm and llvm-gcc-4-0 because the latter depends on
+which will check out both llvm and llvm-gcc-4.2 because the latter depends on
 the former.  You can check out any number of modules using the "get" script, 
 for example, like this:
 
-  ./get llvm-gcc-4.0 test-suite stacker
+  ./get llvm-gcc-4.2 test-suite stacker
 
 
 In addition to checking out software, there are several more scripts in 
@@ -119,17 +119,17 @@ choices on the command line:
 
 So, for example, consider:
 
-  ./build llvm-gcc-4.0 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
+  ./build llvm-gcc-4.2 ENABLE_OPTIMIZED=1 PREFIX=/my/install/dir VERBOSE=1
 
 As you might guess, this will do the following:
 
-  1. Check out the llvm-gcc-4.0 module
-  2. Check out the core module because llvm-gcc-4.0 depends on core
+  1. Check out the llvm-gcc-4.2 module
+  2. Check out the core module because llvm-gcc-4.2 depends on core
   3. Check out the support module because core depends on support
   4. Build the support module in optimized mode and configure it to install
      into /my/install/dir
   5. Build the core module the same way.
-  6. Build the llvm-gcc-4.0 module the same way.
+  6. Build the llvm-gcc-4.2 module the same way.
   7. Do all of the above with some simple progress messages.
 
 The modules available are:
@@ -138,7 +138,7 @@ The modules available are:
   sample       - A sample module you can use as a template for your own
   support      - The support libraries, makefile system, etc.
   core         - The core llvm software (currently "llvm")
-  llvm-gcc-4.0 - The C/C++/Obj-C front end for llvm, based on GCC 4.0
+  llvm-gcc-4.2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
   llvm-gcc-4.2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
   cfe          - The new C/C++/Obj-C front end for llvm
   test-suite   - The llvm test suite

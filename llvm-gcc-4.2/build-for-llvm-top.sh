@@ -1,5 +1,5 @@
 #!/bin/sh
-#                      build script for llvm-gcc-4.2   
+#                      build script for llvm-gcc-4.2
 # 
 # This file was developed by Reid Spencer and is distributed under the
 # University of Illinois Open Source License. See LICENSE.TXT for details.
@@ -27,8 +27,9 @@ if test ! -d "$config_status" -o "$config_status" -ot "$0" ; then
   config_options="--prefix=$PREFIX --enable-llvm=$LLVM_TOP/llvm "
   config_options="$config_options --program-prefix=llvm-"
   config_options="$config_options --enable-languages=c,c++"
+  config_options="$config_options --disable-bootstrap"
   if test "$OPTIMIZED" -eq 0 ; then
-    config_options="$config_options --enable-checking --enable-libstdcxx-debug"
+    config_options="$config_options --enable-checking"
   fi
   host=`./config.guess`
   if test ! -z `echo "$host" | grep 'linux'` ; then

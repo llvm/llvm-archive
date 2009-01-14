@@ -138,7 +138,7 @@ The modules available are:
   sample       - A sample module you can use as a template for your own
   support      - The support libraries, makefile system, etc.
   core         - The core llvm software (currently "llvm")
-  llvm-gcc-4.2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
+  llvm-gcc-4.0 - The C/C++/Obj-C front end for llvm, based on GCC 4.0
   llvm-gcc-4.2 - The C/C++/Obj-C front end for llvm, based on GCC 4.2
   cfe          - The new C/C++/Obj-C front end for llvm
   test-suite   - The llvm test suite

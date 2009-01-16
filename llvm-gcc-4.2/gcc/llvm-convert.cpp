@@ -6444,7 +6444,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
   case UNION_TYPE:
     // Store each element of the constructor into the corresponding field of
     // DEST.
-    if (!elt) return 0;  // no elements
+    if (!elt || VEC_empty(constructor_elt, elt)) return 0;  // no elements
     assert(VEC_length(constructor_elt, elt) == 1
            && "Union CONSTRUCTOR should have one element!");
     tree tree_purpose = VEC_index(constructor_elt, elt, 0)->index;

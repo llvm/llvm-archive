@@ -9,3 +9,4 @@ vFloat t(const float *A) {
   return _mm_loadu_ps(&A[4]);
 }
 /* { dg-final { scan-assembler-not "call" } } */
+/* { dg-final { scan-assembler-not "mm_" } } */

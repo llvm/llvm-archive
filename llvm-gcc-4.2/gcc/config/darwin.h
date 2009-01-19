@@ -1604,8 +1604,12 @@ extern unsigned darwin_llvm_override_target_version(const char*, char**);
 #ifdef WARN_FORMAT_INIT
 #undef WARN_FORMAT_INIT
 #endif
-
 #define WARN_FORMAT_INIT 1
+
+#ifdef WARN_FORMAT_SECURITY_INIT
+#undef WARN_FORMAT_SECURITY_INIT
+#endif
+#define WARN_FORMAT_SECURITY_INIT 1
 /* LLVM LOCAL end */
 
 #endif /* CONFIG_DARWIN_H */

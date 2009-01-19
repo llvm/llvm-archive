@@ -466,6 +466,12 @@ extern int warn_unknown_pragmas; /* Tri state variable.  */
 
 extern int warn_format;
 
+/* LLVM LOCAL begin */
+/* Warn about possible security problems with format functions  */
+
+extern int warn_format_security;
+/* LLVM LOCAL end */
+
 /* APPLE LOCAL begin disable_typechecking_for_spec_flag */
 /* This makes type conflicts a warning, instead of an error,
    to work around some problems with SPEC.  */

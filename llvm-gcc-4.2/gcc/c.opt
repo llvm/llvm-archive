@@ -237,9 +237,11 @@ C ObjC C++ ObjC++ Var(warn_format_nonliteral)
 Warn about format strings that are not literals
 
 ; APPLE LOCAL begin default to Wformat-security 5764921
+; LLVM LOCAL begin don't initialize this
 Wformat-security
-C ObjC C++ ObjC++ Var(warn_format_security) Init(1)
+C ObjC C++ ObjC++
 Warn about possible security problems with format functions
+; LLVM LOCAL end don't initialize this
 ; APPLE LOCAL end default to Wformat-security 5764921
 
 Wformat-y2k

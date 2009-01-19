@@ -4084,12 +4084,16 @@ build_block_call (tree fntype, tree block_ptr_exp, tree params)
 {
   tree function_ptr_exp;
   tree typelist;
+  bool block_ptr_exp_side_effect = TREE_SIDE_EFFECTS (block_ptr_exp);
 
   /* First convert BLOCK_PTR_EXP to 'void *'. */
   block_ptr_exp = convert (ptr_type_node, block_ptr_exp);
   gcc_assert (generic_block_literal_struct_type);
   block_ptr_exp = convert (build_pointer_type (generic_block_literal_struct_type),
 			   block_ptr_exp);
+  if (block_ptr_exp_side_effect)
+    block_ptr_exp = save_expr (block_ptr_exp);
+
   /* BLOCK_PTR_VAR->__FuncPtr */
   function_ptr_exp = build_component_ref (build_indirect_ref (block_ptr_exp, "->"),
 					  get_identifier ("__FuncPtr"));

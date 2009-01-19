@@ -298,7 +298,12 @@ int warn_unknown_pragmas; /* Tri state variable.  */
    (*printf, *scanf, strftime, strfmon, etc.).  */
 
 /* APPLE LOCAL default to Wformat-security 5764921 */
-int warn_format = 1;
+/* LLVM LOCAL begin initialize via config/darwin.h */
+#ifndef WARN_FORMAT_INIT
+#define WARN_FORMAT_INIT 0
+#endif
+int warn_format = WARN_FORMAT_INIT;
+/* LLVM LOCAL end initialize via config/darwin.h */
 
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right

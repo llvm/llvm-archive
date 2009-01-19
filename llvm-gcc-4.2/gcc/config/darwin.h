@@ -1599,4 +1599,13 @@ extern unsigned darwin_llvm_override_target_version(const char*, char**);
 #define LLVM_OVERRIDE_TARGET_VERSION(T,N)        \
   darwin_llvm_override_target_version(T,N)
 /* APPLE LOCAL end radar 6230142 */
+
+/* LLVM LOCAL begin */
+#ifdef WARN_FORMAT_INIT
+#undef WARN_FORMAT_INIT
+#endif
+
+#define WARN_FORMAT_INIT 1
+/* LLVM LOCAL end */
+
 #endif /* CONFIG_DARWIN_H */

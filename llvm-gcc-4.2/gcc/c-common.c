@@ -294,6 +294,12 @@ int flag_signed_bitfields = 1;
 
 int warn_unknown_pragmas; /* Tri state variable.  */
 
+/* Warn about format/argument anomalies in calls to formatted I/O functions
+   (*printf, *scanf, strftime, strfmon, etc.).  */
+
+/* APPLE LOCAL default to Wformat-security 5764921 */
+int warn_format = 1;
+
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right
    size.  */
@@ -6243,8 +6249,11 @@ build_block_helper_name (int unique_count)
   char *buf;
   if (!current_function_decl)
     {
+      /* APPLE LOCAL begin radar 6411649 */
+      static int global_count;
       buf = (char *)alloca (32);
-      sprintf (buf, "__block_global_%d", unique_count);
+      sprintf (buf, "__block_global_%d", ++global_count);
+      /* APPLE LOCAL end radar 6411649 */
     }
   else
     {
@@ -6254,6 +6263,10 @@ build_block_helper_name (int unique_count)
              DECL_CONTEXT (outer_decl) && TREE_CODE (DECL_CONTEXT (outer_decl)) == FUNCTION_DECL)
       /* APPLE LOCAL end radar 6169580 */
         outer_decl = DECL_CONTEXT (outer_decl);
+      /* APPLE LOCAL begin radar 6411649 */
+      if (!unique_count)
+        unique_count = ++DECL_STRUCT_FUNCTION(outer_decl)->unqiue_block_number;
+      /* APPLE LOCAL end radar 6411649 */
       buf = (char *)alloca (IDENTIFIER_LENGTH (DECL_NAME (outer_decl)) + 32); 
       sprintf (buf, "__%s_block_invoke_%d", 
 	       IDENTIFIER_POINTER (DECL_NAME (outer_decl)), unique_count);
@@ -7250,6 +7263,13 @@ iasm_op_comp (const void *a, const void *b)
 #define U(X) ""
 /* This is used to denote the size for testcase generation.  */
 #define S(X)
+#define X(X) X
+#define T(X) X
+/* Not for x86_64 mode */
+#define NX ""
+/* Not yet implemented by the 64-bit assembler, but is in 32-bit assembler. */
+#define NY ""
+#define C X(",")
 
 #define m8 "m" S("1")
 #define m16 "m" S("2")
@@ -7260,22 +7280,18 @@ iasm_op_comp (const void *a, const void *b)
 #define r8 "r" S("1")
 #define r16 "r" S("2")
 #define r32 "r" S("4")
-#define r64 U("r" S("8"))
+#define R64 X("r" S("8"))
 #define a8 "a" S("1")
 #define a16 "a" S("2")
 #define a32 "a" S("4")
 #define r16r32 r16 r32
-#define r16r32r64 r16 r32 r64
 #define r8r16r32 r8 r16 r32
 #define rm8 r8 m8
 #define rm16 r16 m16
 #define rm32 r32 m32
-#define rm64 r64 m64
 #define rm8rm16 rm8 rm16
 #define rm8rm16rm32 rm8 rm16 rm32
-#define rm8rm16rm32rm64 rm8 rm16 rm32 rm64
 #define m8m16m32 m8 m16 m32
-#define r32r64 r32 r64
 #define ri8 r8 "i"
 #define ri16 r16 "i"
 #define ri32 r32 "i"
@@ -7285,6 +7301,14 @@ iasm_op_comp (const void *a, const void *b)
 #define m80fp "m" S("7")
 #define m32fpm64fp m32fp m64fp
 #define m32fpm64fpm80fp m32fp m64fp m80fp
+#define M64 X(m64)
+#define RM64 R64 M64
+#define RI64 X(R64 "i")
+#define r32R64 r32 R64
+#define r16r32R64 r16 r32 R64
+#define rm32RM64 rm32 RM64
+#define rm8rm16rm32RM64 rm8 rm16 rm32 RM64
+#define m8m16m32M64 m8 m16 m32 M64
 #endif
 
 #ifndef TARGET_IASM_REORDER_ARG
@@ -7355,6 +7379,14 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
 }
 
 #if defined(TARGET_386)
+#undef U
+#undef S
+#undef X
+#undef T
+#undef NX
+#undef NY
+#undef C
+
 #undef m8
 #undef m16
 #undef m32
@@ -7364,22 +7396,18 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
 #undef r8
 #undef r16
 #undef r32
-#undef r64
+#undef R64
 #undef a8
 #undef a16
 #undef a32
 #undef r16r32
-#undef r16r32r64
 #undef r8r16r32
 #undef rm8
 #undef rm16
 #undef rm32
-#undef rm64
 #undef rm8rm16
 #undef rm8rm16rm32
-#undef rm8rm16rm32rm64
 #undef m8m16m32
-#undef r32r64
 #undef ri8
 #undef ri16
 #undef ri32
@@ -7389,9 +7417,13 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
 #undef m80fp
 #undef m32fpm64fp
 #undef m32fpm64fpm80fp
-
-#undef U
-#undef S
+#undef M64
+#undef RM64
+#undef r32R64
+#undef r16r32R64
+#undef rm32RM64
+#undef rm8rm16rm32RM64
+#undef m8m16m32M64
 #endif
 
 static void
@@ -7913,14 +7945,18 @@ iasm_stmt (tree expr, tree args, int lineno)
     e.no_label_map = true;
 #ifdef TARGET_386
   else if (strcasecmp (opcodename, "call") == 0
-	   || strcasecmp (opcodename, "jmp") == 0)
+	   || strncasecmp (opcodename, "j", 1) == 0)
     {
       if (args
 	  && TREE_CODE (TREE_VALUE (args)) != LABEL_DECL
 	  && TREE_CODE (TREE_VALUE (args)) != FUNCTION_DECL)
 	e.modifier = "A";
       else
-	iasm_force_constraint ("X", &e);
+	{
+	  if (TARGET_64BIT)
+	    e.modifier = "l";
+	  iasm_force_constraint ("X", &e);
+	}
     }
 #endif
 
@@ -8149,6 +8185,9 @@ iasm_expr_val (tree arg)
 #ifndef IASM_VALID_PIC
 #define IASM_VALID_PIC(D,E)
 #endif
+#ifndef IASM_RIP
+#define IASM_RIP(X)
+#endif
 
 /* Force the last operand to have constraint C.  */
 
@@ -8240,6 +8279,10 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	 :-( Hope this stays working.  */
       iasm_force_constraint ("X", e);
       modifier = "l";
+#ifdef TARGET_386
+      if (TARGET_64BIT)
+	modifier = "a";
+#endif
       if (e->modifier)
 	{
 	  modifier = e->modifier;
@@ -8355,6 +8398,7 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	      sprintf (buf + strlen (buf), "%s", user_label_prefix);
 	      strcat (buf, IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (arg)));
 	    }
+	  IASM_RIP (buf);
 
 	  mark_decl_referenced (arg);
 	}

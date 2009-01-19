@@ -461,6 +461,11 @@ extern int flag_signed_bitfields;
 
 extern int warn_unknown_pragmas; /* Tri state variable.  */
 
+/* Warn about format/argument anomalies in calls to formatted I/O functions
+   (*printf, *scanf, strftime, strfmon, etc.).  */
+
+extern int warn_format;
+
 /* APPLE LOCAL begin disable_typechecking_for_spec_flag */
 /* This makes type conflicts a warning, instead of an error,
    to work around some problems with SPEC.  */
@@ -1156,8 +1161,6 @@ struct block_sema_info {
   tree block_original_ref_decl_list;
   /* APPLE LOCAL radar 5847213 - tree block_original_byref_decl_list is removed. */
   tree block_body;
-  bool hasPrototype;
-  bool isVariadic;
   bool BlockHasCopyDispose;
   /* APPLE LOCAL radar 6214617 */
   bool BlockImportsCxxObjects;

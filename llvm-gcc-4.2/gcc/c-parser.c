@@ -95,9 +95,6 @@ static int objc_foreach_context;
 #define IDENTIFIER 2
 /* APPLE LOCAL end CW asm blocks (in 4.2 g) */
 
-/* APPLE LOCAL radar 6185344 */
-static int parsing_block_return_type;
-
 /* The reserved keyword table.  */
 struct resword
 {
@@ -1077,6 +1074,10 @@ typedef enum c_dtr_syn {
   C_DTR_NORMAL,
   /* An abstract declarator (maybe empty).  */
   C_DTR_ABSTRACT,
+  /* APPLE LOCAL begin blocks 6339747 */
+  /* A block declarator (maybe empty).  */
+  C_DTR_BLOCK,
+  /* APPLE LOCAL end blocks 6339747 */
   /* A parameter declarator: may be either, but after a type name does
      not redeclare a typedef name as an identifier if it can
      alternatively be interpreted as a typedef name; see DR#009,
@@ -2500,6 +2501,18 @@ c_parser_typeof_specifier (c_parser *parser)
      parameter-list ;
      parameter-forward-declarations parameter-list ;
 
+     APPLE LOCAL begin blocks 6339747
+   block-declarator:
+     pointer
+     pointer[opt] direct-block-declarator
+
+   direct-block-declarator:
+     ( attributes[opt] block-declarator )
+     direct-block-declarator[opt] array-declarator
+     direct-block-declarator[opt]
+       ( parameter-type-list[opt] ) [opt]
+     APPLE LOCAL end blocks 6339747
+
    The uses of attributes shown above are GNU extensions.
 
    Some forms of array declarator are not included in C99 in the
@@ -2586,7 +2599,8 @@ c_parser_direct_declarator (c_parser *parser, bool type_seen_p, c_dtr_syn kind,
      ??? Also following the old parser, typedef names may be
      redeclared in declarators, but not Objective-C class names.  */
 
-  if (kind != C_DTR_ABSTRACT
+  /* APPLE LOCAL blocks 6339747 */
+  if ((kind != C_DTR_ABSTRACT && kind != C_DTR_BLOCK)
       && c_parser_next_token_is (parser, CPP_NAME)
       && ((type_seen_p
 	   /* APPLE LOCAL begin radar 4281748 */
@@ -2613,8 +2627,7 @@ c_parser_direct_declarator (c_parser *parser, bool type_seen_p, c_dtr_syn kind,
   /* Either we are at the end of an abstract declarator, or we have
      parentheses.  */
 
-  /* APPLE LOCAL radar 6185344 */
-  if (!parsing_block_return_type && c_parser_next_token_is (parser, CPP_OPEN_PAREN))
+  if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
     {
       tree attrs;
       struct c_declarator *inner;
@@ -5474,7 +5487,7 @@ c_parser_alignof_expression (c_parser *parser)
 			     assignment-expression )
      __builtin_types_compatible_p ( type-name , type-name )
      APPLE LOCAL blocks (C++ cf)
-     ^ block-literal-expr
+     block-literal-expr
 
    offsetof-member-designator:
      identifier
@@ -9662,11 +9675,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteGlobalBlock_decl, 0, 0);
 	    }
 	}
-      /* LLVM LOCAL begin radar 5865221 */
+      /* APPLE LOCAL begin radar 6457359 */
       initlist = build_tree_list (fields,
                                   convert (ptr_type_node,
                                            build_fold_addr_expr (NSConcreteGlobalBlock_decl)));
-      /* LLVM LOCAL end radar 5865221 */
+      /* APPLE LOCAL end radar 6457359 */
       flags |= BLOCK_IS_GLOBAL;
     }
   else
@@ -9686,11 +9699,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
 	    }
 	}
-      /* LLVM LOCAL begin radar 5865221 */
+      /* APPLE LOCAL begin radar 6457359 */
       initlist = build_tree_list (fields,
                                   convert (ptr_type_node,
                                            build_fold_addr_expr (NSConcreteStackBlock_decl)));
-      /* LLVM LOCAL end radar 5865221 */
+      /* APPLE LOCAL end radar 6457359 */
     }
   fields = TREE_CHAIN (fields);
 
@@ -9713,11 +9726,11 @@ build_block_struct_initlist (tree block_struct_type,
   fields = TREE_CHAIN (fields);
 
   /* __descriptor */
-  /* LLVM LOCAL begin radar 5865221 */
+  /* APPLE LOCAL begin radar 6457359 */
   initlist = tree_cons (fields,
-			build_fold_addr_expr (descriptor_block_decl),
-			initlist);
-  /* LLVM LOCAL end radar 5865221 */
+                        build_fold_addr_expr (descriptor_block_decl),
+                        initlist);
+  /* APPLE LOCAL end radar 6457359 */
   for (chain = block_impl->block_original_ref_decl_list; chain;
        chain = TREE_CHAIN (chain))
     {
@@ -10025,11 +10038,49 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
   free (arg_info);
 }
 
-/** c_parser_block_literal_expr - Main routine to process a block literal
-    with the syntax of ^arg-list[OPT] block or ^()expression. It synthesizes
-    the helper function for later generation and builds the necessary data to
-    represent the block literal where it is declared.
-*/
+/* Parse a block-id.
+
+   GNU Extension:
+
+   block-id:
+     specifier-qualifier-list block-declarator
+
+   Returns the DECL specified or implied.  */
+
+static tree
+c_parser_block_id (c_parser* parser)
+{
+  struct c_declspecs *specs = build_null_declspecs ();
+  struct c_declarator *declarator;
+  bool dummy = false;
+
+  c_parser_declspecs (parser, specs, false, true, true);
+  if (!specs->declspecs_seen_p)
+    {
+      c_parser_error (parser, "expected specifier-qualifier-list");
+      return NULL;
+    }
+  pending_xref_error ();
+  finish_declspecs (specs);
+  declarator = c_parser_declarator (parser, specs->type_seen_p,
+				    C_DTR_BLOCK, &dummy);
+  if (declarator == NULL)
+    return NULL;
+
+  return grokblockdecl (specs, declarator);
+}
+
+/* Parse a block-literal-expr.
+
+   GNU Extension:
+
+  block-literal-expr:
+    ^ parameter-declation-clause exception-specification [opt] compound-statement
+    ^ block-id compound-statement
+
+    It synthesizes the helper function for later generation and builds
+    the necessary data to represent the block literal where it is
+    declared.  */
 static tree
 c_parser_block_literal_expr (c_parser* parser)
 {
@@ -10037,7 +10088,7 @@ c_parser_block_literal_expr (c_parser* parser)
   static int global_unique_count;
   int unique_count = ++global_unique_count;
   tree block_helper_function_decl;
-  tree expr, body, type, arglist, ftype;
+  tree expr, body, type, arglist = void_list_node, ftype;
   tree self_arg, stmt;
   struct c_arg_info *args = NULL;
   tree arg_type = void_list_node;
@@ -10060,40 +10111,19 @@ c_parser_block_literal_expr (c_parser* parser)
     attributes = c_parser_attributes (parser);
   /* APPLE LOCAL end radar 6237713 */
   
-  /* APPLE LOCAL begin radar 6185344 */
-  /* Parse user declared return type. */
-  if (!c_parser_next_token_is (parser, CPP_OPEN_PAREN) &&
-      !c_parser_next_token_is (parser, CPP_OPEN_BRACE))
-  {
-    struct c_type_name *type;
-    /* APPLE LOCAL begin radar 6237713 */
-    if (attributes)
-      {
-        warning (0, "attribute before block type is ignored");
-        attributes = NULL_TREE;
-      }
-    /* APPLE LOCAL end radar 6237713 */
-    parsing_block_return_type = 1;
-    type = c_parser_type_name (parser);
-    parsing_block_return_type = 0;
-    if (type) {
-      declared_block_return_type = groktypename (type);
-    }
-  }
-  /* APPLE LOCAL end radar 6185344 */
-
-  /* Parse the optional argument list */
   if (c_parser_next_token_is (parser, CPP_OPEN_PAREN))
     {
+      /* Parse the optional argument list */
       c_parser_consume_token (parser);
       /* Open the scope to collect parameter decls */
       push_scope ();
       args = c_parser_parms_declarator (parser, true, NULL_TREE);
       /* Check for args as it might be NULL due to error. */
-      if (args) {
-	arglist = args->parms;
-	arg_type = args->types;
-      }
+      if (args)
+	{
+	  arglist = args->parms;
+	  arg_type = args->types;
+	}
       else
 	{
 	  pop_scope ();
@@ -10102,8 +10132,28 @@ c_parser_block_literal_expr (c_parser* parser)
       open_paren_seen = true;
       pop_scope ();
     }
-  else
-    arglist = build_tree_list (NULL_TREE, void_type_node);
+  else if (c_parser_next_token_is_not (parser, CPP_OPEN_BRACE))
+    {
+      /* Parse user declared return type. */
+      tree decl;
+    
+      /* APPLE LOCAL begin radar 6237713 */
+      if (attributes)
+	{
+	  warning (0, "attributes before block type are ignored");
+	  attributes = NULL_TREE;
+	}
+      /* APPLE LOCAL end radar 6237713 */    
+
+      decl = c_parser_block_id (parser);
+
+      if (decl && decl != error_mark_node)
+	{
+	  arg_type = TYPE_ARG_TYPES (TREE_TYPE (decl));
+	  arglist = DECL_ARGUMENTS (decl);
+	  declared_block_return_type = TREE_TYPE (TREE_TYPE (decl));
+	}
+    }
 
   block = begin_block ();
 
@@ -10117,36 +10167,22 @@ c_parser_block_literal_expr (c_parser* parser)
     cur_block->return_type = NULL_TREE;
 
   if (args)
-    {
-      tree list = NULL_TREE;
-      cur_block->arg_info = args;
-      if (arg_type)
-	{
-	  cur_block->hasPrototype = true;
-	  /* This is the only way in gcc to know if argument list ends with ... */
-	  for (list = arg_type; TREE_CHAIN (list); list = TREE_CHAIN (list))
-	    ;
-	  cur_block->isVariadic = (list != void_list_node);
-	}
-      else
-	{
-	  /* K&R syle () argument list. */
-	  cur_block->hasPrototype = false;
-	  cur_block->isVariadic = true;
-	}
-    }
+    cur_block->arg_info = args;
   else
+    cur_block->arg_info = xcalloc (1, sizeof (struct c_arg_info));
+
+  if (declared_block_return_type)
     {
-      cur_block->hasPrototype = false;
-      cur_block->isVariadic = false;
-      cur_block->arg_info = xcalloc (1, sizeof (struct c_arg_info));
+      cur_block->arg_info->parms = arglist;
+      cur_block->arg_info->types = arg_type;
     }
 
-  /* Must also build hidden parameter _self added to the helper
+  /* Must also build hidden parameter .block_descriptor added to the helper
    function, even though we do not know its type yet. */
-  self_arg = build_decl (PARM_DECL, get_identifier ("_self"),
+  /* APPLE LOCAL radar 6404979 */
+  self_arg = build_decl (PARM_DECL, get_identifier (".block_descriptor"),
                          ptr_type_node);
-  TREE_USED (self_arg) = 1;  /* Prevent unused parameter '_self' warning. */
+  TREE_USED (self_arg) = 1;  /* Prevent unused parameter '.block_descriptor' warning. */
   TREE_CHAIN (self_arg) = cur_block->arg_info->parms;
   cur_block->arg_info->types = tree_cons (NULL_TREE, ptr_type_node, arg_type);
   cur_block->arg_info->parms = self_arg;
@@ -10161,8 +10197,8 @@ c_parser_block_literal_expr (c_parser* parser)
                                 ? void_type_node : cur_block->return_type),
                                cur_block->arg_info->types);
   /* APPLE LOCAL end radar 6185344 */
-  /* APPLE LOCAL radar 6160536 */
-  block_helper_function_decl = build_helper_func_decl (build_block_helper_name (unique_count),
+  /* APPLE LOCAL radar 6160536 - radar 6411649 */
+  block_helper_function_decl = build_helper_func_decl (build_block_helper_name (0),
                                                          ftype);
   DECL_CONTEXT (block_helper_function_decl) = current_function_decl;
   cur_block->helper_func_decl = block_helper_function_decl;
@@ -10241,7 +10277,7 @@ c_parser_block_literal_expr (c_parser* parser)
   if (restype == error_mark_node)
     return clean_and_exit (block);
 
-  /* Now that we know type of the hidden _self argument, fix its type. */
+  /* Now that we know type of the hidden .block_descriptor argument, fix its type. */
   TREE_TYPE (self_arg) = cur_block->block_arg_ptr_type;
   DECL_ARG_TYPE (self_arg) = cur_block->block_arg_ptr_type;
 

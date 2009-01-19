@@ -489,7 +489,7 @@ init_optimization_passes (void)
   NEXT_PASS (pass_ipa_cp);
   NEXT_PASS (pass_ipa_inline);
   NEXT_PASS (pass_ipa_reference);
-  NEXT_PASS (pass_ipa_pure_const);
+  NEXT_PASS (pass_ipa_pure_const); 
   NEXT_PASS (pass_ipa_type_escape);
   NEXT_PASS (pass_ipa_pta);
   *p = NULL;
@@ -853,6 +853,7 @@ execute_todo (unsigned int flags)
                                dump_file, dump_flags);
       else
 	{
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 	  if (dump_flags & TDF_SLIM)
 	    print_rtl_slim_with_bb (dump_file, get_insns (), dump_flags);
@@ -861,6 +862,7 @@ execute_todo (unsigned int flags)
           else
 	    print_rtl (dump_file, get_insns ());
 #endif
+/* LLVM LOCAL end */
 	  if (curr_properties & PROP_cfg
 	      && graph_dump_format != no_graph
 	      && (dump_flags & TDF_GRAPH))

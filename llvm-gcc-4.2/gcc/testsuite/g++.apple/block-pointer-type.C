@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5732232 - blocks */
 /* Test that mixup of a pointer type and a block pointer type does not cause program to crash. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 void * _NSConcreteStackBlock;
 #ifndef _BLOCK_PRIVATE_H_

@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5882266 */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC++ -fobjc-gc -framework Foundation" { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #import <Foundation/Foundation.h>
 void * _NSConcreteStackBlock;

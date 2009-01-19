@@ -1,3 +1,66 @@
+2009-01-12  Caroline Tice  <ctice@apple.com>
+
+	Radar 6476836
+	* g++.apple/r6476836.C:  New testcase.
+
+2009-01-07  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6379842
+	* gcc.apple/block-copy-attrib-err.c: New
+
+2008-12-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6440204
+	* gcc.apple/6440204.c: New.
+
+2008-12-11  Caroline Tice  <ctice@apple.com>
+
+       Radars 5964438, 6007135
+       * g++.apple/typedef.C:  New testcase.
+
+2008-12-09  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6414738
+	* g++.apple/6414738.C: New.
+
+2008-12-05  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6413140
+	* gcc.apple/block-explicit-return-type.c: Modified
+	* gcc.apple/block-literal.c: Modified
+	* g++.apple/block-bad-def.C: Modified
+	* g++.apple/block-explicit-return-type.C: Modified
+	* g++.apple/block-return.C: Modified
+	* g++.apple/block-literal.C: Modified
+
+2008-12-02  Caroline Tice  <ctice@apple.com>
+
+       Radar 6386976
+       * objc.dg/objc2-ivar-test-1.m:  Modify to check for
+       DW_AT_APPLE_major_runtime_vers and DW_AT_APPLE_runtime_class.
+       * obj-c++.dg/apple-runtime-test.mm:  New test.
+
+2008-12-02  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6411649
+	* gcc.apple/block-unique-name.c: Add
+	
+2008-12-02  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6396238
+	* gcc.apple/block-call-with-sideeffect.c: Add
+	* g++.apple/block-call-with-sideeffect.C: Add
+
+2008-12-01  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6404979
+	* gcc.apple/block-err-hidden-arg.c: New.
+
+2008-12-01  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6382081
+	* gcc.apple/6382081.c: New.
+
 2008-11-18  Stuart Hastings  <stuart@apple.com>
 
 	Radar 6385223

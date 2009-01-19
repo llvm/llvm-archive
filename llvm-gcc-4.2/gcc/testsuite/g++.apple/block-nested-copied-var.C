@@ -2,8 +2,9 @@
 /* This test is to make sure that the inner block uses the value of the
    copied-in variable at its point of declaration and not when block is envoked.
 */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 extern "C" void abort(void);
 

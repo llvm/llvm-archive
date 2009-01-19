@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5988451 */
 /* Testing of copied in parameter in nested blocks. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks -mmacosx-version-min=10.5 -ObjC++ -framework Foundation" { target *-*-darwin* } } */
-/* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #import <Foundation/Foundation.h>
 void *_NSConcreteStackBlock;

@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 6014138 */
 /* Test use of __block on locals which will be used as 'byref' variables in blocks. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -fblocks" { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 void * _NSConcreteStackBlock;

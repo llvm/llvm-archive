@@ -2,8 +2,10 @@
 /* Test that all 'ivars' are treated as implicit byref. Its inclusing inside |...|
    block is treated with a warning and ignored.
 */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-ObjC++ -mmacosx-version-min=10.5 -fobjc-gc -framework Foundation" { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+
 #import <Foundation/Foundation.h>
 
 void * _NSConcreteStackBlock;

@@ -1,5 +1,7 @@
 /* { dg-do compile { target i?86-*-* x86_64-*-* } } */
 /* { dg-options "-O2 -msse2 -march=k8" } */
+/* APPLE LOCAL fix-and-continue 6360409 */
+/* { dg-options "-mno-fix-and-continue -O2 -msse2 -march=k8" { target *-*-darwin* } } */
 /* { dg-final { scan-assembler "andps\[^\\n\]*magic" } } */
 /* { dg-final { scan-assembler "andnps\[^\\n\]*magic" } } */
 /* { dg-final { scan-assembler "xorps\[^\\n\]*magic" } } */

@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 6116917 */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 -ObjC -Os -Wall -Wextra" { target *-*-darwin* } } */
-/* { dg-do run } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

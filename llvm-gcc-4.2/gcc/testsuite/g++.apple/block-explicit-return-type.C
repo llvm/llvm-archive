@@ -22,36 +22,36 @@ double test(myblock I);
 
 int main()
 {
-	 __block int x = 1;
- 	__block int y = 2;
+  __block int x = 1;
+  __block int y = 2;
 
-	^void *{ return 0; };
+  ^void *{ return 0; };
 
-	^float(float y){ return y; };
+  ^float(float y){ return y; };
 
-	^double (float y, double d) 
-           {
-	      if (y)
-	       return d;
-	      else
-	       return y;
-	   };
+  ^double (float y, double d)
+     {
+       if (y)
+	 return d;
+       else
+	 return y;
+     };
 
-	const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) { 
-	  if (flag)
-	    return 0;
-	  if (flag == 1)
-	    return arg;
-          else if (flag == 2)
-	    return "";
-	  return arg1; 
-	};
+  const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) {
+    if (flag)
+      return 0;
+    if (flag == 1)
+      return arg;
+    else if (flag == 2)
+      return "";
+    return arg1; 
+  };
 
-	^PF { return &gf; };
+  ^PF { return &gf; };
 
-	some_func(^ NSView * (id whatever) { return [some_object some_method_that_returns_id]; });
+  some_func(^ NSView * (id whatever) { return [some_object some_method_that_returns_id]; });
 
-	double res = test(^double (int z){x = y+z; return z; });	
+  double res = test(^(int z){x = y+z; return (double)z; });	
 }
 
 void func()
@@ -75,10 +75,8 @@ void func()
 int (^(^block)(double x))(char, short);
 
 void foo() {
-   int one = 1;
-   block = ^(double x){ return ^int(char c, short y) { return one + c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
-   // or:
-   block = ^(double x){ return ^(char c, short y) { return one + (int)c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
+  int one = 1;
+  block = ^(double x){ return ^(char c, short y) { return one + c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
+  // or:
+  block = ^(double x){ return ^(char c, short y) { return one + (int)c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
 }
-
-

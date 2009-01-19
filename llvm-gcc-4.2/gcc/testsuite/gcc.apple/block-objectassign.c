@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 6175959 */
 /* Test for generation of two new APIs; _Block_object_assign and _Block_object_dispose */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 -fblocks" { target *-*-darwin* } } */
-/* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 

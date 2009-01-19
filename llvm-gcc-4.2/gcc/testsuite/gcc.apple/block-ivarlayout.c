@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 6133042 */
 /* Check that ivars of block pointer types are scanned by GC */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-ObjC -mmacosx-version-min=10.6 -fblocks -fobjc-gc -framework Foundation" { target *-*-darwin* } } */
 /* { dg-require-effective-target ilp32 } */
 /* { dg-require-effective-target objc_gc } */

@@ -1,7 +1,9 @@
 /* APPLE LOCAL file radar 5822844 */
 /* Test that blocks can be declared at global scope. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 -fblocks" { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
+
 #include <stdio.h>
 
 static void* _NSConcreteGlobalBlock;

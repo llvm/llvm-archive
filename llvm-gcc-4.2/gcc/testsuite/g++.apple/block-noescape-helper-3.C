@@ -1,8 +1,9 @@
 /* APPLE LOCAL file radar 6083129 byref escapes */
 /* Test for generation of escape _Block_object_dispose call when a __block
    variable inside a block is declared and used. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
-/* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 

@@ -29,7 +29,7 @@ int main()
 
 	^float(float y){ return y; };
 
-	^double (float y, double d) 
+	^double (float y, double d)
            {
 	      if (y)
 	       return d;
@@ -37,7 +37,7 @@ int main()
 	       return y;
 	   };
 
-	const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) { 
+	const char * (^chb) (int flag, const char *arg, char *arg1) = ^ const char * (int flag, const char *arg, char *arg1) {
 	  if (flag)
 	    return 0;
 	  if (flag == 1)
@@ -51,7 +51,7 @@ int main()
 
 	some_func(^ NSView * (id whatever) { return [some_object some_method_that_returns_id]; });
 
-	double res = test(^double (int z){x = y+z; return z; });	
+	double res = test(^(int z){x = y+z; return (double)z; });	
 }
 
 void func()
@@ -76,7 +76,7 @@ int (^(^block)(double x))(char, short);
 
 void foo() {
    int one = 1;
-   block = ^(double x){ return ^int(char c, short y) { return one + c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
+   block = ^(double x){ return ^(char c, short y) { return one + c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
    // or:
    block = ^(double x){ return ^(char c, short y) { return one + (int)c + y; };};  /* { dg-warning "returning block that lives on the local stack" } */
 }

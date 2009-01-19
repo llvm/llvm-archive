@@ -1,6 +1,8 @@
 /* Check that constant constraints like "i", "n" and "s" can be used in
    cases where the operand is an initializer constant.  */
 /* { dg-options "-fno-pic" } */
+/* APPLE LOCAL fix-and-continue 6360409 */
+/* { dg-options "-mno-fix-and-continue -fno-pic" { target *-*-darwin* } } */
 
 int x[2] = { 1, 2 };
 

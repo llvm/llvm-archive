@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5832193 */
 /* assigning a Block into a global should elicit a global write-barrier under GC */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC++ -fobjc-gc" { target *-*-darwin* } } */
 
 #include <stdio.h>

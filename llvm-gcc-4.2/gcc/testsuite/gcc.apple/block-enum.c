@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5732232 - blocks */
 /* Test use of enumerators in blocks. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 void * _NSConcreteStackBlock;

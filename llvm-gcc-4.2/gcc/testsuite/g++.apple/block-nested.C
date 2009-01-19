@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5732232 - blocks */
-/* { dg-do run } */
-/* { dg-options "-mmacosx-version-min=10.6 -fblocks" { target *-*-darwin* } } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
+/* { dg-options "-mmacosx-version-min=10.6 -fblocks" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 void * _NSConcreteStackBlock;

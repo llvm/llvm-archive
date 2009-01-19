@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 6169527 */
 /* Test for proper use of copy constructors in setting up various block
    support code. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 " { target *-*-darwin* } } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 

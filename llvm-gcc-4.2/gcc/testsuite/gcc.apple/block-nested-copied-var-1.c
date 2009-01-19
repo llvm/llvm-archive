@@ -3,8 +3,9 @@
    inner block must be 'frozen' at the outer block so, it has the value
    at the point of inner block declaration and not when block is envoked.
 */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 extern void abort(void);
 

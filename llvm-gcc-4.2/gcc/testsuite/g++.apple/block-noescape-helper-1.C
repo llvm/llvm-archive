@@ -1,8 +1,8 @@
 /* APPLE LOCAL file radar 6083129 byref escapes */
 /* Test for generation of escape _Block_byref_release call when a local
    __block variable is copied in. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
-/* { dg-do run } */
 
 #include <stdio.h>
 

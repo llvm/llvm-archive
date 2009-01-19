@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar global blocks */
 /* More testing of copied in variables in nested blocks. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks -mmacosx-version-min=10.6 -ObjC++ -framework Foundation" { target *-*-darwin* } } */
-/* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #import <Foundation/Foundation.h>
 void *_NSConcreteGlobalBlock;

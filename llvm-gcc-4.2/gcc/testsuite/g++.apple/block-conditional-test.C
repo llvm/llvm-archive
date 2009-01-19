@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5928316 */
 /* Test for use of block pointer in a conditional expression. */
 /* { dg-options "-fblocks" } */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
 void * _NSConcreteStackBlock;

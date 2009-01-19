@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 6169580 */
 /* Test use of blocks in member functions. */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 " { target *-*-darwin* } } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 

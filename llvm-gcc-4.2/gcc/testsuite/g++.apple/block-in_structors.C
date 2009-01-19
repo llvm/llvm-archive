@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 6305545 */
-/* { dg-do run } */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.5" { target *-*-darwin* } } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 extern "C" void abort(void);
 

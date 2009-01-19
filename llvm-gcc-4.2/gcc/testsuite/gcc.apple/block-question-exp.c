@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5957801 */
 /* Test for use of block pointer in a ?-exp expression. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
-/* { dg-do run } */
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 typedef int (^myblock)(void);
 void *_NSConcreteStackBlock;

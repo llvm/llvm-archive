@@ -51,7 +51,7 @@ st2 test (void)
 int main ()
 {
   st2 res = test ();
-  if (res.x != 1 || res.x != 4)
-    abort;
+  if (res.x != 1 || res.h != 4)
+    abort();
   return 0;
 }

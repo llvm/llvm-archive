@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 6083129 byref escapes */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-fblocks" } */
-/* { dg-do run } */
-
+/* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 extern "C" void abort(void);
 

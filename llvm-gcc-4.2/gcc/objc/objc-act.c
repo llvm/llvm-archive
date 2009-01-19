@@ -1344,6 +1344,16 @@ objc_add_property_variable (tree decl)
                   /* under -fobjc-gc[-only], a warning should be issued if none of those were specified
                      AND the object type conforms to <NSCopying>. */
                   tree ltyp = TREE_TYPE (property_decl);
+                  /* APPLE LOCAL begin radar 6379842 */
+                  /* under -fobjc-gc-only flag, a warning to be issued if 
+                   block pointer property does not have 'copy' attribute. */
+                  if (flag_objc_gc_only 
+                      && TREE_CODE (ltyp) == BLOCK_POINTER_TYPE
+                      && !property_copy)
+                    warning (0, "'copy' attribute must be specified for the block"
+                           " property %qs when -fobjc-gc-only is specified",
+                           IDENTIFIER_POINTER (PROPERTY_NAME (property_decl)));
+                  /* APPLE LOCAL end radar 6379842 */
                   do
                     ltyp = TREE_TYPE (ltyp);
                   while (POINTER_TYPE_P (ltyp));
@@ -3168,10 +3178,18 @@ objc_add_method_declaration (tree decl, tree attributes)
   /* APPLE LOCAL end radar 4869979 */
 }
 
+/* APPLE LOCAL begin deprecated use in deprecated 6425499 */
+static tree fast_lookup_method (int is_class, tree class, tree method_ident);
+/* APPLE LOCAL end deprecated use in deprecated 6425499 */
+
 void
 /* APPLE LOCAL radar 3803157 - objc attribute */
 objc_start_method_definition (tree decl, tree attributes)
 {
+  /* APPLE LOCAL begin deprecated use in deprecated 6425499 */
+  tree class;
+  /* APPLE LOCAL end deprecated use in deprecated 6425499 */
+
   if (!objc_implementation_context)
     fatal_error ("method definition not in @implementation context");
 
@@ -3218,6 +3236,18 @@ objc_start_method_definition (tree decl, tree attributes)
 		   decl,
 		   /* APPLE LOCAL C* language */
 		   objc_inherit_code == CLASS_METHOD_DECL, 0);
+  /* APPLE LOCAL begin deprecated use in deprecated 6425499 */
+  /* We have to copy the TREE_DEPRECATED bit from the interface.  */
+  class = lookup_interface (CLASS_NAME (objc_implementation_context));
+  if (class)
+    {
+      tree decl2 = fast_lookup_method (objc_inherit_code == CLASS_METHOD_DECL,
+				       class,
+				       METHOD_SEL_NAME (decl));
+      if (decl2)
+	TREE_DEPRECATED (decl) = TREE_DEPRECATED (decl2);
+  }
+  /* APPLE LOCAL end deprecated use in deprecated 6425499 */
   start_method_def (decl);
 
   /* APPLE LOCAL begin ObjC abi v2 */
@@ -4057,6 +4087,10 @@ objc_check_decl (tree decl)
 {
   tree type = TREE_TYPE (decl);
 
+  /* APPLE LOCAL begin 6393374 */
+  while (TREE_CODE (type) == ARRAY_TYPE)
+    type = TREE_TYPE (type);
+  /* APPLE LOCAL end 6393374 */
   if (TREE_CODE (type) != RECORD_TYPE)
     return;
   if (OBJC_TYPE_NAME (type) && (type = objc_is_class_name (OBJC_TYPE_NAME (type))))
@@ -14876,18 +14910,18 @@ objc_add_method (tree class, tree method, int is_class, int is_optional)
       if (!(mth = lookup_method (is_class
                                 ? PROTOCOL_OPTIONAL_CLS_METHODS (class)
                                 : PROTOCOL_OPTIONAL_NST_METHODS (class), method)))
-      {
-        if (is_class)
-	  {
-	    TREE_CHAIN (method) = PROTOCOL_OPTIONAL_CLS_METHODS (class);
-	    PROTOCOL_OPTIONAL_CLS_METHODS (class) = method;
-	  }
-        else
-	  {
-	    TREE_CHAIN (method) = PROTOCOL_OPTIONAL_NST_METHODS (class);
-	    PROTOCOL_OPTIONAL_NST_METHODS (class) = method;
-	  }
-      }
+	{
+	  if (is_class)
+	    {
+	      TREE_CHAIN (method) = PROTOCOL_OPTIONAL_CLS_METHODS (class);
+	      PROTOCOL_OPTIONAL_CLS_METHODS (class) = method;
+	    }
+	  else
+	    {
+	      TREE_CHAIN (method) = PROTOCOL_OPTIONAL_NST_METHODS (class);
+	      PROTOCOL_OPTIONAL_NST_METHODS (class) = method;
+	    }
+	}
     }
   else
   /* APPLE LOCAL end C* language */
@@ -18354,6 +18388,8 @@ really_start_method (tree method,
 #endif
 
   METHOD_DEFINITION (method) = current_function_decl;
+  /* APPLE LOCAL deprecated use in deprecated 6425499 */
+  TREE_DEPRECATED (current_function_decl) = TREE_DEPRECATED (method);
 
   /* Check consistency...start_function, pushdecl, duplicate_decls.  */
 

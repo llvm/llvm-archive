@@ -1149,6 +1149,7 @@ cgraph_decide_inlining_incrementally (struct cgraph_node *node, bool early)
 	inlined = true;
       }
 
+  /* Now do the automatic inlining.  */
   if (!flag_really_no_inline)
     for (e = node->callees; e; e = e->next_callee)
       if (e->callee->local.inlinable

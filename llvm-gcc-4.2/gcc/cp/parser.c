@@ -1220,6 +1220,10 @@ typedef enum cp_parser_flags
 
 typedef enum cp_parser_declarator_kind
 {
+  /* APPLE LOCAL begin blocks 6339747 */
+  /* We want a block declarator.  */
+  CP_PARSER_DECLARATOR_BLOCK,
+  /* APPLE LOCAL end blocks 6339747 */
   /* We want an abstract declarator.  */
   CP_PARSER_DECLARATOR_ABSTRACT,
   /* We want a named declarator.  */
@@ -3303,7 +3307,7 @@ cp_parser_translation_unit (cp_parser* parser)
      __builtin_va_arg ( assignment-expression , type-id )
      __builtin_offsetof ( type-id , offsetof-expression )
    APPLE LOCAL blocks 6040305 (cf)
-   ^ block-literal-expr
+   block-literal-expr
 
    Objective-C++ Extension:
 
@@ -12417,6 +12421,12 @@ cp_parser_cv_qualifier_or_attribute_seq_opt (cp_parser *parser, tree *attrs_p)
      attributes [opt] ptr-operator abstract-declarator [opt]
      attributes [opt] direct-abstract-declarator
 
+     APPLE LOCAL begin blocks 6339747
+   block-declarator:
+     attributes [opt] ptr-operator block-declarator [opt]
+     attributes [opt] direct-block-declarator
+     APPLE LOCAL end blocks 6339747
+
    If CTOR_DTOR_OR_CONV_P is not NULL, *CTOR_DTOR_OR_CONV_P is used to
    detect constructor, destructor or conversion operators. It is set
    to -1 if the declarator is a name, and +1 if it is a
@@ -12540,10 +12550,6 @@ cp_parser_declarator (cp_parser* parser,
   return declarator;
 }
 
-/* APPLE LOCAL begin blocks 6185344 */
-static int parsing_block_return_type;
-/* APPLE LOCAL end blocks 6185344 */
-
 /* Parse a direct-declarator or direct-abstract-declarator.
 
    direct-declarator:
@@ -12561,6 +12567,17 @@ static int parsing_block_return_type;
        exception-specification [opt]
      direct-abstract-declarator [opt] [ constant-expression [opt] ]
      ( abstract-declarator )
+
+     APPLE LOCAL begin blocks 6339747
+   GNU Extensions:
+
+   direct-block-declarator:
+     direct-block-declarator [opt]
+       ( parameter-declaration-clause ) [opt]
+       exception-specification [opt]
+     direct-block-declarator [opt] [ constant-expression [opt] ]
+     ( block-declarator )
+     APPLE LOCAL end blocks 6339747
 
    Returns a representation of the declarator.  DCL_KIND is
    CP_PARSER_DECLARATOR_ABSTRACT, if we are parsing a
@@ -12589,8 +12606,7 @@ cp_parser_direct_declarator (cp_parser* parser,
     {
       /* Peek at the next token.  */
       token = cp_lexer_peek_token (parser->lexer);
-      /* APPLE LOCAL radar 6185344 */
-      if (!parsing_block_return_type && token->type == CPP_OPEN_PAREN)
+      if (token->type == CPP_OPEN_PAREN)
 	{
 	  /* This is either a parameter-declaration-clause, or a
 	     parenthesized declarator. When we know we are parsing a
@@ -12679,8 +12695,16 @@ cp_parser_direct_declarator (cp_parser* parser,
 		  /* Consume the `)'.  */
 		  cp_parser_require (parser, CPP_CLOSE_PAREN, "`)'");
 
-		  /* Parse the cv-qualifier-seq.  */
-		  cv_quals = cp_parser_cv_qualifier_seq_opt (parser);
+		  /* APPLE LOCAL begin blocks 6339747 */
+		  if (dcl_kind != BLOCKDEF)
+		    {
+		      /* Parse the cv-qualifier-seq.  */
+		      cv_quals = cp_parser_cv_qualifier_seq_opt (parser);
+		    }
+		  else
+		    cv_quals = TYPE_UNQUALIFIED;
+		  /* APPLE LOCAL end blocks 6339747 */
+
 		  /* And the exception-specification.  */
 		  exception_specification
 		    = cp_parser_exception_specification_opt (parser);
@@ -12780,7 +12804,10 @@ cp_parser_direct_declarator (cp_parser* parser,
 
 	  declarator = make_array_declarator (declarator, bounds);
 	}
-      else if (first && dcl_kind != CP_PARSER_DECLARATOR_ABSTRACT)
+      /* APPLE LOCAL begin blocks 6339747 */
+      else if (first && (dcl_kind == CP_PARSER_DECLARATOR_NAMED
+			 || dcl_kind == CP_PARSER_DECLARATOR_EITHER))
+      /* APPLE LOCAL end blocks 6339747 */
 	{
 	  tree qualifying_scope;
 	  tree unqualified_name;
@@ -12941,7 +12968,8 @@ cp_parser_direct_declarator (cp_parser* parser,
 
   /* For an abstract declarator, we might wind up with nothing at this
      point.  That's an error; the declarator is not optional.  */
-  if (!declarator)
+  /* APPLE LOCAL blocks 6339747 */
+  if (!declarator && dcl_kind != CP_PARSER_DECLARATOR_BLOCK)
     cp_parser_error (parser, "expected declarator");
 
   /* If we entered a scope, we must exit it now.  */
@@ -20876,11 +20904,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteGlobalBlock_decl, 0, 0);
 	    }
 	}
-      /* LLVM LOCAL begin radar 5865221 */
+      /* APPLE LOCAL begin radar 6457359 */
       CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE,
                              convert (ptr_type_node,
                                       build_fold_addr_expr (NSConcreteGlobalBlock_decl)));
-      /* LLVM LOCAL end radar 5865221 */
+      /* APPLE LOCAL end radar 6457359 */
       flags |= BLOCK_IS_GLOBAL;
     }
   else
@@ -20900,11 +20928,11 @@ build_block_struct_initlist (tree block_struct_type,
 	      rest_of_decl_compilation (NSConcreteStackBlock_decl, 0, 0);
 	    }
 	}
-      /* LLVM LOCAL begin radar 5865221 */
+      /* APPLE LOCAL begin radar 6457359 */
       CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE,
                              convert (ptr_type_node,
                                       build_fold_addr_expr (NSConcreteStackBlock_decl)));
-      /* LLVM LOCAL end radar 5865221 */
+      /* APPLE LOCAL end radar 6457359 */
     }
 
   /* __flags */
@@ -21270,11 +21298,47 @@ synth_destroy_helper_block_func (struct block_sema_info * block_impl)
   pop_function_context ();
 }
 
-/** cp_parser_block_literal_expr - Main routine to process a block literal
-    with the syntax of ^arg-list[OPT] block or ^()expression. It synthesizes
-    the helper function for later generation and builds the necessary data to
-    represent the block literal where it is declared.
-*/
+/* Parse a block-id.
+
+   GNU Extension:
+
+   block-id:
+     type-specifier-seq block-declarator
+
+   Returns the DECL specified or implied.  */
+
+static tree
+cp_parser_block_id (cp_parser* parser)
+{
+  cp_decl_specifier_seq type_specifier_seq;
+  cp_declarator *declarator;
+
+  /* Parse the type-specifier-seq.  */
+  cp_parser_type_specifier_seq (parser, /*is_condition=*/false,
+				&type_specifier_seq);
+  if (type_specifier_seq.type == error_mark_node)
+    return error_mark_node;
+
+  /* Look for the block-declarator.  */
+  declarator
+    = cp_parser_declarator (parser, CP_PARSER_DECLARATOR_BLOCK, NULL,
+			    /*parenthesized_p=*/NULL,
+			    /*member_p=*/false);
+
+  return grokblockdecl (&type_specifier_seq, declarator);
+}
+
+/* Parse a block-literal-expr.
+
+   GNU Extension:
+
+  block-literal-expr:
+    ^ parameter-declation-clause exception-specification [opt] compound-statement
+    ^ block-id compound-statement
+
+    It synthesizes the helper function for later generation and builds
+    the necessary data to represent the block literal where it is
+    declared.  */
 static tree
 cp_parser_block_literal_expr (cp_parser* parser)
 {
@@ -21299,6 +21363,7 @@ cp_parser_block_literal_expr (cp_parser* parser)
   tree attributes = NULL_TREE;
   /* APPLE LOCAL radar 6169580 */
   int context_is_nonstatic_method;
+  tree raises = NULL_TREE;
 
   cp_lexer_consume_token (parser->lexer); /* eat '^' */
 
@@ -21307,30 +21372,9 @@ cp_parser_block_literal_expr (cp_parser* parser)
     attributes = cp_parser_attributes_opt (parser);
   /* APPLE LOCAL end radar 6237713 */
   
-  /* APPLE LOCAL begin radar 6185344 */
-  /* Parse user declared return type. */
-  if (!cp_lexer_next_token_is (parser->lexer, CPP_OPEN_PAREN) &&
-      !cp_lexer_next_token_is (parser->lexer, CPP_OPEN_BRACE))
-  {
-    tree type;
-    /* APPLE LOCAL begin radar 6237713 */
-    if (attributes)
-    {
-      warning (0, "attribute before block type is ignored");
-      attributes = NULL_TREE;
-    }
-    /* APPLE LOCAL end radar 6237713 */    
-    parsing_block_return_type = 1;
-    type = cp_parser_type_id (parser);
-    parsing_block_return_type = 0;
-    if (type != error_mark_node) 
-      declared_block_return_type = type;
-  }
-  /* APPLE LOCAL end radar 6185344 */
-
-  /* Parse the optional argument list */
   if (cp_lexer_next_token_is (parser->lexer, CPP_OPEN_PAREN))
     {
+      /* Parse the optional argument list */
       cp_lexer_consume_token (parser->lexer);
       /* Open the scope to collect parameter decls */
       /* push_scope (); */
@@ -21342,15 +21386,35 @@ cp_parser_block_literal_expr (cp_parser* parser)
       /* Check for args as it might be NULL due to error. */
       if (! args)
 	{
-	  /* pop_scope (); */
 	  return error_mark_node;
 	}
-      /* pop_scope (); */
+      raises = cp_parser_exception_specification_opt (parser);
     }
-#if 0
-  else
-    arglist = build_tree_list (NULL_TREE, void_type_node);
-#endif
+  /* APPLE LOCAL begin radar 6185344 */
+  else if (cp_lexer_next_token_is_not (parser->lexer, CPP_OPEN_BRACE))
+    {
+      /* Parse user declared return type. */
+      tree decl;
+    
+      /* APPLE LOCAL begin radar 6237713 */
+      if (attributes)
+	{
+	  warning (0, "attributes before block type are ignored");
+	  attributes = NULL_TREE;
+	}
+      /* APPLE LOCAL end radar 6237713 */    
+
+      decl = cp_parser_block_id (parser);
+
+      if (decl && decl != error_mark_node)
+	{
+	  arg_type = TYPE_ARG_TYPES (TREE_TYPE (decl));
+	  arglist = DECL_ARGUMENTS (decl);
+	  raises = TYPE_RAISES_EXCEPTIONS (TREE_TYPE (decl));
+	  declared_block_return_type = TREE_TYPE (TREE_TYPE (decl));
+	}
+    }
+  /* APPLE LOCAL end radar 6185344 */
 
   block = begin_block ();
   /* APPLE LOCAL begin radar 6169580 */
@@ -21369,32 +21433,10 @@ cp_parser_block_literal_expr (cp_parser* parser)
     cur_block->return_type = NULL_TREE;
   /* APPLE LOCAL end radar 6185344 */
 
-  if (args)
-    {
-      /* cur_block->arg_info = args; */
-      if (arg_type)
-	{
-	  cur_block->hasPrototype = true;
-	  /* This is the only way in gcc to know if argument list ends with ... */
-	  cur_block->isVariadic = args->ellipsis_p;
-	}
-      else
-	{
-	  /* K&R syle () argument list. */
-	  cur_block->hasPrototype = false;
-	  cur_block->isVariadic = true;
-	}
-    }
-  else
-    {
-      cur_block->hasPrototype = false;
-      cur_block->isVariadic = false;
-      /* cur_block->arg_info = xcalloc (1, sizeof (struct c_arg_info)); */
-    }
-
-  /* Must also build hidden parameter _self added to the helper
+  /* Must also build hidden parameter .block_descriptor added to the helper
      function, even though we do not know its type yet. */
-  self_arg = build_artificial_parm (get_identifier ("_self"), ptr_type_node);
+  /* APPLE LOCAL radar 6404979 */
+  self_arg = build_artificial_parm (get_identifier (".block_descriptor"), ptr_type_node);
 
   /* TREE_CHAIN (self_arg) = cur_block->arg_info->parms; */
   TREE_CHAIN (self_arg) = arglist;
@@ -21413,6 +21455,8 @@ cp_parser_block_literal_expr (cp_parser* parser)
                                 ? void_type_node : cur_block->return_type),
                                arg_type);
   /* APPLE LOCAL end radar 6185344 */
+  if (raises)
+    ftype = build_exception_variant (ftype, raises);
   /* APPLE LOCAL radar 6160536 */
   block_helper_function_decl = build_helper_func_decl (build_block_helper_name (unique_count),
 						       ftype);
@@ -21466,7 +21510,7 @@ cp_parser_block_literal_expr (cp_parser* parser)
   if (restype == error_mark_node)
     return clean_and_exit (block);
 
-  /* Now that we know type of the hidden _self argument, fix its type. */
+  /* Now that we know type of the hidden .block_descriptor argument, fix its type. */
   TREE_TYPE (self_arg) = cur_block->block_arg_ptr_type;
   DECL_ARG_TYPE (self_arg) = cur_block->block_arg_ptr_type;
 
@@ -21487,6 +21531,8 @@ cp_parser_block_literal_expr (cp_parser* parser)
      not nested and is gimplified in call to finish_function() and return type 
      of the function must be correct. */
   ftype = build_function_type (restype, TREE_CHAIN (arg_type));
+  if (raises)
+    ftype = build_exception_variant (ftype, raises);
   /* Declare helper function; as in:
      double helper_1(struct block_1 *ii, int z); */
   typelist = TYPE_ARG_TYPES (ftype);
@@ -21494,6 +21540,8 @@ cp_parser_block_literal_expr (cp_parser* parser)
   typelist = tree_cons (NULL_TREE, cur_block->block_arg_ptr_type,
                         typelist);
   helper_function_type = build_function_type (TREE_TYPE (ftype), typelist);
+  if (raises)
+    helper_function_type = build_exception_variant (helper_function_type, raises);
   TREE_TYPE (cur_block->helper_func_decl) = helper_function_type;
   finish_function (4);
   pop_function_context ();
@@ -21994,8 +22042,8 @@ declare_block_prologue_local_byref_vars (tree self_parm, tree component,
  block_build_prologue
  - This routine builds the declarations for the
  variables referenced in the block; as in:
- int *y = _self->y;
- int x = _self->x;
+ int *y = .block_descriptor->y;
+ int x = .block_descriptor->x;
 
  The decl_expr declaration for each initialization is enterred at the
  beginning of the helper function's statement-list which is passed
@@ -22005,7 +22053,7 @@ void
 block_build_prologue (struct block_sema_info *block_impl)
 {
   tree chain;
-  tree self_parm = lookup_name (get_identifier ("_self"));
+  tree self_parm = lookup_name (get_identifier (".block_descriptor"));
   gcc_assert (self_parm);
 
   for (chain = block_impl->block_ref_decl_list; chain;

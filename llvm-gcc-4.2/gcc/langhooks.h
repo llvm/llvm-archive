@@ -148,6 +148,12 @@ struct lang_hooks_for_types
      firstprivate variables.  */
   void (*omp_firstprivatize_type_sizes) (struct gimplify_omp_ctx *, tree);
 
+  /* APPLE LOCAL begin radar 6386976  */
+  /* Determine whether the type-tree passed in is specific to the 
+     language/runtime definitions, e.g. is an Objective-C class...  */
+  bool (*is_runtime_specific_type) (tree);
+  /* APPLE LOCAL end radar 6386976  */
+
   /* Nonzero if types that are identical are to be hashed so that only
      one copy is kept.  If a language requires unique types for each
      user-specified type, such as Ada, this should be set to TRUE.  */

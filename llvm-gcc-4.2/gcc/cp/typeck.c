@@ -239,6 +239,8 @@ original_type (tree t)
       x = DECL_ORIGINAL_TYPE (x);
       if (x == NULL_TREE)
 	break;
+      if (x == t)
+	break;
       t = x;
     }
   return cp_build_qualified_type (t, quals);
@@ -2776,12 +2778,16 @@ build_block_call (tree fntype, tree block_ptr_exp, tree params)
   tree function_ptr_exp;
   tree typelist;
   tree result;
+  /* APPLE LOCAL radar 6396238 */
+  bool block_ptr_exp_side_effect = TREE_SIDE_EFFECTS (block_ptr_exp);
   
   /* First convert it to 'void *'. */
   block_ptr_exp = convert (ptr_type_node, block_ptr_exp);
   gcc_assert (generic_block_literal_struct_type);
   block_ptr_exp = convert (build_pointer_type (generic_block_literal_struct_type),
                            block_ptr_exp);
+  if (block_ptr_exp_side_effect)
+    block_ptr_exp = save_expr (block_ptr_exp);
 
   /* BLOCK_PTR_VAR->__FuncPtr */
   function_ptr_exp =

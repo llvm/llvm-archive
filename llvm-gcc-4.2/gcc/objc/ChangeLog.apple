@@ -1,3 +1,9 @@
+2009-01-07  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6379842
+	* objc-act.c (objc_add_property_variable): warn on 
+	block property with no 'copy' attribute.
+
 2008-11-14  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6370136

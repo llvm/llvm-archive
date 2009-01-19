@@ -71,6 +71,8 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 enum decl_context
 { NORMAL,			/* Ordinary declaration */
   FUNCDEF,			/* Function definition */
+  /* APPLE LOCAL blocks 6339747 */
+  BLOCKDEF,			/* Block literal declaration */
   PARM,				/* Declaration of parm before function body */
   FIELD,			/* Declaration inside struct or union */
   TYPENAME};			/* Typename (inside cast or sizeof)  */
@@ -3285,6 +3287,27 @@ add_flexible_array_elts_to_size (tree decl, tree init)
     }
 }
 
+/* APPLE LOCAL begin blocks 6339747 */
+/* Decode a block literal type, such as "int **", returning a ...FUNCTION_DECL node.  */
+
+tree
+grokblockdecl (struct c_declspecs *specs, struct c_declarator *declarator)
+{
+  tree decl;
+  tree attrs = specs->attrs;
+
+  specs->attrs = NULL_TREE;
+
+  decl = grokdeclarator (declarator, specs, BLOCKDEF,
+			 false, NULL);
+
+  /* Apply attributes.  */
+  decl_attributes (&decl, attrs, 0);
+
+  return decl;
+}
+/* APPLE LOCAL end blocks 6339747 */
+
 /* Decode a "typename", such as "int **", returning a ..._TYPE node.  */
 
 tree
@@ -5171,6 +5194,41 @@ grokdeclarator (const struct c_declarator *declarator,
 	 crash in tree_low_cst().  */
       type = error_mark_node;
     }
+
+  /* APPLE LOCAL begin blocks 6339747 */
+  if (decl_context == BLOCKDEF)
+    {
+      tree decl;
+
+      if (type == error_mark_node)
+	return error_mark_node;
+
+      if (TREE_CODE (type) != FUNCTION_TYPE)
+	{
+	  tree arg_types;
+
+	  if (TREE_CODE (type) == ARRAY_TYPE)
+	    {
+	      error ("block declared as returning an array");
+	      return error_mark_node;
+	    }
+
+	  arg_info = XOBNEW (&parser_obstack, struct c_arg_info);
+	  arg_info->parms = 0;
+	  arg_info->tags = 0;
+	  arg_info->types = 0;
+	  arg_info->others = 0;
+	  arg_info->pending_sizes = 0;
+	  arg_info->had_vla_unspec = 0;
+	  arg_types = grokparms (arg_info, false);
+	  type_quals = TYPE_UNQUALIFIED;
+	  type = build_function_type (type, arg_types);
+	}
+      decl = build_decl (FUNCTION_DECL, NULL_TREE, type);
+      DECL_ARGUMENTS (decl) = arg_info ? arg_info->parms : NULL_TREE;
+      return decl;
+    }
+  /* APPLE LOCAL end blocks 6339747 */
 
   /* If this is declaring a typedef name, return a TYPE_DECL.  */
 
@@ -8343,8 +8401,8 @@ declare_block_prologue_local_vars (tree self_parm, tree component,
  block_build_prologue
  - This routine builds the declarations for the
  variables referenced in the block; as in:
- int *y = _self->y;
- int x = _self->x;
+ int *y = .block_descriptor->y;
+ int x = .block_descriptor->x;
 
  The decl_expr declaration for each initialization is enterred at the
  beginning of the helper function's statement-list which is passed
@@ -8354,7 +8412,8 @@ void
 block_build_prologue (struct block_sema_info *block_impl)
 {
   tree chain;
-  tree self_parm = lookup_name (get_identifier ("_self"));
+  /* APPLE LOCAL radar 6404979 */
+  tree self_parm = lookup_name (get_identifier (".block_descriptor"));
   gcc_assert (self_parm);
 
   for (chain = block_impl->block_ref_decl_list; chain;

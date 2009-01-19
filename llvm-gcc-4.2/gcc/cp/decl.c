@@ -3901,6 +3901,25 @@ shadow_tag (cp_decl_specifier_seq *declspecs)
   return t;
 }
 
+/* APPLE LOCAL begin blocks 6339747 */
+/* Decode a block literal type, such as "int **", returning a ...FUNCTION_DECL node.  */
+
+tree
+grokblockdecl (cp_decl_specifier_seq *type_specifiers,
+	       const cp_declarator *declarator)
+{
+  tree decl;
+  tree attrs = type_specifiers->attributes;
+
+  type_specifiers->attributes = NULL_TREE;
+
+  decl = grokdeclarator (declarator, type_specifiers, BLOCKDEF, 0, &attrs);
+  if (attrs)
+    cplus_decl_attributes (&decl, attrs, 0);
+  return decl;
+}
+/* APPLE LOCAL end blocks 6339747 */
+
 /* Decode a "typename", such as "int **", returning a ..._TYPE node.  */
 
 tree
@@ -8693,6 +8712,38 @@ grokdeclarator (const cp_declarator *declarator,
 	  storage_class = sc_none;
 	}
     }
+
+  /* APPLE LOCAL begin blocks 6339747 */
+  if (decl_context == BLOCKDEF)
+    {
+      tree decl;
+
+      if (type == error_mark_node)
+	return error_mark_node;
+
+      if (TREE_CODE (type) != FUNCTION_TYPE)
+	{
+	  tree t = make_node (FUNCTION_TYPE);
+
+	  if (TREE_CODE (type) == ARRAY_TYPE)
+	    {
+	      error ("block declared as returning an array");
+	      return error_mark_node;
+	    }
+
+	  TYPE_ARG_TYPES (t) = void_list_node;
+	  TREE_TYPE (t) = type;
+	  type = t;
+	  parms = NULL_TREE;
+	}	    
+
+      if (raises)
+	type = build_exception_variant (type, raises);
+      decl = build_lang_decl (FUNCTION_DECL, NULL_TREE, type);
+      DECL_ARGUMENTS (decl) = parms;
+      return decl;
+    }
+  /* APPLE LOCAL end blocks 6339747 */
 
   /* If this is declaring a typedef name, return a TYPE_DECL.  */
   if (declspecs->specs[(int)ds_typedef] && decl_context != TYPENAME)

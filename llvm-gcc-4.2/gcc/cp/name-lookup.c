@@ -813,7 +813,12 @@ pushdecl_maybe_friend (tree x, bool is_friend)
 	      if (TYPE_NAME (type) == 0)
 		TYPE_NAME (type) = x;
 	    }
-	  else if (type != error_mark_node && TYPE_NAME (type) != x
+	  /* APPLE LOCAL begin radar 6007135, typedef of anonymous struct  */
+	  /* Make sure to do the copying if the type was anonymous  */
+	  else if (type != error_mark_node 
+		   && ((TYPE_NAME (type) != x) 
+		       || (TYPE_LANG_SPECIFIC (type) && TYPE_WAS_ANONYMOUS (type)))
+	  /* APPLE LOCAL end radar 6007135, typedef of anonymous struct  */
 		   /* We don't want to copy the type when all we're
 		      doing is making a TYPE_DECL for the purposes of
 		      inlining.  */

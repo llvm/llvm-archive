@@ -6884,10 +6884,11 @@ legitimate_pic_address_disp_p (rtx disp)
 #if TARGET_MACHO
 	  if (machopic_data_defined_p (op0))
 	    return true;
+
 	  /* Under -mfix-and-continue, even local storage is
 	     addressed via the GOT, so that the value of local
 	     statics is preserved when a function is "fixed."  */
-	  if (TARGET_FIX_AND_CONTINUE)
+	  if (indirect_data (op0))
 	    return false;
 #endif
 	  /* APPLE LOCAL end fix-and-continue 6227434 */
@@ -10545,7 +10546,7 @@ ix86_expand_convert_uns_SI2DF_sse (rtx operands[])
   return "";
 }
 
-/* Convert an unsigned SImode value into a DFmode, using only SSE.
+/* Convert a signed DImode value into a DFmode, using only SSE.
    Result returned in an %xmm register.  For x86_32, -mfpmath=sse,
    !optimize_size only.  */
 const char *
@@ -22590,8 +22591,25 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
   if (opcode[0] == ' ' && iasm_is_pseudo (opcode+1))
     e->pseudo = true;
 
-  if (strcasecmp (opcode, "movs") == 0)
-    args = NULL_TREE;
+  if (strcasecmp (opcode, "movs") == 0
+      || strcasecmp (opcode, "scas") == 0
+      || strcasecmp (opcode, "stos") == 0
+      || strcasecmp (opcode, "xlat") == 0)
+      args = NULL_TREE;
+  else if (strcasecmp (opcode, "cmovpo") == 0)
+    opcode = "cmovnp";
+  else if (strcasecmp (opcode, "cmovpe") == 0)
+    opcode = "cmovp";
+  else if (strcasecmp (opcode, "outs") == 0
+	   && TREE_CHAIN (args))
+    {
+      e->mod[0] = e->mod[1];
+    }
+  else if (strcasecmp (opcode, "ins") == 0
+	   && TREE_CHAIN (args))
+    {
+      e->mod[1] = 0;
+    }
   /* movsx isn't part of the AT&T syntax, they spell it movs.  */
   else if (strcasecmp (opcode, "movsx") == 0)
     opcode = "movs";
@@ -22676,6 +22694,8 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	   || strcasecmp (opcode, "js") == 0
 	   || strcasecmp (opcode, "jz") == 0
 	   || strcasecmp (opcode, "ldmxcsr") == 0
+	   || strcasecmp (opcode, "lgdt") == 0
+	   || strcasecmp (opcode, "lidt") == 0
 	   || strcasecmp (opcode, "lldt") == 0
 	   || strcasecmp (opcode, "lmsw") == 0
 	   || strcasecmp (opcode, "ltr") == 0
@@ -22733,7 +22753,8 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	   || strcasecmp (opcode, "sldt") == 0
 	   || strcasecmp (opcode, "smsw") == 0
 	   || strcasecmp (opcode, "stmxcsr") == 0
-	   || strcasecmp (opcode, "str") == 0)
+	   || strcasecmp (opcode, "str") == 0
+	   || strcasecmp (opcode, "xlat") == 0)
     e->mod[0] = 0;
   else if (strcasecmp (opcode, "rcr") == 0
 	   || strcasecmp (opcode, "rcl") == 0
@@ -22752,7 +22773,14 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
     {
       if (e->mod[0] == 'q'
 	  && !(strcasecmp (opcode, "inc") == 0
-	       || strcasecmp (opcode, "dec") == 0))
+	       || strcasecmp (opcode, "or") == 0
+	       || strcasecmp (opcode, "idiv") == 0
+	       || strcasecmp (opcode, "movs") == 0
+	       || strcasecmp (opcode, "scas") == 0
+	       || strcasecmp (opcode, "dec") == 0
+	       || strcasecmp (opcode, "push") == 0
+	       || strcasecmp (opcode, "pop") == 0
+	       || strcasecmp (opcode, "mov") == 0))
 	sprintf (buf, "%s%s", opcode, "ll");
       else
 	sprintf (buf, "%s%c", opcode, e->mod[0]);
@@ -22878,7 +22906,7 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
 
 	e->as_immediate = true;
 	iasm_print_operand (buf, op1, argnum, uses,
-			      must_be_reg, must_not_be_reg, e);
+			    must_be_reg, must_not_be_reg, e);
 	e->as_immediate = false;
 
 	/* Just an immediate.  */
@@ -22898,7 +22926,7 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
 	    iasm_force_constraint ("R", e);
 	    iasm_warn_extra_reg (op2);
 	    iasm_print_operand (buf, op2, argnum, uses,
-				  must_be_reg, must_not_be_reg, e);
+				must_be_reg, must_not_be_reg, e);
 	    iasm_force_constraint (0, e);
 	  }
 	if (op3)
@@ -22912,14 +22940,14 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
 	    iasm_force_constraint ("l", e);
 	    iasm_warn_extra_reg (op3);
 	    iasm_print_operand (buf, op3, argnum, uses,
-				  must_be_reg, must_not_be_reg, e);
+				must_be_reg, must_not_be_reg, e);
 	    iasm_force_constraint (0, e);
 	    if (scale)
 	      {
 		strcat (buf, ",");
 		e->as_immediate = true;
 		iasm_print_operand (buf, scale, argnum, uses,
-				      must_be_reg, must_not_be_reg, e);
+				    must_be_reg, must_not_be_reg, e);
 		e->as_immediate = false;
 	      }
 	  }
@@ -22941,16 +22969,16 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
       if (! e->as_immediate)
 	e->as_offset = true;
       iasm_print_operand (buf, TREE_OPERAND (arg, 0), argnum, uses,
-			    must_be_reg, must_not_be_reg, e);
+			  must_be_reg, must_not_be_reg, e);
       e->as_offset = false;
       break;
 
     case MULT_EXPR:
       iasm_print_operand (buf, TREE_OPERAND (arg, 0), argnum, uses,
-			    must_be_reg, must_not_be_reg, e);
+			  must_be_reg, must_not_be_reg, e);
       strcat (buf, "*");
       iasm_print_operand (buf, TREE_OPERAND (arg, 1), argnum, uses,
-			    must_be_reg, must_not_be_reg, e);
+			  must_be_reg, must_not_be_reg, e);
       break;
     default:
       return false;

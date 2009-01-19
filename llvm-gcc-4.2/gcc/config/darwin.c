@@ -280,7 +280,8 @@ machopic_classify_symbol (rtx sym_ref)
    permit the runtime to rebind new instances of the translation unit
    to the original instance of the data.  */
 
-static int
+/* APPLE LOCAL fix-and-continue 6227434 */
+int
 indirect_data (rtx sym_ref)
 {
   int lprefix;
@@ -298,8 +299,12 @@ indirect_data (rtx sym_ref)
   name = XSTR (sym_ref, 0);
 
   lprefix = (((name[0] == '*' || name[0] == '&')
-              && (name[1] == 'L' || (name[1] == '"' && name[2] == 'L')))
-             || (strncmp (name, "_OBJC_", 6) == 0));
+              && (name[1] == 'L'
+		  || (name[1] == '"' && name[2] == 'L')
+		  /* Don't indirect writable strings.  */
+		  || (name[1] == 'l' && name[2] == 'C')))
+             || (strncmp (name, "_OBJC_", 6) == 0)
+	     || objc_anonymous_local_objc_name (name));
 
   return ! lprefix;
 }
@@ -1542,7 +1547,8 @@ machopic_select_section (tree exp, int reloc,
             return darwin_sections[objc_v2_nonlazy_class_section];
           else if (!strncmp (name, "_OBJC_LABEL_NONLAZY_CATEGORY_", 29))
             return darwin_sections[objc_v2_nonlazy_category_section];
-          else if (!strncmp (name, "_OBJC_PROTOCOL_REFERENCE_", 25))
+          /* APPLE LOCAL radar 6351990 */
+          else if (!strncmp (name, "l_OBJC_PROTOCOL_REFERENCE_", 26))
             return darwin_sections[objc_v2_protocolrefs_section];
           else if (!strncmp (name, "_OBJC_SELECTOR_REFERENCES", 25))
             return darwin_sections[objc_v2_selector_refs_section];

@@ -1,9 +1,132 @@
+2009-01-12  Caroline Tice  <ctice@apple.com>
+
+        Radar 6476836
+        * dwarf2out.c(struct die_struct):  New field, "dead".
+	(size_of_inlined):  Don't count entries whose "dead" field is marked.
+	(output_debug_inlined_section):  Remove code that was commented out; 
+	don't output info for dies whose "dead" field is marked.
+	(prune_unused_types_cleanup_inlining):  New function.
+	(prune_unused_types):  Call prune_unused_types_cleanup_inlining  before
+ 	calling prune_unused_types_prune.
+
+2008-12-21  Caroline Tice  <ctice@apple.com>
+
+        Radar 6455678
+        * cp/typeck.c (original_type):  Stop if the type
+	and its DECL_ORIGINAL_TYPE are the same.
+
+2008-12-18  Bill Wendling  <wendling@apple.com>
+
+        Radar 6457359
+        * c-parser.c (build_block_struct_initlist): Changed type.
+        * cp/parser.c (build_block_struct_initlist): Ditto.
+
+2008-12-18  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6440204
+	* config/i386/sse.md (sse2_ashlti3): Moved from here...
+	* config/i386/i386.md (sse2_ashlti3): ...to here.
+
+2008-12-11  Caroline Tice  <ctice@apple.com>
+
+       Radars 5964438, 6007135
+       * cp/name-lookup.c (pushdecl_maybe_friend):   Copy
+       type decl info to DECL_ORIGINAL_TYPE if the type
+       decl was anonymous.
+       * dwarf2out.c  (gen_variable_die):  Don't attempt to
+       reference an abstract origin unless the die actually
+       exists.
+
 2008-12-10   Jim Grosbach <grosbach@applecom>
 
 	Radar 6387939
 	* config/arm/arm.md (builtin_setjmp_setup): Properly terminate
 	the code snipped to prevent the rtl template from adding an
 	extraneous "use" insn into the instruction list.
+
+2008-12-09  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6414738
+	* var-tracking.c (clobber_variable_part): Update anextp for
+          next iteration.
+
+2008-12-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6413140
+	* c-parser.c (c_parser_block_literal_expr): Warn on use of explicit 
+	block return type.
+
+2008-12-05  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6382081
+	* config/i386/i386.md (floatdisf2): Replace SSE code
+	  with x87 code.
+
+2008-12-02  Caroline Tice  <ctice@apple.com>
+
+       Radar 6386976
+       * objcp/objcp-decl.h (TYPE_HAS_OBJCXX_INFO):  New macro.
+       * objcp/objcp-lang.c  (objcp-decl.h):  New include statement, with
+       required define.      
+       (LANG_HOOKS_IS_RUNTIME_SPECIFIC_TYPE):  Redefine for
+       obj-c++.
+       (objcxx_is_runtime_type):  New function.
+
+2008-12-02  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6411649
+	* funciton.h: Added new field.
+	* c-common.c (build_block_helper_name): Produce a unique
+          block number per each enclosing function when building
+          the block helper function name.
+
+2008-12-02  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6396238
+	* c-typeck.c (build_block_call): Handle case of a block
+	expression tree with side-effect when envoking the block.
+
+2008-12-01  Caroline Tice  <ctice@apple.com>
+
+	Radar 6386976
+	* objc/objc-lang.c (objc_is_runtime_type):  New function.
+	(LANG_HOOKS_IS_RUNTIME_SPECIFIC_TYPE):  Re-define new constant.
+	* dwarf2out.c (dwarf_attr_name):  Add case statements for
+	DW_AT_APPLE_major_runtime_vers and DW_AT_APPLE_runtime_class.
+	( gen_struct_or_union_type_die):  Call
+       lang_hooks.types.is_runtime_specific_type, and add runtime attribute
+       if appropriate.
+       (dwarf2out_finish):  Add DW_AT_APPLE_major_runtime_vers to comp_unit
+       die if appropriate.
+       * dwarf2.h (enum dwarf_attribute):  Add two new Apple dwarf attributes:
+       DW_AT_APPLE_major_runtime_vers and DW_AT_APPLE_runtime_class.
+       * langhooks.c (lhd_is_runtime_specific_type):  New generic function.
+       * langhooks.h (struct lang_hooks_for_types):  Add new function field,
+       is_runtime_specific_type.
+       * langhooks-def.h (lhd_is_runtime_specific_type):  New extern decl.
+       (LANG_HOOKS_IS_RUNTIME_SPECIFIC_TYPE):  New constant definition.
+       (LANG_HOOKS_FOR_TYPES_INITIALIZER):  Use new constant definition to
+       initialize new field.
+
+
+2008-12-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6404979
+	* c-decl.c (block_build_prologue): Use an internal name for
+	block helper's hidden argument.
+	* c-parser.c (c_parser_block_literal_expr): Ditto.
+
+2008-12-01  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6382081
+	* config/i386/i386.md (floatdisf2): Add SSE code for
+          conversion on x86_32.
+	* config/i386/i386.c (ix86_expand_convert_sign_DI2DF_sse): Typo.
+
+2008-11-24  Stuart Hastings  <stuart@apple.com>
+
+	* config/i386/i386.c (ix86_expand_convert_uns_SI2DF_sse): Fix
+          comment.
 
 2008-11-18  Stuart Hastings  <stuart@apple.com>
 

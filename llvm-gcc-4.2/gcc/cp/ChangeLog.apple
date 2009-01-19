@@ -1,3 +1,21 @@
+2008-12-05  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6413140
+        * parser.c (cp_parser_block_literal_expr): Warn on use of explicit
+        block return type.
+
+2008-12-02  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6396238
+        * typeck.c (build_block_call): Handle case of a block
+        expression tree with side-effect when envoking the block.
+
+2008-12-01  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6404979
+        * parser.c (cp_parser_block_literal_expr): Use an internal name for
+        block helper's hidden argument.
+
 008-11-07  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 5847976

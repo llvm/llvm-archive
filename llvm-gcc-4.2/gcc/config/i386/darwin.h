@@ -100,6 +100,9 @@ Boston, MA 02110-1301, USA.  */
   "/* APPLE LOCAL ARM 5683689 */"\
   %{!mmacosx-version-min=*: %{!miphoneos-version-min=*: %(darwin_cc1_minversion)}} \
   "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
+  "/* LLVM LOCAL enable format security warnings */"    \
+  %{!Wno-format:-Wformat}                               \
+  %{!Wno-format-security:-Wformat-security}                             \
   %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5 \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }}"
 

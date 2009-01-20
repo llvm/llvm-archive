@@ -224,9 +224,11 @@ Wfloat-equal
 C ObjC C++ ObjC++ Var(warn_float_equal)
 Warn if testing floating point numbers for equality
 
+; LLVM LOCAL begin keep "Var(warn_format) Warning"
 Wformat
-C ObjC C++ ObjC++
+C ObjC C++ ObjC++ Var(warn_format) Warning
 Warn about printf/scanf/strftime/strfmon format string anomalies
+; LLVM LOCAL end keep "Var(warn_format) Warning"
 
 Wformat-extra-args
 C ObjC C++ ObjC++ Var(warn_format_extra_args)
@@ -237,11 +239,11 @@ C ObjC C++ ObjC++ Var(warn_format_nonliteral)
 Warn about format strings that are not literals
 
 ; APPLE LOCAL begin default to Wformat-security 5764921
-; LLVM LOCAL begin don't initialize this
+; LLVM LOCAL begin keep "Var(warn_format_security)"
 Wformat-security
-C ObjC C++ ObjC++
+C ObjC C++ ObjC++ Var(warn_format_security)
 Warn about possible security problems with format functions
-; LLVM LOCAL end don't initialize this
+; LLVM LOCAL endkeep "Var(warn_format_security)"
 ; APPLE LOCAL end default to Wformat-security 5764921
 
 Wformat-y2k

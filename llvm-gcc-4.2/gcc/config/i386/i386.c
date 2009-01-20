@@ -2020,15 +2020,19 @@ override_options (void)
         error ("-mstackrealign not supported in the 64bit mode");
       /* APPLE LOCAL end radar 4877693 */
 
+      /* LLVM LOCAL begin */
       target_flags |= TARGET_SUBTARGET64_DEFAULT & ~target_flags_explicit;
+      /* LLVM LOCAL end */
 
       /* Enable by default the SSE and MMX builtins.  Do allow the user to
          explicitly disable any of these.  In particular, disabling SSE and
          MMX for kernel code is extremely useful.  */
       if (!ix86_arch_specified)
+      /* LLVM LOCAL begin */
         target_flags
           |= ((MASK_SSE2 | MASK_SSE | MASK_MMX | MASK_128BIT_LONG_DOUBLE)
                & ~target_flags_explicit);
+      /* LLVM LOCAL end */
       /* APPLE LOCAL begin mainline candidate */
       /* Disable the red zone for kernel compilation.
 	 ??? Why aren't we using -mcmodel=kernel?  */

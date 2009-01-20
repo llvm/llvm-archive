@@ -112,6 +112,60 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateTrunc(Result, Type::Int64Ty);
     return true;
   }
+  case ALPHA_BUILTIN_CMPBGE: {
+    Value *Arg0 = Ops[0];
+    Value *Arg1 = Ops[1];
+    Value* cmps[8];
+    for (unsigned x = 0; x < 8; ++x) {
+      Value* LHS = Builder.CreateLShr(Arg0, ConstantInt::get(Type::Int64Ty, x*8));
+      LHS = Builder.CreateTrunc(LHS, Type::Int8Ty);
+      Value* RHS = Builder.CreateLShr(Arg1, ConstantInt::get(Type::Int64Ty, x*8));
+      RHS = Builder.CreateTrunc(RHS, Type::Int8Ty);
+      Value* cmps = Builder.CreateICmpUGE(LHS, RHS);
+      cmps = Builder.CreateIsNotNull(cmps);
+      cmps = Builder.CreateZExt(cmps, Type::Int64Ty);
+      cmps = Builder.CreateShl(cmps, ConstantInt::get(Type::Int64Ty, x));
+      if (x == 0)
+	Result = cmps;
+      else
+	Result = Builder.CreateOr(Result,cmps);
+    }
+    return true;
+  }
+  case ALPHA_BUILTIN_EXTBL:
+  case ALPHA_BUILTIN_EXTWL:
+  case ALPHA_BUILTIN_EXTLL:
+  case ALPHA_BUILTIN_EXTQL: {
+    unsigned long long mask = 0;
+    switch (FnCode) {
+    case ALPHA_BUILTIN_EXTBL: mask = 0x00000000000000FFULL; break;
+    case ALPHA_BUILTIN_EXTWL: mask = 0x000000000000FFFFULL; break;
+    case ALPHA_BUILTIN_EXTLL: mask = 0x00000000FFFFFFFFULL; break;
+    case ALPHA_BUILTIN_EXTQL: mask = 0xFFFFFFFFFFFFFFFFULL; break;
+    };
+    Value *Arg0 = Ops[0];
+    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(Type::Int64Ty, 7));
+    Arg0 = Builder.CreateLShr(Arg0, Arg1);
+    Result = Builder.CreateAnd(Arg0, ConstantInt::get(Type::Int64Ty, mask));
+    return true;
+  }
+  case ALPHA_BUILTIN_EXTWH:
+  case ALPHA_BUILTIN_EXTLH:
+  case ALPHA_BUILTIN_EXTQH: {
+    unsigned long long mask = 0;
+    switch (FnCode) {
+    case ALPHA_BUILTIN_EXTWH: mask = 0x000000000000FFFFULL; break;
+    case ALPHA_BUILTIN_EXTLH: mask = 0x00000000FFFFFFFFULL; break;
+    case ALPHA_BUILTIN_EXTQH: mask = 0xFFFFFFFFFFFFFFFFULL; break;
+    };
+    Value *Arg0 = Ops[0];
+    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(Type::Int64Ty, 7));
+    Arg1 = Builder.CreateSub(ConstantInt::get(Type::Int64Ty, 64), Arg1);
+    Arg0 = Builder.CreateShl(Arg0, Arg1);
+    Result = Builder.CreateAnd(Arg0, ConstantInt::get(Type::Int64Ty, mask));
+    return true;
+  }
+
   default: break;
   }
 

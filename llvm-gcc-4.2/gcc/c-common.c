@@ -294,7 +294,21 @@ int flag_signed_bitfields = 1;
 
 int warn_unknown_pragmas; /* Tri state variable.  */
 
-/* LLVM LOCAL no definition of warn_format or warn_format_security.  */
+/* Warn about format/argument anomalies in calls to formatted I/O functions
+   (*printf, *scanf, strftime, strfmon, etc.).  */
+
+/* APPLE LOCAL begin default to Wformat-security 5764921 */
+/* LLVM LOCAL begin initialize via config/darwin.h */
+#ifndef WARN_FORMAT_INIT
+#define WARN_FORMAT_INIT 0
+#endif
+#ifndef WARN_FORMAT_SECURITY_INIT
+#define WARN_FORMAT_SECURITY_INIT 0
+#endif
+int warn_format = WARN_FORMAT_INIT;
+int warn_format_security = WARN_FORMAT_SECURITY_INIT;
+/* LLVM LOCAL end initialize via config/darwin.h */
+/* APPLE LOCAL end default to Wformat-security 5764921 */
 
 /* Warn about using __null (as NULL in C++) as sentinel.  For code compiled
    with GCC this doesn't matter as __null is guaranteed to have the right

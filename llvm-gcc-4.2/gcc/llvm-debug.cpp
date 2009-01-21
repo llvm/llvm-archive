@@ -558,7 +558,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
       llvm::DIType FwdDecl =
         DebugFactory.CreateCompositeType(Tag, MainCompileUnit, TypeName, 
                                          MainCompileUnit, Loc.line, 
-                                         0, 0, 0, DW_AT_declaration,
+                                         0, 0, 0, llvm::DIType::FlagFwdDecl,
                                          llvm::DIType(), llvm::DIArray(),
                                          &Filename, &Directory);
   
@@ -617,11 +617,10 @@ DIType DebugInfo::getOrCreateType(tree type) {
           const char *MemberName = GetNodeName(Member);
           unsigned Flags = 0;
           if (TREE_PROTECTED(Member))
-            Flags = DW_ACCESS_protected;
+            Flags = llvm::DIType::FlagProtected;
           else if (TREE_PRIVATE(Member))
-            Flags = DW_ACCESS_private;
-          else
-            Flags = DW_ACCESS_public;
+            Flags = llvm::DIType::FlagPrivate;
+
           DIType DTy =
             DebugFactory.CreateDerivedType(DW_TAG_member, MainCompileUnit, 
                                            MemberName, MainCompileUnit,
@@ -727,8 +726,6 @@ DIType DebugInfo::getOrCreateType(tree type) {
 DICompileUnit DebugInfo::createCompileUnit(const std::string &FullPath){
   // Get source file information.
   std::string Directory;
-  std::string FileName;
-  DirectoryAndFile(FullPath, Directory, FileName);
   
   // Set up Language number.
   unsigned LangTag;
@@ -752,7 +749,7 @@ DICompileUnit DebugInfo::createCompileUnit(const std::string &FullPath){
   else
     LangTag = DW_LANG_C89;
 
-  return DebugFactory.CreateCompileUnit(LangTag, FileName, Directory, 
+  return DebugFactory.CreateCompileUnit(LangTag, FullPath, "",
                                         version_string);
 }
 

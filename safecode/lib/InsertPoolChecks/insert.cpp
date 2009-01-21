@@ -187,6 +187,11 @@ static std::map<Value *, Value * > GEPBounds;
 //
 static inline bool
 isNodeRegistered (DSNode * Node) {
+  //
+  // Null DSNodes are never registered in a MetaPool.
+  //
+  if (!Node) return false;
+
   // Do not perform checks on the pointer if its DSNode does not have a known
   // allocation site.
   if (!((Node->isAllocaNode()) ||
@@ -701,7 +706,7 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
-  PageRegister = M.getOrInsertFunction("pchk_reg_page", Type::VoidTy, VoidPtrType,
+  PageRegister = M.getOrInsertFunction("pchk_reg_pages", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
@@ -965,6 +970,8 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   //Get the poolregister function
   PoolRegister = M.getOrInsertFunction("pchk_reg_obj", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
+  PageRegister = M.getOrInsertFunction("pchk_reg_pages", Type::VoidTy, VoidPtrType,
+                                       VoidPtrType, Type::UIntTy, NULL);
   StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   IORegister = M.getOrInsertFunction("pchk_reg_io", Type::VoidTy, VoidPtrType,
@@ -1146,9 +1153,9 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (len);
         new CallInst(PoolRegister, args, "", IP);
+#ifdef SVA_IO
       } else if ((name == "__ioremap") || 
                  (name == "ioremap_nocache")) {
-#ifdef SVA_IO
         if (EnableIOChecks) {
           // Register object after allocation
           Instruction* IP = i->getInstruction()->getNext();
@@ -2017,17 +2024,18 @@ isEligableForExactCheck (Value * Pointer, bool IOOkay) {
     return true;
 
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
-    if (CI->getCalledFunction() &&
-        (CI->getCalledFunction()->getName() == "__vmalloc" || 
-         CI->getCalledFunction()->getName() == "malloc" || 
-         CI->getCalledFunction()->getName() == "kmalloc" || 
-         CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
-         CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
-      return true;
-    }
+    if (CI->getCalledFunction()) {
+      if ((CI->getCalledFunction()->getName() == "__vmalloc" || 
+           CI->getCalledFunction()->getName() == "malloc" || 
+           CI->getCalledFunction()->getName() == "kmalloc" || 
+           CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
+           CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
+        return true;
+      }
 
-    if (IOOkay && (CI->getCalledFunction()->getName() == "__ioremap")) {
-      return true;
+      if (IOOkay && (CI->getCalledFunction()->getName() == "__ioremap")) {
+        return true;
+      }
     }
   }
 
@@ -2248,6 +2256,17 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
     ++AlignChecks;
   }
 
+  //
+  // If the node is type known and all indices are used to index into
+  // structures or constant sized arrays, then no bounds check is necessary.
+  //
+  if ((Node->isComplete()) &&
+      (!(Node->isNodeCompletelyFolded())) &&
+      (indexesStructsOnly (GEP))) {
+    ++StructGEPsRemoved;
+    return true;
+  }
+
 #if 0
   // Debugging: See if we're missing exactcheck opportunities
   if (isa<SelectInst>(PointerOperand))
@@ -2285,17 +2304,19 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
 
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(PointerOperand)) {
     //
-    // Attempt to remove checks on GEPs that only index into structures.
-    // These criteria must be met:
-    //  1) The pool must be Type-Homogoneous.
+    // If the source pointer argument to the GEP is a global variable, and all
+    // indexing is structure indexing, then the safety of the indexing
+    // operation can be proved statically.  In this case, don't insert a
+    // run-time check.
     //
-#if 0
-    if ((!(Node->isNodeCompletelyFolded())) &&
-        (indexesStructsOnly (GEP))) {
-      ++StructGEPsRemoved;
-      return true;
+    // Note that we do not need to know whether the DSNode is type-known.
+    //
+    if (isa<GlobalVariable>(GEP->getPointerOperand())) {
+      if (indexesStructsOnly (GEP)) {
+        ++StructGEPsRemoved;
+        return true;
+      }
     }
-#endif
 
     //
     // Attempt to use a call to exactcheck() to check this value if it is a
@@ -2366,17 +2387,27 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
   //
   if (AllocaInst *AI = dyn_cast<AllocaInst>(PointerOperand)) {
     //
-    // Attempt to remove checks on GEPs that only index into structures.
-    // These criteria must be met:
-    //  1) The pool must be Type-Homogoneous.
+    // If the source pointer of the GEP is the allocation instruction and the
+    // GEP only does structure indexing, then the indexing operation can be
+    // proved safe statically.  In that case, forego the run-time check.
     //
-#if 0
-    if ((!(Node->isNodeCompletelyFolded())) &&
-        (indexesStructsOnly (GEP))) {
-      ++StructGEPsRemoved;
-      return true;
+    // Note that we need to ensure that the allocation is of a constant size.
+    // This requires checking that the alloca either allocates an object of a
+    // single type or it allocates an array of a constant size.
+    //
+    if (isa<AllocaInst>(GEP->getPointerOperand())) {
+      if (indexesStructsOnly (GEP)) {
+        if (AI->isArrayAllocation()) {
+          if (isa<Constant>(AI->getArraySize())) {
+            ++StructGEPsRemoved;
+            return true;
+          }
+        } else {
+          ++StructGEPsRemoved;
+          return true;
+        }
+      }
     }
-#endif
 
     const Type * AllocaType = AI->getAllocatedType();
     Value *AllocSize=ConstantInt::get(Type::IntTy, TD->getTypeSize(AllocaType));
@@ -2400,17 +2431,17 @@ InsertPoolChecks::insertExactCheck (GetElementPtrInst * GEP) {
         (CI->getCalledFunction()->getName() == "malloc") || 
         (CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
       //
-      // Attempt to remove checks on GEPs that only index into structures.
-      // These criteria must be met:
-      //  1) The pool must be Type-Homogoneous.
+      // If the source pointer of the GEP is a call to an allocator function,
+      // and the allocation size is constant, and the GEP only does structure
+      // indexing, then we can prove the GEP is safe statically and forego
+      // run-time checks.
       //
-#if 0
-      if ((!(Node->isNodeCompletelyFolded())) &&
-          (indexesStructsOnly (GEP))) {
-        ++StructGEPsRemoved;
-        return true;
+      if ((GEP->getPointerOperand()) == PointerOperand) {
+        if ((isa<Constant>(CI->getOperand(1))) && (indexesStructsOnly (GEP))) {
+          ++StructGEPsRemoved;
+          return true;
+        }
       }
-#endif
 
       Value* Cast = new CastInst(CI->getOperand(1), Type::IntTy, "", GEP);
       addExactCheck2(PointerOperand, GEP, Cast, GEP->getNext());

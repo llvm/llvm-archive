@@ -3995,7 +3995,7 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   }
 
   //
-  // Attempt to find the orign of the pointer that we're checking.
+  // Attempt to find the origin of the pointer that we're checking.
   //
   bool indexed = true;
   Value * SourcePointer = findSourcePointer (V, indexed, false);

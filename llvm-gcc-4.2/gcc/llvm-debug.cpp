@@ -627,11 +627,16 @@ DIType DebugInfo::getOrCreateType(tree type) {
         if (DECL_P(Member) && DECL_IGNORED_P(Member)) continue;
 
         if (TREE_CODE(Member) == FIELD_DECL) {
+
           if (DECL_FIELD_OFFSET(Member) == 0 ||
               TREE_CODE(DECL_FIELD_OFFSET(Member)) != INTEGER_CST)
             // FIXME: field with variable position, skip it for now.
             continue;
 
+          /* Ignore nameless fields.  */
+          if (DECL_NAME (Member) == NULL_TREE)
+            continue;
+          
           // Get the location of the member.
           expanded_location MemLoc = GetNodeLocation(Member, false);
           std::string MemFilename, MemDirectory;

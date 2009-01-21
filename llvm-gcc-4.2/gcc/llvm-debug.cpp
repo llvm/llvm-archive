@@ -217,12 +217,34 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   std::string Filename, Directory;
   DirectoryAndFile(Loc.file, Directory, Filename);
   const char *LinkageName = getLinkageName(FnDecl);
-  DIType FnTy = getOrCreateType(TREE_TYPE(TREE_TYPE(FnDecl)));
+
+  tree func_type = TREE_TYPE(FnDecl);
+  llvm::SmallVector<llvm::DIDescriptor, 16> ArgTys;
+  // Add the result type at least.
+  ArgTys.push_back(getOrCreateType(TREE_TYPE(func_type)));
+
+  // Set up remainder of arguments.
+  for (tree arg = TYPE_ARG_TYPES(func_type); arg; arg = TREE_CHAIN(arg)) {
+    tree formal_type = TREE_VALUE(arg);
+    if (formal_type == void_type_node) break;
+   ArgTys.push_back(getOrCreateType(formal_type));
+  }
+      
+  llvm::DIArray FnTypeArray =
+    DebugFactory.GetOrCreateArray(&ArgTys[0], ArgTys.size());
+
+  llvm::DICompositeType  FnTy = 
+    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
+                                     MainCompileUnit, "", 
+                                     MainCompileUnit, 0, 0, 0, 0, 0,
+                                     llvm::DIType(), FnTypeArray);
+
   DISubprogram SP = DebugFactory.CreateSubprogram(MainCompileUnit, 
                                                   Fn->getNameStr(),
                                                   Fn->getNameStr(), LinkageName,
                                                   MainCompileUnit, CurLineNo, 
-                                                  FnTy, Fn->hasInternalLinkage(),
+                                                  FnTy, 
+                                                  Fn->hasInternalLinkage(),
                                                   true /*definition*/,
                                                   &Filename, &Directory);
 

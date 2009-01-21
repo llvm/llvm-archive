@@ -334,8 +334,12 @@ DIType DebugInfo::getOrCreateType(tree type) {
     return Slot;
   
   DIType MainTy;
-  if (type != TYPE_MAIN_VARIANT(type))
-    MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
+  if (type != TYPE_MAIN_VARIANT(type)) {
+    if (TYPE_NEXT_VARIANT(type) && type != TYPE_NEXT_VARIANT(type))
+      MainTy = getOrCreateType(TYPE_NEXT_VARIANT(type));
+    else if (TYPE_MAIN_VARIANT(type))
+      MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
+  }
 
   // Get the name and location early to assist debugging.
   const char *TypeName = GetNodeName(type);

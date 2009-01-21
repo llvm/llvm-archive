@@ -757,6 +757,8 @@ DIType DebugInfo::getOrCreateType(tree type) {
 DICompileUnit DebugInfo::createCompileUnit(const std::string &FullPath){
   // Get source file information.
   std::string Directory;
+  std::string FileName;
+  DirectoryAndFile(FullPath, Directory, FileName);
   
   // Set up Language number.
   unsigned LangTag;
@@ -780,7 +782,7 @@ DICompileUnit DebugInfo::createCompileUnit(const std::string &FullPath){
   else
     LangTag = DW_LANG_C89;
 
-  return DebugFactory.CreateCompileUnit(LangTag, FullPath, "",
+  return DebugFactory.CreateCompileUnit(LangTag, FileName, Directory, 
                                         version_string);
 }
 

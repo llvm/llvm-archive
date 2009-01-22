@@ -281,6 +281,8 @@ struct InsertPoolChecks : public FunctionPass {
     void addLSChecks(Value *V, Instruction *I, Function *F);
     void addIOLSChecks (Value *V, Instruction *I, Function *F);
     Value * getPoolHandle(const Value *V, Function *F);
+    Value * findSourcePointer (Value * P, bool & indexed, bool IOOkay = true);
+    bool isEligableForExactCheck (Value * P, bool IO, Instruction * I = 0);
 #endif  
 };
 }

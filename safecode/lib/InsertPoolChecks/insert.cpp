@@ -2036,10 +2036,10 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
 //  deallocated between the allocation and the check.  To support older code,
 //  we allow InsertPt to be 0; in that case, we act conservatively.
 //
-static inline bool
-isEligableForExactCheck (Value * Pointer,
-                         bool IOOkay,
-                         const Instruction * InsertPt = 0) {
+bool
+InsertPoolChecks::isEligableForExactCheck (Value * Pointer,
+                                           bool IOOkay,
+                                           Instruction * InsertPt) {
   //
   // Global variables and stack allocations are always safe.
   //
@@ -2047,14 +2047,22 @@ isEligableForExactCheck (Value * Pointer,
     return true;
 
   //
-  // Heap and I/O allocations must satisfy the following conditions:
-  //  1) The object cannot be deallocated between allocation and the check.
+  // Heap and I/O allocations must satisfy one of the following conditions:
+  //  o) The object is type-known.
+  //  o) The object cannot be deallocated between allocation and the check.
   //
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction()) {
-      if (InsertPt &&
-          (CI->getParent() == InsertPt->getParent()) &&
-          (!hasBadCall (InsertPt->getParent()))) {
+      //
+      // Determine whether the allocation can be used for a check at the given
+      // location.
+      //
+      DSNode * Node = getDSNode (Pointer, CI->getParent()->getParent());
+      bool HeapOkay = (Node && (!(Node->isNodeCompletelyFolded()))) ||
+                      (InsertPt &&
+                       (CI->getParent() == InsertPt->getParent()) &&
+                       (!hasBadCall (InsertPt->getParent())));
+      if (HeapOkay) {
         if ((CI->getCalledFunction()->getName() == "__vmalloc" || 
              CI->getCalledFunction()->getName() == "malloc" || 
              CI->getCalledFunction()->getName() == "kmalloc" || 
@@ -2140,8 +2148,10 @@ InsertPoolChecks::findCheckedPointer (Value * PointerOperand) {
 //  indexed - Flags whether the data flow went through a indexing operation
 //            (i.e. a GEP).  This value is always written.
 //
-static Value *
-findSourcePointer (Value * PointerOperand, bool & indexed, bool IOOkay = true) {
+Value *
+InsertPoolChecks::findSourcePointer (Value * PointerOperand,
+                                     bool & indexed,
+                                     bool IOOkay) {
   //
   // Attempt to look for the originally allocated object by scanning the data
   // flow up.

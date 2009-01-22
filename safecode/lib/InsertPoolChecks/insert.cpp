@@ -317,12 +317,12 @@ usedOnlyForLoadStore (Value * InitialValue) {
 //  function other than our run-time checks can modify the registered objects.
 //
 static bool
-hasBadCall (BasicBlock * BB) {
+hasBadCall (const BasicBlock * BB) {
   bool hasBadCall = false;
 
-  BasicBlock::iterator i = BB->begin(), e = BB->end();
+  BasicBlock::const_iterator i = BB->begin(), e = BB->end();
   for (; i != e; ++i) {
-    if (CallInst * CI = dyn_cast<CallInst>(i)) {
+    if (const CallInst * CI = dyn_cast<CallInst>(i)) {
       if (Function * F = CI->getCalledFunction()) {
         // Intrinsic functions do not change the set of recorded objects
         if (F->isIntrinsic()) continue;
@@ -2014,27 +2014,58 @@ InsertPoolChecks::addExactCheck (Instruction * GEP,
 //
 // Function: isEligableForExactCheck()
 //
+// Description:
+//  Determine whether a run-time check on the specified pointer can be done
+//  using an exactcheck().  This method does not search backwards in the data
+//  flow for the origin of the pointer; that is the responsbility of the
+//  caller.
+//
+// Inputs:
+//  Pointer  - The pointer for which an exactcheck is desired.
+//  IOOkay   - An exactcheck can be performed on I/O memory.
+//  InsertPt - The insertion point for where a check will be inserted.  This
+//             can be NULL.
+//
 // Return value:
 //  true  - This value is eligable for an exactcheck.
 //  false - This value is not eligable for an exactcheck.
 //
+// Notes:
+//  The insertion pointer (InsertPt) is needed because we heap allocations can
+//  only be used for exactchecks if we can prove that the heap object cannot be
+//  deallocated between the allocation and the check.  To support older code,
+//  we allow InsertPt to be 0; in that case, we act conservatively.
+//
 static inline bool
-isEligableForExactCheck (Value * Pointer, bool IOOkay) {
+isEligableForExactCheck (Value * Pointer,
+                         bool IOOkay,
+                         const Instruction * InsertPt = 0) {
+  //
+  // Global variables and stack allocations are always safe.
+  //
   if ((isa<AllocaInst>(Pointer)) || (isa<GlobalVariable>(Pointer)))
     return true;
 
+  //
+  // Heap and I/O allocations must satisfy the following conditions:
+  //  1) The object cannot be deallocated between allocation and the check.
+  //
   if (CallInst* CI = dyn_cast<CallInst>(Pointer)) {
     if (CI->getCalledFunction()) {
-      if ((CI->getCalledFunction()->getName() == "__vmalloc" || 
-           CI->getCalledFunction()->getName() == "malloc" || 
-           CI->getCalledFunction()->getName() == "kmalloc" || 
-           CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
-           CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
-        return true;
-      }
+      if (InsertPt &&
+          (CI->getParent() == InsertPt->getParent()) &&
+          (!hasBadCall (InsertPt->getParent()))) {
+        if ((CI->getCalledFunction()->getName() == "__vmalloc" || 
+             CI->getCalledFunction()->getName() == "malloc" || 
+             CI->getCalledFunction()->getName() == "kmalloc" || 
+             CI->getCalledFunction()->getName() == "kmem_cache_alloc" || 
+             CI->getCalledFunction()->getName() == "__alloc_bootmem")) {
+          return true;
+        }
 
-      if (IOOkay && (CI->getCalledFunction()->getName() == "__ioremap")) {
-        return true;
+        if (IOOkay && (CI->getCalledFunction()->getName() == "__ioremap")) {
+          return true;
+        }
       }
     }
   }
@@ -4045,7 +4076,10 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // If the pointer we're checking is known to be the beginning of a memory
   // object, then we know the load/store is good, and no check is needed.
   //
-  if (isEligableForExactCheck (V, false)) {
+  // We can also do this for heap objects, but we must be sure that the
+  // object is not freed before the load/store.
+  //
+  if (isEligableForExactCheck (V, false, I)) {
     ++SavedPoolChecks;
     return;
   }
@@ -4105,7 +4139,7 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   //
   // See if we can get away with an exactcheck().
   //
-  if (isEligableForExactCheck (SourcePointer, false)) {
+  if (isEligableForExactCheck (SourcePointer, false, I)) {
     addExactCheck2 (SourcePointer, V, getAllocationSize(SourcePointer, I), I);
     return;
   }

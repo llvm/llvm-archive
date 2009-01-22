@@ -4008,6 +4008,11 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // ensure that we are accessing the correct type (I/O or regular memory) of
   // object).
   //
+  // FIXME:
+  //  This optimization is not correct.  To be correct, it must ensure that
+  //  the object is not deallocated between the first check and this check.
+  //
+#if 0
   if (Node->isComplete() && (!(Node->isUnknownNode()))) {
     if (!(EnableIOChecks && Node->isIONode())) {
       if (findCheckedPointer(V)) {
@@ -4016,18 +4021,25 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
       }
     }
   }
+#endif
 
   //
   // If I can prove that this is a memory object (or I don't care about I/O
   // objects), then I can alleviate checks if there was already a bounds check
   // performed.
   //
+  // FIXME:
+  //  This optimization is not correct.  To be correct, it must ensure that
+  //  the object is not deallocated between the first check and this check.
+  //
+#if 0
   if ((!EnableIOChecks) || (isEligableForExactCheck (SourcePointer, false))) {
     if (findCheckedPointer(V)) {
       ++SavedPoolChecks;
       return;
     }
   }
+#endif
 
   //
   // If the pointer we're checking is known to be the beginning of a memory
@@ -4043,11 +4055,16 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // check could *prove* that the result of the indexing operation would only
   // be used to access memory, then elide the check.
   //
+  // FIXME:
+  //  This optimization is not correct.  To be correct, it must ensure that
+  //  the object is not deallocated between the first check and this check.
+#if 0
   if (MemCheckedValues.find (V) != MemCheckedValues.end()) {
     ++SavedPoolChecks;
     ++SavedLSGEPS;
     return;
   }
+#endif
 
   // Gather statistics for understanding why we don't remove as many checks
   // as we'd like.

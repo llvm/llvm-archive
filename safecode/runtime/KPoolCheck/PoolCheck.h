@@ -30,12 +30,12 @@ disable_irqs ()
 }
 
 static void
-enable_irqs (int is_set)
+enable_irqs (unsigned is_set)
 {
   llva_load_lif (is_set);
 }
 
-#define PCLOCK() int pc_i = disable_irqs();
+#define PCLOCK() unsigned pc_i = disable_irqs();
 #define PCLOCK2() pc_i = disable_irqs();
 #define PCUNLOCK() enable_irqs(pc_i);
 
@@ -102,6 +102,8 @@ extern "C" {
   void pchk_drop_obj(MetaPoolTy* MP, void* addr);
   void pchk_reg_pool(MetaPoolTy* MP, void* PoolID, void* MPLoc);
   void pchk_drop_pool(MetaPoolTy* MP, void* PoolID);
+  void pchk_reg_pages (MetaPoolTy* MP, void* addr, unsigned order);
+  void pchk_drop_pages (MetaPoolTy* MP, void* addr);
 
   /* Register and Deregister Integer State buffers */
   void pchk_reg_int (void* addr);

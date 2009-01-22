@@ -70,6 +70,13 @@
 #include "gstab.h"  /* for N_SLINE */
 #endif
 
+/* LLVM LOCAL begin get VECTOR_SAVE_INLINE defined */
+/* We think 1 is right for non-Darwin targets, but no one is sure - PR 3190 */
+#ifndef VECTOR_SAVE_INLINE
+#define VECTOR_SAVE_INLINE(x) (1)
+#endif
+/* LLVM LOCAL end */
+
 /* APPLE LOCAL begin pascal strings */
 #include "../../libcpp/internal.h"
 extern struct cpp_reader* parse_in;

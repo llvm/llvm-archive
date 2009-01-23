@@ -36,8 +36,8 @@ get_module_dependencies $MODULES
 for mod in $MODULE_DEPENDENCIES ; do
   msg 0 "Information for module '$mod'"
   if test "$VERBOSE" -gt 0 ; then
-    svn info $mod
+    vcs_info $mod
   else
-    svn info $mod | sed -e '/^Repository/d' -e '/^Node/d' -e '/^Sched/d'
+    vcs_info $mod | sed -e '/^Repository/d' -e '/^Node/d' -e '/^Sched/d'
   fi
 done

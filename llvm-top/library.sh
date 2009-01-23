@@ -46,10 +46,20 @@ fi
 
 # Define where subversion is. We assume by default its in the path.
 SVN=`which svn`
+GIT=`which git`
+
+vcs_info() {
+  local module="$1"
+  if test -d "$module/.svn" ; then
+    $SVN info "$module"
+  elif test -d "$module/.git" ; then
+    (cd "$module" && $GIT svn info)
+  fi
+}
 
 # A command to figure out the root of the SVN repository by asking for it from
 # the 'svn info' command. To use, execute it in a script with something like
-SVNROOT=`$SVN info . | grep 'Repository Root:' |sed -e 's/^Repository Root: //'`
+SVNROOT=`vcs_info . | grep 'Repository Root:' |sed -e 's/^Repository Root: //'`
 
 # Generate an informative message to the user based on the verbosity level
 msg() {
@@ -80,7 +90,7 @@ process_arguments() {
       --*)        OPTIONS_DASH_DASH="$OPTIONS_DASH_DASH $arg" ;;
        -*)        OPTIONS_DASH="$OPTIONS_DASH $arg" ;;
       *=*)        OPTIONS_ASSIGN="$OPTIONS_ASSIGN $arg" ;;
-      all)        MODULES=`svn list $SVNROOT | grep '/$' | sed -e 's#/##'` ;;
+      all)        MODULES=`$SVN list $SVNROOT | grep '/$' | sed -e 's#/##'` ;;
       [a-zA-Z]*)  MODULES="$MODULES $arg" ;;
         *)        die 1 "Unrecognized option: $arg" ;;
     esac
@@ -116,7 +126,7 @@ checkout_a_module() {
     quiet="-q"
   fi
   msg 3 "Running svn checkout for '$module'"
-  $SVN checkout $quiet $SVNROOT/$module/trunk $module || \
+  vcs_checkout $quiet $SVNROOT/$module/trunk $module || \
     die $? "Checkout of module '$module' failed."
   return 0
 }
@@ -225,3 +235,19 @@ build_a_module() {
   cd "$LLVM_TOP"
 }
 
+vcs_update() {
+  local module="${1:-.}"
+  if test -d "$module/.svn" ; then
+    $SVN update "$module"
+  elif test -d "$module/.git" ; then
+    (cd "$module" && $GIT svn rebase)
+  fi
+}
+
+vcs_checkout() {
+  if test -d ".svn" ; then
+    $SVN checkout $@
+  elif test -d ".git" ; then
+    $GIT svn clone $@
+  fi
+}

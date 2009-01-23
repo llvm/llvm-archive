@@ -35,7 +35,7 @@ get_module_dependencies $MODULES
 for mod in $MODULE_DEPENDENCIES ; do
   msg 1 "Updating module '$mod'"
   cd $mod
-  svn update
+  vcs_update
   cd $LLVM_TOP
 done
 

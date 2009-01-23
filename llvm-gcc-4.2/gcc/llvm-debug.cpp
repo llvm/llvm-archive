@@ -496,8 +496,9 @@ DIType DebugInfo::createEnumType(tree type) {
   llvm::DIArray EltArray =
     DebugFactory.GetOrCreateArray(&Elements[0], Elements.size());
   
-  expanded_location Loc;
-  std::string Filename, Directory;
+  expanded_location Loc = { NULL, 0 };
+  std::string Filename = "";
+  std::string Directory= "";
   if (TYPE_SIZE(type)) {
     // Incomplete enums do not  have any location info.
     Loc = GetNodeLocation(TREE_CHAIN(type), false);

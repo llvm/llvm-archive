@@ -642,7 +642,9 @@ void TreeToLLVM::StartFunctionBody() {
   // emitted; hack this by pretending they're static.  That will either
   // make them go away or emit a static definition that won't collide with
   // anything.
-  if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
+  if (DECL_LLVM_PRIVATE(FnDecl)) {
+    Fn->setLinkage(Function::PrivateLinkage);
+  } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
     Fn->setLinkage(Function::InternalLinkage);
   } else if (DECL_EXTERNAL(FnDecl) && 
              lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl))) {

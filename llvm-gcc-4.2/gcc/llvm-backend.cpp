@@ -592,6 +592,13 @@ void llvm_asm_file_end(void) {
     writeLLVMValues();
   }
 
+  if (!flag_pch_file 
+      && optimize && debug_info_level > DINFO_LEVEL_NONE && !TheDebugInfo) {
+    DebugInfo DI(TheModule);
+    DICompileUnit CU = DI.createCompileUnit(main_input_filename);
+    AttributeUsedGlobals.insert(CU.getGV());
+  }
+
   // Add an llvm.global_ctors global if needed.
   if (!StaticCtors.empty())
     CreateStructorsList(StaticCtors, "llvm.global_ctors");

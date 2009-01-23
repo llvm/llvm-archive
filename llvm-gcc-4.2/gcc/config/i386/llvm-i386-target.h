@@ -1,4 +1,5 @@
 /* LLVM LOCAL begin (ENTIRE FILE!)  */
+#ifdef ENABLE_LLVM
 /* Some target-specific hooks for gcc->llvm conversion
 Copyright (C) 2007 Free Software Foundation, Inc.
 Contributed by Anton Korobeynikov (asl@math.spbu.ru)
@@ -237,6 +238,6 @@ extern Value *llvm_x86_load_scalar_argument(Value *L,
   llvm_x86_load_scalar_argument((LOC),(TY),(SIZE),(BUILDER))
 
 #endif /* LLVM_ABI_H */
-
+#endif /* ENABLE_LLVM */
 /* LLVM LOCAL end (ENTIRE FILE!)  */
 

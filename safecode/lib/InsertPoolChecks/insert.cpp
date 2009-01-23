@@ -43,6 +43,10 @@ cl::opt<bool> EnableIOChecks  ("enable-iochecks", cl::Hidden,
                                cl::init(false),
                                cl::desc("Enable checks on I/O operations"));
 
+cl::opt<bool> EnableDefers  ("enable-defers", cl::Hidden,
+                             cl::init(false),
+                             cl::desc("Defer GEP bounds checks when possible"));
+
 #ifdef SVA_KSTACKS
 cl::opt<bool> EnableDSChecks  ("enable-dschecks", cl::Hidden,
                                cl::init(true),
@@ -171,6 +175,9 @@ static Statistic<> GEP2LS  ("safecode", "Number of loads that are only used for 
 static std::set<Value *> CheckedValues;
 static std::set<Value *> MemCheckedValues;
 
+// Map load/store instructions to the GEP that needs a bounds check
+static std::map<Instruction *, GetElementPtrInst *> LSBounds;
+
 // Map GEP instructions to their getBounds calls
 static std::map<Value *, Value * > GEPBounds;
 
@@ -214,12 +221,24 @@ isNodeRegistered (DSNode * Node) {
 //  Determines whether the given instruction is only used as the pointer
 //  operand for load and/or store instructions.
 //
+// Inputs:
+//  InitialValue - The value to inspect.
+//  directUse    - A flag indicating whether the caller only wants to know
+//                 about direct uses of the value.
+//
+// Outputs:
+//  Ins - The set of loads and stores that use the pointer (or a derived
+//  value thereof) *and* such value dominates the load/store.  Note that we
+//  *add* to this vector; we never clear it.
+//
 // Return value:
 //  true  - The value is only used as a pointer operand for loads/stores.
 //  false - The value has some other use besides as an operand for loads/stores.
 //
 static bool
-usedOnlyForLoadStore (Value * InitialValue) {
+usedOnlyForLoadStore (Value * InitialValue,
+                      std::vector<Instruction *> & Ins,
+                      bool directUse = false) {
   std::vector<Value *> Worklist;
   std::set<PHINode *>  VisitedPhis;
 
@@ -232,38 +251,37 @@ usedOnlyForLoadStore (Value * InitialValue) {
 
     Value::use_iterator i = V->use_begin(), e = V->use_end();
     for (; i != e; ++i) {
-      if (LoadInst * LI=dyn_cast<LoadInst>(i))
-        if (((LI->getPointerOperand()) == V))
+      //
+      // If the use is a load or store, then records the instruction for the
+      // caller.
+      //
+      if (LoadInst * LI=dyn_cast<LoadInst>(i)) {
+        if (((LI->getPointerOperand()) == V)) {
+          Ins.push_back (LI);
           continue;
-
-      if (StoreInst * SI=dyn_cast<StoreInst>(i))
-        if (((SI->getOperand(0)) == V) && ((SI->getOperand(1)) != V))
-          continue;
-
-      if (isa<GetElementPtrInst>(i)) {
-        Value * ins = dyn_cast<Value>(i);
-        Worklist.push_back (ins);
-        continue;
+        }
       }
 
-      if (isa<SelectInst>(i)) {
-        Value * ins = dyn_cast<Value>(i);
-        Worklist.push_back (ins);
-        continue;
+      if (StoreInst * SI=dyn_cast<StoreInst>(i)) {
+        if (((SI->getOperand(0)) == V) && ((SI->getOperand(1)) != V)) {
+          Ins.push_back (SI);
+          continue;
+        }
       }
 
+      //
+      // Comparing the pointer to some other value doesn't change its value,
+      // so just ignore it.
+      //
       if (isa<SetCondInst>(i)) {
         continue;
       }
 
-      if (PHINode * Phi = dyn_cast<PHINode>(i)) {
-        if (VisitedPhis.find(Phi) == VisitedPhis.end()) {
-          VisitedPhis.insert (Phi);
-          Worklist.push_back (Phi);
-        }
-        continue;
-      }
-
+      //
+      // Casts and certain call instructions don't modify the pointer's value
+      // or deallocate the object to which it points.  It still counts as a
+      // direct use, so scan through it.
+      //
       if (CastInst * CastI = dyn_cast<CastInst>(i)) {
         if (isa<PointerType>(CastI->getType())) {
           Value * ins = dyn_cast<Value>(i);
@@ -297,6 +315,33 @@ usedOnlyForLoadStore (Value * InitialValue) {
             if ((CI->getOperand(1) == V) || (CI->getOperand(2) == V))
               continue;
           }
+        }
+      }
+
+      //
+      // GEPs, selects, and phis generate a value that is different from the
+      // original pointer.  In that case, only scan through them if the caller
+      // wants indirect uses.
+      //
+      if (!directUse) {
+        if (isa<GetElementPtrInst>(i)) {
+          Value * ins = dyn_cast<Value>(i);
+          Worklist.push_back (ins);
+          continue;
+        }
+
+        if (isa<SelectInst>(i)) {
+          Value * ins = dyn_cast<Value>(i);
+          Worklist.push_back (ins);
+          continue;
+        }
+
+        if (PHINode * Phi = dyn_cast<PHINode>(i)) {
+          if (VisitedPhis.find(Phi) == VisitedPhis.end()) {
+            VisitedPhis.insert (Phi);
+            Worklist.push_back (Phi);
+          }
+          continue;
         }
       }
 
@@ -1386,7 +1431,8 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
 
   // Determine whether the destination value is always used as a pointer
   // operand in a load and/or store
-  bool OnlyLoadStore = usedOnlyForLoadStore(Dest);
+  std::vector<Instruction *> LoadsAndStores;
+  bool OnlyLoadStore = usedOnlyForLoadStore(Dest, LoadsAndStores);
 
   //
   // Cast the pool handle, source and destination pointers into the correct
@@ -2258,6 +2304,56 @@ InsertPoolChecks::getAllocationSize (Value * I, Instruction * InsertPt) {
   }
 
   return 0;
+}
+
+//
+// Method: deferBoundsCheck()
+//
+// Description:
+//  Determine whether the specified GEP instruction is only used for loads,
+//  stores, and uses that don't require bounds checking.  If so, then defer the
+//  check until the actual load/store occurs.
+//
+// Return value:
+//  true - The run-time check can be deferred until the loads and stores that
+//         use it.
+//  false - The run-time check cannot be deferred.
+//
+bool
+InsertPoolChecks::deferBoundsCheck (GetElementPtrInst * GEP) {
+  // Don't defer anything unless the option is enabled
+  if (!EnableDefers) return false;
+
+  //
+  // Determine whether the GEP is type-known.  If so, then don't defer the
+  // run-time check since type-known pointers are not subjected to load/store
+  // checks.
+  //
+  DSNode * Node = getDSNode (GEP, GEP->getParent()->getParent());
+  if ((!Node->isNodeCompletelyFolded()))
+    return false;
+
+  //
+  // Determine whether the GEP is only used for loads and/or stores.
+  // If so, record it in a global data structure so that the load/store checks
+  // can determine which kind of check to use.
+  //
+  std::vector<Instruction *> LoadsStores;
+  if (usedOnlyForLoadStore (GEP, LoadsStores, true)) {
+    while (LoadsStores.size()) {
+      Instruction * I = LoadsStores.back();
+      LoadsStores.pop_back();
+      if (LSBounds.find (I) != LSBounds.end())
+        LSBounds.insert (std::make_pair(I, GEP));
+    }
+
+    return true;
+  }
+
+  //
+  // There are uses of the GEP other than loads and stores.
+  //
+  return false;
 }
 
 //
@@ -3328,6 +3424,13 @@ void InsertPoolChecks::handleGetElementPtr(GetElementPtrInst *MAI) {
     if (insertExactCheck (MAI))
       return;
 
+    //
+    // Attempt to defer the run-time check to the actual loads and stores that
+    // use the result of the GEP.
+    //
+    if (deferBoundsCheck (MAI))
+      return;
+
     //Exact poolchecks
     if (const PointerType *PT = dyn_cast<PointerType>(MAI->getPointerOperand()->getType())) {
 #if 0
@@ -4013,6 +4116,16 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   }
 
   if (!needsCheck) return;
+
+  //
+  // If the value to be checked was from a defered GEP check, then perform
+  // a bounds check instead of a regular load/store check.
+  //
+  if (LSBounds.find (I) != LSBounds.end()) {
+    GetElementPtrInst * GEP = LSBounds[I];
+    insertBoundsCheck (GEP, GEP->getPointerOperand(), V, I);
+    return;
+  }
 
   //
   // We will perform checks on incomplete or unknown nodes, but we must accept

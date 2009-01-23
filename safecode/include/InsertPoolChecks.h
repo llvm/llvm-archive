@@ -261,6 +261,7 @@ struct InsertPoolChecks : public FunctionPass {
     void insertFunctionCheck(CallInst* CI);
     void insertICCheck (Value * Pointer, Instruction * InsertPt);
     Value * insertBoundsCheck (Instruction * , Value *, Value *, Instruction *);
+    bool deferBoundsCheck (GetElementPtrInst * GEP);
     bool AggregateGEPs (GetElementPtrInst * GEP, std::set<Instruction *> & GEPs);
     bool findCheckedPointer (Value * PointerOperand);
     void addHeapRegs (Module & M);

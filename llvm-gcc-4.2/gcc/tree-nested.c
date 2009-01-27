@@ -1732,7 +1732,7 @@ static struct nesting_info *with_chain_worklist;
 
 static void
 initialize_chains (struct nesting_info *root) {
-  do
+  while (root)
     {
       if (root->inner)
         initialize_chains (root->inner);
@@ -1747,7 +1747,6 @@ initialize_chains (struct nesting_info *root) {
 
       root = root->next;
     }
-  while (root);
 }
 
 /* Helper for propagate_chains.  Set the chain flag on a function and all of
@@ -1972,20 +1971,11 @@ convert_all_function_calls (struct nesting_info *root)
       walk_function (convert_tramp_reference, root);
       walk_function (convert_call_expr, root);
 
-      /* LLVM LOCAL begin */
-      /* FIXME: Keep the LLVM-way? */
-#ifdef ENABLE_LLVM
-      gcc_assert (!root->outer ||
-                  DECL_NO_STATIC_CHAIN (root->context) ==
-                  !(root->chain_decl || root->chain_field));
-#else
       /* If the function does not use a static chain, then remember that.  */
       if (root->outer && !root->chain_decl && !root->chain_field)
 	DECL_NO_STATIC_CHAIN (root->context) = 1;
       else
 	gcc_assert (!DECL_NO_STATIC_CHAIN (root->context));
-#endif
-      /* LLVM LOCAL end */
 
       root = root->next;
     }

@@ -66,6 +66,7 @@ private:
   std::vector<DIDescriptor> RegionStack;
                                         // Stack to track declarative scopes.
   
+  std::map<tree_node *, DIDescriptor> RegionMap;
 public:
   DebugInfo(Module *m);
 
@@ -126,7 +127,9 @@ public:
 
   /// createCompileUnit - Create a new compile unit.
   DICompileUnit createCompileUnit(const std::string &FullPath);
-  
+
+  /// findRegion - Find tree_node N's region.
+  DIDescriptor findRegion(tree_node *n);
 };
 
 } // end namespace llvm

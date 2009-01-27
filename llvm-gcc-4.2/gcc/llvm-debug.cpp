@@ -214,39 +214,51 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   const char *FnName = GetNodeName(FnDecl);
   const char *LinkageName = getLinkageName(FnDecl);
 
-  tree func_type = TREE_TYPE(FnDecl);
-  llvm::SmallVector<llvm::DIDescriptor, 16> ArgTys;
-  // Add the result type at least.
-  ArgTys.push_back(getOrCreateType(TREE_TYPE(func_type)));
-
-  // Set up remainder of arguments.
-  for (tree arg = TYPE_ARG_TYPES(func_type); arg; arg = TREE_CHAIN(arg)) {
-    tree formal_type = TREE_VALUE(arg);
-    if (formal_type == void_type_node) break;
-   ArgTys.push_back(getOrCreateType(formal_type));
-  }
-      
-  llvm::DIArray FnTypeArray =
-    DebugFactory.GetOrCreateArray(&ArgTys[0], ArgTys.size());
-
-  llvm::DICompositeType  FnTy = 
-    DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                     MainCompileUnit, "", 
-                                     MainCompileUnit, 0, 0, 0, 0, 0,
-                                     llvm::DIType(), FnTypeArray);
-
-  DISubprogram SP = DebugFactory.CreateSubprogram(MainCompileUnit, 
-                                                  FnName, FnName, LinkageName,
-                                                  MainCompileUnit, CurLineNo, 
-                                                  FnTy, 
-                                                  Fn->hasInternalLinkage(),
-                                                  true /*definition*/,
-                                                  &Filename, &Directory);
+  DISubprogram SP = 
+    DebugFactory.CreateSubprogram(findRegion(FnDecl),
+                                  FnName, FnName, LinkageName,
+                                  MainCompileUnit, CurLineNo, 
+                                  getOrCreateType(TREE_TYPE(FnDecl)),
+                                  Fn->hasInternalLinkage(),
+                                  true /*definition*/,
+                                  &Filename, &Directory);
 
   DebugFactory.InsertSubprogramStart(SP, CurBB);
 
   // Push function on region stack.
   RegionStack.push_back(SP);
+  RegionMap[FnDecl] = SP;
+}
+
+  /// findRegion - Find tree_node N's region.
+DIDescriptor DebugInfo::findRegion(tree Node) {
+  if (Node == NULL_TREE)
+    return MainCompileUnit;
+
+  std::map<tree_node *, DIDescriptor>::iterator I = RegionMap.find(Node);
+  if (I != RegionMap.end())
+    return I->second;
+
+  if (TYPE_P (Node)) {
+    if (TYPE_CONTEXT (Node))
+      return findRegion (TYPE_CONTEXT(Node));
+  } else if (DECL_P (Node)) {
+    tree decl = Node;
+    tree context = NULL_TREE;
+    if (TREE_CODE (decl) != FUNCTION_DECL || ! DECL_VINDEX (decl))
+      context = DECL_CONTEXT (decl);
+    else
+      context = TYPE_MAIN_VARIANT
+        (TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (decl)))));
+    
+    if (context && !TYPE_P (context))
+      context = NULL_TREE;
+    if (context != NULL_TREE)
+      return findRegion(context);
+  }
+
+  // Otherwise main compile unit covers everything.
+  return MainCompileUnit;
 }
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
@@ -397,7 +409,7 @@ DIType DebugInfo::createMethodType(tree type) {
     DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                          MainCompileUnit, "", 
+                                          findRegion(type), "", 
                                           MainCompileUnit, 0, 0, 0, 0, 0,
                                           llvm::DIType(), EltTypeArray);
 }
@@ -412,7 +424,7 @@ DIType DebugInfo::createPointerType(tree type) {
                   TREE_CODE(type) == BLOCK_POINTER_TYPE) ?
     DW_TAG_pointer_type :
     DW_TAG_reference_type;
-  return  DebugFactory.CreateDerivedType(Tag, MainCompileUnit, "", 
+  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), "", 
                                          MainCompileUnit, 0 /*line no*/, 
                                          NodeSizeInBits(type),
                                          NodeAlignInBits(type),
@@ -466,7 +478,7 @@ DIType DebugInfo::createArrayType(tree type) {
     DebugFactory.GetOrCreateArray(&Subscripts[0], Subscripts.size());
   
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
-                                          MainCompileUnit, "", 
+                                          findRegion(type), "", 
                                           MainCompileUnit,
                                           0, NodeSizeInBits(type), 
                                           NodeAlignInBits(type), 0, 0,
@@ -500,7 +512,7 @@ DIType DebugInfo::createEnumType(tree type) {
     DirectoryAndFile(Loc.file, Directory, Filename);
   }
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_enumeration_type,
-                                          MainCompileUnit, GetNodeName(type), 
+                                          findRegion(type), GetNodeName(type), 
                                           MainCompileUnit, Loc.line,
                                           NodeSizeInBits(type), 
                                           NodeAlignInBits(type), 0, 0,
@@ -526,7 +538,9 @@ DIType DebugInfo::createStructType(tree type) {
   std::string Filename, Directory;
   DirectoryAndFile(Loc.file, Directory, Filename);
   llvm::DIType FwdDecl =
-    DebugFactory.CreateCompositeType(Tag, MainCompileUnit, GetNodeName(type),
+    DebugFactory.CreateCompositeType(Tag, 
+                                     findRegion(type),
+                                     GetNodeName(type),
                                      MainCompileUnit, Loc.line, 
                                      0, 0, 0, llvm::DIType::FlagFwdDecl,
                                      llvm::DIType(), llvm::DIArray(),
@@ -554,7 +568,7 @@ DIType DebugInfo::createStructType(tree type) {
       // FIXME : name, size, align etc...
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 
-                                       MainCompileUnit,"", 
+                                       findRegion(type),"", 
                                        MainCompileUnit, 0,0,0, 
                                        getInt64(BINFO_OFFSET(BInfo), 0),
                                        0, BaseClass);
@@ -595,7 +609,7 @@ DIType DebugInfo::createStructType(tree type) {
         Flags = llvm::DIType::FlagPrivate;
       
       DIType DTy =
-        DebugFactory.CreateDerivedType(DW_TAG_member, MainCompileUnit, 
+        DebugFactory.CreateDerivedType(DW_TAG_member, findRegion(Member),
                                        MemberName, MainCompileUnit,
                                        MemLoc.line, NodeSizeInBits(Member),
                                        NodeAlignInBits(FieldNodeType),
@@ -622,7 +636,7 @@ DIType DebugInfo::createStructType(tree type) {
     const char *LinkageName = getLinkageName(Member);
     DIType SPTy = getOrCreateType(TREE_TYPE(Member));
     DISubprogram SP = 
-      DebugFactory.CreateSubprogram(MainCompileUnit, MemberName, MemberName,
+      DebugFactory.CreateSubprogram(findRegion(Member), MemberName, MemberName,
                                     LinkageName, MainCompileUnit, 
                                     MemLoc.line, SPTy, false, false,
                                     &MemFilename, &MemDirectory);
@@ -634,7 +648,7 @@ DIType DebugInfo::createStructType(tree type) {
     DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
   
   llvm::DIType RealDecl =
-    DebugFactory.CreateCompositeType(Tag, MainCompileUnit, 
+    DebugFactory.CreateCompositeType(Tag, findRegion(type),
                                      GetNodeName(type),
                                      MainCompileUnit, Loc.line, 
                                      NodeSizeInBits(type), NodeAlignInBits(type),
@@ -657,7 +671,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
       expanded_location TypeDefLoc = GetNodeLocation(Name);
       std::string Filename, Directory;
       DirectoryAndFile(TypeDefLoc.file, Directory, Filename);
-      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, MainCompileUnit,
+      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(type),
                                           GetNodeName(Name), 
                                           MainCompileUnit, TypeDefLoc.line,
                                           0 /*size*/,
@@ -673,7 +687,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
 
   if (TYPE_VOLATILE(type)) {
     Ty = DebugFactory.CreateDerivedType(DW_TAG_volatile_type, 
-                                        MainCompileUnit, "", 
+                                        findRegion(type), "", 
                                         MainCompileUnit, 0 /*line no*/, 
                                         NodeSizeInBits(type),
                                         NodeAlignInBits(type),
@@ -685,7 +699,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
 
   if (TYPE_READONLY(type)) 
     Ty =  DebugFactory.CreateDerivedType(DW_TAG_const_type, 
-                                         MainCompileUnit, "", 
+                                         findRegion(type), "", 
                                          MainCompileUnit, 0 /*line no*/, 
                                          NodeSizeInBits(type),
                                          NodeAlignInBits(type),

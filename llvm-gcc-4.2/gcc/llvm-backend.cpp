@@ -833,7 +833,9 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   GlobalValue::LinkageTypes Linkage;
 
   // A weak alias has TREE_PUBLIC set but not the other bits.
-  if (DECL_WEAK(decl))
+  if (DECL_LLVM_PRIVATE(decl))
+    Linkage = GlobalValue::PrivateLinkage;
+  else if (DECL_WEAK(decl))
     Linkage = GlobalValue::WeakLinkage;
   else if (!TREE_PUBLIC(decl))
     Linkage = GlobalValue::InternalLinkage;
@@ -1085,7 +1087,10 @@ void emit_global_to_llvm(tree decl) {
     GV->setThreadLocal(true);
 
   // Set the linkage.
-  if (!TREE_PUBLIC(decl)) {
+  if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
+      && DECL_LLVM_PRIVATE(decl)) {
+    GV->setLinkage(GlobalValue::PrivateLinkage);
+  } else if (!TREE_PUBLIC(decl)) {
     GV->setLinkage(GlobalValue::InternalLinkage);
   } else if (DECL_WEAK(decl) || DECL_ONE_ONLY(decl)) {
     GV->setLinkage(GlobalValue::WeakLinkage);

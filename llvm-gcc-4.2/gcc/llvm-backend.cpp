@@ -131,6 +131,9 @@ void llvm_initialize_backend(void) {
 
   // Allow targets to specify PIC options and other stuff to the corresponding
   // LLVM backends.
+#ifdef LLVM_SET_ARCH_OPTIONS
+  LLVM_SET_ARCH_OPTIONS(Args);
+#endif
 #ifdef LLVM_SET_TARGET_OPTIONS
   LLVM_SET_TARGET_OPTIONS(Args);
 #endif

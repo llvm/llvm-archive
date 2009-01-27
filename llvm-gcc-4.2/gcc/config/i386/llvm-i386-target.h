@@ -89,6 +89,10 @@ extern int ix86_regparm;
     }                                                           \
   }
 
+#define LLVM_SET_ARCH_OPTIONS(argvec)                           \
+  if (TARGET_NO_RED_ZONE)                                       \
+    argvec.push_back("--disable-red-zone");
+
 #ifdef LLVM_ABI_H
 
 /* On x86-32 objects containing SSE vectors are 16 byte aligned, everything

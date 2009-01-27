@@ -198,11 +198,6 @@ DebugInfo::DebugInfo(Module *m)
 , PrevFullPath("")
 , PrevLineNo(0)
 , PrevBB(NULL)
-, StopPointFn(NULL)
-, FuncStartFn(NULL)
-, RegionStartFn(NULL)
-, RegionEndFn(NULL)
-, DeclareFn(NULL)
 , RegionStack()
 {
   MainCompileUnit = createCompileUnit(main_input_filename);

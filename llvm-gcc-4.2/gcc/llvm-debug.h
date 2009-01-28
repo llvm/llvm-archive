@@ -108,6 +108,27 @@ public:
   /// necessary.
   DIType getOrCreateType(tree_node *type);
 
+  /// createBasicType - Create BasicType.
+  DIType createBasicType(tree_node *type);
+
+  /// createMethodType - Create MethodType.
+  DIType createMethodType(tree_node *type);
+
+  /// createPointerType - Create PointerType.
+  DIType createPointerType(tree_node *type);
+
+  /// createArrayType - Create ArrayType.
+  DIType createArrayType(tree_node *type);
+
+  /// createEnumType - Create EnumType.
+  DIType createEnumType(tree_node *type);
+
+  /// createStructType - Create StructType for struct or union or class.
+  DIType createStructType(tree_node *type);
+
+  /// createVarinatType - Create variant type or return MainTy.
+  DIType createVariantType(tree_node *type, DIType MainTy);
+
   /// createCompileUnit - Create a new compile unit.
   DICompileUnit createCompileUnit(const std::string &FullPath);
   

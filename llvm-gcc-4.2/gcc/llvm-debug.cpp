@@ -216,6 +216,7 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   expanded_location Loc = GetNodeLocation(FnDecl, false);
   std::string Filename, Directory;
   DirectoryAndFile(Loc.file, Directory, Filename);
+  const char *FnName = GetNodeName(FnDecl);
   const char *LinkageName = getLinkageName(FnDecl);
 
   tree func_type = TREE_TYPE(FnDecl);
@@ -240,8 +241,7 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                      llvm::DIType(), FnTypeArray);
 
   DISubprogram SP = DebugFactory.CreateSubprogram(MainCompileUnit, 
-                                                  Fn->getNameStr(),
-                                                  Fn->getNameStr(), LinkageName,
+                                                  FnName, FnName, LinkageName,
                                                   MainCompileUnit, CurLineNo, 
                                                   FnTy, 
                                                   Fn->hasInternalLinkage(),
@@ -619,10 +619,11 @@ DIType DebugInfo::createStructType(tree type) {
     DirectoryAndFile(MemLoc.file, MemDirectory, MemFilename);
     
     const char *MemberName = GetNodeName(Member);                
+    const char *LinkageName = getLinkageName(Member);
     DIType SPTy = getOrCreateType(TREE_TYPE(Member));
     DISubprogram SP = 
       DebugFactory.CreateSubprogram(MainCompileUnit, MemberName, MemberName,
-                                    MemberName, MainCompileUnit, 
+                                    LinkageName, MainCompileUnit, 
                                     MemLoc.line, SPTy, false, false,
                                     &MemFilename, &MemDirectory);
     

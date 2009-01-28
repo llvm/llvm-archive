@@ -21461,6 +21461,8 @@ cp_parser_block_literal_expr (cp_parser* parser)
   block_helper_function_decl = build_helper_func_decl (build_block_helper_name (unique_count),
 						       ftype);
   DECL_CONTEXT (block_helper_function_decl) = current_function_decl;
+  /* LLVM LOCAL 6530487 - blocks helper functions never need a static chain */
+  DECL_NO_STATIC_CHAIN (block_helper_function_decl) = 1;
   cur_block->helper_func_decl = block_helper_function_decl;
 
   DECL_ARGUMENTS (block_helper_function_decl) = arglist;

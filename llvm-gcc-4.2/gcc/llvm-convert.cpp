@@ -1183,11 +1183,10 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case WITH_SIZE_EXPR:
     // The address is the address of the operand.
     return EmitLV(TREE_OPERAND(exp, 0));
-  case INDIRECT_REF: {
+  case INDIRECT_REF:
     // The lvalue is just the address.
-    tree Op = TREE_OPERAND(exp, 0);
-    return LValue(Emit(Op, 0), expr_align(Op) / 8);
-  }
+    return LValue(Emit(TREE_OPERAND(exp, 0), 0),
+                  expr_align(exp) / 8);
   }
 }
 

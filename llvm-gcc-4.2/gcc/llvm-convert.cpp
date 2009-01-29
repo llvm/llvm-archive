@@ -6090,7 +6090,7 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
   tree FieldDecl = TREE_OPERAND(exp, 1); 
-  unsigned LVAlign = DECL_PACKED(FieldDecl) ? 1 : StructAddrLV.Alignment;
+  unsigned LVAlign = StructAddrLV.Alignment;
  
   assert((TREE_CODE(DECL_CONTEXT(FieldDecl)) == RECORD_TYPE ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE  ||
@@ -6128,6 +6128,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
       unsigned Offset = SL->getElementOffset(MemberIndex);
       BitStart -= Offset * 8;
+      
+      // If the base is known to be 8-byte aligned, and we're adding a 4-byte
+      // offset, the field is known to be 4-byte aligned.
       LVAlign = MinAlign(LVAlign, Offset);
     }
     
@@ -6214,6 +6217,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       Offset = Builder.CreateAdd(Offset,
         ConstantInt::get(Offset->getType(), ByteOffset));
       BitStart -= ByteOffset*8;
+      // If the base is known to be 8-byte aligned, and we're adding a 4-byte
+      // offset, the field is known to be 4-byte aligned.
       LVAlign = MinAlign(LVAlign, ByteOffset);
     }
 

@@ -6087,6 +6087,70 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
   return Result;
 }
 
+Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
+  tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
+
+  const Type *OrigPtrTy = FieldPtr->getType();
+  const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
+  
+  Function *Fn = Intrinsic::getDeclaration(TheModule, 
+                                           Intrinsic::ptr_annotation,
+                                           &SBP, 1);
+  
+  // Get file and line number.  FIXME: Should this be for the decl or the
+  // use.  Is there a location info for the use?
+  Constant *LineNo = ConstantInt::get(Type::Int32Ty,
+                                      DECL_SOURCE_LINE(FieldDecl));
+  Constant *File = ConvertMetadataStringToGV(DECL_SOURCE_FILE(FieldDecl));
+  
+  File = TheFolder->CreateBitCast(File, SBP);
+  
+  // There may be multiple annotate attributes. Pass return of lookup_attr 
+  //  to successive lookups.
+  while (AnnotateAttr) {
+    // Each annotate attribute is a tree list.
+    // Get value of list which is our linked list of args.
+    tree args = TREE_VALUE(AnnotateAttr);
+    
+    // Each annotate attribute may have multiple args.
+    // Treat each arg as if it were a separate annotate attribute.
+    for (tree a = args; a; a = TREE_CHAIN(a)) {
+      // Each element of the arg list is a tree list, so get value
+      tree val = TREE_VALUE(a);
+      
+      // Assert its a string, and then get that string.
+      assert(TREE_CODE(val) == STRING_CST &&
+             "Annotate attribute arg should always be a string");
+      
+      Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
+      
+      // We can not use the IRBuilder because it will constant fold away
+      // the GEP that is critical to distinguish between an annotate 
+      // attribute on a whole struct from one on the first element of the
+      // struct.
+      BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP, 
+                                                  FieldPtr->getNameStart());
+      Builder.Insert(CastFieldPtr);
+      
+      Value *Ops[4] = {
+        CastFieldPtr, BitCastToType(strGV, SBP), 
+        File,  LineNo
+      };
+      
+      const Type* FieldPtrType = FieldPtr->getType();
+      FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
+      FieldPtr = BitCastToType(FieldPtr, FieldPtrType);
+    }
+    
+    // Get next annotate attribute.
+    AnnotateAttr = TREE_CHAIN(AnnotateAttr);
+    if (AnnotateAttr)
+      AnnotateAttr = lookup_attribute("annotate", AnnotateAttr);
+  }
+  return FieldPtr;
+}
+
+
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
   tree FieldDecl = TREE_OPERAND(exp, 1); 
@@ -6137,67 +6201,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // If the FIELD_DECL has an annotate attribute on it, emit it.
     
     // Handle annotate attribute on global.
-    if (tree AnnotateAttr = 
-        lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl))) {
-      
-      const Type *OrigPtrTy = FieldPtr->getType();
-      const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
-      
-      Function *Fn = Intrinsic::getDeclaration(TheModule, 
-                                               Intrinsic::ptr_annotation,
-                                               &SBP, 1);
-      
-      // Get file and line number.  FIXME: Should this be for the decl or the
-      // use.  Is there a location info for the use?
-      Constant *LineNo = ConstantInt::get(Type::Int32Ty,
-                                          DECL_SOURCE_LINE(FieldDecl));
-      Constant *File = ConvertMetadataStringToGV(DECL_SOURCE_FILE(FieldDecl));
-      
-      File = TheFolder->CreateBitCast(File, SBP);
-      
-      // There may be multiple annotate attributes. Pass return of lookup_attr 
-      //  to successive lookups.
-      while (AnnotateAttr) {
-        // Each annotate attribute is a tree list.
-        // Get value of list which is our linked list of args.
-        tree args = TREE_VALUE(AnnotateAttr);
-        
-        // Each annotate attribute may have multiple args.
-        // Treat each arg as if it were a separate annotate attribute.
-        for (tree a = args; a; a = TREE_CHAIN(a)) {
-          // Each element of the arg list is a tree list, so get value
-          tree val = TREE_VALUE(a);
-          
-          // Assert its a string, and then get that string.
-          assert(TREE_CODE(val) == STRING_CST &&
-                 "Annotate attribute arg should always be a string");
-          
-          Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
-          
-          // We can not use the IRBuilder because it will constant fold away
-          // the GEP that is critical to distinguish between an annotate 
-          // attribute on a whole struct from one on the first element of the
-          // struct.
-          BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP, 
-                                                      FieldPtr->getNameStart());
-          Builder.Insert(CastFieldPtr);
-          
-          Value *Ops[4] = {
-            CastFieldPtr, BitCastToType(strGV, SBP), 
-            File,  LineNo
-          };
-          
-          const Type* FieldPtrType = FieldPtr->getType();
-          FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
-          FieldPtr = BitCastToType(FieldPtr, FieldPtrType);
-        }
-        
-        // Get next annotate attribute.
-        AnnotateAttr = TREE_CHAIN(AnnotateAttr);
-        if (AnnotateAttr)
-          AnnotateAttr = lookup_attribute("annotate", AnnotateAttr);
-      }
-    }
+    if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))
+      FieldPtr = EmitFieldAnnotation(FieldPtr, FieldDecl);
   } else {
     Value *Offset = Emit(field_offset, 0);
 

@@ -1108,14 +1108,14 @@ void emit_global_to_llvm(tree decl) {
     }
     
     // Set the alignment for the global if one of the following condition is met
-    // 1) DECL_ALIGN_UNIT is better than the alignment as per ABI specification
+    // 1) DECL_ALIGN is better than the alignment as per ABI specification
     // 2) DECL_ALIGN is set by user.
-    if (DECL_ALIGN_UNIT(decl)) {
+    if (DECL_ALIGN(decl)) {
       unsigned TargetAlign =
         getTargetData().getABITypeAlignment(GV->getType()->getElementType());
       if (DECL_USER_ALIGN(decl) ||
-          TargetAlign < (unsigned)DECL_ALIGN_UNIT(decl))
-        GV->setAlignment(DECL_ALIGN_UNIT(decl));
+          8 * TargetAlign < (unsigned)DECL_ALIGN(decl))
+        GV->setAlignment(DECL_ALIGN(decl) / 8);
     }
 
     // Handle used decls

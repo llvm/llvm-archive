@@ -1161,15 +1161,15 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // Constants.
   case LABEL_DECL: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-    return LValue(Ptr, DECL_ALIGN_UNIT(exp));
+    return LValue(Ptr, DECL_ALIGN(exp) / 8);
   }
   case COMPLEX_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN_UNIT(TREE_TYPE(exp)));
+    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
   }
   case STRING_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_STRING_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN_UNIT(TREE_TYPE(exp)));
+    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
   }
 
   // Type Conversion.
@@ -1700,12 +1700,12 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   unsigned Alignment = 0; // Alignment in bytes.
 
   // Set the alignment for the local if one of the following condition is met
-  // 1) DECL_ALIGN_UNIT is better than the alignment as per ABI specification
+  // 1) DECL_ALIGN is better than the alignment as per ABI specification
   // 2) DECL_ALIGN is set by user.
-  if (DECL_ALIGN_UNIT(decl)) {
+  if (DECL_ALIGN(decl)) {
     unsigned TargetAlign = getTargetData().getABITypeAlignment(Ty);
-    if (DECL_USER_ALIGN(decl) || TargetAlign < (unsigned)DECL_ALIGN_UNIT(decl))
-      Alignment = DECL_ALIGN_UNIT(decl);
+    if (DECL_USER_ALIGN(decl) || 8 * TargetAlign < (unsigned)DECL_ALIGN(decl))
+      Alignment = DECL_ALIGN(decl) / 8;
   }
 
   const char *Name;      // Name of variable
@@ -5945,9 +5945,9 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
   const PointerType *PTy = PointerType::getUnqual(Ty);
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
-  if (DECL_ALIGN_UNIT(exp)) {
-    if (DECL_USER_ALIGN(exp) || Alignment < (unsigned)DECL_ALIGN_UNIT(exp))
-      Alignment = DECL_ALIGN_UNIT(exp);
+  if (DECL_ALIGN(exp)) {
+    if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
+      Alignment = DECL_ALIGN(exp) / 8;
   }
 
   return LValue(BitCastToType(Decl, PTy), Alignment);
@@ -6187,8 +6187,8 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // is required to be.  Try to round up our alignment info.
     if (BitStart == 0 && // llvm pointer points to it.
         !isBitfield(FieldDecl) &&  // bitfield computation might offset pointer.
-        DECL_ALIGN_UNIT(FieldDecl))
-      LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN_UNIT(FieldDecl)));
+        DECL_ALIGN(FieldDecl))
+      LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN(FieldDecl)) / 8);
     
     // If the FIELD_DECL has an annotate attribute on it, emit it.
     if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))

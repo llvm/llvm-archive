@@ -1161,7 +1161,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // Constants.
   case LABEL_DECL: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-    return LValue(Ptr, DECL_ALIGN(exp) / 8);
+    return LValue(Ptr, DECL_ALIGN_UNIT(exp));
   }
   case COMPLEX_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp);
@@ -6198,9 +6198,15 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       LVAlign = MinAlign(LVAlign, Offset);
     }
     
-    // If the FIELD_DECL has an annotate attribute on it, emit it.
+    // If this field is at a constant offset, if the LLVM pointer really points
+    // to it, then we know that the pointer is at least as aligned as the field
+    // is required to be.  Try to round up our alignment info.
+    if (BitStart == 0 && // llvm pointer points to it.
+        !isBitfield(FieldDecl) &&  // bitfield computation might offset pointer.
+        DECL_ALIGN_UNIT(FieldDecl))
+      LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN_UNIT(FieldDecl)));
     
-    // Handle annotate attribute on global.
+    // If the FIELD_DECL has an annotate attribute on it, emit it.
     if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))
       FieldPtr = EmitFieldAnnotation(FieldPtr, FieldDecl);
   } else {

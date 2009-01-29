@@ -2821,7 +2821,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
         const FunctionType *ActualFT =
           cast<FunctionType>(ActualPT->getElementType());
         if (RealFT->getReturnType() == ActualFT->getReturnType() &&
-            ActualFT->getNumParams() == 0)
+            RealFT->getNumParams() == 0)
           Callee = RealCallee;
       }
     }
@@ -2829,21 +2829,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   
   Value *Call;
   if (!LandingPad) {
-    if (CallOperands.empty()) {
-      const FunctionType *FTy = cast<FunctionType>
-        (cast<PointerType>(Callee->getType())->getElementType());
-      if (!FTy->isVarArg() && FTy->getNumParams() > 0) {
-        // Something like this:
-        // static int func2();
-        // void func1() {
-        //   int a = func2();
-        // }
-        // int func2(unsigned a) {
-        // }
-        // gcc4.2 allows this.
-        CallOperands.push_back(UndefValue::get(FTy->getParamType(0)));
-      }
-    }
     Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
     cast<CallInst>(Call)->setAttributes(PAL);

@@ -1165,11 +1165,11 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   }
   case COMPLEX_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    return LValue(Ptr, TYPE_ALIGN_UNIT(TREE_TYPE(exp)));
   }
   case STRING_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_STRING_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    return LValue(Ptr, TYPE_ALIGN_UNIT(TREE_TYPE(exp)));
   }
 
   // Type Conversion.

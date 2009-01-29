@@ -1972,7 +1972,6 @@ convert_all_function_calls (struct nesting_info *root)
       walk_function (convert_call_expr, root);
 
       /* LLVM LOCAL begin */
-      /* FIXME: Keep the LLVM-way? */
 #ifdef ENABLE_LLVM
       gcc_assert (!root->outer ||
                   DECL_NO_STATIC_CHAIN (root->context) ==

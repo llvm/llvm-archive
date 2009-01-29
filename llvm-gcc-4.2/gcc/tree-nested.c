@@ -527,7 +527,6 @@ lookup_tramp_for_decl (struct nesting_info *info, tree decl,
       field = make_node (FIELD_DECL);
       DECL_NAME (field) = DECL_NAME (decl);
       /* LLVM LOCAL begin */
-      /* FIXME: Keep the LLVM-way? */
 #ifdef ENABLE_LLVM
       TREE_TYPE (field) = TYPE_POINTER_TO (TREE_TYPE (decl));
 #else
@@ -1831,7 +1830,6 @@ convert_tramp_reference (tree *tp, int *walk_subtrees, void *data)
 	continue;
 
       /* LLVM LOCAL begin */
-      /* FIXME: Keep the LLVM-way? */
 #ifdef ENABLE_LLVM
       /* Lookup the trampoline.  */
       x = lookup_tramp_for_decl (i, decl, INSERT);
@@ -2078,7 +2076,6 @@ finalize_nesting_tree_1 (struct nesting_info *root)
 	  arg = tree_cons (NULL, x, arg);
 
 	  /* LLVM LOCAL begin */
-          /* FIXME: Keep the LLVM-way? */
 #ifdef ENABLE_LLVM
 	  /* Create a local variable to hold the trampoline code.  */
 	  y = create_tmp_var_for (root, get_trampoline_type(),

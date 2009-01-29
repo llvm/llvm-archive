@@ -104,8 +104,8 @@ static FunctionPassManager *PerFunctionPasses = 0;
 static PassManager *PerModulePasses = 0;
 static FunctionPassManager *CodeGenPasses = 0;
 
-static void createOptimizationPasses();
-bool OptimizationPassesCreated = false;
+static void createPerFunctionOptimizationPasses();
+static void createPerModuleOptimizationPasses();
 static void destroyOptimizationPasses();
 
 // Forward decl visibility style to global.
@@ -298,7 +298,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
     exit(1);
   }
 
-  if (OptimizationPassesCreated) {
+  if (PerFunctionPasses || PerModulePasses) {
     destroyOptimizationPasses();
 
     // Don't run codegen, when we should output PCH
@@ -321,8 +321,6 @@ void llvm_pch_write_init(void) {
   AsmOutRawStream = new raw_os_ostream(*AsmOutStream);
   AsmOutFile = new OStream(*AsmOutStream);
 
-  assert(!OptimizationPassesCreated);
-  OptimizationPassesCreated = true;
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
 
@@ -344,9 +342,6 @@ void llvm_pch_write_init(void) {
 }
 
 static void destroyOptimizationPasses() {
-  assert(OptimizationPassesCreated ||
-         (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
-
   delete PerFunctionPasses;
   delete PerModulePasses;
   delete CodeGenPasses;
@@ -354,16 +349,11 @@ static void destroyOptimizationPasses() {
   PerFunctionPasses = 0;
   PerModulePasses   = 0;
   CodeGenPasses     = 0;
-  OptimizationPassesCreated = false;
 }
 
-static void createOptimizationPasses() {
-  assert(OptimizationPassesCreated ||
-         (!PerFunctionPasses && !PerModulePasses && !CodeGenPasses));
-
-  if (OptimizationPassesCreated)
+static void createPerFunctionOptimizationPasses() {
+  if (PerFunctionPasses) 
     return;
-  OptimizationPassesCreated = true;
 
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
@@ -388,19 +378,73 @@ static void createOptimizationPasses() {
     PerFunctionPasses->add(createInstructionCombiningPass());
   }
 
+  // If there are no module-level passes that have to be run, we codegen as
+  // each function is parsed.
+  // FIXME: We can't figure this out until we know there are no always-inline
+  // functions.
+  // FIXME: This is disabled right now until bugs can be worked out.  Reenable
+  // this for fast -O0 compiles!
+  if (!emit_llvm_bc && !emit_llvm && 0) {
+    FunctionPassManager *PM = PerFunctionPasses;    
+    HasPerFunctionPasses = true;
+
+    // Normal mode, emit a .s file by running the code generator.
+    // Note, this also adds codegenerator level optimization passes.
+    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
+                                           TargetMachine::AssemblyFile,
+                                           /*FAST*/optimize == 0)) {
+    default:
+    case FileModel::Error:
+      cerr << "Error interfacing to target machine!\n";
+      exit(1);
+    case FileModel::AsmFile:
+      break;
+    }
+
+    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
+      cerr << "Error interfacing to target machine!\n";
+      exit(1);
+    }
+  }
+  
+  if (HasPerFunctionPasses) {
+    PerFunctionPasses->doInitialization();
+  } else {
+    delete PerFunctionPasses;
+    PerFunctionPasses = 0;
+  }
+}
+
+static void createPerModuleOptimizationPasses() {
+  if (PerModulePasses)
+    // llvm_pch_write_init has already created the per module passes.
+    return;
+
   // FIXME: AT -O0/O1, we should stream out functions at a time.
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
   bool HasPerModulePasses = false;
+  bool NeedAlwaysInliner = false;
+  if (flag_inline_trees <= 1) {
+    // If full inliner is not run, check if always-inline is needed to handle
+    // functions that are  marked as always_inline.
+    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+         I != E; ++I)
+      if (I->hasFnAttr(Attribute::AlwaysInline)) {
+        NeedAlwaysInliner = true;
+        break;
+      }
+  }
 
   if (!DisableLLVMOptimizations) {
     HasPerModulePasses = true;
-    if (optimize == 0)
-      // Unless all LLVM optimizations are disabled, always run
-      // always-inline pass.
-      PerModulePasses->add(createAlwaysInlinerPass());
-    else {
-      PassManager *PM = PerModulePasses;
+    PassManager *PM = PerModulePasses;
+    if (optimize == 0) {
+      if (flag_inline_trees > 1)                // respect -fno-inline-functions
+        PM->add(createFunctionInliningPass());    // Inline small functions
+      else if (NeedAlwaysInliner)
+        PM->add(createAlwaysInlinerPass());       // Inline always_inline funcs
+    } else {
       if (flag_unit_at_a_time)
         PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
       PM->add(createCFGSimplificationPass());     // Clean up disgusting code
@@ -420,7 +464,7 @@ static void createOptimizationPasses() {
       }
       if (flag_inline_trees > 1)                // respect -fno-inline-functions
         PM->add(createFunctionInliningPass());    // Inline small functions
-      else
+      else if (NeedAlwaysInliner)
         PM->add(createAlwaysInlinerPass());       // Inline always_inline funcs
       if (optimize > 2)
         PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
@@ -479,54 +523,42 @@ static void createOptimizationPasses() {
     PerModulePasses->add(createPrintModulePass(AsmOutRawStream));
     HasPerModulePasses = true;
   } else {
-    FunctionPassManager *PM;
-    
     // If there are passes we have to run on the entire module, we do codegen
     // as a separate "pass" after that happens.
+    // However if there are no module-level passes that have to be run, we
+    // codegen as each function is parsed.
     // FIXME: This is disabled right now until bugs can be worked out.  Reenable
     // this for fast -O0 compiles!
-    if (HasPerModulePasses || 1) {
-      CodeGenPasses = PM =
+    if (PerModulePasses || 1) {
+      FunctionPassManager *PM = CodeGenPasses =
         new FunctionPassManager(new ExistingModuleProvider(TheModule));
       PM->add(new TargetData(*TheTarget->getTargetData()));
-    } else {
-      // If there are no module-level passes that have to be run, we codegen as
-      // each function is parsed.
-      PM = PerFunctionPasses;
-      HasPerFunctionPasses = true;
-    }
 
-    // Normal mode, emit a .s file by running the code generator.
-    // Note, this also adds codegenerator level optimization passes.
-    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
-                                           TargetMachine::AssemblyFile,
-                                           /*FAST*/optimize == 0)) {
-    default:
-    case FileModel::Error:
-      cerr << "Error interfacing to target machine!\n";
-      exit(1);
-    case FileModel::AsmFile:
-      break;
-    }
+      // Normal mode, emit a .s file by running the code generator.
+      // Note, this also adds codegenerator level optimization passes.
+      switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
+                                             TargetMachine::AssemblyFile,
+                                             /*FAST*/optimize == 0)) {
+      default:
+      case FileModel::Error:
+        cerr << "Error interfacing to target machine!\n";
+        exit(1);
+      case FileModel::AsmFile:
+        break;
+      }
 
-    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
-      cerr << "Error interfacing to target machine!\n";
-      exit(1);
+      if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
+        cerr << "Error interfacing to target machine!\n";
+        exit(1);
+      }
     }
   }
-  
-  if (HasPerFunctionPasses) {
-    PerFunctionPasses->doInitialization();
-  } else {
-    delete PerFunctionPasses;
-    PerFunctionPasses = 0;
-  }
+
   if (!HasPerModulePasses) {
     delete PerModulePasses;
     PerModulePasses = 0;
   }
 }
-
 
 // llvm_asm_file_start - Start the .s file.
 void llvm_asm_file_start(void) {
@@ -583,7 +615,7 @@ void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
 
   performLateBackendInitialization();
-  createOptimizationPasses();
+  createPerFunctionOptimizationPasses();
 
   if (flag_pch_file) {
     writeLLVMTypesStringTable();
@@ -677,7 +709,9 @@ void llvm_asm_file_end(void) {
     delete AsmIntermediateOutFile;
     AsmIntermediateOutFile = 0;
   }
+
   // Run module-level optimizers, if any are present.
+  createPerModuleOptimizationPasses();
   if (PerModulePasses)
     PerModulePasses->run(*TheModule);
   
@@ -743,7 +777,7 @@ void llvm_emit_code_for_current_function(tree fndecl) {
 #endif
 
   performLateBackendInitialization();
-  createOptimizationPasses();
+  createPerFunctionOptimizationPasses();
 
   if (PerFunctionPasses)
     PerFunctionPasses->run(*Fn);

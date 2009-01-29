@@ -392,86 +392,81 @@ static void createOptimizationPasses() {
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
   bool HasPerModulePasses = false;
-  bool NeedAlwaysInliner = false;
-  // Check if AlwaysInliner is needed to handle functions that are 
-  // marked as always_inline.
-  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-       I != E; ++I)
-    if (I->hasFnAttr(Attribute::AlwaysInline)) {
-      NeedAlwaysInliner = true;
-      break;
-    }
 
-  if (optimize > 0 && !DisableLLVMOptimizations) {
+  if (!DisableLLVMOptimizations) {
     HasPerModulePasses = true;
-    PassManager *PM = PerModulePasses;
-    if (flag_unit_at_a_time)
-      PM->add(createRaiseAllocationsPass());      // call %malloc -> malloc inst
-    PM->add(createCFGSimplificationPass());       // Clean up disgusting code
-    PM->add(createPromoteMemoryToRegisterPass()); // Kill useless allocas
-    if (flag_unit_at_a_time) {
-      PM->add(createGlobalOptimizerPass());       // Optimize out global vars
-      PM->add(createGlobalDCEPass());             // Remove unused fns and globs
-      PM->add(createIPConstantPropagationPass()); // IP Constant Propagation
-      PM->add(createDeadArgEliminationPass());    // Dead argument elimination
-    }
-    PM->add(createInstructionCombiningPass());    // Clean up after IPCP & DAE
-    PM->add(createCFGSimplificationPass());       // Clean up after IPCP & DAE
-    if (flag_unit_at_a_time) {
-      if (flag_exceptions)
-        PM->add(createPruneEHPass());             // Remove dead EH info
-      PM->add(createFunctionAttrsPass());         // Deduce function attrs
-    }
-    if (flag_inline_trees > 1)                    // respect -fno-inline-functions
-      PM->add(createFunctionInliningPass());      // Inline small functions
-    else if (NeedAlwaysInliner)
-      PM->add(createAlwaysInlinerPass());         // Inline always_inline functions
-    if (optimize > 2)
-      PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
-    if (!flag_no_simplify_libcalls)
-      PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
-    PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
-    PM->add(createJumpThreadingPass());         // Thread jumps.
-    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-    PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
-    PM->add(createInstructionCombiningPass());  // Combine silly seq's
-    PM->add(createCondPropagationPass());       // Propagate conditionals
-    PM->add(createTailCallEliminationPass());   // Eliminate tail calls
-    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
-    PM->add(createReassociatePass());           // Reassociate expressions
-    PM->add(createLoopRotatePass());            // Rotate Loop
-    PM->add(createLICMPass());                  // Hoist loop invariants
-    PM->add(createLoopUnswitchPass(optimize_size || optimize < 3));
-    PM->add(createLoopIndexSplitPass());        // Split loop index
-    PM->add(createInstructionCombiningPass());  
-    PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
-    PM->add(createLoopDeletionPass());          // Delete dead loops
-    if (flag_unroll_loops)
-      PM->add(createLoopUnrollPass());          // Unroll small loops
-    PM->add(createInstructionCombiningPass());  // Clean up after the unroller
-    PM->add(createGVNPass());                   // Remove redundancies
-    PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
-    PM->add(createSCCPPass());                  // Constant prop with SCCP
+    if (optimize == 0)
+      // Unless all LLVM optimizations are disabled, always run
+      // always-inline pass.
+      PerModulePasses->add(createAlwaysInlinerPass());
+    else {
+      PassManager *PM = PerModulePasses;
+      if (flag_unit_at_a_time)
+        PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
+      PM->add(createCFGSimplificationPass());     // Clean up disgusting code
+      PM->add(createPromoteMemoryToRegisterPass()); // Kill useless allocas
+      if (flag_unit_at_a_time) {
+        PM->add(createGlobalOptimizerPass());     // Optimize out global vars
+        PM->add(createGlobalDCEPass());           // Remove unused fns and globs
+        PM->add(createIPConstantPropagationPass()); // IP Constant Propagation
+        PM->add(createDeadArgEliminationPass());  // Dead argument elimination
+      }
+      PM->add(createInstructionCombiningPass());  // Clean up after IPCP & DAE
+      PM->add(createCFGSimplificationPass());     // Clean up after IPCP & DAE
+      if (flag_unit_at_a_time) {
+        if (flag_exceptions)
+          PM->add(createPruneEHPass());           // Remove dead EH info
+        PM->add(createFunctionAttrsPass());       // Deduce function attrs
+      }
+      if (flag_inline_trees > 1)                // respect -fno-inline-functions
+        PM->add(createFunctionInliningPass());    // Inline small functions
+      else
+        PM->add(createAlwaysInlinerPass());       // Inline always_inline funcs
+      if (optimize > 2)
+        PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
+      if (!flag_no_simplify_libcalls)
+        PM->add(createSimplifyLibCallsPass());    // Library Call Optimizations
+      PM->add(createInstructionCombiningPass());  // Cleanup for scalarrepl.
+      PM->add(createJumpThreadingPass());         // Thread jumps.
+      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+      PM->add(createScalarReplAggregatesPass());  // Break up aggregate allocas
+      PM->add(createInstructionCombiningPass());  // Combine silly seq's
+      PM->add(createCondPropagationPass());       // Propagate conditionals
+      PM->add(createTailCallEliminationPass());   // Eliminate tail calls
+      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+      PM->add(createReassociatePass());           // Reassociate expressions
+      PM->add(createLoopRotatePass());            // Rotate Loop
+      PM->add(createLICMPass());                  // Hoist loop invariants
+      // At -O2, loop unswitch should not increase code size.
+      PM->add(createLoopUnswitchPass(optimize_size || optimize < 3));
+      PM->add(createLoopIndexSplitPass());        // Split loop index
+      PM->add(createInstructionCombiningPass());  
+      PM->add(createIndVarSimplifyPass());        // Canonicalize indvars
+      PM->add(createLoopDeletionPass());          // Delete dead loops
+      if (flag_unroll_loops)
+        PM->add(createLoopUnrollPass());          // Unroll small loops
+      PM->add(createInstructionCombiningPass());  // Clean up after the unroller
+      PM->add(createGVNPass());                   // Remove redundancies
+      PM->add(createMemCpyOptPass());             // Remove memcpy / form memset
+      PM->add(createSCCPPass());                  // Constant prop with SCCP
     
-    // Run instcombine after redundancy elimination to exploit opportunities
-    // opened up by them.
-    PM->add(createInstructionCombiningPass());
-    PM->add(createCondPropagationPass());       // Propagate conditionals
-    PM->add(createDeadStoreEliminationPass());  // Delete dead stores
-    PM->add(createAggressiveDCEPass());   // Delete dead instructions
-    PM->add(createCFGSimplificationPass());     // Merge & remove BBs
+      // Run instcombine after redundancy elimination to exploit opportunities
+      // opened up by them.
+      PM->add(createInstructionCombiningPass());
+      PM->add(createCondPropagationPass());       // Propagate conditionals
+      PM->add(createDeadStoreEliminationPass());  // Delete dead stores
+      PM->add(createAggressiveDCEPass());         // Delete dead instructions
+      PM->add(createCFGSimplificationPass());     // Merge & remove BBs
 
-    if (flag_unit_at_a_time) {
-      PM->add(createStripDeadPrototypesPass());   // Get rid of dead prototypes
-      PM->add(createDeadTypeEliminationPass());   // Eliminate dead types
+      if (flag_unit_at_a_time) {
+        PM->add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
+        PM->add(createDeadTypeEliminationPass()); // Eliminate dead types
+      }
+
+      if (optimize > 1 && flag_unit_at_a_time)
+        PM->add(createConstantMergePass());       // Merge dup global constants 
     }
-
-    if (optimize > 1 && flag_unit_at_a_time)
-      PM->add(createConstantMergePass());       // Merge dup global constants 
   }
-
-  if (!HasPerModulePasses && NeedAlwaysInliner)
-    PerModulePasses->add(createAlwaysInlinerPass());
 
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed

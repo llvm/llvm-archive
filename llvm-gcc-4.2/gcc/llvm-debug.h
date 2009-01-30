@@ -59,7 +59,7 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  DICompileUnit MainCompileUnit;
+  std::map<std::string, GlobalVariable *> CUCache;
   std::map<tree_node *, DIType> TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
@@ -125,8 +125,9 @@ public:
   /// createVarinatType - Create variant type or return MainTy.
   DIType createVariantType(tree_node *type, DIType MainTy);
 
-  /// createCompileUnit - Create a new compile unit.
-  DICompileUnit createCompileUnit(const std::string &FullPath);
+  /// getOrCreateCompileUnit - Create a new compile unit.
+  DICompileUnit getOrCreateCompileUnit(const char *FullPath,
+                                       bool isMain = false);
 
   /// findRegion - Find tree_node N's region.
   DIDescriptor findRegion(tree_node *n);

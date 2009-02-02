@@ -6181,7 +6181,10 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       // offset, the field is known to be 4-byte aligned.
       LVAlign = MinAlign(LVAlign, Offset);
     }
-    
+
+    // There is debate about whether this is really safe or not, be conservative
+    // in the meantime.
+#if 0
     // If this field is at a constant offset, if the LLVM pointer really points
     // to it, then we know that the pointer is at least as aligned as the field
     // is required to be.  Try to round up our alignment info.
@@ -6189,6 +6192,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
         !isBitfield(FieldDecl) &&  // bitfield computation might offset pointer.
         DECL_ALIGN(FieldDecl))
       LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN(FieldDecl)) / 8);
+#endif
     
     // If the FIELD_DECL has an annotate attribute on it, emit it.
     if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))

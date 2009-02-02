@@ -1513,10 +1513,23 @@ void GraphBuilder::visitCallSite(CallSite CS) {
       RetNH = getValueDest(*CS.getInstruction());
       RetNH.getNode()->setHeapNodeMarker()->setModifiedMarker();
       RetNH.getNode()->getMP()->addCallSite(CS);
+
+      //
+      // Anything that is not a pool allocator must mark objects as
+      // type-unknown.
+      //
+      if (F->getName() != "kmem_cache_alloc")
+        RetNH.getNode()->foldNodeCompletely();
       return;
     }
 
 #ifdef SVA_IO
+    //
+    // Determine whether this is a call to a function that allocates an I/O
+    // object.  If so, then make it with the I/O flags and make it
+    // type-unknown (as the I/O device may treat the memory as a type different
+    // than what we infer).
+    //
     if (IOAllocList.end() != std::find(IOAllocList.begin(), IOAllocList.end(), F->getName())) {
       DSNodeHandle RetNH;
       if (F->getName() == "pseudo_alloc")
@@ -1525,6 +1538,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
         RetNH = getValueDest(*CS.getInstruction());
       RetNH.getNode()->setIONodeMarker()->setModifiedMarker();
       RetNH.getNode()->getMP()->addCallSite(CS);
+      RetNH.getNode()->foldNodeCompletely();
       return;
     }
 #endif
@@ -1815,7 +1829,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   AllocList.push_back("__vmalloc");
   AllocList.push_back("kmem_cache_alloc");
   AllocList.push_back("__alloc_bootmem");
-  AllocList.push_back(" __get_free_pages");
+  AllocList.push_back("__get_free_pages");
   AllocList.push_back("pseudo_alloc");
   AllocList.push_back("malloc");
 

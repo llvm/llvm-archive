@@ -4410,7 +4410,12 @@ InsertPoolChecks::addIOLSChecks (Value *V, Instruction *I, Function *F) {
   // ensure that we are accessing the correct type (I/O or regular memory) of
   // object).
   //
+  // Note:
+  //  Disable this optimization.  It needs to prove that the object cannot be
+  //  deallocated between the time it is checked for a bounds violation and the
+  //  time it is used for the I/O load/store.
   //
+#if 0
   bool indexed = true;
   Value * SourcePointer = findSourcePointer (V, indexed, false);
   if (!aliasesMemory) {
@@ -4419,6 +4424,7 @@ InsertPoolChecks::addIOLSChecks (Value *V, Instruction *I, Function *F) {
       return;
     }
   }
+#endif
 
   // Get the pool handle associated with this pointer.  If there is no pool
   // handle, use a NULL pointer value and let the runtime deal with it.

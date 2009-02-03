@@ -21,7 +21,7 @@
 #define DEBUG(x) 
 
 /* Flag whether to print error messages on bounds violations */
-int ec_do_fail = 1;
+int ec_do_fail = 0;
 
 /* Flags whether we're ready to do run-time checks */
 extern int pchk_ready;
@@ -68,13 +68,14 @@ void *
 exactcheck3(signed char *base, signed char *result, signed char * end) {
   ++stat_exactcheck3;
   if ((result < base) || (result > end )) {
-    if (ec_do_fail)
+    if (ec_do_fail) {
 #if 0
       poolcheckfail("Array bounds violation detected ", (unsigned)base, (void*)__builtin_return_address(0));
 #else
       poolcheckfail("exactcheck3: ", (unsigned)base, (void*)__builtin_return_address(0));
       poolcheckfail("exactcheck3: ", (unsigned)result, (void*)__builtin_return_address(0));
       poolcheckfail("exactcheck3: ", (unsigned)end, (void*)__builtin_return_address(0));
+    }
 #endif
   }
 

@@ -767,7 +767,9 @@ static const char *endfile_spec = ENDFILE_SPEC;
 static const char *startfile_spec = STARTFILE_SPEC;
 static const char *switches_need_spaces = SWITCHES_NEED_SPACES;
 static const char *linker_name_spec = LINKER_NAME;
+/* LLVM LOCAL begin */
 static const char *gold_plugin_file_spec = "";
+/* LLVM LOCAL end */
 static const char *link_command_spec = LINK_COMMAND_SPEC;
 static const char *link_libgcc_spec = LINK_LIBGCC_SPEC;
 static const char *startfile_prefix_spec = STARTFILE_PREFIX_SPEC;
@@ -7142,7 +7144,9 @@ main (int argc, char **argv)
   if (num_linker_inputs > 0 && error_count == 0)
     {
       int tmp = execution_count;
+      /* LLVM LOCAL begin */
       const char *use_gold_plugin = "use-gold-plugin";
+      /* LLVM LOCAL end */
 
       /* We'll use ld if we can't find collect2.  */
       if (! strcmp (linker_name_spec, "collect2"))
@@ -7152,6 +7156,7 @@ main (int argc, char **argv)
 	    linker_name_spec = "ld";
 	}
 
+      /* LLVM LOCAL begin */
       if (switch_matches (use_gold_plugin,
 			  use_gold_plugin + strlen (use_gold_plugin), 0))
 	{
@@ -7161,6 +7166,7 @@ main (int argc, char **argv)
 	  if (!gold_plugin_file_spec)
 	    fatal ("-use-gold-plugin, but libLLVMgold.so not found.");
 	}
+      /* LLVM LOCAL end */
 
       /* Rebuild the COMPILER_PATH and LIBRARY_PATH environment variables
 	 for collect.  */

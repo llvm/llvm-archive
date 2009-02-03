@@ -713,10 +713,12 @@ proper position among the other output files.  */
    scripts which exist in user specified directories, or in standard
    directories.  */
 /* APPLE LOCAL begin add fcreate-profile */
+/* LLVM LOCAL begin add use-gold-plugin */
 #ifndef LINK_COMMAND_SPEC
 #define LINK_COMMAND_SPEC "\
 %{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %(linker) %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} %{r}\
+    %(linker) %{use-gold-plugin: -plugin %(gold_plugin_file)} \
+    %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} %{r}\
     %{s} %{t} %{u*} %{x} %{z} %{Z} %{!A:%{!nostdlib:%{!nostartfiles:%S}}}\
     %{static:} %{L*} %(mfwrap) %(link_libgcc) %o\
     %{fopenmp:%:include(libgomp.spec)%(link_gomp)} %(mflib)\
@@ -765,6 +767,7 @@ static const char *endfile_spec = ENDFILE_SPEC;
 static const char *startfile_spec = STARTFILE_SPEC;
 static const char *switches_need_spaces = SWITCHES_NEED_SPACES;
 static const char *linker_name_spec = LINKER_NAME;
+static const char *gold_plugin_file_spec = "";
 static const char *link_command_spec = LINK_COMMAND_SPEC;
 static const char *link_libgcc_spec = LINK_LIBGCC_SPEC;
 static const char *startfile_prefix_spec = STARTFILE_PREFIX_SPEC;
@@ -1637,6 +1640,7 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("linker",			&linker_name_spec),
   INIT_STATIC_SPEC ("link_libgcc",		&link_libgcc_spec),
   /* LLVM LOCAL */
+  INIT_STATIC_SPEC ("gold_plugin_file",		&gold_plugin_file_spec),
   INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
   INIT_STATIC_SPEC ("md_exec_prefix",		&md_exec_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix",	&md_startfile_prefix),
@@ -7138,6 +7142,7 @@ main (int argc, char **argv)
   if (num_linker_inputs > 0 && error_count == 0)
     {
       int tmp = execution_count;
+      const char *use_gold_plugin = "use-gold-plugin";
 
       /* We'll use ld if we can't find collect2.  */
       if (! strcmp (linker_name_spec, "collect2"))
@@ -7146,6 +7151,17 @@ main (int argc, char **argv)
 	  if (s == NULL)
 	    linker_name_spec = "ld";
 	}
+
+      if (switch_matches (use_gold_plugin,
+			  use_gold_plugin + strlen (use_gold_plugin), 0))
+	{
+	  gold_plugin_file_spec = find_a_file (&exec_prefixes,
+					       "libLLVMgold.so", X_OK,
+					       false);
+	  if (!gold_plugin_file_spec)
+	    fatal ("-use-gold-plugin, but libLLVMgold.so not found.");
+	}
+
       /* Rebuild the COMPILER_PATH and LIBRARY_PATH environment variables
 	 for collect.  */
       putenv_from_prefixes (&exec_prefixes, "COMPILER_PATH", false);

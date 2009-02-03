@@ -298,6 +298,11 @@ void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
 /// region - "llvm.dbg.declare."
 void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
                             tree type, Value *AI, BasicBlock *CurBB) {
+
+  // Do not emit variable declaration info, for now.
+  if (optimize)
+    return;
+
   // Ignore compiler generated temporaries.
   if (DECL_IGNORED_P(decl))
     return;
@@ -319,6 +324,11 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
 /// source line - "llvm.dbg.stoppoint."
 void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
+
+  // Do not emit line number info, for now.
+  if (optimize)
+    return;
+
   // Don't bother if things are the same as last time.
   if (PrevLineNo == CurLineNo &&
       PrevBB == CurBB &&

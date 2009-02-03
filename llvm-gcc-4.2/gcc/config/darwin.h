@@ -340,7 +340,6 @@ do {					\
    specifying the handling of options understood by generic Unix
    linkers, and for positional arguments like libraries.  */
 /* APPLE LOCAL begin mainline */
-#ifdef ENABLE_LLVM
 #define LINK_COMMAND_SPEC "\
 %{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
     %(linker) %l %X %{d} %{s} %{t} %{Z} %{u*} \
@@ -359,29 +358,7 @@ do {					\
 %{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
 "/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
     %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
-    %{!O: %{!O1: %{!O2: %{!O3: %{!O4: %{!Os: \
-"/* LLVM LOCAL do not use dsymutil with -O1 or higher */"\
-    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}}}}}}}"
-#else
-#define LINK_COMMAND_SPEC "\
-%{!fdump=*:%{!fsyntax-only:%{!precomp:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %(linker) %l %X %{d} %{s} %{t} %{Z} %{u*} \
-    %{A} %{e*} %{m} %{r} %{x} \
-    %{o*}%{!o:-o a.out} \
-    %{!A:%{!nostdlib:%{!nostartfiles:%S}}} \
-    %{L*} %{fopenmp:%:include(libgomp.spec)%(link_gomp)}   \
-"/* APPLE LOCAL add fcreate-profile */"\
-    %(link_libgcc) %o %{fprofile-arcs|fprofile-generate|fcreate-profile|coverage:-lgcov} \
-"/* APPLE LOCAL nested functions 4357979  */"\
-    %{fnested-functions: -allow_stack_execute} \
-    %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %G %L}} \
-"/* APPLE LOCAL begin mainline 4.3 2006-10-31 4370146 */"\
-    %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
-%{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-"/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
-    %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
     %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
-#endif
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT

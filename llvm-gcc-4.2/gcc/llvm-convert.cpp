@@ -4548,11 +4548,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       // If this builtin directly corresponds to an LLVM intrinsic, get the
       // IntrinsicID now.
       const char *BuiltinName = IDENTIFIER_POINTER(DECL_NAME(fndecl));
-      Intrinsic::ID IntrinsicID = Intrinsic::not_intrinsic;
-#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-#include "llvm/Intrinsics.gen"
-#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
-      
+      Intrinsic::ID IntrinsicID = 
+        Intrinsic::getIntrinsicForGCCBuiltin(TargetPrefix, BuiltinName);
       if (IntrinsicID == Intrinsic::not_intrinsic) {
         if (EmitFrontendExpandedBuiltinCall(exp, fndecl, DestLoc, Result))
           return true;

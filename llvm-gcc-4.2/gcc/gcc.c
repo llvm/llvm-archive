@@ -1171,6 +1171,9 @@ static const struct option_map option_map[] =
    {"--include-with-prefix-after", "-iwithprefix", "a"},
    {"--language", "-x", "a"},
    {"--library-directory", "-L", "a"},
+   /* LLVM LOCAL begin */
+   {"--llvm-options", "-mllvm", "a"},
+   /* LLVM LOCAL end */
    {"--machine", "-m", "aj"},
    {"--machine-", "-m", "*j"},
    {"--no-integrated-cpp", "-no-integrated-cpp", 0},

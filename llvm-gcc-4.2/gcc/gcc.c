@@ -713,12 +713,13 @@ proper position among the other output files.  */
    scripts which exist in user specified directories, or in standard
    directories.  */
 /* APPLE LOCAL begin add fcreate-profile */
-/* LLVM LOCAL begin add use-gold-plugin */
+/* LLVM LOCAL begin add use-gold-plugin, remove emit-llvm */
 #ifndef LINK_COMMAND_SPEC
 #define LINK_COMMAND_SPEC "\
 %{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
     %(linker) %{use-gold-plugin: -plugin %(gold_plugin_file)} \
-    %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %{e*} %{m} %{N} %{n} %{r}\
+    %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %<emit-llvm %{e*}\
+    %{m} %{N} %{n} %{r}\
     %{s} %{t} %{u*} %{x} %{z} %{Z} %{!A:%{!nostdlib:%{!nostartfiles:%S}}}\
     %{static:} %{L*} %(mfwrap) %(link_libgcc) %o\
     %{fopenmp:%:include(libgomp.spec)%(link_gomp)} %(mflib)\

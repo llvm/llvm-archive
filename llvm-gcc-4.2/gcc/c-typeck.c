@@ -2081,6 +2081,13 @@ build_array_ref (tree array, tree index)
       if (TREE_CODE (type) != ARRAY_TYPE && !objc_is_object_ptr (type))
       /* APPLE LOCAL end radar 6164211 */
 	type = TYPE_MAIN_VARIANT (type);
+      
+      /* LLVM LOCAL begin propagate objc_volatilized: rdar://6551276 */
+      if (lookup_attribute ("objc_volatilized", 
+                            TYPE_ATTRIBUTES (TREE_TYPE (TREE_TYPE (array)))))
+        type = objc_build_volatilized_type(type);
+      /* LLVM LOCAL end propagate objc_volatilized: rdar://6551276 */
+      
       rval = build4 (ARRAY_REF, type, array, index, NULL_TREE, NULL_TREE);
       /* Array ref is const/volatile if the array elements are
 	 or if the array is.  */
@@ -2097,6 +2104,7 @@ build_array_ref (tree array, tree index)
 	       in an inline function.
 	       Hope it doesn't break something else.  */
 	    | TREE_THIS_VOLATILE (array));
+
       return require_complete_type (fold (rval));
     }
   else

@@ -79,6 +79,14 @@ objc_non_volatilized_type (tree type)
 }
 /* APPLE LOCAL end radar 4330422 */
 
+/* LLVM LOCAL begin radar 6551276 */
+tree
+objc_build_volatilized_type (tree type)
+{
+  return type;
+}
+/* LLVM LOCAL end radar 6551276 */
+
 /* APPLE LOCAL begin radar 4697411 */
 void
 objc_volatilize_component_ref (tree ARG_UNUSED (cref), tree ARG_UNUSED (type))

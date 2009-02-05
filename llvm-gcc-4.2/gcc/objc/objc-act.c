@@ -3452,7 +3452,8 @@ objc_build_struct (tree class, tree fields, tree super_name)
 /* Build a type differing from TYPE only in that TYPE_VOLATILE is set.
    Unlike tree.c:build_qualified_type(), preserve TYPE_LANG_SPECIFIC in the
    process.  */
-static tree
+/* LLVM LOCAL rdar 6551276 */
+tree
 objc_build_volatilized_type (tree type)
 {
   tree t;

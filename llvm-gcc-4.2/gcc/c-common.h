@@ -993,6 +993,8 @@ extern bool objc_diagnose_private_ivar (tree);
 /* APPLE LOCAL radar 4507230 */
 bool objc_type_valid_for_messaging (tree);
 extern void objc_volatilize_decl (tree);
+/* LLVM LOCAL rdar 6551276 */
+extern tree objc_build_volatilized_type (tree);
 extern bool objc_type_quals_match (tree, tree);
 extern tree objc_rewrite_function_call (tree, tree);
 extern tree objc_message_selector (void);

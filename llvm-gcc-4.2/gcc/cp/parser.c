@@ -21065,13 +21065,13 @@ build_block_literal_tmp (const char *name,
     TREE_PUBLIC (block_holder_tmp_decl) = 0;
     TREE_STATIC (block_holder_tmp_decl) = 1;
   }
+  cp_finish_decl (block_holder_tmp_decl, constructor, 0, 0, LOOKUP_ONLYCONVERTING);
   /* LLVM LOCAL begin radar 5865221 */
 #ifdef ENABLE_LLVM
   TREE_CONSTANT (block_holder_tmp_decl) = 1;
   TREE_READONLY (block_holder_tmp_decl) = 1;
 #endif
   /* LLVM LOCAL end radar 5865221 */
-  cp_finish_decl (block_holder_tmp_decl, constructor, 0, 0, LOOKUP_ONLYCONVERTING);
   return block_holder_tmp_decl;
 }
 /* APPLE LOCAL end radar 6169527 */

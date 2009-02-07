@@ -2581,13 +2581,23 @@ build_array_ref (tree array, tree idx)
 
     /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-    /* Do not create explicit pointer arithmetic for pointer subscripts,
+     /* Do not create explicit pointer arithmetic for pointer subscripts,
       * instead, generate an array ref, even though the first argument is a
       * pointer, not an array.  The LLVM backend supports this use of ARRAY_REF
       * and it provides it with more information for optimization.
       */
-    return build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ar)), ar, ind,
-                   NULL_TREE, NULL_TREE);
+    ar = build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ar)), ar, ind,
+                 NULL_TREE, NULL_TREE);
+    /* Mirror logic from build_indirect_ref to set TREE_THIS_VOLATILE and other
+     * flags.
+     */
+    TREE_THIS_VOLATILE (ar) = CP_TYPE_VOLATILE_P (TREE_TYPE (ar));
+    TREE_READONLY (ar) = CP_TYPE_CONST_P (TREE_TYPE (ar));
+    TREE_SIDE_EFFECTS (ar)
+     = TREE_THIS_VOLATILE (ar) || TREE_SIDE_EFFECTS (array) ||
+       TREE_SIDE_EFFECTS (idx);
+
+    return ar;
 #endif
     /* LLVM LOCAL end */
     return build_indirect_ref (cp_build_binary_op (PLUS_EXPR, ar, ind),

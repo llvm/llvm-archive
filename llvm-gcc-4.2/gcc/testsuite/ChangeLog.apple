@@ -1,3 +1,8 @@
+2009-01-22  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6515001
+	* gcc.apple/6515001.c: New.
+
 2009-01-12  Caroline Tice  <ctice@apple.com>
 
 	Radar 6476836

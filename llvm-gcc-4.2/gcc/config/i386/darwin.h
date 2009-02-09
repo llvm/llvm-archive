@@ -141,6 +141,23 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL ARM 5681645 */
 #define DARWIN_IPHONEOS_LIBGCC_SPEC "-lgcc_s.10.5 -lgcc"
 
+/* APPLE LOCAL begin link optimizations 6499452 */
+#undef DARWIN_CRT1_SPEC
+#define DARWIN_CRT1_SPEC						\
+  "%:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
+   %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lcrt1.10.5.o)	\
+   %:version-compare(>= 10.6 mmacosx-version-min= -lcrt1.10.6.o)"
+
+#undef DARWIN_DYLIB1_SPEC
+#define DARWIN_DYLIB1_SPEC						\
+  "%:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
+   %:version-compare(>< 10.5 10.6 mmacosx-version-min= -ldylib1.10.5.o)"
+
+#undef DARWIN_BUNDLE1_SPEC
+#define DARWIN_BUNDLE1_SPEC						\
+  "%:version-compare(!> 10.6 mmacosx-version-min= -lbundle1.o)"
+/* APPLE LOCAL end link optimizations 6499452 */
+
 #undef SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS                                   \
   DARWIN_EXTRA_SPECS                                            \

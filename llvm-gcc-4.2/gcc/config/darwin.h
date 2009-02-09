@@ -516,10 +516,12 @@ do {					\
       miphoneos-version-min=*: %(darwin_iphoneos_libgcc);		   \
       shared-libgcc|fexceptions|fgnu-runtime:				   \
        %:version-compare(!> 10.5 mmacosx-version-min= -lgcc_s.10.4)	   \
-       %:version-compare(>= 10.5 mmacosx-version-min= -lgcc_s.10.5)	   \
+       "/* APPLE LOCAL link optimizations 6499452 */"			   \
+       %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)   \
        -lgcc;								   \
       :%:version-compare(>< 10.3.9 10.5 mmacosx-version-min= -lgcc_s.10.4) \
-       %:version-compare(>= 10.5 mmacosx-version-min= -lgcc_s.10.5)	   \
+       "/* APPLE LOCAL link optimizations 6499452 */"			   \
+       %:version-compare(>< 10.5 10.6 mmacosx-version-min= -lgcc_s.10.5)   \
        -lgcc}"
 
 /* We specify crt0.o as -lcrt0.o so that ld will search the library path.
@@ -533,7 +535,8 @@ do {					\
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC							    \
   "%{Zdynamiclib: %(darwin_dylib1) }					    \
-   %{!Zdynamiclib:%{Zbundle:%{!static:-lbundle1.o}}			    \
+   "/* APPLE LOCAL link optimizations 6499452 */"			    \
+   %{!Zdynamiclib:%{Zbundle:%{!static: %(darwin_bundle1)}}		    \
      %{!Zbundle:%{pg:%{static:-lgcrt0.o}				    \
                      %{!static:%{object:-lgcrt0.o}			    \
                                %{!object:%{preload:-lgcrt0.o}		    \
@@ -557,6 +560,8 @@ do {					\
 #define DARWIN_EXTRA_SPECS						\
   { "darwin_crt1", DARWIN_CRT1_SPEC },					\
   { "darwin_dylib1", DARWIN_DYLIB1_SPEC },				\
+  /* APPLE LOCAL link optimizations 6499452 */				\
+  { "darwin_bundle1", DARWIN_BUNDLE1_SPEC },				\
   { "darwin_minversion", DARWIN_MINVERSION_SPEC },			\
 /* APPLE LOCAL end mainline */						\
 /* APPLE LOCAL begin ARM 5683689 */					\
@@ -572,6 +577,11 @@ do {					\
    %{!miphoneos-version-min=*:						\
      %:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
      %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)}"
+
+/* APPLE LOCAL begin link optimizations 6499452 */
+#define DARWIN_BUNDLE1_SPEC						\
+  "-lbundle1.o"
+/* APPLE LOCAL end link optimizations 6499452 */
 
 #define DARWIN_CRT1_SPEC						\
 /* APPLE LOCAL ARM 5823776 iphoneos should use crt1.o */		\

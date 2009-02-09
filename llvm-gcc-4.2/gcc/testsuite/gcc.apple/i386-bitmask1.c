@@ -6,11 +6,12 @@
 /* { dg-final { scan-assembler "and.*(0xffffff00|4294967040)" } } */
 unsigned char lut[256];
 
-void foo( int count )
+/* LLVM LOCAL - make pointers arguments */
+void foo( int count, unsigned int *srcptr, unsigned int *dstptr )
 {
   int j;
-	
-  unsigned int *srcptr, *dstptr;
+
+  /* LLVM LOCAL - make pointers arguments */
   for (j = 0; j < count; j++) {
     unsigned int tmp = *srcptr;
     unsigned int alpha = (tmp&255);

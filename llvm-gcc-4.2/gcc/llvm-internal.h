@@ -515,6 +515,7 @@ private:
                         unsigned Opc);
   Value *EmitFLOOR_MOD_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCEIL_DIV_EXPR(tree_node *exp);
+  Value *EmitFLOOR_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
 
   // Exception Handling.

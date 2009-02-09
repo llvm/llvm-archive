@@ -1050,6 +1050,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     break;
   case RDIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::FDiv); break;
   case CEIL_DIV_EXPR: Result = EmitCEIL_DIV_EXPR(exp); break;
+  case FLOOR_DIV_EXPR: Result = EmitFLOOR_DIV_EXPR(exp); break;
   case ROUND_DIV_EXPR: Result = EmitROUND_DIV_EXPR(exp); break;
   case TRUNC_MOD_EXPR: 
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
@@ -3696,6 +3697,55 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   Value *CDiv = Builder.CreateSub(LHS, Offset);
   CDiv = Builder.CreateUDiv(CDiv, RHS);
   return Builder.CreateAdd(CDiv, Offset, "cdiv");
+}
+
+Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
+  // Notation: FLOOR_DIV_EXPR <-> FDiv, TRUNC_DIV_EXPR <-> Div.
+  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
+  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+
+  // FDiv calculates LHS/RHS by rounding down to the nearest integer.  In terms
+  // of Div this means if the values of LHS and RHS have the same sign or if LHS
+  // is zero, then FDiv necessarily equals Div; and
+  //   LHS FDiv RHS = (LHS + Sign(RHS)) Div RHS - 1
+  // otherwise.
+
+  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+    // In the case of unsigned arithmetic, LHS and RHS necessarily have the
+    // same sign, so FDiv is the same as Div.
+    return Builder.CreateUDiv(LHS, RHS, "fdiv");
+
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  Constant *Zero = ConstantInt::get(Ty, 0);
+  Constant *One = ConstantInt::get(Ty, 1);
+  Constant *MinusOne = ConstantInt::getAllOnesValue(Ty);
+
+  // In the case of signed arithmetic, we calculate FDiv as follows:
+  //   LHS FDiv RHS = (LHS + Sign(RHS) * Offset) Div RHS - Offset,
+  // where Offset is 1 if LHS and RHS have opposite signs and LHS is
+  // not zero, and 0 otherwise.
+
+  // Determine the signs of LHS and RHS, and whether they have the same sign.
+  Value *LHSIsPositive = Builder.CreateICmpSGE(LHS, Zero);
+  Value *RHSIsPositive = Builder.CreateICmpSGE(RHS, Zero);
+  Value *SignsDiffer = Builder.CreateICmpNE(LHSIsPositive, RHSIsPositive);
+
+  // Offset equals 1 if LHS and RHS have opposite signs and LHS is not zero.
+  Value *LHSNotZero = Builder.CreateICmpNE(LHS, Zero);
+  Value *OffsetOne = Builder.CreateAnd(SignsDiffer, LHSNotZero);
+  // ... otherwise it is 0.
+  Value *Offset = Builder.CreateSelect(OffsetOne, One, Zero);
+
+  // Calculate Sign(RHS) ...
+  Value *SignRHS = Builder.CreateSelect(RHSIsPositive, One, MinusOne);
+  // ... and Sign(RHS) * Offset
+  Value *SignedOffset = CastToType(Instruction::SExt, OffsetOne, Ty);
+  SignedOffset = Builder.CreateAnd(SignRHS, SignedOffset);
+
+  // Return FDiv = (LHS + Sign(RHS) * Offset) Div RHS - Offset.
+  Value *FDiv = Builder.CreateAdd(LHS, SignedOffset);
+  FDiv = Builder.CreateSDiv(FDiv, RHS);
+  return Builder.CreateSub(FDiv, Offset, "fdiv");
 }
 
 Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {

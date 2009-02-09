@@ -1,8 +1,8 @@
 /* APPLE LOCAL file radar 5595325 */
 /* Test for implementation of __attribute__ ((NSObject)) to make a struct pointer
    a first class objective-c pointer to object. */
+/* { dg-do run { target *-*-darwin[1-2][0-9]* } } */
 /* { dg-options "-mmacosx-version-min=10.6 -Werror -framework Foundation" } */
-/* { dg-do run { target *-*-darwin* } } */
 
 #import <Foundation/Foundation.h>
 
@@ -28,14 +28,14 @@ int main(int argc, char *argv[]) {
     int before = [dictRef retainCount];
     to.dict = foo;
     int after = [dictRef retainCount];
-    
+
     if (after <= before) {
         abort();
     }
     if ([foo retainCount] != [dictRef retainCount]) {
         abort();
     }
-    
+
     // do Blocks retain?
     {
         void (^block)(void) = ^{
@@ -50,4 +50,3 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
-

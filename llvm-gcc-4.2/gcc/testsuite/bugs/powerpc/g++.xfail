@@ -11,6 +11,8 @@
 ###
 ###------------------------------------------------------------------
 4531667: g++.dg/bitreverse-23.C execution test
+6497723: g++.apple/block-5988451.C (test for excess errors)
+6497723: g++.apple/block-ivar.C (test for excess errors)
 #
 # The following tests fail only when the c++ suite is run with -mcpu=G5
 5822514: g++.dg/altivec-8.C execution test

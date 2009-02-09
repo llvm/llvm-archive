@@ -12,6 +12,8 @@
 ###------------------------------------------------------------------
 5066141: gcc.dg/pr30643.c scan-assembler-not undefined
 5951276: gcc.target/i386/20020616-1.c execution test
+6497723: gcc.apple/block-5988451.c (test for excess errors)
+6497723: gcc.apple/block-ivar.c (test for excess errors)
 # temporary failures due to new linker messages
 6312070: gcc.dg/compat/scalar-by-value-1 c_compat_x_tst.o-c_compat_y_tst.o link
 6312070: gcc.dg/compat/scalar-by-value-3 c_compat_x_tst.o-c_compat_y_tst.o link

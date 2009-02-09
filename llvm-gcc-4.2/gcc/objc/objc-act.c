@@ -3452,8 +3452,12 @@ objc_build_struct (tree class, tree fields, tree super_name)
 /* Build a type differing from TYPE only in that TYPE_VOLATILE is set.
    Unlike tree.c:build_qualified_type(), preserve TYPE_LANG_SPECIFIC in the
    process.  */
-/* LLVM LOCAL rdar 6551276 */
+/* LLVM LOCAL begin rdar 6551276 */
+#ifndef ENABLE_LLVM
+static
+#endif
 tree
+/* LLVM LOCAL end rdar 6551276 */
 objc_build_volatilized_type (tree type)
 {
   tree t;
@@ -14152,11 +14156,11 @@ build_v2_protocol_reference (tree p)
   set_user_assembler_name (decl, proto_name);
   /* APPLE LOCAL end radar 6255913 */
   PROTOCOL_V2_FORWARD_DECL (p) = decl;
-  /* APPLE LOCAL begin - LLVM radar 5476262 */
+  /* LLVM LOCAL begin - radar 5476262 */
 #ifdef ENABLE_LLVM
   pushdecl_top_level(decl);
 #endif
-  /* APPLE LOCAL end - LLVM radar 5476262 */
+  /* LLVM LOCAL end - radar 5476262 */
 }
 /* APPLE LOCAL end radar 4695109 */
 

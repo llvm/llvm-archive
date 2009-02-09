@@ -299,12 +299,14 @@ indirect_data (rtx sym_ref)
   name = XSTR (sym_ref, 0);
 
   lprefix = (((name[0] == '*' || name[0] == '&')
+	      /* APPLE LOCAL begin fix-and-continue 6227434 */
               && (name[1] == 'L'
 		  || (name[1] == '"' && name[2] == 'L')
 		  /* Don't indirect writable strings.  */
 		  || (name[1] == 'l' && name[2] == 'C')))
              || (strncmp (name, "_OBJC_", 6) == 0)
 	     || objc_anonymous_local_objc_name (name));
+	      /* APPLE LOCAL end fix-and-continue 6227434 */
 
   return ! lprefix;
 }

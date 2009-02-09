@@ -727,6 +727,7 @@ proper position among the other output files.  */
     %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %(link_gcc_c_sequence)}}\
     %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} }}}}}}"
 #endif
+/* LLVM LOCAL end add use-gold-plugin, remove emit-llvm */
 /* APPLE LOCAL end add fcreate-profile */
 
 #ifndef LINK_LIBGCC_SPEC
@@ -1645,9 +1646,10 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("multilib_options",		&multilib_options),
   INIT_STATIC_SPEC ("linker",			&linker_name_spec),
   INIT_STATIC_SPEC ("link_libgcc",		&link_libgcc_spec),
-  /* LLVM LOCAL */
+  /* LLVM LOCAL begin */
   INIT_STATIC_SPEC ("gold_plugin_file",		&gold_plugin_file_spec),
   INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
+  /* LLVM LOCAL end */
   INIT_STATIC_SPEC ("md_exec_prefix",		&md_exec_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix",	&md_startfile_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix_1",	&md_startfile_prefix_1),

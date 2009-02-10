@@ -746,8 +746,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     type = orig_type;
   case INTEGER_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    return SET_TYPE_LLVM(type, 
-                         IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
+    return SET_TYPE_LLVM(type, IntegerType::get(TYPE_PRECISION(type)));
   case REAL_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     switch (TYPE_PRECISION(type)) {

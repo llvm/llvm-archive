@@ -3463,6 +3463,10 @@ enum rs6000_builtins
     F.AddFeature("64bit", TARGET_POWERPC64); \
   }
 
+#define LLVM_SET_MACHINE_OPTIONS(argvec)               \
+  if (TARGET_SOFT_FLAT)                                \
+    argvec.push_back("-soft-float");
+
 /* When -m64 is specified, set the architecture to powerpc64-os-blah even if the
  * compiler was configured for powerpc-os-blah.
  */

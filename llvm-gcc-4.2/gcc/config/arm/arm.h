@@ -2922,6 +2922,10 @@ enum arm_builtins
 #define LLVM_OVERRIDE_TARGET_ARCH() \
   (TARGET_THUMB ? "thumb" : "")
 
+#define LLVM_SET_MACHINE_OPTIONS(argvec)               \
+  if (TARGET_SOFT_FLAT)                                \
+    argvec.push_back("-soft-float");
+
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4
 

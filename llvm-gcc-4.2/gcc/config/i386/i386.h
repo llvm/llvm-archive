@@ -3892,6 +3892,10 @@ enum ix86_builtins
     if (TARGET_3DNOW)   F.AddFeature("3dnow");                \
     if (TARGET_3DNOW_A) F.AddFeature("3dnowa");               \
   }
+
+#define LLVM_SET_MACHINE_OPTIONS(argvec)                      \
+  if (!TARGET_80387)                                          \
+    argvec.push_back("-soft-float");
     
 /* LLVM ABI definition macros. */
 

@@ -2923,7 +2923,7 @@ enum arm_builtins
   (TARGET_THUMB ? "thumb" : "")
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
-  if (TARGET_SOFT_FLAT)                                \
+  if (TARGET_SOFT_FLOAT)                               \
     argvec.push_back("-soft-float");
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */

@@ -3464,7 +3464,7 @@ enum rs6000_builtins
   }
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
-  if (TARGET_SOFT_FLAT)                                \
+  if (TARGET_SOFT_FLOAT)                               \
     argvec.push_back("-soft-float");
 
 /* When -m64 is specified, set the architecture to powerpc64-os-blah even if the

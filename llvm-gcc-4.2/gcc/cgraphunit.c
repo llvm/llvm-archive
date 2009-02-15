@@ -1329,12 +1329,16 @@ cgraph_mark_functions_to_output (void)
 	      internal_error ("failed to reclaim unneeded function");
 	    }
 #endif
+          /* LLVM LOCAL begin - extern inline */
+#ifdef ENABLE_LLVM
 	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
-                      /* LLVM LOCAL begin - extern inline */
 		      || IS_EXTERN_INLINE (decl));
-                      /* LLVM LOCAL end - extern inline */
+#else
+	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
+		      || DECL_EXTERNAL (decl));
+#endif
+          /* LLVM LOCAL end - extern inline */
 	}
-
     }
 }
 

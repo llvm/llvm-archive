@@ -100,10 +100,6 @@ extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern SmallSetVector<Constant *,32> AttributeUsedGlobals;
 
-/// AttributeNoinlineFunctions - The list of functions that are 
-/// marked attribute(noinline)
-extern std::vector<Constant*> AttributeNoinlineFunctions;
-
 extern Constant* ConvertMetadataStringToGV(const char* str);
 
 /// AddAnnotateAttrsToGlobal - Adds decls that have a

@@ -94,7 +94,6 @@ static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
 std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
-std::vector<Constant*> AttributeNoinlineFunctions;
 std::vector<Constant*> AttributeAnnotateGlobals;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
@@ -646,21 +645,7 @@ void llvm_asm_file_end(void) {
     gv->setSection("llvm.metadata");
     AttributeUsedGlobals.clear();
   }
-  
-  // Add llvm.noinline
-  if (!AttributeNoinlineFunctions.empty()) {
-    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
-    ArrayType *AT = ArrayType::get(SBP, AttributeNoinlineFunctions.size());
-    Constant *Init = ConstantArray::get(AT, AttributeNoinlineFunctions);
-    GlobalValue *gv = new GlobalVariable(AT, false, 
-                                        GlobalValue::AppendingLinkage, Init,
-                                        "llvm.noinline", TheModule);
-    gv->setSection("llvm.metadata");
-    
-    // Clear vector
-    AttributeNoinlineFunctions.clear();
-  }
-  
+
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
     

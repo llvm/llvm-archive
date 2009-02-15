@@ -11,12 +11,12 @@
 /* APPLE LOCAL begin Apple version */
 #ifdef ENABLE_LLVM
 #ifdef LLVM_VERSION_INFO
-#define VERSUFFIX " (Based on Apple Inc. build 5639) (LLVM build " LLVM_VERSION_INFO ")"
+#define VERSUFFIX " (Based on Apple Inc. build 5641) (LLVM build " LLVM_VERSION_INFO ")"
 #else
-#define VERSUFFIX " (Based on Apple Inc. build 5639) (LLVM build)"
+#define VERSUFFIX " (Based on Apple Inc. build 5641) (LLVM build)"
 #endif
 #else
-#define VERSUFFIX " (Based on Apple Inc. build 5639)"
+#define VERSUFFIX " (Based on Apple Inc. build 5641)"
 #endif
 /* APPLE LOCAL end Apple version */
 

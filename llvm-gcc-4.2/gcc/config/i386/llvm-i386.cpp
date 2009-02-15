@@ -284,6 +284,60 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
+  case IX86_BUILTIN_LOADUPS: {
+    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
+    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
+    LoadInst *LI = Builder.CreateLoad(BC, "tmp");
+    LI->setAlignment(1);
+    Result = LI;
+    return true;
+  }
+  case IX86_BUILTIN_LOADUPD: {
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
+    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
+    LoadInst *LI = Builder.CreateLoad(BC, "tmp");
+    LI->setAlignment(1);
+    Result = LI;
+    return true;
+  }
+  case IX86_BUILTIN_LOADDQU: {
+    VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
+    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
+    LoadInst *LI = Builder.CreateLoad(BC, "tmp");
+    LI->setAlignment(1);
+    Result = LI;
+    return true;
+  }
+  case IX86_BUILTIN_STOREUPS: {
+    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
+    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
+    StoreInst *SI = Builder.CreateStore(Ops[1], BC);
+    SI->setAlignment(1);
+    Result = SI;
+    return true;
+  }
+  case IX86_BUILTIN_STOREUPD: {
+    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
+    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
+    StoreInst *SI = Builder.CreateStore(Ops[1], BC);
+    SI->setAlignment(1);
+    Result = SI;
+    return true;
+  }
+  case IX86_BUILTIN_STOREDQU: {
+    VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
+    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
+    StoreInst *SI = Builder.CreateStore(Ops[1], BC);
+    SI->setAlignment(1);
+    Result = SI;
+    return true;
+  }
   case IX86_BUILTIN_LOADHPS: {
     PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");

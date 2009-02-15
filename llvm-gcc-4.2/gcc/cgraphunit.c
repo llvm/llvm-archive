@@ -1331,13 +1331,8 @@ cgraph_mark_functions_to_output (void)
 #endif
 	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
                       /* LLVM LOCAL begin - extern inline */
-#ifdef ENABLE_LLVM
 		      || IS_EXTERN_INLINE (decl));
-#else
-		      || DECL_EXTERNAL (decl));
-#endif
                       /* LLVM LOCAL end - extern inline */
-
 	}
 
     }

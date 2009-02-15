@@ -84,11 +84,11 @@ static bool arm_assemble_integer (rtx, unsigned int, int);
 static const char *fp_const_from_val (REAL_VALUE_TYPE *);
 static arm_cc get_arm_condition_code (rtx);
 static HOST_WIDE_INT int_log2 (HOST_WIDE_INT);
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 static rtx is_jump_table (rtx);
-/* LLVM LOCAL */
 #endif
+/* LLVM LOCAL end */
 static const char *output_multi_immediate (rtx *, const char *, const char *,
 					   int, HOST_WIDE_INT);
 static const char *shift_op (rtx, HOST_WIDE_INT *);
@@ -99,7 +99,7 @@ static int handle_thumb_unexpanded_epilogue (bool);
 static int handle_thumb_exit (FILE *, int, bool);
 static int handle_thumb_pushpop (FILE *, unsigned long, int, int *, unsigned long, bool);
 /* APPLE LOCAL end compact switch tables */
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 static HOST_WIDE_INT get_jump_table_size (rtx);
 static Mnode *move_minipool_fix_forward_ref (Mnode *, Mnode *, HOST_WIDE_INT);
@@ -114,14 +114,14 @@ static Mfix *create_fix_barrier (Mfix *, HOST_WIDE_INT);
 static void push_minipool_barrier (rtx, HOST_WIDE_INT);
 static void push_minipool_fix (rtx, HOST_WIDE_INT, rtx *, enum machine_mode,
 			       rtx);
-/* LLVM LOCAL */
 #endif
+/* LLVM LOCAL end */
 static void arm_reorg (void);
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 static bool note_invalid_constants (rtx, HOST_WIDE_INT, int);
-/* LLVM LOCAL */
 #endif
+/* LLVM LOCAL end */
 static int current_file_function_operand (rtx);
 static unsigned long arm_compute_save_reg0_reg12_mask (void);
 static unsigned long arm_compute_save_reg_mask (void);
@@ -151,13 +151,13 @@ static bool arm_fastmul_rtx_costs (rtx, int, int, int *);
 static bool arm_xscale_rtx_costs (rtx, int, int, int *);
 static bool arm_9e_rtx_costs (rtx, int, int, int *);
 static int arm_address_cost (rtx);
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 static bool arm_memory_load_p (rtx);
 static bool arm_cirrus_insn_p (rtx);
 static void cirrus_reorg (rtx);
-/* LLVM LOCAL */
 #endif
+/* LLVM LOCAL end */
 static void arm_init_builtins (void);
 static rtx arm_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 static void arm_init_iwmmxt_builtins (void);
@@ -447,11 +447,11 @@ static bool arm_ms_bitfield_layout_p (tree);
 #endif
 /* APPLE LOCAL end ARM darwin local binding */
 /* APPLE LOCAL ARM 6008578 */
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
 static HOST_WIDE_INT get_label_pad (rtx, HOST_WIDE_INT);
-/* LLVM LOCAL */
 #endif
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL begin ARM reliable backtraces */
 #undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
@@ -5912,7 +5912,7 @@ arm_address_cost (rtx x)
 static int
 arm_adjust_cost (rtx insn, rtx link, rtx dep, int cost)
 {
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   insn = insn;
   link = link;
@@ -5920,6 +5920,7 @@ arm_adjust_cost (rtx insn, rtx link, rtx dep, int cost)
   cost = cost;
   return 1;
 #else  
+/* LLVM LOCAL end */
   rtx i_pat, d_pat;
 
   /* Some true dependencies can have a higher cost depending
@@ -12977,10 +12978,11 @@ get_arm_condition_code (rtx comparison)
 void
 arm_final_prescan_insn (rtx insn)
 {
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   insn = insn;
 #else
+/* LLVM LOCAL end */
   /* BODY will hold the body of INSN.  */
   rtx body = PATTERN (insn);
 
@@ -14838,10 +14840,11 @@ thumb_shiftable_const (unsigned HOST_WIDE_INT val)
 static int
 thumb_far_jump_used_p (void)
 {
-/* LLVM LOCAL */
+/* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   return 0;
 #else  
+/* LLVM LOCAL end */
   rtx insn;
 
   /* This test is only important for leaf functions.  */

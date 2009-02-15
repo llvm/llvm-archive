@@ -384,8 +384,13 @@ cgraph_assemble_pending_functions (void)
       n->next_needed = NULL;
       if (!n->global.inlined_to
 	  && !n->alias
-         /* LLVM LOCAL extern inline */
+         /* LLVM LOCAL begin - extern inline */
+#ifdef ENABLE_LLVM
 	  && !IS_EXTERN_INLINE (n->decl))
+#else
+	  && !DECL_EXTERNAL (n->decl))
+#endif
+         /* LLVM LOCAL end - extern inline */
 	{
 	  cgraph_expand_function (n);
 	  output = true;
@@ -848,8 +853,13 @@ verify_cgraph_node (struct cgraph_node *node)
 
   if (node->analyzed
       && DECL_SAVED_TREE (node->decl) && !TREE_ASM_WRITTEN (node->decl)
-        /* LLVM LOCAL extern inline */ 
-     && (!IS_EXTERN_INLINE (node->decl) || node->global.inlined_to))
+      /* LLVM LOCAL begin - extern inline */ 
+#ifdef ENABLE_LLVM
+      && (!IS_EXTERN_INLINE (node->decl) || node->global.inlined_to))
+#else
+      && (!DECL_EXTERNAL (node->decl) || node->global.inlined_to))
+#endif
+      /* LLVM LOCAL end - extern inline */ 
     {
       if (this_cfun->cfg)
 	{
@@ -1294,24 +1304,39 @@ cgraph_mark_functions_to_output (void)
 	  && (node->needed
 	      || (e && node->reachable))
 	  && !TREE_ASM_WRITTEN (decl)
-          /* LLVM LOCAL extern inline */
+          /* LLVM LOCAL begin - extern inline */
+#ifdef ENABLE_LLVM
 	  && !IS_EXTERN_INLINE (decl))
+#else
+	  && !DECL_EXTERNAL (decl))
+#endif
+          /* LLVM LOCAL end - extern inline */
 	node->output = 1;
       else
 	{
 	  /* We should've reclaimed all functions that are not needed.  */
 #ifdef ENABLE_CHECKING
 	  if (!node->global.inlined_to && DECL_SAVED_TREE (decl)
-            /* LLVM LOCAL extern inline */
+              /* LLVM LOCAL begin - extern inline */
+#ifdef ENABLE_LLVM
 	      && !IS_EXTERN_INLINE (decl))
+#else
+	      && !DECL_EXTERNAL (decl))
+#endif
+              /* LLVM LOCAL end - extern inline */
 	    {
 	      dump_cgraph_node (stderr, node);
 	      internal_error ("failed to reclaim unneeded function");
 	    }
 #endif
 	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
-                       /* LLVM LOCAL extern inline */
+                      /* LLVM LOCAL begin - extern inline */
+#ifdef ENABLE_LLVM
 		      || IS_EXTERN_INLINE (decl));
+#else
+		      || DECL_EXTERNAL (decl));
+#endif
+                      /* LLVM LOCAL end - extern inline */
 
 	}
 

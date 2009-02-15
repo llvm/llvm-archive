@@ -1188,7 +1188,9 @@ c_common_post_options (const char **pfilename)
       warning (OPT_Wformat_nonliteral,
 	       "-Wformat-nonliteral ignored without -Wformat");
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       if (warn_format_security)
+#endif
         warning (OPT_Wformat_security,
                  "-Wformat-security ignored without -Wformat");
       /* LLVM LOCAL end */

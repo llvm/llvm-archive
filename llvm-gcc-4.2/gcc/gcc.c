@@ -770,7 +770,9 @@ static const char *startfile_spec = STARTFILE_SPEC;
 static const char *switches_need_spaces = SWITCHES_NEED_SPACES;
 static const char *linker_name_spec = LINKER_NAME;
 /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
 static const char *gold_plugin_file_spec = "";
+#endif
 /* LLVM LOCAL end */
 static const char *link_command_spec = LINK_COMMAND_SPEC;
 static const char *link_libgcc_spec = LINK_LIBGCC_SPEC;
@@ -1153,7 +1155,9 @@ static const struct option_map option_map[] =
    {"--dump", "-d", "a"},
    {"--dumpbase", "-dumpbase", "a"},
    /* LLVM LOCAL */
+#ifdef ENABLE_LLVM
    {"--emit-llvm", "-emit-llvm", 0 },
+#endif
    {"--encoding", "-fencoding=", "aj"},
    {"--entry", "-e", 0},
    {"--extra-warnings", "-W", 0},
@@ -1174,7 +1178,9 @@ static const struct option_map option_map[] =
    {"--language", "-x", "a"},
    {"--library-directory", "-L", "a"},
    /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
    {"--llvm-options", "-mllvm", "a"},
+#endif
    /* LLVM LOCAL end */
    {"--machine", "-m", "aj"},
    {"--machine-", "-m", "*j"},
@@ -1647,8 +1653,10 @@ static struct spec_list static_specs[] =
   INIT_STATIC_SPEC ("linker",			&linker_name_spec),
   INIT_STATIC_SPEC ("link_libgcc",		&link_libgcc_spec),
   /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   INIT_STATIC_SPEC ("gold_plugin_file",		&gold_plugin_file_spec),
   INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
+#endif
   /* LLVM LOCAL end */
   INIT_STATIC_SPEC ("md_exec_prefix",		&md_exec_prefix),
   INIT_STATIC_SPEC ("md_startfile_prefix",	&md_startfile_prefix),
@@ -7151,7 +7159,9 @@ main (int argc, char **argv)
     {
       int tmp = execution_count;
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       const char *use_gold_plugin = "use-gold-plugin";
+#endif
       /* LLVM LOCAL end */
 
       /* We'll use ld if we can't find collect2.  */
@@ -7161,8 +7171,8 @@ main (int argc, char **argv)
 	  if (s == NULL)
 	    linker_name_spec = "ld";
 	}
-
       /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
       if (switch_matches (use_gold_plugin,
 			  use_gold_plugin + strlen (use_gold_plugin), 0))
 	{
@@ -7172,8 +7182,8 @@ main (int argc, char **argv)
 	  if (!gold_plugin_file_spec)
 	    fatal ("-use-gold-plugin, but libLLVMgold.so not found.");
 	}
+#endif
       /* LLVM LOCAL end */
-
       /* Rebuild the COMPILER_PATH and LIBRARY_PATH environment variables
 	 for collect.  */
       putenv_from_prefixes (&exec_prefixes, "COMPILER_PATH", false);

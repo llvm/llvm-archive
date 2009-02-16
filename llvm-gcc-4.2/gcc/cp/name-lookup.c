@@ -817,7 +817,12 @@ pushdecl_maybe_friend (tree x, bool is_friend)
 	  /* Make sure to do the copying if the type was anonymous  */
 	  else if (type != error_mark_node 
 		   && ((TYPE_NAME (type) != x) 
+#ifdef ENABLE_LLVM
+                       /* llvm-gcc does not need a copy if the type was anonymous.  */
+                       )
+#else
 		       || (TYPE_LANG_SPECIFIC (type) && TYPE_WAS_ANONYMOUS (type)))
+#endif
 	  /* APPLE LOCAL end radar 6007135, typedef of anonymous struct  */
 		   /* We don't want to copy the type when all we're
 		      doing is making a TYPE_DECL for the purposes of

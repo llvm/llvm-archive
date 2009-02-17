@@ -136,6 +136,9 @@ void llvm_initialize_backend(void) {
 #ifdef LLVM_SET_TARGET_OPTIONS
   LLVM_SET_TARGET_OPTIONS(Args);
 #endif
+#ifdef LLVM_SET_MACHINE_OPTIONS
+  LLVM_SET_MACHINE_OPTIONS(Args);
+#endif
   
   if (time_report)
     Args.push_back("--time-passes");

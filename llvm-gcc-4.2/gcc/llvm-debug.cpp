@@ -202,18 +202,7 @@ DebugInfo::DebugInfo(Module *m)
 , PrevLineNo(0)
 , PrevBB(NULL)
 , RegionStack()
-{
-
-  // Each input file is encoded as a separate compile unit in LLVM
-  // debugging information output. However, many target specific tool chains
-  // prefer to encode only one compile unit in an object file. In this 
-  // situation, the LLVM code generator will include  debugging information
-  // entities in the compile unit that is marked as main compile unit. The 
-  // code generator accepts maximum one main compile unit per module. If a
-  // module does not contain any main compile unit then the code generator 
-  // will emit multiple compile units in the output object file.
-  DICompileUnit M = getOrCreateCompileUnit(main_input_filename, true);
-}
+{}
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start."
@@ -544,6 +533,27 @@ DIType DebugInfo::createStructType(tree type) {
   unsigned Tag = TREE_CODE(type) == RECORD_TYPE ? DW_TAG_structure_type :
     DW_TAG_union_type;
   
+  unsigned RunTimeLang = 0;
+  if (TYPE_LANG_SPECIFIC (type)
+      && lang_hooks.types.is_runtime_specific_type (type))
+    {
+      DICompileUnit CU = getOrCreateCompileUnit(main_input_filename);
+      unsigned CULang = CU.getLanguage();
+      switch (CULang) {
+      case DW_LANG_ObjC_plus_plus :
+        RunTimeLang = DW_LANG_ObjC_plus_plus;
+        break;
+      case DW_LANG_ObjC :
+        RunTimeLang = DW_LANG_ObjC;
+        break;
+      case DW_LANG_C_plus_plus :
+        RunTimeLang = DW_LANG_C_plus_plus;
+        break;
+      default:
+        break;
+      }
+    }
+    
   // Records and classes and unions can all be recursive.  To handle them,
   // we first generate a debug descriptor for the struct as a forward 
   // declaration. Then (if it is a definition) we go through and get debug 
@@ -559,7 +569,8 @@ DIType DebugInfo::createStructType(tree type) {
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 
                                      0, 0, 0, llvm::DIType::FlagFwdDecl,
-                                     llvm::DIType(), llvm::DIArray());
+                                     llvm::DIType(), llvm::DIArray(),
+                                     RunTimeLang);
   
   // forward declaration, 
   if (TYPE_SIZE(type) == 0) 
@@ -665,7 +676,8 @@ DIType DebugInfo::createStructType(tree type) {
                                      getOrCreateCompileUnit(Loc.file),
                                      Loc.line, 
                                      NodeSizeInBits(type), NodeAlignInBits(type),
-                                     0, 0, llvm::DIType(), Elements);
+                                     0, 0, llvm::DIType(), Elements,
+                                     RunTimeLang);
   
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
@@ -854,10 +866,13 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
    if (debugopt && debugopt[0])
      Flags = get_arguments();
 
-  DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
-                                                       Directory, 
-                                                       version_string, isMain,
-                                                       optimize, Flags);
+   // flag_objc_abi represents Objective-C runtime version number. It is zero
+   // for all other language.
+   DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
+                                                        Directory, 
+                                                        version_string, isMain,
+                                                        optimize, Flags,
+                                                        flag_objc_abi);
   CU = NewCU.getGV();
   return NewCU;
 }

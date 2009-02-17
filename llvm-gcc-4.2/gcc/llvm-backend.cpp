@@ -265,6 +265,18 @@ void performLateBackendInitialization(void) {
 }
 
 void llvm_lang_dependent_init(const char *Name) {
+
+  // Each input file is encoded as a separate compile unit in LLVM
+  // debugging information output. However, many target specific tool chains
+  // prefer to encode only one compile unit in an object file. In this 
+  // situation, the LLVM code generator will include  debugging information
+  // entities in the compile unit that is marked as main compile unit. The 
+  // code generator accepts maximum one main compile unit per module. If a
+  // module does not contain any main compile unit then the code generator 
+  // will emit multiple compile units in the output object file.
+  if (TheDebugInfo)
+    TheDebugInfo->getOrCreateCompileUnit(main_input_filename, true);
+
   if (Name)
     TheModule->setModuleIdentifier(Name);
 }

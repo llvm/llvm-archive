@@ -847,9 +847,17 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   else
     LangTag = DW_LANG_C89;
 
+   const char *Flags = "";
+   // Do this only when RC_DEBUG_OPTIONS environment variable is set to
+   // a nonempty string. This is intended only for internal Apple use.
+   char * debugopt = getenv("RC_DEBUG_OPTIONS");
+   if (debugopt && debugopt[0])
+     Flags = get_arguments();
+
   DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
                                                        Directory, 
-                                                       version_string, isMain);
+                                                       version_string, isMain,
+                                                       optimize, Flags);
   CU = NewCU.getGV();
   return NewCU;
 }

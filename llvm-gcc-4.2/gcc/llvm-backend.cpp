@@ -250,7 +250,7 @@ void llvm_initialize_backend(void) {
 
   // FIXME - Do not disable debug info while writing pch.
   if (!flag_pch_file &&
-      !optimize && debug_info_level > DINFO_LEVEL_NONE)
+      debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
@@ -287,8 +287,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   delete MB;
 
   // FIXME - Do not disable debug info while writing pch.
-  if (!flag_pch_file &&
-      !optimize && debug_info_level > DINFO_LEVEL_NONE)
+  if (!flag_pch_file && debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 
   if (!TheModule) {

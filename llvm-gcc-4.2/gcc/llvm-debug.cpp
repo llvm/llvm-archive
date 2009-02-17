@@ -221,12 +221,13 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                   BasicBlock *CurBB) {
   // Gather location information.
   expanded_location Loc = GetNodeLocation(FnDecl, false);
-  const char *FnName = GetNodeName(FnDecl);
   const char *LinkageName = getLinkageName(FnDecl);
 
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(findRegion(FnDecl),
-                                  FnName, FnName, LinkageName,
+                                  lang_hooks.dwarf_name(FnDecl, 0),
+                                  lang_hooks.dwarf_name(FnDecl, 0),
+                                  LinkageName,
                                   getOrCreateCompileUnit(Loc.file), CurLineNo,
                                   getOrCreateType(TREE_TYPE(FnDecl)),
                                   Fn->hasInternalLinkage(),
@@ -588,7 +589,7 @@ DIType DebugInfo::createStructType(tree type) {
        Member = TREE_CHAIN(Member)) {
     // Should we skip.
     if (DECL_P(Member) && DECL_IGNORED_P(Member)) continue;
-    
+
     if (TREE_CODE(Member) == FIELD_DECL) {
       
       if (DECL_FIELD_OFFSET(Member) == 0 ||
@@ -631,11 +632,12 @@ DIType DebugInfo::createStructType(tree type) {
        Member = TREE_CHAIN(Member)) {
     
     if (DECL_ABSTRACT_ORIGIN (Member)) continue;
-    
+    if (DECL_ARTIFICIAL (Member)) continue;
+
     // Get the location of the member.
     expanded_location MemLoc = GetNodeLocation(Member, false);
     
-    const char *MemberName = GetNodeName(Member);                
+    const char *MemberName = lang_hooks.dwarf_name(Member, 0);        
     const char *LinkageName = getLinkageName(Member);
     DIType SPTy = getOrCreateType(TREE_TYPE(Member));
     DISubprogram SP = 

@@ -2240,6 +2240,13 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
       continue;
 
     tree TheGccTy = TREE_TYPE(Field);
+
+    // Skip zero-length fields; ConvertType refuses to construct a type
+    // of size 0.
+    if (DECL_SIZE(Field) &&
+        TREE_CODE(DECL_SIZE(Field))==INTEGER_CST &&
+        TREE_INT_CST_LOW(DECL_SIZE(Field))==0)
+      continue;
 #ifdef TARGET_POWERPC
     // Normally gcc reduces the size of bitfields to the size necessary
     // to hold the bits, e.g. a 1-bit field becomes QI.  It does not do

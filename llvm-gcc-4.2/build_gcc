@@ -512,9 +512,11 @@ done
 # LLVM LOCAL begin
 # Compress manpages
 gzip -f $MDIR/*
-mkdir -p /Developer/usr/share/man/man1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 /Developer/usr/share/man/man1/llvm-gcc.1
-gzip -f /Developer/usr/share/man/man1/llvm-gcc.1
+mkdir -p $DEST_DIR/Developer/usr/share/man/man1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
+gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
+gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
 # LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers

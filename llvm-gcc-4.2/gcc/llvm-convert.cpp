@@ -3083,14 +3083,10 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   case Type::FP128TyID: Name = "fabsl"; break;
   }
 
-  Function *F = cast<Function>(TheModule->getOrInsertFunction(Name,
-                                                              Op->getType(),
-                                                              Op->getType(),
-                                                              NULL));
-  CallInst *Call = Builder.CreateCall(F, Op);
-  F->setDoesNotThrow();
+  Value *V = TheModule->getOrInsertFunction(Name, Op->getType(), Op->getType(),
+                                            NULL);
+  CallInst *Call = Builder.CreateCall(V, Op);
   Call->setDoesNotThrow();
-  F->setDoesNotAccessMemory();
   Call->setDoesNotAccessMemory();
   return Call;
 }

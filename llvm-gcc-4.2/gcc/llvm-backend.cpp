@@ -92,7 +92,7 @@ llvm::OStream *AsmIntermediateOutFile = 0;
 /// optimizations off.
 static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
-std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
+std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
 std::vector<Constant*> AttributeAnnotateGlobals;
 
@@ -106,6 +106,203 @@ static FunctionPassManager *CodeGenPasses = 0;
 static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 static void destroyOptimizationPasses();
+
+//===----------------------------------------------------------------------===//
+//                   Matching LLVM Values with GCC DECL trees
+//===----------------------------------------------------------------------===//
+//
+// LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM
+// Values using this vector's index. It is easier to save and restore the index
+// than the LLVM Value pointer while using PCH.
+
+// Collection of LLVM Values
+static std::vector<Value *> LLVMValues;
+typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
+static LLVMValuesMapTy LLVMValuesMap;
+
+/// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
+/// this allows us to efficiently identify and remove them.  Local IDs are IDs
+/// for values that are local to the current function being processed.  These do
+/// not need to go into the PCH file, but DECL_LLVM still needs a valid index
+/// while converting the function.  Using "Local IDs" allows the IDs for
+/// function-local decls to be recycled after the function is done.
+static std::vector<unsigned> LocalLLVMValueIDs;
+
+// Remember the LLVM value for GCC tree node.
+void llvm_set_decl(tree Tr, Value *V) {
+
+  // If there is not any value then do not add new LLVMValues entry.
+  // However clear Tr index if it is non zero.
+  if (!V) {
+    if (GET_DECL_LLVM_INDEX(Tr))
+      SET_DECL_LLVM_INDEX(Tr, 0);
+    return;
+  }
+
+  unsigned &ValueSlot = LLVMValuesMap[V];
+  if (ValueSlot) {
+    // Already in map
+    SET_DECL_LLVM_INDEX(Tr, ValueSlot);
+    return;
+  }
+
+  LLVMValues.push_back(V);
+  unsigned Index = LLVMValues.size();
+  SET_DECL_LLVM_INDEX(Tr, Index);
+  LLVMValuesMap[V] = Index;
+
+  // Remember local values.
+  if (!isa<Constant>(V))
+    LocalLLVMValueIDs.push_back(Index);
+}
+
+// Return TRUE if there is a LLVM Value associate with GCC tree node.
+bool llvm_set_decl_p(tree Tr) {
+  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+  if (Index == 0)
+    return false;
+
+  return LLVMValues[Index - 1] != 0;
+}
+
+// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
+// If there is not any value associated then use make_decl_llvm() to
+// make LLVM value. When GCC tree node is initialized, it has 0 as the
+// index value. This is why all recorded indices are offset by 1.
+Value *llvm_get_decl(tree Tr) {
+
+  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+  if (Index == 0) {
+    make_decl_llvm(Tr);
+    Index = GET_DECL_LLVM_INDEX(Tr);
+
+    // If there was an error, we may have disabled creating LLVM values.
+    if (Index == 0) return 0;
+  }
+  assert((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
+  assert(LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
+
+  return LLVMValues[Index - 1];
+}
+
+/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
+/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
+/// At this point we know that New is not in any of these maps.
+void changeLLVMConstant(Constant *Old, Constant *New) {
+  assert(Old->use_empty() && "Old value has uses!");
+
+  if (AttributeUsedGlobals.count(Old)) {
+    AttributeUsedGlobals.remove(Old);
+    AttributeUsedGlobals.insert(New);
+  }
+
+  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
+    if (StaticCtors[i].first == Old)
+      StaticCtors[i].first = New;
+  }
+
+  for (unsigned i = 0, e = StaticDtors.size(); i != e; ++i) {
+    if (StaticDtors[i].first == Old)
+      StaticDtors[i].first = New;
+  }
+
+  assert(!LLVMValuesMap.count(New) && "New cannot be in the LLVMValues map!");
+
+  // Find Old in the table.
+  LLVMValuesMapTy::iterator I = LLVMValuesMap.find(Old);
+  if (I == LLVMValuesMap.end()) return;
+
+  unsigned Idx = I->second-1;
+  assert(Idx < LLVMValues.size() && "Out of range index!");
+  assert(LLVMValues[Idx] == Old && "Inconsistent LLVMValues mapping!");
+
+  LLVMValues[Idx] = New;
+
+  // Remove the old value from the value map.
+  LLVMValuesMap.erase(I);
+
+  // Insert the new value into the value map.  We know that it can't already
+  // exist in the mapping.
+  if (New)
+    LLVMValuesMap[New] = Idx+1;
+}
+
+// Read LLVM Types string table
+void readLLVMValues() {
+  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
+  if (!V)
+    return;
+
+  GlobalVariable *GV = cast<GlobalVariable>(V);
+  ConstantStruct *ValuesFromPCH = cast<ConstantStruct>(GV->getOperand(0));
+
+  for (unsigned i = 0; i < ValuesFromPCH->getNumOperands(); ++i) {
+    Value *Va = ValuesFromPCH->getOperand(i);
+
+    if (!Va) {
+      // If V is empty then insert NULL to represent empty entries.
+      LLVMValues.push_back(Va);
+      continue;
+    }
+    if (ConstantArray *CA = dyn_cast<ConstantArray>(Va)) {
+      std::string Str = CA->getAsString();
+      Va = TheModule->getValueSymbolTable().lookup(Str);
+    }
+    assert (Va != NULL && "Invalid Value in LLVMValues string table");
+    LLVMValues.push_back(Va);
+  }
+
+  // Now, llvm.pch.values is not required so remove it from the symbol table.
+  GV->eraseFromParent();
+}
+
+// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
+// Create a string table to hold these LLVM Values' names. This string
+// table will be used to recreate LTypes vector after loading PCH.
+void writeLLVMValues() {
+  if (LLVMValues.empty())
+    return;
+
+  std::vector<Constant *> ValuesForPCH;
+  for (std::vector<Value *>::iterator I = LLVMValues.begin(),
+         E = LLVMValues.end(); I != E; ++I)  {
+    if (Constant *C = dyn_cast_or_null<Constant>(*I))
+      ValuesForPCH.push_back(C);
+    else
+      // Non constant values, e.g. arguments, are not at global scope.
+      // When PCH is read, only global scope values are used.
+      ValuesForPCH.push_back(Constant::getNullValue(Type::Int32Ty));
+  }
+
+  // Create string table.
+  Constant *LLVMValuesTable = ConstantStruct::get(ValuesForPCH, false);
+
+  // Create variable to hold this string table.
+  new GlobalVariable(LLVMValuesTable->getType(), true,
+                     GlobalValue::ExternalLinkage,
+                     LLVMValuesTable,
+                     "llvm.pch.values", TheModule);
+}
+
+/// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
+void eraseLocalLLVMValues() {
+  // Erase all the local values, these are stored in LocalLLVMValueIDs.
+  while (!LocalLLVMValueIDs.empty()) {
+    unsigned Idx = LocalLLVMValueIDs.back()-1;
+    LocalLLVMValueIDs.pop_back();
+
+    if (Value *V = LLVMValues[Idx]) {
+      assert(!isa<Constant>(V) && "Found global value");
+      LLVMValuesMap.erase(V);
+    }
+
+    if (Idx == LLVMValues.size()-1)
+      LLVMValues.pop_back();
+    else
+      LLVMValues[Idx] = 0;
+  }
+}
+
 
 // Forward decl visibility style to global.
 void handleVisibility(tree decl, GlobalValue *GV) {
@@ -598,7 +795,7 @@ void llvm_asm_file_start(void) {
 
 /// ConvertStructorsList - Convert a list of static ctors/dtors to an
 /// initializer suitable for the llvm.global_[cd]tors globals.
-static void CreateStructorsList(std::vector<std::pair<Function*, int> > &Tors,
+static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                                 const char *Name) {
   std::vector<Constant*> InitList;
   std::vector<Constant*> StructInit;
@@ -641,7 +838,7 @@ void llvm_asm_file_end(void) {
   // Add an llvm.global_dtors global if needed.
   if (!StaticDtors.empty())
     CreateStructorsList(StaticDtors, "llvm.global_dtors");
-  
+
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
@@ -653,7 +850,7 @@ void llvm_asm_file_end(void) {
 
     ArrayType *AT = ArrayType::get(SBP, AUGs.size());
     Constant *Init = ConstantArray::get(AT, AUGs);
-    GlobalValue *gv = new GlobalVariable(AT, false, 
+    GlobalValue *gv = new GlobalVariable(AT, false,
                        GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
     gv->setSection("llvm.metadata");
@@ -662,19 +859,17 @@ void llvm_asm_file_end(void) {
 
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
-    
     Constant *Array =
-    ConstantArray::get(ArrayType::get(AttributeAnnotateGlobals[0]->getType(), 
+    ConstantArray::get(ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
                                       AttributeAnnotateGlobals.size()),
                        AttributeAnnotateGlobals);
-    GlobalValue *gv = new GlobalVariable(Array->getType(), false, 
-                                         GlobalValue::AppendingLinkage, Array, 
-                                         "llvm.global.annotations", TheModule); 
+    GlobalValue *gv = new GlobalVariable(Array->getType(), false,
+                                         GlobalValue::AppendingLinkage, Array,
+                                         "llvm.global.annotations", TheModule);
     gv->setSection("llvm.metadata");
     AttributeAnnotateGlobals.clear();
-  
   }
-  
+
   // Finish off the per-function pass.
   if (PerFunctionPasses)
     PerFunctionPasses->doFinalization();
@@ -876,7 +1071,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     return;
   }
     
-  changeLLVMValue(V, GA);
+  changeLLVMConstant(V, GA);
   GA->takeName(V);
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     GV->eraseFromParent();
@@ -1018,11 +1213,7 @@ void reset_type_and_initializer_llvm(tree decl) {
                                              GV->getName(), TheModule);
     NGV->setVisibility(GV->getVisibility());
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
-    if (AttributeUsedGlobals.count(GV)) {
-      AttributeUsedGlobals.remove(GV);
-      AttributeUsedGlobals.insert(NGV);
-    }
-    changeLLVMValue(GV, NGV);
+    changeLLVMConstant(GV, NGV);
     delete GV;
     SET_DECL_LLVM(decl, NGV);
     GV = NGV;
@@ -1090,11 +1281,7 @@ void emit_global_to_llvm(tree decl) {
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName(), TheModule);
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
-    if (AttributeUsedGlobals.count(GV)) {
-      AttributeUsedGlobals.remove(GV);
-      AttributeUsedGlobals.insert(NGV);
-    }
-    changeLLVMValue(GV, NGV);
+    changeLLVMConstant(GV, NGV);
     delete GV;
     SET_DECL_LLVM(decl, NGV);
     GV = NGV;
@@ -1327,14 +1514,14 @@ void make_decl_llvm(tree decl) {
       if (FnEntry->getName() != Name) {
         GlobalVariable *G = TheModule->getGlobalVariable(Name, true);
         assert(G && G->isDeclaration() && "A global turned into a function?");
-        
+
         // Replace any uses of "G" with uses of FnEntry.
-        Value *GInNewType = TheFolder->CreateBitCast(FnEntry, G->getType());
+        Constant *GInNewType = TheFolder->CreateBitCast(FnEntry, G->getType());
         G->replaceAllUsesWith(GInNewType);
-        
+
         // Update the decl that points to G.
-        changeLLVMValue(G, GInNewType);
-        
+        changeLLVMConstant(G, GInNewType);
+
         // Now we can give GV the proper name.
         FnEntry->takeName(G);
         
@@ -1393,11 +1580,11 @@ void make_decl_llvm(tree decl) {
           assert(F && F->isDeclaration() && "A function turned into a global?");
           
           // Replace any uses of "F" with uses of GV.
-          Value *FInNewType = TheFolder->CreateBitCast(GV, F->getType());
+          Constant *FInNewType = TheFolder->CreateBitCast(GV, F->getType());
           F->replaceAllUsesWith(FInNewType);
-          
+
           // Update the decl that points to F.
-          changeLLVMValue(F, FInNewType);
+          changeLLVMConstant(F, FInNewType);
 
           // Now we can give GV the proper name.
           GV->takeName(F);
@@ -1474,11 +1661,11 @@ void llvm_mark_decl_weak(tree decl) {
 //
 void llvm_emit_ctor_dtor(tree FnDecl, int InitPrio, int isCtor) {
   mark_decl_referenced(FnDecl);  // Inform cgraph that we used the global.
-  
+
   if (errorcount || sorrycount) return;
-  
-  Function *F = cast_or_null<Function>(DECL_LLVM(FnDecl));
-  (isCtor ? &StaticCtors:&StaticDtors)->push_back(std::make_pair(F, InitPrio));
+
+  Constant *C = cast<Constant>(DECL_LLVM(FnDecl));
+  (isCtor ? &StaticCtors:&StaticDtors)->push_back(std::make_pair(C, InitPrio));
 }
 
 void llvm_emit_typedef(tree decl) {

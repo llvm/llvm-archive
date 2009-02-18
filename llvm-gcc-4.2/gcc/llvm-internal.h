@@ -93,10 +93,6 @@ const TargetData &getTargetData();
 ///
 extern llvm::OStream *AsmOutFile;
 
-/// StaticCtors/StaticDtors - The static constructors and destructors that we
-/// need to emit.
-extern std::vector<std::pair<Function*, int> > StaticCtors, StaticDtors;
-
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern SmallSetVector<Constant *,32> AttributeUsedGlobals;
 
@@ -106,11 +102,12 @@ extern Constant* ConvertMetadataStringToGV(const char* str);
 /// annotate attribute to a vector to be emitted later.
 extern void AddAnnotateAttrsToGlobal(GlobalValue *GV, union tree_node* decl);
 
-void changeLLVMValue(Value *Old, Value *New);
+void changeLLVMConstant(Constant *Old, Constant *New);
 void readLLVMTypesStringTable();
 void writeLLVMTypesStringTable();
 void readLLVMValues();
 void writeLLVMValues();
+void eraseLocalLLVMValues();
 void clearTargetBuiltinCache();
 const char* extractRegisterName(union tree_node*);
 void handleVisibility(union tree_node* decl, GlobalValue *GV);

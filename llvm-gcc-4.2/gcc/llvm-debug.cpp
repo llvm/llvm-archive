@@ -828,9 +828,10 @@ DIType DebugInfo::getOrCreateType(tree type) {
 /// getOrCreateCompileUnit - Get the compile unit from the cache or 
 /// create a new one if necessary.
 DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
-                                                bool isMain){
-
-  GlobalVariable *&CU = CUCache[FullPath ? FullPath : main_input_filename];
+                                                bool isMain) {
+  if (!FullPath)
+    FullPath = main_input_filename;
+  GlobalVariable *&CU = CUCache[FullPath];
   if (CU)
     return DICompileUnit(CU);
 

@@ -869,11 +869,14 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
 
    // flag_objc_abi represents Objective-C runtime version number. It is zero
    // for all other language.
+   unsigned ObjcRunTimeVer = 0;
+   if (flag_objc_abi != 0 && flag_objc_abi != -1)
+     ObjcRunTimeVer = flag_objc_abi;
    DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
                                                         Directory, 
                                                         version_string, isMain,
                                                         optimize, Flags,
-                                                        flag_objc_abi);
+                                                        ObjcRunTimeVer);
   CU = NewCU.getGV();
   return NewCU;
 }

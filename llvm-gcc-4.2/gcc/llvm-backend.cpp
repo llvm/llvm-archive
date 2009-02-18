@@ -1506,7 +1506,7 @@ void make_decl_llvm(tree decl) {
       TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-     handleVisibility(decl, FnEntry);
+      handleVisibility(decl, FnEntry);
 
       // If FnEntry got renamed, then there is already an object with this name
       // in the symbol table.  If this happens, the old one must be a forward

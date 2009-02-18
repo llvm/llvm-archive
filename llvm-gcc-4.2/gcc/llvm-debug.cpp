@@ -88,14 +88,14 @@ static uint64_t NodeSizeInBits(tree Node) {
     if (TYPE_SIZE(Node) == NULL_TREE)
       return 0;
     else if (isInt64(TYPE_SIZE(Node), 1))
-      return getInt64(TYPE_SIZE(Node), 1);
+      return getINTEGER_CSTVal(TYPE_SIZE(Node));
     else
       return TYPE_ALIGN(Node);
   } else if (DECL_P(Node)) {
     if (DECL_SIZE(Node) == NULL_TREE)
       return 0;
     else if (isInt64(DECL_SIZE(Node), 1))
-      return getInt64(DECL_SIZE(Node), 1);
+      return getINTEGER_CSTVal(DECL_SIZE(Node));
     else
       return DECL_ALIGN(Node);
   }
@@ -477,8 +477,8 @@ DIType DebugInfo::createArrayType(tree type) {
       tree MaxValue = TYPE_MAX_VALUE(Domain);
       if (MinValue && MaxValue &&
           isInt64(MinValue, 0) && isInt64(MaxValue, 0)) {
-        uint64_t Low = getInt64(MinValue, 0);
-        uint64_t Hi = getInt64(MaxValue, 0);
+        uint64_t Low = getINTEGER_CSTVal(MinValue);
+        uint64_t Hi = getINTEGER_CSTVal(MaxValue);
         Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
       }
     }
@@ -505,7 +505,7 @@ DIType DebugInfo::createEnumType(tree type) {
   if (TYPE_SIZE(type)) {
     for (tree Link = TYPE_VALUES(type); Link; Link = TREE_CHAIN(Link)) {
       tree EnumValue = TREE_VALUE(Link);
-      int64_t Value = getInt64(EnumValue, tree_int_cst_sgn(EnumValue) > 0);
+      int64_t Value = getINTEGER_CSTVal(EnumValue);
       const char *EnumName = IDENTIFIER_POINTER(TREE_PURPOSE(Link));
       Elements.push_back(DebugFactory.CreateEnumerator(EnumName, Value));
     }
@@ -599,7 +599,7 @@ DIType DebugInfo::createStructType(tree type) {
                                        findRegion(type),"", 
                                        getOrCreateCompileUnit(Loc.file), 
                                        0,0,0, 
-                                       getInt64(BINFO_OFFSET(BInfo), 0),
+                                       getINTEGER_CSTVal(BINFO_OFFSET(BInfo)),
                                        0, BaseClass);
       EltTys.push_back(DTy);
     }

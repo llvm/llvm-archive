@@ -102,7 +102,7 @@ static bool isStructWithVarSizeArrayAtEnd(const Type *Ty) {
 
 /// getINTEGER_CSTVal - Return the specified INTEGER_CST value as a uint64_t.
 ///
-static uint64_t getINTEGER_CSTVal(tree exp) {
+uint64_t getINTEGER_CSTVal(tree exp) {
   unsigned HOST_WIDE_INT HI = (unsigned HOST_WIDE_INT)TREE_INT_CST_HIGH(exp);
   unsigned HOST_WIDE_INT LO = (unsigned HOST_WIDE_INT)TREE_INT_CST_LOW(exp);
   if (HOST_BITS_PER_WIDE_INT == 64) {

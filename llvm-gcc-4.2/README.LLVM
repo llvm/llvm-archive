@@ -93,7 +93,7 @@ With these options, llvm-gcc will build the same way as Apple's system GCC.
 
 If you want Fortran support, you need to do the following:
     Get the GMP, MPFR, and libiconv via MacPorts.
-    You need to add fotran to the list of EXTRALANGS.
+    You need to add fortran to the list of EXTRALANGS.
     Then specify these additional options to configure:
         --with-gmp=/opt/local
         --with-mpfr=/opt/local

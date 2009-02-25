@@ -343,12 +343,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   expanded_location Loc = expand_location(DECL_SOURCE_LOCATION(decl));
   DIType TyD = getOrCreateType(TREE_TYPE(decl));
   DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
-                                    GV->getNameStr(), 
-                                    DECL_NAME(decl) ?
-                                    (IDENTIFIER_POINTER(DECL_NAME(decl)) ?
-                                     IDENTIFIER_POINTER(DECL_NAME(decl)) :
-                                     GV->getNameStr()) :
-                                    GV->getNameStr(),
+                                    GV->getNameStr(), GV->getNameStr(), 
                                     getLinkageName(decl), 
                                     getOrCreateCompileUnit(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),

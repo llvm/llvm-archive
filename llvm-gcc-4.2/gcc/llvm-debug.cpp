@@ -342,8 +342,15 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   // Gather location information.
   expanded_location Loc = expand_location(DECL_SOURCE_LOCATION(decl));
   DIType TyD = getOrCreateType(TREE_TYPE(decl));
+  std::string DispName = GV->getNameStr();
+  if (DECL_NAME(decl)) {
+    if (IDENTIFIER_POINTER(DECL_NAME(decl)))
+      DispName = IDENTIFIER_POINTER(DECL_NAME(decl));
+  }
+    
   DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
-                                    GV->getNameStr(), GV->getNameStr(), 
+                                    GV->getNameStr(), 
+                                    DispName,
                                     getLinkageName(decl), 
                                     getOrCreateCompileUnit(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),

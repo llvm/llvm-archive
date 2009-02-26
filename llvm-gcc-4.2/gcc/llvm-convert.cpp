@@ -7181,9 +7181,6 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
                                             TAI->getStringConstantPrefix() : 
                                             ".str", TheModule);
   if (SlotP) *SlotP = GV;
-  // Try to put it into the .cstring (__TEXT, __cstring) section.
-  if (StringIsConstant && static_cast<ConstantArray*>(Init)->isCString())
-    GV->setSection("__TEXT, __cstring");
   return GV;
 }
 

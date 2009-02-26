@@ -518,44 +518,42 @@ static uint64_t getFieldOffsetInBits(tree Field) {
 
 /// FindLLVMTypePadding - If the specified struct has any inter-element padding,
 /// add it to the Padding array.
-static void FindLLVMTypePadding(const Type *Ty, uint64_t BitOffset,
+static void FindLLVMTypePadding(const Type *Ty, tree type, uint64_t BitOffset,
                        SmallVector<std::pair<uint64_t,uint64_t>, 16> &Padding) {
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const TargetData &TD = getTargetData();
     const StructLayout *SL = TD.getStructLayout(STy);
-    uint64_t PrevFieldBitOffset = 0;
+    uint64_t PrevFieldEnd = 0;
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      // If this field is marked as being padding, then pretend it is not there.
+      // This results in it (or something bigger) being added to Padding.  This
+      // matches the logic in CopyAggregate.
+      if (type && isPaddingElement(type, i))
+        continue;
+
       uint64_t FieldBitOffset = SL->getElementOffset(i)*8;
 
       // Get padding of sub-elements.
-      FindLLVMTypePadding(STy->getElementType(i), 
+      FindLLVMTypePadding(STy->getElementType(i), 0,
                           BitOffset+FieldBitOffset, Padding);
       // Check to see if there is any padding between this element and the
       // previous one.
-      if (i) {
-        uint64_t PrevFieldEnd = 
-          PrevFieldBitOffset+TD.getTypeSizeInBits(STy->getElementType(i-1));
-        if (PrevFieldEnd < FieldBitOffset)
-          Padding.push_back(std::make_pair(PrevFieldEnd+BitOffset,
-                                           FieldBitOffset-PrevFieldEnd));
-      }
-      
-      PrevFieldBitOffset = FieldBitOffset;
+      if (PrevFieldEnd < FieldBitOffset)
+        Padding.push_back(std::make_pair(PrevFieldEnd+BitOffset,
+                                         FieldBitOffset-PrevFieldEnd));
+      PrevFieldEnd =
+        FieldBitOffset + TD.getTypeSizeInBits(STy->getElementType(i));
     }
-    
+
     //  Check for tail padding.
-    if (unsigned EltCount = STy->getNumElements()) {
-      uint64_t PrevFieldEnd = PrevFieldBitOffset +
-           TD.getTypeSizeInBits(STy->getElementType(EltCount-1));
-      if (PrevFieldEnd < SL->getSizeInBytes()*8)
-        Padding.push_back(std::make_pair(PrevFieldEnd,
-                                         SL->getSizeInBytes()*8-PrevFieldEnd));
-    }
-    
+    if (PrevFieldEnd < SL->getSizeInBits())
+      Padding.push_back(std::make_pair(PrevFieldEnd,
+                                       SL->getSizeInBits()-PrevFieldEnd));
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     uint64_t EltSize = getTargetData().getTypeSizeInBits(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
-      FindLLVMTypePadding(ATy->getElementType(), BitOffset+i*EltSize, Padding);
+      FindLLVMTypePadding(ATy->getElementType(), 0, BitOffset+i*EltSize,
+                          Padding);
   }
   
   // primitive and vector types have no padding.
@@ -696,7 +694,7 @@ bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type,
   
   // Start by finding all of the padding in the LLVM Type.
   SmallVector<std::pair<uint64_t,uint64_t>, 16> StructPadding;
-  FindLLVMTypePadding(Ty, 0, StructPadding);
+  FindLLVMTypePadding(Ty, type, 0, StructPadding);
   
   for (unsigned i = 0, e = StructPadding.size(); i != e; ++i)
     if (GCCTypeOverlapsWithPadding(type, StructPadding[i].first,

@@ -1355,16 +1355,22 @@ struct StructTypeConversionInfo {
                            Packed || (!Elements.empty() && AllBitFields));
   }
   
+  /// getAlignmentAsLLVMStruct - Return the alignment of this struct if it were
+  /// converted to an LLVM type.
+  uint64_t getAlignmentAsLLVMStruct() const {
+    if (Packed || AllBitFields) return 1;
+    unsigned MaxAlign = 1;
+    for (unsigned i = 0, e = Elements.size(); i != e; ++i)
+      MaxAlign = std::max(MaxAlign, getTypeAlignment(Elements[i]));
+    return MaxAlign;
+  }
+
   /// getSizeAsLLVMStruct - Return the size of this struct if it were converted
   /// to an LLVM type.  This is the end of last element push an alignment pad at
   /// the end.
   uint64_t getSizeAsLLVMStruct() const {
     if (Elements.empty()) return 0;
-    unsigned MaxAlign = 1;
-    if (!Packed && !AllBitFields)
-      for (unsigned i = 0, e = Elements.size(); i != e; ++i)
-        MaxAlign = std::max(MaxAlign, getTypeAlignment(Elements[i]));
-    
+    unsigned MaxAlign = getAlignmentAsLLVMStruct();
     uint64_t Size = ElementOffsetInBytes.back()+ElementSizeInBytes.back();
     return (Size+MaxAlign-1) & ~(MaxAlign-1);
   }
@@ -2083,7 +2089,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       if (GCCTypeSize-LLVMLastElementEnd == 1)
         Info->addElement(Type::Int8Ty, 1, 1);
       else {
-        if ( ((GCCTypeSize-LLVMStructSize) % 4) == 0) {
+        if (((GCCTypeSize-LLVMStructSize) % 4) == 0 &&
+            (Info->getAlignmentAsLLVMStruct() %
+             Info->getTypeAlignment(Type::Int32Ty)) == 0) {
           // insert array of i32
           unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
           const Type *PadTy = ArrayType::get(Type::Int32Ty, Int32ArraySize);

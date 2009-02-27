@@ -906,9 +906,9 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     }
 
     // This handles cases like "int A[n]" which have a runtime constant
-    // number of elements, but is a compile-time variable.  Since these are
-    // variable sized, we just represent them as the element themself.
-    return TypeDB.setType(type, ConvertType(TREE_TYPE(type)));
+    // number of elements, but is a compile-time variable.  Since these
+    // are variable sized, we represent them as A[0].
+    return TypeDB.setType(type, ArrayType::get(ConvertType(TREE_TYPE(type)),0));
   }
   case OFFSET_TYPE:
     // Handle OFFSET_TYPE specially.  This is used for pointers to members,
@@ -2120,6 +2120,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
       uint64_t FieldOffsetInBits = getFieldOffsetInBits(Field);
       tree FieldType = getDeclaredType(Field);
+      const Type *FieldTy = ConvertType(FieldType);
 
       // If this is a bitfield, we may want to adjust the FieldOffsetInBits to
       // produce safe code.  In particular, bitfields will be loaded/stored as
@@ -2127,7 +2128,6 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       // them.  As such, we need to respect the alignment of the declared type.
       if (isBitfield(Field)) {
         // If this is a bitfield, the declared type must be an integral type.
-        const Type *FieldTy = ConvertType(FieldType);
         unsigned BitAlignment = Info->getTypeAlignment(FieldTy)*8;
 
         FieldOffsetInBits &= ~(BitAlignment-1ULL);
@@ -2141,10 +2141,9 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
           continue;
       }
 
-      // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
-      // not include variable sized fields here.
-      bool isZeroSizeField = !TYPE_SIZE(FieldType) ||
-        integer_zerop(TYPE_SIZE(FieldType));
+      // Figure out if this field is zero bits wide, e.g. {} or [0 x int].
+      bool isZeroSizeField = FieldTy->isSized() &&
+        getTargetData().getTypeSizeInBits(FieldTy) == 0;
 
       unsigned FieldNo =
         Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);

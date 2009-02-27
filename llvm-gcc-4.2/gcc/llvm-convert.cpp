@@ -7346,10 +7346,10 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
                                             TAI->getStringConstantPrefix() : 
                                             ".str", TheModule);
   if (SlotP) *SlotP = GV;
-#ifdef LLVM_DARWIN_CSTRING_SECTION
+#ifdef LLVM_CSTRING_SECTION
   // For Darwin, try to put it into the .cstring section.
   if (TAI && TAI->SectionKindForGlobal(GV) == SectionKind::RODataMergeStr)
-    GV->setSection(LLVM_DARWIN_CSTRING_SECTION);
+    GV->setSection(LLVM_CSTRING_SECTION);
 #endif
   return GV;
 }

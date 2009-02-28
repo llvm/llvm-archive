@@ -1700,7 +1700,12 @@ void print_llvm(FILE *file, void *LLVM) {
 void print_llvm_type(FILE *file, void *LLVM) {
   oFILEstream FS(file);
   FS << "LLVM: ";
-  WriteTypeSymbolic(FS, (const Type*)LLVM, TheModule);
+  
+  // FIXME: oFILEstream can probably be removed in favor of a new raw_ostream
+  // adaptor which would be simpler and more efficient.  In the meantime, just
+  // adapt the adaptor.
+  raw_os_ostream RO(FS);
+  WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
 }
 
 // Get a register name given its decl.  In 4.2 unlike 4.0 these names

@@ -35,7 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 #include <map>
 
 extern "C" {
@@ -498,7 +498,8 @@ void TypeRefinementDatabase::typeBecameConcrete(const DerivedType *AbsTy) {
   AbsTy->removeAbstractTypeUser(this);
 }
 void TypeRefinementDatabase::dump() const {
-  std::cerr << "TypeRefinementDatabase\n";
+  outs() << "TypeRefinementDatabase\n";
+  outs().flush();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1622,14 +1623,16 @@ void StructTypeConversionInfo::addNewBitField(uint64_t Size,
 }
 
 void StructTypeConversionInfo::dump() const {
-  std::cerr << "Info has " << Elements.size() << " fields:\n";
+  raw_ostream &OS = outs();
+  OS << "Info has " << Elements.size() << " fields:\n";
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-    std::cerr << "  Offset = " << ElementOffsetInBytes[i]
-              << " Size = " << ElementSizeInBytes[i]
-              << " Type = ";
-    WriteTypeSymbolic(std::cerr, Elements[i], TheModule);
-    std::cerr << "\n";
+    OS << "  Offset = " << ElementOffsetInBytes[i]
+       << " Size = " << ElementSizeInBytes[i]
+       << " Type = ";
+    WriteTypeSymbolic(OS, Elements[i], TheModule);
+    OS << "\n";
   }
+  OS.flush();
 }
 
 std::map<tree, StructTypeConversionInfo *> StructTypeInfoMap;

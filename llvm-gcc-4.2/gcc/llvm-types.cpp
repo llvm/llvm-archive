@@ -1167,6 +1167,10 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   TARGET_ADJUST_LLVM_RETATTR(RAttributes, type);
 #endif
 
+  // The value returned by a 'malloc' function does not alias anything.
+  if (flags & ECF_MALLOC)
+    RAttributes |= Attribute::NoAlias;
+
   if (RAttributes != Attribute::None)
     Attrs.push_back(AttributeWithIndex::get(0, RAttributes));
 

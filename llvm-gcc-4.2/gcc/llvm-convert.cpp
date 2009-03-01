@@ -5834,24 +5834,15 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     // SExt it to retain its value in the larger type
     IndexVal = CastToSIntType(IndexVal, IntPtrTy);
 
-  // If this is an index into an LLVM array, codegen as a GEP.
-  if (isArrayCompatible(ArrayTreeType)) {
-    Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), IndexVal };
-    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idxs, Idxs + 2);
-    const Type *ATy = cast<PointerType>(ArrayAddr->getType())->getElementType();
-    const Type *ElementTy = cast<ArrayType>(ATy)->getElementType();
-    unsigned Alignment = MinAlign(ArrayAlign, TD.getTypePaddedSize(ElementTy));
-    return LValue(BitCastToType(Ptr,
-                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
-                  Alignment);
-  }
-
   // If we are indexing over a fixed-size type, just use a GEP.
   if (isSequentialCompatible(ArrayTreeType)) {
+    SmallVector<Value*, 2> Idx;
+    if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE)
+      Idx.push_back(ConstantInt::get(IntPtrTy, 0));
+    Idx.push_back(IndexVal);
+    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end());
+
     const Type *ElementTy = ConvertType(ElementType);
-    const Type *PtrElementTy = PointerType::getUnqual(ElementTy);
-    ArrayAddr = BitCastToType(ArrayAddr, PtrElementTy);
-    Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
     unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));
     return LValue(BitCastToType(Ptr,
                            PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
@@ -7202,8 +7193,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   // Check for variable sized reference.
   // FIXME: add support for array types where the size doesn't fit into 64 bits
-  assert((isArrayCompatible(ArrayType) || isSequentialCompatible(ArrayType))
-         && "Cannot have globals with variable size!");
+  assert(isSequentialCompatible(ArrayType) && "Global with variable size?");
 
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
   // operand.  This construct maps directly to a getelementptr instruction.
@@ -7226,8 +7216,8 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
                                         !TYPE_UNSIGNED(IndexType));
 
   std::vector<Value*> Idx;
-  if (isArrayCompatible(ArrayType))
-    Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
+  if (TREE_CODE (ArrayType) == ARRAY_TYPE)
+    Idx.push_back(ConstantInt::get(IntPtrTy, 0));
   Idx.push_back(IndexVal);
 
   return TheFolder->CreateGetElementPtr(ArrayAddr, &Idx[0], Idx.size());

@@ -213,12 +213,9 @@ bool isPassedByInvisibleReference(tree_node *type);
 
 /// isSequentialCompatible - Return true if the specified gcc array or pointer
 /// type and the corresponding LLVM SequentialType lay out their components
-/// identically in memory.
+/// identically in memory, so doing a GEP accesses the right memory location.
+/// We assume that objects without a known size do not.
 bool isSequentialCompatible(tree_node *type);
-
-/// isArrayCompatible - Return true if the specified gcc array or pointer type
-/// corresponds to an LLVM array type.
-bool isArrayCompatible(tree_node *type);
 
 /// isBitfield - Returns whether to treat the specified field as a bitfield.
 bool isBitfield(tree_node *field_decl);

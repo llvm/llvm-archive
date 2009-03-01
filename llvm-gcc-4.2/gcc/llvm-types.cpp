@@ -298,7 +298,8 @@ static std::string GetTypeName(const char *Prefix, tree type) {
 
 /// isSequentialCompatible - Return true if the specified gcc array or pointer
 /// type and the corresponding LLVM SequentialType lay out their components
-/// identically in memory.  We assume that objects without a known size do not.
+/// identically in memory, so doing a GEP accesses the right memory location.
+/// We assume that objects without a known size do not.
 bool isSequentialCompatible(tree_node *type) {
   assert((TREE_CODE(type) == ARRAY_TYPE ||
           TREE_CODE(type) == POINTER_TYPE ||
@@ -309,28 +310,6 @@ bool isSequentialCompatible(tree_node *type) {
   // struct foo;  extern foo bar[];
   return TYPE_SIZE(TREE_TYPE(type)) &&
          isInt64(TYPE_SIZE(TREE_TYPE(type)), true);
-}
-
-/// isArrayCompatible - Return true if the specified gcc array or pointer type
-/// corresponds to an LLVM array type.
-bool isArrayCompatible(tree_node *type) {
-  assert((TREE_CODE(type) == ARRAY_TYPE ||
-          TREE_CODE(type) == POINTER_TYPE ||
-          TREE_CODE(type) == REFERENCE_TYPE ||
-          TREE_CODE(type) == BLOCK_POINTER_TYPE) && "not a sequential type!");
-  return
-    (TREE_CODE(type) == ARRAY_TYPE) && (
-      // Arrays with no size are fine as long as their components are layed out
-      // the same way in memory by LLVM.  For example 'int X[]' -> '[0 x i32]'.
-      (!TYPE_SIZE(type) && isSequentialCompatible(type)) ||
-
-      // Arrays with constant size map to LLVM arrays.  If the array has zero
-      // size then there can be two exotic cases: (1) the array might have zero
-      // length and a component type of variable size; or (2) the array could
-      // have variable length and a component type with zero size.  In both
-      // cases we convert to a zero length LLVM array.
-      (TYPE_SIZE(type) && isInt64(TYPE_SIZE(type), true))
-    );
 }
 
 /// isBitfield - Returns whether to treat the specified field as a bitfield.
@@ -872,44 +851,51 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
 
-    if (isArrayCompatible(type)) {
-      uint64_t NumElements;
-
-      if (!TYPE_SIZE(type)) {
-        // We get here if we have something that is declared to be an array with
-        // no dimension.  This just becomes a zero length array of the element
-        // type, so 'int X[]' becomes '%X = external global [0 x i32]'.
-        //
-        // Note that this also affects new expressions, which return a pointer
-        // to an unsized array of elements.
-        NumElements = 0;
-      } else if (integer_zerop(TYPE_SIZE(type))) {
-        // An array of zero length, or with an element type of zero size.
-        // Turn it into a zero length array of the element type.
-        NumElements = 0;
-      } else {
-        // Normal constant-size array.
-        NumElements = getInt64(TYPE_SIZE(type), true);
-
-        assert(isInt64(TYPE_SIZE(TREE_TYPE(type)), true)
-               && "Array of constant size with elements of variable size!");
-        uint64_t ElementSize = getInt64(TYPE_SIZE(TREE_TYPE(type)), true);
-        assert(ElementSize
-               && "Array of positive size with elements of zero size!");
-        assert(!(NumElements % ElementSize)
-               && "Array size is not a multiple of the element size!");
-
-        NumElements /= ElementSize;
-      }
-
-      return TypeDB.setType(type, ArrayType::get(ConvertType(TREE_TYPE(type)),
-                                                 NumElements));
+    uint64_t ElementSize;
+    const Type *ElementTy;
+    if (isSequentialCompatible(type)) {
+      // The gcc element type maps to an LLVM type of the same size.
+      // Convert to an LLVM array of the converted element type.
+      ElementSize = getInt64(TYPE_SIZE(TREE_TYPE(type)), true);
+      ElementTy = ConvertType(TREE_TYPE(type));
+    } else {
+      // The gcc element type has no size, or has variable size.  Convert to an
+      // LLVM array of bytes.  In the unlikely but theoretically possible case
+      // that the gcc array type has constant size, using an i8 for the element
+      // type ensures we can produce an LLVM array of the right size.
+      ElementSize = 8;
+      ElementTy = Type::Int8Ty;
     }
 
-    // This handles cases like "int A[n]" which have a runtime constant
-    // number of elements, but is a compile-time variable.  Since these
-    // are variable sized, we represent them as A[0].
-    return TypeDB.setType(type, ArrayType::get(ConvertType(TREE_TYPE(type)),0));
+    uint64_t NumElements;
+    if (!TYPE_SIZE(type)) {
+      // We get here if we have something that is declared to be an array with
+      // no dimension.  This just becomes a zero length array of the element
+      // type, so 'int X[]' becomes '%X = external global [0 x i32]'.
+      //
+      // Note that this also affects new expressions, which return a pointer
+      // to an unsized array of elements.
+      NumElements = 0;
+    } else if (!isInt64(TYPE_SIZE(type), true)) {
+      // This handles cases like "int A[n]" which have a runtime constant
+      // number of elements, but is a compile-time variable.  Since these
+      // are variable sized, we represent them as [0 x type].
+      NumElements = 0;
+    } else if (integer_zerop(TYPE_SIZE(type))) {
+      // An array of zero length, or with an element type of zero size.
+      // Turn it into a zero length array of the element type.
+      NumElements = 0;
+    } else {
+      // Normal constant-size array.
+      assert(ElementSize
+             && "Array of positive size with elements of zero size!");
+      NumElements = getInt64(TYPE_SIZE(type), true);
+      assert(!(NumElements % ElementSize)
+             && "Array size is not a multiple of the element size!");
+      NumElements /= ElementSize;
+    }
+
+    return TypeDB.setType(type, ArrayType::get(ElementTy, NumElements));
   }
   case OFFSET_TYPE:
     // Handle OFFSET_TYPE specially.  This is used for pointers to members,

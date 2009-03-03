@@ -2916,8 +2916,10 @@ struct tree_parm_decl GTY(())
   /* Used to indicate that this DECL has weak linkage.  */
 #define DECL_WEAK(NODE) (DECL_WITH_VIS_CHECK (NODE)->decl_with_vis.weak_flag)
 
+/* LLVM LOCAL begin */
 #define DECL_LLVM_PRIVATE(NODE) \
   (DECL_WITH_VIS_CHECK (NODE)->decl_with_vis.llvm_private_flag)
+/* LLVM LOCAL end */
 
 /* Internal to the gimplifier.  Indicates that the value is a formal
    temporary controlled by the gimplifier.  */

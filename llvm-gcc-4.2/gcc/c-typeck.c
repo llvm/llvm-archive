@@ -2104,7 +2104,6 @@ build_array_ref (tree array, tree index)
 	       in an inline function.
 	       Hope it doesn't break something else.  */
 	    | TREE_THIS_VOLATILE (array));
-
       return require_complete_type (fold (rval));
     }
   else

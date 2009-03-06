@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Streams.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
@@ -90,6 +91,7 @@ void dummy_function() {
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
 
+  llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
   llvm::DIFactory::DIFactory(*MP->getModule());
   std::string Err;
   llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),

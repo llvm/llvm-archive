@@ -470,9 +470,12 @@ void TreeToLLVM::StartFunctionBody() {
              lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl))) {
     Fn->setLinkage(Function::InternalLinkage);
   } else if (DECL_COMDAT(FnDecl)) {
-    Fn->setLinkage(Function::LinkOnceLinkage);
-  } else if (DECL_WEAK(FnDecl) || DECL_ONE_ONLY(FnDecl)) {
-    Fn->setLinkage(Function::WeakLinkage);
+    Fn->setLinkage(Function::getLinkOnceLinkage(flag_odr));
+  } else if (DECL_WEAK(FnDecl)) {
+    // The user may have explicitly asked for weak linkage - ignore flag_odr.
+    Fn->setLinkage(Function::WeakAnyLinkage);
+  } else if (DECL_ONE_ONLY(FnDecl)) {
+    Fn->setLinkage(Function::getWeakLinkage(flag_odr));
   }
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE

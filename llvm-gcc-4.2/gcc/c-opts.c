@@ -238,6 +238,9 @@ c_common_init_options (unsigned int argc, const char **argv)
   /* APPLE LOCAL end -Wfour-char-constants  */
 
   flag_exceptions = c_dialect_cxx ();
+  /* LLVM local begin One Definition Rule */
+  flag_odr = c_dialect_cxx ();
+  /* LLVM local end */
   warn_pointer_arith = c_dialect_cxx ();
   warn_write_strings = c_dialect_cxx();
 

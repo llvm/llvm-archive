@@ -222,7 +222,7 @@ void llvm_initialize_backend(void) {
   const TargetMachineRegistry::entry *TME = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
-    cerr << "Did not get a target machine!\n";
+    cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
     exit(1);
   }
 

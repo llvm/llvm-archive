@@ -2949,8 +2949,22 @@ enum arm_builtins
     } \
   }
 
-#define LLVM_OVERRIDE_TARGET_ARCH() \
-  (TARGET_THUMB ? "thumb" : "")
+/* Encode arm / thumb modes and arm subversion number in the triplet. e.g.
+ * armv6-apple-darwin, thumbv5-apple-darwin. FIXME: Replace thumb triplets
+ * with function notes.
+ */
+#define LLVM_OVERRIDE_TARGET_ARCH()                                       \
+  (TARGET_THUMB                                                           \
+   ? (arm_arch6                                                           \
+      ? "thumbv6" : (arm_arch5e                                           \
+                     ? "thumbv5e" : (arm_arch5                            \
+                                     ? "thumbv5" : (arm_arch4t            \
+                                                    ? "thumbv4t" : "")))) \
+   : (arm_arch6                                                           \
+      ? "armv6"   : (arm_arch5e                                           \
+                     ? "armv5e"   : (arm_arch5                            \
+                                     ? "armv5"   : (arm_arch4t            \
+                                                    ? "armv4t" : "")))))
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
   if (TARGET_SOFT_FLOAT)                               \

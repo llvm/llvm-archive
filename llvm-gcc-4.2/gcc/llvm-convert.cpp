@@ -6163,9 +6163,15 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
-    assert(MemberIndex < StructTy->getNumContainedTypes() &&
-           "Field Idx out of range!");
-    FieldPtr = Builder.CreateStructGEP(StructAddrLV.Ptr, MemberIndex);
+    
+    // If the LLVM struct has zero field, don't try to index into it, just use
+    // the current pointer.
+    FieldPtr = StructAddrLV.Ptr;
+    if (StructTy->getNumContainedTypes() != 0) {
+      assert(MemberIndex < StructTy->getNumContainedTypes() &&
+             "Field Idx out of range!");
+      FieldPtr = Builder.CreateStructGEP(FieldPtr, MemberIndex);
+    }
     
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.

@@ -3730,8 +3730,6 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
 /// Other %xN expressions are turned into LLVM ${N:x} operands.
 ///
 static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
-  static unsigned InlineAsmCounter = 0U;
-  unsigned InlineAsmNum = InlineAsmCounter++;
 
   tree str = ASM_STRING(exp);
   if (TREE_CODE(str) == ADDR_EXPR) str = TREE_OPERAND(str, 0);
@@ -3772,7 +3770,7 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
       if (EscapedChar == '%') {            // Escaped '%' character
         Result += '%';
       } else if (EscapedChar == '=') {     // Unique ID for the asm instance.
-        Result += utostr(InlineAsmNum);
+        Result += "${:uid}";
       }
 #ifdef LLVM_ASM_EXTENSIONS
       LLVM_ASM_EXTENSIONS(EscapedChar, InStr, Result)

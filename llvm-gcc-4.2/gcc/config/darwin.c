@@ -2074,8 +2074,10 @@ darwin_handle_weak_import_attribute (tree *node, tree name,
   if (objc_method_decl (TREE_CODE (*node)))
     return NULL_TREE;
   /* APPLE LOCAL end radar 4733555 */
+  /* LLVM LOCAL 6652529 begin */
   if ((TREE_CODE (*node) != FUNCTION_DECL && TREE_CODE (*node) != VAR_DECL)
       || !DECL_EXTERNAL (*node))
+  /* LLVM LOCAL 6652529 end */
     {
       warning (OPT_Wattributes, "%qs attribute ignored",
 	       IDENTIFIER_POINTER (name));

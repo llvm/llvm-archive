@@ -832,6 +832,22 @@ DIType DebugInfo::getOrCreateType(tree type) {
   return Ty;
 }
 
+/// Initialize - Initialize debug info by creating compile unit for
+/// main_input_filename. This must be inovked after language dependent
+/// initialization is done.
+void DebugInfo::Initialize() {
+
+  // Each input file is encoded as a separate compile unit in LLVM
+  // debugging information output. However, many target specific tool chains
+  // prefer to encode only one compile unit in an object file. In this 
+  // situation, the LLVM code generator will include  debugging information
+  // entities in the compile unit that is marked as main compile unit. The 
+  // code generator accepts maximum one main compile unit per module. If a
+  // module does not contain any main compile unit then the code generator 
+  // will emit multiple compile units in the output object file.
+  getOrCreateCompileUnit(main_input_filename, true);
+}
+
 /// getOrCreateCompileUnit - Get the compile unit from the cache or 
 /// create a new one if necessary.
 DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,

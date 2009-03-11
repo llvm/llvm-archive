@@ -461,18 +461,8 @@ void performLateBackendInitialization(void) {
 }
 
 void llvm_lang_dependent_init(const char *Name) {
-
-  // Each input file is encoded as a separate compile unit in LLVM
-  // debugging information output. However, many target specific tool chains
-  // prefer to encode only one compile unit in an object file. In this 
-  // situation, the LLVM code generator will include  debugging information
-  // entities in the compile unit that is marked as main compile unit. The 
-  // code generator accepts maximum one main compile unit per module. If a
-  // module does not contain any main compile unit then the code generator 
-  // will emit multiple compile units in the output object file.
   if (TheDebugInfo)
-    TheDebugInfo->getOrCreateCompileUnit(main_input_filename, true);
-
+    TheDebugInfo->Initialize();
   if (Name)
     TheModule->setModuleIdentifier(Name);
 }
@@ -499,8 +489,10 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   delete MB;
 
   // FIXME - Do not disable debug info while writing pch.
-  if (!flag_pch_file && debug_info_level > DINFO_LEVEL_NONE)
+  if (!flag_pch_file && debug_info_level > DINFO_LEVEL_NONE) {
     TheDebugInfo = new DebugInfo(TheModule);
+    TheDebugInfo->Initialize();
+  }
 
   if (!TheModule) {
     cerr << "Error reading bytecodes from PCH file\n";

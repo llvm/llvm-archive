@@ -1017,14 +1017,12 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     if (!Aliasee) {
       if (lookup_attribute ("weakref", DECL_ATTRIBUTES (decl))) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-          // The user explicitly asked for weak linkage - ignore flag_odr.
           Aliasee = new GlobalVariable(GV->getType(), GV->isConstant(),
-                                       GlobalVariable::ExternalWeakAnyLinkage,
+                                       GlobalVariable::ExternalWeakLinkage,
                                        NULL, AliaseeName, TheModule);
         else if (Function *F = dyn_cast<Function>(V))
-          // The user explicitly asked for weak linkage - ignore flag_odr.
           Aliasee = Function::Create(F->getFunctionType(),
-                                     Function::ExternalWeakAnyLinkage,
+                                     Function::ExternalWeakLinkage,
                                      AliaseeName, TheModule);
         else
           assert(0 && "Unsuported global value");
@@ -1492,10 +1490,9 @@ void make_decl_llvm(tree decl) {
       FnEntry->setCallingConv(CC);
       FnEntry->setAttributes(PAL);
 
-      // Check for external weak linkage.  The user may have explicitly asked
-      // for weak linkage - ignore flag_odr.
+      // Check for external weak linkage.
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
-        FnEntry->setLinkage(Function::ExternalWeakAnyLinkage);
+        FnEntry->setLinkage(Function::ExternalWeakLinkage);
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
       TARGET_ADJUST_LLVM_LINKAGE(FnEntry,decl);
@@ -1539,10 +1536,9 @@ void make_decl_llvm(tree decl) {
       GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
                               "", TheModule);
 
-      // Check for external weak linkage.  The user may have explicitly asked
-      // for weak linkage - ignore flag_odr.
+      // Check for external weak linkage.
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
-        GV->setLinkage(GlobalValue::ExternalWeakAnyLinkage);
+        GV->setLinkage(GlobalValue::ExternalWeakLinkage);
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
       TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
@@ -1558,10 +1554,9 @@ void make_decl_llvm(tree decl) {
         GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
                                 Name, TheModule);
 
-        // Check for external weak linkage.  The user may have explicitly asked
-        // for weak linkage - ignore flag_odr.
+        // Check for external weak linkage.
         if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
-          GV->setLinkage(GlobalValue::ExternalWeakAnyLinkage);
+          GV->setLinkage(GlobalValue::ExternalWeakLinkage);
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
         TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
@@ -1647,7 +1642,7 @@ void llvm_mark_decl_weak(tree decl) {
   // The user may have explicitly asked for weak linkage - ignore flag_odr.
   if (GV->hasExternalLinkage()) {
     if (GV->isDeclaration())
-      GV->setLinkage(GlobalValue::ExternalWeakAnyLinkage);
+      GV->setLinkage(GlobalValue::ExternalWeakLinkage);
     else
       GV->setLinkage(GlobalValue::WeakAnyLinkage);
   }

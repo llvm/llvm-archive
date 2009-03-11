@@ -3895,7 +3895,7 @@ enum ix86_builtins
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)                      \
   if (!TARGET_80387)                                          \
-    argvec.push_back("-soft-float");
+    argvec.push_back("-no-implicit-float")
     
 /* LLVM ABI definition macros. */
 

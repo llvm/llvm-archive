@@ -33,7 +33,7 @@ fi
 # whether the C++ driver and driver-driver are installed
 LANGUAGES=${LANGUAGES-c,objc,c++,obj-c++}
 
-# The B&I build srcript (~rc/bin/buildit) accepts an '-othercflags'
+# The B&I build script (~rc/bin/buildit) accepts an '-othercflags'
 # command-line flag, and captures the argument to that flag in
 # $RC_NONARCH_CFLAGS (and mysteriously prepends '-pipe' thereto).
 # We will allow this to override the default $CFLAGS and $CXXFLAGS.

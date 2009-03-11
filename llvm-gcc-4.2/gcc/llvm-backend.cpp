@@ -1297,7 +1297,7 @@ void emit_global_to_llvm(tree decl) {
   } else if (DECL_COMMON(decl) &&  // DECL_COMMON is only meaningful if no init
              (!DECL_INITIAL(decl) || DECL_INITIAL(decl) == error_mark_node)) {
     // llvm-gcc also includes DECL_VIRTUAL_P here.
-    GV->setLinkage(GlobalValue::getCommonLinkage(flag_odr));
+    GV->setLinkage(GlobalValue::CommonLinkage);
   } else if (DECL_COMDAT(decl)) {
     GV->setLinkage(GlobalValue::getLinkOnceLinkage(flag_odr));
   }

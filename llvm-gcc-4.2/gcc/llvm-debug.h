@@ -70,6 +70,11 @@ private:
 public:
   DebugInfo(Module *m);
 
+  /// Initialize - Initialize debug info by creating compile unit for
+  /// main_input_filename. This must be inovked after language dependent
+  /// initialization is done.
+  void Initialize();
+
   // Accessors.
   void setLocationFile(const char *FullPath) { CurFullPath = FullPath; }
   void setLocationLine(int LineNo)           { CurLineNo = LineNo; }

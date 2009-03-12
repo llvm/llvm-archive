@@ -21,7 +21,7 @@ HOSTS=`echo $1 | $TRANSLATE_ARCH `
 # compilers will generate code for.  If the current machine isn't in
 # the list, a compiler for it will get built anyway, but won't be
 # installed.
-TARGETS=`echo $2 | $TRANSLATE_ARCH | $OMIT_X86_64`
+TARGETS=`echo $2 | $TRANSLATE_ARCH | $OMIT_X86_64 | sed -e s,\\',,g`
 
 # The GNU makefile target ('bootstrap' by default).
 BOOTSTRAP=${BOOTSTRAP-bootstrap}

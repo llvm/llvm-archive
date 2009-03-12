@@ -666,7 +666,10 @@ Function *TreeToLLVM::FinishFunctionBody() {
       }
     }
   }
-  if (TheDebugInfo) TheDebugInfo->EmitRegionEnd(Fn, Builder.GetInsertBlock());
+  if (TheDebugInfo) {
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
+    TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
+  }
   if (RetVals.empty())
     Builder.CreateRetVoid();
   else if (!Fn->getReturnType()->isAggregateType()) {

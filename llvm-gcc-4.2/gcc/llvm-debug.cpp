@@ -273,13 +273,8 @@ void DebugInfo::EmitRegionStart(BasicBlock *CurBB) {
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void DebugInfo::EmitRegionEnd(Function *Fn, BasicBlock *CurBB) {
-
+void DebugInfo::EmitRegionEnd(BasicBlock *CurBB) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
-
-  // Provide an region stop point.
-  EmitStopPoint(Fn, CurBB);
-  
   DebugFactory.InsertRegionEnd(RegionStack.back(), CurBB);
   RegionStack.pop_back();
 }

@@ -108,14 +108,6 @@ fi
 # to be built.  It's VERS but only up to the second '.' (if there is one).
 MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 
-# APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-# For ARM, grab all system files from an SDK.
-ARM_SYSROOT="/Developer/SDKs/Extra"
-ARM_LIBSTDCXX_VERSION=4.2.1
-ARM_CONFIGFLAGS="--with-build-sysroot=\"$ARM_SYSROOT\" \
-                 --with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
-# APPLE LOCAL end ARM ARM_CONFIGFLAGS
-
 # This is the libstdc++ version to use.
 LIBSTDCXX_VERSION=4.2.1
 # LLVM LOCAL begin
@@ -129,6 +121,52 @@ NON_ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
 
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
+
+# APPLE LOCAL begin ARM
+ARM_LIBSTDCXX_VERSION=4.2.1
+ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
+
+ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
+ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
+ARM_EXTRA_SDK=/Developer/SDKs/Extra
+
+# Check if the build system is running Leopard or earlier.  If the Legacy PDK
+# is not installed, the toolchain in / will not support ARM.  Use the iPhone
+# platform directory instead.
+if [ $DARWIN_VERS -le 9 -a ! -d $ARM_EXTRA_SDK ]; then
+  ARM_TOOLROOT=$ARM_PLATFORM
+else
+  ARM_TOOLROOT=/
+fi
+
+# ARM requires a sysroot option, at least while building the compiler.
+ARM_SYSROOT=$ARM_EXTRA_SDK
+# If the default sysroot does not exist, try a different location.
+if [ ! -d $ARM_SYSROOT ]; then
+  ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
+fi
+
+MACOSX_DEPLOYMENT_MAJOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/\..*//'`
+MACOSX_DEPLOYMENT_MINOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/[0-9]*\.\([0-9]*\).*/\1/'`
+if [ $MACOSX_DEPLOYMENT_MAJOR -eq 10 -a \
+     $MACOSX_DEPLOYMENT_MINOR -le 5 ]; then
+  ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
+else
+  ARM_SYSROOT=/
+fi
+
+# If building an ARM target, check that the required directories exist.
+if echo $TARGETS | grep arm; then
+  if [ ! -d $ARM_SYSROOT ]; then
+    echo "Error: cannot find ARM SDK to build ARM target"
+    exit 1
+  fi
+  if [ ! -d $ARM_TOOLROOT ]; then
+    echo "Error: $ARM_TOOLROOT directory is not installed"
+    exit 1
+  fi
+fi
+# APPLE LOCAL end ARM
 
 # If the user has CC set in their environment unset it now
 unset CC
@@ -145,7 +183,7 @@ mkdir $SRC_DIR || exit 1
 ln -s $ORIG_SRC_DIR/* $SRC_DIR/ || exit 1
 rm -rf $SRC_DIR/tcl $SRC_DIR/expect $SRC_DIR/dejagnu || exit 1
 # Also remove libstdc++ since it is built from a separate project.
-# LLVM LOCAL
+# LLVM LOCAL: The following line was commented out; uncomment it.
 rm -rf $SRC_DIR/libstdc++-v3 || exit 1
 # Clean out old specs files
 rm -f /usr/lib/gcc/*/4.0.0/specs
@@ -244,18 +282,34 @@ mkdir $DIR/bin || exit 1
 for prog in ar nm ranlib strip lipo ld ; do
   for t in `echo $TARGETS $HOSTS | sort -u`; do
     P=$DIR/bin/${t}-apple-darwin$DARWIN_VERS-${prog}
+    # APPLE LOCAL begin toolroot
+    if [ $t = "arm" ]; then
+      toolroot=$ARM_TOOLROOT
+    else
+      toolroot=
+    fi
+    # APPLE LOCAL end toolroot
     echo '#!/bin/sh' > $P || exit 1
-    echo 'exec /usr/bin/'${prog}' "$@"' >> $P || exit 1
+    # APPLE LOCAL insert toolroot below
+    echo 'exec '${toolroot}'/usr/bin/'${prog}' "$@"' >> $P || exit 1
     chmod a+x $P || exit 1
   done
 done
 for t in `echo $1 $2 | sort -u`; do
   gt=`echo $t | $TRANSLATE_ARCH`
   P=$DIR/bin/${gt}-apple-darwin$DARWIN_VERS-as
+  # APPLE LOCAL begin toolroot
+  if [ $gt = "arm" ]; then
+    toolroot=$ARM_TOOLROOT
+  else
+    toolroot=
+  fi
+  # APPLE LOCAL end toolroot
   echo '#!/bin/sh' > $P || exit 1
 
-  echo 'for a; do case $a in -arch) exec /usr/bin/as "$@";;  esac; done' >> $P || exit 1
-  echo 'exec /usr/bin/as -arch '${t}' "$@"' >> $P || exit 1
+  # APPLE LOCAL insert toolroot below
+  echo 'for a; do case $a in -arch) exec '${toolroot}'/usr/bin/as "$@";;  esac; done' >> $P || exit 1
+  echo 'exec '${toolroot}'/usr/bin/as -arch '${t}' "$@"' >> $P || exit 1
   chmod a+x $P || exit 1
 done
 PATH=$DIR/bin:$PATH

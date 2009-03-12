@@ -262,7 +262,7 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
 
 /// EmitRegionStart- Constructs the debug code for entering a declarative
 /// region - "llvm.dbg.region.start."
-void DebugInfo::EmitRegionStart(Function *Fn, BasicBlock *CurBB) {
+void DebugInfo::EmitRegionStart(BasicBlock *CurBB) {
   llvm::DIDescriptor D;
   if (!RegionStack.empty())
     D = RegionStack.back();

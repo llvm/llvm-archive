@@ -91,11 +91,11 @@ public:
 
   /// EmitRegionStart- Constructs the debug code for entering a declarative
   /// region - "llvm.dbg.region.start."
-  void EmitRegionStart(Function *Fn, BasicBlock *CurBB);
+  void EmitRegionStart(BasicBlock *CurBB);
 
   /// EmitRegionEnd - Constructs the debug code for exiting a declarative
   /// region - "llvm.dbg.region.end."
-  void EmitRegionEnd(Function *Fn, BasicBlock *CurBB);
+  void EmitRegionEnd(BasicBlock *CurBB);
 
   /// EmitDeclare - Constructs the debug code for allocation of a new variable.
   /// region - "llvm.dbg.declare."

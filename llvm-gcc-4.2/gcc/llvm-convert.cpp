@@ -895,6 +895,9 @@ Function *TreeToLLVM::FinishFunctionBody() {
 }
 
 Function *TreeToLLVM::EmitFunction() {
+  if (TheDebugInfo)
+    TheDebugInfo->ClearVarCache();
+
   // Set up parameters and prepare for return, for the function.
   StartFunctionBody();
 
@@ -902,12 +905,43 @@ Function *TreeToLLVM::EmitFunction() {
   basic_block bb;
   edge e;
   edge_iterator ei;
+  tree stmt_block = NULL_TREE;
   FOR_EACH_BB (bb) {
     for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
          bsi_next (&bsi)) {
       MemRef DestLoc;
       tree stmt = bsi_stmt (bsi);
+      // FIXME : Optimizer and code generator are not doing the right thing yet
+      // while dealing with variable's debug info locations.
+      if (TheDebugInfo && !optimize) {
+        if (stmt_block == NULL_TREE) 
+          // This is beginning of function. llvm.dbg.func.start is emitted so
+          // no need to emit llvm.dbg.region.start here.
+          stmt_block = BLOCK_SUBBLOCKS (stmt);
+        else {
+          tree new_stmt_block = BLOCK_SUBBLOCKS (stmt);
+          if (new_stmt_block) {
+            if (stmt_block != new_stmt_block) {
+              if (BLOCK_SUPERCONTEXT (new_stmt_block) == stmt_block) 
+                // Entering new scope. Emit llvm.dbg.func.start.
+                TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+              else if (BLOCK_SUPERCONTEXT (new_stmt_block) == 
+                       BLOCK_SUPERCONTEXT (stmt_block)) {
+                // Entering new scope at the same level. End previous current 
+                // region by emitting llvm.dbg.region.end. And emit 
+                // llvm.dbg.region.start to start new region.
+                TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
+                TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+              } else
+                // Leaving current scop.e Emit llvm.dbg.region.end.
+                TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
 
+              stmt_block = BLOCK_SUBBLOCKS (stmt);
+            }
+          }
+        }
+      }
+        
       // If this stmt returns an aggregate value (e.g. a call whose result is
       // ignored), create a temporary to receive the value.  Note that we don't
       // do this for MODIFY_EXPRs as an efficiency hack.
@@ -1744,17 +1778,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Builder.CreateStore(Constant::getNullValue(T), AI);
     }
   
-  if (TheDebugInfo) {
-    if (DECL_NAME(decl)) {
-      TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_auto_variable,
-                                Name, TREE_TYPE(decl), AI,
-                                Builder.GetInsertBlock());
-    } else if (TREE_CODE(decl) == RESULT_DECL) {
-      TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_return_variable,
-                                Name, TREE_TYPE(decl), AI,
-                                Builder.GetInsertBlock());
-    }
-  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -5868,6 +5891,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
 //===----------------------------------------------------------------------===//
 
 LValue TreeToLLVM::EmitLV_DECL(tree exp) {
+
   if (TREE_CODE(exp) == PARM_DECL || TREE_CODE(exp) == VAR_DECL || 
       TREE_CODE(exp) == CONST_DECL) {
     // If a static var's type was incomplete when the decl was written,
@@ -5943,6 +5967,14 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   if (DECL_ALIGN(exp)) {
     if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
       Alignment = DECL_ALIGN(exp) / 8;
+  }
+
+  if (TheDebugInfo) {
+    if (DECL_NAME(exp))
+      TheDebugInfo->EmitDeclare(exp, dwarf::DW_TAG_auto_variable,
+                                IDENTIFIER_POINTER (DECL_NAME (exp)), 
+                                TREE_TYPE(exp), Decl,
+                                Builder.GetInsertBlock());
   }
 
   return LValue(BitCastToType(Decl, PTy), Alignment);

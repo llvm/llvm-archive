@@ -63,6 +63,9 @@ private:
   std::map<tree_node *, DIType> TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
+  std::map<tree_node *, DIVariable> VarCache;
+                                        // Cache of previously constructed 
+                                        // vars in this function.
   std::vector<DIDescriptor> RegionStack;
                                         // Stack to track declarative scopes.
   
@@ -74,6 +77,9 @@ public:
   /// main_input_filename. This must be inovked after language dependent
   /// initialization is done.
   void Initialize();
+
+  /// ClearDeclCache - Clear variable debug info cache.
+  void ClearVarCache();
 
   // Accessors.
   void setLocationFile(const char *FullPath) { CurFullPath = FullPath; }

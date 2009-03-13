@@ -139,15 +139,22 @@ else
   ARM_TOOLROOT=/
 fi
 
-# ARM requires a sysroot option, at least while building the compiler.
+# ARM may require a sysroot option.
 ARM_SYSROOT=$ARM_EXTRA_SDK
 # If the default sysroot does not exist, try a different location.
 if [ ! -d $ARM_SYSROOT ]; then
   ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
 fi
 
-MACOSX_DEPLOYMENT_MAJOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/\..*//'`
-MACOSX_DEPLOYMENT_MINOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/[0-9]*\.\([0-9]*\).*/\1/'`
+# Split the MACOSX_DEPLOYMENT_TARGET into major/minor versions.
+if [ -z "$MACOSX_DEPLOYMENT_TARGET" ]; then
+  # Anything 10.5 or earlier is treated the same below.
+  MACOSX_DEPLOYMENT_MAJOR=10
+  MACOSX_DEPLOYMENT_MINOR=5
+else
+  MACOSX_DEPLOYMENT_MAJOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/\..*//'`
+  MACOSX_DEPLOYMENT_MINOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/[0-9]*\.\([0-9]*\).*/\1/'`
+fi
 if [ $MACOSX_DEPLOYMENT_MAJOR -eq 10 -a \
      $MACOSX_DEPLOYMENT_MINOR -le 5 ]; then
   ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""

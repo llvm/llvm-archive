@@ -913,31 +913,29 @@ Function *TreeToLLVM::EmitFunction() {
       tree stmt = bsi_stmt (bsi);
       // FIXME : Optimizer and code generator are not doing the right thing yet
       // while dealing with variable's debug info locations.
-      if (TheDebugInfo && !optimize) {
+      tree new_stmt_block = TREE_BLOCK (stmt);
+      if (TheDebugInfo && new_stmt_block && !optimize) {
         if (stmt_block == NULL_TREE) 
           // This is beginning of function. llvm.dbg.func.start is emitted so
           // no need to emit llvm.dbg.region.start here.
-          stmt_block = BLOCK_SUBBLOCKS (stmt);
+          stmt_block = new_stmt_block;
         else {
-          tree new_stmt_block = BLOCK_SUBBLOCKS (stmt);
-          if (new_stmt_block) {
-            if (stmt_block != new_stmt_block) {
-              if (BLOCK_SUPERCONTEXT (new_stmt_block) == stmt_block) 
-                // Entering new scope. Emit llvm.dbg.func.start.
-                TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
-              else if (BLOCK_SUPERCONTEXT (new_stmt_block) == 
-                       BLOCK_SUPERCONTEXT (stmt_block)) {
-                // Entering new scope at the same level. End previous current 
-                // region by emitting llvm.dbg.region.end. And emit 
-                // llvm.dbg.region.start to start new region.
-                TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
-                TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
-              } else
-                // Leaving current scop.e Emit llvm.dbg.region.end.
-                TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
-
-              stmt_block = BLOCK_SUBBLOCKS (stmt);
-            }
+          if (stmt_block != new_stmt_block) {
+            if (BLOCK_SUPERCONTEXT (new_stmt_block) == stmt_block) 
+              // Entering new scope. Emit llvm.dbg.func.start.
+              TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+            else if (BLOCK_SUPERCONTEXT (new_stmt_block) == 
+                     BLOCK_SUPERCONTEXT (stmt_block)) {
+              // Entering new scope at the same level. End previous current 
+              // region by emitting llvm.dbg.region.end. And emit 
+              // llvm.dbg.region.start to start new region.
+              TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
+              TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+            } else
+              // Leaving current scop.e Emit llvm.dbg.region.end.
+              TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
+            
+            stmt_block = new_stmt_block;
           }
         }
       }

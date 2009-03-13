@@ -294,6 +294,11 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
 
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
 
+  // Check to see if the compile unit already has created this type.
+  llvm::DIVariable &Slot = VarCache[decl];
+  if (!Slot.isNull())
+    return;
+
   expanded_location Loc = GetNodeLocation(decl, false);
 
   // Construct variable.
@@ -301,6 +306,8 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
     DebugFactory.CreateVariable(Tag, RegionStack.back(), Name, 
                                 getOrCreateCompileUnit(Loc.file),
                                 Loc.line, getOrCreateType(type));
+
+  VarCache[decl] = D;
 
   // Insert an llvm.dbg.declare into the current block.
   DebugFactory.InsertDeclare(AI, D, CurBB);
@@ -841,6 +848,11 @@ void DebugInfo::Initialize() {
   // module does not contain any main compile unit then the code generator 
   // will emit multiple compile units in the output object file.
   getOrCreateCompileUnit(main_input_filename, true);
+}
+
+/// ClearDeclCache - Clear variable debug info cache.
+void DebugInfo::ClearVarCache() {
+  VarCache.clear();
 }
 
 /// getOrCreateCompileUnit - Get the compile unit from the cache or 

@@ -725,6 +725,7 @@ Function *TreeToLLVM::EmitFunction() {
   edge e;
   edge_iterator ei;
   tree stmt_block = NULL_TREE;
+  unsigned RegionCount = 0;
   FOR_EACH_BB (bb) {
     for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
          bsi_next (&bsi)) {
@@ -734,15 +735,24 @@ Function *TreeToLLVM::EmitFunction() {
       // while dealing with variable's debug info locations.
       tree new_stmt_block = TREE_BLOCK (stmt);
       if (TheDebugInfo && new_stmt_block && !optimize) {
-        if (stmt_block == NULL_TREE) 
+        if (stmt_block == NULL_TREE) {
           // This is beginning of function. llvm.dbg.func.start is emitted so
           // no need to emit llvm.dbg.region.start here.
+          tree t = new_stmt_block;
+          while (TREE_CODE (BLOCK_SUPERCONTEXT (t)) != FUNCTION_DECL) {
+            TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+            t = BLOCK_SUPERCONTEXT (t);
+            RegionCount++;
+          } 
           stmt_block = new_stmt_block;
+        }
         else {
           if (stmt_block != new_stmt_block) {
-            if (BLOCK_SUPERCONTEXT (new_stmt_block) == stmt_block) 
+            if (BLOCK_SUPERCONTEXT (new_stmt_block) == stmt_block) {
               // Entering new scope. Emit llvm.dbg.func.start.
               TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
+              RegionCount++;
+            }
             else if (BLOCK_SUPERCONTEXT (new_stmt_block) == 
                      BLOCK_SUPERCONTEXT (stmt_block)) {
               // Entering new scope at the same level. End previous current 
@@ -750,10 +760,11 @@ Function *TreeToLLVM::EmitFunction() {
               // llvm.dbg.region.start to start new region.
               TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
               TheDebugInfo->EmitRegionStart(Builder.GetInsertBlock());
-            } else
-              // Leaving current scop.e Emit llvm.dbg.region.end.
+            } else {
+              // Leaving current scope. Emit llvm.dbg.region.end.
               TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
-            
+              RegionCount--;
+            }
             stmt_block = new_stmt_block;
           }
         }
@@ -777,7 +788,13 @@ Function *TreeToLLVM::EmitFunction() {
       EmitBlock(BasicBlock::Create(""));
     }
   }
- 
+
+  // Pop out of dbg info regions.
+  while(RegionCount) {
+    TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock());
+    RegionCount--;
+  }
+
   // Wrap things up.
   return FinishFunctionBody();
 }

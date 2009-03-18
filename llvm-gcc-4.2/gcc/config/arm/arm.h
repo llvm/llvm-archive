@@ -30,6 +30,7 @@
 /* Overridden by arm/darwin.h, whether it is included first or not. */
 #ifndef TARGET_MACHO
 #define TARGET_MACHO 0
+#define MACHO_DYNAMIC_NO_PIC_P 0
 #endif
 /* APPLE LOCAL end ARM darwin target */
 

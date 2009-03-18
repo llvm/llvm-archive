@@ -828,6 +828,7 @@ static const char *llvm_options =
 "%{O4|emit-llvm|flto:%{S:-emit-llvm} \
                      %{!S:-emit-llvm-bc \
                      %{c: %W{o*} %{!o*:-o %b%w.o}} \
+                     %{!emit-llvm:%<g*} \
                      %{!c:-o %d%w%u%O}}}"
 #else
   "%{emit-llvm:%e--emit-llvm is not supported in this configuration.}"

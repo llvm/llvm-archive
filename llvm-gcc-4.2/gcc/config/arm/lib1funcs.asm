@@ -845,7 +845,8 @@ LSYM(Lgot_result):
 	cmp	dividend, divisor
 	blo	LSYM(Lgot_result)
 
-	THUMB_DIV_MOD_BODY 0
+	/* LLVM LOCAL */
+	THUMB_DIV_MOD_BODY(0)
 	
 	mov	r0, result
 	pop	{ work }
@@ -920,7 +921,8 @@ FUNC_START aeabi_uidivmod
 LSYM(Lover10):
 	push	{ work }
 
-	THUMB_DIV_MOD_BODY 1
+	/* LLVM LOCAL */
+	THUMB_DIV_MOD_BODY(1)
 	
 	pop	{ work }
 	RET
@@ -973,7 +975,8 @@ LSYM(Lover11):
 	cmp	dividend, divisor
 	blo	LSYM(Lgot_result)
 
-	THUMB_DIV_MOD_BODY 0
+	/* LLVM LOCAL */
+	THUMB_DIV_MOD_BODY(0)
 	
 	mov	r0, result
 	mov	work, ip
@@ -1076,7 +1079,8 @@ LSYM(Lover11):
 	cmp	dividend, divisor
 	blo	LSYM(Lgot_result)
 
-	THUMB_DIV_MOD_BODY 1
+	/* LLVM LOCAL */
+	THUMB_DIV_MOD_BODY(1)
 		
 	pop	{ work }
 	cmp	work, #0

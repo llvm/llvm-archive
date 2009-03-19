@@ -1872,6 +1872,14 @@ typedef struct
 #define SYMBOL_LONG_CALL_ATTR_P(SYMBOL) \
   (SYMBOL_REF_FLAGS (SYMBOL) & SYMBOL_LONG_CALL)
 
+/* LLVM LOCAL begin encoded call attr */
+#define ENCODED_SHORT_CALL_ATTR_P(SYMBOL_NAME)	\
+  (*(SYMBOL_NAME) == SHORT_CALL_FLAG_CHAR)
+
+#define ENCODED_LONG_CALL_ATTR_P(SYMBOL_NAME)	\
+  (*(SYMBOL_NAME) == LONG_CALL_FLAG_CHAR)
+/* LLVM LOCAL end encoded call attr */
+
 #ifndef SUBTARGET_NAME_ENCODING_LENGTHS
 #define SUBTARGET_NAME_ENCODING_LENGTHS
 #endif
@@ -1880,9 +1888,20 @@ typedef struct
    Each case label should return the number of characters to
    be stripped from the start of a function's name, if that
    name starts with the indicated character.  */
+/* LLVM LOCAL */
+#if TARGET_MACHO
 #define ARM_NAME_ENCODING_LENGTHS		\
   case '*':  return 1;				\
   SUBTARGET_NAME_ENCODING_LENGTHS
+/* LLVM LOCAL begin name encoding */
+#else
+#define ARM_NAME_ENCODING_LENGTHS		\
+  case SHORT_CALL_FLAG_CHAR: return 1;		\
+  case LONG_CALL_FLAG_CHAR:  return 1;		\
+  case '*':  return 1;				\
+  SUBTARGET_NAME_ENCODING_LENGTHS
+#endif
+/* LLVM LOCAL end name encoding */
 /* APPLE LOCAL end ARM longcall */
 
 /* This is how to output a reference to a user-level label named NAME.
@@ -2319,10 +2338,19 @@ extern unsigned arm_pic_register;
    the source code are potential hazards for -mdynamic-no-pic, too.
    This macro is similar in usage to LEGITIMATE_PIC_OPERAND_P, but it
    doesn't assume flag_pic is set.  */
+/* LLVM LOCAL */
+#ifdef TARGET_MACHO
 #define LEGITIMATE_INDIRECT_OPERAND_P(X)				\
 	((! flag_pic || LEGITIMATE_PIC_OPERAND_P(X))			\
 	 && (! MACHO_DYNAMIC_NO_PIC_P					\
 	     || LEGITIMATE_DYNAMIC_NO_PIC_OPERAND_P(X)))
+/* LLVM LOCAL begin */
+#else
+#define LEGITIMATE_INDIRECT_OPERAND_P(X)				\
+	((! flag_pic || LEGITIMATE_PIC_OPERAND_P(X))			\
+	 && (LEGITIMATE_DYNAMIC_NO_PIC_OPERAND_P(X)))
+#endif
+/* LLVM LOCAL end */
 /* APPLE LOCAL end ARM -mdynamic-no-pic support */
 
 /* We need to know when we are making a constant pool; this determines

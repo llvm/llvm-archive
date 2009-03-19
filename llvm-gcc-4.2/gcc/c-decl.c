@@ -3938,8 +3938,7 @@ finish_decl (tree decl, tree init, tree asmspec_tree)
     {
       if (DECL_EXTERNAL (decl) || TREE_STATIC (decl))
 	{
-	  warning (0,
-		   "__block attribute is only allowed on local variables - ignored");
+	  error ("__block attribute on %q+D not allowed, only allowed on local variables", decl);
 	  COPYABLE_BYREF_LOCAL_VAR (decl) = 0;
 	  COPYABLE_BYREF_LOCAL_NONPOD (decl) = 0;
 	}

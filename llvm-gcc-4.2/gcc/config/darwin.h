@@ -352,7 +352,8 @@ do {					\
     %(link_libgcc) %o %{fprofile-arcs|fprofile-generate|fcreate-profile|coverage:-lgcov} \
 "/* APPLE LOCAL nested functions 4357979  */"\
     %{fnested-functions: -allow_stack_execute} \
-    %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %G %L}} \
+"/* APPLE LOCAL prefer -lSystem 6645902 */"\
+    %{!nostdlib:%{!nodefaultlibs:%(link_ssp) %(link_gcc_c_sequence)}} \
 "/* APPLE LOCAL begin mainline 4.3 2006-10-31 4370146 */"\
     %{!A:%{!nostdlib:%{!nostartfiles:%E}}} %{T*} %{F*} }}}}}}}}\n\
 %{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
@@ -567,6 +568,10 @@ do {					\
      %:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
      %:version-compare(>= 10.5 mmacosx-version-min= -lcrt1.10.5.o)}"
 /* APPLE LOCAL end ARM 5683689 */
+
+/* APPLE LOCAL begin prefer -lSystem 6645902 */
+#define LINK_GCC_C_SEQUENCE_SPEC "%G %L"
+/* APPLE LOCAL end prefer -lSystem 6645902 */
 
 /* Default Darwin ASM_SPEC, very simple.  */
 /* APPLE LOCAL begin kext weak_import 5935650 */

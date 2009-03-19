@@ -5799,9 +5799,8 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
       /* APPLE LOCAL begin blocks 6040305 (cq) */
       if (COPYABLE_BYREF_LOCAL_VAR (decl)) {
         if (DECL_EXTERNAL (decl) || TREE_STATIC (decl))
-        {
-	    warning (0,
-		     "__block attribute is only allowed on local variables - ignored");
+	  {
+	    error ("__block attribute on %q+D not allowed, only allowed on local variables", decl);
 	    COPYABLE_BYREF_LOCAL_VAR (decl) = 0;
 	    COPYABLE_BYREF_LOCAL_NONPOD (decl) = 0;
 	  }

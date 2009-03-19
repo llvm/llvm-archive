@@ -6230,9 +6230,44 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 tree
 build_x_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 {
+  /* APPLE LOCAL __block assign sequence point 6639533 */
+  bool insert_sequence_point = false;
+
   if (processing_template_decl)
     return build_min_nt (MODOP_EXPR, lhs,
 			 build_min_nt (modifycode, NULL_TREE, NULL_TREE), rhs);
+
+  /* APPLE LOCAL begin __block assign sequence point 6639533 */
+  /* For byref = x;, we have to transform this into ({ typeof(x) x' =
+     x; byref = x`; )} to ensure there is a sequence point before the
+     evaluation of the byref, inorder to ensure that the access
+     expression for byref doesn't start running before x is evaluated,
+     as it will access the __forwarding pointer and that must be done
+     after x is evaluated.  */
+  /* First we check to see if lhs is a byref...  byrefs look like:
+       __Block_byref_X.__forwarding->x  */
+  if (TREE_CODE (lhs) == COMPONENT_REF)
+    {
+      tree inner = TREE_OPERAND (lhs, 0);
+      /* now check for -> */
+      if (TREE_CODE (inner) == INDIRECT_REF)
+	{
+	  inner = TREE_OPERAND (inner, 0);
+	  if (TREE_CODE (inner) == COMPONENT_REF)
+	    {
+	      inner = TREE_OPERAND (inner, 0);
+	      if (TREE_CODE (inner) == VAR_DECL
+		  && COPYABLE_BYREF_LOCAL_VAR (inner))
+		{
+		  /* then we save the rhs.  */
+		  rhs = save_expr (rhs);
+		  /* And arrage for the sequence point to be inserted.  */
+		  insert_sequence_point = true;
+		}
+	    }
+	}
+    }
+  /* APPLE LOCAL end __block assign sequence point 6639533 */
 
   if (modifycode != NOP_EXPR)
     {
@@ -6241,11 +6276,20 @@ build_x_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 				/*overloaded_p=*/NULL);
       if (rval)
 	{
+	  /* APPLE LOCAL begin __block assign sequence point 6639533 */
+	  if (insert_sequence_point)
+	    rval = build2 (COMPOUND_EXPR, TREE_TYPE (rval), rhs, rval);
+	  /* APPLE LOCAL end __block assign sequence point 6639533 */
 	  TREE_NO_WARNING (rval) = 1;
 	  return rval;
 	}
     }
-  return build_modify_expr (lhs, modifycode, rhs);
+  lhs = build_modify_expr (lhs, modifycode, rhs);
+  /* APPLE LOCAL begin __block assign sequence point 6639533 */
+  if (insert_sequence_point)
+    lhs = build2 (COMPOUND_EXPR, TREE_TYPE (lhs), rhs, lhs);
+  /* APPLE LOCAL end __block assign sequence point 6639533 */
+  return lhs;
 }
 
 

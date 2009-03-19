@@ -4143,8 +4143,20 @@ c_parser_statement_after_labels (c_parser *parser)
      (recursively) all of the component statements should already have
      line numbers assigned.  ??? Can we discard no-op statements
      earlier?  */
+  /* APPLE LOCAL begin Radar 6144634  */
+  /* Normal expr stmts, including modify exprs, get the location where
+     the statement began, i.e. 'loc'.  Assignments of Blocks to Block
+     pointer variables get the location of the end of the Block definition,
+     i.e. 'input_location', which should already be set by this point.  */
   if (stmt && EXPR_P (stmt))
-    SET_EXPR_LOCATION (stmt, loc);
+    {
+      if (TREE_CODE (stmt) == MODIFY_EXPR
+	  && TREE_CODE (TREE_TYPE (TREE_OPERAND (stmt, 0))) == BLOCK_POINTER_TYPE)
+	SET_EXPR_LOCATION (stmt, input_location);
+      else
+	SET_EXPR_LOCATION (stmt, loc);
+    }
+  /* APPLE LOCAL end Radar 6144634  */
 }
 
 /* Parse a parenthesized condition from an if, do or while statement.
@@ -6514,7 +6526,11 @@ c_parser_objc_property_declaration (c_parser *parser)
   objc_set_property_attr (0, NULL_TREE);
   c_parser_objc_property_attr_decl (parser);
   objc_property_attr_context = 0;
+  /* APPLE LOCAL weak_import on property 6676828 */
+  note_objc_property_decl_context ();
   prop = c_parser_component_decl (parser);
+  /* APPLE LOCAL weak_import on property 6676828 */
+  note_end_objc_property_decl_context ();
   /* Comma-separated properties are chained together in
      reverse order; add them one by one.  */
   prop = nreverse (prop);

@@ -1,3 +1,8 @@
+2009-02-11  Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 6545782
+	g++.apple/block-no-trampoline-1.C: Add
+
 2009-01-22  Stuart Hastings  <stuart@apple.com>
 
 	Radar 6515001

@@ -16515,7 +16515,7 @@ ix86_init_mmx_sse_builtins (void)
   tree float128_type;
   tree ftype;
 
-  /* APPLE LOCAL begin LLVM */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* LLVM doesn't initialize the RTL backend, so build_vector_type will assign
     all of these types BLKmode.  This interferes with i386.c-specific
@@ -16533,7 +16533,7 @@ ix86_init_mmx_sse_builtins (void)
   TYPE_MODE (V8HI_type_node) = V8HImode;
   TYPE_MODE (V1DI_type_node) = V1DImode;
 #endif
-  /* APPLE LOCAL end LLVM */
+  /* LLVM LOCAL end */
 
   /* The __float80 type.  */
   if (TYPE_MODE (long_double_type_node) == XFmode)
@@ -22152,13 +22152,13 @@ iasm_is_offset (tree v)
       v = TREE_OPERAND (v, 0);
       if (TREE_CODE (v) == VAR_DECL
 	  && TREE_STATIC (v)
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* DECL_RTL is not set for LLVM */
 #ifndef ENABLE_LLVM
           && MEM_P (DECL_RTL (v))
 #endif
          )
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
 	{
 	  note_alternative_entry_points ();
 	  return true;
@@ -22169,13 +22169,13 @@ iasm_is_offset (tree v)
     }
   if (TREE_CODE (v) == VAR_DECL
       && TREE_STATIC (v)
-/* APPLE LOCAL begin LLVM */
+/* LLVM LOCAL begin */
 /* DECL_RTL is not set for LLVM */
 #ifndef ENABLE_LLVM
       && MEM_P (DECL_RTL (v))
 #endif
      )
-/* APPLE LOCAL end LLVM */
+/* LLVM LOCAL end */
     {
       note_alternative_entry_points ();
       return true;
@@ -22832,19 +22832,7 @@ iasm_x86_canonicalize_operands (const char **opcode_p, tree iargs, void *ep)
 	  && (e->mod[0] == e->mod[1]
 	      || e->mod[1] == 0)))
     {
-      if (e->mod[0] == 'q'
-	  && !(strcasecmp (opcode, "inc") == 0
-	       || strcasecmp (opcode, "or") == 0
-	       || strcasecmp (opcode, "idiv") == 0
-	       || strcasecmp (opcode, "movs") == 0
-	       || strcasecmp (opcode, "scas") == 0
-	       || strcasecmp (opcode, "dec") == 0
-	       || strcasecmp (opcode, "push") == 0
-	       || strcasecmp (opcode, "pop") == 0
-	       || strcasecmp (opcode, "mov") == 0))
-	sprintf (buf, "%s%s", opcode, "ll");
-      else
-	sprintf (buf, "%s%c", opcode, e->mod[0]);
+      sprintf (buf, "%s%c", opcode, e->mod[0]);
       *opcode_p = buf;
     }
   else if (argnum == 2 && e->mod[0] && e->mod[1])

@@ -166,6 +166,14 @@ Boston, MA 02110-1301, USA.  */
   { "darwin_subarch", DARWIN_SUBARCH_SPEC },
 /* APPLE LOCAL end mainline */
 
+/* APPLE LOCAL begin prefer -lSystem 6645902 */
+#undef LINK_GCC_C_SEQUENCE_SPEC
+#define LINK_GCC_C_SEQUENCE_SPEC					\
+  "%{miphoneos-version-min=*: %G %L}					\
+   %{!miphoneos-version-min=*:						\
+     %{!static:%:version-compare(>= 10.6 mmacosx-version-min= -lSystem)} %G %L}"
+/* APPLE LOCAL end prefer -lSystem 6645902 */
+
 /* Use the following macro for any Darwin/x86-specific command-line option
    translation.  */
 #define SUBTARGET_OPTION_TRANSLATE_TABLE \

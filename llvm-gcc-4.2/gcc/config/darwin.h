@@ -1166,8 +1166,11 @@ enum machopic_addr_class {
 
 /* Macros defining the various PIC cases.  */
 
-/* APPLE LOCAL mdynamic-no-pic */
+/* APPLE LOCAL begin mdynamic-no-pic */
+/* LLVM LOCAL - possibly redefine MACHO_DYNAMIC_NO_PIC_P */
+#undef MACHO_DYNAMIC_NO_PIC_P
 #define MACHO_DYNAMIC_NO_PIC_P	(TARGET_MACHO_DYNAMIC_NO_PIC)
+/* APPLE LOCAL end mdynamic-no-pic */
 /* APPLE LOCAL begin mach-o cleanup */
 #undef MACHOPIC_INDIRECT
 #define MACHOPIC_INDIRECT	(flag_pic || MACHO_DYNAMIC_NO_PIC_P)

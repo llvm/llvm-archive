@@ -1,3 +1,22 @@
+2009-03-12  Caroline Tice  <ctice@apple.com>
+
+        Radar 6144634
+        * c-parser.c (c_parser_statement_after_labels): When
+        re-setting the expression location at the end, use the input
+        location for Block pointer assignments.
+
+2009-02-25  Jim Grosbach <grosbach@apple.com>
+
+	Radar 6465387
+	* gcc/config/arm/t-darwin (LIB1ASMFUNCS): Add _save_vfp_d8_d15_regs,
+	_restore_vfp_d8_d15_regs.
+	* gcc/config/arm/arm.c (handle_thumb_unexpanded_prologue,
+	handle_thumb_unexpanded_epilogue): Add call to 
+	___{save,restore}_vfp_d8_d15_regs when compiling a function
+	w/ a non-local label in Thumb1 mode for a v6 or later processor.
+	* gcc/config/arm/lib1funcs.asm (save_vfp_d8_d15_regs,
+	restore_vfp_d8_d15_regs): New functions, built only for v6 ARM.
+
 2009-02-11  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6573923

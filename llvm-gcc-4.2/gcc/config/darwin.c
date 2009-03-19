@@ -2074,6 +2074,13 @@ darwin_handle_weak_import_attribute (tree *node, tree name,
   if (objc_method_decl (TREE_CODE (*node)))
     return NULL_TREE;
   /* APPLE LOCAL end radar 4733555 */
+  /* APPLE LOCAL begin weak_import on property 6676828 */
+  if (in_objc_property_decl_context ())
+    {
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+  /* APPLE LOCAL end weak_import on property 6676828 */
   /* LLVM LOCAL 6652529 begin */
   if ((TREE_CODE (*node) != FUNCTION_DECL && TREE_CODE (*node) != VAR_DECL)
       || !DECL_EXTERNAL (*node))

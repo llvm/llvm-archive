@@ -3415,7 +3415,10 @@ parse_using_directive (tree namespace, tree attribs)
 	    error ("strong using only meaningful at namespace scope");
 	  else if (namespace != error_mark_node)
 	    {
-	      if (!is_ancestor (current_namespace, namespace))
+	      /* APPLE LOCAL begin 10.5 debug mode 6621704 */
+	      if (! in_system_header
+		  && !is_ancestor (current_namespace, namespace))
+	      /* APPLE LOCAL end 10.5 debug mode 6621704 */
 		error ("current namespace %qD does not enclose strongly used namespace %qD",
 		       current_namespace, namespace);
 	      DECL_NAMESPACE_ASSOCIATIONS (namespace)

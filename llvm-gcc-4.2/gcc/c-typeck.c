@@ -4152,6 +4152,8 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
   tree newrhs;
   tree lhstype = TREE_TYPE (lhs);
   tree olhstype = lhstype;
+  /* APPLE LOCAL __block assign sequence point 6639533 */
+  bool insert_sequence_point = false;
 
   /* APPLE LOCAL begin radar 4426814 */
   if (c_dialect_objc () && flag_objc_gc)
@@ -4179,6 +4181,38 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 
   newrhs = rhs;
 
+  /* APPLE LOCAL begin __block assign sequence point 6639533 */
+  /* For byref = x;, we have to transform this into {( typeof(x) x' =
+     x; byref = x`; )} to ensure there is a sequence point before the
+     evaluation of the byref, inorder to ensure that the access
+     expression for byref doesn't start running before x is evaluated,
+     as it will access the __forwarding pointer and that must be done
+     after x is evaluated.  */
+  /* First we check to see if lhs is a byref...  byrefs look like:
+       __Block_byref_X.__forwarding->x  */
+  if (TREE_CODE (lhs) == COMPONENT_REF)
+    {
+      tree inner = TREE_OPERAND (lhs, 0);
+      /* now check for -> */
+      if (TREE_CODE (inner) == INDIRECT_REF)
+	{
+	  inner = TREE_OPERAND (inner, 0);
+	  if (TREE_CODE (inner) == COMPONENT_REF)
+	    {
+	      inner = TREE_OPERAND (inner, 0);
+	      if (TREE_CODE (inner) == VAR_DECL
+		  && COPYABLE_BYREF_LOCAL_VAR (inner))
+		{
+		  /* then we save the rhs.  */
+		  rhs = save_expr (rhs);
+		  /* And arrage for the sequence point to be inserted.  */
+		  insert_sequence_point = true;
+		}
+	    }
+	}
+    }
+  /* APPLE LOCAL end __block assign sequence point 6639533 */
+
   /* If a binary op has been requested, combine the old LHS value with the RHS
      producing the value we should actually store into the LHS.  */
 
@@ -4193,7 +4227,13 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
     {
       result = objc_build_setter_call (lhs, newrhs);
       if (result)
-        return result;
+	/* APPLE LOCAL begin __block assign sequence point 6639533 */
+	{
+	  if (insert_sequence_point)
+	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+	  return result;
+	}
+      /* APPLE LOCAL end __block assign sequence point 6639533 */
     }
   /* APPLE LOCAL end C* property (Radar 4436866) */
 
@@ -4241,13 +4281,24 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
     {
       result = objc_generate_write_barrier (lhs, modifycode, newrhs);
       if (result)
-	return result;
+	/* APPLE LOCAL begin __block assign sequence point 6639533 */
+	{
+	  if (insert_sequence_point)
+	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+	  return result;
+	}
+      /* APPLE LOCAL end __block assign sequence point 6639533 */
     }
 
   /* Scan operands.  */
 
   result = build2 (MODIFY_EXPR, lhstype, lhs, newrhs);
   TREE_SIDE_EFFECTS (result) = 1;
+
+  /* APPLE LOCAL begin __block assign sequence point 6639533 */
+  if (insert_sequence_point)
+    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+  /* APPLE LOCAL end __block assign sequence point 6639533 */
 
   /* If we got the LHS in a different type for storing in,
      convert the result back to the nominal type of LHS

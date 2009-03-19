@@ -11928,6 +11928,12 @@ arm_get_frame_offsets (void)
       saved = bit_count (thumb_compute_save_reg_mask ()) * 4;
       if (TARGET_BACKTRACE)
 	saved += 16;
+      /* APPLE LOCAL begin 6465387 exception handling interworking VFP save */
+      /* Saved VFP registers in thumb mode aren't accounted for by
+         thumb1_compute_save_reg_mask() */
+      if (current_function_has_nonlocal_label && arm_arch6)
+        saved += 64;
+      /* APPLE LOCAL end 6465387 exception handling interworking VFP save */
     }
 
   /* Saved registers include the stack frame.  */
@@ -14953,6 +14959,15 @@ handle_thumb_unexpanded_epilogue (bool emit)
   if (IS_NAKED (arm_current_func_type ()))
     return bytes;
 
+  /* APPLE LOCAL begin 6465387 exception handling interworking VFP save */
+  if (current_function_has_nonlocal_label && arm_arch6)
+    {
+      bytes += 4;
+      if (emit)
+        asm_fprintf (asm_out_file, "\tblx ___restore_vfp_d8_d15_regs\n");
+    }
+  /* APPLE LOCAL end 6465387 exception handling interworking VFP save */
+
   live_regs_mask = thumb_compute_save_reg_mask ();
   high_regs_pushed = bit_count (live_regs_mask & 0x0f00);
 
@@ -15726,6 +15741,14 @@ handle_thumb_unexpanded_prologue (FILE *f, bool emit)
 	    bytes += handle_thumb_pushpop (f, pushable_regs, 1, &cfa_offset, real_regs_mask, emit);
 	}
     }
+  /* APPLE LOCAL begin 6465387 exception handling interworking VFP save */
+  if (current_function_has_nonlocal_label && arm_arch6)
+    {
+      bytes += 4;
+      if (emit)
+        asm_fprintf (f, "\tblx ___save_vfp_d8_d15_regs\n");
+    }
+  /* APPLE LOCAL end 6465387 exception handling interworking VFP save */
   return bytes;
 }
 

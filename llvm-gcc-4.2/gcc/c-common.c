@@ -6150,7 +6150,7 @@ handle_blocks_attribute (tree *node, tree name,
   *no_add_attrs = true;
   if (!(*node) || TREE_CODE (*node) != VAR_DECL)
     {
-      warning (OPT_Wattributes, "__block attribute can be specified on variables only - ignored");
+      error ("__block attribute can be specified on variables only");
       return NULL_TREE;
     }
   arg_ident = TREE_VALUE (args);
@@ -7319,6 +7319,9 @@ iasm_op_comp (const void *a, const void *b)
 #define ri8 r8 "i"
 #define ri16 r16 "i"
 #define ri32 r32 "i"
+#define rmi8 ri8 m8
+#define rmi16 ri16 m16
+#define rmi32 ri32 m32
 #define rel8 "s" S("1")
 #define m32fp "m" S("3")
 #define m64fp "m" S("6")
@@ -7328,6 +7331,7 @@ iasm_op_comp (const void *a, const void *b)
 #define M64 X(m64)
 #define RM64 R64 M64
 #define RI64 X(R64 "i")
+#define RMI64 RI64 M64
 #define r32R64 r32 R64
 #define r16r32R64 r16 r32 R64
 #define rm32RM64 rm32 RM64
@@ -7435,6 +7439,9 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
 #undef ri8
 #undef ri16
 #undef ri32
+#undef rmi8
+#undef rmi16
+#undef rmi32
 #undef rel8
 #undef m32fp
 #undef m64fp
@@ -7443,6 +7450,8 @@ iasm_constraint_for (const char *opcode, unsigned argnum, unsigned ARG_UNUSED (n
 #undef m32fpm64fpm80fp
 #undef M64
 #undef RM64
+#undef RI64
+#undef RMI64
 #undef r32R64
 #undef r16r32R64
 #undef rm32RM64

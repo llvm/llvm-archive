@@ -1313,6 +1313,7 @@ cgraph_mark_functions_to_output (void)
 	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
 		      || IS_EXTERN_INLINE (decl));
 	}
+
     }
 }
 

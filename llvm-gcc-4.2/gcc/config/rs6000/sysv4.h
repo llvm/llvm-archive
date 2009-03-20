@@ -910,8 +910,9 @@ extern int fixuplabelno;
 #define LINUX_DYNAMIC_LINKER \
   CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
 
-#define LINK_OS_LINUX_SPEC "-m elf32ppclinux %{!shared: %{!static: \
-  %{rdynamic:-export-dynamic} \
+/* LLVM LOCAL set linker hash_style */
+#define LINK_OS_LINUX_SPEC "-m elf32ppclinux --hash-style=both %{!shared: \
+  %{!static: %{rdynamic:-export-dynamic} \
   %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}}}"
 
 #if defined(HAVE_LD_EH_FRAME_HDR)

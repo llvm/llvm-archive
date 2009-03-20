@@ -53,7 +53,8 @@ Boston, MA 02110-1301, USA.  */
 #define GLIBC_DYNAMIC_LINKER64 "/lib64/ld-linux-x86-64.so.2"
 
 #undef	LINK_SPEC
-#define LINK_SPEC "%{!m32:-m elf_x86_64} %{m32:-m elf_i386} \
+/* LLVM LOCAL set linker hash_style */
+#define LINK_SPEC "%{!m32:-m elf_x86_64} %{m32:-m elf_i386} --hash-style=both \
   %{shared:-shared} \
   %{!shared: \
     %{!static: \

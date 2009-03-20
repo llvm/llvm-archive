@@ -1281,26 +1281,40 @@ void emit_global_to_llvm(tree decl) {
     GV->setThreadLocal(true);
 
   // Set the linkage.
+  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
   if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
       && DECL_LLVM_PRIVATE(decl)) {
-    GV->setLinkage(GlobalValue::PrivateLinkage);
+    Linkage = GlobalValue::PrivateLinkage;
   } else if (!TREE_PUBLIC(decl)) {
-    GV->setLinkage(GlobalValue::InternalLinkage);
+    Linkage = GlobalValue::InternalLinkage;
   } else if (DECL_WEAK(decl)) {
     // The user may have explicitly asked for weak linkage - ignore flag_odr.
-    GV->setLinkage(GlobalValue::WeakAnyLinkage);
+    Linkage = GlobalValue::WeakAnyLinkage;
   } else if (DECL_ONE_ONLY(decl)) {
-    GV->setLinkage(GlobalValue::getWeakLinkage(flag_odr));
+    Linkage = GlobalValue::getWeakLinkage(flag_odr);
   } else if (DECL_COMMON(decl) &&  // DECL_COMMON is only meaningful if no init
              (!DECL_INITIAL(decl) || DECL_INITIAL(decl) == error_mark_node)) {
     // llvm-gcc also includes DECL_VIRTUAL_P here.
-    GV->setLinkage(GlobalValue::CommonLinkage);
+    Linkage = GlobalValue::CommonLinkage;
   } else if (DECL_COMDAT(decl)) {
-    GV->setLinkage(GlobalValue::getLinkOnceLinkage(flag_odr));
+    Linkage = GlobalValue::getLinkOnceLinkage(flag_odr);
   }
 
+  // Allow loads from constants to be folded even if the constant has weak
+  // linkage.  Do this by giving the constant weak_odr linkage rather than
+  // weak linkage.  It is not clear whether this optimization is valid (see
+  // gcc bug 36685), but mainline gcc chooses to do it, and fold may already
+  // have done it, so we might as well join in with gusto.
+  if (GV->isConstant()) {
+    if (Linkage == GlobalValue::WeakAnyLinkage)
+      Linkage = GlobalValue::WeakODRLinkage;
+    else if (Linkage == GlobalValue::LinkOnceAnyLinkage)
+      Linkage = GlobalValue::LinkOnceODRLinkage;
+  }
+  GV->setLinkage(Linkage);
+
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
-  TARGET_ADJUST_LLVM_LINKAGE(GV,decl);
+  TARGET_ADJUST_LLVM_LINKAGE(GV, decl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
   handleVisibility(decl, GV);
@@ -1586,8 +1600,8 @@ void make_decl_llvm(tree decl) {
         GV = GVE;  // Global already created, reuse it.
       }
     }
-    
-    if ((TREE_READONLY(decl) && !TREE_SIDE_EFFECTS(decl)) || 
+
+    if ((TREE_READONLY(decl) && !TREE_SIDE_EFFECTS(decl)) ||
         TREE_CODE(decl) == CONST_DECL) {
       if (DECL_EXTERNAL(decl)) {
         // Mark external globals constant even though they could be marked
@@ -1638,10 +1652,21 @@ void llvm_mark_decl_weak(tree decl) {
   // Do not mark something that is already known to be linkonce or internal.
   // The user may have explicitly asked for weak linkage - ignore flag_odr.
   if (GV->hasExternalLinkage()) {
-    if (GV->isDeclaration())
-      GV->setLinkage(GlobalValue::ExternalWeakLinkage);
-    else
-      GV->setLinkage(GlobalValue::WeakAnyLinkage);
+    GlobalValue::LinkageTypes Linkage;
+    if (GV->isDeclaration()) {
+      Linkage = GlobalValue::ExternalWeakLinkage;
+    } else {
+      Linkage = GlobalValue::WeakAnyLinkage;
+      // Allow loads from constants to be folded even if the constant has weak
+      // linkage.  Do this by giving the constant weak_odr linkage rather than
+      // weak linkage.  It is not clear whether this optimization is valid (see
+      // gcc bug 36685), but mainline gcc chooses to do it, and fold may already
+      // have done it, so we might as well join in with gusto.
+      if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
+        if (GVar->isConstant())
+          Linkage = GlobalValue::WeakODRLinkage;
+    }
+    GV->setLinkage(Linkage);
   }
 }
 

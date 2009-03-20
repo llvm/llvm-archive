@@ -4203,10 +4203,12 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	      if (TREE_CODE (inner) == VAR_DECL
 		  && COPYABLE_BYREF_LOCAL_VAR (inner))
 		{
+		  tree old_rhs = rhs;
 		  /* then we save the rhs.  */
 		  rhs = save_expr (rhs);
-		  /* And arrage for the sequence point to be inserted.  */
-		  insert_sequence_point = true;
+		  if (rhs != old_rhs)
+		    /* And arrage for the sequence point to be inserted.  */
+		    insert_sequence_point = true;
 		}
 	    }
 	}

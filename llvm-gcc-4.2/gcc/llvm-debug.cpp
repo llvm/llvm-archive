@@ -310,11 +310,9 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
 /// source line - "llvm.dbg.stoppoint."
 void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
 
-#if 0
   // Do not emit line number info, for now.
   if (optimize)
     return;
-#endif
 
   // Don't bother if things are the same as last time.
   if (PrevLineNo == CurLineNo &&

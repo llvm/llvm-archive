@@ -6413,12 +6413,9 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     long RealArr[4];
     uint64_t UArr[2];
     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
-
-    UArr[0] = ((uint64_t)((uint16_t)RealArr[2]) << 48) |
-              ((uint64_t)((uint32_t)RealArr[1]) << 16) |
-              ((uint64_t)((uint16_t)(RealArr[0] >> 16)));
-    UArr[1] = (uint16_t)RealArr[0];
-
+    UArr[0] = ((uint64_t)((uint32_t)RealArr[0])) |
+              ((uint64_t)((uint32_t)RealArr[1]) << 32);
+    UArr[1] = (uint16_t)RealArr[2];
     return ConstantFP::get(APFloat(APInt(80, 2, UArr)));
   } else if (Ty==Type::PPC_FP128Ty) {
     long RealArr[4];

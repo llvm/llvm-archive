@@ -547,8 +547,9 @@ private:
   bool EmitBuiltinVAStart(tree_node *exp);
   bool EmitBuiltinVAEnd(tree_node *exp);
   bool EmitBuiltinVACopy(tree_node *exp);
-  bool EmitBuiltinMemCopy(tree_node *exp, Value *&Result, bool isMemMove);
-  bool EmitBuiltinMemSet(tree_node *exp, Value *&Result);
+  bool EmitBuiltinMemCopy(tree_node *exp, Value *&Result,
+                          bool isMemMove, bool SizeCheck);
+  bool EmitBuiltinMemSet(tree_node *exp, Value *&Result, bool SizeCheck);
   bool EmitBuiltinBZero(tree_node *exp, Value *&Result);
   bool EmitBuiltinPrefetch(tree_node *exp);
   bool EmitBuiltinReturnAddr(tree_node *exp, Value *&Result, bool isFrame);

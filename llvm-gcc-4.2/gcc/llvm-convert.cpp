@@ -4410,8 +4410,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                         AttrListPtr());
     return true;
   }
-  
-  switch (DECL_FUNCTION_CODE(fndecl)) {
+
+  enum built_in_function fcode = DECL_FUNCTION_CODE(fndecl);
+  switch (fcode) {
   default: return false;
   // Varargs builtins.
   case BUILT_IN_VA_START:
@@ -4422,9 +4423,16 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_ALLOCA:         return EmitBuiltinAlloca(exp, Result);
   case BUILT_IN_EXTEND_POINTER: return EmitBuiltinExtendPointer(exp, Result);
   case BUILT_IN_EXPECT:         return EmitBuiltinExpect(exp, DestLoc, Result);
-  case BUILT_IN_MEMCPY:         return EmitBuiltinMemCopy(exp, Result, false);
-  case BUILT_IN_MEMMOVE:        return EmitBuiltinMemCopy(exp, Result, true);
-  case BUILT_IN_MEMSET:         return EmitBuiltinMemSet(exp, Result);
+  case BUILT_IN_MEMCPY:         return EmitBuiltinMemCopy(exp, Result,
+                                                          false, false);
+  case BUILT_IN_MEMCPY_CHK:     return EmitBuiltinMemCopy(exp, Result,
+                                                          false, true);
+  case BUILT_IN_MEMMOVE:        return EmitBuiltinMemCopy(exp, Result,
+                                                          true, false);
+  case BUILT_IN_MEMMOVE_CHK:    return EmitBuiltinMemCopy(exp, Result,
+                                                          true, true);
+  case BUILT_IN_MEMSET:         return EmitBuiltinMemSet(exp, Result, false);
+  case BUILT_IN_MEMSET_CHK:     return EmitBuiltinMemSet(exp, Result, true);
   case BUILT_IN_BZERO:          return EmitBuiltinBZero(exp, Result);
   case BUILT_IN_PREFETCH:       return EmitBuiltinPrefetch(exp);
   case BUILT_IN_FRAME_ADDRESS:  return EmitBuiltinReturnAddr(exp, Result,true);
@@ -5100,13 +5108,46 @@ bool TreeToLLVM::EmitBuiltinExtendPointer(tree exp, Value *&Result) {
   return true;
 }
 
+/// OptimizeIntoPlainBuiltIn - Return true if it's safe to lower the object
+/// size checking builtin calls (e.g. __builtin___memcpy_chk into the
+/// plain non-checking calls. If the size of the argument is either -1 (unknown)
+/// or large enough to ensure no overflow (> len), then it's safe to do so.
+static bool OptimizeIntoPlainBuiltIn(tree exp, Value *Len, Value *Size) {
+  if (BitCastInst *BC = dyn_cast<BitCastInst>(Size))
+    Size = BC->getOperand(0);
+  ConstantInt *SizeCI = dyn_cast<ConstantInt>(Size);
+  if (!SizeCI)
+    return false;
+  if (SizeCI->isAllOnesValue())
+    // If size is -1, convert to plain memcpy, etc.
+    return true;
+
+  ConstantInt *LenCI = dyn_cast<ConstantInt>(Len);
+  if (!LenCI)
+    return false;
+  if (LenCI->getZExtValue() >= SizeCI->getZExtValue()) {
+    location_t locus = EXPR_LOCATION(exp);
+    warning (0, "%Hcall to %D will always overflow destination buffer",
+             &locus, get_callee_fndecl(exp));
+    return false;
+  }
+  return true;
+}
+
 /// EmitBuiltinMemCopy - Emit an llvm.memcpy or llvm.memmove intrinsic, 
 /// depending on the value of isMemMove.
-bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove) {
+bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
+                                    bool SizeCheck) {
   tree arglist = TREE_OPERAND(exp, 1);
-  if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE, 
-                        INTEGER_TYPE, VOID_TYPE))
-    return false;
+  if (SizeCheck) {
+    if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE, 
+                          INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
+      return false;
+  } else {
+    if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE, 
+                          INTEGER_TYPE, VOID_TYPE))
+      return false;
+  }
 
   tree Dst = TREE_VALUE(arglist);
   tree Src = TREE_VALUE(TREE_CHAIN(arglist));
@@ -5116,6 +5157,13 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove) {
   Value *DstV = Emit(Dst, 0);
   Value *SrcV = Emit(Src, 0);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0);
+  if (SizeCheck) {
+    tree SizeArg = TREE_VALUE(TREE_CHAIN(TREE_CHAIN(TREE_CHAIN(arglist))));
+    Value *Size = Emit(SizeArg, 0);
+    if (!OptimizeIntoPlainBuiltIn(exp, Len, Size))
+      return false;
+  }
+
   if (isMemMove)
     EmitMemMove(DstV, SrcV, Len, std::min(SrcAlign, DstAlign));
   else
@@ -5124,7 +5172,7 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove) {
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result) {
+bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, 
                         INTEGER_TYPE, VOID_TYPE))
@@ -5136,6 +5184,12 @@ bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result) {
   Value *DstV = Emit(Dst, 0);
   Value *Val = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0);
+  if (SizeCheck) {
+    tree SizeArg = TREE_VALUE(TREE_CHAIN(TREE_CHAIN(TREE_CHAIN(arglist))));
+    Value *Size = Emit(SizeArg, 0);
+    if (!OptimizeIntoPlainBuiltIn(exp, Len, Size))
+      return false;
+  }
   EmitMemSet(DstV, Val, Len, DstAlign);
   Result = DstV;
   return true;

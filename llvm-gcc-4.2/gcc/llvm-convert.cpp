@@ -5113,8 +5113,8 @@ bool TreeToLLVM::EmitBuiltinExtendPointer(tree exp, Value *&Result) {
 /// plain non-checking calls. If the size of the argument is either -1 (unknown)
 /// or large enough to ensure no overflow (> len), then it's safe to do so.
 static bool OptimizeIntoPlainBuiltIn(tree exp, Value *Len, Value *Size) {
-  if (BitCastInst *BC = dyn_cast<BitCastInst>(Size))
-    Size = BC->getOperand(0);
+  if (BitCastInst *SizeBC = dyn_cast<BitCastInst>(Size))
+    Size = SizeBC->getOperand(0);
   ConstantInt *SizeCI = dyn_cast<ConstantInt>(Size);
   if (!SizeCI)
     return false;
@@ -5122,10 +5122,12 @@ static bool OptimizeIntoPlainBuiltIn(tree exp, Value *Len, Value *Size) {
     // If size is -1, convert to plain memcpy, etc.
     return true;
 
+  if (BitCastInst *LenBC = dyn_cast<BitCastInst>(Len))
+    Len = LenBC->getOperand(0);
   ConstantInt *LenCI = dyn_cast<ConstantInt>(Len);
   if (!LenCI)
     return false;
-  if (LenCI->getZExtValue() >= SizeCI->getZExtValue()) {
+  if (SizeCI->getValue().ult(LenCI->getValue())) {
     location_t locus = EXPR_LOCATION(exp);
     warning (0, "%Hcall to %D will always overflow destination buffer",
              &locus, get_callee_fndecl(exp));

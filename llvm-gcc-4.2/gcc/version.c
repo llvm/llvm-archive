@@ -27,8 +27,14 @@
    forward us bugs reported to you, if you determine that they are
    not bugs in your modifications.)  */
 
-/* APPLE LOCAL Apple bug-report */
+/* APPLE LOCAL begin Apple bug-report */
+#ifdef BUILD_LLVM_APPLE_STYLE
+// When llvm-gcc is built "Apple style", use Apple's bugreporter.
 const char bug_report_url[] = "<URL:http://developer.apple.com/bugreporter>";
+#else
+const char bug_report_url[] = "<URL:http://llvm.org/bugs/>";
+#endif
+/* APPLE LOCAL end Apple bug-report */
 
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, and DEVPHASE are defined by the Makefile.  */

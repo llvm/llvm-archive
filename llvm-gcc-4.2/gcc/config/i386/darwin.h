@@ -102,8 +102,8 @@ Boston, MA 02110-1301, USA.  */
   "/* APPLE LOCAL ignore -mcpu=G4 -mcpu=G5 */"\
   %<faltivec %<mno-fused-madd %<mlong-branch %<mlongcall %<mcpu=G4 %<mcpu=G5 \
   "/* LLVM LOCAL ignore -g in LTO mode */"\
-  "/* On Darwin, debug info is extracting in .dSYM files. */"\
-  "/* This requires sepcial support in LTO mode. */" \
+  "/* On Darwin, debug info is stored in separate .dSYM files. */"\
+  "/* This requires special support in LTO mode. */" \
   %{O4|flto: %<g* } \
   %{g: %{!fno-eliminate-unused-debug-symbols: -feliminate-unused-debug-symbols }}"
 

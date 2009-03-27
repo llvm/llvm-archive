@@ -29,7 +29,7 @@
 
 /* APPLE LOCAL begin Apple bug-report */
 #ifdef BUILD_LLVM_APPLE_STYLE
-// When llvm-gcc is built "Apple style", use Apple's bugreporter.
+/* When llvm-gcc is built "Apple style", use Apple's bugreporter. */
 const char bug_report_url[] = "<URL:http://developer.apple.com/bugreporter>";
 #else
 const char bug_report_url[] = "<URL:http://llvm.org/bugs/>";

@@ -307,8 +307,12 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
 }
 
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
-/// source line - "llvm.dbg.stoppoint."  Now enabled with -O.
+/// source line - "llvm.dbg.stoppoint."
 void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
+
+  // Do not emit line number info, for now.
+  if (optimize)
+    return;
 
   // Don't bother if things are the same as last time.
   if (PrevLineNo == CurLineNo &&

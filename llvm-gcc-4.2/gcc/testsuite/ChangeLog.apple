@@ -1,3 +1,7 @@
+2009-03-24  Stuart Hastings  <stuart@apple.com>
+
+	gcc.apple/5774346.c: Add -maltivec.
+
 2009-02-11  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6545782

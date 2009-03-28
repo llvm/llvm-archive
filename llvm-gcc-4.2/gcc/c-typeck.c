@@ -4179,8 +4179,6 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 
   STRIP_TYPE_NOPS (rhs);
 
-  newrhs = rhs;
-
   /* APPLE LOCAL begin __block assign sequence point 6639533 */
   /* For byref = x;, we have to transform this into {( typeof(x) x' =
      x; byref = x`; )} to ensure there is a sequence point before the
@@ -4207,13 +4205,15 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 		  /* then we save the rhs.  */
 		  rhs = save_expr (rhs);
 		  if (rhs != old_rhs)
-		    /* And arrage for the sequence point to be inserted.  */
+		    /* And arrange for the sequence point to be inserted.  */
 		    insert_sequence_point = true;
 		}
 	    }
 	}
     }
   /* APPLE LOCAL end __block assign sequence point 6639533 */
+
+  newrhs = rhs;
 
   /* If a binary op has been requested, combine the old LHS value with the RHS
      producing the value we should actually store into the LHS.  */

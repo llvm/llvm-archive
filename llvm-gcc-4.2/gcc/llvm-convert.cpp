@@ -5176,9 +5176,15 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
 
 bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
   tree arglist = TREE_OPERAND(exp, 1);
-  if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, 
-                        INTEGER_TYPE, VOID_TYPE))
-    return false;
+  if (SizeCheck) {
+    if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, 
+                          INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
+      return false;
+  } else {
+    if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, 
+                          INTEGER_TYPE, VOID_TYPE))
+      return false;
+  }
 
   tree Dst = TREE_VALUE(arglist);
   unsigned DstAlign = getPointerAlignment(Dst);

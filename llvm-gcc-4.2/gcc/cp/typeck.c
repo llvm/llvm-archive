@@ -6263,7 +6263,7 @@ build_x_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 		  /* then we save the rhs.  */
 		  rhs = save_expr (rhs);
 		  if (rhs != old_rhs)
-		    /* And arrage for the sequence point to be inserted.  */
+		    /* And arrange for the sequence point to be inserted.  */
 		    insert_sequence_point = true;
 		}
 	    }

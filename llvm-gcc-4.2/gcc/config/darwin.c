@@ -1760,7 +1760,11 @@ const char *darwin_objc_llvm_implicit_target_global_var_section(tree decl) {
       else
         return "__OBJC, __string_object,no_dead_strip";
     } else if (!strcmp(IDENTIFIER_POINTER(typename), "__builtin_CFString")) {
-      return "__DATA, __cfstring";
+      return
+#ifdef LLVM_CONST_DATA_SECTION
+	(flag_writable_strings) ? LLVM_CONST_DATA_SECTION :
+#endif
+	"__DATA, __cfstring";
     } else {
       return 0;
     }

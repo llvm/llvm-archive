@@ -273,10 +273,17 @@ void DebugInfo::EmitRegionStart(BasicBlock *CurBB) {
 
 /// EmitRegionEnd - Constructs the debug code for exiting a declarative
 /// region - "llvm.dbg.region.end."
-void DebugInfo::EmitRegionEnd(BasicBlock *CurBB) {
+void DebugInfo::EmitRegionEnd(BasicBlock *CurBB, bool EndFunction) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
   DebugFactory.InsertRegionEnd(RegionStack.back(), CurBB);
   RegionStack.pop_back();
+  // Blocks get erased; clearing these is needed for determinism, and also
+  // a good idea if the next function gets inlined.
+  if (EndFunction) {
+    PrevBB = NULL;
+    PrevLineNo = 0;
+    PrevFullPath = NULL;
+  }
 }
 
 /// EmitDeclare - Constructs the debug code for allocation of a new variable.
@@ -307,12 +314,8 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
 }
 
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
-/// source line - "llvm.dbg.stoppoint."
+/// source line - "llvm.dbg.stoppoint."  Now enabled at -O.
 void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
-
-  // Do not emit line number info, for now.
-  if (optimize)
-    return;
 
   // Don't bother if things are the same as last time.
   if (PrevLineNo == CurLineNo &&

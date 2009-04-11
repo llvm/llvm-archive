@@ -190,7 +190,7 @@ static const char *getLinkageName(tree Node) {
       return IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Node));
     } 
   }
-  return "";
+  return NULL;
 }
 
 DebugInfo::DebugInfo(Module *m)
@@ -211,12 +211,11 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   // Gather location information.
   expanded_location Loc = GetNodeLocation(FnDecl, false);
   const char *LinkageName = getLinkageName(FnDecl);
-
+  const char *FnName = lang_hooks.dwarf_name(FnDecl, 0);
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(findRegion(FnDecl),
-                                  lang_hooks.dwarf_name(FnDecl, 0),
-                                  lang_hooks.dwarf_name(FnDecl, 0),
-                                  LinkageName,
+                                  FnName, FnName,
+                                  LinkageName ? LinkageName : FnName,
                                   getOrCreateCompileUnit(Loc.file), CurLineNo,
                                   getOrCreateType(TREE_TYPE(FnDecl)),
                                   Fn->hasInternalLinkage(),
@@ -345,11 +344,11 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
     if (IDENTIFIER_POINTER(DECL_NAME(decl)))
       DispName = IDENTIFIER_POINTER(DECL_NAME(decl));
   }
-    
+  const char *LinkageName = getLinkageName(decl);
   DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
                                     GV->getNameStr(), 
                                     DispName,
-                                    getLinkageName(decl), 
+                                    LinkageName ? LinkageName : DispName,
                                     getOrCreateCompileUnit(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),
                                     true/*definition*/, GV);
@@ -668,7 +667,7 @@ DIType DebugInfo::createStructType(tree type) {
     DIType SPTy = getOrCreateType(TREE_TYPE(Member));
     DISubprogram SP = 
       DebugFactory.CreateSubprogram(findRegion(Member), MemberName, MemberName,
-                                    LinkageName, 
+                                    LinkageName ? LinkageName : MemberName, 
                                     getOrCreateCompileUnit(MemLoc.file),
                                     MemLoc.line, SPTy, false, false);
     EltTys.push_back(SP);

@@ -6423,15 +6423,17 @@ Constant *TreeConstantToLLVM::Convert(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertINTEGER_CST(tree exp) {
-  const IntegerType *Ty = cast<IntegerType>(ConvertType(TREE_TYPE(exp)));
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
   
   // Handle i128 specially.
-  if (Ty->getPrimitiveSizeInBits() == 128) {
-    // GCC only supports i128 on 64-bit systems.
-    assert(HOST_BITS_PER_WIDE_INT == 64 &&
-           "i128 only supported on 64-bit system");
-    uint64_t Bits[] = { TREE_INT_CST_LOW(exp), TREE_INT_CST_HIGH(exp) };
-    return ConstantInt::get(APInt(128, 2, Bits));
+  if (const IntegerType *IT = dyn_cast<IntegerType>(Ty)) {
+    if (IT->getBitWidth() == 128) {
+      // GCC only supports i128 on 64-bit systems.
+      assert(HOST_BITS_PER_WIDE_INT == 64 &&
+             "i128 only supported on 64-bit system");
+      uint64_t Bits[] = { TREE_INT_CST_LOW(exp), TREE_INT_CST_HIGH(exp) };
+      return ConstantInt::get(APInt(128, 2, Bits));
+    }
   }
   
   // Build the value as a ulong constant, then constant fold it to the right

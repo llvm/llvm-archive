@@ -1,6 +1,7 @@
 // APPLE LOCAL file 6755006
 //#include <cassert>
 // { dg-do run }
+// { dg-options "-Os -m32" }
 #include <stdio.h>
 #include <stdlib.h>
 enum foo {

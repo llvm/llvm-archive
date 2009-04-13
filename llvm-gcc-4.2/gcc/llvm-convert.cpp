@@ -5011,19 +5011,31 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
-    case BUILT_IN_APPLY_ARGS:
-    case BUILT_IN_APPLY:
-    case BUILT_IN_RETURN:
-    case BUILT_IN_SAVEREGS:
-    case BUILT_IN_ARGS_INFO:
-    case BUILT_IN_NEXT_ARG:
-    case BUILT_IN_CLASSIFY_TYPE:
-    case BUILT_IN_AGGREGATE_INCOMING_ADDRESS:
-    case BUILT_IN_SETJMP_SETUP:
-    case BUILT_IN_SETJMP_DISPATCHER:
-    case BUILT_IN_SETJMP_RECEIVER:
-    case BUILT_IN_LONGJMP:
-    case BUILT_IN_UPDATE_SETJMP_BUF:
+  case BUILT_IN_LONGJMP: {
+    tree arglist = TREE_OPERAND(exp, 1);
+
+    if (validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
+      tree value = TREE_VALUE(TREE_CHAIN(arglist));
+
+      if (TREE_CODE(value) != INTEGER_CST ||
+          cast<ConstantInt>(Emit(value, 0))->getValue() != 1) {
+        error ("%<__builtin_longjmp%> second argument must be 1");
+        return false;
+      }
+    }
+  }
+  case BUILT_IN_APPLY_ARGS:
+  case BUILT_IN_APPLY:
+  case BUILT_IN_RETURN:
+  case BUILT_IN_SAVEREGS:
+  case BUILT_IN_ARGS_INFO:
+  case BUILT_IN_NEXT_ARG:
+  case BUILT_IN_CLASSIFY_TYPE:
+  case BUILT_IN_AGGREGATE_INCOMING_ADDRESS:
+  case BUILT_IN_SETJMP_SETUP:
+  case BUILT_IN_SETJMP_DISPATCHER:
+  case BUILT_IN_SETJMP_RECEIVER:
+  case BUILT_IN_UPDATE_SETJMP_BUF:
 
     // FIXME: HACK: Just ignore these.
     {

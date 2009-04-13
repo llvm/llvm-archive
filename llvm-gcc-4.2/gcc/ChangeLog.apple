@@ -1,3 +1,9 @@
+2009-04-06  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6755006
+	* tree-ssa-loop-ivopts.c (aff_combination_to_tree): Unsigned
+          types can't be negative.
+
 2009-03-12  Caroline Tice  <ctice@apple.com>
 
         Radar 6144634

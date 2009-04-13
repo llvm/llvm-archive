@@ -4232,7 +4232,7 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	/* APPLE LOCAL begin __block assign sequence point 6639533 */
 	{
 	  if (insert_sequence_point)
-	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), build1 (NOP_EXPR, void_type_node, rhs), result);
 	  return result;
 	}
       /* APPLE LOCAL end __block assign sequence point 6639533 */
@@ -4286,7 +4286,7 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	/* APPLE LOCAL begin __block assign sequence point 6639533 */
 	{
 	  if (insert_sequence_point)
-	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+	    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), build1 (NOP_EXPR, void_type_node, rhs), result);
 	  return result;
 	}
       /* APPLE LOCAL end __block assign sequence point 6639533 */
@@ -4299,7 +4299,7 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 
   /* APPLE LOCAL begin __block assign sequence point 6639533 */
   if (insert_sequence_point)
-    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), rhs, result);
+    result = build2 (COMPOUND_EXPR, TREE_TYPE (result), build1 (NOP_EXPR, void_type_node, rhs), result);
   /* APPLE LOCAL end __block assign sequence point 6639533 */
 
   /* If we got the LHS in a different type for storing in,

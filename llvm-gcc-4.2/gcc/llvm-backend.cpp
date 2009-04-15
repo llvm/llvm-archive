@@ -1199,6 +1199,7 @@ void reset_type_and_initializer_llvm(tree decl) {
                                              GV->getName(), TheModule);
     NGV->setVisibility(GV->getVisibility());
     NGV->setSection(GV->getSection());
+    NGV->setAlignment(GV->getAlignment());
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
     changeLLVMConstant(GV, NGV);
     delete GV;

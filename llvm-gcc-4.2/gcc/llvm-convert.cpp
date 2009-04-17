@@ -7033,7 +7033,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
         Tmp.trunc(8);
         ValToAppend = ConstantInt::get(Tmp);
       }
-    } else if (ValC->getBitWidth() == 8) {
+    } else if (Val.getBitWidth() == 8) {
       ValToAppend = ConstantInt::get(Val);
     } else {
       APInt Tmp = Val;

@@ -88,6 +88,18 @@ static bool isGimpleTemporary(tree decl) {
         !isAggregateTreeType(TREE_TYPE(decl));
 }
 
+/// isStructWithVarSizeArrayAtEnd - Return true if this StructType contains a
+/// zero sized array as its last element.  This typically happens due to C
+/// constructs like:  struct X { int A; char B[]; };
+static bool isStructWithVarSizeArrayAtEnd(const Type *Ty) {
+  const StructType *STy = dyn_cast<StructType>(Ty);
+  if (STy == 0) return false;
+  assert(STy->getNumElements() && "empty struct?");
+  const Type *LastElTy = STy->getElementType(STy->getNumElements()-1);
+  return isa<ArrayType>(LastElTy) && 
+         cast<ArrayType>(LastElTy)->getNumElements() == 0;
+}
+
 /// getINTEGER_CSTVal - Return the specified INTEGER_CST value as a uint64_t.
 ///
 uint64_t getINTEGER_CSTVal(tree exp) {
@@ -6505,22 +6517,23 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
 }
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
-  if (!TREE_VECTOR_CST_ELTS(exp))
+  if (TREE_VECTOR_CST_ELTS(exp)) {
+    std::vector<Constant*> Elts;
+    for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
+      Elts.push_back(Convert(TREE_VALUE(elt)));
+    
+    // The vector should be zero filled if insufficient elements are provided.
+    if (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp))) {
+      tree EltType = TREE_TYPE(TREE_TYPE(exp));
+      Constant *Zero = Constant::getNullValue(ConvertType(EltType));
+      while (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp)))
+        Elts.push_back(Zero);
+    }
+    
+    return ConstantVector::get(Elts);
+  } else {
     return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
-
-  std::vector<Constant*> Elts;
-  for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
-    Elts.push_back(Convert(TREE_VALUE(elt)));
-  
-  // The vector should be zero filled if insufficient elements are provided.
-  if (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp))) {
-    tree EltType = TREE_TYPE(TREE_TYPE(exp));
-    Constant *Zero = Constant::getNullValue(ConvertType(EltType));
-    while (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp)))
-      Elts.push_back(Zero);
   }
-  
-  return ConstantVector::get(Elts);
 }
 
 Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
@@ -6765,387 +6778,334 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   return ConstantStruct::get(ResultElts, false);
 }
 
+/// InsertBitFieldValue - Process the assignment of a bitfield value into an
+/// LLVM struct value.  Val may be null if nothing has been assigned into this
+/// field, so FieldTy indicates the type of the LLVM struct type to use.
+static Constant *InsertBitFieldValue(uint64_t ValToInsert,
+                                     unsigned NumBitsToInsert,
+                                     unsigned OffsetToBitFieldStart,
+                                     unsigned FieldBitSize,
+                                     Constant *Val, const Type *FieldTy) {
+  if (FieldTy->isInteger()) {
+    uint64_t ExistingVal;
+    if (Val == 0)
+      ExistingVal = 0;
+    else {
+      assert(isa<ConstantInt>(Val) && "Bitfield shared with non-bit-field?");
+      ExistingVal = cast<ConstantInt>(Val)->getZExtValue();
+    }
+    
+    // Compute the value to insert, and the mask to use.
+    uint64_t FieldMask;
+    if (BYTES_BIG_ENDIAN) {
+      FieldMask = ~0ULL >> (64-NumBitsToInsert);
+      FieldMask   <<= FieldBitSize-(OffsetToBitFieldStart+NumBitsToInsert);
+      ValToInsert <<= FieldBitSize-(OffsetToBitFieldStart+NumBitsToInsert);
+    } else {
+      FieldMask = ~0ULL >> (64-NumBitsToInsert);
+      FieldMask   <<= OffsetToBitFieldStart;
+      ValToInsert <<= OffsetToBitFieldStart;
+    }
 
-namespace {
-/// ConstantLayoutInfo - A helper class used by ConvertRecordCONSTRUCTOR to
-/// lay out struct inits.
-struct ConstantLayoutInfo {
-  const TargetData &TD;
-  
-  /// ResultElts - The initializer elements so far.
-  std::vector<Constant*> ResultElts;
-  
-  /// StructIsPacked - This is set to true if we find out that we have to emit
-  /// the ConstantStruct as a Packed LLVM struct type (because the LLVM
-  /// alignment rules would prevent laying out the struct correctly).
-  bool StructIsPacked;
-  
-  /// NextFieldByteStart - This field indicates the *byte* that the next field
-  /// will start at.  Put another way, this is the size of the struct as
-  /// currently laid out, but without any tail padding considered.
-  uint64_t NextFieldByteStart;
+    // Insert the new value into the field and return it.
+    uint64_t NewVal = (ExistingVal & ~FieldMask) | ValToInsert;
+    return TheFolder->CreateTruncOrBitCast(ConstantInt::get(Type::Int64Ty,
+                                                            NewVal), FieldTy);
+  } else {
+    // Otherwise, this is initializing part of an array of bytes.  Recursively
+    // insert each byte.
+    assert(isa<ArrayType>(FieldTy) && 
+           cast<ArrayType>(FieldTy)->getElementType() == Type::Int8Ty &&
+           "Not an array of bytes?");
+    // Expand the already parsed initializer into its elements if it is a 
+    // ConstantArray or ConstantAggregateZero.
+    std::vector<Constant*> Elts;
+    Elts.resize(cast<ArrayType>(FieldTy)->getNumElements());
+    
+    if (Val) {
+      if (ConstantArray *CA = dyn_cast<ConstantArray>(Val)) {
+        for (unsigned i = 0, e = Elts.size(); i != e; ++i)
+          Elts[i] = CA->getOperand(i);
+      } else {
+        assert(isa<ConstantAggregateZero>(Val) && "Unexpected initializer!");
+        Constant *Elt = Constant::getNullValue(Type::Int8Ty);
+        for (unsigned i = 0, e = Elts.size(); i != e; ++i)
+          Elts[i] = Elt;
+      }
+    }
+    
+    // Loop over all of our elements, inserting pieces into each one as
+    // appropriate.
+    unsigned i = OffsetToBitFieldStart/8;  // Skip to first byte
+    OffsetToBitFieldStart &= 7;
+    
+    for (; NumBitsToInsert; ++i) {
+      assert(i < Elts.size() && "Inserting out of range!");
+      
+      unsigned NumEltBitsToInsert = std::min(8-OffsetToBitFieldStart,
+                                             NumBitsToInsert);
+      
+      uint64_t EltValToInsert;
+      if (BYTES_BIG_ENDIAN) {
+        // If this is a big-endian bit-field, take the top NumBitsToInsert
+        // bits from the bitfield value.
+        EltValToInsert = ValToInsert >> (NumBitsToInsert-NumEltBitsToInsert);
+        
+        // Clear the handled bits from BitfieldVal.
+        ValToInsert &= (1ULL << (NumBitsToInsert-NumEltBitsToInsert))-1;
+      } else {
+        // If this is little-endian bit-field, take the bottom NumBitsToInsert
+        // bits from the bitfield value.
+        EltValToInsert = ValToInsert & ((1ULL << NumEltBitsToInsert)-1);
+        ValToInsert >>= NumEltBitsToInsert;
+      }
 
-  /// MaxLLVMFieldAlignment - This is the largest alignment of any IR field,
-  /// which is the alignment that the ConstantStruct will get.
-  unsigned MaxLLVMFieldAlignment;
-  
-  
-  ConstantLayoutInfo(const TargetData &TD) : TD(TD) {
-    StructIsPacked = false;
-    NextFieldByteStart = 0;
-    MaxLLVMFieldAlignment = 1;
+      Elts[i] = InsertBitFieldValue(EltValToInsert, NumEltBitsToInsert,
+                                    OffsetToBitFieldStart, 8, Elts[i], 
+                                    Type::Int8Ty);
+      
+      // Advance for next element.
+      OffsetToBitFieldStart = 0;
+      NumBitsToInsert -= NumEltBitsToInsert;
+    }
+
+    // Pad extra array elements. This may happens when one llvm field
+    // is used to access two struct fields and llvm field is represented
+    // as an array of bytes.
+    for (; i < Elts.size(); ++i)
+      Elts[i] = ConstantInt::get((cast<ArrayType>(FieldTy))->getElementType(),
+                                 0);
+
+    return ConstantArray::get(cast<ArrayType>(FieldTy), Elts);
   }
-  
-  void ConvertToPacked();
-  void AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits);
-  void AddBitFieldToRecordConstant(ConstantInt *Val,
-                                   uint64_t GCCFieldOffsetInBits);
-  void HandleTailPadding(uint64_t GCCStructBitSize);
-};
-  
 }
 
-/// ConvertToPacked - Given a partially constructed initializer for a LLVM
-/// struct constant, change it to make all the implicit padding between elements
-/// be fully explicit.
-void ConstantLayoutInfo::ConvertToPacked() {
-  uint64_t EltOffs = 0;
-  for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
-    Constant *Val = ResultElts[i];
+
+/// ProcessBitFieldInitialization - Handle a static initialization of a 
+/// RECORD_TYPE field that is a bitfield.
+static void ProcessBitFieldInitialization(tree Field, Value *Val,
+                                          const StructType *STy,
+                                          std::vector<Constant*> &ResultElts) {
+  // Get the offset and size of the bitfield, in bits.
+  unsigned BitfieldBitOffset = getFieldOffsetInBits(Field);
+  unsigned BitfieldSize      = TREE_INT_CST_LOW(DECL_SIZE(Field));
+  
+  // Get the value to insert into the bitfield.
+  assert(Val->getType()->isInteger() && "Bitfield initializer isn't int!");
+  assert(isa<ConstantInt>(Val) && "Non-constant bitfield initializer!");
+  uint64_t BitfieldVal = cast<ConstantInt>(Val)->getZExtValue();
+  
+  // Ensure that the top bits (which don't go into the bitfield) are zero.
+  BitfieldVal &= ~0ULL >> (64-BitfieldSize);
+  
+  // Get the struct field layout info for this struct.
+  const StructLayout *STyLayout = getTargetData().getStructLayout(STy);
+  
+  // If this is a bitfield, we know that FieldNo is the *first* LLVM field
+  // that contains bits from the bitfield overlayed with the declared type of
+  // the bitfield.  This bitfield value may be spread across multiple fields, or
+  // it may be just this field, or it may just be a small part of this field.
+  unsigned int FieldNo = GetFieldIndex(Field);
+  assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
+
+  // Get the offset and size of the LLVM field.
+  uint64_t STyFieldBitOffs = STyLayout->getElementOffset(FieldNo)*8;
+  
+  assert(BitfieldBitOffset >= STyFieldBitOffs &&
+         "This bitfield doesn't start in this LLVM field!");
+  unsigned OffsetToBitFieldStart = BitfieldBitOffset-STyFieldBitOffs;
+  
+  // Loop over all of the fields this bitfield is part of.  This is usually just
+  // one, but can be several in some cases.
+  for (; BitfieldSize; ++FieldNo) {
+    assert(STyFieldBitOffs == STyLayout->getElementOffset(FieldNo)*8 &&
+           "Bitfield LLVM fields are not exactly consecutive in memory!");
     
-    // Check to see if this element has an alignment that would cause it to get
-    // offset.  If so, insert explicit padding for the offset.
-    unsigned ValAlign = TD.getABITypeAlignment(Val->getType());
-    uint64_t AlignedEltOffs = TargetData::RoundUpAlignment(EltOffs, ValAlign);
+    // Compute overlap of this bitfield with this LLVM field, then call a
+    // function to insert (the STy element may be an array of bytes or
+    // something).
+    const Type *STyFieldTy = STy->getElementType(FieldNo);
+    unsigned STyFieldBitSize = getTargetData().getTypeSizeInBits(STyFieldTy);
     
-    // If the alignment doesn't affect the element offset, then the value is ok.
-    // Accept the field and keep moving.
-    if (AlignedEltOffs == EltOffs) {
-      EltOffs += TD.getTypePaddedSize(Val->getType());
+    // If the bitfield starts after this field, advance to the next field.  This
+    // can happen because we start looking at the first element overlapped by
+    // an aligned instance of the declared type. 
+    if (OffsetToBitFieldStart >= STyFieldBitSize) {
+      OffsetToBitFieldStart -= STyFieldBitSize;
+      STyFieldBitOffs       += STyFieldBitSize;
       continue;
     }
     
-    // Otherwise, there is padding here.  Insert explicit zeros.
-    const Type *PadTy = Type::Int8Ty;
-    if (AlignedEltOffs-EltOffs != 1)
-      PadTy = ArrayType::get(PadTy, AlignedEltOffs-EltOffs);
-    ResultElts.insert(ResultElts.begin()+i, Constant::getNullValue(PadTy));
-    ++e;  // One extra element to scan.
-  }
-  
-  // Packed now!
-  MaxLLVMFieldAlignment = 1;
-  StructIsPacked = true;
-}
-
-
-/// AddFieldToRecordConstant - As ConvertRecordCONSTRUCTOR builds up an LLVM
-/// constant to represent a GCC CONSTRUCTOR node, it calls this method to add
-/// fields.  The design of this is that it adds leading/trailing padding as
-/// needed to make the piece fit together and honor the GCC layout.  This does
-/// not handle bitfields.
-///
-/// The arguments are:
-///   Val: The value to add to the struct, with a size that matches the size of
-///        the corresponding GCC field.
-///   GCCFieldOffsetInBits: The offset that we have to put Val in the result. 
-///
-void ConstantLayoutInfo::
-AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
-  assert((TD.getTypeSizeInBits(Val->getType()) & 7) == 0 &&
-         "Cannot handle non-byte sized values");
-  
-  // Figure out how to add this non-bitfield value to our constant struct so
-  // that it ends up at the right offset.  There are four cases we have to
-  // think about:
-  //   1. We may be able to just slap it onto the end of our struct and have
-  //      everything be ok.
-  //   2. We may have to insert explicit padding into the LLVM struct to get
-  //      the initializer over into the right space.  This is needed when the
-  //      GCC field has a larger alignment than the LLVM field.
-  //   3. The LLVM field may be too far over and we may be forced to convert
-  //      this to an LLVM packed struct.  This is required when the LLVM
-  //      alignment is larger than the GCC alignment.
-  //   4. We may have a bitfield that needs to be merged into a previous
-  //      field.
-  // Start by determining which case we have by looking at where LLVM and GCC
-  // would place the field.
-  
-  // Verified that we haven't already laid out bytes that will overlap with
-  // this new field.
-  assert(NextFieldByteStart*8 <= GCCFieldOffsetInBits &&
-         "Overlapping LLVM fields!");
-  
-  // Compute the offset the field would get if we just stuck 'Val' onto the
-  // end of our structure right now.  It is NextFieldByteStart rounded up to
-  // the LLVM alignment of Val's type.
-  unsigned ValLLVMAlign = 1;
-  
-  if (!StructIsPacked) { // Packed structs ignore the alignment of members.
-    ValLLVMAlign = TD.getABITypeAlignment(Val->getType());
-    MaxLLVMFieldAlignment = std::max(MaxLLVMFieldAlignment, ValLLVMAlign);
-  }
-  
-  // LLVMNaturalByteOffset - This is where LLVM would drop the field if we
-  // slap it onto the end of the struct.
-  uint64_t LLVMNaturalByteOffset
-    = TargetData::RoundUpAlignment(NextFieldByteStart, ValLLVMAlign);
-  
-  // If adding the LLVM field would push it over too far, then we must have a
-  // case that requires the LLVM struct to be packed.  Do it now if so.
-  if (LLVMNaturalByteOffset*8 > GCCFieldOffsetInBits) {
-    // Switch to packed.
-    ConvertToPacked();
-    LLVMNaturalByteOffset = NextFieldByteStart;
-    assert(LLVMNaturalByteOffset*8 <= GCCFieldOffsetInBits &&
-           "Packing didn't fix the problem!");
-  }
-  
-  // If the LLVM offset is not large enough, we need to insert explicit
-  // padding in the LLVM struct between the fields.
-  if (LLVMNaturalByteOffset*8 < GCCFieldOffsetInBits) {
-    // Insert enough padding to fully fill in the hole.  Insert padding from
-    // NextFieldByteStart (not LLVMNaturalByteOffset) because the padding will
-    // not get the same alignment as "Val".
-    const Type *FillTy = Type::Int8Ty;
-    if (GCCFieldOffsetInBits/8-NextFieldByteStart != 1)
-      FillTy = ArrayType::get(FillTy,
-                              GCCFieldOffsetInBits/8-NextFieldByteStart);
-    ResultElts.push_back(Constant::getNullValue(FillTy));
+    // We are inserting part of 'Val' into this LLVM field.  The start bit
+    // is OffsetToBitFieldStart.  Compute the number of bits from this bitfield
+    // we are inserting into this LLVM field.
+    unsigned NumBitsToInsert =
+      std::min(BitfieldSize, STyFieldBitSize-OffsetToBitFieldStart);
     
-    NextFieldByteStart = GCCFieldOffsetInBits/8;
-    LLVMNaturalByteOffset
-      = TargetData::RoundUpAlignment(NextFieldByteStart, ValLLVMAlign);
-  }
-  
-  // Slap 'Val' onto the end of our ConstantStruct, it must be known to land
-  // at the right offset now.
-  assert(LLVMNaturalByteOffset*8 == GCCFieldOffsetInBits);
-  ResultElts.push_back(Val);
-  NextFieldByteStart += TD.getTypePaddedSize(Val->getType());
-}
-
-/// AddBitFieldToRecordConstant - Bitfields can span multiple LLVM fields and
-/// have other annoying properties, thus requiring extra layout rules.  This
-/// routine handles the extra complexity and then forwards to
-/// AddFieldToRecordConstant.
-void ConstantLayoutInfo::
-AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
-  // If the field is a bitfield, it could partially go in a previously
-  // laid out structure member, and may add elements to the end of the currently
-  // laid out structure.
-  //
-  // Since bitfields can only partially overlap other bitfields, because we
-  // always emit components of bitfields as i8, and because we never emit tail
-  // padding until we know it exists, this boils down to merging pieces of the
-  // bitfield values into i8's.  This is also simplified by the fact that
-  // bitfields can only be initialized by ConstantInts.  An interesting case is
-  // sharing of tail padding in C++ structures.  Because this can only happen
-  // in inheritance cases, and those are non-POD, we should never see them here.
-  
-  // First handle any part of Val that overlaps an already laid out field by
-  // merging it into it.  By the above invariants, we know that it is an i8 that
-  // we are merging into.  Note that we may be inserting *all* of Val into the
-  // previous field.
-  if (GCCFieldOffsetInBits < NextFieldByteStart*8) {
-    unsigned ValBitSize = ValC->getBitWidth();
-    assert(!ResultElts.empty() && "Bitfield starts before first element?");
-    assert(ResultElts.back()->getType() == Type::Int8Ty &&
-           isa<ConstantInt>(ResultElts.back()) &&
-           "Merging bitfield with non-bitfield value?");
-    assert(NextFieldByteStart*8 - GCCFieldOffsetInBits < 8 &&
-           "Bitfield overlaps backwards more than one field?");
-
-    // Figure out how many bits can fit into the previous field given the
-    // starting point in that field.
-    unsigned BitsInPreviousField =
-      unsigned(NextFieldByteStart*8 - GCCFieldOffsetInBits);
-    assert(BitsInPreviousField != 0 && "Previous field should not be null!");
-    
-    // Split the bits that will be inserted into the previous element out of
-    // Val into a new constant.  If Val is completely contained in the previous
-    // element, this sets Val to null, otherwise we shrink Val to contain the
-    // bits to insert in the next element.
-    APInt ValForPrevField(ValC->getValue());
-    if (BitsInPreviousField >= ValBitSize) {
-      // The whole field fits into the previous field.
-      ValC = 0;
-    } else if (!BYTES_BIG_ENDIAN) {
-      // Little endian, take bits from the bottom of the field value.
-      ValForPrevField.trunc(BitsInPreviousField);
-      APInt Tmp = ValC->getValue();
-      Tmp = Tmp.lshr(BitsInPreviousField);
-      Tmp = Tmp.trunc(ValBitSize-BitsInPreviousField);
-      ValC = ConstantInt::get(Tmp);
-    } else {
-      // Big endian, take bits from the top of the field value.
-      ValForPrevField = ValForPrevField.lshr(ValBitSize-BitsInPreviousField);
-      ValForPrevField.trunc(BitsInPreviousField);
+    // Compute the NumBitsToInsert-wide value that we are going to insert
+    // into this field as an ulong integer constant value.
+    uint64_t ValToInsert;
+    if (BYTES_BIG_ENDIAN) {
+      // If this is a big-endian bit-field, take the top NumBitsToInsert
+      // bits from the bitfield value.
+      ValToInsert = BitfieldVal >> (BitfieldSize-NumBitsToInsert);
       
-      APInt Tmp = ValC->getValue();
-      Tmp = Tmp.trunc(ValBitSize-BitsInPreviousField);
-      ValC = ConstantInt::get(Tmp);
-    }
-    
-    // Okay, we're going to insert ValForPrevField into the previous i8, extend
-    // it and shift into place.
-    ValForPrevField.zext(8);
-    if (!BYTES_BIG_ENDIAN) {
-      ValForPrevField = ValForPrevField.shl(8-BitsInPreviousField);
+      // Clear the handled bits from BitfieldVal.
+      BitfieldVal &= (1ULL << (BitfieldSize-NumBitsToInsert))-1;
     } else {
-      // On big endian, if the entire field fits into the remaining space, shift
-      // over to not take part of the next field's bits.
-      if (BitsInPreviousField > ValBitSize)
-        ValForPrevField = ValForPrevField.shl(BitsInPreviousField-ValBitSize);
+      // If this is little-endian bit-field, take the bottom NumBitsToInsert
+      // bits from the bitfield value.
+      ValToInsert = BitfieldVal & ((1ULL << NumBitsToInsert)-1);
+      BitfieldVal >>= NumBitsToInsert;
     }
     
-    // "or" in the previous value and install it.
-    const APInt &LastElt = cast<ConstantInt>(ResultElts.back())->getValue();
-    ResultElts.back() = ConstantInt::get(ValForPrevField | LastElt);
+    ResultElts[FieldNo] = InsertBitFieldValue(ValToInsert, NumBitsToInsert,
+                                              OffsetToBitFieldStart,
+                                              STyFieldBitSize,
+                                              ResultElts[FieldNo], STyFieldTy);
     
-    // If the whole bit-field fit into the previous field, we're done.
-    if (ValC == 0) return;
-    GCCFieldOffsetInBits = NextFieldByteStart*8;
+    // If this bitfield splits across multiple LLVM fields, update these
+    // values for the next field.
+    BitfieldSize          -= NumBitsToInsert;
+    STyFieldBitOffs       += STyFieldBitSize;
+    OffsetToBitFieldStart = 0;
   }
-  
-  assert(GCCFieldOffsetInBits == NextFieldByteStart*8 && 
-         "expected no missing bitfields");
+}
 
-  APInt Val = ValC->getValue();
+/// ConvertStructFieldInitializerToType - Convert the input value to a new type,
+/// when constructing the field initializers for a constant CONSTRUCTOR object.
+static Constant *ConvertStructFieldInitializerToType(Constant *Val, 
+                                                     const Type *FieldTy) {
+  const TargetData &TD = getTargetData();
+  assert(TD.getTypePaddedSize(FieldTy) == TD.getTypePaddedSize(Val->getType()) &&
+         "Mismatched initializer type isn't same size as initializer!");
 
-  // Okay, we know that we're plopping bytes onto the end of the struct.
-  // Iterate while there is stuff to do.
-  while (1) {
-    ConstantInt *ValToAppend;
-    if (Val.getBitWidth() > 8) {
-      if (!BYTES_BIG_ENDIAN) {
-        // Little endian lays out low bits first.
-        APInt Tmp = Val;
-        Tmp.trunc(8);
-        ValToAppend = ConstantInt::get(Tmp);
-        
-        Val = Val.lshr(8);
-      } else {
-        // Big endian lays out high bits first.
-        APInt Tmp = Val;
-        Tmp = Tmp.lshr(Tmp.getBitWidth()-8);
-        Tmp.trunc(8);
-        ValToAppend = ConstantInt::get(Tmp);
+  // If this is an integer initializer for an array of ubytes, we are
+  // initializing an unaligned integer field.  Break the integer initializer up
+  // into pieces.
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
+    if (const ArrayType *ATy = dyn_cast<ArrayType>(FieldTy))
+      if (ATy->getElementType() == Type::Int8Ty) {
+        std::vector<Constant*> ArrayElts;
+        uint64_t Val = CI->getZExtValue();
+        for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+          unsigned char EltVal;
+
+          if (BYTES_BIG_ENDIAN) {
+            EltVal = (Val >> 8*(e-i-1)) & 0xFF;
+          } else {
+            EltVal = (Val >> 8*i) & 0xFF;
+          }
+
+          ArrayElts.push_back(ConstantInt::get(Type::Int8Ty, EltVal));
+        }
+
+        return ConstantArray::get(ATy, ArrayElts);
       }
-    } else if (ValC->getBitWidth() == 8) {
-      ValToAppend = ConstantInt::get(Val);
-    } else {
-      APInt Tmp = Val;
-      Tmp.zext(8);
-      
-      if (BYTES_BIG_ENDIAN)
-        Tmp = Tmp << 8-Val.getBitWidth();
-      ValToAppend = ConstantInt::get(Tmp);
-    }
-    
-    ResultElts.push_back(ValToAppend);
-    ++NextFieldByteStart;
-    
-    if (Val.getBitWidth() <= 8)
-      break;
-    Val.trunc(Val.getBitWidth()-8);
   }
+
+  // Otherwise, we can get away with this initialization.
+  assert(TD.getABITypeAlignment(FieldTy) >= 
+         TD.getABITypeAlignment(Val->getType()) &&
+         "Field initialize is over aligned for LLVM type!");
+  return Val;
 }
 
-
-/// HandleTailPadding - Check to see if the struct fields, as laid out so far,
-/// will be large enough to make the generated constant struct have the right
-/// size.  If not, add explicit tail padding.  If rounding up based on the LLVM
-/// IR alignment would make the struct too large, convert it to a packed LLVM
-/// struct.
-void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
-  uint64_t GCCStructSize = (GCCStructBitSize+7)/8;
-  uint64_t LLVMNaturalSize =
-    TargetData::RoundUpAlignment(NextFieldByteStart, MaxLLVMFieldAlignment);
-  
-  // If the total size of the laid out data is within the size of the GCC type
-  // but the rounded-up size (including the tail padding induced by LLVM
-  // alignment) is too big, convert to a packed struct type.  We don't do this
-  // if the size of the laid out fields is too large because initializers like
-  //
-  //    struct X { int A; char C[]; } x = { 4, "foo" };
-  //
-  // can occur and no amount of packing will help.
-  if (NextFieldByteStart <= GCCStructSize &&   // Not flexible init case.
-      LLVMNaturalSize > GCCStructSize) {       // Tail pad will overflow type.
-    assert(!StructIsPacked && "LLVM Struct type overflow!");
-    
-    // Switch to packed.
-    ConvertToPacked();
-    LLVMNaturalSize = NextFieldByteStart;
-    
-    // Verify that packing solved the problem.
-    assert(LLVMNaturalSize <= GCCStructSize &&
-           "Oversized should be handled by packing");
-  }
-  
-  // If the LLVM Size is too small, add some tail padding to fill it in.
-  if (LLVMNaturalSize < GCCStructSize) {
-    const Type *FillTy = Type::Int8Ty;
-    if (GCCStructSize - NextFieldByteStart != 1)
-      FillTy = ArrayType::get(FillTy, GCCStructSize - NextFieldByteStart);
-    ResultElts.push_back(Constant::getNullValue(FillTy));
-  }
-}
 
 Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
-  ConstantLayoutInfo LayoutInfo(getTargetData());
-  
+  const StructType *STy = cast<StructType>(ConvertType(TREE_TYPE(exp)));
+  std::vector<Constant*> ResultElts;
+  ResultElts.resize(STy->getNumElements());
+
   tree NextField = TYPE_FIELDS(TREE_TYPE(exp));
-  unsigned HOST_WIDE_INT CtorIndex;
-  tree FieldValue;
-  tree Field; // The FIELD_DECL for the field.
-  FOR_EACH_CONSTRUCTOR_ELT(CONSTRUCTOR_ELTS(exp), CtorIndex, Field, FieldValue){
-    // If an explicit field is specified, use it.
-    if (Field == 0) {
+  unsigned HOST_WIDE_INT ix;
+  tree elt_value;
+  tree Field; // The fielddecl for the field.
+  FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, Field, elt_value) {
+    unsigned FieldNo;
+    if (Field == 0) {           // If an explicit field is specified, use it.
       Field = NextField;
       // Advance to the next FIELD_DECL, skipping over other structure members
       // (e.g. enums).
-      while (1) {
+      for (; 1; Field = TREE_CHAIN(Field)) {
         assert(Field && "Fell off end of record!");
         if (TREE_CODE(Field) == FIELD_DECL) break;
-        Field = TREE_CHAIN(Field);
       }
     }
-    
-    // Decode the field's value.
-    Constant *Val = Convert(FieldValue);
-    
-    // GCCFieldOffsetInBits is where GCC is telling us to put the current field.
-    uint64_t GCCFieldOffsetInBits = getFieldOffsetInBits(Field);
-    NextField = TREE_CHAIN(Field);
-    
 
-    // If this is a non-bitfield value, just slap it onto the end of the struct
-    // with the appropriate padding etc.  If it is a bitfield, we have more
-    // processing to do.
-    if (!isBitfield(Field))
-      LayoutInfo.AddFieldToRecordConstant(Val, GCCFieldOffsetInBits);
-    else {
-      assert(isa<ConstantInt>(Val) && "Can only init bitfield with constant");
-      assert(Val->getType()->getPrimitiveSizeInBits() ==
-                TREE_INT_CST_LOW(DECL_SIZE(Field)) &&
-             "disagreement between LLVM and GCC on bitfield size");
-      LayoutInfo.AddBitFieldToRecordConstant(cast<ConstantInt>(Val),
-                                             GCCFieldOffsetInBits);
+    // Decode the field's value.
+    Constant *Val = Convert(elt_value);
+
+    // If the field is a bitfield, it could be spread across multiple fields and
+    // may start at some bit offset.
+    if (isBitfield(Field)) {
+      ProcessBitFieldInitialization(Field, Val, STy, ResultElts);
+    } else {
+      // If not, things are much simpler.
+      unsigned int FieldNo = GetFieldIndex(Field);
+      assert(FieldNo < ResultElts.size() && "Invalid struct field number!");
+
+      // Example: struct X { int A; char C[]; } x = { 4, "foo" };
+      assert((TYPE_SIZE(getDeclaredType(Field)) ||
+             (FieldNo == ResultElts.size()-1 &&
+              isStructWithVarSizeArrayAtEnd(STy)))
+             && "field with no size is not array at end of struct!");
+
+      // If this is an initialization of a global that ends with a variable
+      // sized array at its end, and the initializer has a non-zero number of
+      // elements, then Val contains the actual type for the array.  Otherwise,
+      // we know that the initializer has to match the element type of the LLVM
+      // structure field.  If not, then there is something that is not
+      // straight-forward going on.  For example, we could be initializing an
+      // unaligned integer field (e.g. due to attribute packed) with an
+      // integer.  The struct field will have type [4 x ubyte] instead of
+      // "int" for example.  If we ignored this, we would lay out the
+      // initializer wrong.
+      if (TYPE_SIZE(getDeclaredType(Field)) &&
+          Val->getType() != STy->getElementType(FieldNo))
+        Val = ConvertStructFieldInitializerToType(Val,
+                                                  STy->getElementType(FieldNo));
+
+      ResultElts[FieldNo] = Val;
     }
+
+    NextField = TREE_CHAIN(Field);
   }
   
-  // Check to see if the struct fields, as laid out so far, will be large enough
-  // to make the generated constant struct have the right size.  If not, add
-  // explicit tail padding.  If rounding up based on the LLVM IR alignment would
-  // make the struct too large, convert it to a packed LLVM struct.
-  tree StructTypeSizeTree = TYPE_SIZE(TREE_TYPE(exp));
-  if (StructTypeSizeTree && TREE_CODE(StructTypeSizeTree) == INTEGER_CST)
-    LayoutInfo.HandleTailPadding(getInt64(StructTypeSizeTree, true));
-  
-  // Okay, we're done, return the computed elements.
-  return ConstantStruct::get(LayoutInfo.ResultElts, LayoutInfo.StructIsPacked);
+  // Fill in null elements with zeros.
+  for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
+    if (ResultElts[i] == 0)
+      ResultElts[i] = Constant::getNullValue(STy->getElementType(i));
+  }
+
+  // The type we're going to build for the initializer is not necessarily the
+  // same as the type of the struct.  In cases where there is a union field.
+  // it is possible for the size and/or alignment of the two structs to differ,
+  // in which case we need some explicit padding.
+  Constant *retval = ConstantStruct::get(ResultElts, STy->isPacked());
+  const Type *NewSTy = retval->getType();
+
+  unsigned oldLLVMSize = getTargetData().getTypePaddedSize(STy);
+  unsigned oldLLVMAlign = getTargetData().getABITypeAlignment(STy);
+  oldLLVMSize = ((oldLLVMSize+oldLLVMAlign-1)/oldLLVMAlign)*oldLLVMAlign;
+
+  unsigned newLLVMSize = getTargetData().getTypePaddedSize(NewSTy);
+  unsigned newLLVMAlign = getTargetData().getABITypeAlignment(NewSTy);
+  newLLVMSize = ((newLLVMSize+newLLVMAlign-1)/newLLVMAlign)*newLLVMAlign;
+
+  // oldSize < newSize occurs legitimately when we don't know the size of
+  // the struct.
+  if (newLLVMSize < oldLLVMSize) {
+    const Type *FillTy;
+    if (oldLLVMSize - newLLVMSize == 1)
+      FillTy = Type::Int8Ty;
+    else
+      FillTy = ArrayType::get(Type::Int8Ty, oldLLVMSize - newLLVMSize);
+    ResultElts.push_back(Constant::getNullValue(FillTy));
+    retval = ConstantStruct::get(ResultElts, STy->isPacked());
+  }
+
+  return retval;
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
@@ -7165,8 +7125,8 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
   // it out.
   tree UnionType = TREE_TYPE(exp);
   if (TYPE_SIZE(UnionType) && TREE_CODE(TYPE_SIZE(UnionType)) == INTEGER_CST) {
-    uint64_t UnionSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(UnionType))+7)/8;
-    uint64_t InitSize = getTargetData().getTypePaddedSize(Elts[0]->getType());
+    unsigned UnionSize = ((unsigned)TREE_INT_CST_LOW(TYPE_SIZE(UnionType))+7)/8;
+    unsigned InitSize = getTargetData().getTypePaddedSize(Elts[0]->getType());
     if (UnionSize != InitSize) {
       const Type *FillTy;
       assert(UnionSize > InitSize && "Init shouldn't be larger than union!");

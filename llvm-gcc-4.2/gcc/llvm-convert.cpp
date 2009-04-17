@@ -6922,6 +6922,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
   // at the right offset now.
   assert(LLVMNaturalByteOffset*8 == GCCFieldOffsetInBits);
   ResultElts.push_back(Val);
+  NextFieldByteStart = LLVMNaturalByteOffset;
   NextFieldByteStart += TD.getTypePaddedSize(Val->getType());
 }
 

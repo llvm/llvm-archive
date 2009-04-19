@@ -6932,6 +6932,14 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
 /// AddFieldToRecordConstant.
 void ConstantLayoutInfo::
 AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
+  // If the GCC field starts after our current LLVM field then there must have
+  // been an anonymous bitfield or other thing that shoved it over.  No matter,
+  // just insert some i8 padding until there are bits to fill in.
+  while (GCCFieldOffsetInBits > NextFieldByteStart*8) {
+    ResultElts.push_back(ConstantInt::get(Type::Int8Ty, 0));
+    ++NextFieldByteStart;
+  }
+  
   // If the field is a bitfield, it could partially go in a previously
   // laid out structure member, and may add elements to the end of the currently
   // laid out structure.
@@ -7009,9 +7017,6 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
     GCCFieldOffsetInBits = NextFieldByteStart*8;
   }
   
-  assert(GCCFieldOffsetInBits == NextFieldByteStart*8 && 
-         "expected no missing bitfields");
-
   APInt Val = ValC->getValue();
 
   // Okay, we know that we're plopping bytes onto the end of the struct.

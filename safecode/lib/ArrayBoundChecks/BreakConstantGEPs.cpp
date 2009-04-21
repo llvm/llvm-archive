@@ -27,14 +27,18 @@
 #include <map>
 #include <utility>
 
-NAMESPACE_SC_BEGIN
+namespace sc {
 
 // Identifier variable for the pass
-char BreakConstantGEPs::ID = 0;
+//char BreakConstantGEPs::ID = 0;
 
 // Statistics
-STATISTIC (GEPChanges,   "Number of Converted GEP Constant Expressions");
-STATISTIC (TotalChanges, "Number of Converted Constant Expressions");
+static Statistic<> GEPChanges (DEBUG_TYPE,
+                               "Number of Converted GEP Constant Expressions");
+static Statistic<> ZeroGEPChanges (DEBUG_TYPE,
+                               "Number of GEP Constant Expressions that have a first index of zero");
+static Statistic<> TotalChanges (DEBUG_TYPE,
+                                 "Number of Converted Constant Expressions");
 
 // Register the pass
 static RegisterPass<BreakConstantGEPs> P ("break-constgeps",
@@ -87,6 +91,13 @@ hasConstantGEP (Value * V) {
 static Instruction *
 convertGEP (ConstantExpr * CE, Instruction * InsertPt) {
   //
+  // Count the number of GEP constant expressions that have a zero as the
+  // first index.
+  //
+  if (ConstantInt * CI = dyn_cast<ConstantInt>(CE->getOperand(1)))
+    if (CI->isNullValue ()) ++ZeroGEPChanges;
+
+  //
   // Create iterators to the indices of the constant expression.
   //
   std::vector<Value *> Indices;
@@ -102,11 +113,10 @@ convertGEP (ConstantExpr * CE, Instruction * InsertPt) {
   //
   // Make the new GEP instruction.
   //
-  return (GetElementPtrInst::Create (CE->getOperand(0),
-                                     Indices.begin(),
-                                     Indices.end(),
-                                     CE->getName(),
-                                     InsertPt));
+  return (new GetElementPtrInst (CE->getOperand(0),
+                                 Indices,
+                                 CE->getName(),
+                                 InsertPt));
 }
 
 //
@@ -139,13 +149,12 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
     case Instruction::SRem:
     case Instruction::FRem:
     case Instruction::Shl:
-    case Instruction::LShr:
-    case Instruction::AShr:
+    case Instruction::Shr:
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor: {
       Instruction::BinaryOps Op = (Instruction::BinaryOps)(CE->getOpcode());
-      NewInst = BinaryOperator::Create (Op,
+      NewInst = BinaryOperator::create (Op,
                                         CE->getOperand(0),
                                         CE->getOperand(1),
                                         CE->getName(),
@@ -153,36 +162,24 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
       break;
     }
 
-    case Instruction::Trunc:
-    case Instruction::ZExt:
-    case Instruction::SExt:
-    case Instruction::FPToUI:
-    case Instruction::FPToSI:
-    case Instruction::UIToFP:
-    case Instruction::SIToFP:
-    case Instruction::FPTrunc:
-    case Instruction::FPExt:
-    case Instruction::PtrToInt:
-    case Instruction::IntToPtr:
-    case Instruction::BitCast: {
-      Instruction::CastOps Op = (Instruction::CastOps)(CE->getOpcode());
-      NewInst = CastInst::Create (Op,
-                                  CE->getOperand(0),
-                                  CE->getType(),
-                                  CE->getName(),
-                                  InsertPt);
+    case Instruction::Cast: {
+      NewInst = new CastInst (CE->getOperand(0),
+                              CE->getType(),
+                              CE->getName(),
+                              InsertPt);
       break;
     }
 
-    case Instruction:: ICmp:
-    case Instruction:: FCmp:
-    case Instruction:: Select:
-    case Instruction:: ExtractElement:
-    case Instruction:: InsertElement:
-    case Instruction:: ShuffleVector:
-    case Instruction:: InsertValue:
-    case Instruction:: VICmp:
-    case Instruction:: VFCmp:
+    case Instruction::SetEQ:
+    case Instruction::SetNE:
+    case Instruction::SetLE:
+    case Instruction::SetGE:
+    case Instruction::SetLT:
+    case Instruction::SetGT:
+    case Instruction::Select:
+    case Instruction::ExtractElement:
+    case Instruction::InsertElement:
+    case Instruction::ShuffleVector:
     default:
       assert (0 && "Unhandled constant expression!\n");
       break;
@@ -291,5 +288,5 @@ BreakConstantGEPs::runOnFunction (Function & F) {
   return modified;
 }
 
-NAMESPACE_SC_END
+}
 

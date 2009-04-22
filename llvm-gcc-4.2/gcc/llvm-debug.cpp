@@ -182,6 +182,12 @@ static expanded_location GetNodeLocation(tree Node, bool UseStub = true) {
 
 static const char *getLinkageName(tree Node) {
 
+  // Use llvm value name as linkage name if it is available.
+  if (DECL_LLVM_SET_P(Node)) {
+    Value *V = DECL_LLVM(Node);
+    return V->getNameStart();
+  }
+
   tree decl_name = DECL_NAME(Node);
   if (decl_name != NULL && IDENTIFIER_POINTER (decl_name) != NULL) {
     if (TREE_PUBLIC(Node) &&

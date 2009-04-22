@@ -6771,15 +6771,15 @@ namespace {
 /// lay out struct inits.
 struct ConstantLayoutInfo {
   const TargetData &TD;
-  
+
   /// ResultElts - The initializer elements so far.
   std::vector<Constant*> ResultElts;
-  
+
   /// StructIsPacked - This is set to true if we find out that we have to emit
   /// the ConstantStruct as a Packed LLVM struct type (because the LLVM
   /// alignment rules would prevent laying out the struct correctly).
   bool StructIsPacked;
-  
+
   /// NextFieldByteStart - This field indicates the *byte* that the next field
   /// will start at.  Put another way, this is the size of the struct as
   /// currently laid out, but without any tail padding considered.
@@ -6788,21 +6788,21 @@ struct ConstantLayoutInfo {
   /// MaxLLVMFieldAlignment - This is the largest alignment of any IR field,
   /// which is the alignment that the ConstantStruct will get.
   unsigned MaxLLVMFieldAlignment;
-  
-  
+
+
   ConstantLayoutInfo(const TargetData &TD) : TD(TD) {
     StructIsPacked = false;
     NextFieldByteStart = 0;
     MaxLLVMFieldAlignment = 1;
   }
-  
+
   void ConvertToPacked();
   void AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits);
   void AddBitFieldToRecordConstant(ConstantInt *Val,
                                    uint64_t GCCFieldOffsetInBits);
   void HandleTailPadding(uint64_t GCCStructBitSize);
 };
-  
+
 }
 
 /// ConvertToPacked - Given a partially constructed initializer for a LLVM
@@ -6812,19 +6812,19 @@ void ConstantLayoutInfo::ConvertToPacked() {
   uint64_t EltOffs = 0;
   for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
     Constant *Val = ResultElts[i];
-    
+
     // Check to see if this element has an alignment that would cause it to get
     // offset.  If so, insert explicit padding for the offset.
     unsigned ValAlign = TD.getABITypeAlignment(Val->getType());
     uint64_t AlignedEltOffs = TargetData::RoundUpAlignment(EltOffs, ValAlign);
-    
+
     // If the alignment doesn't affect the element offset, then the value is ok.
     // Accept the field and keep moving.
     if (AlignedEltOffs == EltOffs) {
       EltOffs += TD.getTypePaddedSize(Val->getType());
       continue;
     }
-    
+
     // Otherwise, there is padding here.  Insert explicit zeros.
     const Type *PadTy = Type::Int8Ty;
     if (AlignedEltOffs-EltOffs != 1)
@@ -6832,7 +6832,7 @@ void ConstantLayoutInfo::ConvertToPacked() {
     ResultElts.insert(ResultElts.begin()+i, Constant::getNullValue(PadTy));
     ++e;  // One extra element to scan.
   }
-  
+
   // Packed now!
   MaxLLVMFieldAlignment = 1;
   StructIsPacked = true;
@@ -6848,13 +6848,13 @@ void ConstantLayoutInfo::ConvertToPacked() {
 /// The arguments are:
 ///   Val: The value to add to the struct, with a size that matches the size of
 ///        the corresponding GCC field.
-///   GCCFieldOffsetInBits: The offset that we have to put Val in the result. 
+///   GCCFieldOffsetInBits: The offset that we have to put Val in the result.
 ///
 void ConstantLayoutInfo::
 AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
   assert((TD.getTypeSizeInBits(Val->getType()) & 7) == 0 &&
          "Cannot handle non-byte sized values");
-  
+
   // Figure out how to add this non-bitfield value to our constant struct so
   // that it ends up at the right offset.  There are four cases we have to
   // think about:
@@ -6870,27 +6870,27 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
   //      field.
   // Start by determining which case we have by looking at where LLVM and GCC
   // would place the field.
-  
+
   // Verified that we haven't already laid out bytes that will overlap with
   // this new field.
   assert(NextFieldByteStart*8 <= GCCFieldOffsetInBits &&
          "Overlapping LLVM fields!");
-  
+
   // Compute the offset the field would get if we just stuck 'Val' onto the
   // end of our structure right now.  It is NextFieldByteStart rounded up to
   // the LLVM alignment of Val's type.
   unsigned ValLLVMAlign = 1;
-  
+
   if (!StructIsPacked) { // Packed structs ignore the alignment of members.
     ValLLVMAlign = TD.getABITypeAlignment(Val->getType());
     MaxLLVMFieldAlignment = std::max(MaxLLVMFieldAlignment, ValLLVMAlign);
   }
-  
+
   // LLVMNaturalByteOffset - This is where LLVM would drop the field if we
   // slap it onto the end of the struct.
   uint64_t LLVMNaturalByteOffset
     = TargetData::RoundUpAlignment(NextFieldByteStart, ValLLVMAlign);
-  
+
   // If adding the LLVM field would push it over too far, then we must have a
   // case that requires the LLVM struct to be packed.  Do it now if so.
   if (LLVMNaturalByteOffset*8 > GCCFieldOffsetInBits) {
@@ -6900,7 +6900,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
     assert(LLVMNaturalByteOffset*8 <= GCCFieldOffsetInBits &&
            "Packing didn't fix the problem!");
   }
-  
+
   // If the LLVM offset is not large enough, we need to insert explicit
   // padding in the LLVM struct between the fields.
   if (LLVMNaturalByteOffset*8 < GCCFieldOffsetInBits) {
@@ -6912,12 +6912,12 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
       FillTy = ArrayType::get(FillTy,
                               GCCFieldOffsetInBits/8-NextFieldByteStart);
     ResultElts.push_back(Constant::getNullValue(FillTy));
-    
+
     NextFieldByteStart = GCCFieldOffsetInBits/8;
     LLVMNaturalByteOffset
       = TargetData::RoundUpAlignment(NextFieldByteStart, ValLLVMAlign);
   }
-  
+
   // Slap 'Val' onto the end of our ConstantStruct, it must be known to land
   // at the right offset now.
   assert(LLVMNaturalByteOffset*8 == GCCFieldOffsetInBits);
@@ -6939,7 +6939,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
     ResultElts.push_back(ConstantInt::get(Type::Int8Ty, 0));
     ++NextFieldByteStart;
   }
-  
+
   // If the field is a bitfield, it could partially go in a previously
   // laid out structure member, and may add elements to the end of the currently
   // laid out structure.
@@ -6951,7 +6951,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
   // bitfields can only be initialized by ConstantInts.  An interesting case is
   // sharing of tail padding in C++ structures.  Because this can only happen
   // in inheritance cases, and those are non-POD, we should never see them here.
-  
+
   // First handle any part of Val that overlaps an already laid out field by
   // merging it into it.  By the above invariants, we know that it is an i8 that
   // we are merging into.  Note that we may be inserting *all* of Val into the
@@ -6970,7 +6970,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
     unsigned BitsInPreviousField =
       unsigned(NextFieldByteStart*8 - GCCFieldOffsetInBits);
     assert(BitsInPreviousField != 0 && "Previous field should not be null!");
-    
+
     // Split the bits that will be inserted into the previous element out of
     // Val into a new constant.  If Val is completely contained in the previous
     // element, this sets Val to null, otherwise we shrink Val to contain the
@@ -6990,12 +6990,12 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
       // Big endian, take bits from the top of the field value.
       ValForPrevField = ValForPrevField.lshr(ValBitSize-BitsInPreviousField);
       ValForPrevField.trunc(BitsInPreviousField);
-      
+
       APInt Tmp = ValC->getValue();
       Tmp = Tmp.trunc(ValBitSize-BitsInPreviousField);
       ValC = ConstantInt::get(Tmp);
     }
-    
+
     // Okay, we're going to insert ValForPrevField into the previous i8, extend
     // it and shift into place.
     ValForPrevField.zext(8);
@@ -7007,16 +7007,16 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
       if (BitsInPreviousField > ValBitSize)
         ValForPrevField = ValForPrevField.shl(BitsInPreviousField-ValBitSize);
     }
-    
+
     // "or" in the previous value and install it.
     const APInt &LastElt = cast<ConstantInt>(ResultElts.back())->getValue();
     ResultElts.back() = ConstantInt::get(ValForPrevField | LastElt);
-    
+
     // If the whole bit-field fit into the previous field, we're done.
     if (ValC == 0) return;
     GCCFieldOffsetInBits = NextFieldByteStart*8;
   }
-  
+
   APInt Val = ValC->getValue();
 
   // Okay, we know that we're plopping bytes onto the end of the struct.
@@ -7029,7 +7029,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
         APInt Tmp = Val;
         Tmp.trunc(8);
         ValToAppend = ConstantInt::get(Tmp);
-        
+
         Val = Val.lshr(8);
       } else {
         // Big endian lays out high bits first.
@@ -7043,15 +7043,15 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
     } else {
       APInt Tmp = Val;
       Tmp.zext(8);
-      
+
       if (BYTES_BIG_ENDIAN)
         Tmp = Tmp << 8-Val.getBitWidth();
       ValToAppend = ConstantInt::get(Tmp);
     }
-    
+
     ResultElts.push_back(ValToAppend);
     ++NextFieldByteStart;
-    
+
     if (Val.getBitWidth() <= 8)
       break;
     Val.trunc(Val.getBitWidth()-8);
@@ -7068,7 +7068,7 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
   uint64_t GCCStructSize = (GCCStructBitSize+7)/8;
   uint64_t LLVMNaturalSize =
     TargetData::RoundUpAlignment(NextFieldByteStart, MaxLLVMFieldAlignment);
-  
+
   // If the total size of the laid out data is within the size of the GCC type
   // but the rounded-up size (including the tail padding induced by LLVM
   // alignment) is too big, convert to a packed struct type.  We don't do this
@@ -7080,16 +7080,16 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
   if (NextFieldByteStart <= GCCStructSize &&   // Not flexible init case.
       LLVMNaturalSize > GCCStructSize) {       // Tail pad will overflow type.
     assert(!StructIsPacked && "LLVM Struct type overflow!");
-    
+
     // Switch to packed.
     ConvertToPacked();
     LLVMNaturalSize = NextFieldByteStart;
-    
+
     // Verify that packing solved the problem.
     assert(LLVMNaturalSize <= GCCStructSize &&
            "Oversized should be handled by packing");
   }
-  
+
   // If the LLVM Size is too small, add some tail padding to fill it in.
   if (LLVMNaturalSize < GCCStructSize) {
     const Type *FillTy = Type::Int8Ty;
@@ -7101,7 +7101,7 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
 
 Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   ConstantLayoutInfo LayoutInfo(getTargetData());
-  
+
   tree NextField = TYPE_FIELDS(TREE_TYPE(exp));
   unsigned HOST_WIDE_INT CtorIndex;
   tree FieldValue;
@@ -7118,14 +7118,14 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
         Field = TREE_CHAIN(Field);
       }
     }
-    
+
     // Decode the field's value.
     Constant *Val = Convert(FieldValue);
-    
+
     // GCCFieldOffsetInBits is where GCC is telling us to put the current field.
     uint64_t GCCFieldOffsetInBits = getFieldOffsetInBits(Field);
     NextField = TREE_CHAIN(Field);
-    
+
 
     // If this is a non-bitfield value, just slap it onto the end of the struct
     // with the appropriate padding etc.  If it is a bitfield, we have more
@@ -7134,14 +7134,21 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       LayoutInfo.AddFieldToRecordConstant(Val, GCCFieldOffsetInBits);
     else {
       assert(isa<ConstantInt>(Val) && "Can only init bitfield with constant");
-      assert(Val->getType()->getPrimitiveSizeInBits() ==
-                TREE_INT_CST_LOW(DECL_SIZE(Field)) &&
+      uint64_t FieldSizeInBits = getInt64(DECL_SIZE(Field), true);
+      uint64_t ValueSizeInBits = Val->getType()->getPrimitiveSizeInBits();
+      assert(ValueSizeInBits >= FieldSizeInBits &&
              "disagreement between LLVM and GCC on bitfield size");
+      if (ValueSizeInBits != FieldSizeInBits) {
+        // Fields are allowed to be smaller than their type.  Simply discard
+        // the unwanted upper bits in the field value.
+        APInt ValAsInt = cast<ConstantInt>(Val)->getValue();
+        Val = ConstantInt::get(ValAsInt.trunc(FieldSizeInBits));
+      }
       LayoutInfo.AddBitFieldToRecordConstant(cast<ConstantInt>(Val),
                                              GCCFieldOffsetInBits);
     }
   }
-  
+
   // Check to see if the struct fields, as laid out so far, will be large enough
   // to make the generated constant struct have the right size.  If not, add
   // explicit tail padding.  If rounding up based on the LLVM IR alignment would
@@ -7149,7 +7156,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   tree StructTypeSizeTree = TYPE_SIZE(TREE_TYPE(exp));
   if (StructTypeSizeTree && TREE_CODE(StructTypeSizeTree) == INTEGER_CST)
     LayoutInfo.HandleTailPadding(getInt64(StructTypeSizeTree, true));
-  
+
   // Okay, we're done, return the computed elements.
   return ConstantStruct::get(LayoutInfo.ResultElts, LayoutInfo.StructIsPacked);
 }

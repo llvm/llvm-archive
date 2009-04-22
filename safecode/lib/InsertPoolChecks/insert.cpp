@@ -1225,8 +1225,10 @@ InsertPoolChecks::addHeapRegs (Module & M) {
           new CallInst(IOFree, args, "", IP);
         }
 #endif
-      } else
-        assert(0 && "unknown alloc");
+      } else {
+        std::cerr << "JTC: " << name << std::endl;
+        assert(0 && "Unknown allocator");
+      }
     }
   }
 }

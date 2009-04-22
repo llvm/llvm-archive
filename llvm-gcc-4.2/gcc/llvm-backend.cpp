@@ -1232,6 +1232,10 @@ void emit_global_to_llvm(tree decl) {
       && (DECL_DEFER_OUTPUT(decl)))
       return;
 
+  // If we encounter a forward declaration then do not emit the global yet.
+  if (!TYPE_SIZE(TREE_TYPE(decl)))
+    return;
+
   timevar_push(TV_LLVM_GLOBALS);
 
   // Get or create the global variable now.

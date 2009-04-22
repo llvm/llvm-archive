@@ -33,6 +33,8 @@ namespace sc {
 //char BreakConstantGEPs::ID = 0;
 
 // Statistics
+static Statistic<> NULLCEGeps (DEBUG_TYPE,
+                               "Number of GEP Constant Expressions of NULL");
 static Statistic<> GEPChanges (DEBUG_TYPE,
                                "Number of Converted GEP Constant Expressions");
 static Statistic<> ZeroGEPChanges (DEBUG_TYPE,
@@ -90,6 +92,12 @@ hasConstantGEP (Value * V) {
 //
 static Instruction *
 convertGEP (ConstantExpr * CE, Instruction * InsertPt) {
+  //
+  // Determine if the constant expression indexes off of NULL.
+  //
+  if (isa<ConstantPointerNull>(CE->getOperand(0)))
+    ++NULLCEGeps;
+
   //
   // Count the number of GEP constant expressions that have a zero as the
   // first index.

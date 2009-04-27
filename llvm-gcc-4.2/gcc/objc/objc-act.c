@@ -1018,6 +1018,23 @@ objc_finish_interface (void)
   objc_method_optional_flag = 0;
 }
 
+#ifdef ENABLE_LLVM
+/* Return size in bits this class occupies when used as a base class. */
+static int realClassSize(tree class)
+{
+  unsigned int instanceSize = 0;
+  tree field = TYPE_FIELDS (class);
+  while (field && TREE_CHAIN (field)
+         && TREE_CODE (TREE_CHAIN (field)) == FIELD_DECL)
+    field = TREE_CHAIN (field);
+  
+  if (field && TREE_CODE (field) == FIELD_DECL)
+    instanceSize = int_byte_position (field) * BITS_PER_UNIT + 
+                          tree_low_cst (DECL_SIZE (field), 0);
+  return instanceSize;
+}
+#endif
+
 void
 objc_start_class_implementation (tree class, tree super_class)
 {
@@ -1044,18 +1061,24 @@ objc_start_class_implementation (tree class, tree super_class)
               /* If we have an embedded base class, and its size doesn't match the
                  size in the field node, that's because ivars were added to the base
                  class after the field node was built.  We need to update the field
-                 node and re-layout the outer record. */
+                 node and re-layout the outer record. 
+                 Note that we can't rely on the size in the TYPE_SIZE node of
+                 the embedded base class type, it is wrong for some cases
+                 involving bitfields (!) */
               if (DECL_ARTIFICIAL (field) && !DECL_NAME (field)
                   && TREE_CODE (TREE_TYPE (field)) == RECORD_TYPE
-                  && DECL_SIZE (field) && TYPE_SIZE(TREE_TYPE(field))
-                  && TREE_CODE (DECL_SIZE (field)) == INTEGER_CST
-                  && TREE_CODE (TYPE_SIZE (TREE_TYPE (field))) == INTEGER_CST
-                  && TREE_INT_CST_LOW (DECL_SIZE (field))
-                     != TREE_INT_CST_LOW (TYPE_SIZE (TREE_TYPE (field))))
+                  && DECL_SIZE (field) 
+                  && TREE_CODE (DECL_SIZE (field)) == INTEGER_CST)
                 {
-                  DECL_SIZE (field) = TYPE_SIZE (TREE_TYPE (field));
-                  DECL_SIZE_UNIT (field) = TYPE_SIZE_UNIT (TREE_TYPE (field));
-                  changed = true;
+                  unsigned int realSize = realClassSize(TREE_TYPE(field));
+                  if (realSize && 
+                      TREE_INT_CST_LOW (DECL_SIZE (field)) != realSize)
+                  {
+                    DECL_SIZE (field) = build_int_cst(bitsizetype, realSize);
+                    DECL_SIZE_UNIT (field) = 
+                        build_int_cst(sizetype, realSize / BITS_PER_UNIT);
+                    changed = true;
+                  }
                 }
             }
           if (changed) 

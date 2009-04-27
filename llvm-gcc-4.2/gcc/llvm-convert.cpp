@@ -6897,6 +6897,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
     // Switch to packed.
     ConvertToPacked();
     LLVMNaturalByteOffset = NextFieldByteStart;
+    ValLLVMAlign = 1;
     assert(LLVMNaturalByteOffset*8 <= GCCFieldOffsetInBits &&
            "Packing didn't fix the problem!");
   }

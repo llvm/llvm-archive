@@ -9913,9 +9913,11 @@ generate_protocols (void)
       DECL_ALIGN(decl) = 32;
       DECL_USER_ALIGN(decl) = 1;
 #endif
+      /* LLVM LOCAL end */
 
       finish_var_decl (decl, initlist);
 
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* At -O0, we may have emitted references to the decl earlier. */
       if (!optimize)
@@ -11149,8 +11151,10 @@ build_ivar_list_initializer (tree type, tree field_decl)
 
       /* Set offset.  */
       /* LLVM LOCAL - begin make initializer size match type size */
+#ifdef ENABLE_LLVM
       ivar = tree_cons (NULL_TREE, convert (integer_type_node,
                                             byte_position (field_decl)), ivar);
+#endif
       /* LLVM LOCAL - end make initializer size match type size */
       initlist = tree_cons (NULL_TREE,
 			    objc_build_constructor (type, nreverse (ivar)),
@@ -18402,11 +18406,11 @@ really_start_method (tree method,
 			   get_arg_type_list (METHOD_SEL_NAME (method), method, METHOD_DEF, 0));
   /* APPLE LOCAL radar 5839812 - location for synthesized methods  */
   objc_start_function (method_id, meth_type, NULL_TREE, parmlist, method);
-/* LLVM LOCAL begin prevent llvm from adding leading _ */
+  /* LLVM LOCAL begin prevent llvm from adding leading _ */
 #ifdef ENABLE_LLVM
   set_user_assembler_name(current_function_decl, buf);
 #endif
-/* LLVM LOCAL end prevent llvm from adding leading _ */
+  /* LLVM LOCAL end prevent llvm from adding leading _ */
 
   /* Set self_decl from the first argument.  */
   self_decl = DECL_ARGUMENTS (current_function_decl);
@@ -19285,13 +19289,13 @@ handle_class_ref (tree chain)
   DECL_INITIAL (decl) = exp;
   TREE_STATIC (decl) = 1;
   TREE_USED (decl) = 1;
-/* LLVM LOCAL begin */
+  /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   /* This decl's name is special. Ask llvm to not add leading underscore by 
      setting it as a user supplied asm name.  */
   set_user_assembler_name(decl, string);
 #endif
-/* LLVM LOCAL end */
+  /* LLVM LOCAL end */
   /* Force the output of the decl as this forces the reference of the class.  */
   mark_decl_referenced (decl);
 
@@ -19331,7 +19335,7 @@ handle_impent (struct imp_entry *impent)
       /* Do the same for categories.  Even though no references to
          these symbols are generated automatically by the compiler, it
          gives you a handle to pull them into an archive by hand.  */
-/* LLVM LOCAL begin */
+      /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
       /* The * is a sentinel for gcc's back end, but is not wanted by llvm. */
       sprintf (string, "%sobjc_category_name_%s_%s",
@@ -19340,7 +19344,7 @@ handle_impent (struct imp_entry *impent)
       sprintf (string, "*%sobjc_category_name_%s_%s",
                (flag_next_runtime ? "." : "__"), class_name, class_super_name);
 #endif
-/* LLVM LOCAL end */
+      /* LLVM LOCAL end */
     }
   else
     return;
@@ -19400,6 +19404,10 @@ generate_objc_image_info (void)
   if (flag_objc_gc_only)
     flags |= 6;
   /* APPLE LOCAL end radar 4810609 */
+  /* APPLE LOCAL begin radar 6803242 */
+  if (flag_objc_abi == 2)
+    flags |= 16;
+  /* APPLE LOCAL end radar 6803242 */
 
   /* APPLE LOCAL begin radar 4810587 */
   /* LLVM LOCAL begin */

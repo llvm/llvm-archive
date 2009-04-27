@@ -1,3 +1,9 @@
+2009-04-20 Fariborz Jahanian <fjahanian@apple.com> 
+        Radar 6803342
+        * objc-act.c (generate_objc_image_info): Set the imfo_info
+        flag to 16 (1<<4) when in objc2, setter/getter issues error
+        on use of super class synthsized ivar.
+
 2009-01-07  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6379842

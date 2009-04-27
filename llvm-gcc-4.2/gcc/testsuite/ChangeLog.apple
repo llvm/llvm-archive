@@ -1,3 +1,17 @@
+2009-04-20  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6803242
+        *  image-info-1.m: Add
+
+2009-04-13  Stuart Hastings  <stuart@apple.com>
+
+	* g++.apple/675506.C: Added "-Os -m32".
+
+2009-04-06  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6755006
+	* g++.apple/675506.C: New.
+
 2009-03-24  Stuart Hastings  <stuart@apple.com>
 
 	gcc.apple/5774346.c: Add -maltivec.

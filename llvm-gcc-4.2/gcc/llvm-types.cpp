@@ -1685,11 +1685,11 @@ static tree FixBaseClassField(tree Field) {
   // If already in table, reuse.
   if (!newTy) {
     newTy = copy_node(oldTy);
-    tree F2 = 0, prevF2 = 0;
+    tree F2 = 0, prevF2 = 0, F;
     // Copy the fields up to the TYPE_DECL separator.
     // VAR_DECLs can also appear, representing static members.  Possibly some
     // other junk I haven't hit yet, just skip anything that's not a FIELD:(
-    for (tree F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
+    for (F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
       if (TREE_CODE(F) == TYPE_DECL)
         break;
       if (TREE_CODE(F) == FIELD_DECL) {
@@ -1700,6 +1700,14 @@ static tree FixBaseClassField(tree Field) {
           TYPE_FIELDS(newTy) = F2;
         TREE_CHAIN(F2) = 0;
       }
+    }
+    // If we didn't find a TYPE_DECL this isn't the virtual base class case.
+    // The ObjC trees for bitfield instance variables can look similar enough
+    // to the C++ virtual base case to get this far, but these don't have
+    // the TYPE_DECL sentinel, nor the virtual base class allocation problem.
+    if (!F || TREE_CODE(F) != TYPE_DECL) {
+      BaseTypesMap[oldTy] = oldTy;
+      return oldTy;
     }
     BaseTypesMap[oldTy] = newTy;
     BaseTypesMap[newTy] = oldTy;

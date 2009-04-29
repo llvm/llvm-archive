@@ -7337,10 +7337,10 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
   tree IndexType = TREE_TYPE(Index);
-  assert((TREE_CODE (ArrayType) == ARRAY_TYPE ||
-          TREE_CODE (ArrayType) == POINTER_TYPE ||
-          TREE_CODE (ArrayType) == REFERENCE_TYPE ||
-          TREE_CODE (ArrayType) == BLOCK_POINTER_TYPE) &&
+  assert((TREE_CODE(ArrayType) == ARRAY_TYPE ||
+          TREE_CODE(ArrayType) == POINTER_TYPE ||
+          TREE_CODE(ArrayType) == REFERENCE_TYPE ||
+          TREE_CODE(ArrayType) == BLOCK_POINTER_TYPE) &&
          "Unknown ARRAY_REF!");
 
   // Check for variable sized reference.
@@ -7350,12 +7350,24 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
   // operand.  This construct maps directly to a getelementptr instruction.
   Constant *ArrayAddr;
-  if (TREE_CODE (ArrayType) == ARRAY_TYPE) {
+  if (TREE_CODE(ArrayType) == ARRAY_TYPE) {
     // First subtract the lower bound, if any, in the type of the index.
     tree LowerBound = array_ref_low_bound(exp);
     if (!integer_zerop(LowerBound))
       Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
     ArrayAddr = EmitLV(Array);
+    
+    // The GCC array expression value may not compile to an LLVM array type if
+    // (for example) the array value is an array of unions.  In this case, the
+    // array literal will turn into an LLVM constant struct, which has struct
+    // type.  Do a cast to the correct type just to be certain everything is
+    // kosher.
+    const PointerType *ResPTy = cast<PointerType>(ArrayAddr->getType());
+    if (!isa<llvm::ArrayType>(ResPTy->getElementType())) {
+      const Type *RealArrayTy = ConvertType(ArrayType);
+      ResPTy = PointerType::getUnqual(RealArrayTy);
+      ArrayAddr = TheFolder->CreateBitCast(ArrayAddr, ResPTy);
+    }    
   } else {
     ArrayAddr = Convert(Array);
   }
@@ -7368,7 +7380,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
                                         !TYPE_UNSIGNED(IndexType));
 
   std::vector<Value*> Idx;
-  if (TREE_CODE (ArrayType) == ARRAY_TYPE)
+  if (TREE_CODE(ArrayType) == ARRAY_TYPE)
     Idx.push_back(ConstantInt::get(IntPtrTy, 0));
   Idx.push_back(IndexVal);
 

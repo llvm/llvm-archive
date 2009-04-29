@@ -587,11 +587,21 @@ static void createPerFunctionOptimizationPasses() {
     FunctionPassManager *PM = PerFunctionPasses;    
     HasPerFunctionPasses = true;
 
+    CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+
+    switch (optimize) {
+    default: break;
+    case 1: OptLevel = CodeGenOpt::One; break;
+    case 2: OptLevel = CodeGenOpt::Two; break;
+    case 3: OptLevel = CodeGenOpt::Aggressive; break;
+    case 4: OptLevel = CodeGenOpt::LTO; break;
+    }
+
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
     switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                            TargetMachine::AssemblyFile,
-                                           optimize)) {
+                                           OptLevel)) {
     default:
     case FileModel::Error:
       cerr << "Error interfacing to target machine!\n";
@@ -600,7 +610,7 @@ static void createPerFunctionOptimizationPasses() {
       break;
     }
 
-    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, optimize)) {
+    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, OptLevel)) {
       cerr << "Error interfacing to target machine!\n";
       exit(1);
     }
@@ -733,11 +743,21 @@ static void createPerModuleOptimizationPasses() {
         new FunctionPassManager(new ExistingModuleProvider(TheModule));
       PM->add(new TargetData(*TheTarget->getTargetData()));
 
+      CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+
+      switch (optimize) {
+      default: break;
+      case 1: OptLevel = CodeGenOpt::One; break;
+      case 2: OptLevel = CodeGenOpt::Two; break;
+      case 3: OptLevel = CodeGenOpt::Aggressive; break;
+      case 4: OptLevel = CodeGenOpt::LTO; break;
+      }
+
       // Normal mode, emit a .s file by running the code generator.
       // Note, this also adds codegenerator level optimization passes.
       switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                              TargetMachine::AssemblyFile,
-                                             optimize)) {
+                                             OptLevel)) {
       default:
       case FileModel::Error:
         cerr << "Error interfacing to target machine!\n";
@@ -746,7 +766,7 @@ static void createPerModuleOptimizationPasses() {
         break;
       }
 
-      if (TheTarget->addPassesToEmitFileFinish(*PM, 0, optimize)) {
+      if (TheTarget->addPassesToEmitFileFinish(*PM, 0, OptLevel)) {
         cerr << "Error interfacing to target machine!\n";
         exit(1);
       }

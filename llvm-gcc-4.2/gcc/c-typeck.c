@@ -2130,8 +2130,8 @@ build_array_ref (tree array, tree index)
           ty = TYPE_MAIN_VARIANT (ty);
 
         ar = build4 (ARRAY_REF, ty, ar, index, NULL_TREE, NULL_TREE);
-        /* Mirror logic from build_indirect_ref to set TREE_THIS_VOLATILE and other
-         * flags.
+        /* Mirror logic from build_indirect_ref to set TREE_THIS_VOLATILE and
+         * other flags.
          */
         TREE_READONLY (ar) = TYPE_READONLY (TREE_TYPE (ar));
         TREE_THIS_VOLATILE(ar) = TYPE_VOLATILE(TREE_TYPE (ar));

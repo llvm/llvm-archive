@@ -591,7 +591,7 @@ static void createPerFunctionOptimizationPasses() {
     // Note, this also adds codegenerator level optimization passes.
     switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                            TargetMachine::AssemblyFile,
-                                           /*FAST*/optimize == 0)) {
+                                           optimize)) {
     default:
     case FileModel::Error:
       cerr << "Error interfacing to target machine!\n";
@@ -600,7 +600,7 @@ static void createPerFunctionOptimizationPasses() {
       break;
     }
 
-    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
+    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, optimize)) {
       cerr << "Error interfacing to target machine!\n";
       exit(1);
     }
@@ -737,7 +737,7 @@ static void createPerModuleOptimizationPasses() {
       // Note, this also adds codegenerator level optimization passes.
       switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                              TargetMachine::AssemblyFile,
-                                             /*FAST*/optimize == 0)) {
+                                             optimize)) {
       default:
       case FileModel::Error:
         cerr << "Error interfacing to target machine!\n";
@@ -746,7 +746,7 @@ static void createPerModuleOptimizationPasses() {
         break;
       }
 
-      if (TheTarget->addPassesToEmitFileFinish(*PM, 0, /*Fast*/optimize == 0)) {
+      if (TheTarget->addPassesToEmitFileFinish(*PM, 0, optimize)) {
         cerr << "Error interfacing to target machine!\n";
         exit(1);
       }

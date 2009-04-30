@@ -25,7 +25,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -34,6 +33,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetMachine.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
 /// library, allowing the llvm backend to be shared across the various
@@ -54,7 +55,7 @@ void dummy_function() {
   llvm::createScalarReplAggregatesPass();
   llvm::createCFGSimplificationPass();
 
-  llvm::createDefaultScheduler(NULL, NULL);
+  llvm::createDefaultScheduler(NULL, llvm::CodeGenOpt::Default);
   llvm::createLinearScanRegisterAllocator();
   llvm::createLocalRegisterAllocator();
 

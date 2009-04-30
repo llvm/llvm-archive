@@ -717,7 +717,11 @@ proper position among the other output files.  */
 #ifndef LINK_COMMAND_SPEC
 #define LINK_COMMAND_SPEC "\
 %{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
-    %(linker) %{use-gold-plugin: -plugin %(gold_plugin_file)} \
+    %(linker) \
+    %{use-gold-plugin: \
+     -plugin %(gold_plugin_file) \
+     -plugin-opt=gcc=%(gold_plugin_gcc) \
+    } \
     %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %<emit-llvm %{e*}\
     %{m} %{N} %{n} %{r}\
     %{s} %{t} %<use-gold-plugin \
@@ -773,6 +777,7 @@ static const char *linker_name_spec = LINKER_NAME;
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 static const char *gold_plugin_file_spec = "";
+static const char *gold_plugin_gcc_spec = "";
 #endif
 /* LLVM LOCAL end */
 static const char *link_command_spec = LINK_COMMAND_SPEC;
@@ -1656,6 +1661,7 @@ static struct spec_list static_specs[] =
   /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
   INIT_STATIC_SPEC ("gold_plugin_file",		&gold_plugin_file_spec),
+  INIT_STATIC_SPEC ("gold_plugin_gcc",		&gold_plugin_gcc_spec),
   INIT_STATIC_SPEC ("llvm_options",		&llvm_options),
 #endif
   /* LLVM LOCAL end */
@@ -7183,6 +7189,7 @@ main (int argc, char **argv)
 	  if (!gold_plugin_file_spec)
 	    fatal ("-use-gold-plugin, but libLLVMgold.so not found.");
 	}
+      gold_plugin_gcc_spec = argv[0];
 #endif
       /* LLVM LOCAL end */
       /* Rebuild the COMPILER_PATH and LIBRARY_PATH environment variables

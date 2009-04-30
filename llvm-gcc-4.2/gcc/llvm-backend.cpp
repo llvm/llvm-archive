@@ -591,10 +591,8 @@ static void createPerFunctionOptimizationPasses() {
 
     switch (optimize) {
     default: break;
-    case 1: OptLevel = CodeGenOpt::One; break;
-    case 2: OptLevel = CodeGenOpt::Two; break;
+    case 0: OptLevel = CodeGenOpt::None; break;
     case 3: OptLevel = CodeGenOpt::Aggressive; break;
-    case 4: OptLevel = CodeGenOpt::LTO; break;
     }
 
     // Normal mode, emit a .s file by running the code generator.
@@ -747,10 +745,8 @@ static void createPerModuleOptimizationPasses() {
 
       switch (optimize) {
       default: break;
-      case 1: OptLevel = CodeGenOpt::One; break;
-      case 2: OptLevel = CodeGenOpt::Two; break;
+      case 0: OptLevel = CodeGenOpt::None; break;
       case 3: OptLevel = CodeGenOpt::Aggressive; break;
-      case 4: OptLevel = CodeGenOpt::LTO; break;
       }
 
       // Normal mode, emit a .s file by running the code generator.

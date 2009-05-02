@@ -1390,7 +1390,9 @@ void emit_global_to_llvm(tree decl) {
   // No debug info for globals when optimization is on.  While this is
   // something that would be accurate and useful to a user, it currently
   // affects some optimizations that, e.g., count uses.
-  if (TheDebugInfo && !optimize) TheDebugInfo->EmitGlobalVariable(GV, decl); 
+  if (TheDebugInfo && !optimize)
+    if (GV->getSection() == "llvm.metadata")
+      TheDebugInfo->EmitGlobalVariable(GV, decl);
 
   TREE_ASM_WRITTEN(decl) = 1;
   timevar_pop(TV_LLVM_GLOBALS);

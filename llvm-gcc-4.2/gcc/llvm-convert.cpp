@@ -209,11 +209,24 @@ static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
                                        const llvm::Type *LLVMTy,
                                        unsigned RealSize,
                                        LLVMBuilder &Builder) {
-  assert (RealSize == 0 &&
-          "The target should handle this argument!");
-  // This cast only involves pointers, therefore BitCast.
-  Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy));
-  Builder.CreateStore(ArgVal, Loc);
+  if (RealSize) {
+    // Not clear what this is supposed to do on big endian machines...
+    assert(!BYTES_BIG_ENDIAN && "Unsupported case - please report");
+    // Do byte wise store because actual argument type does not match LLVMTy.
+    assert(isa<IntegerType>(ArgVal->getType()) && "Expected an integer value!");
+    const Type *StoreType = IntegerType::get(RealSize * 8);
+    Loc = Builder.CreateBitCast(Loc, StoreType->getPointerTo());
+    if (ArgVal->getType()->getPrimitiveSizeInBits() >=
+        StoreType->getPrimitiveSizeInBits())
+      ArgVal = Builder.CreateTrunc(ArgVal, StoreType);
+    else
+      ArgVal = Builder.CreateZExt(ArgVal, StoreType);
+    Builder.CreateStore(ArgVal, Loc);
+  } else {
+    // This cast only involves pointers, therefore BitCast.
+    Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy));
+    Builder.CreateStore(ArgVal, Loc);
+  }
 }
 
 #ifndef LLVM_STORE_SCALAR_ARGUMENT
@@ -2254,8 +2267,20 @@ static Value *llvm_load_scalar_argument(Value *L,
                                         const llvm::Type *LLVMTy,
                                         unsigned RealSize,
                                         LLVMBuilder &Builder) {
-  assert (0 && "The target should override this routine!");
-  return NULL;
+  if (!RealSize)
+    return UndefValue::get(LLVMTy);
+
+  // Not clear what this is supposed to do on big endian machines...
+  assert(!BYTES_BIG_ENDIAN && "Unsupported case - please report");
+  assert(isa<IntegerType>(LLVMTy) && "Expected an integer value!");
+  const Type *LoadType = IntegerType::get(RealSize * 8);
+  L = Builder.CreateBitCast(L, LoadType->getPointerTo());
+  Value *Val = Builder.CreateLoad(L);
+  if (LoadType->getPrimitiveSizeInBits() >= LLVMTy->getPrimitiveSizeInBits())
+    Val = Builder.CreateTrunc(Val, LLVMTy);
+  else
+    Val = Builder.CreateZExt(Val, LLVMTy);
+  return Val;
 }
 
 #ifndef LLVM_LOAD_SCALAR_ARGUMENT

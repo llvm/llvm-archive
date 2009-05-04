@@ -76,8 +76,8 @@ extern int ix86_regparm;
             PAttribute |= Attribute::InReg;                     \
           else                                                  \
             local_fp_regparm = 0;                               \
-      } else if (TREE_CODE(Type) == INTEGER_TYPE ||             \
-                 TREE_CODE(Type) == POINTER_TYPE) {             \
+      } else if (INTEGRAL_TYPE_P(Type) ||                       \
+                 POINTER_TYPE_P(Type)) {                        \
           int words =                                           \
                   (Size + BITS_PER_WORD - 1) / BITS_PER_WORD;   \
           local_regparm -= words;                               \

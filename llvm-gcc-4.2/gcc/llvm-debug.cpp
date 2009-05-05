@@ -607,9 +607,8 @@ DIType DebugInfo::createStructType(tree type) {
       // FIXME : name, size, align etc...
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 
-                                       findRegion(type),"", 
-                                       getOrCreateCompileUnit(Loc.file), 
-                                       0,0,0, 
+                                       findRegion(type), "",
+                                       llvm::DICompileUnit(), 0,0,0, 
                                        getINTEGER_CSTVal(BINFO_OFFSET(BInfo)),
                                        0, BaseClass);
       EltTys.push_back(DTy);

@@ -6834,6 +6834,7 @@ struct ConstantLayoutInfo {
 /// struct constant, change it to make all the implicit padding between elements
 /// be fully explicit.
 void ConstantLayoutInfo::ConvertToPacked() {
+  assert(!StructIsPacked && "Struct is already packed");
   uint64_t EltOffs = 0;
   for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
     Constant *Val = ResultElts[i];
@@ -6921,10 +6922,11 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
   if (LLVMNaturalByteOffset*8 > GCCFieldOffsetInBits) {
     // Switch to packed.
     ConvertToPacked();
-    LLVMNaturalByteOffset = NextFieldByteStart;
-    ValLLVMAlign = 1;
-    assert(LLVMNaturalByteOffset*8 <= GCCFieldOffsetInBits &&
+    assert(NextFieldByteStart*8 <= GCCFieldOffsetInBits &&
            "Packing didn't fix the problem!");
+    
+    // Recurse to add the field after converting to packed.
+    return AddFieldToRecordConstant(Val, GCCFieldOffsetInBits);
   }
 
   // If the LLVM offset is not large enough, we need to insert explicit
@@ -6940,8 +6942,10 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
     ResultElts.push_back(Constant::getNullValue(FillTy));
 
     NextFieldByteStart = GCCFieldOffsetInBits/8;
-    LLVMNaturalByteOffset
-      = TargetData::RoundUpAlignment(NextFieldByteStart, ValLLVMAlign);
+    
+    // Recurse to add the field.  This handles the case when the LLVM struct
+    // needs to be converted to packed after inserting tail padding.
+    return AddFieldToRecordConstant(Val, GCCFieldOffsetInBits);
   }
 
   // Slap 'Val' onto the end of our ConstantStruct, it must be known to land

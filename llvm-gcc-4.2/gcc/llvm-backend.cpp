@@ -1394,8 +1394,9 @@ void emit_global_to_llvm(tree decl) {
     const char LPrefix[] = "\01L_OBJC_";
     const char lPrefix[] = "\01l_OBJC_";
 
-    if (strncmp(Name, LPrefix, sizeof(LPrefix) - 1) != 0 &&
-        strncmp(Name, lPrefix, sizeof(lPrefix) - 1) != 0)
+    if (flag_objc_abi == -1 || flag_objc_abi == 0 ||
+        (strncmp(Name, LPrefix, sizeof(LPrefix) - 1) != 0 &&
+         strncmp(Name, lPrefix, sizeof(lPrefix) - 1) != 0))
       TheDebugInfo->EmitGlobalVariable(GV, decl);
   }
 

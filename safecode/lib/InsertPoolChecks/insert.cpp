@@ -148,6 +148,8 @@ static Statistic<> MissedMultDimArrayChecks ("safecode",
 static Statistic<> MissedGlobalChecks ("safecode", "Missed global checks");
 static Statistic<> MissedNullChecks   ("safecode", "Missed PD checks");
 
+static Statistic<> ReusedBounds ("safecode",
+                                 "Number of Bounds Reused to Load/Store Checks");
 // Exact Check Statistics
 static Statistic<> ExactChecks        ("safecode", "Exactchecks inserted");
 static Statistic<> ConstExactChecks   ("safecode", "Omitted Exactchecks with constant arguments");
@@ -832,6 +834,7 @@ PreInsertPoolChecks::addPoolCheckProto(Module &M) {
 
   std::vector<const Type *> Arg4(1, VoidPtrType);
   Arg4.push_back(VoidPtrType);
+  Arg4.push_back(VoidPtrType);
   FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
   getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
   UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
@@ -1096,6 +1099,7 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
 
   std::vector<const Type *> Arg4(1, VoidPtrType);
   Arg4.push_back(VoidPtrType);
+  Arg4.push_back(VoidPtrType);
   FunctionType *getBoundsTy = FunctionType::get(VoidPtrType,Arg4, false);
   getBounds   = M.getOrInsertFunction("getBounds",   getBoundsTy);
   UIgetBounds = M.getOrInsertFunction("getBounds_i", getBoundsTy);
@@ -1109,7 +1113,8 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   StackRegister = M.getOrInsertFunction("pchk_reg_stack", Type::VoidTy, VoidPtrType,
                                        VoidPtrType, Type::UIntTy, NULL);
   IORegister = M.getOrInsertFunction("pchk_reg_io", Type::VoidTy, VoidPtrType,
-                                       VoidPtrType, Type::UIntTy, NULL);
+                                       VoidPtrType, Type::UIntTy, Type::UIntTy,
+                                       NULL);
   IOFree  = M.getOrInsertFunction("pchk_drop_io", Type::VoidTy, VoidPtrType,
                                   VoidPtrType, NULL);
   ObjFree = M.getOrInsertFunction("pchk_drop_obj", Type::VoidTy, VoidPtrType,
@@ -1293,13 +1298,15 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         if (EnableIOChecks) {
           // Register object after allocation
           Instruction* IP = i->getInstruction()->getNext();
-          Value* VP  = castTo (i->getInstruction(), VoidPtrType, IP);
-          Value* VMP = castTo (MPV, VoidPtrType, IP);
-          Value* len = castTo (i->getArgument(1), Type::UIntTy, IP);
+          Value* VP       = castTo (i->getInstruction(), VoidPtrType, IP);
+          Value* VMP      = castTo (MPV, VoidPtrType, IP);
+          Value* len      = castTo (i->getArgument(1), Type::UIntTy, IP);
+          Value* physAddr = castTo (i->getArgument(0), Type::UIntTy, IP);
 
           args.push_back (VMP);
           args.push_back (VP);
           args.push_back (len);
+          args.push_back (physAddr);
           new CallInst(IORegister, args, "", IP);
         }
       } else if (name == "iounmap") {
@@ -1402,6 +1409,26 @@ void InsertPoolChecks::addObjFrees(Module& M) {
       }
     }
   }
+
+#if 0
+  FP = M.getNamedFunction ("kmem_cache_free");
+  if (FP) {
+    Value::use_iterator ii = FP->use_begin(), ee = FP->use_end();
+    for (; ii != ee; ++ii) {
+      if (CallInst* CI = dyn_cast<CallInst>(*ii)) {
+        if (CI->getCalledFunction() == FP) {
+          Value* Ptr = CI->getOperand(2);
+          Value* MP = getPD(getDSNode(Ptr, CI->getParent()->getParent()), M);
+          if (MP) {
+            MP = new CastInst(MP, PointerType::get(Type::SByteTy), "MP", CI);
+            Ptr = new CastInst(Ptr, PointerType::get(Type::SByteTy), "ADDR", CI);
+            new CallInst(ObjFree, make_vector(MP, Ptr, 0), "", CI);
+          }
+        }
+      }
+    }
+  }
+#endif
 
 #ifdef SVA_IO
   if (!EnableIOChecks) return;
@@ -1550,6 +1577,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
   if (EnableSplitChecks) {
     std::vector<Value *> args(1, PH);
     args.push_back (SrcCast);
+    args.push_back (DestCast);
     if ((Node == 0) ||
         (Node->isAllocaNode()) ||
         (Node->isIncomplete()) ||
@@ -1571,6 +1599,7 @@ InsertPoolChecks::insertBoundsCheck (Instruction * I,
     Instruction * LowerBound = new CallInst(getBegin, boundsargs, "gb", InsertPt);
     Instruction * UpperBound = new CallInst(getEnd,   boundsargs, "ge", InsertPt);
     Value * EC3 = addExactCheck3 (LowerBound, DestCast, UpperBound, InsertPt);
+    AddedValues.insert(CI);
     AddedValues.insert(EC3);
     if (EC3->getType() != Dest->getType())
       EC3 = new CastInst(EC3, Dest->getType(), EC3->getName(), InsertPt);
@@ -4140,9 +4169,20 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
   //
   DSNode * Node = getDSNode (LI->getPointerOperand(), F);
   if (!Node) return;
+  bool found = false;
+  unsigned offset = 0;
   for (unsigned i = 0 ; i < Node->getNumLinks(); i+=4) {
     DSNodeHandle & LinkNode = Node->getLink(i);
     if (LinkNode.getNode() == LoadResultNode) {
+      if ((found) && (offset != (LinkNode.getOffset()))) {
+        std::cerr << "JTC: Multiple alignments possible: "
+                  << LI->getParent()->getParent()->getName()
+                  << std::endl;
+        //abort();
+      }
+      found = true;
+      offset = LinkNode.getOffset();
+
       // Insertion point for this check is *after* the load.
       Instruction * InsertPt = LI->getNext();
 
@@ -4159,8 +4199,6 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
 
       // Update the statistics
       ++AlignLSChecks;
-
-      break;
     }
   }
 }
@@ -4185,9 +4223,15 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   if (!Node) return;
 
   //
-  // Perform basic static checks.
+  // Perform basic static checks.  Do these on complete nodes only (nodes for
+  // which the points-to analysis knows everything there is to know about
+  // a pointer sans its favorite color).
   //
   if (Node->isComplete()) {
+    //
+    // Loads and stores to pointers that can only point to I/O locations are
+    // known to be incorrect.  Fail them statically here.
+    //
     if (Node->isIONode() && (!(Node->isHeapNode()   ||
                                Node->isGlobalNode() ||
                                Node->isAllocaNode()))) {
@@ -4198,12 +4242,27 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
 
   bool needsCheck = false;
 
+  //
+  // Nodes that are either type-unknown, incomplete (we don't know everything
+  // about them), or have some unknown behavior about them (e.g., int to
+  // pointer cast) should be checked at run-time.
+  //
   if (Node->isNodeCompletelyFolded() ||
       Node->isUnknownNode() ||
       Node->isIncomplete()) {
     needsCheck = true;
   }
 
+  //
+  // If we're doing I/O checks and this pointer can point to either an I/O
+  // object or a memory object, do a check at run-time.
+  //
+  // Note:
+  //  DSA will assume that I/O objects are type-unknown because the I/O device
+  //  can modify the values within the I/O object without CPU intervention.
+  //  However, this code will not assume that I/O objects are automatically
+  //  type-unknown, making the whole SAFECode/SVA implementation more modular.
+  //
   if (EnableIOChecks) {
     if (Node->isIONode() && (Node->isHeapNode()   ||
                              Node->isGlobalNode() ||
@@ -4225,8 +4284,9 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   }
 
   //
-  // We will perform checks on incomplete or unknown nodes, but we must accept
-  // the possibility that the object will not be found.
+  // We will perform checks on incomplete nodes, but we must accept the
+  // possibility that the object will not be found.  Therefore, use a special
+  // version of the load/store check.
   //
   Function * ThePoolCheckFunction = PoolCheck;
   if (Node->isIncomplete()) {
@@ -4376,6 +4436,11 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   // Determine if we can fetch the bounds information from a previous GEP
   // lookup.
   //
+  // FIXME:
+  //  This optimization is incorrect.  We can only do this when we know that
+  //  the returned bounds belong to the type of object which we seek.
+  //
+#if 0
   if (Instruction * AGEP = dyn_cast<Instruction>(V)) {
     BasicBlock * BB = AGEP->getParent();
     if (I->getParent() == BB) {
@@ -4401,11 +4466,13 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
             if (AddedValues.find(*UI) == AddedValues.end())
               UI->replaceUsesOfWith (V, EC3);
           }
+          ++ReusedBounds;
           return;
         }
       }
     }
   }
+#endif
 
   // Get the pool handle associated with this pointer.  If there is no pool
   // handle, use a NULL pointer value and let the runtime deal with it.

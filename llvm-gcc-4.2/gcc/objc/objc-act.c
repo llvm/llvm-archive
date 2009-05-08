@@ -1689,6 +1689,8 @@ objc_build_property_reference_expr (tree receiver, tree component)
   tree rtype;
   tree prop, prop_type, res;
   bool receiver_is_class;
+  /* APPLE LOCAL radar 6083666 */
+  tree ivar;
 
   if (component == error_mark_node || component == NULL_TREE
       || TREE_CODE (component) != IDENTIFIER_NODE)
@@ -1703,14 +1705,16 @@ objc_build_property_reference_expr (tree receiver, tree component)
   if (res == NULL_TREE || res == error_mark_node)
     return res;
 
-  prop_type = NULL_TREE;
+  /* APPLE LOCAL radar 6083666 */
+  prop_type = ivar = NULL_TREE;
   /* APPLE LOCAL begin objc2 5512183 */
   if (interface_type && !receiver_is_class)
   /* APPLE LOCAL end objc2 5512183 */
     {
       /* type of the expression is either the property type or, if no property declared,
 	 then ivar type used in receiver.ivar expression. */
-      tree ivar = nested_ivar_lookup (interface_type, component);
+      /* APPLE LOCAL radar 6083666 */
+      ivar = nested_ivar_lookup (interface_type, component);
       if (ivar)
 	prop_type = TREE_TYPE (ivar);
       else
@@ -1767,11 +1771,14 @@ objc_build_property_reference_expr (tree receiver, tree component)
 #endif
           comparison_result = comptypes (prop_type, property_type) != 1;
       }
-      if (prop_type && comparison_result)
-	error ("type of accessor does not match the type of property %qs",
-	       IDENTIFIER_POINTER (PROPERTY_NAME (prop)));
+      /* APPLE LOCAL begin radar 6083666 */
+      if (!ivar && prop_type && comparison_result
+          && !objc_compare_types(property_type, prop_type, -6, NULL_TREE, NULL))
+	warning (0, "type of accessor does not match the type of property %qs",
+	        IDENTIFIER_POINTER (PROPERTY_NAME (prop)));
       else
-	prop_type = property_type;
+        prop_type = property_type;
+      /* APPLE LOCAL end radar 6083666 */
       /* APPLE LOCAL end radar 6029577 */
     }
   /* APPLE LOCAL end objc2 5512183 */
@@ -17082,10 +17089,14 @@ finish_class (tree class)
 	      getter_decl = lookup_method (CLASS_NST_METHODS (class), prop_name);
 	      if (getter_decl)
 	    	{
-	          if (comptypes (type, TREE_VALUE (TREE_TYPE (getter_decl))) != 1)
+                  /* APPLE LOCAL begin radar 6083666 */
+                  tree getter_type = TREE_VALUE (TREE_TYPE (getter_decl));
+	          if ((comptypes (type, getter_type) != 1)
+                      && !objc_compare_types (type, getter_type, -6, NULL_TREE, NULL))
 		    /* APPLE LOCAL radar 4815054 */
-	            error ("type of accessor does not match the type of property %qs",
-		           IDENTIFIER_POINTER (prop_name));
+	            warning (0, "type of accessor does not match the type of property %qs",
+		             IDENTIFIER_POINTER (prop_name));
+                  /* APPLE LOCAL end radar 6083666 */
 		  if (METHOD_SEL_ARGS (getter_decl) != NULL_TREE)
 		    error ("accessor %<%c%s%> cannot have any argument", 
 		           '-', IDENTIFIER_POINTER (prop_name));	
@@ -20275,20 +20286,19 @@ void objc_declare_property_impl (int impl_code, tree tree_list)
                       /* APPLE LOCAL begin radar 6029624 */
                       tree property_type = TREE_TYPE (property_decl);
 		      bool comparison_result;
-                      /* APPLE LOCAL begin radar 5435299 */
-                      if (flag_new_property_ivar_synthesis && flag_objc_abi == 2 && 
-			  !TREE_PURPOSE (chain)) {
+                      /* APPLE LOCAL begin radar 5435299  - radar 6825962 */
+                      if (flag_new_property_ivar_synthesis && flag_objc_abi == 2) {
                         /* In ObjC2 abi, it is illegal when a @synthesize with no named ivar
                            does not have a matching ivar in its class but some superclass ivar
                            already has the desired name */
                         tree record = CLASS_STATIC_TEMPLATE (class);
                         if (record && record != DECL_CONTEXT (ivar_decl))
-                          error ("property %qs attempting to use ivar %qs in super class %qs",
+                          error ("property %qs attempting to use ivar %qs declared in super class of %qs",
                                  IDENTIFIER_POINTER (property_name),
                                  IDENTIFIER_POINTER (ivar_name),
                                  IDENTIFIER_POINTER (OBJC_TYPE_NAME (record)));
                       }
-                      /* APPLE LOCAL end radar 5435299 */
+                      /* APPLE LOCAL end radar 5435299  - radar 6825962 */
 		      /* APPLE LOCAL begin radar 5389292 */
 #ifdef OBJCPLUS
                       if (TREE_CODE (property_type) == REFERENCE_TYPE)

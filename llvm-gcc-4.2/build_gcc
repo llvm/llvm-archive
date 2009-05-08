@@ -334,25 +334,25 @@ fi
 
 # Build the cross-compilers, using the compiler we just built.
 for t in $CROSS_TARGETS ; do
- if [ $t != $BUILD ] ; then
-  mkdir -p $DIR/obj-$BUILD-$t $DIR/dst-$BUILD-$t || exit 1
-   cd $DIR/obj-$BUILD-$t || exit 1
-   if [ \! -f Makefile ]; then
-    # APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-    $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
-     `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
-      --program-prefix=$t-apple-darwin$DARWIN_VERS- \
-      --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
-    # APPLE LOCAL end ARM ARM_CONFIGFLAGS
-   fi
-   make $MAKEFLAGS all CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
-   make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$t install-gcc install-target \
-     CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+  if [ $t != $BUILD ] ; then
+    mkdir -p $DIR/obj-$BUILD-$t $DIR/dst-$BUILD-$t || exit 1
+    cd $DIR/obj-$BUILD-$t || exit 1
+    if [ \! -f Makefile ]; then
+      # APPLE LOCAL begin ARM ARM_CONFIGFLAGS
+      $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
+          `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
+          --program-prefix=$t-apple-darwin$DARWIN_VERS- \
+          --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
+      # APPLE LOCAL end ARM ARM_CONFIGFLAGS
+    fi
+    make $MAKEFLAGS all CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+    make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$t install-gcc install-target \
+        CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 
-   # Add the compiler we just built to the path.
-   # LLVM LOCAL Support for non /usr $DEST_ROOT
-   PATH=$DIR/dst-$BUILD-$t/$DEST_ROOT/bin:$PATH
- fi
+    # Add the compiler we just built to the path.
+    # LLVM LOCAL Support for non /usr $DEST_ROOT
+    PATH=$DIR/dst-$BUILD-$t/$DEST_ROOT/bin:$PATH
+  fi
 done
 
 # Rearrange various libraries, for no really good reason.
@@ -373,7 +373,17 @@ done
 
 # Build the cross-hosted compilers.
 for h in $HOSTS ; do
-  if [ $h != $BUILD ] ; then
+  # LLVM LOCAL begin - Don't build for PowerPC on > 10.5 systems.
+  if [ $MACOSX_DEPLOYMENT_MAJOR -gt 10 -o \
+      \( $MACOSX_DEPLOYMENT_MAJOR -eq 10 -a \
+         $MACOSX_DEPLOYMENT_MINOR -gt 5 \) ]; then
+    if [ $h = "powerpc" ]; then
+      continue
+    fi
+  fi
+  # LLVM LOCAL end - Don't build for PowerPC on > 10.5 systems.
+
+  if [ $h != $BUILD ]; then
     for t in $TARGETS ; do
       mkdir -p $DIR/obj-$h-$t $DIR/dst-$h-$t || exit 1
       cd $DIR/obj-$h-$t || exit 1

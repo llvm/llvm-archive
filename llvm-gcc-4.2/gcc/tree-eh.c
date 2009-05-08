@@ -2015,6 +2015,14 @@ tree_could_trap_p (tree expr)
 	return true;
       return false;
 
+      /* APPLE LOCAL begin weak variables 6822086 */
+    case VAR_DECL:
+      /* Assume that weak variables may trap.  */
+      if (DECL_WEAK (expr))
+	return true;
+      return false;
+      /* APPLE LOCAL end weak variables 6822086 */
+
     default:
       /* Any floating arithmetic may trap.  */
       if (fp_operation && flag_trapping_math)

@@ -3055,7 +3055,8 @@ arm_float_words_big_endian (void)
 void
 arm_init_cumulative_args (CUMULATIVE_ARGS *pcum, tree fntype,
 			  rtx libname  ATTRIBUTE_UNUSED,
-			  tree fndecl ATTRIBUTE_UNUSED)
+/* APPLE LOCAL 6738583 -mlong-calls PIC static functions */
+			  tree fndecl)
 {
   /* On the ARM, the offset starts at 0.  */
   pcum->nregs = 0;
@@ -3075,6 +3076,10 @@ arm_init_cumulative_args (CUMULATIVE_ARGS *pcum, tree fntype,
 	pcum->call_cookie = CALL_SHORT;
       else if (lookup_attribute ("long_call", TYPE_ATTRIBUTES (fntype)))
 	pcum->call_cookie = CALL_LONG;
+      /* APPLE LOCAL begin 6738583 -mlong-calls PIC static functions */
+      else if (fndecl && ! TREE_PUBLIC (fndecl))
+	pcum->call_cookie = CALL_SHORT;
+      /* APPLE LOCAL end 6738583 -mlong-calls PIC static functions */
     }
 
   /* Varargs vectors are treated the same as long long.

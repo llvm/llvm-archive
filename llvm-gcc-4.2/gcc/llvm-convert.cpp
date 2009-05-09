@@ -1154,7 +1154,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
-    unsigned EltSize = getTargetData().getTypePaddedSize(ATy->getElementType());
+    unsigned EltSize = getTargetData().getTypeAllocSize(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       Value *DElPtr = Builder.CreateStructGEP(DestLoc.Ptr, i);
       Value *SElPtr = Builder.CreateStructGEP(SrcLoc.Ptr, i);
@@ -1265,7 +1265,7 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
     }
   } else {
     const ArrayType *ATy = cast<ArrayType>(ElTy);
-    unsigned EltSize = getTargetData().getTypePaddedSize(ATy->getElementType());
+    unsigned EltSize = getTargetData().getTypeAllocSize(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i);
       unsigned Alignment = MinAlign(DestLoc.Alignment, i * EltSize);
@@ -3269,7 +3269,7 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
     // We can't get the type size (and thus convert to using a GEP instr) from
     // pointers to opaque structs if the type isn't abstract.
     if (ElTy->isSized()) {
-      int64_t EltSize = TD.getTypePaddedSize(ElTy);
+      int64_t EltSize = TD.getTypeAllocSize(ElTy);
       
       // If EltSize exactly divides Offset, then we know that we can turn this
       // into a getelementptr instruction.
@@ -5681,7 +5681,7 @@ void TreeToLLVM::EmitLoadFromComplex(Value *&Real, Value *&Imag,
   Value *ImagPtr = Builder.CreateStructGEP(SrcComplex.Ptr, 1, "imag");
   Imag = Builder.CreateLoad(ImagPtr, SrcComplex.Volatile, "imag");
   cast<LoadInst>(Imag)->setAlignment(
-    MinAlign(SrcComplex.Alignment, TD.getTypePaddedSize(Real->getType()))
+    MinAlign(SrcComplex.Alignment, TD.getTypeAllocSize(Real->getType()))
   );
 }
 
@@ -5696,7 +5696,7 @@ void TreeToLLVM::EmitStoreToComplex(MemRef DestComplex, Value *Real,
   Value *ImagPtr = Builder.CreateStructGEP(DestComplex.Ptr, 1, "imag");
   St = Builder.CreateStore(Imag, ImagPtr, DestComplex.Volatile);
   St->setAlignment(
-    MinAlign(DestComplex.Alignment, TD.getTypePaddedSize(Real->getType()))
+    MinAlign(DestComplex.Alignment, TD.getTypeAllocSize(Real->getType()))
   );
 }
 
@@ -6168,7 +6168,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     if (LLVMFieldTy->isInteger() &&
         LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize &&
         LLVMFieldTy->getPrimitiveSizeInBits() ==
-        TD.getTypePaddedSizeInBits(LLVMFieldTy))
+        TD.getTypeAllocSizeInBits(LLVMFieldTy))
       FieldTy = LLVMFieldTy;
     else
       // If the field result type T is a bool or some other curiously sized
@@ -6178,10 +6178,10 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       // sized like an i24 there may be trouble: incrementing a T* will move
       // the position by 32 bits not 24, leaving the upper 8 of those 32 bits
       // inaccessible.  Avoid this by rounding up the size appropriately.
-      FieldTy = IntegerType::get(TD.getTypePaddedSizeInBits(FieldTy));
+      FieldTy = IntegerType::get(TD.getTypeAllocSizeInBits(FieldTy));
 
     assert(FieldTy->getPrimitiveSizeInBits() ==
-           TD.getTypePaddedSizeInBits(FieldTy) && "Field type not sequential!");
+           TD.getTypeAllocSizeInBits(FieldTy) && "Field type not sequential!");
 
     // If this is a bitfield, the field may span multiple fields in the LLVM
     // type.  As such, cast the pointer to be a pointer to the declared type.
@@ -6258,7 +6258,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   assert(BitSize <= ValueSizeInBits &&
          "ValTy isn't large enough to hold the value loaded!");
 
-  assert(ValueSizeInBits == TD.getTypePaddedSizeInBits(ValTy) &&
+  assert(ValueSizeInBits == TD.getTypeAllocSizeInBits(ValTy) &&
          "FIXME: BIT_FIELD_REF logic is broken for non-round types");
 
   // BIT_FIELD_REF values can have BitStart values that are quite large.  We
@@ -6295,7 +6295,7 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   else
     // IMAGPART alignment = MinAlign(Ptr.Alignment, sizeof field);
     Alignment = MinAlign(Ptr.Alignment,
-                         TD.getTypePaddedSize(Ptr.Ptr->getType()));
+                         TD.getTypeAllocSize(Ptr.Ptr->getType()));
   return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
 }
 
@@ -6847,7 +6847,7 @@ void ConstantLayoutInfo::ConvertToPacked() {
     // If the alignment doesn't affect the element offset, then the value is ok.
     // Accept the field and keep moving.
     if (AlignedEltOffs == EltOffs) {
-      EltOffs += TD.getTypePaddedSize(Val->getType());
+      EltOffs += TD.getTypeAllocSize(Val->getType());
       continue;
     }
 
@@ -6953,7 +6953,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
   assert(LLVMNaturalByteOffset*8 == GCCFieldOffsetInBits);
   ResultElts.push_back(Val);
   NextFieldByteStart = LLVMNaturalByteOffset;
-  NextFieldByteStart += TD.getTypePaddedSize(Val->getType());
+  NextFieldByteStart += TD.getTypeAllocSize(Val->getType());
 }
 
 /// AddBitFieldToRecordConstant - Bitfields can span multiple LLVM fields and
@@ -7209,7 +7209,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
   tree UnionType = TREE_TYPE(exp);
   if (TYPE_SIZE(UnionType) && TREE_CODE(TYPE_SIZE(UnionType)) == INTEGER_CST) {
     uint64_t UnionSize = ((uint64_t)TREE_INT_CST_LOW(TYPE_SIZE(UnionType))+7)/8;
-    uint64_t InitSize = getTargetData().getTypePaddedSize(Elts[0]->getType());
+    uint64_t InitSize = getTargetData().getTypeAllocSize(Elts[0]->getType());
     if (UnionSize != InitSize) {
       const Type *FillTy;
       assert(UnionSize > InitSize && "Init shouldn't be larger than union!");

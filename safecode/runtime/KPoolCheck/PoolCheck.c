@@ -32,7 +32,7 @@ static const int do_profile = 0;
 static const int use_oob = 0;
 
 /* Flag whether to print error messages on bounds violations */
-static const int do_fail = 0;
+static const int do_fail = 1;
 
 /* Statistic counters */
 int stat_poolcheck=0;
@@ -305,13 +305,23 @@ pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
 
 #ifdef SVA_IO
 void
-pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len) {
+pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len, unsigned phys) {
   unsigned int index;
   if (!pchk_ready || !MP) return;
   PCLOCK();
 
   ++stat_regio;
-  adl_splay_insert(&MP->IOObjs, addr, len, __builtin_return_address(0));
+  /*
+   * Add the original physical object to the splay tree.
+   */
+  adl_splay_insert(&MP->IOObjs, phys, len, 0);
+
+  /*
+   * Add the virtual object created by the I/O object allocation to the splay
+   * tree.  Put the starting physical address into the tag in case we index
+   * from the virtual object to the physical object.
+   */
+  adl_splay_insert(&MP->IOObjs, addr, len, phys);
   PCUNLOCK();
 }
 
@@ -506,6 +516,7 @@ void
 pchk_releasestack (void * addr) {
   void * S = addr;
   unsigned int len;
+
   if (adl_splay_retrieve(&(StackSplay), &S, &len, 0)) {
     /*
      * Ensure that we're not trying to release the currently used stack.
@@ -575,7 +586,14 @@ pchk_checkstack (void * addr, unsigned int * length) {
 }
 #endif
 
-/* Remove a non-pool allocated object */
+/*
+ * Function:
+ *  pchk_drop_obj()
+ *
+ * Description:
+ *  Check that the specified object can be freed and invalidate its bounds in
+ *  the specified MetaPool.
+ */
 void
 pchk_drop_obj (MetaPoolTy* MP, void* addr) {
   unsigned int index;
@@ -591,6 +609,7 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
     poolcheckfail ("pchk_drop_obj: Releasing declared stack",
                    (unsigned)addr,
                    (void*)__builtin_return_address(0));
+    PCUNLOCK();
     return;
   }
 #endif
@@ -1089,7 +1108,7 @@ void * getEnd (void * node) {
   return ((struct node *)(node))->end;
 }
 
-void* getBounds(MetaPoolTy* MP, void* src) {
+void* getBounds(MetaPoolTy* MP, void* src, void *dest) {
   if (!pchk_ready || !MP) return &found;
 
   /*
@@ -1108,6 +1127,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
   /* try objs */
   void* S = src;
   unsigned len = 0;
+  unsigned tag = 0;
   PCLOCK();
   int fs = adl_splay_retrieve(&MP->Objs, &S, &len, 0);
   if (fs) {
@@ -1119,10 +1139,29 @@ void* getBounds(MetaPoolTy* MP, void* src) {
    * Try I/O objects.
    */
 #ifdef SVA_IO
+  /*
+   * Get the bounds of the I/O object if possible.
+   */
   S = src;
   len = 0;
-  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
+  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, &tag);
   if (fs) {
+    /*
+     * Check the destination to see whether it falls within bounds.  If not,
+     * it's possible that the value has been indexed into the physical address
+     * associated with the I/O object.  In this case, return the bounds of that
+     * object.
+     */
+    if ((!(S <= dest && ((char*)S + len) > (char*)dest)) && tag &&
+       ((char *)tag <= dest && ((char*)tag + len) > (char*)dest)) {
+      S = tag;
+      if (adl_splay_retrieve(&MP->IOObjs, &S, &len, 0)) {
+        PCUNLOCK();
+        return (MP->IOObjs);
+      } else {
+        return &not_found;
+      }
+    }
     PCUNLOCK();
     return (MP->IOObjs);
   }
@@ -1153,7 +1192,7 @@ void* getBounds(MetaPoolTy* MP, void* src) {
  *  If the node is not found in the pool, it returns 0xffffffff.
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
-void* getBounds_i(MetaPoolTy* MP, void* src) {
+void* getBounds_i(MetaPoolTy* MP, void* src, void *dest) {
   if (!pchk_ready || !MP) return &found;
   ++stat_boundscheck;
   /* Try fail cache first */
@@ -1173,8 +1212,9 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
     do
     {
       if ((MP->start[index] <= src) &&
-         (MP->start[index]+MP->length[index] >= src))
+         (MP->start[index]+MP->length[index] >= src)) {
         return MP->cache[index];
+      }
       index = (index + 1) & 3;
     } while (index != cindex);
   }
@@ -1182,6 +1222,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
   /* try objs */
   void* S = src;
   unsigned len = 0;
+  unsigned tag = 0;
 #if 0
   PCLOCK2();
 #endif
@@ -1208,8 +1249,28 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
 #ifdef SVA_IO
   S = src;
   len = 0;
-  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, 0);
+  fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, &tag);
   if (fs) {
+    /*
+     * Check the destination to see whether it falls within bounds.  If not,
+     * it's possible that the value has been indexed into the physical address
+     * associated with the I/O object.  In this case, return the bounds of that
+     * object.
+     */
+    if (!((S <= dest) && ((char*)S + len) > (char*)dest)) {
+      poolcheckinfo2("LLVA: Found I/O Object: 1: ", (int) dest, (int) S);
+      poolcheckinfo2("LLVA: Found I/O Object: 2: ", (int) dest, (int) len);
+      poolcheckinfo2("LLVA: Found I/O Object: 3: ", (int) dest, (int) tag);
+      if (tag && ((((char *)tag) <= dest) && ((char*)tag + len) > (char*)dest)) {
+        S = tag;
+        if (adl_splay_retrieve(&MP->IOObjs, &S, &len, 0)) {
+          PCUNLOCK();
+          return (MP->IOObjs);
+        } else {
+          return &not_found;
+        }
+      }
+    }
     PCUNLOCK();
     return (MP->IOObjs);
   }
@@ -1255,7 +1316,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src) {
  *  If the pool is not yet pchk_ready, it returns 0xffffffff
  */
 void*
-getBoundsnoio_i(MetaPoolTy* MP, void* src) {
+getBoundsnoio_i(MetaPoolTy* MP, void* src, void *dest) {
   if (!pchk_ready || !MP) return &found;
   ++stat_boundscheck;
 

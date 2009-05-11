@@ -430,11 +430,10 @@ private: // Helper functions.
   void EmitAggregateZero(MemRef DestLoc, tree_node *GCCType);
                          
   /// EmitMemCpy/EmitMemMove/EmitMemSet - Emit an llvm.memcpy/llvm.memmove or
-  /// llvm.memset call with the specified operands.  Returns DestPtr bitcast
-  /// to i8*.
-  Value *EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
-  Value *EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
-  Value *EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, unsigned Align);
+  /// llvm.memset call with the specified operands.
+  void EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
+  void EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
+  void EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, unsigned Align);
 
   /// EmitLandingPads - Emit EH landing pads.
   void EmitLandingPads();

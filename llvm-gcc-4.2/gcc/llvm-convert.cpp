@@ -930,6 +930,12 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   assert(((DestLoc && Result == 0) || DestLoc == 0) &&
          "Expected a scalar or aggregate but got the wrong thing!"); 
+  // Check that the type of the result matches that of the tree node.  If the
+  // result is not used then GCC sometimes sets the tree type to VOID_TYPE, so
+  // don't take VOID_TYPE too seriously here.
+  assert((Result == 0 || VOID_TYPE_P(TREE_TYPE(exp)) ||
+          Result->getType() == ConvertType(TREE_TYPE(exp))) &&
+          "Value has wrong type!");
   return Result;
 }
 
@@ -937,6 +943,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 /// the address of the result.
 LValue TreeToLLVM::EmitLV(tree exp) {
   // Needs to be in sync with EmitVIEW_CONVERT_EXPR.
+  LValue LV(0, 0);
+
   switch (TREE_CODE(exp)) {
   default:
     std::cerr << "Unhandled lvalue expression!\n";
@@ -947,44 +955,79 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case VAR_DECL:
   case FUNCTION_DECL:
   case CONST_DECL:
-  case RESULT_DECL:   return EmitLV_DECL(exp);
+  case RESULT_DECL:
+    LV = EmitLV_DECL(exp);
+    break;
   case ARRAY_RANGE_REF:
-  case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
-  case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
-  case BIT_FIELD_REF: return EmitLV_BIT_FIELD_REF(exp);
-  case REALPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 0);
-  case IMAGPART_EXPR: return EmitLV_XXXXPART_EXPR(exp, 1);
+  case ARRAY_REF:
+    LV = EmitLV_ARRAY_REF(exp);
+    break;
+  case COMPONENT_REF:
+    LV = EmitLV_COMPONENT_REF(exp);
+    break;
+  case BIT_FIELD_REF:
+    LV = EmitLV_BIT_FIELD_REF(exp);
+    break;
+  case REALPART_EXPR:
+    LV = EmitLV_XXXXPART_EXPR(exp, 0);
+    break;
+  case IMAGPART_EXPR:
+    LV = EmitLV_XXXXPART_EXPR(exp, 1);
+    break;
 
   // Constants.
   case LABEL_DECL: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-    return LValue(Ptr, DECL_ALIGN(exp) / 8);
+    LV = LValue(Ptr, DECL_ALIGN(exp) / 8);
+    break;
   }
   case COMPLEX_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_COMPLEX_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    LV = LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    break;
   }
   case STRING_CST: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_STRING_CST(exp);
-    return LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    LV = LValue(Ptr, TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+    break;
   }
 
   // Type Conversion.
-  case VIEW_CONVERT_EXPR: return EmitLV_VIEW_CONVERT_EXPR(exp);
+  case VIEW_CONVERT_EXPR:
+    LV = EmitLV_VIEW_CONVERT_EXPR(exp);
+    break;
 
   // Exception Handling.
-  case EXC_PTR_EXPR:  return EmitLV_EXC_PTR_EXPR(exp);
-  case FILTER_EXPR:   return EmitLV_FILTER_EXPR(exp);
+  case EXC_PTR_EXPR:
+    LV = EmitLV_EXC_PTR_EXPR(exp);
+    break;
+  case FILTER_EXPR:
+    LV = EmitLV_FILTER_EXPR(exp);
+    break;
 
   // Trivial Cases.
   case WITH_SIZE_EXPR:
     // The address is the address of the operand.
-    return EmitLV(TREE_OPERAND(exp, 0));
+    LV = EmitLV(TREE_OPERAND(exp, 0));
+    break;
   case INDIRECT_REF:
     // The lvalue is just the address.
-    return LValue(Emit(TREE_OPERAND(exp, 0), 0),
-                  expr_align(exp) / 8);
+    LV = LValue(Emit(TREE_OPERAND(exp, 0), 0), expr_align(exp) / 8);
+    // Correct for implicit type conversion: INDIRECT_REF can be applied to a
+    // void*, resulting in a non-void type.
+    LV.Ptr = BitCastToType(LV.Ptr, ConvertType(TREE_TYPE(exp))->getPointerTo());
+    break;
   }
+
+  // Check that the type of the lvalue is indeed that of a pointer to the tree
+  // node.  This may not hold for bitfields because the type of a bitfield need
+  // not match the type of the value being loaded out of it.  Since LLVM has no
+  // void* type, don't insist that void* be converted to a specific LLVM type.
+  assert((LV.isBitfield() || VOID_TYPE_P(TREE_TYPE(exp)) ||
+          LV.Ptr->getType() == ConvertType(TREE_TYPE(exp))->getPointerTo()) &&
+         "LValue has wrong type!");
+
+  return LV;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1297,8 +1340,8 @@ void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
              Emit(TYPE_SIZE_UNIT(type), 0), DestLoc.Alignment);
 }
 
-void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, 
-                            unsigned Align) {
+Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
+                              unsigned Align) {
   const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
   const Type *IntPtr = TD.getIntPtrType();
   Value *Ops[4] = {
@@ -1310,10 +1353,11 @@ void TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memcpy,
                                                &IntPtr, 1), Ops, Ops+4);
+  return Ops[0];
 }
 
-void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, 
-                             unsigned Align) {
+Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
+                               unsigned Align) {
   const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
   const Type *IntPtr = TD.getIntPtrType();
   Value *Ops[4] = {
@@ -1325,10 +1369,11 @@ void TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memmove,
                                                &IntPtr, 1), Ops, Ops+4);
+  return Ops[0];
 }
 
-void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, 
-                            unsigned Align) {
+Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
+                              unsigned Align) {
   const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
   const Type *IntPtr = TD.getIntPtrType();
   Value *Ops[4] = {
@@ -1340,6 +1385,7 @@ void TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
   
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memset,
                                                &IntPtr, 1), Ops, Ops+4);
+  return Ops[0];
 }
 
 
@@ -3125,22 +3171,18 @@ static const Type *getSuitableBitCastIntType(const Type *Ty) {
 
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-  if (isa<PointerType>(Op->getType())) {
+  const Type *Ty = Op->getType();
+  if (isa<PointerType>(Ty)) {
     assert (TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE &&
             "Expected integer type here");
-    Op = CastToType(Instruction::PtrToInt, Op, TREE_TYPE(exp));
+    Ty = ConvertType(TREE_TYPE(exp));
+    Op = CastToType(Instruction::PtrToInt, Op, Ty);
+  } else if (Ty->isFloatingPoint() ||
+             (isa<VectorType>(Ty) &&
+              cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
+    Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
   }
-
-  const Type *Ty = Op->getType();
-  if (Ty->isFloatingPoint() ||
-      (isa<VectorType>(Ty) && 
-       cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
-    Ty = getSuitableBitCastIntType(Ty);
-    if (!Ty)
-      abort();
-    Op = BitCastToType(Op, Ty);
-  }
-  return Builder.CreateNot(Op, (Op->getName()+"not").c_str());
+  return BitCastToType(Builder.CreateNot(Op, (Op->getName()+"not").c_str()),Ty);
 }
 
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
@@ -3237,13 +3279,11 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
        (isa<VectorType>(Ty) && 
         cast<VectorType>(Ty)->getElementType()->isFloatingPoint()))) {
     Ty = getSuitableBitCastIntType(Ty);
-    if (!Ty)
-      abort();
     LHS = BitCastToType(LHS, Ty);
     RHS = BitCastToType(RHS, Ty);
   }
 
-  Value * V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
+  Value *V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   if (ResTy != Ty)
     V = BitCastToType(V, ResTy);
   return V;
@@ -4375,7 +4415,8 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
                                                  Ty, 2),
     C, C + 3);
   if (isBool)
-    Result = Builder.CreateICmpEQ(Result, C[1]);
+    Result = CastToUIntType(Builder.CreateICmpEQ(Result, C[1]),
+                            ConvertType(boolean_type_node));
   else
     Result = Builder.CreateIntToPtr(Result, ResultTy);
   return Result;
@@ -4633,6 +4674,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz); 
     Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1));
+    Result = CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
     Value *Cond =
       Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()));
     Result = Builder.CreateSelect(Cond,
@@ -5063,7 +5105,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 }
 
 bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
-                                       Intrinsic::ID Id) {
+                                    Intrinsic::ID Id) {
   // The intrinsic might be overloaded in which case the argument is of
   // varying type. Make sure that we specify the actual type for "iAny" 
   // by passing it as the 3rd and 4th parameters. This isn't needed for
@@ -5191,11 +5233,9 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
       return false;
   }
 
-  if (isMemMove)
-    EmitMemMove(DstV, SrcV, Len, std::min(SrcAlign, DstAlign));
-  else
+  Result = isMemMove ?
+    EmitMemMove(DstV, SrcV, Len, std::min(SrcAlign, DstAlign)) :
     EmitMemCpy(DstV, SrcV, Len, std::min(SrcAlign, DstAlign));
-  Result = DstV;
   return true;
 }
 
@@ -5223,8 +5263,7 @@ bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
     if (!OptimizeIntoPlainBuiltIn(exp, Len, Size))
       return false;
   }
-  EmitMemSet(DstV, Val, Len, DstAlign);
-  Result = DstV;
+  Result = EmitMemSet(DstV, Val, Len, DstAlign);
   return true;
 }
 
@@ -6240,7 +6279,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     const Type *EltTy = ConvertType(TREE_TYPE(exp));
     FieldPtr = BitCastToType(FieldPtr, PointerType::getUnqual(EltTy));
   }
-  
+
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");
   return LValue(FieldPtr, LVAlign);
@@ -7228,6 +7267,8 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
 //===----------------------------------------------------------------------===//
 
 Constant *TreeConstantToLLVM::EmitLV(tree exp) {
+  Constant *LV;
+
   switch (TREE_CODE(exp)) {
   default: 
     debug_tree(exp); 
@@ -7235,16 +7276,29 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
     abort();
   case FUNCTION_DECL:
   case CONST_DECL:
-  case VAR_DECL:      return EmitLV_Decl(exp);
-  case LABEL_DECL:    return EmitLV_LABEL_DECL(exp);
-  case COMPLEX_CST:   return EmitLV_COMPLEX_CST(exp);
-  case STRING_CST:    return EmitLV_STRING_CST(exp);
-  case COMPONENT_REF: return EmitLV_COMPONENT_REF(exp);
+  case VAR_DECL:
+    LV = EmitLV_Decl(exp);
+    break;
+  case LABEL_DECL:
+    LV = EmitLV_LABEL_DECL(exp);
+    break;
+  case COMPLEX_CST:
+    LV = EmitLV_COMPLEX_CST(exp);
+    break;
+  case STRING_CST:
+    LV = EmitLV_STRING_CST(exp);
+    break;
+  case COMPONENT_REF:
+    LV = EmitLV_COMPONENT_REF(exp);
+    break;
   case ARRAY_RANGE_REF:
-  case ARRAY_REF:     return EmitLV_ARRAY_REF(exp);
+  case ARRAY_REF:
+    LV = EmitLV_ARRAY_REF(exp);
+    break;
   case INDIRECT_REF:
     // The lvalue is just the address.
-    return Convert(TREE_OPERAND(exp, 0));
+    LV = Convert(TREE_OPERAND(exp, 0));
+    break;
   case COMPOUND_LITERAL_EXPR: // FIXME: not gimple - defined by C front-end
     /* This used to read 
        return EmitLV(COMPOUND_LITERAL_EXPR_DECL(exp));
@@ -7252,8 +7306,18 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
        with casts or the like.  The following is equivalent with no checking
        (since we know TREE_CODE(exp) is COMPOUND_LITERAL_EXPR the checking 
        doesn't accomplish anything anyway). */
-    return EmitLV(DECL_EXPR_DECL (TREE_OPERAND (exp, 0)));
+    LV = EmitLV(DECL_EXPR_DECL (TREE_OPERAND (exp, 0)));
+    break;
   }
+
+  // Check that the type of the lvalue is indeed that of a pointer to the tree
+  // node.  Since LLVM has no void* type, don't insist that void* be converted
+  // to a specific LLVM type.
+  assert((VOID_TYPE_P(TREE_TYPE(exp)) ||
+          LV->getType() == ConvertType(TREE_TYPE(exp))->getPointerTo()) &&
+         "LValue of constant has wrong type!");
+
+  return LV;
 }
 
 Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
@@ -7283,8 +7347,13 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
     if (tree ID = DECL_ASSEMBLER_NAME(exp))
       mark_referenced(ID);
   }
-  
-  return Val;
+
+  // The type of the global value output for exp need not match that of exp.
+  // For example if the global's initializer has a different type to the global
+  // itself (allowed in GCC but not in LLVM) then the global is changed to have
+  // the type of the initializer.  Correct for this now.
+  return TheFolder->CreateBitCast(Val,
+                                  ConvertType(TREE_TYPE(exp))->getPointerTo());
 }
 
 /// EmitLV_LABEL_DECL - Someone took the address of a label.
@@ -7385,18 +7454,6 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
     if (!integer_zerop(LowerBound))
       Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
     ArrayAddr = EmitLV(Array);
-    
-    // The GCC array expression value may not compile to an LLVM array type if
-    // (for example) the array value is an array of unions.  In this case, the
-    // array literal will turn into an LLVM constant struct, which has struct
-    // type.  Do a cast to the correct type just to be certain everything is
-    // kosher.
-    const PointerType *ResPTy = cast<PointerType>(ArrayAddr->getType());
-    if (!isa<llvm::ArrayType>(ResPTy->getElementType())) {
-      const Type *RealArrayTy = ConvertType(ArrayType);
-      ResPTy = PointerType::getUnqual(RealArrayTy);
-      ArrayAddr = TheFolder->CreateBitCast(ArrayAddr, ResPTy);
-    }    
   } else {
     ArrayAddr = Convert(Array);
   }

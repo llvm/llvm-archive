@@ -4739,12 +4739,9 @@ handle_const_attribute (tree *node, tree name, tree ARG_UNUSED (args),
   tree type = TREE_TYPE (*node);
 
   /* See FIXME comment on noreturn in c_common_attribute_table.  */
-  /* LLVM LOCAL begin */
-  if (TREE_CODE (*node) == FUNCTION_DECL) {
+  if (TREE_CODE (*node) == FUNCTION_DECL)
     TREE_READONLY (*node) = 1;
-    TREE_NOTHROW (*node) = 1;
-  } else if (TREE_CODE (type) == POINTER_TYPE
-  /* LLVM LOCAL end */
+  else if (TREE_CODE (type) == POINTER_TYPE
 	   && TREE_CODE (TREE_TYPE (type)) == FUNCTION_TYPE)
     TREE_TYPE (*node)
       = build_pointer_type
@@ -5576,13 +5573,10 @@ static tree
 handle_pure_attribute (tree *node, tree name, tree ARG_UNUSED (args),
 		       int ARG_UNUSED (flags), bool *no_add_attrs)
 {
-  /* LLVM LOCAL begin */
-  if (TREE_CODE (*node) == FUNCTION_DECL) {
+  if (TREE_CODE (*node) == FUNCTION_DECL)
     DECL_IS_PURE (*node) = 1;
-    TREE_NOTHROW (*node) = 1;
-  } else
-  /* LLVM LOCAL end */
-    /* ??? TODO: Support types.  */
+  /* ??? TODO: Support types.  */
+  else
     {
       warning (OPT_Wattributes, "%qE attribute ignored", name);
       *no_add_attrs = true;

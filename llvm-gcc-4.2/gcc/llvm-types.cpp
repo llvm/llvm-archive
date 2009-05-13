@@ -1241,8 +1241,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     
 #ifdef LLVM_TARGET_ENABLE_REGPARM
     // Allow the target to mark this as inreg.
-    if (TREE_CODE(ArgTy) == INTEGER_TYPE || TREE_CODE(ArgTy) == POINTER_TYPE ||
-        TREE_CODE(ArgTy) == REAL_TYPE)
+    if (INTEGRAL_TYPE_P(ArgTy) || POINTER_TYPE_P(ArgTy) ||
+        SCALAR_FLOAT_TYPE_P(ArgTy))
       LLVM_ADJUST_REGPARM_ATTRIBUTE(PAttributes, ArgTy,
                                     TREE_INT_CST_LOW(TYPE_SIZE(ArgTy)),
                                     local_regparam, local_fp_regparam);

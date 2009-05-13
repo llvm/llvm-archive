@@ -800,6 +800,11 @@ case "${target}" in
   spu-*-*)
     skipdirs="target-libiberty target-libssp"
     ;;
+# LLVM LOCAL begin - TCE target
+  tce-*-*)
+    skipdirs="target-libssp target-libstdc++-v3"
+    ;;  
+# LLVM LOCAL end - TCE target
   v810-*-*)
     noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libstdc++-v3 opcodes target-libgloss ${libgcj}"
     ;;

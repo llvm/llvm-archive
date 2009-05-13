@@ -1154,6 +1154,11 @@ case $basic_machine in
 	pmac | pmac-mpw)
 		basic_machine=powerpc-apple
 		;;
+# LLVM LOCAL begin - TCE target
+ 	tce*)
+ 		basic_machine=tce-
+ 		;;
+# LLVM LOCAL end - TCE target
 	*-unknown)
 		# Make sure to match an already-canonicalized machine name.
 		;;
@@ -1355,6 +1360,10 @@ case $os in
 	-zvmoe)
 		os=-zvmoe
 		;;
+# LLVM LOCAL begin - TCE target
+ 	-llvm*)
+        ;;
+# LLVM LOCAL end - TCE target
 	-none)
 		;;
 	*)

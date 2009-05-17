@@ -1525,6 +1525,11 @@ inlinable_function_p (tree fn)
 {
   bool inlinable = true;
 
+/* LLVM LOCAL begin turn off gcc inliner */
+#ifdef ENABLE_LLVM
+  DECL_UNINLINABLE (fn) = 1;
+#endif
+/* LLVM LOCAL end turn off gcc inliner */
   /* If we've already decided this function shouldn't be inlined,
      there's no need to check again.  */
   if (DECL_UNINLINABLE (fn))

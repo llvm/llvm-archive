@@ -264,6 +264,11 @@ ifdef LLVM_VERSION_INFO
 CPPFLAGS += -DLLVM_VERSION_INFO='"$(LLVM_VERSION_INFO)"'
 endif
 # LLVM LOCAL end
+# APPLE LOCAL begin
+ifdef BUILD_LLVM_APPLE_STYLE
+CPPFLAGS += -DBUILD_LLVM_APPLE_STYLE
+endif
+# APPLE LOCAL end
 
 # These exists to be overridden by the x-* and t-* files, respectively.
 X_CFLAGS =
@@ -730,6 +735,8 @@ BUILD_CPPFLAGS=$(ALL_CPPFLAGS)
 GCC_INSTALL_NAME := $(shell echo gcc|sed '$(program_transform_name)')
 GCC_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo gcc|sed '$(program_transform_name)')
 CPP_INSTALL_NAME := $(shell echo cpp|sed '$(program_transform_name)')
+# APPLE LOCAL 6024929
+CPP_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo cpp|sed '$(program_transform_name)')
 PROTOIZE_INSTALL_NAME := $(shell echo protoize|sed '$(program_transform_name)')
 UNPROTOIZE_INSTALL_NAME := $(shell echo unprotoize|sed '$(program_transform_name)')
 GCOV_INSTALL_NAME := $(shell echo gcov|sed '$(program_transform_name)')
@@ -937,7 +944,7 @@ INCLUDES = -I. -I$(@D) -I$(srcdir) -I$(srcdir)/$(@D) \
 ifneq ($(LLVMOBJDIR),)
 # If LLVM is built srcdir != objdir, include the objdir headers for configured
 # headers, like DataTypes.h.
-ifneq (($LLVMOBJDIR),$(LLVMSRCDIR))
+ifneq ($(LLVMOBJDIR),$(LLVMSRCDIR))
 INCLUDES += -I$(LLVMOBJDIR)/include
 endif
 
@@ -3986,6 +3993,17 @@ install: install-common $(INSTALL_HEADERS) $(INSTALL_LIBGCC) \
 install-cpp: installdirs cpp$(exeext)
 	-rm -f $(DESTDIR)$(bindir)/$(CPP_INSTALL_NAME)$(exeext)
 	-$(INSTALL_PROGRAM) -m 755 cpp$(exeext) $(DESTDIR)$(bindir)/$(CPP_INSTALL_NAME)$(exeext)
+	# APPLE LOCAL begin 6024929
+	-rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-cpp-$(version)$(exeext)
+	-( cd $(DESTDIR)$(bindir) && \
+	   $(LN) $(CPP_INSTALL_NAME)$(exeext) $(target_noncanonical)-cpp-$(version)$(exeext) )
+	-if [ \! -f gcc-cross$(exeext) ] ; then \
+	  rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-cpp-tmp$(exeext); \
+	  ( cd $(DESTDIR)$(bindir) && \
+	    $(LN) $(CPP_INSTALL_NAME)$(exeext) $(target_noncanonical)-cpp-tmp$(exeext) && \
+	    mv -f $(target_noncanonical)-cpp-tmp$(exeext) $(CPP_TARGET_INSTALL_NAME)$(exeext) ); \
+	fi
+	# APPLE LOCAL end 6024929
 	-if [ x$(cpp_install_dir) != x ]; then \
 	  rm -f $(DESTDIR)$(prefix)/$(cpp_install_dir)/$(CPP_INSTALL_NAME)$(exeext); \
 	  $(INSTALL_PROGRAM) -m 755 cpp$(exeext) $(DESTDIR)$(prefix)/$(cpp_install_dir)/$(CPP_INSTALL_NAME)$(exeext); \
@@ -4051,6 +4069,28 @@ install-common: native $(EXTRA_PARTS) lang.install-common installdirs
 # Install the driver program as $(target_noncanonical)-gcc,
 # $(target_noncanonical)-gcc-$(version)
 # and also as either gcc (if native) or $(gcc_tooldir)/bin/gcc.
+
+# LLVM LOCAL begin copy libstdc++.dylib on Darwin
+ifneq (,$(findstring darwin,$(target)))
+install-driver: installdirs xgcc$(exeext)
+	-rm -f $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
+	-$(INSTALL_PROGRAM) xgcc$(exeext) $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
+	-rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-gcc-$(version)$(exeext)
+	-cp -p /usr/lib/libstdc++.6.dylib $(DESTDIR)$(libsubdir)/libstdc++.dylib
+	-( cd $(DESTDIR)$(bindir) && \
+	   $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-$(version)$(exeext) )
+	-if [ -f gcc-cross$(exeext) ] ; then \
+	  if [ -d $(DESTDIR)$(gcc_tooldir)/bin/. ] ; then \
+	    rm -f $(DESTDIR)$(gcc_tooldir)/bin/gcc$(exeext); \
+	    $(INSTALL_PROGRAM) gcc-cross$(exeext) $(DESTDIR)$(gcc_tooldir)/bin/gcc$(exeext); \
+	  else true; fi; \
+	else \
+	  rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-gcc-tmp$(exeext); \
+	  ( cd $(DESTDIR)$(bindir) && \
+	    $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-tmp$(exeext) && \
+	    mv -f $(target_noncanonical)-gcc-tmp$(exeext) $(GCC_TARGET_INSTALL_NAME)$(exeext) ); \
+	fi
+else
 install-driver: installdirs xgcc$(exeext)
 	-rm -f $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
 	-$(INSTALL_PROGRAM) xgcc$(exeext) $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
@@ -4068,6 +4108,8 @@ install-driver: installdirs xgcc$(exeext)
 	    $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-tmp$(exeext) && \
 	    mv -f $(target_noncanonical)-gcc-tmp$(exeext) $(GCC_TARGET_INSTALL_NAME)$(exeext) ); \
 	fi
+endif
+# LLVM LOCAL end copy libstdc++.dylib on Darwin
 
 # Install the info files.
 # $(INSTALL_DATA) might be a relative pathname, so we can't cd into srcdir

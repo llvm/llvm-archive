@@ -939,7 +939,7 @@ function acceptTest() {
   }
   else{
     $email .= "\nBuildlog available at http://llvm.org/nightlytest/".
-              "machines/$db_date-Build-Log.txt\n";
+              "machines/$machine_id/$db_date-Build-Log.txt\n";
   }
 
   $email_addr = "llvm-testresults\@cs.uiuc.edu";

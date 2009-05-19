@@ -14,14 +14,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "dsa/DataStructure.h"
-#include "llvm/Module.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Instructions.h"
 #include "llvm/DerivedTypes.h"
-#include "dsa/DSGraph.h"
+#include "llvm/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/ADT/Statistic.h"
+
+#include "dsa/DataStructure.h"
+#include "dsa/DSGraph.h"
+
 #include <iostream>
+
 using namespace llvm;
 
 #if 0
@@ -149,7 +153,57 @@ bool TDDataStructures::runOnModule(Module &M) {
 	   ii != ee; ++ii)
 	ii->getMP()->addFlags(ii->getNodeFlags());
     }
-      
+
+#ifdef LLVA_KERNEL
+  //
+  // Ugly hack:
+  //
+  // Memory objects returned from kmem_cache_alloc() alias if they are
+  // allocated from the same kernel pool.  This code forces them to have the
+  // same MetaPool.
+  //
+  Function* KMA = M.getNamedFunction("kmem_cache_alloc");
+  if (KMA) {
+    // Map from kmem_cache_t's metapool to the metapool of its return value
+    std::map<MetaPool*, MetaPool*> locs;
+
+    for (Value::use_iterator ii = KMA->use_begin(), ee = KMA->use_end();
+         ii != ee; ++ii) {
+      CallInst* CI = dyn_cast<CallInst>(*ii);
+      if ((CI) && (CI->getCalledFunction() == KMA)) {
+        // Function in which the call statement resides
+        Function * F = CI->getParent()->getParent();
+
+        // The pointer to the kmem_cache_t
+        Value* CacheT = CI->getOperand(1);
+
+        //
+        // Get the metapool for the kmem_cache_t
+        //
+        DSNodeHandle DSCacheT = DSInfo[F]->getNodeForValue(CacheT);
+        MetaPoolHandle MPCacheT (DSCacheT.getNode()->getMP());
+
+        //
+        // Get the DSNode handle of the object being allocated.
+        //
+        DSNodeHandle DSH = DSInfo[F]->getNodeForValue(CI);
+        MetaPoolHandle MPNode (DSH.getNode()->getMP());
+
+        //
+        // If the allocated object does not belong to the same metapool as
+        // other objects allocated from this kmem_cache_t, merge their
+        // metapools so that they do.
+        //
+        if (locs[MPCacheT.getPool()] != MPNode.getPool()) {
+          std::cerr << "kmem_cache_alloc recovered merge\n";
+          DSH.getNode()->getMP()->merge(locs[MPCacheT.getPool()]);
+        }
+        locs[MPCacheT.getPool()] = DSH.getNode()->getMP();
+      }
+    }
+  }
+#endif
+     
   return false;
 }
 

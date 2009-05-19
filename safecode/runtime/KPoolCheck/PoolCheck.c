@@ -212,7 +212,7 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
    */
   for (index=0; index < 4; ++index) {
     if ((MP->start[index] <= addr) &&
-       (MP->start[index]+MP->length[index] >= addr)) {
+       (MP->start[index]+MP->length[index] > addr)) {
       MP->start[index] = 0;
       MP->length[index] = 0;
       MP->cache[index] = 0;
@@ -293,7 +293,7 @@ pchk_reg_stack (MetaPoolTy* MP, void* addr, unsigned len) {
    */
   for (index=0; index < 4; ++index) {
     if ((MP->start[index] <= addr) &&
-       (MP->start[index]+MP->length[index] >= addr)) {
+       (MP->start[index]+MP->length[index] > addr)) {
       MP->start[index] = 0;
       MP->length[index] = 0;
       MP->cache[index] = 0;
@@ -624,7 +624,7 @@ pchk_drop_obj (MetaPoolTy* MP, void* addr) {
    */
   for (index=0; index < 4; ++index) {
     if ((MP->start[index] <= addr) &&
-       (MP->start[index]+MP->length[index] >= addr)) {
+       (MP->start[index]+MP->length[index] > addr)) {
       MP->start[index] = 0;
       MP->length[index] = 0;
       MP->cache[index] = 0;
@@ -644,7 +644,7 @@ void pchk_drop_stack (MetaPoolTy* MP, void* addr) {
    */
   for (index=0; index < 4; ++index) {
     if ((MP->start[index] <= addr) &&
-       (MP->start[index]+MP->length[index] >= addr)) {
+       (MP->start[index]+MP->length[index] > addr)) {
       MP->start[index] = 0;
       MP->length[index] = 0;
       MP->cache[index] = 0;
@@ -733,7 +733,7 @@ void pchk_drop_pool(MetaPoolTy* MP, void* PoolID) {
  *  object.
  */
 void
-poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
+poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
   if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
@@ -798,9 +798,15 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset) {
  * Description:
  *  This is the same as poolcheckalign(), but does not fail if an object cannot
  *  be found.  This is useful for checking incomplete/unknown nodes.
+ *
+ * Inputs:
+ *  MP     - The metapool in which the object should be found.
+ *  addr   - The pointer to the object which we seek.
+ *  offset - The offset into the object at which the pointer should point.
+ *  size   - The size of one object (in case this is an array).
  */
 void
-poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
+poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
   if (!pchk_ready || !MP) return;
 #if 0
   if (do_profile) pchk_profile(MP, __builtin_return_address(0));
@@ -821,14 +827,14 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset) {
   PCUNLOCK();
 
   if (t) {
-    if ((addr - S) == offset) {
+    if (((addr - S) % size) == offset) {
       return;
     } else {
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: addr : ", (unsigned)addr, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: start: ", (unsigned)S, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: len  : ", (unsigned)len, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: offst: ", (unsigned)offset, (void*)__builtin_return_address(0));
-      if (do_fail) poolcheckfail ("poolcheckalign_i failure: tag  : ", (unsigned)tag, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: addr : ", (unsigned)addr, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: start: ", (unsigned)S, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: len  : ", (unsigned)len, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: offst: ", (unsigned)offset, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: tag  : ", (unsigned)tag, (void*)__builtin_return_address(0));
     }
   }
 
@@ -1212,7 +1218,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src, void *dest) {
     do
     {
       if ((MP->start[index] <= src) &&
-         (MP->start[index]+MP->length[index] >= src)) {
+         (MP->start[index]+MP->length[index] > src)) {
         return MP->cache[index];
       }
       index = (index + 1) & 3;

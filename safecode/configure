@@ -807,6 +807,7 @@ Optional Features:
                           NO)
   --enable-safeio         Enable safe I/O checks (default is NO)
   --enable-safemmu        Enable safe MMU checks (default is NO)
+  --enable-safekstacks    Enable safe kernel stack checks (default is NO)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2467,6 +2468,15 @@ if test "${enable_safemmu+set}" = set; then
   enableval="$enable_safemmu"
   cat >>confdefs.h <<\_ACEOF
 #define SVA_MMU 1
+_ACEOF
+
+fi;
+
+# Check whether --enable-safekstacks or --disable-safekstacks was given.
+if test "${enable_safekstacks+set}" = set; then
+  enableval="$enable_safekstacks"
+  cat >>confdefs.h <<\_ACEOF
+#define SVA_KSTACKS 1
 _ACEOF
 
 fi;

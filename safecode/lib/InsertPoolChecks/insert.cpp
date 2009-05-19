@@ -1273,6 +1273,7 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (len);
         new CallInst(PageRegister, args, "", IP);
       } else if (name == "__get_free_pages") {
+#if 0
         Instruction* IP = i->getInstruction()->getNext();
         Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);
         Value* VMP = castTo (MPV, VoidPtrType, IP);
@@ -1282,6 +1283,9 @@ InsertPoolChecks::addHeapRegs (Module & M) {
         args.push_back (VP);
         args.push_back (len);
         new CallInst(PageRegister, args, "", IP);
+#else
+        std::cerr << "JTC: gfp: " << i->getInstruction()->getParent()->getParent()->getName() << "\n";
+#endif
       } else if (name == "pseudo_alloc") {
         Instruction* IP = i->getInstruction()->getNext();
         Value* VP = castTo (i->getInstruction(), VoidPtrType, IP);

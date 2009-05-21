@@ -572,7 +572,7 @@ makeMetaPool(Module* M, DSNode* N) {
 #ifdef SVA_IO
   const_struct_9_fields.push_back(const_ptr_10); // IOObjs
 #endif
-  ConstantInt* const_int8_14 = ConstantInt::get(Type::UIntTy, N && !(N->isNodeCompletelyFolded()));
+  ConstantInt* const_int8_14 = ConstantInt::get(Type::UIntTy, N && (!(N->isNodeCompletelyFolded())));
   const_struct_9_fields.push_back(const_int8_14); //TK
   Constant* const_struct_9 = ConstantStruct::get(MPT, const_struct_9_fields);
 
@@ -1076,6 +1076,7 @@ InsertPoolChecks::addPoolCheckProto(Module &M) {
   Arg.clear();
   Arg.push_back(VoidPtrType);
   Arg.push_back(VoidPtrType);
+  Arg.push_back(Type::UIntTy);
   Arg.push_back(Type::UIntTy);
   PoolCheckTy = FunctionType::get(Type::VoidTy,Arg, false);
   PoolCheckAlign   = M.getOrInsertFunction("poolcheckalign", PoolCheckTy);
@@ -4198,7 +4199,8 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
       // Create the call to poolcheck
       std::vector<Value *> args(1,CastPHI);
       args.push_back(CastVI);
-      args.push_back (ConstantInt::get(Type::UIntTy, LinkNode.getOffset()));
+      args.push_back(ConstantInt::get(Type::UIntTy, LinkNode.getOffset()));
+      args.push_back(ConstantInt::get(Type::UIntTy, LoadResultNode->getSize()));
       new CallInst (ThePoolCheckFunction, args, "", InsertPt);
 
       // Update the statistics

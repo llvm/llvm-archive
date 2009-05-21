@@ -425,7 +425,7 @@ DIType DebugInfo::createMethodType(tree type) {
   }
   
   llvm::DIArray EltTypeArray =
-    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
                                           findRegion(type), "", 
@@ -497,7 +497,7 @@ DIType DebugInfo::createArrayType(tree type) {
   }
   
   llvm::DIArray SubscriptArray =
-    DebugFactory.GetOrCreateArray(&Subscripts[0], Subscripts.size());
+    DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
   expanded_location Loc = GetNodeLocation(type);
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
                                           findRegion(type), "", 
@@ -523,7 +523,7 @@ DIType DebugInfo::createEnumType(tree type) {
   }
   
   llvm::DIArray EltArray =
-    DebugFactory.GetOrCreateArray(&Elements[0], Elements.size());
+    DebugFactory.GetOrCreateArray(Elements.data(), Elements.size());
   
   expanded_location Loc = { NULL, 0 };
   if (TYPE_SIZE(type)) 
@@ -680,7 +680,7 @@ DIType DebugInfo::createStructType(tree type) {
   }
   
   llvm::DIArray Elements =
-    DebugFactory.GetOrCreateArray(&EltTys[0], EltTys.size());
+    DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   
   llvm::DIType RealDecl =
     DebugFactory.CreateCompositeType(Tag, findRegion(type),

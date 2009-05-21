@@ -32,7 +32,7 @@ static const int do_profile = 0;
 static const int use_oob = 0;
 
 /* Flag whether to print error messages on bounds violations */
-static const int do_fail = 1;
+static const int do_fail = 0;
 
 /* Statistic counters */
 int stat_poolcheck=0;
@@ -183,7 +183,7 @@ void pchk_drop_slab(MetaPoolTy* MP, void* PoolID, void* addr) {
 }
 
 #ifdef SVA_MMU
-extern void llva_reg_obj(void*, void*, unsigned);
+extern void llva_reg_obj(void*, void*, unsigned, void *);
 #endif
 
 /* Register a non-pool allocated object */
@@ -201,8 +201,14 @@ void pchk_reg_obj(MetaPoolTy* MP, void* addr, unsigned len) {
   }
 #endif
 
+#if 0
+  /* For debugging only */
+  if (pchk_ready) {
+    poolcheckinfo2 ("regobj: Created ", __builtin_return_address(0), addr);
+  }
+#endif
 #ifdef SVA_MMU 
-  llva_reg_obj(addr, MP, MP->TK);
+  llva_reg_obj(addr, MP, MP->TK, __builtin_return_address(0));
 #endif
  
   adl_splay_insert(&MP->Objs, addr, len, __builtin_return_address(0));
@@ -753,13 +759,14 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
   int t = adl_splay_retrieve(&MP->Objs, &S, &len, &tag);
   PCUNLOCK();
   if (t) {
-    if ((addr - S) == offset) {
+    if (((addr - S) % size) == offset) {
       return;
     } else {
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(1): ", (unsigned)addr, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(2): ", (unsigned)S, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(3): ", (unsigned)offset, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign failure: Align(4): ", (unsigned)tag, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign failure: Align(5): ", (unsigned)size, (void*)__builtin_return_address(0));
       return;
     }
   }
@@ -835,6 +842,8 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
       if (do_fail) poolcheckfail ("poolcheckalign_i: len  : ", (unsigned)len, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign_i: offst: ", (unsigned)offset, (void*)__builtin_return_address(0));
       if (do_fail) poolcheckfail ("poolcheckalign_i: tag  : ", (unsigned)tag, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: size : ", (unsigned)size, (void*)__builtin_return_address(0));
+      if (do_fail) poolcheckfail ("poolcheckalign_i: roffs: ", (unsigned)((addr - S) % size), (void*)__builtin_return_address(0));
     }
   }
 

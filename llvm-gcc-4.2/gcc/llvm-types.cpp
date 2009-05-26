@@ -951,8 +951,8 @@ namespace {
       RetTy = AggrTy;
     }
 
-    /// HandleShadowArgument - Handle an aggregate or scalar shadow argument.
-    void HandleShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+    /// HandleShadowResult - Handle an aggregate or scalar shadow argument.
+    void HandleShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       // This function either returns void or the shadow argument,
       // depending on the target.
       RetTy = RetPtr ? PtrArgTy : Type::VoidTy;
@@ -964,21 +964,21 @@ namespace {
       isShadowRet = true;
     }
 
-    /// HandleAggregateShadowArgument - This callback is invoked if the function
+    /// HandleAggregateShadowResult - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter, which is
     /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
     /// the pointer argument itself is returned from the function.
-    void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
+    void HandleAggregateShadowResult(const PointerType *PtrArgTy,
                                        bool RetPtr) {
-      HandleShadowArgument(PtrArgTy, RetPtr);
+      HandleShadowResult(PtrArgTy, RetPtr);
     }
 
-    /// HandleScalarShadowArgument - This callback is invoked if the function
+    /// HandleScalarShadowResult - This callback is invoked if the function
     /// returns a scalar value by using a "shadow" first parameter, which is a
     /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
     /// the pointer argument itself is returned from the function.
-    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
-      HandleShadowArgument(PtrArgTy, RetPtr);
+    void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
+      HandleShadowResult(PtrArgTy, RetPtr);
     }
 
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,

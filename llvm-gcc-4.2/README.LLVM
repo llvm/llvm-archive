@@ -44,6 +44,14 @@ $ tar zxvf llvm-gcc4-x.y.source.tar.gz
 //===-----------------------
 Linux-specific Instructions:
 
+To build a compiler that targets 32-bit x86, the following options should be
+added to the configure line:
+  --target=i686-pc-linux-gnu --with-tune=generic --with-arch=pentium4
+You can select a different arch string if you prefer, but it's important to
+use this option to prevert llvm-gcc from defaulting to generic i386, which
+can lead to problems as llvm itself doesn't support x86 targets lower
+than i486.
+
 If llvm-gcc doesn't build right, try building LLVM with OPTIMIZE_OPTION=-O2.
 This may be host compiler version specific.
 

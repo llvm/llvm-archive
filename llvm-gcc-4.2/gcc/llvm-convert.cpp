@@ -233,11 +233,16 @@ namespace {
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
     unsigned Offset;
+    bool isShadowRet;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
                                      const LLVMBuilder &B)
-      : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0) {}
+      : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0),
+        isShadowRet(false) {}
     
+    bool isShadowReturn() {
+      return isShadowRet;
+    }
     void setName(const std::string &Name) {
       NameStack.push_back(Name);
     }
@@ -258,7 +263,8 @@ namespace {
       assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
              "No explicit return value?");
       AI->setName("agg.result");
-        
+
+      isShadowRet = true;
       tree ResultDecl = DECL_RESULT(FunctionDecl);
       tree RetTy = TREE_TYPE(TREE_TYPE(FunctionDecl));
       if (TREE_CODE(RetTy) == TREE_CODE(TREE_TYPE(ResultDecl))) {
@@ -288,6 +294,7 @@ namespace {
       assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
              "No explicit return value?");
       AI->setName("scalar.result");
+      isShadowRet = true;
       SET_DECL_LLVM(DECL_RESULT(FunctionDecl), AI);
       ++AI;
     }
@@ -359,13 +366,14 @@ namespace {
 // isPassedByVal - Return true if an aggregate of the specified type will be
 // passed in memory byval.
 static bool isPassedByVal(tree type, const Type *Ty,
-                          std::vector<const Type*> &ScalarArgs) {
+                          std::vector<const Type*> &ScalarArgs,
+                          bool isShadowRet) {
   if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty))
     return true;
 
   std::vector<const Type*> Args;
   if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Args) &&
-      LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs))
+      LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs, isShadowRet))
     // We want to pass the whole aggregate in registers but only some of the
     // registers are available.
     return true;
@@ -542,7 +550,8 @@ void TreeToLLVM::StartFunctionBody() {
         (ArgTy->getTypeID()==Type::VectorTyID &&
          LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(TREE_TYPE(Args))) ||
         (!ArgTy->isSingleValueType() &&
-         isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs))) {
+         isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs,
+                       Client.isShadowReturn()))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);

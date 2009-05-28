@@ -277,7 +277,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // the aggregate. Note, this routine should return false if none of the needed
 // registers are available.
 #ifndef LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE) \
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR) \
     false
 #endif
 
@@ -455,7 +455,8 @@ public:
     } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
       C.HandleFCAArgument(Ty, type);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
-      if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts))
+      if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts,
+                                                   C.isShadowReturn()))
         PassInMixedRegisters(type, Ty, Elts, ScalarElts);
       else {
         C.HandleByValArgument(Ty, type);

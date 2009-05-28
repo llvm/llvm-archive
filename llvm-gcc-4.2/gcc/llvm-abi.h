@@ -66,17 +66,17 @@ struct DefaultABIClient {
   /// returns an aggregate value using multiple return values.
   void HandleAggregateResultAsAggregate(const Type *AggrTy) {}
 
-  /// HandleAggregateShadowArgument - This callback is invoked if the function
+  /// HandleAggregateShadowResult - This callback is invoked if the function
   /// returns an aggregate value by using a "shadow" first parameter, which is
   /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
   /// the pointer argument itself is returned from the function.
-  void HandleAggregateShadowArgument(const PointerType *PtrArgTy, bool RetPtr){}
+  void HandleAggregateShadowResult(const PointerType *PtrArgTy, bool RetPtr){}
 
-  /// HandleScalarShadowArgument - This callback is invoked if the function
+  /// HandleScalarShadowResult - This callback is invoked if the function
   /// returns a scalar value by using a "shadow" first parameter, which is a
   /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
   /// the pointer argument itself is returned from the function.
-  void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {}
+  void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {}
 
 
   /// HandleScalarArgument - This is the primary callback that specifies an
@@ -382,7 +382,7 @@ public:
       if (ScalarType)
         C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
       else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
-        C.HandleScalarShadowArgument(PointerType::getUnqual(Ty), false);
+        C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
     } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
@@ -414,7 +414,7 @@ public:
 
       // FIXME: should return the hidden first argument for some targets
       // (e.g. ELF i386).
-      C.HandleAggregateShadowArgument(PointerType::getUnqual(Ty), false);
+      C.HandleAggregateShadowResult(PointerType::getUnqual(Ty), false);
     }
   }
   

@@ -250,7 +250,7 @@ namespace {
       LocStack.clear();
     }
     
-    void HandleAggregateShadowArgument(const PointerType *PtrArgTy, 
+    void HandleAggregateShadowResult(const PointerType *PtrArgTy, 
                                        bool RetPtr) {
       // If the function returns a structure by value, we transform the function
       // to take a pointer to the result as the first argument of the function
@@ -284,7 +284,7 @@ namespace {
       ++AI;
     }
 
-    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+    void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       assert(AI != Builder.GetInsertBlock()->getParent()->arg_end() &&
              "No explicit return value?");
       AI->setName("scalar.result");
@@ -2380,11 +2380,11 @@ namespace {
       isAggrRet = true;
     }
 
-    /// HandleAggregateShadowArgument - This callback is invoked if the function
+    /// HandleAggregateShadowResult - This callback is invoked if the function
     /// returns an aggregate value by using a "shadow" first parameter.  If
     /// RetPtr is set to true, the pointer argument itself is returned from the
     /// function.
-    void HandleAggregateShadowArgument(const PointerType *PtrArgTy,
+    void HandleAggregateShadowResult(const PointerType *PtrArgTy,
                                        bool RetPtr) {
       // We need to pass memory to write the return value into.
       // FIXME: alignment and volatility are being ignored!
@@ -2410,11 +2410,11 @@ namespace {
       isShadowRet = true;
     }
 
-    /// HandleScalarShadowArgument - This callback is invoked if the function
+    /// HandleScalarShadowResult - This callback is invoked if the function
     /// returns a scalar value by using a "shadow" first parameter, which is a
     /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
     /// the pointer argument itself is returned from the function.
-    void HandleScalarShadowArgument(const PointerType *PtrArgTy, bool RetPtr) {
+    void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       assert(DestLoc == 0 &&
              "Call returns a scalar but caller expects aggregate!");
       // Create a buffer to hold the result.  The result will be loaded out of

@@ -608,7 +608,8 @@ static void createPerFunctionOptimizationPasses() {
       break;
     }
 
-    if (TheTarget->addPassesToEmitFileFinish(*PM, 0, OptLevel)) {
+    if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
+                                             OptLevel)) {
       cerr << "Error interfacing to target machine!\n";
       exit(1);
     }

@@ -465,18 +465,11 @@ void TreeToLLVM::StartFunctionBody() {
 
   // The function should not already have a body.
   assert(Fn->empty() && "Function expanded multiple times!");
-  
+
   // Compute the linkage that the function should get.
-  // Functions declared "always inline" should not have a body
-  // emitted; hack this by pretending they're static.  That will either
-  // make them go away or emit a static definition that won't collide with
-  // anything.
   if (DECL_LLVM_PRIVATE(FnDecl)) {
     Fn->setLinkage(Function::PrivateLinkage);
   } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
-    Fn->setLinkage(Function::InternalLinkage);
-  } else if (DECL_EXTERNAL(FnDecl) && 
-             lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl))) {
     Fn->setLinkage(Function::InternalLinkage);
   } else if (DECL_COMDAT(FnDecl)) {
     Fn->setLinkage(Function::getLinkOnceLinkage(flag_odr));
@@ -485,6 +478,8 @@ void TreeToLLVM::StartFunctionBody() {
     Fn->setLinkage(Function::WeakAnyLinkage);
   } else if (DECL_ONE_ONLY(FnDecl)) {
     Fn->setLinkage(Function::getWeakLinkage(flag_odr));
+  } else if (DECL_EXTERNAL(FnDecl)) {
+    Fn->setLinkage(Function::AvailableExternallyLinkage);
   }
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE

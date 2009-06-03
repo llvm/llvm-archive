@@ -632,26 +632,31 @@ static void createPerModuleOptimizationPasses() {
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
   bool HasPerModulePasses = false;
-  bool NeedAlwaysInliner = false;
-  if (flag_inline_trees <= 1) {
-    // If full inliner is not run, check if always-inline is needed to handle
-    // functions that are  marked as always_inline.
-    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-         I != E; ++I)
-      if (I->hasFnAttr(Attribute::AlwaysInline)) {
-        NeedAlwaysInliner = true;
-        break;
-      }
-  }
 
   if (!DisableLLVMOptimizations) {
+    bool NeedAlwaysInliner = false;
+    llvm::Pass *InliningPass = 0;
+    if (flag_inline_trees > 1) {                // respect -fno-inline-functions
+      InliningPass = createFunctionInliningPass();    // Inline small functions
+    } else {
+      // If full inliner is not run, check if always-inline is needed to handle
+      // functions that are  marked as always_inline.
+      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+           I != E; ++I)
+        if (I->hasFnAttr(Attribute::AlwaysInline)) {
+          NeedAlwaysInliner = true;
+          break;
+        }
+
+      if (NeedAlwaysInliner)
+        InliningPass = createAlwaysInlinerPass();  // Inline always_inline funcs
+    }
+
     HasPerModulePasses = true;
     PassManager *PM = PerModulePasses;
     if (optimize == 0) {
-      if (flag_inline_trees > 1)                // respect -fno-inline-functions
-        PM->add(createFunctionInliningPass());    // Inline small functions
-      else if (NeedAlwaysInliner)
-        PM->add(createAlwaysInlinerPass());       // Inline always_inline funcs
+      if (InliningPass)
+        PM->add(InliningPass);
     } else {
       if (flag_unit_at_a_time)
         PM->add(createRaiseAllocationsPass());    // call %malloc -> malloc inst
@@ -670,10 +675,8 @@ static void createPerModuleOptimizationPasses() {
           PM->add(createPruneEHPass());           // Remove dead EH info
         PM->add(createFunctionAttrsPass());       // Deduce function attrs
       }
-      if (flag_inline_trees > 1)                // respect -fno-inline-functions
-        PM->add(createFunctionInliningPass());    // Inline small functions
-      else if (NeedAlwaysInliner)
-        PM->add(createAlwaysInlinerPass());       // Inline always_inline funcs
+      if (InliningPass)
+        PM->add(InliningPass);
       if (optimize > 2)
         PM->add(createArgumentPromotionPass());   // Scalarize uninlined fn args
       if (!flag_no_simplify_libcalls)

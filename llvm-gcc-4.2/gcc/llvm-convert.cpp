@@ -7419,8 +7419,7 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
                                             TAI->getStringConstantPrefix() : 
                                             ".str", TheModule);
 
-  if (optimize_size)
-    GV->setAlignment(TYPE_ALIGN(TREE_TYPE(exp)) / 8);
+  GV->setAlignment(TYPE_ALIGN(TREE_TYPE(exp)) / 8);
 
   if (SlotP) *SlotP = GV;
 #ifdef LLVM_CSTRING_SECTION

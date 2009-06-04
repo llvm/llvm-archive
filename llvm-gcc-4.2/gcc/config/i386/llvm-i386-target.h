@@ -89,9 +89,9 @@ extern int ix86_regparm;
     }                                                           \
   }
 
-#define LLVM_SET_ARCH_OPTIONS(argvec)                           \
+#define LLVM_SET_RED_ZONE_FLAG(disable_red_zone)                \
   if (TARGET_NO_RED_ZONE)                                       \
-    argvec.push_back("--disable-red-zone");
+    disable_red_zone = 1;
 
 #ifdef LLVM_ABI_H
 

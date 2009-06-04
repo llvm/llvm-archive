@@ -78,6 +78,9 @@ int flag_llvm_pch_read;
 // Non-zero if libcalls should not be simplified.
 int flag_no_simplify_libcalls;
 
+// Non-zer if red-zone is disabled.
+static int flag_disable_red_zone = 0;
+
 // Global state for the LLVM backend.
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
@@ -327,8 +330,8 @@ void llvm_initialize_backend(void) {
 
   // Allow targets to specify PIC options and other stuff to the corresponding
   // LLVM backends.
-#ifdef LLVM_SET_ARCH_OPTIONS
-  LLVM_SET_ARCH_OPTIONS(Args);
+#ifdef LLVM_SET_RED_ZONE_FLAG
+  LLVM_SET_RED_ZONE_FLAG(flag_disable_red_zone)
 #endif
 #ifdef LLVM_SET_TARGET_OPTIONS
   LLVM_SET_TARGET_OPTIONS(Args);
@@ -456,6 +459,10 @@ void llvm_initialize_backend(void) {
 void performLateBackendInitialization(void) {
   // The Ada front-end sets flag_exceptions only after processing the file.
   ExceptionHandling = flag_exceptions;
+  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+       I != E; ++I)
+    if (!I->isDeclaration() && flag_disable_red_zone)
+      I->addFnAttr(Attribute::NoRedZone);
 }
 
 void llvm_lang_dependent_init(const char *Name) {

@@ -78,7 +78,7 @@ int flag_llvm_pch_read;
 // Non-zero if libcalls should not be simplified.
 int flag_no_simplify_libcalls;
 
-// Non-zer if red-zone is disabled.
+// Non-zero if red-zone is disabled.
 static int flag_disable_red_zone = 0;
 
 // Global state for the LLVM backend.

@@ -3892,9 +3892,11 @@ enum ix86_builtins
     if (TARGET_3DNOW_A) F.AddFeature("3dnowa");               \
   }
 
-#define LLVM_SET_MACHINE_OPTIONS(argvec)                      \
+#define LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)       \
   if (!TARGET_80387)                                          \
-    argvec.push_back("-no-implicit-float")
+    flag_no_implicit_float = 1;                               \
+  else                                                        \
+    flag_no_implicit_float = 0;                               
     
 /* LLVM ABI definition macros. */
 

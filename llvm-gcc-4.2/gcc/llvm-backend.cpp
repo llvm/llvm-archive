@@ -81,6 +81,9 @@ int flag_no_simplify_libcalls;
 // Non-zero if red-zone is disabled.
 static int flag_disable_red_zone = 0;
 
+// Non-zero if implicit floating point instructions are disabled.
+static int flag_no_implicit_float = 0;
+
 // Global state for the LLVM backend.
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
@@ -339,6 +342,9 @@ void llvm_initialize_backend(void) {
 #ifdef LLVM_SET_MACHINE_OPTIONS
   LLVM_SET_MACHINE_OPTIONS(Args);
 #endif
+#ifdef LLVM_SET_IMPLICIT_FLOAT
+  LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
+#endif
   
   if (time_report)
     Args.push_back("--time-passes");
@@ -461,8 +467,12 @@ void performLateBackendInitialization(void) {
   ExceptionHandling = flag_exceptions;
   for (Module::iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
-    if (!I->isDeclaration() && flag_disable_red_zone)
-      I->addFnAttr(Attribute::NoRedZone);
+    if (!I->isDeclaration()) {
+      if (flag_disable_red_zone)
+        I->addFnAttr(Attribute::NoRedZone);
+      if (flag_no_implicit_float)
+        I->addFnAttr(Attribute::NoImplicitFloat);
+    }
 }
 
 void llvm_lang_dependent_init(const char *Name) {

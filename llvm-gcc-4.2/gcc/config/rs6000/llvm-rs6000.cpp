@@ -245,6 +245,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   Amt+4, Amt+5, Amt+6, Amt+7,
                                   Amt+8, Amt+9, Amt+10, Amt+11,
                                   Amt+12, Amt+13, Amt+14, Amt+15);
+      /* Make sure result type matches. */
+      Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     } else {
       error("%Hshift amount must be an immediate", &EXPR_LOCATION(exp));
       Result = Ops[0];

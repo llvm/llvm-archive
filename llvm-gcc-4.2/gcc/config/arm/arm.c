@@ -1503,8 +1503,12 @@ arm_override_options (void)
   else
     arm_float_abi = TARGET_DEFAULT_FLOAT_ABI;
 
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if (arm_float_abi == ARM_FLOAT_ABI_HARD && TARGET_VFP)
     sorry ("-mfloat-abi=hard and VFP");
+#endif
+/* LLVM LOCAL end */
 
   /* FPA and iWMMXt are incompatible because the insn encodings overlap.
      VFP and iWMMXt can theoretically coexist, but it's unlikely such silicon

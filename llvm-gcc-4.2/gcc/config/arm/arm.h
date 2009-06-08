@@ -3025,7 +3025,9 @@ enum arm_builtins
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
   if (TARGET_SOFT_FLOAT)                               \
-    argvec.push_back("-soft-float");
+    argvec.push_back("-soft-float");                   \
+  if (TARGET_HARD_FLOAT_ABI)                           \
+    argvec.push_back("-float-abi=hard");
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4

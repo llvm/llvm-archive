@@ -538,6 +538,9 @@ static GTY(()) rtx switch32_libfunc;
 #define FL_WBUF	      (1 << 14)	      /* Schedule for write buffer ops.
 					 Note: ARM6 & 7 derivatives only.  */
 #define FL_ARCH6K     (1 << 15)       /* Architecture rel 6 K extensions.  */
+/* LLVM LOCAL begin */
+#define FL_THUMB2     (1 << 16)	      /* Thumb-2.  */
+/* LLVM LOCAL end */
 
 #define FL_IWMMXT     (1 << 29)	      /* XScale v2 or "Intel Wireless MMX technology".  */
 
@@ -556,6 +559,10 @@ static GTY(()) rtx switch32_libfunc;
 #define FL_FOR_ARCH6K	(FL_FOR_ARCH6 | FL_ARCH6K)
 #define FL_FOR_ARCH6Z	FL_FOR_ARCH6
 #define FL_FOR_ARCH6ZK	FL_FOR_ARCH6K
+/* LLVM LOCAL begin */
+#define FL_FOR_ARCH6T2	(FL_FOR_ARCH6 | FL_THUMB2)
+#define FL_FOR_ARCH7A	(FL_FOR_ARCH6T2)
+/* LLVM LOCAL end */
 
 /* The bits in this mask specify which
    instructions we are allowed to generate.  */
@@ -620,6 +627,11 @@ int thumb_code = 0;
    problems in GLD which doesn't understand that armv5t code is
    interworking clean.  */
 int arm_cpp_interwork = 0;
+
+/* LLVM LOCAL begin */
+/* Nonzero if chip supports Thumb 2.  */
+int arm_arch_thumb2;
+/* LLVM LOCAL end */
 
 /* In case of a PRE_INC, POST_INC, PRE_DEC, POST_DEC memory reference, we
    must report the mode of the memory reference from PRINT_OPERAND to
@@ -717,6 +729,10 @@ static const struct processors all_architectures[] =
 /* APPLE LOCAL end ARM custom architectures */
   {"armv6z",  arm1176jzs, "6Z",  FL_CO_PROC |             FL_FOR_ARCH6Z, NULL},
   {"armv6zk", arm1176jzs, "6ZK", FL_CO_PROC |             FL_FOR_ARCH6ZK, NULL},
+/* LLVM LOCAL begin */
+  {"armv6t2", arm1156t2s, "6T2", FL_CO_PROC |             FL_FOR_ARCH6T2, NULL},
+  {"armv7-a", cortexa8,	  "7A",	 FL_CO_PROC |		  FL_FOR_ARCH7A, NULL},
+/* LLVM LOCAL end */
   {"ep9312",  ep9312,     "4T",  FL_LDSCHED | FL_CIRRUS | FL_FOR_ARCH4, NULL},
   {"iwmmxt",  iwmmxt,     "5TE", FL_LDSCHED | FL_STRONG | FL_FOR_ARCH5TE | FL_XSCALE | FL_IWMMXT , NULL},
   {NULL, arm_none, NULL, 0 , NULL}
@@ -1369,6 +1385,9 @@ arm_override_options (void)
   arm_arch5e = (insn_flags & FL_ARCH5E) != 0;
   arm_arch6 = (insn_flags & FL_ARCH6) != 0;
   arm_arch6k = (insn_flags & FL_ARCH6K) != 0;
+  /* LLVM LOCAL begin */
+  arm_arch_thumb2 = (insn_flags & FL_THUMB2) != 0;
+  /* LLVM LOCAL end */
   arm_arch_xscale = (insn_flags & FL_XSCALE) != 0;
   arm_arch_cirrus = (insn_flags & FL_CIRRUS) != 0;
 

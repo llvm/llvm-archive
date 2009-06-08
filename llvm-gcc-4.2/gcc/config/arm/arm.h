@@ -54,6 +54,10 @@ extern char arm_arch_name[];
 	builtin_define ("__APCS_32__");			\
 	if (TARGET_THUMB)				\
 	  builtin_define ("__thumb__");			\
+	/* LLVM LOCAL begin */				\
+	if (TARGET_THUMB2)				\
+	  builtin_define ("__thumb2__");		\
+	/* LLVM LOCAL end */				\
 							\
 	if (TARGET_BIG_END)				\
 	  {						\
@@ -209,6 +213,15 @@ extern GTY(()) rtx aof_pic_label;
 
 #define TARGET_HARD_TP			(target_thread_pointer == TP_CP15)
 #define TARGET_SOFT_TP			(target_thread_pointer == TP_SOFT)
+
+/* LLVM LOCAL begin */
+/* Only 16-bit thumb code.  */
+#define TARGET_THUMB1			(TARGET_THUMB && !arm_arch_thumb2)
+/* Arm or Thumb-2 32-bit code.  */
+#define TARGET_32BIT			(TARGET_ARM || arm_arch_thumb2)
+/* 32-bit Thumb-2 code.  */
+#define TARGET_THUMB2			(TARGET_THUMB && arm_arch_thumb2)
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL begin ARM compact switch tables */
 /* Use compact switch tables with libgcc handlers.  */
@@ -371,6 +384,11 @@ extern int arm_tune_wbuf;
    problems in GLD which doesn't understand that armv5t code is
    interworking clean.  */
 extern int arm_cpp_interwork;
+
+/* LLVM LOCAL begin */
+/* Nonzero if chip supports Thumb 2.  */
+extern int arm_arch_thumb2;
+/* LLVM LOCAL end */
 
 #ifndef TARGET_DEFAULT
 #define TARGET_DEFAULT  (MASK_APCS_FRAME)
@@ -2976,7 +2994,11 @@ enum arm_builtins
     case arm1176jzfs:   F.setCPU("arm1176jzf-s"); break;\
     case mpcorenovfp:   F.setCPU("mpcorenovfp"); break;\
     case mpcore:        F.setCPU("mpcore"); break;\
-    default: \
+    case arm1156t2s:    F.setCPU("arm1156t2-s"); break;	\
+    case arm1156t2fs:   F.setCPU("arm1156t2f-s"); break; \
+    case cortexa8:      F.setCPU("cortex-a8"); break; \
+    case cortexa9:      F.setCPU("cortex-a9"); break; \
+    default:						\
       F.setCPU("arm7tdmi"); \
       break; \
     } \
@@ -2986,18 +3008,20 @@ enum arm_builtins
  * armv6-apple-darwin, thumbv5-apple-darwin. FIXME: Replace thumb triplets
  * with function notes.
  */
-#define LLVM_OVERRIDE_TARGET_ARCH()                                       \
-  (TARGET_THUMB                                                           \
-   ? (arm_arch6                                                           \
-      ? "thumbv6" : (arm_arch5e                                           \
-                     ? "thumbv5e" : (arm_arch5                            \
-                                     ? "thumbv5" : (arm_arch4t            \
-                                                    ? "thumbv4t" : "")))) \
-   : (arm_arch6                                                           \
-      ? "armv6"   : (arm_arch5e                                           \
-                     ? "armv5e"   : (arm_arch5                            \
-                                     ? "armv5"   : (arm_arch4t            \
-                                                    ? "armv4t" : "")))))
+#define LLVM_OVERRIDE_TARGET_ARCH()					\
+  (TARGET_THUMB								\
+   ? (arm_arch_thumb2							\
+      ? "thumbv6t2" :							\
+      (arm_arch6							\
+       ? "thumbv6" : (arm_arch5e					\
+		      ? "thumbv5e" : (arm_arch5				\
+				      ? "thumbv5" : (arm_arch4t		\
+						     ? "thumbv4t" : ""))))) \
+   : (arm_arch6								\
+      ? "armv6"   : (arm_arch5e						\
+		     ? "armv5e"   : (arm_arch5				\
+				     ? "armv5"   : (arm_arch4t		\
+						    ? "armv4t" : "")))))
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
   if (TARGET_SOFT_FLOAT)                               \

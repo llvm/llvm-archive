@@ -1,3 +1,4 @@
+/* LLVM LOCAL (entire file!) */
 ;; -*- buffer-read-only: t -*-
 ;; Generated automatically by gentune.sh from arm-cores.def
 (define_attr "tune"

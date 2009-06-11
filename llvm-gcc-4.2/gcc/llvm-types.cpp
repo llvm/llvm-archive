@@ -984,8 +984,8 @@ namespace {
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
                               unsigned RealSize = 0) {
       if (KNRPromotion) {
-        if (LLVMTy == Type::FloatTy)
-          LLVMTy = Type::DoubleTy;
+        if (type == float_type_node)
+          LLVMTy = ConvertType(double_type_node);
         else if (LLVMTy == Type::Int16Ty || LLVMTy == Type::Int8Ty ||
                  LLVMTy == Type::Int1Ty)
           LLVMTy = Type::Int32Ty;

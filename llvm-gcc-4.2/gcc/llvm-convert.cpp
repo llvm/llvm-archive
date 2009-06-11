@@ -7529,8 +7529,9 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     Ptr = TheFolder->CreateAdd(Ptr, Offset);
     FieldPtr = TheFolder->CreateIntToPtr(Ptr, PointerType::getUnqual(FieldTy));
   }
-  
-  if (isBitfield(FieldDecl))
+
+  // Make sure we return a result of the right type.
+  if (PointerType::getUnqual(FieldTy) != FieldPtr->getType())
     FieldPtr = TheFolder->CreateBitCast(FieldPtr,
                                         PointerType::getUnqual(FieldTy));
 

@@ -4341,7 +4341,9 @@ build_compound_literal (tree type, tree init)
     {
       /* This decl needs a name for the assembler output.  */
       set_compound_literal_name (decl);
+#ifndef ENABLE_LLVM
       DECL_DEFER_OUTPUT (decl) = 1;
+#endif
       DECL_COMDAT (decl) = 1;
       DECL_ARTIFICIAL (decl) = 1;
       DECL_IGNORED_P (decl) = 1;

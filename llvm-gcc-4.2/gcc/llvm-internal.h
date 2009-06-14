@@ -38,6 +38,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/TargetFolder.h"
 
@@ -233,14 +234,20 @@ bool ValidateRegisterVariable(tree_node *decl);
 /// a pointer to the memory, its alignment and whether the access is volatile.
 struct MemRef {
   Value *Ptr;
-  unsigned Alignment;
   bool Volatile;
+private:
+  unsigned char LogAlign;
 
-  MemRef() : Ptr(0), Alignment(0), Volatile(false) {}
-  MemRef(Value *P, unsigned A, bool V)
-    : Ptr(P), Alignment(A), Volatile(V) {
-      // Allowing alignment 0 would complicate calculations, so forbid it.
-      assert(A && !(A & (A - 1)) && "Alignment not a power of 2!");
+public:
+  MemRef() : Ptr(0), Volatile(false), LogAlign(0) {}
+  MemRef(Value *P, uint32_t A, bool V) : Ptr(P), Volatile(V) {
+    // Forbid alignment 0 along with non-power-of-2 alignment values.
+    assert(isPowerOf2_32(A) && "Alignment not a power of 2!");
+    LogAlign = Log2_32(A);
+  }
+
+  uint32_t getAlignment() const {
+    return 1U << LogAlign;
   }
 };
 
@@ -253,21 +260,29 @@ struct MemRef {
 /// "LValue" is intended to be a light-weight object passed around by-value.
 struct LValue {
   Value *Ptr;
-  unsigned char Alignment;
   unsigned char BitStart;
   unsigned char BitSize;
-  
-  LValue(Value *P, unsigned Align)
-    : Ptr(P), Alignment(Align), BitStart(255), BitSize(255) {}
-  LValue(Value *P, unsigned Align, unsigned BSt, unsigned BSi) 
-  : Ptr(P), Alignment(Align), BitStart(BSt), BitSize(BSi) {
-      assert(BitStart == BSt && BitSize == BSi &&
-             "Bit values larger than 256?");
-    }
+private:
+  unsigned char LogAlign;
 
-  unsigned getAlignment() const {
-    assert(Alignment && "LValue alignment cannot be zero!");
-    return Alignment;
+public:
+  LValue() : Ptr(0), BitStart(255), BitSize(255), LogAlign(0) {}
+  LValue(Value *P, uint32_t A) : Ptr(P), BitStart(255), BitSize(255) {
+    // Forbid alignment 0 along with non-power-of-2 alignment values.
+    assert(isPowerOf2_32(A) && "Alignment not a power of 2!");
+    LogAlign = Log2_32(A);
+  }
+  LValue(Value *P, uint32_t A, unsigned BSt, unsigned BSi)
+  : Ptr(P), BitStart(BSt), BitSize(BSi) {
+    assert(BitStart == BSt && BitSize == BSi &&
+           "Bit values larger than 256?");
+    // Forbid alignment 0 along with non-power-of-2 alignment values.
+    assert(isPowerOf2_32(A) && "Alignment not a power of 2!");
+    LogAlign = Log2_32(A);
+  }
+
+  uint32_t getAlignment() const {
+    return 1U << LogAlign;
   }
   bool isBitfield() const { return BitStart != 255; }
 };

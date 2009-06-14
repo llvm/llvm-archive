@@ -947,7 +947,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 /// the address of the result.
 LValue TreeToLLVM::EmitLV(tree exp) {
   // Needs to be in sync with EmitVIEW_CONVERT_EXPR.
-  LValue LV(0, 0);
+  LValue LV;
 
   switch (TREE_CODE(exp)) {
   default:
@@ -982,7 +982,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // Constants.
   case LABEL_DECL: {
     Value *Ptr = TreeConstantToLLVM::EmitLV_LABEL_DECL(exp);
-    LV = LValue(Ptr, DECL_ALIGN(exp) / 8);
+    LV = LValue(Ptr, 1);
     break;
   }
   case COMPLEX_CST: {
@@ -1180,7 +1180,7 @@ static void CopyAggregate(MemRef DestLoc, MemRef SrcLoc,
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
 
-  unsigned Alignment = std::min(DestLoc.Alignment, SrcLoc.Alignment);
+  unsigned Alignment = std::min(DestLoc.getAlignment(), SrcLoc.getAlignment());
 
   if (ElTy->isSingleValueType()) {
     LoadInst *V = Builder.CreateLoad(SrcLoc.Ptr, SrcLoc.Volatile);
@@ -1291,7 +1291,7 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
 
   Value *TypeSize = Emit(TYPE_SIZE_UNIT(type), 0);
   EmitMemCpy(DestLoc.Ptr, SrcLoc.Ptr, TypeSize,
-             std::min(DestLoc.Alignment, SrcLoc.Alignment));
+             std::min(DestLoc.getAlignment(), SrcLoc.getAlignment()));
 }
 
 /// ZeroAggregate - Recursively traverse the potentially aggregate DestLoc,
@@ -1302,12 +1302,13 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
   if (ElTy->isSingleValueType()) {
     StoreInst *St = Builder.CreateStore(Constant::getNullValue(ElTy),
                                         DestLoc.Ptr, DestLoc.Volatile);
-    St->setAlignment(DestLoc.Alignment);
+    St->setAlignment(DestLoc.getAlignment());
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
     const StructLayout *SL = getTargetData().getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i);
-      unsigned Alignment = MinAlign(DestLoc.Alignment, SL->getElementOffset(i));
+      unsigned Alignment = MinAlign(DestLoc.getAlignment(),
+                                    SL->getElementOffset(i));
       ZeroAggregate(MemRef(Ptr, Alignment, DestLoc.Volatile), Builder);
     }
   } else {
@@ -1315,7 +1316,7 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
     unsigned EltSize = getTargetData().getTypeAllocSize(ATy->getElementType());
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       Value *Ptr = Builder.CreateStructGEP(DestLoc.Ptr, i);
-      unsigned Alignment = MinAlign(DestLoc.Alignment, i * EltSize);
+      unsigned Alignment = MinAlign(DestLoc.getAlignment(), i * EltSize);
       ZeroAggregate(MemRef(Ptr, Alignment, DestLoc.Volatile), Builder);
     }
   }
@@ -1341,7 +1342,7 @@ void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
   }
 
   EmitMemSet(DestLoc.Ptr, ConstantInt::get(Type::Int8Ty, 0),
-             Emit(TYPE_SIZE_UNIT(type), 0), DestLoc.Alignment);
+             Emit(TYPE_SIZE_UNIT(type), 0), DestLoc.getAlignment());
 }
 
 Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
@@ -2730,7 +2731,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   }
   Ptr = BitCastToType(Ptr, PointerType::getUnqual(Call->getType()));
   StoreInst *St = Builder.CreateStore(Call, Ptr, DestLoc->Volatile);
-  St->setAlignment(DestLoc->Alignment);
+  St->setAlignment(DestLoc->getAlignment());
   return 0;
 }
 
@@ -2982,7 +2983,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   Value *Ptr = BitCastToType(DestLoc->Ptr, 
                              PointerType::getUnqual(OpVal->getType()));
   StoreInst *St = Builder.CreateStore(OpVal, Ptr, DestLoc->Volatile);
-  St->setAlignment(DestLoc->Alignment);
+  St->setAlignment(DestLoc->getAlignment());
   return 0;
 }
 
@@ -3059,7 +3060,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
     Value *Ptr = BitCastToType(DestLoc->Ptr,
                                PointerType::getUnqual(OpVal->getType()));
     StoreInst *St = Builder.CreateStore(OpVal, Ptr, DestLoc->Volatile);
-    St->setAlignment(DestLoc->Alignment);
+    St->setAlignment(DestLoc->getAlignment());
     return 0;
   }
 
@@ -5719,12 +5720,12 @@ void TreeToLLVM::EmitLoadFromComplex(Value *&Real, Value *&Imag,
                                      MemRef SrcComplex) {
   Value *RealPtr = Builder.CreateStructGEP(SrcComplex.Ptr, 0, "real");
   Real = Builder.CreateLoad(RealPtr, SrcComplex.Volatile, "real");
-  cast<LoadInst>(Real)->setAlignment(SrcComplex.Alignment);
+  cast<LoadInst>(Real)->setAlignment(SrcComplex.getAlignment());
 
   Value *ImagPtr = Builder.CreateStructGEP(SrcComplex.Ptr, 1, "imag");
   Imag = Builder.CreateLoad(ImagPtr, SrcComplex.Volatile, "imag");
   cast<LoadInst>(Imag)->setAlignment(
-    MinAlign(SrcComplex.Alignment, TD.getTypeAllocSize(Real->getType()))
+    MinAlign(SrcComplex.getAlignment(), TD.getTypeAllocSize(Real->getType()))
   );
 }
 
@@ -5734,12 +5735,12 @@ void TreeToLLVM::EmitStoreToComplex(MemRef DestComplex, Value *Real,
 
   Value *RealPtr = Builder.CreateStructGEP(DestComplex.Ptr, 0, "real");
   St = Builder.CreateStore(Real, RealPtr, DestComplex.Volatile);
-  St->setAlignment(DestComplex.Alignment);
+  St->setAlignment(DestComplex.getAlignment());
 
   Value *ImagPtr = Builder.CreateStructGEP(DestComplex.Ptr, 1, "imag");
   St = Builder.CreateStore(Imag, ImagPtr, DestComplex.Volatile);
   St->setAlignment(
-    MinAlign(DestComplex.Alignment, TD.getTypeAllocSize(Real->getType()))
+    MinAlign(DestComplex.getAlignment(), TD.getTypeAllocSize(Real->getType()))
   );
 }
 
@@ -5949,7 +5950,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     LValue ArrayAddrLV = EmitLV(Array);
     assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
     ArrayAddr = ArrayAddrLV.Ptr;
-    ArrayAlign = ArrayAddrLV.Alignment;
+    ArrayAlign = ArrayAddrLV.getAlignment();
   } else {
     ArrayAddr = Emit(Array, 0);
     if (TREE_CODE (ArrayTreeType) == POINTER_TYPE)
@@ -6095,7 +6096,7 @@ Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
   tree FieldDecl = TREE_OPERAND(exp, 1); 
-  unsigned LVAlign = StructAddrLV.Alignment;
+  unsigned LVAlign = StructAddrLV.getAlignment();
  
   assert((TREE_CODE(DECL_CONTEXT(FieldDecl)) == RECORD_TYPE ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE  ||
@@ -6320,7 +6321,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   // If this is referring to the whole field, return the whole thing.
   if (BitStart == 0 && BitSize == ValueSizeInBits) {
     return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)),
-                  Ptr.Alignment);
+                  Ptr.getAlignment());
   }
   
   return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)), 1,
@@ -6334,10 +6335,10 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
   unsigned Alignment;
   if (Idx == 0)
     // REALPART alignment is same as the complex operand.
-    Alignment = Ptr.Alignment;
+    Alignment = Ptr.getAlignment();
   else
     // IMAGPART alignment = MinAlign(Ptr.Alignment, sizeof field);
-    Alignment = MinAlign(Ptr.Alignment,
+    Alignment = MinAlign(Ptr.getAlignment(),
                          TD.getTypeAllocSize(Ptr.Ptr->getType()));
   return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
 }
@@ -6452,7 +6453,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
       Value *Ptr = BitCastToType(DestLoc->Ptr, 
                                  PointerType::getUnqual(V->getType()));
       StoreInst *St = Builder.CreateStore(V, Ptr, DestLoc->Volatile);
-      St->setAlignment(DestLoc->Alignment);
+      St->setAlignment(DestLoc->getAlignment());
     }
     break;
   }

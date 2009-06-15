@@ -862,9 +862,24 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case UNGE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGE); break;
   case UNEQ_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UEQ); break;
   case LTGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ONE); break;
-  case PLUS_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Add);break;
-  case MINUS_EXPR:Result = EmitBinOp(exp, DestLoc, Instruction::Sub);break;
-  case MULT_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::Mul);break;
+  case PLUS_EXPR:
+    Result = EmitBinOp(exp, DestLoc,
+                       FLOAT_TYPE_P(TREE_TYPE(exp)) ?
+                         Instruction::FAdd :
+                         Instruction::Add);
+    break;
+  case MINUS_EXPR:
+    Result = EmitBinOp(exp, DestLoc,
+                       FLOAT_TYPE_P(TREE_TYPE(exp)) ?
+                         Instruction::FSub :
+                         Instruction::Sub);
+    break;
+  case MULT_EXPR:
+    Result = EmitBinOp(exp, DestLoc,
+                       FLOAT_TYPE_P(TREE_TYPE(exp)) ?
+                         Instruction::FMul :
+                         Instruction::Mul);
+    break;
   case EXACT_DIV_EXPR: Result = EmitEXACT_DIV_EXPR(exp, DestLoc); break;
   case TRUNC_DIV_EXPR: 
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
@@ -3089,6 +3104,8 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   if (!DestLoc) {
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
+    if (V->getType()->isFPOrFPVector())
+      return Builder.CreateFNeg(V);
     if (!isa<PointerType>(V->getType()))
       return Builder.CreateNeg(V);
     
@@ -3108,8 +3125,8 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: -(a+ib) = -a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  R = Builder.CreateNeg(R);
-  I = Builder.CreateNeg(I);
+  R = Builder.CreateFNeg(R);
+  I = Builder.CreateFNeg(I);
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -3125,7 +3142,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: ~(a+ib) = a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  I = Builder.CreateNeg(I);
+  I = Builder.CreateFNeg(I);
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -5776,37 +5793,37 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   switch (TREE_CODE(exp)) {
   default: TODO(exp);
   case PLUS_EXPR: // (a+ib) + (c+id) = (a+c) + i(b+d)
-    DSTr = Builder.CreateAdd(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateAdd(LHSi, RHSi, "tmpi");
+    DSTr = Builder.CreateFAdd(LHSr, RHSr, "tmpr");
+    DSTi = Builder.CreateFAdd(LHSi, RHSi, "tmpi");
     break;
   case MINUS_EXPR: // (a+ib) - (c+id) = (a-c) + i(b-d)
-    DSTr = Builder.CreateSub(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateSub(LHSi, RHSi, "tmpi");
+    DSTr = Builder.CreateFSub(LHSr, RHSr, "tmpr");
+    DSTi = Builder.CreateFSub(LHSi, RHSi, "tmpi");
     break;
   case MULT_EXPR: { // (a+ib) * (c+id) = (ac-bd) + i(ad+cb)
-    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr); // a*c
-    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi); // b*d
-    DSTr = Builder.CreateSub(Tmp1, Tmp2);        // ac-bd
+    Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
+    Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
+    DSTr = Builder.CreateFSub(Tmp1, Tmp2);        // ac-bd
 
-    Value *Tmp3 = Builder.CreateMul(LHSr, RHSi); // a*d
-    Value *Tmp4 = Builder.CreateMul(RHSr, LHSi); // c*b
-    DSTi = Builder.CreateAdd(Tmp3, Tmp4);        // ad+cb
+    Value *Tmp3 = Builder.CreateFMul(LHSr, RHSi); // a*d
+    Value *Tmp4 = Builder.CreateFMul(RHSr, LHSi); // c*b
+    DSTi = Builder.CreateFAdd(Tmp3, Tmp4);        // ad+cb
     break;
   }
   case RDIV_EXPR: { // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
-    Value *Tmp1 = Builder.CreateMul(LHSr, RHSr); // a*c
-    Value *Tmp2 = Builder.CreateMul(LHSi, RHSi); // b*d
-    Value *Tmp3 = Builder.CreateAdd(Tmp1, Tmp2); // ac+bd
+    Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
+    Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
+    Value *Tmp3 = Builder.CreateFAdd(Tmp1, Tmp2); // ac+bd
 
-    Value *Tmp4 = Builder.CreateMul(RHSr, RHSr); // c*c
-    Value *Tmp5 = Builder.CreateMul(RHSi, RHSi); // d*d
-    Value *Tmp6 = Builder.CreateAdd(Tmp4, Tmp5); // cc+dd
+    Value *Tmp4 = Builder.CreateFMul(RHSr, RHSr); // c*c
+    Value *Tmp5 = Builder.CreateFMul(RHSi, RHSi); // d*d
+    Value *Tmp6 = Builder.CreateFAdd(Tmp4, Tmp5); // cc+dd
     // FIXME: What about integer complex?
     DSTr = Builder.CreateFDiv(Tmp3, Tmp6);
 
-    Value *Tmp7 = Builder.CreateMul(LHSi, RHSr); // b*c
-    Value *Tmp8 = Builder.CreateMul(LHSr, RHSi); // a*d
-    Value *Tmp9 = Builder.CreateSub(Tmp7, Tmp8); // bc-ad
+    Value *Tmp7 = Builder.CreateFMul(LHSi, RHSr); // b*c
+    Value *Tmp8 = Builder.CreateFMul(LHSr, RHSi); // a*d
+    Value *Tmp9 = Builder.CreateFSub(Tmp7, Tmp8); // bc-ad
     DSTi = Builder.CreateFDiv(Tmp9, Tmp6);
     break;
   }

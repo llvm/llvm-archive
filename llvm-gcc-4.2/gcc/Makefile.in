@@ -1170,6 +1170,15 @@ endif
 # See below for more details.
 ifdef BUILD_LLVM_INTO_A_DYLIB
 LLVMTARGETOBJ := $(sort $(LLVMTARGETOBJ) x86 powerpc arm)
+
+
+## Target symbols to force linking.  This is to ensure that the code generators
+## and asm printers actually get linked into libllvmgcc<stage>.dylib.
+LLVMTARGETSYMBOLS := \
+  __ZN4llvm19InitializeARMTargetEv __ZN4llvm23InitializeARMAsmPrinterEv \
+  __ZN4llvm23InitializePowerPCTargetEv __ZN4llvm27InitializePowerPCAsmPrinterEv\
+  __ZN4llvm19InitializeX86TargetEv __ZN4llvm23InitializeX86AsmPrinterEv \
+
 endif
 
 # We use llvm-config to determine the libraries that we need to link in our
@@ -1232,7 +1241,8 @@ libllvmgcc$(LLVM_STAGE).dylib: llvm-linker-hack.cpp $(LLVMLIBFILES)
 	$(CXX) $(DYLIB_COMPILE_FLAGS) $(INCLUDES) -o $@ \
            $< $(LLVMLIBFILES) -dynamiclib -single_module \
            -compatibility_version 1.0.0 -current_version 1.0.0 \
-           -install_name @executable_path/$@
+           -install_name @executable_path/$@ \
+           $(patsubst %,-u %,$(LLVMTARGETSYMBOLS))
 
 LLVMBACKENDFILES := libllvmgcc$(LLVM_STAGE).dylib
 

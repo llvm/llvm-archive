@@ -664,6 +664,8 @@ DIType DebugInfo::createStructType(tree type) {
     
     if (DECL_ABSTRACT_ORIGIN (Member)) continue;
     if (DECL_ARTIFICIAL (Member)) continue;
+    // In C++, TEMPLATE_DECLs are marked Ignored, and should be.
+    if (DECL_P (Member) && DECL_IGNORED_P (Member)) continue;
 
     // Get the location of the member.
     expanded_location MemLoc = GetNodeLocation(Member, false);

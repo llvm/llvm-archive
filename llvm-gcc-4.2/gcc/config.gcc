@@ -2779,11 +2779,14 @@ case "${target}" in
 			fi
 		done
 
+		# LLVM LOCAL begin
 		case "$with_arch" in
 		"" \
 		| armv[23456] | armv2a | armv3m | armv4t | armv5t \
 		| armv5te | armv6j |armv6k | armv6z | armv6zk \
+		| armv7-a \
 		| iwmmxt | ep9312)
+		# LLVM LOCAL end
 			# OK
 			;;
 		*)

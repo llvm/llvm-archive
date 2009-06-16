@@ -1170,7 +1170,6 @@ endif
 # See below for more details.
 ifdef BUILD_LLVM_INTO_A_DYLIB
 LLVMTARGETOBJ := $(sort $(LLVMTARGETOBJ) x86 powerpc arm)
-LLVMTARGETNAME := $(sort X86 PowerPC ARM)
 endif
 
 # We use llvm-config to determine the libraries that we need to link in our
@@ -1233,9 +1232,7 @@ libllvmgcc$(LLVM_STAGE).dylib: llvm-linker-hack.cpp $(LLVMLIBFILES)
 	$(CXX) $(DYLIB_COMPILE_FLAGS) $(INCLUDES) -o $@ \
            $< $(LLVMLIBFILES) -dynamiclib -single_module \
            -compatibility_version 1.0.0 -current_version 1.0.0 \
-           -install_name @executable_path/$@ \
-           $(patsubst %,-u __ZN4llvm19Initialize%TargetEv,$(LLVMTARGETNAME)) \
-           $(patsubst %,-u __ZN4llvm19Initialize%AsmPrinterEv,$(LLVMTARGETNAME)) \
+           -install_name @executable_path/$@
 
 LLVMBACKENDFILES := libllvmgcc$(LLVM_STAGE).dylib
 

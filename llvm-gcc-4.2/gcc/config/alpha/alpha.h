@@ -1600,6 +1600,12 @@ do {							\
  */
 #define LLVM_TARGET_INTRINSIC_PREFIX "alpha"
 
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME Alpha
+
+
 /* LLVM_TARGET_INTRINSIC_LOWER - To handle builtins, we want to expand the
  * invocation into normal LLVM code.  If the target can handle the builtin, this
  * macro should call the target TreeToLLVM::TargetIntrinsicLower method and

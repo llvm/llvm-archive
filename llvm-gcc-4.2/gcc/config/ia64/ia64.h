@@ -2009,6 +2009,12 @@ extern int ia64_final_schedule;
 
 /* LLVM LOCAL begin */
 #define TARGET_UNWIND_TABLES_DEFAULT true
+
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME IA64
+
 /* LLVM LOCAL end */
 
 #define EH_RETURN_DATA_REGNO(N) ((N) < 4 ? (N) + 15 : INVALID_REGNUM)

@@ -3863,11 +3863,16 @@ enum ix86_builtins
 };
 
 #ifdef ENABLE_LLVM
+
 /* LLVM_TARGET_INTRINSIC_PREFIX - Specify what prefix this target uses for its
  * intrinsics.
  */
 #define LLVM_TARGET_INTRINSIC_PREFIX "x86"
 
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME X86
 
 /* Turn -march=xx into a CPU type.
  */

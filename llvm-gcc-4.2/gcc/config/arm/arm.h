@@ -2962,6 +2962,12 @@ enum arm_builtins
 #ifdef ENABLE_LLVM
 #define LLVM_TARGET_INTRINSIC_PREFIX "arm"
 
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME ARM
+
+
 /* Turn -march=xx into a CPU type.
  */
 #define LLVM_SET_SUBTARGET_FEATURES(F) \

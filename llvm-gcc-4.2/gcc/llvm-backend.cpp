@@ -51,6 +51,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Program.h"
+
 #include <cassert>
 #undef VISIBILITY_HIDDEN
 extern "C" {
@@ -326,7 +327,28 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
+#ifndef LLVM_TARGET_NAME
+#error LLVM_TARGET_NAME macro not specified by GCC backend
+#endif
+
+namespace llvm {
+#define Declare2(TARG, MOD)   void Initialize ## TARG ## MOD()
+#define Declare(T, M) Declare2(T, M)
+  Declare(LLVM_TARGET_NAME, Target);
+  Declare(LLVM_TARGET_NAME, AsmPrinter);
+#undef Declare
+#undef Declare2
+}
+
 void llvm_initialize_backend(void) {
+  // Initialize the LLVM backend.
+#define DoInit2(TARG, MOD)   llvm::Initialize ## TARG ## MOD()
+#define DoInit(T, M) DoInit2(T, M)
+  DoInit(LLVM_TARGET_NAME, Target);
+  DoInit(LLVM_TARGET_NAME, AsmPrinter);
+#undef DoInit
+#undef DoInit2
+  
   // Initialize LLVM options.
   std::vector<const char*> Args;
   Args.push_back(progname); // program name

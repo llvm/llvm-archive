@@ -36,15 +36,6 @@
 #endif
 /* LLVM LOCAL end */
 #endif
-
-/* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-/* Add general target specific stuff */
-#include "llvm-arm-target.h"
-
-#endif /* ENABLE_LLVM */
-/* LLVM LOCAL end */
-
 /* APPLE LOCAL end ARM darwin target */
 
 /* APPLE LOCAL ARM interworking */

@@ -7187,6 +7187,21 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
     if (GCCStructSize - NextFieldByteStart != 1)
       FillTy = ArrayType::get(FillTy, GCCStructSize - NextFieldByteStart);
     ResultElts.push_back(Constant::getNullValue(FillTy));
+    NextFieldByteStart = GCCStructSize;
+  
+    // At this point, we know that our struct should have the right size.
+    // However, if the size of the struct is not a multiple of the largest
+    // element alignment, the rounding could bump up the struct more.  In this
+    // case, we have to convert the struct to being packed.
+    LLVMNaturalSize =
+      TargetData::RoundUpAlignment(NextFieldByteStart, MaxLLVMFieldAlignment);
+
+    // If the alignment will make the struct too big, convert it to being
+    // packed.
+    if (LLVMNaturalSize > GCCStructSize) {
+      assert(!StructIsPacked && "LLVM Struct type overflow!");
+      ConvertToPacked();
+    }
   }
 }
 

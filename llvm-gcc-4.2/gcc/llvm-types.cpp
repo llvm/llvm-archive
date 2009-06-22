@@ -1669,6 +1669,9 @@ void adjustPaddingElement(tree oldtree, tree newtree) {
 /// Mapping from type to type-used-as-base-class and back.
 static DenseMap<tree, tree> BaseTypesMap;
 
+/// Mapping from type to less-aligned-type-used-within-struct and back.
+static DenseMap<std::pair<tree, unsigned int>, tree> LessAlignedTypesMap;
+
 /// FixBaseClassField - This method is called when we have a field Field
 /// of Record type within a Record, and the size of Field is smaller than the
 /// size of its Record type.  This may indicate the situation where a base class
@@ -1711,11 +1714,15 @@ static tree FixBaseClassField(tree Field) {
     }
     BaseTypesMap[oldTy] = newTy;
     BaseTypesMap[newTy] = oldTy;
-    /* Prevent gcc's garbage collector from destroying newTy.  The
-       GC code doesn't understand DenseMaps:( */
+    // Prevent gcc's garbage collector from destroying newTy.  The
+    // GC code doesn't understand DenseMaps:(
     llvm_note_type_used(newTy);
     TYPE_SIZE(newTy) = DECL_SIZE(Field);
     TYPE_SIZE_UNIT(newTy) = DECL_SIZE_UNIT(Field);
+    // If the alignment of the field is smaller than the alignment of the type,
+    // we may not need tail padding in this context.
+    if (DECL_ALIGN(Field) < TYPE_ALIGN(newTy))
+      TYPE_ALIGN(newTy) = DECL_ALIGN(Field);
     TYPE_MAIN_VARIANT(newTy) = newTy;
     TYPE_STUB_DECL(newTy) = TYPE_STUB_DECL(oldTy);
     // Change the name.
@@ -1735,8 +1742,56 @@ static tree FixBaseClassField(tree Field) {
   return newTy;
 }
 
-/// FixBaseClassFields - alter the types referred to by Field nodes that
-/// represent base classes to reflect reality.
+/// FixLessAlignedClassField - This method is called when we have a field Field
+/// of Record type within a Record, and the alignment of Field is smaller than
+/// alignment of its Record type.  The field may not get as much tail padding
+/// as the type would in other contexts.  Replace Field's original
+/// type with a modified one that has the Field's alignment.
+
+static tree FixLessAlignedClassField(tree Field) {
+  tree oldTy = TREE_TYPE(Field);
+  std::pair<tree, unsigned int> p = std::make_pair(oldTy, DECL_ALIGN(Field));
+  tree &newTy = LessAlignedTypesMap[p];
+  // If already in table, reuse.
+  if (!newTy) {
+    newTy = copy_node(oldTy);
+    tree F2 = 0, prevF2 = 0, F;
+    // Copy all the fields.
+    for (F = TYPE_FIELDS(oldTy); F; prevF2 = F2, F = TREE_CHAIN(F)) {
+      F2 = copy_node(F);
+      if (prevF2)
+        TREE_CHAIN(prevF2) = F2;
+      else
+        TYPE_FIELDS(newTy) = F2;
+      TREE_CHAIN(F2) = 0;
+    }
+    LessAlignedTypesMap[p] = newTy;
+    LessAlignedTypesMap[std::make_pair(newTy, 0U)] = oldTy;
+    /* Prevent gcc's garbage collector from destroying newTy.  The
+       GC code doesn't understand DenseMaps:( */
+    llvm_note_type_used(newTy);
+    TYPE_ALIGN(newTy) = DECL_ALIGN(Field);
+    TYPE_MAIN_VARIANT(newTy) = newTy;
+    TYPE_STUB_DECL(newTy) = TYPE_STUB_DECL(oldTy);
+    // Change the name.
+    if (TYPE_NAME(oldTy)) {
+      const char *p = "anon";
+      if (TREE_CODE(TYPE_NAME(oldTy)) ==IDENTIFIER_NODE)
+        p = IDENTIFIER_POINTER(TYPE_NAME(oldTy));
+      else if (DECL_NAME(TYPE_NAME(oldTy)))
+        p = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(oldTy)));
+      char *q = (char *)xmalloc(strlen(p)+7);
+      strcpy(q,p);
+      strcat(q,".align");
+      TYPE_NAME(newTy) = get_identifier(q);
+      free(q);
+    }
+  }
+  return newTy;
+}
+
+/// FixUpFields - alter the types referred to by Field nodes that
+/// represent base classes to reflect reality. 
 //
 // Suppose we're converting type T.  Look for the case where a base class A
 // of T contains a virtual base class B, and B is not allocated when A is 
@@ -1748,7 +1803,15 @@ static tree FixBaseClassField(tree Field) {
 // base classes.  (Where A is a virtual base class of T, there is also a BINFO
 // node for it, but not when A is a nonvirtual base class.  So we can't
 // use that.)
-static void FixBaseClassFields(tree type) {
+//
+// Also alter the types referred to by Field nodes that have greater alignment
+// than the Field does; these might not get the tail padding as a Field that
+// they get elsewhere.
+//
+// Both transformations can be needed for the same type (in different contexts),
+// so we need two mappings.
+
+static void FixUpFields(tree type) {
   if (TREE_CODE(type)!=RECORD_TYPE)
     return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
@@ -1762,8 +1825,24 @@ static void FixBaseClassFields(tree type) {
         TREE_CODE(TYPE_SIZE(TREE_TYPE(Field)))==INTEGER_CST &&
         TREE_INT_CST_LOW(DECL_SIZE(Field)) < 
               TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(Field)))) {
-      TREE_TYPE(Field) = FixBaseClassField(Field);
-      DECL_FIELD_REPLACED(Field) = 1;
+      tree newType = FixBaseClassField(Field);
+      if (newType != TREE_TYPE(Field)) {
+        TREE_TYPE(Field) = newType;
+        DECL_FIELD_BASE_REPLACED(Field) = 1;
+      }
+    }
+    if (TREE_CODE(Field)==FIELD_DECL && 
+        !DECL_BIT_FIELD_TYPE(Field) &&
+        TREE_CODE(DECL_FIELD_OFFSET(Field))==INTEGER_CST &&
+        TREE_CODE(TREE_TYPE(Field))==RECORD_TYPE &&
+        TYPE_SIZE(TREE_TYPE(Field)) &&
+        DECL_SIZE(Field) &&
+        DECL_ALIGN(Field) < TYPE_ALIGN(TREE_TYPE(Field))) {
+      tree newType = FixLessAlignedClassField(Field);
+      if (newType != TREE_TYPE(Field)) {
+        TREE_TYPE(Field) = newType;
+        DECL_FIELD_ALIGN_REPLACED(Field) = 1;
+      }
     }
   }
   // Size of the complete type will be a multiple of its alignment.
@@ -1794,22 +1873,29 @@ static void FixBaseClassFields(tree type) {
   }
 }
 
-// RestoreBaseClassFields - put things back the way they were so the C++FE
+// RestoreOriginalFields - put things back the way they were so the C++FE
 // code continues to work (there are pointers stashed away in there).
 
-static void RestoreBaseClassFields(tree type) {
+static void RestoreOriginalFields(tree type) {
   if (TREE_CODE(type)!=RECORD_TYPE)
     return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
-    if (TREE_CODE(Field) == FIELD_DECL && DECL_FIELD_REPLACED(Field)) {
-      tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
-      assert(oldTy);
-      TREE_TYPE(Field) = oldTy;
-      DECL_FIELD_REPLACED(Field) = 0;
+    if (TREE_CODE(Field) == FIELD_DECL) {
+      if (DECL_FIELD_BASE_REPLACED(Field)) {
+        tree &oldTy = BaseTypesMap[TREE_TYPE(Field)];
+        assert(oldTy);
+        TREE_TYPE(Field) = oldTy;
+        DECL_FIELD_BASE_REPLACED(Field) = 0;
+      }
+      if (DECL_FIELD_ALIGN_REPLACED(Field)) {
+        tree &oldTy = LessAlignedTypesMap[std::make_pair(TREE_TYPE(Field), 0U)];
+        assert(oldTy);
+        TREE_TYPE(Field) = oldTy;
+        DECL_FIELD_ALIGN_REPLACED(Field) = 0;
+      }
     }
   }
 }
-
 
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
@@ -2048,8 +2134,10 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
                                  TYPE_PACKED(type));
 
   // Alter any fields that appear to represent base classes so their lists
-  // of fields bear some resemblance to reality.
-  FixBaseClassFields(type);
+  // of fields bear some resemblance to reality.  Also alter any fields that
+  // are less aligned than their type, as the type may not get tail padding
+  // in this case.
+  FixUpFields(type);
 
   // Convert over all of the elements of the struct.
   bool retryAsPackedStruct = false;
@@ -2157,7 +2245,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
   // Put the original gcc struct back the way it was; necessary to prevent the
   // binfo-walking code in cp/class from getting confused.
-  RestoreBaseClassFields(type);
+  RestoreOriginalFields(type);
 
   const Type *ResultTy = Info->getLLVMType();
   StructTypeInfoMap[type] = Info;

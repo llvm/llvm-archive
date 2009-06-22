@@ -5774,7 +5774,7 @@ void TreeToLLVM::EmitCOMPLEX_CST(tree exp, const MemRef *DestLoc) {
   EmitStoreToComplex(*DestLoc, Real, Imag);
 }
 
-// EmitComplexBinOp - Note that this operands on binops like ==/!=, which return
+// EmitComplexBinOp - Note that this operates on binops like ==/!=, which return
 // a bool, not a complex value.
 Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   const Type *ComplexTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)));
@@ -5793,24 +5793,46 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   switch (TREE_CODE(exp)) {
   default: TODO(exp);
   case PLUS_EXPR: // (a+ib) + (c+id) = (a+c) + i(b+d)
-    DSTr = Builder.CreateFAdd(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateFAdd(LHSi, RHSi, "tmpi");
+    if (LHSr->getType()->isFloatingPoint()) {
+      DSTr = Builder.CreateFAdd(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateFAdd(LHSi, RHSi, "tmpi");
+    } else {
+      DSTr = Builder.CreateAdd(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateAdd(LHSi, RHSi, "tmpi");
+    }
     break;
   case MINUS_EXPR: // (a+ib) - (c+id) = (a-c) + i(b-d)
-    DSTr = Builder.CreateFSub(LHSr, RHSr, "tmpr");
-    DSTi = Builder.CreateFSub(LHSi, RHSi, "tmpi");
+    if (LHSr->getType()->isFloatingPoint()) {
+      DSTr = Builder.CreateFSub(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateFSub(LHSi, RHSi, "tmpi");
+    } else {
+      DSTr = Builder.CreateSub(LHSr, RHSr, "tmpr");
+      DSTi = Builder.CreateSub(LHSi, RHSi, "tmpi");
+    }
     break;
   case MULT_EXPR: { // (a+ib) * (c+id) = (ac-bd) + i(ad+cb)
-    Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
-    Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
-    DSTr = Builder.CreateFSub(Tmp1, Tmp2);        // ac-bd
+    if (LHSr->getType()->isFloatingPoint()) {
+      Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
+      Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
+      DSTr = Builder.CreateFSub(Tmp1, Tmp2);        // ac-bd
 
-    Value *Tmp3 = Builder.CreateFMul(LHSr, RHSi); // a*d
-    Value *Tmp4 = Builder.CreateFMul(RHSr, LHSi); // c*b
-    DSTi = Builder.CreateFAdd(Tmp3, Tmp4);        // ad+cb
+      Value *Tmp3 = Builder.CreateFMul(LHSr, RHSi); // a*d
+      Value *Tmp4 = Builder.CreateFMul(RHSr, LHSi); // c*b
+      DSTi = Builder.CreateFAdd(Tmp3, Tmp4);        // ad+cb
+    } else {
+      Value *Tmp1 = Builder.CreateMul(LHSr, RHSr); // a*c
+      Value *Tmp2 = Builder.CreateMul(LHSi, RHSi); // b*d
+      DSTr = Builder.CreateSub(Tmp1, Tmp2);        // ac-bd
+
+      Value *Tmp3 = Builder.CreateMul(LHSr, RHSi); // a*d
+      Value *Tmp4 = Builder.CreateMul(RHSr, LHSi); // c*b
+      DSTi = Builder.CreateAdd(Tmp3, Tmp4);        // ad+cb
+    }
     break;
   }
   case RDIV_EXPR: { // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
+    // RDIV_EXPR should always be floating point.
+    assert (LHSr->getType()->isFloatingPoint());
     Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
     Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
     Value *Tmp3 = Builder.CreateFAdd(Tmp1, Tmp2); // ac+bd
@@ -5818,7 +5840,6 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     Value *Tmp4 = Builder.CreateFMul(RHSr, RHSr); // c*c
     Value *Tmp5 = Builder.CreateFMul(RHSi, RHSi); // d*d
     Value *Tmp6 = Builder.CreateFAdd(Tmp4, Tmp5); // cc+dd
-    // FIXME: What about integer complex?
     DSTr = Builder.CreateFDiv(Tmp3, Tmp6);
 
     Value *Tmp7 = Builder.CreateFMul(LHSi, RHSr); // b*c

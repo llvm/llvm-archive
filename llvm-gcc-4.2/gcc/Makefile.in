@@ -1175,9 +1175,9 @@ LLVMTARGETOBJ := $(sort $(LLVMTARGETOBJ) x86 powerpc arm)
 ## Target symbols to force linking.  This is to ensure that the code generators
 ## and asm printers actually get linked into libllvmgcc<stage>.dylib.
 LLVMTARGETSYMBOLS := \
-  __ZN4llvm19InitializeARMTargetEv __ZN4llvm23InitializeARMAsmPrinterEv \
-  __ZN4llvm23InitializePowerPCTargetEv __ZN4llvm27InitializePowerPCAsmPrinterEv\
-  __ZN4llvm19InitializeX86TargetEv __ZN4llvm23InitializeX86AsmPrinterEv \
+  _LLVMInitializeARMTarget _LLVMInitializeARMAsmPrinter \
+  _LLVMInitializePowerPCTarget _LLVMInitializePowerPCAsmPrinter\
+  _LLVMInitializeX86Target _LLVMInitializeX86AsmPrinter \
 
 endif
 

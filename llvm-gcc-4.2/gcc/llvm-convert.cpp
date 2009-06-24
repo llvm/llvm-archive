@@ -1026,15 +1026,10 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 
   // Trivial Cases.
   case WITH_SIZE_EXPR:
-    // The address is the address of the operand.
-    LV = EmitLV(TREE_OPERAND(exp, 0));
+    LV = EmitLV_WITH_SIZE_EXPR(exp);
     break;
   case INDIRECT_REF:
-    // The lvalue is just the address.
-    LV = LValue(Emit(TREE_OPERAND(exp, 0), 0), expr_align(exp) / 8);
-    // Correct for implicit type conversion: INDIRECT_REF can be applied to a
-    // void*, resulting in a non-void type.
-    LV.Ptr = BitCastToType(LV.Ptr, ConvertType(TREE_TYPE(exp))->getPointerTo());
+    LV = EmitLV_INDIRECT_REF(exp);
     break;
   }
 
@@ -5877,85 +5872,91 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
 //                         ... L-Value Expressions ...
 //===----------------------------------------------------------------------===//
 
-LValue TreeToLLVM::EmitLV_DECL(tree exp) {
-  if (TREE_CODE(exp) == PARM_DECL || TREE_CODE(exp) == VAR_DECL || 
-      TREE_CODE(exp) == CONST_DECL) {
-    // If a static var's type was incomplete when the decl was written,
-    // but the type is complete now, lay out the decl now.
-    if (DECL_SIZE(exp) == 0 && COMPLETE_OR_UNBOUND_ARRAY_TYPE_P(TREE_TYPE(exp))
-        && (TREE_STATIC(exp) || DECL_EXTERNAL(exp))) {
-      layout_decl(exp, 0);
-      
-      // This mirrors code in layout_decl for munging the RTL.  Here we actually
-      // emit a NEW declaration for the global variable, now that it has been
-      // laid out.  We then tell the compiler to "forward" any uses of the old
-      // global to this new one.
-      if (Value *Val = DECL_LLVM_IF_SET(exp)) {
-        //fprintf(stderr, "***\n*** SHOULD HANDLE GLOBAL VARIABLES!\n***\n");
-        //assert(0 && "Reimplement this with replace all uses!");
-#if 0
-        SET_DECL_LLVM(exp, 0);
-        // Create a new global variable declaration
-        llvm_assemble_external(exp);
-        V2GV(Val)->ForwardedGlobal = V2GV(DECL_LLVM(exp));
-#endif
-      }
-    }
-  }
+/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
+/// structure.
+static unsigned getFieldOffsetInBits(tree Field) {
+  assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
+  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
+  if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
+    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
+  return Result;
+}
 
-  assert(!isGimpleTemporary(exp) &&
-         "Cannot use a gimple temporary as an l-value");
-  
-  Value *Decl = DECL_LLVM(exp);
-  if (Decl == 0) {
-    if (errorcount || sorrycount) {
-      const Type *Ty = ConvertType(TREE_TYPE(exp));
-      const PointerType *PTy = PointerType::getUnqual(Ty);
-      LValue LV(ConstantPointerNull::get(PTy), 1);
-      return LV;
-    }
-    assert(0 && "INTERNAL ERROR: Referencing decl that hasn't been laid out");
-    abort();
-  }
-  
-  // Ensure variable marked as used even if it doesn't go through a parser.  If
-  // it hasn't been used yet, write out an external definition.
-  if (!TREE_USED(exp)) {
-    assemble_external(exp);
-    TREE_USED(exp) = 1;
-    Decl = DECL_LLVM(exp);
-  }
-  
-  if (GlobalValue *GV = dyn_cast<GlobalValue>(Decl)) {
-    // If this is an aggregate, emit it to LLVM now.  GCC happens to
-    // get this case right by forcing the initializer into memory.
-    if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
-      if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && !DECL_EXTERNAL(exp) &&
-          GV->isDeclaration() &&
-          !BOGUS_CTOR(exp)) {
-        emit_global_to_llvm(exp);
-        Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
-      }
-    } else {
-      // Otherwise, inform cgraph that we used the global.
-      mark_decl_referenced(exp);
-      if (tree ID = DECL_ASSEMBLER_NAME(exp))
-        mark_referenced(ID);
-    }
-  }
+/// getComponentRefOffsetInBits - Return the offset (in bits) of the field
+/// referenced in a COMPONENT_REF exp.
+static unsigned getComponentRefOffsetInBits(tree exp) {
+  assert(TREE_CODE(exp) == COMPONENT_REF && "not a COMPONENT_REF!");
+  tree field = TREE_OPERAND(exp, 1);
+  assert(TREE_CODE(field) == FIELD_DECL && "not a FIELD_DECL!");
+  tree field_offset = component_ref_field_offset (exp);
+  assert(DECL_FIELD_BIT_OFFSET(field) && field_offset);
+  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field));
+  if (TREE_CODE(field_offset) == INTEGER_CST)
+    Result += TREE_INT_CST_LOW(field_offset)*8;
+  return Result;
+}
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-  // If we have "extern void foo", make the global have type {} instead of
-  // type void.
-  if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
-  const PointerType *PTy = PointerType::getUnqual(Ty);
-  unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
-  if (DECL_ALIGN(exp)) {
-    if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
-      Alignment = DECL_ALIGN(exp) / 8;
-  }
+Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
+  tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
 
-  return LValue(BitCastToType(Decl, PTy), Alignment);
+  const Type *OrigPtrTy = FieldPtr->getType();
+  const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
+
+  Function *Fn = Intrinsic::getDeclaration(TheModule,
+                                           Intrinsic::ptr_annotation,
+                                           &SBP, 1);
+
+  // Get file and line number.  FIXME: Should this be for the decl or the
+  // use.  Is there a location info for the use?
+  Constant *LineNo = ConstantInt::get(Type::Int32Ty,
+                                      DECL_SOURCE_LINE(FieldDecl));
+  Constant *File = ConvertMetadataStringToGV(DECL_SOURCE_FILE(FieldDecl));
+
+  File = TheFolder->CreateBitCast(File, SBP);
+
+  // There may be multiple annotate attributes. Pass return of lookup_attr
+  //  to successive lookups.
+  while (AnnotateAttr) {
+    // Each annotate attribute is a tree list.
+    // Get value of list which is our linked list of args.
+    tree args = TREE_VALUE(AnnotateAttr);
+
+    // Each annotate attribute may have multiple args.
+    // Treat each arg as if it were a separate annotate attribute.
+    for (tree a = args; a; a = TREE_CHAIN(a)) {
+      // Each element of the arg list is a tree list, so get value
+      tree val = TREE_VALUE(a);
+
+      // Assert its a string, and then get that string.
+      assert(TREE_CODE(val) == STRING_CST &&
+             "Annotate attribute arg should always be a string");
+
+      Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
+
+      // We can not use the IRBuilder because it will constant fold away
+      // the GEP that is critical to distinguish between an annotate
+      // attribute on a whole struct from one on the first element of the
+      // struct.
+      BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP,
+                                                  FieldPtr->getNameStart());
+      Builder.Insert(CastFieldPtr);
+
+      Value *Ops[4] = {
+        CastFieldPtr, BitCastToType(strGV, SBP),
+        File,  LineNo
+      };
+
+      const Type* FieldPtrType = FieldPtr->getType();
+      FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
+      FieldPtr = BitCastToType(FieldPtr, FieldPtrType);
+    }
+
+    // Get next annotate attribute.
+    AnnotateAttr = TREE_CHAIN(AnnotateAttr);
+    if (AnnotateAttr)
+      AnnotateAttr = lookup_attribute("annotate", AnnotateAttr);
+  }
+  return FieldPtr;
 }
 
 LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
@@ -6043,126 +6044,76 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
                 Alignment);
 }
 
-/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
-/// structure.
-static unsigned getFieldOffsetInBits(tree Field) {
-  assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
-  if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
-    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
-  return Result;
-}
+LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
+  LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
+  assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
 
-/// getComponentRefOffsetInBits - Return the offset (in bits) of the field
-/// referenced in a COMPONENT_REF exp.
-static unsigned getComponentRefOffsetInBits(tree exp) {
-  assert(TREE_CODE(exp) == COMPONENT_REF && "not a COMPONENT_REF!");
-  tree field = TREE_OPERAND(exp, 1);
-  assert(TREE_CODE(field) == FIELD_DECL && "not a FIELD_DECL!");
-  tree field_offset = component_ref_field_offset (exp);
-  assert(DECL_FIELD_BIT_OFFSET(field) && field_offset);
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field));
-  if (TREE_CODE(field_offset) == INTEGER_CST)
-    Result += TREE_INT_CST_LOW(field_offset)*8;
-  return Result;
-}
+  unsigned BitStart = (unsigned)TREE_INT_CST_LOW(TREE_OPERAND(exp, 2));
+  unsigned BitSize = (unsigned)TREE_INT_CST_LOW(TREE_OPERAND(exp, 1));
+  const Type *ValTy = ConvertType(TREE_TYPE(exp));
 
-Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
-  tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
+  unsigned ValueSizeInBits = TD.getTypeSizeInBits(ValTy);
+  assert(BitSize <= ValueSizeInBits &&
+         "ValTy isn't large enough to hold the value loaded!");
 
-  const Type *OrigPtrTy = FieldPtr->getType();
-  const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
-  
-  Function *Fn = Intrinsic::getDeclaration(TheModule, 
-                                           Intrinsic::ptr_annotation,
-                                           &SBP, 1);
-  
-  // Get file and line number.  FIXME: Should this be for the decl or the
-  // use.  Is there a location info for the use?
-  Constant *LineNo = ConstantInt::get(Type::Int32Ty,
-                                      DECL_SOURCE_LINE(FieldDecl));
-  Constant *File = ConvertMetadataStringToGV(DECL_SOURCE_FILE(FieldDecl));
-  
-  File = TheFolder->CreateBitCast(File, SBP);
-  
-  // There may be multiple annotate attributes. Pass return of lookup_attr 
-  //  to successive lookups.
-  while (AnnotateAttr) {
-    // Each annotate attribute is a tree list.
-    // Get value of list which is our linked list of args.
-    tree args = TREE_VALUE(AnnotateAttr);
-    
-    // Each annotate attribute may have multiple args.
-    // Treat each arg as if it were a separate annotate attribute.
-    for (tree a = args; a; a = TREE_CHAIN(a)) {
-      // Each element of the arg list is a tree list, so get value
-      tree val = TREE_VALUE(a);
-      
-      // Assert its a string, and then get that string.
-      assert(TREE_CODE(val) == STRING_CST &&
-             "Annotate attribute arg should always be a string");
-      
-      Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
-      
-      // We can not use the IRBuilder because it will constant fold away
-      // the GEP that is critical to distinguish between an annotate 
-      // attribute on a whole struct from one on the first element of the
-      // struct.
-      BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP, 
-                                                  FieldPtr->getNameStart());
-      Builder.Insert(CastFieldPtr);
-      
-      Value *Ops[4] = {
-        CastFieldPtr, BitCastToType(strGV, SBP), 
-        File,  LineNo
-      };
-      
-      const Type* FieldPtrType = FieldPtr->getType();
-      FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
-      FieldPtr = BitCastToType(FieldPtr, FieldPtrType);
-    }
-    
-    // Get next annotate attribute.
-    AnnotateAttr = TREE_CHAIN(AnnotateAttr);
-    if (AnnotateAttr)
-      AnnotateAttr = lookup_attribute("annotate", AnnotateAttr);
+  assert(ValueSizeInBits == TD.getTypeAllocSizeInBits(ValTy) &&
+         "FIXME: BIT_FIELD_REF logic is broken for non-round types");
+
+  // BIT_FIELD_REF values can have BitStart values that are quite large.  We
+  // know that the thing we are loading is ValueSizeInBits large.  If BitStart
+  // is larger than ValueSizeInBits, bump the pointer over to where it should
+  // be.
+  if (unsigned UnitOffset = BitStart / ValueSizeInBits) {
+    // TODO: If Ptr.Ptr is a struct type or something, we can do much better
+    // than this.  e.g. check out when compiling unwind-dw2-fde-darwin.c.
+    Ptr.Ptr = BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy));
+    Ptr.Ptr = Builder.CreateGEP(Ptr.Ptr,
+                                ConstantInt::get(Type::Int32Ty, UnitOffset));
+    BitStart -= UnitOffset*ValueSizeInBits;
   }
-  return FieldPtr;
-}
 
+  // If this is referring to the whole field, return the whole thing.
+  if (BitStart == 0 && BitSize == ValueSizeInBits) {
+    return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)),
+                  Ptr.getAlignment());
+  }
+
+  return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)), 1,
+                BitStart, BitSize);
+}
 
 LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   LValue StructAddrLV = EmitLV(TREE_OPERAND(exp, 0));
-  tree FieldDecl = TREE_OPERAND(exp, 1); 
+  tree FieldDecl = TREE_OPERAND(exp, 1);
   unsigned LVAlign = StructAddrLV.getAlignment();
- 
+
   assert((TREE_CODE(DECL_CONTEXT(FieldDecl)) == RECORD_TYPE ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == UNION_TYPE  ||
           TREE_CODE(DECL_CONTEXT(FieldDecl)) == QUAL_UNION_TYPE));
-  
+
   // Ensure that the struct type has been converted, so that the fielddecls
   // are laid out.  Note that we convert to the context of the Field, not to the
   // type of Operand #0, because GCC doesn't always have the field match up with
   // operand #0's type.
   const Type *StructTy = ConvertType(DECL_CONTEXT(FieldDecl));
-  
-  assert((!StructAddrLV.isBitfield() || 
+
+  assert((!StructAddrLV.isBitfield() ||
           StructAddrLV.BitStart == 0) && "structs cannot be bitfields!");
-  
+
   StructAddrLV.Ptr = BitCastToType(StructAddrLV.Ptr,
                                    PointerType::getUnqual(StructTy));
   const Type *FieldTy = ConvertType(getDeclaredType(FieldDecl));
-  
+
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
   unsigned BitStart = getComponentRefOffsetInBits(exp);
   Value *FieldPtr;
-  
+
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
-    
+
     // If the LLVM struct has zero field, don't try to index into it, just use
     // the current pointer.
     FieldPtr = StructAddrLV.Ptr;
@@ -6171,14 +6122,14 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
              "Field Idx out of range!");
       FieldPtr = Builder.CreateStructGEP(FieldPtr, MemberIndex);
     }
-    
+
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.
     if (MemberIndex) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
       unsigned Offset = SL->getElementOffset(MemberIndex);
       BitStart -= Offset * 8;
-      
+
       // If the base is known to be 8-byte aligned, and we're adding a 4-byte
       // offset, the field is known to be 4-byte aligned.
       LVAlign = MinAlign(LVAlign, Offset);
@@ -6195,7 +6146,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
         DECL_ALIGN(FieldDecl))
       LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN(FieldDecl)) / 8);
 #endif
-    
+
     // If the FIELD_DECL has an annotate attribute on it, emit it.
     if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))
       FieldPtr = EmitFieldAnnotation(FieldPtr, FieldDecl);
@@ -6223,10 +6174,10 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       LVAlign = MinAlign(LVAlign, ByteOffset);
     }
 
-    Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr, 
+    Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr,
                             Offset->getType());
     Ptr = Builder.CreateAdd(Ptr, Offset);
-    FieldPtr = CastToType(Instruction::IntToPtr, Ptr, 
+    FieldPtr = CastToType(Instruction::IntToPtr, Ptr,
                           PointerType::getUnqual(FieldTy));
   }
 
@@ -6328,78 +6279,85 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   return LValue(FieldPtr, LVAlign);
 }
 
-LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
-  LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
-  assert(!Ptr.isBitfield() && "BIT_FIELD_REF operands cannot be bitfields!");
-  
-  unsigned BitStart = (unsigned)TREE_INT_CST_LOW(TREE_OPERAND(exp, 2));
-  unsigned BitSize = (unsigned)TREE_INT_CST_LOW(TREE_OPERAND(exp, 1));
-  const Type *ValTy = ConvertType(TREE_TYPE(exp));
-  
-  unsigned ValueSizeInBits = TD.getTypeSizeInBits(ValTy);
-  assert(BitSize <= ValueSizeInBits &&
-         "ValTy isn't large enough to hold the value loaded!");
+LValue TreeToLLVM::EmitLV_DECL(tree exp) {
+  if (TREE_CODE(exp) == PARM_DECL || TREE_CODE(exp) == VAR_DECL ||
+      TREE_CODE(exp) == CONST_DECL) {
+    // If a static var's type was incomplete when the decl was written,
+    // but the type is complete now, lay out the decl now.
+    if (DECL_SIZE(exp) == 0 && COMPLETE_OR_UNBOUND_ARRAY_TYPE_P(TREE_TYPE(exp))
+        && (TREE_STATIC(exp) || DECL_EXTERNAL(exp))) {
+      layout_decl(exp, 0);
 
-  assert(ValueSizeInBits == TD.getTypeAllocSizeInBits(ValTy) &&
-         "FIXME: BIT_FIELD_REF logic is broken for non-round types");
-
-  // BIT_FIELD_REF values can have BitStart values that are quite large.  We
-  // know that the thing we are loading is ValueSizeInBits large.  If BitStart
-  // is larger than ValueSizeInBits, bump the pointer over to where it should
-  // be.
-  if (unsigned UnitOffset = BitStart / ValueSizeInBits) {
-    // TODO: If Ptr.Ptr is a struct type or something, we can do much better
-    // than this.  e.g. check out when compiling unwind-dw2-fde-darwin.c.
-    Ptr.Ptr = BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy));
-    Ptr.Ptr = Builder.CreateGEP(Ptr.Ptr,
-                                ConstantInt::get(Type::Int32Ty, UnitOffset));
-    BitStart -= UnitOffset*ValueSizeInBits;
+      // This mirrors code in layout_decl for munging the RTL.  Here we actually
+      // emit a NEW declaration for the global variable, now that it has been
+      // laid out.  We then tell the compiler to "forward" any uses of the old
+      // global to this new one.
+      if (Value *Val = DECL_LLVM_IF_SET(exp)) {
+        //fprintf(stderr, "***\n*** SHOULD HANDLE GLOBAL VARIABLES!\n***\n");
+        //assert(0 && "Reimplement this with replace all uses!");
+#if 0
+        SET_DECL_LLVM(exp, 0);
+        // Create a new global variable declaration
+        llvm_assemble_external(exp);
+        V2GV(Val)->ForwardedGlobal = V2GV(DECL_LLVM(exp));
+#endif
+      }
+    }
   }
-  
-  // If this is referring to the whole field, return the whole thing.
-  if (BitStart == 0 && BitSize == ValueSizeInBits) {
-    return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)),
-                  Ptr.getAlignment());
+
+  assert(!isGimpleTemporary(exp) &&
+         "Cannot use a gimple temporary as an l-value");
+
+  Value *Decl = DECL_LLVM(exp);
+  if (Decl == 0) {
+    if (errorcount || sorrycount) {
+      const Type *Ty = ConvertType(TREE_TYPE(exp));
+      const PointerType *PTy = PointerType::getUnqual(Ty);
+      LValue LV(ConstantPointerNull::get(PTy), 1);
+      return LV;
+    }
+    assert(0 && "INTERNAL ERROR: Referencing decl that hasn't been laid out");
+    abort();
   }
-  
-  return LValue(BitCastToType(Ptr.Ptr, PointerType::getUnqual(ValTy)), 1,
-                BitStart, BitSize);
-}
 
-LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
-  LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
-  assert(!Ptr.isBitfield() &&
-         "REALPART_EXPR / IMAGPART_EXPR operands cannot be bitfields!");
-  unsigned Alignment;
-  if (Idx == 0)
-    // REALPART alignment is same as the complex operand.
-    Alignment = Ptr.getAlignment();
-  else
-    // IMAGPART alignment = MinAlign(Ptr.Alignment, sizeof field);
-    Alignment = MinAlign(Ptr.getAlignment(),
-                         TD.getTypeAllocSize(Ptr.Ptr->getType()));
-  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
-}
-
-LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
-  tree Op = TREE_OPERAND(exp, 0);
-
-  if (isAggregateTreeType(TREE_TYPE(Op))) {
-    // If the input is an aggregate, the address is the address of the operand.
-    LValue LV = EmitLV(Op);
-    // The type is the type of the expression.
-    LV.Ptr = BitCastToType(LV.Ptr, 
-                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
-    return LV;
-  } else {
-    // If the input is a scalar, emit to a temporary.
-    Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
-    StoreInst *S = Builder.CreateStore(Emit(Op, 0), Dest);
-    // The type is the type of the expression.
-    Dest = BitCastToType(Dest,  
-                         PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
-    return LValue(Dest, 1);
+  // Ensure variable marked as used even if it doesn't go through a parser.  If
+  // it hasn't been used yet, write out an external definition.
+  if (!TREE_USED(exp)) {
+    assemble_external(exp);
+    TREE_USED(exp) = 1;
+    Decl = DECL_LLVM(exp);
   }
+
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(Decl)) {
+    // If this is an aggregate, emit it to LLVM now.  GCC happens to
+    // get this case right by forcing the initializer into memory.
+    if (TREE_CODE(exp) == CONST_DECL || TREE_CODE(exp) == VAR_DECL) {
+      if ((DECL_INITIAL(exp) || !TREE_PUBLIC(exp)) && !DECL_EXTERNAL(exp) &&
+          GV->isDeclaration() &&
+          !BOGUS_CTOR(exp)) {
+        emit_global_to_llvm(exp);
+        Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
+      }
+    } else {
+      // Otherwise, inform cgraph that we used the global.
+      mark_decl_referenced(exp);
+      if (tree ID = DECL_ASSEMBLER_NAME(exp))
+        mark_referenced(ID);
+    }
+  }
+
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  // If we have "extern void foo", make the global have type {} instead of
+  // type void.
+  if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
+  const PointerType *PTy = PointerType::getUnqual(Ty);
+  unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
+  if (DECL_ALIGN(exp)) {
+    if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
+      Alignment = DECL_ALIGN(exp) / 8;
+  }
+
+  return LValue(BitCastToType(Decl, PTy), Alignment);
 }
 
 LValue TreeToLLVM::EmitLV_EXC_PTR_EXPR(tree exp) {
@@ -6419,6 +6377,57 @@ LValue TreeToLLVM::EmitLV_FILTER_EXPR(tree exp) {
                                              getType())->getElementType());
   return LValue(ExceptionSelectorValue, Alignment);
 }
+
+LValue TreeToLLVM::EmitLV_INDIRECT_REF(tree exp) {
+  // The lvalue is just the address.
+  LValue LV = LValue(Emit(TREE_OPERAND(exp, 0), 0), expr_align(exp) / 8);
+  // Correct for implicit type conversion: INDIRECT_REF can be applied to a
+  // void*, resulting in a non-void type.
+  LV.Ptr = BitCastToType(LV.Ptr, ConvertType(TREE_TYPE(exp))->getPointerTo());
+  return LV;
+}
+
+LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
+  tree Op = TREE_OPERAND(exp, 0);
+
+  if (isAggregateTreeType(TREE_TYPE(Op))) {
+    // If the input is an aggregate, the address is the address of the operand.
+    LValue LV = EmitLV(Op);
+    // The type is the type of the expression.
+    LV.Ptr = BitCastToType(LV.Ptr,
+                           PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
+    return LV;
+  } else {
+    // If the input is a scalar, emit to a temporary.
+    Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
+    StoreInst *S = Builder.CreateStore(Emit(Op, 0), Dest);
+    // The type is the type of the expression.
+    Dest = BitCastToType(Dest,
+                         PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
+    return LValue(Dest, 1);
+  }
+}
+
+LValue TreeToLLVM::EmitLV_WITH_SIZE_EXPR(tree exp) {
+  // The address is the address of the operand.
+  return EmitLV(TREE_OPERAND(exp, 0));
+}
+
+LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
+  LValue Ptr = EmitLV(TREE_OPERAND(exp, 0));
+  assert(!Ptr.isBitfield() &&
+         "REALPART_EXPR / IMAGPART_EXPR operands cannot be bitfields!");
+  unsigned Alignment;
+  if (Idx == 0)
+    // REALPART alignment is same as the complex operand.
+    Alignment = Ptr.getAlignment();
+  else
+    // IMAGPART alignment = MinAlign(Ptr.Alignment, sizeof field);
+    Alignment = MinAlign(Ptr.getAlignment(),
+                         TD.getTypeAllocSize(Ptr.Ptr->getType()));
+  return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                       ... Constant Expressions ...

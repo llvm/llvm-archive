@@ -527,6 +527,7 @@ private:
   Value *EmitCEIL_DIV_EXPR(tree_node *exp);
   Value *EmitFLOOR_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
+  Value *EmitFieldAnnotation(Value *FieldPtr, tree_node *FieldDecl);
 
   // Exception Handling.
   Value *EmitEXC_PTR_EXPR(tree_node *exp);
@@ -589,15 +590,16 @@ private:
   Value *EmitComplexBinOp(tree_node *exp, const MemRef *DestLoc);
 
   // L-Value Expressions.
-  LValue EmitLV_DECL(tree_node *exp);
   LValue EmitLV_ARRAY_REF(tree_node *exp);
-  LValue EmitLV_COMPONENT_REF(tree_node *exp);
-  Value *EmitFieldAnnotation(Value *FieldPtr, tree_node *FieldDecl);
   LValue EmitLV_BIT_FIELD_REF(tree_node *exp);
-  LValue EmitLV_XXXXPART_EXPR(tree_node *exp, unsigned Idx);
-  LValue EmitLV_VIEW_CONVERT_EXPR(tree_node *exp);
+  LValue EmitLV_COMPONENT_REF(tree_node *exp);
+  LValue EmitLV_DECL(tree_node *exp);
   LValue EmitLV_EXC_PTR_EXPR(tree_node *exp);
   LValue EmitLV_FILTER_EXPR(tree_node *exp);
+  LValue EmitLV_INDIRECT_REF(tree_node *exp);
+  LValue EmitLV_VIEW_CONVERT_EXPR(tree_node *exp);
+  LValue EmitLV_WITH_SIZE_EXPR(tree_node *exp);
+  LValue EmitLV_XXXXPART_EXPR(tree_node *exp, unsigned Idx);
 
   // Constant Expressions.
   Value *EmitINTEGER_CST(tree_node *exp);

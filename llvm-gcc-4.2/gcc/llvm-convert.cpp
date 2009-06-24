@@ -3120,8 +3120,13 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: -(a+ib) = -a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  R = Builder.CreateFNeg(R);
-  I = Builder.CreateFNeg(I);
+  if (R->getType()->isFloatingPoint()) {
+    R = Builder.CreateFNeg(R);
+    I = Builder.CreateFNeg(I);
+  } else {
+    R = Builder.CreateNeg(R);
+    I = Builder.CreateNeg(I);
+  }
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -3137,7 +3142,10 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: ~(a+ib) = a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  I = Builder.CreateFNeg(I);
+  if (I->getType()->isFloatingPoint())
+    I = Builder.CreateFNeg(I);
+  else
+    I = Builder.CreateNeg(I);
   EmitStoreToComplex(*DestLoc, R, I);
   return 0;
 }
@@ -4550,6 +4558,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       return false;
     }
 
+    // This treats everything as unknown, and is minimally defensible as
+    // correct, although completely useless.
     if (tree_low_cst (ObjSizeTree, 0) < 2)
       Result = ConstantInt::getAllOnesValue(TD.getIntPtrType());
     else

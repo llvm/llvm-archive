@@ -6544,13 +6544,17 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
     for (unsigned i = 0; i != Len; ++i)
       Elts.push_back(ConstantInt::get(Type::Int8Ty, InStr[i]));
   } else if (ElTy == Type::Int16Ty) {
+    assert((Len&1) == 0 &&
+           "Length in bytes should be a multiple of element size");
     const unsigned short *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len; ++i)
+    for (unsigned i = 0; i != Len/2; ++i)
       Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
   } else if (ElTy == Type::Int32Ty) {
+    assert((Len&3) == 0 &&
+           "Length in bytes should be a multiple of element size");
     const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len; ++i)
+    for (unsigned i = 0; i != Len/4; ++i)
       Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
   } else {
     assert(0 && "Unknown character type!");

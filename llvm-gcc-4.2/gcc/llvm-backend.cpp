@@ -332,7 +332,7 @@ void handleVisibility(tree decl, GlobalValue *GV) {
 #endif
 
 namespace llvm {
-#define Declare2(TARG, MOD)   void Initialize ## TARG ## MOD()
+#define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
 #define Declare(T, M) Declare2(T, M)
   Declare(LLVM_TARGET_NAME, Target);
   Declare(LLVM_TARGET_NAME, AsmPrinter);
@@ -342,7 +342,7 @@ namespace llvm {
 
 void llvm_initialize_backend(void) {
   // Initialize the LLVM backend.
-#define DoInit2(TARG, MOD)   llvm::Initialize ## TARG ## MOD()
+#define DoInit2(TARG, MOD)  LLVMInitialize ## TARG ## MOD()
 #define DoInit(T, M) DoInit2(T, M)
   DoInit(LLVM_TARGET_NAME, Target);
   DoInit(LLVM_TARGET_NAME, AsmPrinter);

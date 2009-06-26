@@ -3981,28 +3981,58 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
   return Result;
 }
 
+/// ChooseConstraintTuple: we know each of the NumInputs+NumOutputs strings
+/// in Constraints[] is a comma-separated list of NumChoices different
+/// constraints.  Look through the operands and constraint possibilities
+/// and pick a tuple where all the operands match.  Replace the strings
+/// in Constraints[] with the shorter strings from that tuple (malloc'ed,
+/// caller is responsible for cleaning it up).
+///
+/// gcc's algorithm for picking "the best" tuple is quite complicated, and
+/// is performed after things like SROA, not before.  At the moment we are
+/// just trying to pick one that will work.  This may get refined.
+static void
+ChooseConstraintTuple(const char **Constraints, tree exp, unsigned NumInputs,
+                      unsigned NumOutputs, unsigned NumChoices)
+{
+}
 
 Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   unsigned NumInputs = list_length(ASM_INPUTS(exp));
   unsigned NumOutputs = list_length(ASM_OUTPUTS(exp));
   unsigned NumInOut = 0;
-  
+
+  // Look for multiple alternative constraints: multiple alternatives separated
+  // by commas.
+  unsigned NumChoices = 0;    // sentinal; real value is always at least 1.
+  const char* p;
+  for (tree t = ASM_INPUTS(exp); t; t = TREE_CHAIN(t)) {
+    unsigned NumInputChoices = 1;
+    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
+      if (*p == ',')
+        NumInputChoices++;
+    }
+    if (NumChoices==0)
+      NumChoices = NumInputChoices;
+    else if (NumChoices != NumInputChoices)
+      abort();      // invalid constraints
+  }
+  for (tree t = ASM_OUTPUTS(exp); t; t = TREE_CHAIN(t)) {
+    unsigned NumOutputChoices = 1;
+    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
+      if (*p == ',')
+        NumOutputChoices++;
+    }
+    if (NumChoices==0)
+      NumChoices = NumOutputChoices;
+    else if (NumChoices != NumOutputChoices)
+      abort();      // invalid constraints
+  }
+ 
   /// Constraints - The output/input constraints, concatenated together in array
   /// form instead of list form.
   const char **Constraints =
     (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
-  
-  // FIXME: CHECK ALTERNATIVES, something akin to check_operand_nalternatives.
-  
-  std::vector<Value*> CallOps;
-  std::vector<const Type*> CallArgTypes;
-  std::string NewAsmStr = ConvertInlineAsmStr(exp, NumOutputs+NumInputs);
-  std::string ConstraintStr;
-  
-  // StoreCallResultAddr - The pointer to store the result of the call through.
-  SmallVector<Value *, 4> StoreCallResultAddrs;
-  SmallVector<const Type *, 4> CallResultTypes;
-  SmallVector<bool, 4> CallResultIsSigned;
   
   // Process outputs.
   int ValNum = 0;
@@ -4017,6 +4047,44 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     const char *Constraint =
       TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Output)));
     Constraints[ValNum] = Constraint;
+  }
+  // Process inputs.
+  for (tree Input = ASM_INPUTS(exp); Input; Input = TREE_CHAIN(Input),++ValNum){
+    tree Val = TREE_VALUE(Input);
+    tree type = TREE_TYPE(Val);
+    // If there's an erroneous arg, emit no insn.
+    if (type == error_mark_node) return 0;
+    
+    const char *Constraint =
+      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Input)));
+    Constraints[ValNum] = Constraint;
+  }
+
+  // If there are multiple constraint tuples, pick one.  Constraints is
+  // altered to point to shorter strings (which are malloc'ed), and everything
+  // below Just Works as in the NumChoices==1 case.
+  if (NumChoices)
+    ChooseConstraintTuple(Constraints, exp, NumInputs, NumOutputs, NumChoices);
+
+  std::vector<Value*> CallOps;
+  std::vector<const Type*> CallArgTypes;
+  std::string NewAsmStr = ConvertInlineAsmStr(exp, NumOutputs+NumInputs);
+  std::string ConstraintStr;
+  
+  // StoreCallResultAddr - The pointer to store the result of the call through.
+  SmallVector<Value *, 4> StoreCallResultAddrs;
+  SmallVector<const Type *, 4> CallResultTypes;
+  SmallVector<bool, 4> CallResultIsSigned;
+  
+  // Process outputs.
+  ValNum = 0;
+  for (tree Output = ASM_OUTPUTS(exp); Output; 
+       Output = TREE_CHAIN(Output), ++ValNum) {
+    tree Operand = TREE_VALUE(Output);
+    tree type = TREE_TYPE(Operand);
+    
+    // Parse the output constraint.
+    const char *Constraint = Constraints[ValNum];
     bool IsInOut, AllowsReg, AllowsMem;
     if (!parse_output_constraint(&Constraint, ValNum, NumInputs, NumOutputs,
                                  &AllowsMem, &AllowsReg, &IsInOut))
@@ -4024,7 +4092,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     
     assert(Constraint[0] == '=' && "Not an output constraint?");
 
-    // Output constraints must be addressible if they aren't simple register
+    // Output constraints must be addressable if they aren't simple register
     // constraints (this emits "address of register var" errors, etc).
     if (!AllowsReg && (AllowsMem || IsInOut))
       lang_hooks.mark_addressable(Operand);
@@ -4082,12 +4150,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   for (tree Input = ASM_INPUTS(exp); Input; Input = TREE_CHAIN(Input),++ValNum){
     tree Val = TREE_VALUE(Input);
     tree type = TREE_TYPE(Val);
-    // If there's an erroneous arg, emit no insn.
-    if (type == error_mark_node) return 0;
     
-    const char *Constraint =
-      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Input)));
-    Constraints[ValNum] = Constraint;
+    const char *Constraint = Constraints[ValNum];
 
     bool AllowsReg, AllowsMem;
     if (!parse_input_constraint(Constraints+ValNum, ValNum-NumOutputs,

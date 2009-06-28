@@ -4461,6 +4461,20 @@ void clearTargetBuiltinCache() {
   TargetBuiltinCache.clear();
 }
 
+void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss) {
+  Value* C[5];
+  C[0] = ConstantInt::get(Type::Int1Ty, ll);
+  C[1] = ConstantInt::get(Type::Int1Ty, ls);
+  C[2] = ConstantInt::get(Type::Int1Ty, sl);
+  C[3] = ConstantInt::get(Type::Int1Ty, ss);
+  // We assume like gcc appears to, that this only applies to cached memory.
+  C[4] = ConstantInt::get(Type::Int1Ty, false);
+
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                               Intrinsic::memory_barrier),
+                     C, C + 5);
+}
+
 Value *
 TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   const Type *ResultTy = ConvertType(TREE_TYPE(exp));
@@ -4474,6 +4488,9 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   Ty[1] = PointerType::getUnqual(ResultTy);
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
   C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+  // The gcc builtins are also full memory barriers.
+  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+  EmitMemoryBarrier(true, true, true, true);
   Value *Result = 
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,  id,
                                                  Ty, 2),
@@ -4498,11 +4515,20 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
   C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
 
+  // The gcc builtins are also full memory barriers.
+  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+  EmitMemoryBarrier(true, true, true, true);
+
   Value *Result = 
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                  Intrinsic::atomic_cmp_swap, 
                                                  Ty, 2),
     C, C + 3);
+  
+  // The gcc builtins are also full memory barriers.
+  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+  EmitMemoryBarrier(true, true, true, true);
+  
   if (isBool)
     Result = CastToUIntType(Builder.CreateICmpEQ(Result, C[1]),
                             ConvertType(boolean_type_node));
@@ -4970,11 +4996,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_add, 
                                                    Ty, 2),
                          C, C + 2);
+
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+
     Result = Builder.CreateAdd(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
@@ -4998,11 +5034,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_sub, 
                                                    Ty, 2),
                          C, C + 2);
+
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+
     Result = Builder.CreateSub(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
@@ -5026,11 +5072,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_or, 
                                                    Ty, 2),
                          C, C + 2);
+                         
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+
     Result = Builder.CreateOr(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
@@ -5054,11 +5110,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_and,
                                                    Ty, 2),
                          C, C + 2);
+
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+
     Result = Builder.CreateAnd(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
@@ -5082,11 +5148,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_xor, 
                                                    Ty, 2),
                          C, C + 2);
+                         
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+                         
     Result = Builder.CreateXor(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;
@@ -5110,11 +5186,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[1] = PointerType::getUnqual(ResultTy);
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+    
     Result = 
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                    Intrinsic::atomic_load_nand, 
                                                    Ty, 2),
                          C, C + 2);
+                         
+    // The gcc builtins are also full memory barriers.
+    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
+    EmitMemoryBarrier(true, true, true, true);
+                         
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
     return true;

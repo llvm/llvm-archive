@@ -3985,7 +3985,13 @@ init_function_start (tree subr)
   /* LLVM LOCAL end */
   /* Warn if this value is an aggregate type,
      regardless of which calling convention we are using for it.  */
-  if (AGGREGATE_TYPE_P (TREE_TYPE (DECL_RESULT (subr))))
+  /* LLVM LOCAL begin - <rdar://problem/7011331> */
+  if (AGGREGATE_TYPE_P (TREE_TYPE (DECL_RESULT (subr)))
+#ifdef ENABLE_LLVM
+      && !lookup_attribute ("always_inline", DECL_ATTRIBUTES (subr))
+#endif
+      )
+  /* LLVM LOCAL end - <rdar://problem/7011331> */
     warning (OPT_Waggregate_return, "function returns an aggregate");
 }
 

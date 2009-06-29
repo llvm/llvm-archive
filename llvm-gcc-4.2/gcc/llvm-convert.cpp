@@ -4467,7 +4467,7 @@ void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss) {
   C[1] = ConstantInt::get(Type::Int1Ty, ls);
   C[2] = ConstantInt::get(Type::Int1Ty, sl);
   C[3] = ConstantInt::get(Type::Int1Ty, ss);
-  // We assume like gcc appears to, that this only applies to cached memory.
+  // Be conservatively safe.
   C[4] = ConstantInt::get(Type::Int1Ty, true);
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule,

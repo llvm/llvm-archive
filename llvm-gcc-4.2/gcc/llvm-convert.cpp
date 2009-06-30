@@ -3981,6 +3981,14 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
   return Result;
 }
 
+/// See if operand "exp" can use the indicated Constraint (which is
+/// terminated by a null or a comma).
+/// Returns:  -1=no, 0=yes but auxiliary instructions needed, 1=yes and free
+int MatchWeight(const char *Constraint, tree exp, bool isInput) {
+  /// TEMPORARY.  This has the effect that alternative 0 is always chosen.
+  return 0;
+}
+
 /// ChooseConstraintTuple: we know each of the NumInputs+NumOutputs strings
 /// in Constraints[] is a comma-separated list of NumChoices different
 /// constraints.  Look through the operands and constraint possibilities
@@ -4000,13 +4008,67 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
                       unsigned NumOutputs, unsigned NumChoices,
                       const char **ReplacementStrings)
 {
-  unsigned int CommasToSkip;
-  // TEMPORARY: assume the second set of constraints is the right one.
-  // This is totally wrong, of course, but allows the mechanics of string
-  // handling to be tested.
-  CommasToSkip = 1;
-
+  int MaxWeight = 0;
+  unsigned int CommasToSkip = 0;
+  int Weights[NumChoices];
+  // RunningConstraints is pointers into the Constraints strings which
+  // are incremented as we go to point to the beginning of each
+  // comma-separated alternative.
+  const char* RunningConstraints[NumInputs+NumOutputs];
+  memcpy(RunningConstraints, Constraints, 
+         (NumInputs+NumOutputs) * sizeof(const char*));
+  // The entire point of this loop is to compute CommasToSkip.
+  for (unsigned int i=0; i<NumChoices; i++) {
+    Weights[i] = 0;
+    unsigned int j = 0;
+    for (tree Output = ASM_OUTPUTS(exp); j<NumOutputs;
+         j++, Output = TREE_CHAIN(Output)) {
+      if (i==0)
+        RunningConstraints[j]++;    // skip leading =
+      const char* p = RunningConstraints[j];
+      if (Weights[i] != -1) {
+        int w = MatchWeight(p, TREE_VALUE(Output), false);
+        // Nonmatch means the entire tuple doesn't match.  However, we
+        // keep scanning to set up RunningConstraints correctly for the
+        // next tuple.
+        if (w < 0)
+          Weights[i] = -1;
+        else 
+          Weights[i] += w;
+      }
+      while (*p!=0 && *p!=',')
+        p++;
+      if (*p!=0)
+        p++;
+      RunningConstraints[j] = p;
+    }
+    assert(j==NumOutputs);
+    for (tree Input = ASM_INPUTS(exp); j<NumInputs+NumOutputs; 
+         j++, Input = TREE_CHAIN(Input)) {
+      const char* p = RunningConstraints[j];
+      if (Weights[i] != -1) {
+        int w = MatchWeight(p, TREE_VALUE(Input), false);
+        if (w < 0)
+          Weights[i] = -1;    // As above.
+        else
+          Weights[i] += w;
+      }
+      while (*p!=0 && *p!=',')
+        p++;
+      if (*p!=0)
+        p++;
+      RunningConstraints[j] = p;
+    }
+    if (Weights[i]>MaxWeight) {
+      CommasToSkip = i;
+      MaxWeight = Weights[i];
+    }
+  }
+  // We have picked an alternative (the CommasToSkip'th one).
+  // Change Constraints to point to malloc'd copies of the appropriate
+  // constraints picked out of the original strings.
   for (unsigned int i=0; i<NumInputs+NumOutputs; i++) {
+    assert(*(RunningConstraints[i])==0);   // sanity check
     const char* start = Constraints[i];
     if (i<NumOutputs)
       start++;          // skip '=' or '+'

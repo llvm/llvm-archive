@@ -4010,11 +4010,12 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
 {
   int MaxWeight = 0;
   unsigned int CommasToSkip = 0;
-  int Weights[NumChoices];
+  int *Weights = (int *)alloca(NumChoices * sizeof(int));
   // RunningConstraints is pointers into the Constraints strings which
   // are incremented as we go to point to the beginning of each
   // comma-separated alternative.
-  const char* RunningConstraints[NumInputs+NumOutputs];
+  const char** RunningConstraints = 
+    (const char**)alloca((NumInputs+NumOutputs)*sizeof(const char*));
   memcpy(RunningConstraints, Constraints, 
          (NumInputs+NumOutputs) * sizeof(const char*));
   // The entire point of this loop is to compute CommasToSkip.

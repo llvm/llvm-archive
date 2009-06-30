@@ -1161,6 +1161,14 @@ objc_check_format_cfstring (tree argument,
        argument = TREE_CHAIN (argument);
     }
 
+  /* APPLE LOCAL begin 7020016 */
+  if (argument == NULL_TREE)
+    {
+      error ("argument number of CFString format too large");
+      *no_add_attrs = true;
+      return false;
+    }
+  /* APPLE LOCAL end 7020016 */
   if (!objc_check_cfstringref_type (TREE_VALUE (argument)))
     {
       error ("format CFString argument not an 'CFStringRef' type");

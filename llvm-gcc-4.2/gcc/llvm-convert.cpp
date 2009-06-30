@@ -3986,15 +3986,61 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
 /// constraints.  Look through the operands and constraint possibilities
 /// and pick a tuple where all the operands match.  Replace the strings
 /// in Constraints[] with the shorter strings from that tuple (malloc'ed,
-/// caller is responsible for cleaning it up).
+/// caller is responsible for cleaning it up).  Later processing can alter what
+/// Constraints points to, so to make sure we delete everything, the addresses
+/// of everything we allocated also are returned in ReplacementStrings.
+/// Casting back and forth from char* to const char* is Ugly, but we have to
+/// interface with C code that expects const char*.
 ///
 /// gcc's algorithm for picking "the best" tuple is quite complicated, and
 /// is performed after things like SROA, not before.  At the moment we are
 /// just trying to pick one that will work.  This may get refined.
 static void
-ChooseConstraintTuple(const char **Constraints, tree exp, unsigned NumInputs,
-                      unsigned NumOutputs, unsigned NumChoices)
+ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
+                      unsigned NumOutputs, unsigned NumChoices,
+                      const char **ReplacementStrings)
 {
+  unsigned int CommasToSkip;
+  // TEMPORARY: assume the second set of constraints is the right one.
+  // This is totally wrong, of course, but allows the mechanics of string
+  // handling to be tested.
+  CommasToSkip = 1;
+
+  for (unsigned int i=0; i<NumInputs+NumOutputs; i++) {
+    const char* start = Constraints[i];
+    if (i<NumOutputs)
+      start++;          // skip '=' or '+'
+    const char* end = start;
+    while (*end != ',' && *end != 0)
+      end++;
+    for (unsigned int j=0; j<CommasToSkip; j++) {
+      start = end+1;
+      end = start;
+      while (*end != ',' && *end != 0)
+        end++;
+    }
+    // String we want is at start..end-1 inclusive.
+    // For outputs, copy the leading = or +.
+    char *newstring;
+    if (i<NumOutputs) {
+      newstring = (char *)xmalloc(end-start+1+1);
+      newstring[0] = *(Constraints[i]);
+      strncpy(newstring+1, start, end-start);
+      newstring[end-start+1] = 0;
+    } else {
+      newstring = (char *)xmalloc(end-start+1);
+      strncpy(newstring, start, end-start);
+      newstring[end-start] = 0;
+    }
+    Constraints[i] = (const char *)newstring;
+    ReplacementStrings[i] = (const char*)newstring;
+  }
+}
+
+static void FreeConstTupleStrings(const char **ReplacementStrings,
+                                  unsigned int Size) {
+  for (unsigned int i=0; i<Size; i++)
+    free((char *)ReplacementStrings[i]);
 }
 
 Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
@@ -4063,8 +4109,13 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // If there are multiple constraint tuples, pick one.  Constraints is
   // altered to point to shorter strings (which are malloc'ed), and everything
   // below Just Works as in the NumChoices==1 case.
-  if (NumChoices)
-    ChooseConstraintTuple(Constraints, exp, NumInputs, NumOutputs, NumChoices);
+  const char** ReplacementStrings;
+  if (NumChoices>1) {
+    ReplacementStrings =
+      (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
+    ChooseConstraintTuple(Constraints, exp, NumInputs, NumOutputs, NumChoices,
+                          ReplacementStrings);
+  }
 
   std::vector<Value*> CallOps;
   std::vector<const Type*> CallArgTypes;
@@ -4087,9 +4138,11 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     const char *Constraint = Constraints[ValNum];
     bool IsInOut, AllowsReg, AllowsMem;
     if (!parse_output_constraint(&Constraint, ValNum, NumInputs, NumOutputs,
-                                 &AllowsMem, &AllowsReg, &IsInOut))
+                                 &AllowsMem, &AllowsReg, &IsInOut)) {
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
       return 0;
-    
+    }    
     assert(Constraint[0] == '=' && "Not an output constraint?");
 
     // Output constraints must be addressable if they aren't simple register
@@ -4156,9 +4209,11 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     bool AllowsReg, AllowsMem;
     if (!parse_input_constraint(Constraints+ValNum, ValNum-NumOutputs,
                                 NumInputs, NumOutputs, NumInOut,
-                                Constraints, &AllowsMem, &AllowsReg))
+                                Constraints, &AllowsMem, &AllowsReg)) {
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
       return 0;
-    
+    }    
     bool isIndirect = false;
     if (AllowsReg || !AllowsMem) {    // Register operand.
       const Type *LLVMTy = ConvertType(type);
@@ -4211,6 +4266,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
             error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
+            if (NumChoices>1)
+              FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
             return 0;
           }
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
@@ -4267,6 +4324,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     // FIXME: Figure out what ASM_USES means.
     error("%Hcode warrior/ms asm not supported yet in %qs", &EXPR_LOCATION(exp),
           TREE_STRING_POINTER(ASM_STRING(exp)));
+    if (NumChoices>1)
+      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
     return 0;
   }
   
@@ -4284,6 +4343,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     case -2:     // Invalid.
       error("%Hunknown register name %qs in %<asm%>", &EXPR_LOCATION(exp), 
             RegName);
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
       return 0;
     case -3:     // cc
       ConstraintStr += ",~{cc}";
@@ -4320,6 +4381,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // Make sure we're created a valid inline asm expression.
   if (!InlineAsm::Verify(FTy, ConstraintStr)) {
     error("%HInvalid or unsupported inline assembly!", &EXPR_LOCATION(exp));
+    if (NumChoices>1)
+      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
     return 0;
   }
   
@@ -4345,6 +4408,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   if (const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo())
     TAI->ExpandInlineAsm(CV);
   
+  if (NumChoices>1)
+    FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
   return 0;
 }
 

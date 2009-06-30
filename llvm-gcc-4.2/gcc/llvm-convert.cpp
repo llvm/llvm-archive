@@ -4109,7 +4109,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // If there are multiple constraint tuples, pick one.  Constraints is
   // altered to point to shorter strings (which are malloc'ed), and everything
   // below Just Works as in the NumChoices==1 case.
-  const char** ReplacementStrings;
+  const char** ReplacementStrings = 0;
   if (NumChoices>1) {
     ReplacementStrings =
       (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));

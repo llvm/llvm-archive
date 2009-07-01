@@ -46,7 +46,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 ///
 void dummy_function() {
   llvm::ModuleProvider *MP = new llvm::ExistingModuleProvider(0);
-  llvm::LLVMContext Ctxt();
+  llvm::LLVMContext Ctxt;
 
   llvm::createVerifierPass();
   llvm::CreateBitcodeWriterPass(*llvm::cout);

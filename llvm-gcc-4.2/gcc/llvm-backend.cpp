@@ -25,6 +25,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-file-ostream.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -86,6 +87,7 @@ static int flag_disable_red_zone = 0;
 static int flag_no_implicit_float = 0;
 
 // Global state for the LLVM backend.
+LLVMContext* Context = 0;
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
@@ -418,7 +420,8 @@ void llvm_initialize_backend(void) {
   int pseudo_argc = Args.size()-1;
   cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
 
-  TheModule = new Module("");
+  Context = new LLVMContext();
+  TheModule = new Module("", Context);
 
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
@@ -522,7 +525,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   memcpy((char*)MB->getBufferStart(), Buffer, Size);
 
   std::string ErrMsg;
-  TheModule = ParseBitcodeFile(MB, &ErrMsg);
+  TheModule = ParseBitcodeFile(MB, Context, &ErrMsg);
   delete MB;
 
   // FIXME - Do not disable debug info while writing pch.

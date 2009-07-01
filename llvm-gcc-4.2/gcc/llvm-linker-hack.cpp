@@ -20,6 +20,7 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
@@ -91,6 +92,8 @@ void dummy_function() {
   llvm::createLoopDeletionPass();
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
+  
+  llvm::getGlobalContext();
 
   llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
   llvm::DIFactory::DIFactory(*MP->getModule());

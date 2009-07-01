@@ -87,7 +87,6 @@ static int flag_disable_red_zone = 0;
 static int flag_no_implicit_float = 0;
 
 // Global state for the LLVM backend.
-LLVMContext* Context = 0;
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
@@ -420,8 +419,7 @@ void llvm_initialize_backend(void) {
   int pseudo_argc = Args.size()-1;
   cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
 
-  Context = new LLVMContext();
-  TheModule = new Module("", Context);
+  TheModule = new Module("", getGlobalContext());
 
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
@@ -525,7 +523,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   memcpy((char*)MB->getBufferStart(), Buffer, Size);
 
   std::string ErrMsg;
-  TheModule = ParseBitcodeFile(MB, Context, &ErrMsg);
+  TheModule = ParseBitcodeFile(MB, getGlobalContext(), &ErrMsg);
   delete MB;
 
   // FIXME - Do not disable debug info while writing pch.

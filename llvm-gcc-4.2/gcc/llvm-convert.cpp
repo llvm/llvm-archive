@@ -3999,7 +3999,7 @@ int MatchWeight(const char *Constraint, tree Operand, bool isInput) {
           RegClass = REG_CLASS_FROM_CONSTRAINT(*p, p);
         if (RegClass != NO_REGS &&
             TEST_HARD_REG_BIT(reg_class_contents[RegClass], RegNum))
-          return 0;
+          return 1;
         ++p;
       } while (*p != ',' && *p != 0);
       return -1;

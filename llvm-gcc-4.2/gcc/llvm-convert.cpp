@@ -3984,8 +3984,29 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
 /// See if operand "exp" can use the indicated Constraint (which is
 /// terminated by a null or a comma).
 /// Returns:  -1=no, 0=yes but auxiliary instructions needed, 1=yes and free
-int MatchWeight(const char *Constraint, tree exp, bool isInput) {
-  /// TEMPORARY.  This has the effect that alternative 0 is always chosen.
+int MatchWeight(const char *Constraint, tree Operand, bool isInput) {
+  const char *p = Constraint;
+  // Look for hard register operand.  This matches only a constraint of a
+  // register class that includes that hard register.
+  if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
+    int RegNum = decode_reg_name(extractRegisterName(Operand));
+    if (RegNum >= 0) {
+      do {
+        unsigned RegClass;
+        if (*p == 'r')
+          RegClass = GENERAL_REGS;
+        else
+          RegClass = REG_CLASS_FROM_CONSTRAINT(*p, p);
+        if (RegClass != NO_REGS &&
+            TEST_HARD_REG_BIT(reg_class_contents[RegClass], RegNum))
+          return 0;
+        ++p;
+      } while (*p != ',' && *p != 0);
+      return -1;
+    }
+  }
+  /// TEMPORARY.  This has the effect that alternative 0 is always chosen,
+  /// except in the cases handled above.
   return 0;
 }
 
@@ -4027,6 +4048,8 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
       if (i==0)
         RunningConstraints[j]++;    // skip leading =
       const char* p = RunningConstraints[j];
+      while (*p=='*' || *p=='&' || *p=='%')   // skip modifiers
+        p++;
       if (Weights[i] != -1) {
         int w = MatchWeight(p, TREE_VALUE(Output), false);
         // Nonmatch means the entire tuple doesn't match.  However, we
@@ -4039,8 +4062,11 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
       }
       while (*p!=0 && *p!=',')
         p++;
-      if (*p!=0)
-        p++;
+      if (*p!=0) {
+        p++;      // skip comma
+        while (*p=='*' || *p=='&' || *p=='%')
+          p++;    // skip modifiers
+      }
       RunningConstraints[j] = p;
     }
     assert(j==NumOutputs);
@@ -4048,7 +4074,7 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
          j++, Input = TREE_CHAIN(Input)) {
       const char* p = RunningConstraints[j];
       if (Weights[i] != -1) {
-        int w = MatchWeight(p, TREE_VALUE(Input), false);
+        int w = MatchWeight(p, TREE_VALUE(Input), true);
         if (w < 0)
           Weights[i] = -1;    // As above.
         else

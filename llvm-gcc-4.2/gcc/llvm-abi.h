@@ -684,12 +684,447 @@ public:
   }
 };
 
+// Make sure the SVR4 ABI is used on 32-bit PowerPC Linux.
+#if defined(POWERPC_LINUX) && (TARGET_64BIT == 0)
+#define TheLLVMABI SVR4ABI
+#endif
+
 /// TheLLVMABI - This can be defined by targets if they want total control over
 /// ABI decisions.
 ///
 #ifndef TheLLVMABI
 #define TheLLVMABI DefaultABI
 #endif
+
+/// SVR4ABI - This class implements the System V Release 4 ABI for PowerPC. The
+/// SVR4 ABI is the ABI used on 32-bit PowerPC Linux.
+///
+template<typename Client>
+class SVR4ABI {
+  // Number of general purpose argument registers which have already been
+  // assigned.
+  unsigned NumGPR;
+protected:
+  Client &C;
+public:
+  SVR4ABI(Client &c) : NumGPR(0), C(c) {}
+
+  bool isShadowReturn() const { return C.isShadowReturn(); }
+  
+  /// HandleReturnType - This is invoked by the target-independent code for the
+  /// return type. It potentially breaks down the argument and invokes methods
+  /// on the client that indicate how its pieces should be handled.  This
+  /// handles things like returning structures via hidden parameters.
+  ///
+  /// This is the default implementation which was copied from DefaultABI.
+  void HandleReturnType(tree type, tree fn, bool isBuiltin) {
+    unsigned Offset = 0;
+    const Type *Ty = ConvertType(type);
+    if (Ty->getTypeID() == Type::VectorTyID) {
+      // Vector handling is weird on x86.  In particular builtin and
+      // non-builtin function of the same return types can use different
+      // calling conventions.
+      tree ScalarType = LLVM_SHOULD_RETURN_VECTOR_AS_SCALAR(type, isBuiltin);
+      if (ScalarType)
+        C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
+      else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
+        C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
+      else
+        C.HandleScalarResult(Ty);
+    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
+      // Return scalar values normally.
+      C.HandleScalarResult(Ty);
+    } else if (doNotUseShadowReturn(type, fn)) {
+      tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
+      if (SingleElt && TYPE_SIZE(SingleElt) && 
+          TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
+          TREE_INT_CST_LOW(TYPE_SIZE_UNIT(type)) == 
+            TREE_INT_CST_LOW(TYPE_SIZE_UNIT(SingleElt))) {
+        C.HandleAggregateResultAsScalar(ConvertType(SingleElt));
+      } else {
+        // Otherwise return as an integer value large enough to hold the entire
+        // aggregate.
+        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
+          C.HandleAggregateResultAsAggregate(AggrTy);
+        else if (const Type* ScalarTy = 
+                    LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type, &Offset))
+          C.HandleAggregateResultAsScalar(ScalarTy, Offset);
+        else {
+          assert(0 && "Unable to determine how to return this aggregate!");
+          abort();
+        }
+      }
+    } else {
+      // If the function is returning a struct or union, we pass the pointer to
+      // the struct as the first argument to the function.
+
+      // FIXME: should return the hidden first argument for some targets
+      // (e.g. ELF i386).
+      C.HandleAggregateShadowResult(PointerType::getUnqual(Ty), false);
+    }
+  }
+  
+  /// HandleArgument - This is invoked by the target-independent code for each
+  /// argument type passed into the function.  It potentially breaks down the
+  /// argument and invokes methods on the client that indicate how its pieces
+  /// should be handled.  This handles things like decimating structures into
+  /// their fields.
+  ///
+  /// _Complex arguments are never split, thus their two scalars are either
+  /// passed both in argument registers or both on the stack. Also _Complex
+  /// arguments are always passed in general purpose registers, never in
+  /// Floating-point registers or vector registers. Arguments which should go
+  /// on the stack are marked with the inreg parameter attribute.
+  /// Giving inreg this target-dependent (and counter-intuitive) meaning
+  /// simplifies things, because functions calls are not always coming from the
+  /// frontend but are also created implicitly e.g. for libcalls. If inreg would
+  /// actually mean that the argument is passed in a register, then all places
+  /// which create function calls/function definitions implicitly would need to
+  /// be aware of this fact and would need to mark arguments accordingly. With
+  /// inreg meaning that the argument is passed on the stack, this is not an
+  /// issue, except for calls which involve _Complex types.
+  void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
+                      Attributes *Attributes = NULL) {
+    // Eight GPR's are availabe for parameter passing.
+    const unsigned NumArgRegs = 8;
+    unsigned Size = 0;
+    bool DontCheckAlignment = false;
+    const Type *Ty = ConvertType(type);
+    // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
+    // not include variable sized fields here.
+    std::vector<const Type*> Elts;
+    if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
+      const Type *PtrTy = PointerType::getUnqual(Ty);
+      C.HandleByInvisibleReferenceArgument(PtrTy, type);
+      ScalarElts.push_back(PtrTy);
+
+      unsigned Attr = Attribute::None;
+      
+      if (NumGPR < NumArgRegs) {
+        NumGPR++;
+      } else {
+        Attr |= Attribute::InReg;
+      }
+
+      if (Attributes) {
+        *Attributes |= Attr;
+      }
+    } else if (Ty->getTypeID()==Type::VectorTyID) {
+      if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
+        PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
+      } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
+        C.HandleByValArgument(Ty, type);
+        if (Attributes) {
+          *Attributes |= Attribute::ByVal;
+          *Attributes |= 
+            Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+        }
+      } else {
+        C.HandleScalarArgument(Ty, type);
+        ScalarElts.push_back(Ty);
+      }
+    } else if (Ty->isSingleValueType()) {
+      C.HandleScalarArgument(Ty, type);
+      ScalarElts.push_back(Ty);
+      
+      unsigned Attr = Attribute::None;
+      
+      if (Ty->isInteger()) {
+        unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+
+        // Determine how many general purpose registers are needed for the
+        // argument.
+        unsigned NumRegs = (TypeSize + 31) / 32;
+
+        // Make sure argument registers are aligned. 64-bit arguments are put in
+        // a register pair which starts with an odd register number.
+        if (TypeSize == 64 && (NumGPR % 2) == 1) {
+          NumGPR++;
+        }
+        
+        if (NumGPR <= (NumArgRegs - NumRegs)) {
+          NumGPR += NumRegs;
+        } else {
+          Attr |= Attribute::InReg;
+          NumGPR = NumArgRegs;
+        }
+      } else if (Ty->getTypeID() == Type::PointerTyID) {
+        if (NumGPR < NumArgRegs) {
+          NumGPR++;
+        } else {
+          Attr |= Attribute::InReg;
+        }
+      // We don't care about arguments passed in Floating-point or vector
+      // registers.
+      } else if (!(Ty->isFloatingPoint() ||
+                   Ty->getTypeID() == Type::VectorTyID)) {
+        abort();
+      }
+
+      if (Attributes) {
+        *Attributes |= Attr;
+      }
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+      HOST_WIDE_INT SrcSize = int_size_in_bytes(type);
+      
+      // With the SVR4 ABI, the only aggregates which are passed in registers
+      // are _Complex aggregates.
+      assert(TREE_CODE(type) == COMPLEX_TYPE && "Not a _Complex type!");
+
+      unsigned Attr = Attribute::None;
+      
+      switch (SrcSize) {
+      default:
+        abort();
+        break;
+      case 32:
+        // _Complex long double
+        if (NumGPR == 0) {
+          NumGPR += NumArgRegs;
+        } else {
+          Attr |= Attribute::InReg;
+          NumGPR = NumArgRegs;
+        }
+        break;
+      case 16:
+        // _Complex long long
+        // _Complex double
+        if (NumGPR <= (NumArgRegs - 4)) {
+          NumGPR += 4;
+        } else {
+          Attr |= Attribute::InReg;
+          NumGPR = NumArgRegs;
+        }
+        break;
+      case 8:
+        // _Complex int
+        // _Complex long
+        // _Complex float
+        
+        // Make sure argument registers are aligned. 64-bit arguments are put in
+        // a register pair which starts with an odd register number.
+        if (NumGPR % 2 == 1) {
+          NumGPR++;
+        }
+
+        if (NumGPR <= (NumArgRegs - 2)) {
+          NumGPR += 2;
+        } else {
+          Attr |= Attribute::InReg;
+          NumGPR = NumArgRegs;
+        }
+        break;
+      case 4:
+      case 2:
+        // _Complex short
+        // _Complex char
+        if (NumGPR < NumArgRegs) {
+          NumGPR++;
+        } else {
+          Attr |= Attribute::InReg;
+        }
+        break;
+      }
+
+      if (Attributes) {
+        *Attributes |= Attr;
+      }
+      
+      PassInMixedRegisters(type, Ty, Elts, ScalarElts);
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
+      C.HandleByValArgument(Ty, type);
+      if (Attributes) {
+        *Attributes |= Attribute::ByVal;
+        *Attributes |= 
+          Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
+      }
+      
+      unsigned Attr = Attribute::None;
+      
+      if (NumGPR < NumArgRegs) {
+        NumGPR++;
+      } else {
+        Attr |= Attribute::InReg;
+      }
+
+      if (Attributes) {
+        *Attributes |= Attr;
+      }
+    } else if (isZeroSizedStructOrUnion(type)) {
+      // Zero sized struct or union, just drop it!
+      ;
+    } else {
+      assert(0 && "unknown aggregate type!");
+      abort();
+    }
+  }
+
+  /// HandleUnion - Handle a UNION_TYPE or QUAL_UNION_TYPE tree.
+  ///
+  /// This is the default implementation which was copied from DefaultABI.
+  void HandleUnion(tree type, std::vector<const Type*> &ScalarElts) {
+    if (TYPE_TRANSPARENT_UNION(type)) {
+      tree Field = TYPE_FIELDS(type);
+      assert(Field && "Transparent union must have some elements!");
+      while (TREE_CODE(Field) != FIELD_DECL) {
+        Field = TREE_CHAIN(Field);
+        assert(Field && "Transparent union must have some elements!");
+      }
+      
+      HandleArgument(TREE_TYPE(Field), ScalarElts);
+    } else {
+      // Unions pass the largest element.
+      unsigned MaxSize = 0;
+      tree MaxElt = 0;
+      for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+        if (TREE_CODE(Field) == FIELD_DECL) {
+          // Skip fields that are known not to be present.
+          if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+              integer_zerop(DECL_QUALIFIER(Field)))
+              continue;
+
+          tree SizeTree = TYPE_SIZE(TREE_TYPE(Field));
+          unsigned Size = ((unsigned)TREE_INT_CST_LOW(SizeTree)+7)/8;
+          if (Size > MaxSize) {
+            MaxSize = Size;
+            MaxElt = Field;
+          }
+
+          // Skip remaining fields if this one is known to be present.
+          if (TREE_CODE(type) == QUAL_UNION_TYPE &&
+              integer_onep(DECL_QUALIFIER(Field)))
+              break;
+        }
+      }
+      
+      if (MaxElt)
+        HandleArgument(TREE_TYPE(MaxElt), ScalarElts);
+    }
+  }
+    
+  /// PassInIntegerRegisters - Given an aggregate value that should be passed in
+  /// integer registers, convert it to a structure containing ints and pass all
+  /// of the struct elements in.  If Size is set we pass only that many bytes.
+  ///
+  /// This is the default implementation which was copied from DefaultABI.
+  void PassInIntegerRegisters(tree type, const Type *Ty,
+                              std::vector<const Type*> &ScalarElts,
+                              unsigned origSize, bool DontCheckAlignment) {
+    unsigned Size;
+    if (origSize)
+      Size = origSize;
+    else
+      Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
+
+    // FIXME: We should preserve all aggregate value alignment information.
+    // Work around to preserve some aggregate value alignment information:
+    // don't bitcast aggregate value to Int64 if its alignment is different
+    // from Int64 alignment. ARM backend needs this.
+    unsigned Align = TYPE_ALIGN(type)/8;
+    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
+
+    // FIXME: In cases where we can, we should use the original struct.
+    // Consider cases like { int, int } and {int, short} for example!  This will
+    // produce far better LLVM code!
+    std::vector<const Type*> Elts;
+
+    unsigned ElementSize = UseInt64 ? 8:4;
+    unsigned ArraySize = Size / ElementSize;
+
+    const Type *ATy = NULL;
+    const Type *ArrayElementType = NULL;
+    if (ArraySize) {
+      Size = Size % ElementSize;
+      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ATy = ArrayType::get(ArrayElementType, ArraySize);
+      Elts.push_back(ATy);
+    }
+
+    if (Size >= 4) {
+      Elts.push_back(Type::Int32Ty);
+      Size -= 4;
+    }
+    if (Size >= 2) {
+      Elts.push_back(Type::Int16Ty);
+      Size -= 2;
+    }
+    if (Size >= 1) {
+      Elts.push_back(Type::Int8Ty);
+      Size -= 1;
+    }
+    assert(Size == 0 && "Didn't cover value?");
+    const StructType *STy = StructType::get(Elts, false);
+
+    unsigned i = 0;
+    if (ArraySize) {
+      C.EnterField(0, STy);
+      for (unsigned j = 0; j < ArraySize; ++j) {
+        C.EnterField(j, ATy);
+        C.HandleScalarArgument(ArrayElementType, 0);
+        ScalarElts.push_back(ArrayElementType);
+        C.ExitField();
+      }
+      C.ExitField();
+      ++i;
+    }
+    for (unsigned e = Elts.size(); i != e; ++i) {
+      C.EnterField(i, STy);
+      C.HandleScalarArgument(Elts[i], 0);
+      ScalarElts.push_back(Elts[i]);
+      C.ExitField();
+    }
+  }
+
+  /// PassInMixedRegisters - Given an aggregate value that should be passed in
+  /// mixed integer, floating point, and vector registers, convert it to a
+  /// structure containing the specified struct elements in.
+  ///
+  /// This is the default implementation which was copied from DefaultABI.
+  void PassInMixedRegisters(tree type, const Type *Ty,
+                            std::vector<const Type*> &OrigElts,
+                            std::vector<const Type*> &ScalarElts) {
+    // We use VoidTy in OrigElts to mean "this is a word in the aggregate
+    // that occupies storage but has no useful information, and is not passed
+    // anywhere".  Happens on x86-64.
+    std::vector<const Type*> Elts(OrigElts);
+    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
+                                                                 Type::Int64Ty;
+    for (unsigned i=0, e=Elts.size(); i!=e; ++i)
+      if (OrigElts[i]==Type::VoidTy)
+        Elts[i] = wordType;
+
+    const StructType *STy = StructType::get(Elts, false);
+
+    unsigned Size = getTargetData().getTypeAllocSize(STy);
+    const StructType *InSTy = dyn_cast<StructType>(Ty);
+    unsigned InSize = 0;
+    // If Ty and STy size does not match then last element is accessing
+    // extra bits.
+    unsigned LastEltSizeDiff = 0;
+    if (InSTy) {
+      InSize = getTargetData().getTypeAllocSize(InSTy);
+      if (InSize < Size) {
+        unsigned N = STy->getNumElements();
+        const llvm::Type *LastEltTy = STy->getElementType(N-1);
+        if (LastEltTy->isInteger())
+          LastEltSizeDiff = 
+            getTargetData().getTypeAllocSize(LastEltTy) - (Size - InSize);
+      }
+    }
+    for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
+      if (OrigElts[i] != Type::VoidTy) {
+        C.EnterField(i, STy);
+        unsigned RealSize = 0;
+        if (LastEltSizeDiff && i == (e - 1))
+          RealSize = LastEltSizeDiff;
+        C.HandleScalarArgument(Elts[i], 0, RealSize);
+        ScalarElts.push_back(Elts[i]);
+        C.ExitField();
+      }
+    }
+  }
+};
 
 #endif
 /* LLVM LOCAL end (ENTIRE FILE!)  */

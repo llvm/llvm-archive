@@ -2667,9 +2667,18 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     }
 
     Attributes Attrs = Attribute::None;
+    
+    unsigned OldSize = CallOperands.size();
+
     ABIConverter.HandleArgument(type, ScalarArgs, &Attrs);
-    if (Attrs != Attribute::None)
-      PAL = PAL.addAttr(CallOperands.size(), Attrs);
+
+    if (Attrs != Attribute::None) {
+      // If the argument is split into multiple scalars, assign the
+      // attributes to all scalars of the aggregate.
+      for (unsigned i = OldSize + 1; i <= CallOperands.size(); ++i) {
+        PAL = PAL.addAttr(i, Attrs);
+      }
+    }
 
     Client.clear();
   }

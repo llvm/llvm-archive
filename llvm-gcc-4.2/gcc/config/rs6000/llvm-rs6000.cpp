@@ -35,6 +35,14 @@ extern "C" {
 #include "toplev.h"
 }
 
+static bool isSVR4ABI() {
+#if defined(POWERPC_LINUX) && (TARGET_64BIT == 0)
+  return true;
+#else
+  return false;
+#endif
+}
+
 // MergeIntPtrOperand - This merges the int and pointer operands of a GCC
 // intrinsic into a single operand for the LLVM intrinsic.  For example, this
 // turns LVX(4, p) -> llvm.lvx(gep P, 4).  OPNUM specifies the operand number
@@ -379,7 +387,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed using the byval mechanism. */
 bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
-
   /* FIXME byval not implemented for ppc64. */
   if (TARGET_64BIT)
     return false;
@@ -387,10 +394,19 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
   HOST_WIDE_INT Bytes = (TYPE_MODE(TreeType) == BLKmode) ? 
                         int_size_in_bytes(TreeType) : 
                         (int) GET_MODE_SIZE(TYPE_MODE(TreeType));
+  
+  // The SVR4 ABI always passes _Complex types in registers (or on the stack if
+  // there are no free argument registers left).
+  if (isSVR4ABI() && (TREE_CODE(TreeType) == COMPLEX_TYPE))
+   return false;
 
   // Zero sized array, struct, or class, ignored.
   if (Bytes == 0)
     return false;
+  
+  // With the SVR4 ABI, pass all other aggregates with the byval mechanism.
+  if (isSVR4ABI())
+    return true;
 
   // Large types always use byval.  If this is a small fixed size type, 
   // investigate it.
@@ -424,9 +440,52 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
   // FIXME there are plenty of ppc64 cases that need this.
   if (TARGET_64BIT)
     return false;
+  
+  HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
+  
+  // With the SVR4 ABI, aggregates of type _Complex are the only aggregates
+  // which are passed in registers.
+  if (isSVR4ABI() && TREE_CODE(TreeType) == COMPLEX_TYPE) {
+    switch (SrcSize) {
+    default:
+      abort();
+    case 32:
+      // Pass _Complex long double in eight registers.
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      // FALLTRHOUGH
+    case 16:
+      // Pass _Complex long long/double in four registers.
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::Int32Ty);
+      break;
+    case 8:
+      // Pass _Complex int/long/float in two registers.
+      // They require 8-byte alignment, thus they are passed with i64,
+      // which will be decomposed into two i32 elements. The first element will
+      // have the split attribute set, which is used to trigger 8-byte alignment
+      // in the backend.
+      Elts.push_back(Type::Int64Ty);
+      break;
+    case 4:
+    case 2:
+      // Pass _Complex short/char in one register.
+      Elts.push_back(Type::Int32Ty);
+      break;
+    }
+    
+    return true;
+  }
+
+  // With the SVR4 ABI, no other aggregates are passed in registers.
+  if (isSVR4ABI())
+    return false;
 
   // If this is a small fixed size type, investigate it.
-  HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
   if (SrcSize <= 0 || SrcSize > 16)
     return false;
 

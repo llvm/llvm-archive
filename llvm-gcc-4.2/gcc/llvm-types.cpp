@@ -1222,6 +1222,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     
     // Determine if there are any attributes for this param.
     Attributes PAttributes = Attribute::None;
+
+    unsigned OldSize = ArgTypes.size();
     
     ABIConverter.HandleArgument(ArgTy, ScalarArgs, &PAttributes);
 
@@ -1250,7 +1252,12 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     
     if (PAttributes != Attribute::None) {
       HasByVal |= PAttributes & Attribute::ByVal;
-      Attrs.push_back(AttributeWithIndex::get(ArgTypes.size(), PAttributes));
+
+      // If the argument is split into multiple scalars, assign the
+      // attributes to all scalars of the aggregate.
+      for (unsigned i = OldSize + 1; i <= ArgTypes.size(); ++i) {
+        Attrs.push_back(AttributeWithIndex::get(i, PAttributes));
+      }
     }
       
     if (DeclArgs)

@@ -3519,6 +3519,11 @@ extern bool llvm_rs6000_should_return_vector_as_shadow(tree, bool);
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X,isBuiltin)\
   llvm_rs6000_should_return_vector_as_shadow((X), (isBuiltin))
 
+#if defined(POWERPC_LINUX) && (TARGET_64BIT == 0)
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(X, Y, Z) \
+  false
+#endif
+
 #endif /* LLVM_ABI_H */
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */

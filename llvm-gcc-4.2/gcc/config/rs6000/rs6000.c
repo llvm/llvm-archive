@@ -6758,7 +6758,7 @@ rs6000_gimplify_va_arg (tree valist, tree type, tree *pre_p, tree *post_p)
 	{
 	  /* Ensure that we don't find any more args in regs.
 	     Alignment has taken care of the n_reg == 2 gpr case.  */
-	  t = build2 (MODIFY_EXPR, TREE_TYPE (reg), reg, size_int (8));
+	  t = build2 (MODIFY_EXPR, TREE_TYPE (reg), reg, build_int_cstu(unsigned_char_type_node, 8));
 	  gimplify_and_add (t, pre_p);
 	}
     }

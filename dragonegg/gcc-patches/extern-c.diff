@@ -1,0 +1,318 @@
+Index: gcc.fsf.master/gcc/flags.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/flags.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/flags.h	2009-07-06 13:29:18.000000000 +0200
+@@ -26,6 +26,10 @@
+ #include "options.h"
+ #include "real.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ enum debug_info_type
+ {
+   NO_DEBUG,	    /* Write no debug info.  */
+@@ -398,4 +402,8 @@
+ /* Whether to emit an overflow warning whose code is C.  */
+ #define issue_strict_overflow_warning(c) (warn_strict_overflow >= (int) (c))
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* ! GCC_FLAGS_H */
+Index: gcc.fsf.master/gcc/opth-gen.awk
+===================================================================
+--- gcc.fsf.master.orig/gcc/opth-gen.awk	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/opth-gen.awk	2009-07-06 13:29:18.000000000 +0200
+@@ -66,6 +66,10 @@
+ print "#ifndef OPTIONS_H"
+ print "#define OPTIONS_H"
+ print ""
++print "#ifdef __cplusplus"
++print "extern \"C\" {"
++print "#endif /* __cplusplus */"
++print ""
+ print "extern int target_flags;"
+ print "extern int target_flags_explicit;"
+ print ""
+@@ -365,5 +369,9 @@
+ print "  N_OPTS"
+ print "};"
+ print ""
++print "#ifdef __cplusplus"
++print "}"
++print "#endif /* __cplusplus */"
++print ""
+ print "#endif /* OPTIONS_H */"
+ }
+Index: gcc.fsf.master/gcc/tree.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/tree.h	2009-07-06 08:21:55.000000000 +0200
++++ gcc.fsf.master/gcc/tree.h	2009-07-06 13:29:18.000000000 +0200
+@@ -31,6 +31,10 @@
+ #include "alias.h"
+ #include "options.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* Codes of tree nodes */
+ 
+ #define DEFTREECODE(SYM, STRING, TYPE, NARGS)   SYM,
+@@ -5299,4 +5303,8 @@
+   for ((arg) = first_const_call_expr_arg ((call), &(iter)); (arg);	\
+        (arg) = next_const_call_expr_arg (&(iter)))
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif  /* GCC_TREE_H  */
+Index: gcc.fsf.master/gcc/tree-flow.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/tree-flow.h	2009-07-06 08:21:56.000000000 +0200
++++ gcc.fsf.master/gcc/tree-flow.h	2009-07-06 13:29:18.000000000 +0200
+@@ -32,6 +32,10 @@
+ #include "ipa-reference.h"
+ #include "tree-ssa-alias.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ 
+ /* Gimple dataflow datastructure. All publicly available fields shall have
+    gimple_ accessor defined in tree-flow-inline.h, all publicly modifiable
+@@ -921,4 +925,8 @@
+ int least_common_multiple (int, int);
+ edge redirect_eh_edge (edge e, basic_block new_bb);
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* _TREE_FLOW_H  */
+Index: gcc.fsf.master/gcc/gimple.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/gimple.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/gimple.h	2009-07-06 13:29:18.000000000 +0200
+@@ -30,6 +30,10 @@
+ #include "basic-block.h"
+ #include "tree-ssa-operands.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ DEF_VEC_P(gimple);
+ DEF_VEC_ALLOC_P(gimple,heap);
+ DEF_VEC_ALLOC_P(gimple,gc);
+@@ -4486,4 +4490,8 @@
+ 
+ extern void dump_gimple_statistics (void);
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif  /* GCC_GIMPLE_H */
+Index: gcc.fsf.master/gcc/configure
+===================================================================
+--- gcc.fsf.master.orig/gcc/configure	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/configure	2009-07-06 13:29:18.000000000 +0200
+@@ -13982,6 +13982,10 @@
+ cat > plugin-version.h <<EOF
+ #include "configargs.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ static char basever[] = "$gcc_BASEVER";
+ static char datestamp[] = "$gcc_DATESTAMP";
+ static char devphase[] = "$gcc_DEVPHASE";
+@@ -13993,6 +13997,10 @@
+ static struct plugin_gcc_version gcc_version = {basever, datestamp,
+ 						devphase, revision,
+ 						configuration_arguments};
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
+ EOF
+ 
+ # Internationalization
+Index: gcc.fsf.master/gcc/configure.ac
+===================================================================
+--- gcc.fsf.master.orig/gcc/configure.ac	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/configure.ac	2009-07-06 13:29:18.000000000 +0200
+@@ -1521,6 +1521,10 @@
+ cat > plugin-version.h <<EOF
+ #include "configargs.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ static char basever[] = "$gcc_BASEVER";
+ static char datestamp[] = "$gcc_DATESTAMP";
+ static char devphase[] = "$gcc_DEVPHASE";
+@@ -1532,6 +1536,10 @@
+ static struct plugin_gcc_version gcc_version = {basever, datestamp,
+ 						devphase, revision,
+ 						configuration_arguments};
++
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
+ EOF
+ changequote([,])dnl
+ 
+Index: gcc.fsf.master/gcc/coretypes.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/coretypes.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/coretypes.h	2009-07-06 13:29:18.000000000 +0200
+@@ -37,6 +37,10 @@
+ #ifndef GCC_CORETYPES_H
+ #define GCC_CORETYPES_H
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ #ifndef GTY
+ #define GTY(x)  /* nothing - marker for gengtype */
+ #endif
+@@ -117,5 +121,8 @@
+ 
+ #endif
+ 
+-#endif /* coretypes.h */
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
+ 
++#endif /* coretypes.h */
+Index: gcc.fsf.master/gcc/gcc-plugin.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/gcc-plugin.h	2009-07-06 08:21:56.000000000 +0200
++++ gcc.fsf.master/gcc/gcc-plugin.h	2009-07-06 13:29:18.000000000 +0200
+@@ -27,6 +27,10 @@
+ #include "config.h"
+ #include "system.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* Event names.  Keep in sync with plugin_event_name[].  */
+ enum plugin_event
+ {
+@@ -153,4 +157,8 @@
+                                plugin_callback_func callback,
+                                void *user_data);
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* GCC_PLUGIN_H */
+Index: gcc.fsf.master/gcc/target.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/target.h	2009-07-06 08:21:55.000000000 +0200
++++ gcc.fsf.master/gcc/target.h	2009-07-06 13:29:18.000000000 +0200
+@@ -52,6 +52,10 @@
+ #include "tm.h"
+ #include "insn-modes.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* Types used by the record_gcc_switches() target function.  */
+ typedef enum
+ {
+@@ -1149,4 +1153,8 @@
+ /* Each target can provide their own.  */
+ extern struct gcc_targetcm targetcm;
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* GCC_TARGET_H */
+Index: gcc.fsf.master/gcc/toplev.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/toplev.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/toplev.h	2009-07-06 13:29:18.000000000 +0200
+@@ -23,6 +23,10 @@
+ #include "input.h"
+ #include "bversion.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* If non-NULL, return one past-the-end of the matching SUBPART of
+    the WHOLE string.  */
+ #define skip_leading_substring(whole,  part) \
+@@ -216,4 +220,8 @@
+ extern const char *get_random_seed (bool);
+ extern const char *set_random_seed (const char *);
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* ! GCC_TOPLEV_H */
+Index: gcc.fsf.master/gcc/tree-pass.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/tree-pass.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/tree-pass.h	2009-07-06 13:29:18.000000000 +0200
+@@ -25,6 +25,10 @@
+ 
+ #include "timevar.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* Different tree dump places.  When you add new tree dump places,
+    extend the DUMP_FILES array in tree-dump.c.  */
+ enum tree_dump_index
+@@ -551,4 +555,8 @@
+    directly in jump threading, and avoid peeling them next time.  */
+ extern bool first_pass_instance;
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* GCC_TREE_PASS_H */
+Index: gcc.fsf.master/gcc/rtl.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/rtl.h	2009-07-06 08:15:05.000000000 +0200
++++ gcc.fsf.master/gcc/rtl.h	2009-07-06 13:29:18.000000000 +0200
+@@ -30,6 +30,10 @@
+ #include "fixed-value.h"
+ #include "alias.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ #undef FFS  /* Some systems predefine this symbol; don't let it interfere.  */
+ #undef FLOAT /* Likewise.  */
+ #undef ABS /* Likewise.  */
+@@ -2375,4 +2379,8 @@
+ extern bool optimize_insn_for_size_p (void);
+ extern bool optimize_insn_for_speed_p (void);
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* ! GCC_RTL_H */

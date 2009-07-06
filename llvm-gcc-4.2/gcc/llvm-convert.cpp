@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
@@ -7904,7 +7905,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     
     FieldPtr = ConstantFoldInstOperands(Instruction::GetElementPtr,
                                         FieldPtr->getType(), Ops,
-                                        3, &TD); 
+                                        3, &getGlobalContext(), &TD); 
     
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.

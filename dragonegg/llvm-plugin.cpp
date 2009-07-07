@@ -408,13 +408,13 @@ int plugin_init (struct plugin_name_args *plugin_info,
 
   // Turn off all rtl passes.
   pass_info.pass = &pass_gimple_null.pass;
-  pass_info.reference_pass_name = "rest_of_compilation";
+  pass_info.reference_pass_name = "*rest_of_compilation";
   pass_info.ref_pass_instance_number = 0;
   pass_info.pos_op = PASS_POS_REPLACE;
   register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
   pass_info.pass = &pass_rtl_null.pass;
-  pass_info.reference_pass_name = "clean_state";
+  pass_info.reference_pass_name = "*clean_state";
   pass_info.ref_pass_instance_number = 0;
   pass_info.pos_op = PASS_POS_REPLACE;
   register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
@@ -423,7 +423,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
     // Turn off all gcc optimization passes.
     // TODO: figure out a good way of turning off ipa passes.
     pass_info.pass = &pass_gimple_null.pass;
-    pass_info.reference_pass_name = "all_optimizations";
+    pass_info.reference_pass_name = "*all_optimizations";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);

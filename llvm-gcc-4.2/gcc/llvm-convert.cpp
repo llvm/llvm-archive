@@ -151,7 +151,8 @@ const TargetData &getTargetData() {
   return *TheTarget->getTargetData();
 }
 
-TreeToLLVM::TreeToLLVM(tree fndecl) : TD(getTargetData()), Builder(*TheFolder) {
+TreeToLLVM::TreeToLLVM(tree fndecl) :
+    TD(getTargetData()), Builder(getGlobalContext(), *TheFolder) {
   FnDecl = fndecl;
   Fn = 0;
   ReturnBB = UnwindBB = 0;

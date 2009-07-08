@@ -286,7 +286,7 @@ void writeLLVMValues() {
   Constant *LLVMValuesTable = ConstantStruct::get(ValuesForPCH, false);
 
   // Create variable to hold this string table.
-  new GlobalVariable(LLVMValuesTable->getType(), true,
+  new GlobalVariable(TheModule->getContext(), LLVMValuesTable->getType(), true,
                      GlobalValue::ExternalLinkage,
                      LLVMValuesTable,
                      "llvm.pch.values", TheModule);
@@ -804,7 +804,8 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   Constant *Array =
     ConstantArray::get(ArrayType::get(InitList[0]->getType(), InitList.size()),
                        InitList);
-  new GlobalVariable(Array->getType(), false, GlobalValue::AppendingLinkage,
+  new GlobalVariable(TheModule->getContext(), Array->getType(), false, 
+                     GlobalValue::AppendingLinkage,
                      Array, Name, TheModule);
 }
 
@@ -838,7 +839,7 @@ void llvm_asm_file_end(void) {
 
     ArrayType *AT = ArrayType::get(SBP, AUGs.size());
     Constant *Init = ConstantArray::get(AT, AUGs);
-    GlobalValue *gv = new GlobalVariable(AT, false,
+    GlobalValue *gv = new GlobalVariable(TheModule->getContext(), AT, false,
                        GlobalValue::AppendingLinkage, Init,
                        "llvm.used", TheModule);
     gv->setSection("llvm.metadata");
@@ -851,7 +852,8 @@ void llvm_asm_file_end(void) {
     ConstantArray::get(ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
                                       AttributeAnnotateGlobals.size()),
                        AttributeAnnotateGlobals);
-    GlobalValue *gv = new GlobalVariable(Array->getType(), false,
+    GlobalValue *gv = new GlobalVariable(TheModule->getContext(),
+                                         Array->getType(), false,
                                          GlobalValue::AppendingLinkage, Array,
                                          "llvm.global.annotations", TheModule);
     gv->setSection("llvm.metadata");
@@ -1013,7 +1015,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     if (!Aliasee) {
       if (lookup_attribute ("weakref", DECL_ATTRIBUTES (decl))) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
-          Aliasee = new GlobalVariable(GV->getType(), GV->isConstant(),
+          Aliasee = new GlobalVariable(TheModule->getContext(),
+                                       GV->getType(), GV->isConstant(),
                                        GlobalVariable::ExternalWeakLinkage,
                                        NULL, AliaseeName, TheModule);
         else if (Function *F = dyn_cast<Function>(V))
@@ -1084,7 +1087,8 @@ Constant* ConvertMetadataStringToGV(const char *str) {
   if (Slot) return Slot;
   
   // Create a new string global.
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(TheModule->getContext(),
+                                          Init->getType(), true,
                                           GlobalVariable::InternalLinkage,
                                           Init, ".str", TheModule);
   GV->setSection("llvm.metadata");
@@ -1193,7 +1197,8 @@ void reset_type_and_initializer_llvm(tree decl) {
   // different from the union element used for the type.
   if (GV->getType()->getElementType() != Init->getType()) {
     GV->removeFromParent();
-    GlobalVariable *NGV = new GlobalVariable(Init->getType(), GV->isConstant(),
+    GlobalVariable *NGV = new GlobalVariable(TheModule->getContext(),
+                                             Init->getType(), GV->isConstant(),
                                              GV->getLinkage(), 0,
                                              GV->getName(), TheModule);
     NGV->setVisibility(GV->getVisibility());
@@ -1269,7 +1274,8 @@ void emit_global_to_llvm(tree decl) {
   // different from the union element used for the type.
   if (GV->getType()->getElementType() != Init->getType()) {
     GV->removeFromParent();
-    GlobalVariable *NGV = new GlobalVariable(Init->getType(), GV->isConstant(),
+    GlobalVariable *NGV = new GlobalVariable(TheModule->getContext(),
+                                             Init->getType(), GV->isConstant(),
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName(), TheModule);
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
@@ -1562,7 +1568,8 @@ void make_decl_llvm(tree decl) {
     if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
 
     if (Name[0] == 0) {   // Global has no name.
-      GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0,
+      GV = new GlobalVariable(TheModule->getContext(),
+                              Ty, false, GlobalValue::ExternalLinkage, 0,
                               "", TheModule);
 
       // Check for external weak linkage.
@@ -1580,7 +1587,8 @@ void make_decl_llvm(tree decl) {
       GlobalVariable *GVE = TheModule->getGlobalVariable(Name, true);
     
       if (GVE == 0) {
-        GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage,0,
+        GV = new GlobalVariable(TheModule->getContext(),
+                                Ty, false, GlobalValue::ExternalLinkage,0,
                                 Name, TheModule);
 
         // Check for external weak linkage.

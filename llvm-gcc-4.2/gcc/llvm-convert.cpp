@@ -7779,7 +7779,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
   if (Slot) return Slot;
 
   // Create a new complex global.
-  Slot = new GlobalVariable(Init->getType(), true,
+  Slot = new GlobalVariable(TheModule->getContext(), Init->getType(), true,
                             GlobalVariable::InternalLinkage,
                             Init, ".cpx", TheModule);
   return Slot;
@@ -7804,7 +7804,8 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
     
   // Create a new string global.
   const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), StringIsConstant,
+  GlobalVariable *GV = new GlobalVariable(TheModule->getContext(),
+                                          Init->getType(), StringIsConstant,
                                           GlobalVariable::InternalLinkage, Init,
                                            TAI ? 
                                             TAI->getStringConstantPrefix() : 

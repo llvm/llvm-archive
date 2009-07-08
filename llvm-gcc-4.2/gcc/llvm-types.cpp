@@ -192,11 +192,11 @@ void writeLLVMTypesStringTable() {
   Constant *LTypesNameTable = ConstantStruct::get(LTypesNames, false);
 
   // Create variable to hold this string table.
-  GlobalVariable *GV = new GlobalVariable(TheModule->getContext(),
+  GlobalVariable *GV = new GlobalVariable(*TheModule,   
                                           LTypesNameTable->getType(), true,
                                           GlobalValue::ExternalLinkage, 
                                           LTypesNameTable,
-                                          "llvm.pch.types", TheModule);
+                                          "llvm.pch.types");
 }
 
 //===----------------------------------------------------------------------===//

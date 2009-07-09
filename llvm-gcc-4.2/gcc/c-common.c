@@ -8317,10 +8317,10 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	}
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
-      // Labels defined earlier in the asm block will have DECL_INITIAL set
-      // at this point; labels we haven't seen yet won't.  LABEL_DECL_UID
-      // should be set in either case (when we saw the forward ref, we
-      // assumed the target was inside the block; that's what gcc does).
+      /* Labels defined earlier in the asm block will have DECL_INITIAL set
+         at this point; labels we haven't seen yet won't.  LABEL_DECL_UID
+         should be set in either case (when we saw the forward ref, we
+         assumed the target was inside the block; that's what gcc does). */
       if (DECL_INITIAL (arg))
         sprintf(buf + strlen(buf), "%lldb", LABEL_DECL_UID (arg));
       else

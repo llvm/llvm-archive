@@ -20,3 +20,6 @@ LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs core target)
 
 llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ ${LDFLAGS}
+
+clean::
+	rm *.o *.so

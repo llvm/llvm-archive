@@ -8322,9 +8322,11 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
          should be set in either case (when we saw the forward ref, we
          assumed the target was inside the block; that's what gcc does). */
       if (DECL_INITIAL (arg))
-        sprintf(buf + strlen(buf), "%lldb", LABEL_DECL_UID (arg));
+        sprintf(buf + strlen(buf), HOST_WIDE_INT_PRINT_DEC "b",
+                LABEL_DECL_UID (arg));
       else
-        sprintf(buf + strlen(buf), "%lldf", LABEL_DECL_UID (arg));
+        sprintf(buf + strlen(buf), HOST_WIDE_INT_PRINT_DEC "f",
+                LABEL_DECL_UID (arg));
 #else
 /* LLVM LOCAL end */
       TREE_USED (arg) = 1;
@@ -8713,8 +8715,8 @@ iasm_label (tree labid, bool atsign)
   
 /* LLVM LOCAL begin */
 #else
-  sprintf (iasm_buffer, "%lld: # %s", LABEL_DECL_UID (label),
-                                    IDENTIFIER_POINTER (DECL_NAME (label)));
+  sprintf (iasm_buffer, HOST_WIDE_INT_PRINT_DEC ": # %s",
+           LABEL_DECL_UID (label), IDENTIFIER_POINTER (DECL_NAME (label)));
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
 #endif
 /* LLVM LOCAL end */

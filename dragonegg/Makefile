@@ -22,4 +22,4 @@ llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ ${LDFLAGS}
 
 clean::
-	rm *.o *.so
+	rm -f *.o *.so

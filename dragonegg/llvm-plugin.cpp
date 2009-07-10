@@ -198,7 +198,7 @@ static void LazilyInitializeModule(void) {
   TheTarget = TME->CtorFn(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
-  TheFolder = new TargetFolder(TheTarget->getTargetData(), &getGlobalContext());
+  TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());
 
   // Install information about target datalayout stuff into the module for
   // optimizer use.

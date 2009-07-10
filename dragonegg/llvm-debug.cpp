@@ -1,4 +1,3 @@
-/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* High-level LLVM backend interface 
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Jim Laskey (jlaskey@apple.com)
@@ -910,5 +909,3 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   CU = NewCU.getGV();
   return NewCU;
 }
-
-/* LLVM LOCAL end (ENTIRE FILE!)  */

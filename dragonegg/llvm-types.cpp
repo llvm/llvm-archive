@@ -1,4 +1,3 @@
-/* LLVM LOCAL begin (ENTIRE FILE!)  */
 /* Tree type to LLVM type converter 
 Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
@@ -2473,5 +2472,3 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
   return GET_TYPE_LLVM(type);
 }
-
-/* LLVM LOCAL end (ENTIRE FILE!)  */

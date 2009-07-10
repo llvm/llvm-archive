@@ -1,4 +1,3 @@
-/* LLVM LOCAL begin (ENTIRE FILE!) */
 /* High-level LLVM backend interface 
 Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
 Contributed by Chris Lattner (sabre@nondot.org)
@@ -7939,5 +7938,3 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
          "It's a bitfield reference or we didn't get to the field!");
   return FieldPtr;
 }
-
-/* LLVM LOCAL end (ENTIRE FILE!)  */

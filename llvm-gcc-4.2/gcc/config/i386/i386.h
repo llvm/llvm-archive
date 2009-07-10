@@ -2512,6 +2512,7 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
 #define IASM_SEE_NO_IMMEDIATE(E)			\
   E->as_immediate = false
 
+/* LLVM LOCAL begin change some = to + */
 /* Table of instructions that need extra constraints.  Keep this table sorted.  */
 #undef TARGET_IASM_OP_CONSTRAINT
 #define TARGET_IASM_OP_CONSTRAINT \
@@ -2592,81 +2593,81 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "cmovz", 2, "rm"},		\
   { "cmp", 1, rm8 "," rm16 "," rm32 C RM64 "," r8 "," r16 "," r32 C R64},\
   { "cmp", 2, ri8 "," ri16 "," ri32 C RI64 "," m8 "," m16 "," m32 C M64},\
-  { "cmpeqpd", 1, "=x"},	\
+  { "cmpeqpd", 1, "+x"},	\
   { "cmpeqpd", 2, "xm"},	\
-  { "cmpeqps", 1, "=x"},	\
+  { "cmpeqps", 1, "+x"},	\
   { "cmpeqps", 2, "xm"},	\
-  { "cmpeqsd", 1, "=x"},	\
+  { "cmpeqsd", 1, "+x"},	\
   { "cmpeqsd", 2, "xm"},	\
-  { "cmpeqss", 1, "=x"},	\
+  { "cmpeqss", 1, "+x"},	\
   { "cmpeqss", 2, "xm"},	\
-  { "cmplepd", 1, "=x"},	\
+  { "cmplepd", 1, "+x"},	\
   { "cmplepd", 2, "xm"},	\
-  { "cmpleps", 1, "=x"},	\
+  { "cmpleps", 1, "+x"},	\
   { "cmpleps", 2, "xm"},	\
-  { "cmplesd", 1, "=x"},	\
+  { "cmplesd", 1, "+x"},	\
   { "cmplesd", 2, "xm"},	\
-  { "cmpless", 1, "=x"},	\
+  { "cmpless", 1, "+x"},	\
   { "cmpless", 2, "xm"},	\
-  { "cmpltpd", 1, "=x"},	\
+  { "cmpltpd", 1, "+x"},	\
   { "cmpltpd", 2, "xm"},	\
-  { "cmpltps", 1, "=x"},	\
+  { "cmpltps", 1, "+x"},	\
   { "cmpltps", 2, "xm"},	\
-  { "cmpltsd", 1, "=x"},	\
+  { "cmpltsd", 1, "+x"},	\
   { "cmpltsd", 2, "xm"},	\
-  { "cmpltss", 1, "=x"},	\
+  { "cmpltss", 1, "+x"},	\
   { "cmpltss", 2, "xm"},	\
-  { "cmpneqpd", 1, "=x"},	\
+  { "cmpneqpd", 1, "+x"},	\
   { "cmpneqpd", 2, "xm"},	\
-  { "cmpneqps", 1, "=x"},	\
+  { "cmpneqps", 1, "+x"},	\
   { "cmpneqps", 2, "xm"},	\
-  { "cmpneqsd", 1, "=x"},	\
+  { "cmpneqsd", 1, "+x"},	\
   { "cmpneqsd", 2, "xm"},	\
-  { "cmpneqss", 1, "=x"},	\
+  { "cmpneqss", 1, "+x"},	\
   { "cmpneqss", 2, "xm"},	\
-  { "cmpnlepd", 1, "=x"},	\
+  { "cmpnlepd", 1, "+x"},	\
   { "cmpnlepd", 2, "xm"},	\
-  { "cmpnleps", 1, "=x"},	\
+  { "cmpnleps", 1, "+x"},	\
   { "cmpnleps", 2, "xm"},	\
-  { "cmpnlesd", 1, "=x"},	\
+  { "cmpnlesd", 1, "+x"},	\
   { "cmpnlesd", 2, "xm"},	\
-  { "cmpnless", 1, "=x"},	\
+  { "cmpnless", 1, "+x"},	\
   { "cmpnless", 2, "xm"},	\
-  { "cmpnltpd", 1, "=x"},	\
+  { "cmpnltpd", 1, "+x"},	\
   { "cmpnltpd", 2, "xm"},	\
-  { "cmpnltps", 1, "=x"},	\
+  { "cmpnltps", 1, "+x"},	\
   { "cmpnltps", 2, "xm"},	\
-  { "cmpnltsd", 1, "=x"},	\
+  { "cmpnltsd", 1, "+x"},	\
   { "cmpnltsd", 2, "xm"},	\
-  { "cmpnltss", 1, "=x"},	\
+  { "cmpnltss", 1, "+x"},	\
   { "cmpnltss", 2, "xm"},	\
-  { "cmpordpd", 1, "=x"},	\
+  { "cmpordpd", 1, "+x"},	\
   { "cmpordpd", 2, "xm"},	\
-  { "cmpordps", 1, "=x"},	\
+  { "cmpordps", 1, "+x"},	\
   { "cmpordps", 2, "xm"},	\
-  { "cmpordsd", 1, "=x"},	\
+  { "cmpordsd", 1, "+x"},	\
   { "cmpordsd", 2, "xm"},	\
-  { "cmpordss", 1, "=x"},	\
+  { "cmpordss", 1, "+x"},	\
   { "cmpordss", 2, "xm"},	\
-  { "cmppd", 1, "=x"},		\
+  { "cmppd", 1, "+x"},		\
   { "cmppd", 2, "xm"},		\
   { "cmppd", 3, "i"},		\
-  { "cmpps", 1, "=x"},		\
+  { "cmpps", 1, "+x"},		\
   { "cmpps", 2, "xm"},		\
   { "cmpps", 3, "i"},		\
-  { "cmpsd", 1, "=x"},		\
+  { "cmpsd", 1, "+x"},		\
   { "cmpsd", 2, "xm"},		\
   { "cmpsd", 3, "i"},		\
-  { "cmpss", 1, "=x"},		\
+  { "cmpss", 1, "+x"},		\
   { "cmpss", 2, "xm"},		\
   { "cmpss", 3, "i"},		\
-  { "cmpunordpd", 1, "=x"},	\
+  { "cmpunordpd", 1, "+x"},	\
   { "cmpunordpd", 2, "xm"},	\
-  { "cmpunordps", 1, "=x"},	\
+  { "cmpunordps", 1, "+x"},	\
   { "cmpunordps", 2, "xm"},	\
-  { "cmpunordsd", 1, "=x"},	\
+  { "cmpunordsd", 1, "+x"},	\
   { "cmpunordsd", 2, "xm"},	\
-  { "cmpunordss", 1, "=x"},	\
+  { "cmpunordss", 1, "+x"},	\
   { "cmpunordss", 2, "xm"},	\
   { "cmpxchg", 1, "+mr"},      	\
   { "cmpxchg", 2, "r"},      	\
@@ -2783,9 +2784,9 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "fldcw", 1, m16},		\
   { "fldenv", 1, "m"},		\
   { "fldt", 1, "m"},		\
-  { "fmul", 1, "=f,t,@"},	\
+  { "fmul", 1, "+f,t,@"},	\
   { "fmul", 2, "t,f," m32fpm64fp},\
-  { "fmulp", 1, "=f"},		\
+  { "fmulp", 1, "+f"},		\
   { "fmulp", 2, "t"},		\
   { "fnsave", 1, "=m"},		\
   { "fnstcw", 1, "m"},		\
@@ -2798,9 +2799,9 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "fstenv", 1, "=m"},		\
   { "fstp", 1, "=f" m32fpm64fpm80fp},\
   { "fstsw", 1, "=ma"},       	\
-  { "fsub", 1, "=f,t,@"},	\
+  { "fsub", 1, "+f,t,@"},	\
   { "fsub", 2, "t,f," m32fpm64fp},\
-  { "fsubr", 1, "=f,t," m32fpm64fp},\
+  { "fsubr", 1, "+f,t," m32fpm64fp},\
   { "fsubr", 2, "t,f,@"},	\
   { "fucom", 1, "f"},		\
   { "fucomi", 1, "t"},		\
@@ -2977,13 +2978,13 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "movzx", 1, "=" r16 "," r32},\
   { "movzx", 2, rm8 "," rm8rm16},\
   { "mul", 1, rm8rm16rm32},	\
-  { "mulpd", 1, "=x"},		\
+  { "mulpd", 1, "+x"},		\
   { "mulpd", 2, "xm"},		\
-  { "mulps", 1, "=x"},		\
+  { "mulps", 1, "+x"},		\
   { "mulps", 2, "xm"},		\
-  { "mulsd", 1, "=x"},		\
+  { "mulsd", 1, "+x"},		\
   { "mulsd", 2, "xm"},		\
-  { "mulss", 1, "=x"},		\
+  { "mulss", 1, "+x"},		\
   { "mulss", 2, "xm"},		\
   { "neg", 1, "+" rm8rm16rm32},	\
   { "not", 1, "+" rm8rm16rm32},	\
@@ -3042,7 +3043,7 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "pextrw", 1, "=" r32R64},	\
   { "pextrw", 2, "xy"},		\
   { "pextrw", 3, "i"},		\
-  { "pinsrw", 1, "=xy"},	\
+  { "pinsrw", 1, "+xy"},	\
   { "pinsrw", 2, r32R64 "m"},	\
   { "pinsrw", 3, "i"},		\
   { "pmaddwd", 1, "+x,y"},	\
@@ -3263,6 +3264,7 @@ extern tree iasm_x86_canonicalize_operands (const char **, tree, void *);
   { "xorpd", 2, "xm"},		\
   { "xorps", 1, "+x"},		\
   { "xorps", 2, "xm"},
+/* LLVM LOCAL end change some = to + */
 
 #define TARGET_IASM_EXTRA_CLOBBERS \
   { "rdtsc", { "edx", "eax"} }

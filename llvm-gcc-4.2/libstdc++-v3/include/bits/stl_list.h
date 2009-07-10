@@ -305,6 +305,12 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD)
       {
 	_List_node_base _M_node;
 
+        // LLVM LOCAL begin mainline 129013
+	_List_impl()
+	: _Node_alloc_type(), _M_node()
+	{ }
+        // LLVM LOCAL end mainline 129013
+
 	_List_impl(const _Node_alloc_type& __a)
 	: _Node_alloc_type(__a), _M_node()
 	{ }
@@ -338,6 +344,12 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD)
       allocator_type
       get_allocator() const
       { return allocator_type(_M_get_Node_allocator()); }
+
+        // LLVM LOCAL begin mainline 129013
+      _List_base()
+      : _M_impl()
+      { _M_init(); }
+        // LLVM LOCAL end mainline 129013
 
       _List_base(const allocator_type& __a)
       : _M_impl(__a)
@@ -468,8 +480,15 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD)
       /**
        *  @brief  Default constructor creates no elements.
        */
+      // LLVM LOCAL begin mainline 129013
+      list()
+      : _Base() { }
+      // LLVM LOCAL end mainline 129013
+
       explicit
-      list(const allocator_type& __a = allocator_type())
+      // LLVM LOCAL begin mainline 129013
+      list(const allocator_type& __a)
+      // LLVM LOCAL end mainline 129013
       : _Base(__a) { }
 
       /**

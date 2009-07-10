@@ -385,6 +385,13 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD)
 	_Bit_iterator 	_M_start;
 	_Bit_iterator 	_M_finish;
 	_Bit_type* 	_M_end_of_storage;
+
+        // LLVM LOCAL begin mainline 129013
+	_Bvector_impl()
+	: _Bit_alloc_type(), _M_start(), _M_finish(), _M_end_of_storage(0)
+	{ }
+        // LLVM LOCAL end mainline 129013
+
 	_Bvector_impl(const _Bit_alloc_type& __a)
 	: _Bit_alloc_type(__a), _M_start(), _M_finish(), _M_end_of_storage(0)
 	{ }
@@ -405,7 +412,13 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD)
       get_allocator() const
       { return allocator_type(_M_get_Bit_allocator()); }
 
-      _Bvector_base(const allocator_type& __a) : _M_impl(__a) { }
+      // LLVM LOCAL begin mainline 129013
+      _Bvector_base()
+      : _M_impl() { }
+
+      _Bvector_base(const allocator_type& __a)
+      : _M_impl(__a) { }
+      // LLVM LOCAL end mainline 129013
 
       ~_Bvector_base()
       { this->_M_deallocate(); }
@@ -480,8 +493,15 @@ template<typename _Alloc>
     using _Base::_M_get_Bit_allocator;
 
   public:
+    // LLVM LOCAL begin mainline 129013
+    vector()
+    : _Base() { }
+    // LLVM LOCAL end mainline 129013
+
     explicit
-    vector(const allocator_type& __a = allocator_type())
+    // LLVM LOCAL begin mainline 129013
+    vector(const allocator_type& __a)
+    // LLVM LOCAL end mainline 129013
     : _Base(__a) { }
 
     explicit
@@ -678,7 +698,9 @@ template<typename _Alloc>
     }
 
     void
-    swap(vector<bool, _Alloc>& __x)
+    // LLVM LOCAL begin mainline 129013
+    swap(vector& __x)
+    // LLVM LOCAL end mainline 129013
     {
       std::swap(this->_M_impl._M_start, __x._M_impl._M_start);
       std::swap(this->_M_impl._M_finish, __x._M_impl._M_finish);

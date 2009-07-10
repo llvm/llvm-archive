@@ -139,27 +139,17 @@ else
   ARM_TOOLROOT=/
 fi
 
-# ARM may require a sysroot option.
-ARM_SYSROOT=$ARM_EXTRA_SDK
-# If the default sysroot does not exist, try a different location.
-if [ ! -d $ARM_SYSROOT ]; then
-  ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
-fi
-
-# Split the MACOSX_DEPLOYMENT_TARGET into major/minor versions.
-if [ -z "$MACOSX_DEPLOYMENT_TARGET" ]; then
-  # Anything 10.5 or earlier is treated the same below.
-  MACOSX_DEPLOYMENT_MAJOR=10
-  MACOSX_DEPLOYMENT_MINOR=5
-else
-  MACOSX_DEPLOYMENT_MAJOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/\..*//'`
-  MACOSX_DEPLOYMENT_MINOR=`echo $MACOSX_DEPLOYMENT_TARGET | sed 's/[0-9]*\.\([0-9]*\).*/\1/'`
-fi
-if [ $MACOSX_DEPLOYMENT_MAJOR -eq 10 -a \
-     $MACOSX_DEPLOYMENT_MINOR -le 5 ]; then
-  ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
-else
+# ARM may require a sysroot option.  Check if libSystem has an ARM slice
+# as an indication of whether the files in / support ARM.
+if lipo -info /usr/lib/libSystem.dylib | grep arm; then
   ARM_SYSROOT=/
+else
+  if [ -d $ARM_EXTRA_SDK ]; then
+    ARM_SYSROOT=$ARM_EXTRA_SDK
+  else
+    ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
+  fi
+  ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
 fi
 
 # If building an ARM target, check that the required directories exist.

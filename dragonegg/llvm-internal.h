@@ -41,10 +41,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/TargetFolder.h"
 
-extern "C" {
-#include "llvm.h"
-}
-
 /// Internal gcc structure describing an exception handling region.  Declared
 /// here to avoid including all of except.h.
 struct eh_region;

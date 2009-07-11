@@ -6835,11 +6835,6 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
 }
 
 Constant *TreeConstantToLLVM::Convert(tree exp) {
-  // Some front-ends use constants other than the standard language-independent
-  // varieties, but which may still be output directly.  Give the front-end a
-  // chance to convert EXP to a language-independent representation.
-  exp = lang_hooks.expand_constant (exp);
-
   assert((TREE_CONSTANT(exp) || TREE_CODE(exp) == STRING_CST) &&
          "Isn't a constant!");
   switch (TREE_CODE(exp)) {

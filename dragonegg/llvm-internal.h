@@ -122,7 +122,7 @@ class TypeConverter {
   bool ConvertingStruct;
   
   /// PointersToReresolve - When ConvertingStruct is true, we handling of
-  /// POINTER_TYPE, REFERENCE_TYPE, and BLOCK_POINTER_TYPE is changed to return
+  /// POINTER_TYPE and REFERENCE_TYPE is changed to return
   /// opaque*'s instead of recursively calling ConvertType.  When this happens,
   /// we add the POINTER_TYPE to this list.
   ///

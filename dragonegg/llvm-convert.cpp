@@ -2300,8 +2300,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
 
   assert(TREE_TYPE (TREE_OPERAND (exp, 0)) &&
          (TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE ||
-          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == REFERENCE_TYPE ||
-          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == BLOCK_POINTER_TYPE)
+          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == REFERENCE_TYPE)
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
   unsigned CallingConv;
@@ -6309,8 +6308,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   assert((TREE_CODE (ArrayTreeType) == ARRAY_TYPE ||
           TREE_CODE (ArrayTreeType) == POINTER_TYPE ||
-          TREE_CODE (ArrayTreeType) == REFERENCE_TYPE ||
-          TREE_CODE (ArrayTreeType) == BLOCK_POINTER_TYPE) &&
+          TREE_CODE (ArrayTreeType) == REFERENCE_TYPE) &&
          "Unknown ARRAY_REF!");
 
   // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
@@ -7850,8 +7848,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree IndexType = TREE_TYPE(Index);
   assert((TREE_CODE(ArrayType) == ARRAY_TYPE ||
           TREE_CODE(ArrayType) == POINTER_TYPE ||
-          TREE_CODE(ArrayType) == REFERENCE_TYPE ||
-          TREE_CODE(ArrayType) == BLOCK_POINTER_TYPE) &&
+          TREE_CODE(ArrayType) == REFERENCE_TYPE) &&
          "Unknown ARRAY_REF!");
 
   // Check for variable sized reference.

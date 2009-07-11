@@ -439,8 +439,7 @@ DIType DebugInfo::createPointerType(tree type) {
   DIType FromTy = getOrCreateType(TREE_TYPE(type));
   // type* and type&
   // FIXME: Should BLOCK_POINTER_TYP have its own DW_TAG?
-  unsigned Tag = (TREE_CODE(type) == POINTER_TYPE ||
-                  TREE_CODE(type) == BLOCK_POINTER_TYPE) ?
+  unsigned Tag = (TREE_CODE(type) == POINTER_TYPE) ?
     DW_TAG_pointer_type :
     DW_TAG_reference_type;
   expanded_location Loc = GetNodeLocation(type);
@@ -794,7 +793,6 @@ DIType DebugInfo::getOrCreateType(tree type) {
     
     case POINTER_TYPE:
     case REFERENCE_TYPE:
-    case BLOCK_POINTER_TYPE:
       Ty = createPointerType(type);
       break;
     

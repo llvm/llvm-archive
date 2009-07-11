@@ -5981,7 +5981,7 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
   tree chain = TREE_CHAIN(arglist);
 
   // Check for errors.
-  if (fold_builtin_next_arg (chain))
+  if (fold_builtin_next_arg (chain, true))
     return true;
   
   tree arg = TREE_VALUE(chain);

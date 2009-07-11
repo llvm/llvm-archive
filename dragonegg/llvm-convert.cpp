@@ -3884,10 +3884,10 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
         unsigned long OpNum = strtoul(InStr, &EndPtr, 10);
         
         if (InStr == EndPtr) {
-          error("%Hoperand number missing after %%-letter",&EXPR_LOCATION(exp));
+          error_at(EXPR_LOCATION(exp),"operand number missing after %%-letter");
           return Result;
         } else if (OpNum >= NumOperands) {
-          error("%Hoperand number out of range", &EXPR_LOCATION(exp));
+          error_at(EXPR_LOCATION(exp), "operand number out of range");
           return Result;
         }
         Result += "${" + utostr(OpNum) + ":" + EscapedChar + "}";
@@ -4379,9 +4379,9 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         if (OTy && OTy != OpTy) {
           if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
               !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
-            error("%Hunsupported inline asm: input constraint with a matching "
-                  "output constraint of incompatible type!",
-                  &EXPR_LOCATION(exp));
+            error_at(EXPR_LOCATION(exp),
+                     "unsupported inline asm: input constraint with a matching "
+                     "output constraint of incompatible type!");
             if (NumChoices>1)
               FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
             return 0;
@@ -4389,9 +4389,9 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
           unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
           if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
-            error("%Hunsupported inline asm: input constraint with a matching "
-                  "output constraint of incompatible type!",
-                  &EXPR_LOCATION(exp));
+            error_at(EXPR_LOCATION(exp),
+                     "unsupported inline asm: input constraint with a matching "
+                     "output constraint of incompatible type!");
             return 0;
           } else if (OTyBits > OpTyBits) {
             Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
@@ -4457,8 +4457,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     switch (RegCode) {
     case -1:     // Nothing specified?
     case -2:     // Invalid.
-      error("%Hunknown register name %qs in %<asm%>", &EXPR_LOCATION(exp), 
-            RegName);
+      error_at(EXPR_LOCATION(exp), "unknown register name %qs in %<asm%>",
+               RegName);
       if (NumChoices>1)
         FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
       return 0;
@@ -4496,7 +4496,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   
   // Make sure we're created a valid inline asm expression.
   if (!InlineAsm::Verify(FTy, ConstraintStr)) {
-    error("%HInvalid or unsupported inline assembly!", &EXPR_LOCATION(exp));
+    error_at(EXPR_LOCATION(exp), "Invalid or unsupported inline assembly!");
     if (NumChoices>1)
       FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
     return 0;
@@ -4743,8 +4743,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
         if (EmitFrontendExpandedBuiltinCall(exp, fndecl, DestLoc, Result))
           return true;
         
-        error("%Hunsupported target builtin %<%s%> used", &EXPR_LOCATION(exp),
-              BuiltinName);
+        error_at(EXPR_LOCATION(exp), "unsupported target builtin %<%s%> used",
+                 BuiltinName);
         const Type *ResTy = ConvertType(TREE_TYPE(exp));
         if (ResTy->isSingleValueType())
           Result = UndefValue::get(ResTy);
@@ -5553,9 +5553,9 @@ static bool OptimizeIntoPlainBuiltIn(tree exp, Value *Len, Value *Size) {
   if (!LenCI)
     return false;
   if (SizeCI->getValue().ult(LenCI->getValue())) {
-    location_t locus = EXPR_LOCATION(exp);
-    warning (0, "%Hcall to %D will always overflow destination buffer",
-             &locus, get_callee_fndecl(exp));
+    warning_at (EXPR_LOCATION(exp), 0,
+                "call to %D will always overflow destination buffer",
+                get_callee_fndecl(exp));
     return false;
   }
   return true;

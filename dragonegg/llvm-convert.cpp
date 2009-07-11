@@ -4435,16 +4435,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += Simplified;
     }
   }
-  
-  if (ASM_USES(exp)) {
-    // FIXME: Figure out what ASM_USES means.
-    error("%Hcode warrior/ms asm not supported yet in %qs", &EXPR_LOCATION(exp),
-          TREE_STRING_POINTER(ASM_STRING(exp)));
-    if (NumChoices>1)
-      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-    return 0;
-  }
-  
+
   // Process clobbers.
 
   // Some targets automatically clobber registers across an asm.

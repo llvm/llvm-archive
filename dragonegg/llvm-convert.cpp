@@ -4983,38 +4983,38 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Builder.CreateUnreachable();
     EmitBlock(BasicBlock::Create(""));
     return true;
-   
-  // Convert annotation built-in to llvm.annotation intrinsic.
-  case BUILT_IN_ANNOTATION: {
-    
-    // Get file and line number
-    location_t locus = EXPR_LOCATION (exp);
-    Constant *lineNo = ConstantInt::get(Type::Int32Ty, LOCATION_LINE(locus));
-    Constant *file = ConvertMetadataStringToGV(LOCATION_FILE(locus));
-    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
-    file = Builder.getFolder().CreateBitCast(file, SBP);
-    
-    // Get arguments.
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value *ExprVal = Emit(TREE_VALUE(arglist), 0);
-    const Type *Ty = ExprVal->getType();
-    Value *StrVal = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
-    
-    SmallVector<Value *, 4> Args;
-    Args.push_back(ExprVal);
-    Args.push_back(StrVal);
-    Args.push_back(file);
-    Args.push_back(lineNo);
-    
-    assert(Ty && "llvm.annotation arg type may not be null");
-    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
-                                                          Intrinsic::annotation,
-                                                          &Ty, 
-                                                          1),
-                                Args.begin(), Args.end());
-    return true;
-  }
-    
+
+//TODO  // Convert annotation built-in to llvm.annotation intrinsic.
+//TODO  case BUILT_IN_ANNOTATION: {
+//TODO
+//TODO    // Get file and line number
+//TODO    location_t locus = EXPR_LOCATION (exp);
+//TODO    Constant *lineNo = ConstantInt::get(Type::Int32Ty, LOCATION_LINE(locus));
+//TODO    Constant *file = ConvertMetadataStringToGV(LOCATION_FILE(locus));
+//TODO    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+//TODO    file = Builder.getFolder().CreateBitCast(file, SBP);
+//TODO
+//TODO    // Get arguments.
+//TODO    tree arglist = TREE_OPERAND(exp, 1);
+//TODO    Value *ExprVal = Emit(TREE_VALUE(arglist), 0);
+//TODO    const Type *Ty = ExprVal->getType();
+//TODO    Value *StrVal = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
+//TODO
+//TODO    SmallVector<Value *, 4> Args;
+//TODO    Args.push_back(ExprVal);
+//TODO    Args.push_back(StrVal);
+//TODO    Args.push_back(file);
+//TODO    Args.push_back(lineNo);
+//TODO
+//TODO    assert(Ty && "llvm.annotation arg type may not be null");
+//TODO    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+//TODO                                                          Intrinsic::annotation,
+//TODO                                                          &Ty,
+//TODO                                                          1),
+//TODO                                Args.begin(), Args.end());
+//TODO    return true;
+//TODO  }
+
   case BUILT_IN_SYNCHRONIZE: {
     // We assume like gcc appears to, that this only applies to cached memory.
     Value* C[5];

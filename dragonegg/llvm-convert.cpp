@@ -7797,8 +7797,7 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 
   // Create a new string global.
   const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
-  GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(), 
-                                          StringIsConstant,
+  GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(), true,
                                           GlobalVariable::InternalLinkage, Init,
                                            TAI ? 
                                             TAI->getStringConstantPrefix() : 
@@ -7810,14 +7809,8 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 #ifdef LLVM_CSTRING_SECTION
   // For Darwin, try to put it into the .cstring section.
   if (TAI && TAI->SectionKindForGlobal(GV) == SectionKind::RODataMergeStr)
-    // RODataMergeStr implies that StringIsConstant will be true here.
     // The Darwin linker will coalesce strings in this section.
     GV->setSection(LLVM_CSTRING_SECTION);
-#ifdef LLVM_CONST_DATA_SECTION
-  else if (!StringIsConstant)
-    // .const_data ("__DATA, __const" on Darwin).
-    GV->setSection(LLVM_CONST_DATA_SECTION);
-#endif	// LLVM_CONST_DATA_SECTION
 #endif	// LLVM_CSTRING_SECTION
   return GV;
 }

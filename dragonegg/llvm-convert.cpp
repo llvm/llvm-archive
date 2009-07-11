@@ -4970,13 +4970,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                   Result);
     return true;
   }
-  case BUILT_IN_FLT_ROUNDS: {
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::flt_rounds));
-    Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
-    return true;
-  }
+//TODO  case BUILT_IN_FLT_ROUNDS: {
+//TODO    Result =
+//TODO      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+//TODO                                                   Intrinsic::flt_rounds));
+//TODO    Result = BitCastToType(Result, ConvertType(TREE_TYPE(exp)));
+//TODO    return true;
+//TODO  }
   case BUILT_IN_TRAP:
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::trap));
     // Emit an explicit unreachable instruction.

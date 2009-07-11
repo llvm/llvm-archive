@@ -1909,14 +1909,14 @@ BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
 
 /// AddHandler - Append the given region to a vector of exception handlers.
 /// A callback passed to foreach_reachable_handler.
-static void AddHandler (struct eh_region *region, void *data) {
-  ((std::vector<struct eh_region *> *)data)->push_back(region);
+static void AddHandler (eh_region region, void *data) {
+  ((std::vector<eh_region> *)data)->push_back(region);
 }
 
 /// EmitLandingPads - Emit EH landing pads.
 void TreeToLLVM::EmitLandingPads() {
   std::vector<Value*> Args;
-  std::vector<struct eh_region *> Handlers;
+  std::vector<eh_region> Handlers;
 
   for (unsigned i = 1; i < LandingPads.size(); ++i) {
     BasicBlock *LandingPad = LandingPads[i];
@@ -1944,9 +1944,9 @@ void TreeToLLVM::EmitLandingPads() {
     // Add selections for each handler.
     foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
-    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+    for (std::vector<eh_region>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
-      struct eh_region *region = *I;
+      eh_region region = *I;
 
       // Create a post landing pad for the handler.
       getPostPad(get_eh_region_number(region));
@@ -2022,7 +2022,7 @@ void TreeToLLVM::EmitLandingPads() {
 
 /// EmitPostPads - Emit EH post landing pads.
 void TreeToLLVM::EmitPostPads() {
-  std::vector<struct eh_region *> Handlers;
+  std::vector<eh_region> Handlers;
 
   for (unsigned i = 1; i < PostPads.size(); ++i) {
     BasicBlock *PostPad = PostPads[i];
@@ -2034,7 +2034,7 @@ void TreeToLLVM::EmitPostPads() {
 
     EmitBlock(PostPad);
 
-    struct eh_region *region = get_eh_region(i);
+    eh_region region = get_eh_region(i);
     BasicBlock *Dest = getLabelDeclBlock(get_eh_region_tree_label(region));
 
     int RegionKind = classify_eh_handler(region);
@@ -2078,7 +2078,7 @@ void TreeToLLVM::EmitPostPads() {
 
       // If the comparion fails, branch to the next catch that has a
       // post landing pad.
-      struct eh_region *next_catch = get_eh_next_catch(region);
+      eh_region next_catch = get_eh_next_catch(region);
       for (; next_catch; next_catch = get_eh_next_catch(next_catch)) {
         unsigned CatchNo = get_eh_region_number(next_catch);
 
@@ -2107,7 +2107,7 @@ void TreeToLLVM::EmitPostPads() {
 
     BasicBlock *TargetBB = NULL;
 
-    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+    for (std::vector<eh_region>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
       unsigned UnwindNo = get_eh_region_number(*I);
 
@@ -3742,12 +3742,12 @@ Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
 /// EmitRESX_EXPR - Handle RESX_EXPR.
 Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
   unsigned RegionNo = TREE_INT_CST_LOW(TREE_OPERAND (exp, 0));
-  std::vector<struct eh_region *> Handlers;
+  std::vector<eh_region> Handlers;
 
   foreach_reachable_handler(RegionNo, true, AddHandler, &Handlers);
 
   if (!Handlers.empty()) {
-    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
+    for (std::vector<eh_region>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I)
       // Create a post landing pad for the handler.
       getPostPad(get_eh_region_number(*I));

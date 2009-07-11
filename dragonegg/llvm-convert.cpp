@@ -2606,7 +2606,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (!PAL.paramHasAttr(~0, Attribute::NoUnwind)) {
     // This call may throw.  Determine if we need to generate
     // an invoke rather than a simple call.
-    int RegionNo = lookup_stmt_eh_region(exp);
+    int RegionNo = lookup_expr_eh_region(exp);
 
     // Is the call contained in an exception handling region?
     if (RegionNo > 0) {

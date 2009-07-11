@@ -23,10 +23,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // This is the code that converts GCC AST nodes into LLVM code.
 //===----------------------------------------------------------------------===//
 
+// LLVM headers
 #include "llvm/ValueSymbolTable.h"
-#include "llvm-abi.h"
-#include "llvm-internal.h"
-#include "llvm-debug.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -42,16 +40,21 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
+
+// System headers
 #include <iostream>
 
-extern "C" {
+// GCC headers
+#define IN_GCC
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "tm_p.h"
+#include "target.h"
 #include "tree.h"
-#include "c-tree.h"  // FIXME: eliminate.
+
+#include "tm_p.h"
+//TODO#include "c-tree.h"  // FIXME: eliminate.
 #include "tree-iterator.h"
 #include "output.h"
 #include "diagnostic.h"
@@ -60,16 +63,20 @@ extern "C" {
 #include "function.h"
 #include "toplev.h"
 #include "flags.h"
-#include "target.h"
 #include "hard-reg-set.h"
 #include "except.h"
-#include "rtl.h"
 #include "libfuncs.h"
 #include "tree-flow.h"
 #include "tree-gimple.h"
+extern "C" {
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }
+
+// Plugin headers
+#include "llvm-abi.h"
+#include "llvm-internal.h"
+#include "llvm-debug.h"
 
 // Check for GCC bug 17347: C++ FE sometimes creates bogus ctor trees
 // which we should throw out

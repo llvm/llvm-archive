@@ -736,10 +736,11 @@ Function *TreeToLLVM::EmitFunction() {
   edge e;
   edge_iterator ei;
   FOR_EACH_BB (bb) {
-    for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
-         bsi_next (&bsi)) {
+    for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+         gsi_next (&gsi)) {
+
       MemRef DestLoc;
-      tree stmt = bsi_stmt (bsi);
+      gimple stmt = gsi_stmt (gsi);
 
       // If this stmt returns an aggregate value (e.g. a call whose result is
       // ignored), create a temporary to receive the value.  Note that we don't

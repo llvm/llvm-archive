@@ -1983,7 +1983,7 @@ void TreeToLLVM::EmitLandingPads() {
       }
     }
 
-    if (can_throw_external_1(i, false)) {
+    if (can_throw_external_1(i, false, false)) {
       // Some exceptions from this region may not be caught by any handler.
       // Since invokes are required to branch to the unwind label no matter
       // what exception is being unwound, append a catch-all.
@@ -2121,7 +2121,7 @@ void TreeToLLVM::EmitPostPads() {
     if (TargetBB) {
       Builder.CreateBr(TargetBB);
     } else {
-      assert(can_throw_external_1(i, true) &&
+      assert(can_throw_external_1(i, true, false) &&
              "Must-not-throw region handled by runtime?");
       // Unwinding continues in the caller.
       if (!UnwindBB)
@@ -2610,7 +2610,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     // Is the call contained in an exception handling region?
     if (RegionNo > 0) {
       // Are there any exception handlers for this region?
-      if (can_throw_internal_1(RegionNo, false)) {
+      if (can_throw_internal_1(RegionNo, false, false)) {
         // There are - turn the call into an invoke.
         LandingPads.grow(RegionNo);
         BasicBlock *&ThisPad = LandingPads[RegionNo];
@@ -2621,7 +2621,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
         LandingPad = ThisPad;
       } else {
-        assert(can_throw_external_1(RegionNo, false) &&
+        assert(can_throw_external_1(RegionNo, false, false) &&
                "Must-not-throw region handled by runtime?");
       }
     }
@@ -3754,7 +3754,7 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 
     Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
   } else {
-    assert(can_throw_external_1(RegionNo, true) &&
+    assert(can_throw_external_1(RegionNo, true, false) &&
            "Must-not-throw region handled by runtime?");
     // Unwinding continues in the caller.
     if (!UnwindBB)

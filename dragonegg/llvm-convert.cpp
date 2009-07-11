@@ -5871,7 +5871,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
     return false;
 
   if (!reg_modes_initialized) {
-    init_reg_modes_once();
+    init_reg_modes_target();
     reg_modes_initialized = true;
   }
 

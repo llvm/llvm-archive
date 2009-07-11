@@ -4756,8 +4756,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   switch (fcode) {
   default: return false;
   // Varargs builtins.
-  case BUILT_IN_VA_START:
-  case BUILT_IN_STDARG_START:   return EmitBuiltinVAStart(exp);
+  case BUILT_IN_VA_START:       return EmitBuiltinVAStart(exp);
   case BUILT_IN_VA_END:         return EmitBuiltinVAEnd(exp);
   case BUILT_IN_VA_COPY:        return EmitBuiltinVACopy(exp);
   case BUILT_IN_CONSTANT_P:     return EmitBuiltinConstantP(exp, Result);

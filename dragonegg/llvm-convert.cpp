@@ -1942,7 +1942,7 @@ void TreeToLLVM::EmitLandingPads() {
                                  PointerType::getUnqual(Type::Int8Ty)));
 
     // Add selections for each handler.
-    foreach_reachable_handler(i, false, AddHandler, &Handlers);
+    foreach_reachable_handler(i, false, false, AddHandler, &Handlers);
 
     for (std::vector<eh_region>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
@@ -2103,7 +2103,7 @@ void TreeToLLVM::EmitPostPads() {
     }
 
     // Emit a RESX_EXPR which skips handlers with no post landing pad.
-    foreach_reachable_handler(i, true, AddHandler, &Handlers);
+    foreach_reachable_handler(i, true, false, AddHandler, &Handlers);
 
     BasicBlock *TargetBB = NULL;
 
@@ -3744,7 +3744,7 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
   unsigned RegionNo = TREE_INT_CST_LOW(TREE_OPERAND (exp, 0));
   std::vector<eh_region> Handlers;
 
-  foreach_reachable_handler(RegionNo, true, AddHandler, &Handlers);
+  foreach_reachable_handler(RegionNo, true, false, AddHandler, &Handlers);
 
   if (!Handlers.empty()) {
     for (std::vector<eh_region>::iterator I = Handlers.begin(),

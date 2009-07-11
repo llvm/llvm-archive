@@ -77,6 +77,7 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 #include "llvm-abi.h"
 #include "llvm-internal.h"
 #include "llvm-debug.h"
+#include "bits_and_bobs.h"
 
 // Check for GCC bug 17347: C++ FE sometimes creates bogus ctor trees
 // which we should throw out

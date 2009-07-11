@@ -4995,8 +4995,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     
     // Get file and line number
     location_t locus = EXPR_LOCATION (exp);
-    Constant *lineNo = ConstantInt::get(Type::Int32Ty, locus.line);
-    Constant *file = ConvertMetadataStringToGV(locus.file);
+    Constant *lineNo = ConstantInt::get(Type::Int32Ty, LOCATION_LINE(locus));
+    Constant *file = ConvertMetadataStringToGV(LOCATION_FILE(locus));
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
     file = Builder.getFolder().CreateBitCast(file, SBP);
     

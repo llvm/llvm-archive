@@ -6489,15 +6489,6 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   } else {
     Value *Offset = Emit(field_offset, 0);
 
-    // For ObjC2, the offset of the field is loaded from memory (it can
-    // change at runtime), and the initial value in memory includes the
-    // value that would normally be computed at compile time; we don't
-    // want to add this in twice.  The ObjC FE figures out the value we
-    // actually should add at compile time (usually 0).
-    tree field_bit_offset = objc_v2_bitfield_ivar_bitpos(exp);
-    if (field_bit_offset) {
-      BitStart = (unsigned)getINTEGER_CSTVal(field_bit_offset);
-    }
     // Here BitStart gives the offset of the field in bits from field_offset.
     // Incorporate as much of it as possible into the pointer computation.
     unsigned ByteOffset = BitStart/8;

@@ -7786,20 +7786,15 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
 Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   Constant *Init = TreeConstantToLLVM::ConvertSTRING_CST(exp);
 
-  // Support -fwritable-strings.
-  bool StringIsConstant = !flag_writable_strings;
-
   GlobalVariable **SlotP = 0;
 
-  if (StringIsConstant) {
-    // Cache the string constants to avoid making obvious duplicate strings that
-    // have to be folded by the optimizer.
-    static std::map<Constant*, GlobalVariable*> StringCSTCache;
-    GlobalVariable *&Slot = StringCSTCache[Init];
-    if (Slot) return Slot;
-    SlotP = &Slot;
-  }
-    
+  // Cache the string constants to avoid making obvious duplicate strings that
+  // have to be folded by the optimizer.
+  static std::map<Constant*, GlobalVariable*> StringCSTCache;
+  GlobalVariable *&Slot = StringCSTCache[Init];
+  if (Slot) return Slot;
+  SlotP = &Slot;
+
   // Create a new string global.
   const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
   GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(), 

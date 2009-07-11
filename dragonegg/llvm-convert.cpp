@@ -2163,7 +2163,8 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     // its definition, which is what has happened here.  This happens rarely
     // in practice, so there's no point in trying to do anything clever: just
     // demote to an ordinary variable and create an alloca to hold its value.
-    DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
+abort(); //FIXME
+//FIXME    DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
     EmitAutomaticVariableDecl(exp);
     // Fall through.
   } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
@@ -2823,7 +2824,8 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
     U.getUse().set(new LoadInst(NewTmp, "mtmp", cast<Instruction>(*U)));
 
   // Finally, This is no longer a GCC temporary.
-  DECL_GIMPLE_FORMAL_TEMP_P(Var) = 0;
+abort(); //FIXME
+//FIXME  DECL_GIMPLE_FORMAL_TEMP_P(Var) = 0;
 }
 
 /// EmitMODIFY_EXPR - Note that MODIFY_EXPRs are rvalues only!

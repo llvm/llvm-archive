@@ -91,8 +91,9 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 /// can only do this if the value is a first class llvm value and if it's a
 /// "gimple_formal_tmp_reg".
 static bool isGimpleTemporary(tree decl) {
-  return is_gimple_formal_tmp_reg(decl) &&
-        !isAggregateTreeType(TREE_TYPE(decl));
+  return false;
+//FIXME  return is_gimple_formal_tmp_reg(decl) &&
+//FIXME        !isAggregateTreeType(TREE_TYPE(decl));
 }
 
 /// getINTEGER_CSTVal - Return the specified INTEGER_CST value as a uint64_t.

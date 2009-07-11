@@ -476,7 +476,7 @@ void TreeToLLVM::StartFunctionBody() {
   assert(Fn->empty() && "Function expanded multiple times!");
 
   // Compute the linkage that the function should get.
-  if (DECL_LLVM_PRIVATE(FnDecl)) {
+  if (false) {//FIXME DECL_LLVM_PRIVATE(FnDecl)) {
     Fn->setLinkage(Function::PrivateLinkage);
   } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
     Fn->setLinkage(Function::InternalLinkage);

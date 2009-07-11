@@ -30,14 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define LLVM_ABI_H
 
 #include "llvm-internal.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Attributes.h"
-#include "llvm/Target/TargetData.h"
 
-namespace llvm {
-  class BasicBlock;
-}
 extern "C" {
 #include "config.h"
 #include "system.h"
@@ -45,6 +38,15 @@ extern "C" {
 #include "tm.h"
 #include "tree.h"
 }  
+
+#include "llvm/Attributes.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Target/TargetData.h"
+
+namespace llvm {
+  class BasicBlock;
+}
 
 /// DefaultABIClient - This is a simple implementation of the ABI client
 /// interface that can be subclassed.

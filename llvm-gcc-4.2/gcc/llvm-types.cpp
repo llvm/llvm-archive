@@ -25,15 +25,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //===----------------------------------------------------------------------===//
 
 #include "llvm-internal.h"
-
-extern "C" {
-#include "config.h"
-#include "system.h"
-#include "coretypes.h"
-#include "tree.h"
-}
-#include "llvm-abi.h"
-
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -46,6 +37,15 @@ extern "C" {
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#undef VISIBILITY_HIDDEN
+
+extern "C" {
+#include "config.h"
+#include "system.h"
+#include "coretypes.h"
+#include "tree.h"
+}
+#include "llvm-abi.h"
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM types with GCC trees

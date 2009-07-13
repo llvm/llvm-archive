@@ -11,6 +11,6 @@
 @implementation  INTF
 @end
 /* LLVM LOCAL begin llvm syntax */
-/* { dg-final { scan-assembler ".section __OBJC,.*__image_info" } } */
+/* { dg-final { scan-assembler ".section.*__OBJC,.*__image_info" } } */
 /* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:.*\n\t.space( |\t)8" } } */
 /* LLVM LOCAL end */

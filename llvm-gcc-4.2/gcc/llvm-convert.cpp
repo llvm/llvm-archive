@@ -4008,10 +4008,13 @@ static std::string CanonicalizeConstraint(const char *Constraint) {
 /// Returns:  -1=no, 0=yes but auxiliary instructions needed, 1=yes and free
 int MatchWeight(const char *Constraint, tree Operand, bool isInput) {
   const char *p = Constraint;
+  int RetVal = 0;
   // Look for hard register operand.  This matches only a constraint of a
-  // register class that includes that hard register.
+  // register class that includes that hard register, and it matches that
+  // perfectly, so we never return 0 in this case.
   if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
     int RegNum = decode_reg_name(extractRegisterName(Operand));
+    RetVal = -1;
     if (RegNum >= 0) {
       do {
         unsigned RegClass;
@@ -4020,16 +4023,32 @@ int MatchWeight(const char *Constraint, tree Operand, bool isInput) {
         else
           RegClass = REG_CLASS_FROM_CONSTRAINT(*p, p);
         if (RegClass != NO_REGS &&
-            TEST_HARD_REG_BIT(reg_class_contents[RegClass], RegNum))
-          return 1;
+            TEST_HARD_REG_BIT(reg_class_contents[RegClass], RegNum)) {
+          RetVal = 1;
+          break;
+        }
         ++p;
       } while (*p != ',' && *p != 0);
-      return -1;
     }
+  }
+  // Look for integer constant operand.  This cannot match "m", and "i" is
+  // better than "r".  FIXME target-dependent immediate letters are not handled
+  // yet; in general they require looking at the value.
+  if (TREE_CODE(Operand) == INTEGER_CST) {
+    do {
+      RetVal = -1;
+      if (*p == 'i' || *p == 'n') {     // integer constant
+        RetVal = 1;
+        break;
+      }
+      if (*p != 'm' && *p != 'o' && *p != 'V')    // not memory
+        RetVal = 0;
+      ++p;
+    } while (*p != ',' && *p != 0);
   }
   /// TEMPORARY.  This has the effect that alternative 0 is always chosen,
   /// except in the cases handled above.
-  return 0;
+  return RetVal;
 }
 
 /// ChooseConstraintTuple: we know each of the NumInputs+NumOutputs strings
@@ -4051,7 +4070,7 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
                       unsigned NumOutputs, unsigned NumChoices,
                       const char **ReplacementStrings)
 {
-  int MaxWeight = 0;
+  int MaxWeight = -1;
   unsigned int CommasToSkip = 0;
   int *Weights = (int *)alloca(NumChoices * sizeof(int));
   // RunningConstraints is pointers into the Constraints strings which

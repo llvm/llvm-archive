@@ -11177,13 +11177,25 @@ cp_parser_elaborated_type_specifier (cp_parser* parser,
       if (parser->scope)
 	{
 	  tree decl;
+	  //LLVM LOCAL begin mainline
+	  tree ambiguous_decls;
+	  //LLVM LOCAL end mainline
 
 	  decl = cp_parser_lookup_name (parser, identifier,
 					tag_type,
 					/*is_template=*/false,
 					/*is_namespace=*/false,
 					/*check_dependency=*/true,
-					/*ambiguous_decls=*/NULL);
+					//LLVM LOCAL begin mainline
+					&ambiguous_decls);
+	                                //LLVM LOCAL end mainline
+
+	  //LLVM LOCAL begin mainline
+	  /* If the lookup was ambiguous, an error will already have been
+	     issued.  */
+	  if (ambiguous_decls)
+	    return error_mark_node;
+	  //LLVM LOCAL end mainline
 
 	  /* If we are parsing friend declaration, DECL may be a
 	     TEMPLATE_DECL tree node here.  However, we need to check

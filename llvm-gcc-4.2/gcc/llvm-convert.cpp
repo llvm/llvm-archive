@@ -1146,7 +1146,8 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
     // it is dead.  This allows us to insert allocas in order without having to
     // scan for an insertion point. Use BitCast for int -> int
     AllocaInsertionPoint = CastInst::Create(Instruction::BitCast,
-      Constant::getNullValue(Type::Int32Ty), Type::Int32Ty, "alloca point");
+      getGlobalContext().getNullValue(Type::Int32Ty),
+      Type::Int32Ty, "alloca point");
     // Insert it as the first instruction in the entry block.
     Fn->begin()->getInstList().insert(Fn->begin()->begin(),
                                       AllocaInsertionPoint);
@@ -1312,7 +1313,7 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
   if (ElTy->isSingleValueType()) {
-    StoreInst *St = Builder.CreateStore(Constant::getNullValue(ElTy),
+    StoreInst *St = Builder.CreateStore(getGlobalContext().getNullValue(ElTy),
                                         DestLoc.Ptr, DestLoc.Volatile);
     St->setAlignment(DestLoc.getAlignment());
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
@@ -1601,7 +1602,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       // before initialization doesn't get garbage results to follow.
       const Type *T = cast<PointerType>(AI->getType())->getElementType();
       EmitTypeGcroot(AI, decl);
-      Builder.CreateStore(Constant::getNullValue(T), AI);
+      Builder.CreateStore(getGlobalContext().getNullValue(T), AI);
     }
   
   if (TheDebugInfo) {
@@ -1963,7 +1964,7 @@ void TreeToLLVM::EmitLandingPads() {
         if (!TypeList) {
           // Catch-all - push a null pointer.
           Args.push_back(
-            Constant::getNullValue(PointerType::getUnqual(Type::Int8Ty))
+           getGlobalContext().getNullValue(PointerType::getUnqual(Type::Int8Ty))
           );
         } else {
           // Add the type infos.
@@ -1989,8 +1990,8 @@ void TreeToLLVM::EmitLandingPads() {
         tree catch_all_type = lang_eh_catch_all();
         if (catch_all_type == NULL_TREE)
           // Use a C++ style null catch-all object.
-          Catch_All =
-            Constant::getNullValue(PointerType::getUnqual(Type::Int8Ty));
+          Catch_All = getGlobalContext().getNullValue(
+                                          PointerType::getUnqual(Type::Int8Ty));
         else
           // This language has a type that catches all others.
           Catch_All = Emit(catch_all_type, 0);
@@ -2193,7 +2194,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   } else {
     // This is a bitfield reference.
     if (!LV.BitSize)
-      return Constant::getNullValue(Ty);
+      return getGlobalContext().getNullValue(Ty);
 
     const Type *ValTy = cast<PointerType>(LV.Ptr->getType())->getElementType();
     unsigned ValSizeInBits = ValTy->getPrimitiveSizeInBits();
@@ -3168,7 +3169,7 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
     Value *Cmp = Builder.CreateICmp(pred, Op, 
-                             Constant::getNullValue(Op->getType()), "abscond");
+                    getGlobalContext().getNullValue(Op->getType()), "abscond");
     return Builder.CreateSelect(Cmp, Op, OpN, "abs");
   }
 
@@ -3224,7 +3225,8 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
   Value *V = Emit(TREE_OPERAND(exp, 0), 0);
   if (V->getType() != Type::Int1Ty) 
-    V = Builder.CreateICmpNE(V, Constant::getNullValue(V->getType()), "toBool");
+    V = Builder.CreateICmpNE(V,
+          getGlobalContext().getNullValue(V->getType()), "toBool");
   V = Builder.CreateNot(V, (V->getName()+"not").c_str());
   return CastToUIntType(V, ConvertType(TREE_TYPE(exp)));
 }
@@ -3382,9 +3384,11 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
-  LHS = Builder.CreateICmpNE(LHS, Constant::getNullValue(LHS->getType()),
+  LHS = Builder.CreateICmpNE(LHS, 
+                             getGlobalContext().getNullValue(LHS->getType()),
                              "toBool");
-  RHS = Builder.CreateICmpNE(RHS, Constant::getNullValue(RHS->getType()),
+  RHS = Builder.CreateICmpNE(RHS, 
+                             getGlobalContext().getNullValue(RHS->getType()),
                              "toBool");
   
   Value *Res = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
@@ -4965,9 +4969,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = Builder.CreateAdd(Result, ConstantInt::get(Result->getType(), 1));
     Result = CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
     Value *Cond =
-      Builder.CreateICmpEQ(Amt, Constant::getNullValue(Amt->getType()));
+      Builder.CreateICmpEQ(Amt, 
+                           getGlobalContext().getNullValue(Amt->getType()));
     Result = Builder.CreateSelect(Cond,
-                                  Constant::getNullValue(Result->getType()),
+                           getGlobalContext().getNullValue(Result->getType()),
                                   Result);
     return true;
   }
@@ -5445,7 +5450,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
       if (Ty != Type::VoidTy)
-        Result = Constant::getNullValue(Ty);
+        Result = getGlobalContext().getNullValue(Ty);
       return true;
     }
 #endif  // FIXME: Should handle these GCC extensions eventually.
@@ -5510,7 +5515,7 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
 }
 
 bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {
-  Result = Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
+  Result = getGlobalContext().getNullValue(ConvertType(TREE_TYPE(exp)));
   return true;
 }
 
@@ -5625,7 +5630,7 @@ bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
   unsigned DstAlign = getPointerAlignment(Dst);
 
   Value *DstV = Emit(Dst, 0);
-  Value *Val = Constant::getNullValue(Type::Int32Ty);
+  Value *Val = getGlobalContext().getNullValue(Type::Int32Ty);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
   EmitMemSet(DstV, Val, Len, DstAlign);
   return true;
@@ -5671,7 +5676,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
   
   // Default to highly local read.
   if (ReadWrite == 0)
-    ReadWrite = Constant::getNullValue(Type::Int32Ty);
+    ReadWrite = getGlobalContext().getNullValue(Type::Int32Ty);
   if (Locality == 0)
     Locality = ConstantInt::get(Type::Int32Ty, 3);
   
@@ -6776,7 +6781,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
     std::vector<Value *> BuildVecOps;
     
     // Insert zero initializers for any uninitialized values.
-    Constant *Zero = Constant::getNullValue(PTy->getElementType());
+    Constant *Zero = getGlobalContext().getNullValue(PTy->getElementType());
     BuildVecOps.resize(cast<VectorType>(Ty)->getNumElements(), Zero);
 
     // Insert all of the elements here.
@@ -6954,7 +6959,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
   if (!TREE_VECTOR_CST_ELTS(exp))
-    return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
+    return getGlobalContext().getNullValue(ConvertType(TREE_TYPE(exp)));
 
   std::vector<Constant*> Elts;
   for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
@@ -6963,7 +6968,7 @@ Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
   // The vector should be zero filled if insufficient elements are provided.
   if (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp))) {
     tree EltType = TREE_TYPE(TREE_TYPE(exp));
-    Constant *Zero = Constant::getNullValue(ConvertType(EltType));
+    Constant *Zero = getGlobalContext().getNullValue(ConvertType(EltType));
     while (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp)))
       Elts.push_back(Zero);
   }
@@ -7016,7 +7021,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       Elts.resize(ConstantSize);
     } else {
       // Fill the end of the string with nulls.
-      Constant *C = Constant::getNullValue(ElTy);
+      Constant *C = getGlobalContext().getNullValue(ElTy);
       for (; Len != ConstantSize; ++Len)
         Elts.push_back(C);
     }
@@ -7090,7 +7095,7 @@ Constant *TreeConstantToLLVM::ConvertCONSTRUCTOR(tree exp) {
   // when array is filled during program initialization.
   if (CONSTRUCTOR_ELTS(exp) == 0 ||
       VEC_length(constructor_elt, CONSTRUCTOR_ELTS(exp)) == 0)  // All zeros?
-    return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
+    return getGlobalContext().getNullValue(ConvertType(TREE_TYPE(exp)));
 
   switch (TREE_CODE(TREE_TYPE(exp))) {
   default: 
@@ -7197,7 +7202,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   //       of an array.  This can occur in cases where we have an array of
   //       unions, and the various unions had different pieces init'd.
   const Type *ElTy = SomeVal->getType();
-  Constant *Filler = Constant::getNullValue(ElTy);
+  Constant *Filler = getGlobalContext().getNullValue(ElTy);
   bool AllEltsSameType = true;
   for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
     if (ResultElts[i] == 0)
@@ -7282,7 +7287,8 @@ void ConstantLayoutInfo::ConvertToPacked() {
     const Type *PadTy = Type::Int8Ty;
     if (AlignedEltOffs-EltOffs != 1)
       PadTy = ArrayType::get(PadTy, AlignedEltOffs-EltOffs);
-    ResultElts.insert(ResultElts.begin()+i, Constant::getNullValue(PadTy));
+    ResultElts.insert(ResultElts.begin()+i, 
+                      getGlobalContext().getNullValue(PadTy));
     ++e;  // One extra element to scan.
   }
 
@@ -7366,7 +7372,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
     if (GCCFieldOffsetInBits/8-NextFieldByteStart != 1)
       FillTy = ArrayType::get(FillTy,
                               GCCFieldOffsetInBits/8-NextFieldByteStart);
-    ResultElts.push_back(Constant::getNullValue(FillTy));
+    ResultElts.push_back(getGlobalContext().getNullValue(FillTy));
 
     NextFieldByteStart = GCCFieldOffsetInBits/8;
     
@@ -7552,7 +7558,7 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
     const Type *FillTy = Type::Int8Ty;
     if (GCCStructSize - NextFieldByteStart != 1)
       FillTy = ArrayType::get(FillTy, GCCStructSize - NextFieldByteStart);
-    ResultElts.push_back(Constant::getNullValue(FillTy));
+    ResultElts.push_back(getGlobalContext().getNullValue(FillTy));
     NextFieldByteStart = GCCStructSize;
   
     // At this point, we know that our struct should have the right size.
@@ -7659,7 +7665,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
         FillTy = Type::Int8Ty;
       else
         FillTy = ArrayType::get(Type::Int8Ty, UnionSize - InitSize);
-      Elts.push_back(Constant::getNullValue(FillTy));
+      Elts.push_back(getGlobalContext().getNullValue(FillTy));
     }
   }
   return ConstantStruct::get(Elts, false);
@@ -7907,7 +7913,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
     Constant *Ops[] = {
       StructAddrLV,
-      Constant::getNullValue(Type::Int32Ty),
+      getGlobalContext().getNullValue(Type::Int32Ty),
       ConstantInt::get(Type::Int32Ty, MemberIndex)
     };
     FieldPtr = TheFolder->CreateGetElementPtr(StructAddrLV, Ops+1, 2);

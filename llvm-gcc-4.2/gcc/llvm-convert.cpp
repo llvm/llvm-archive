@@ -3530,7 +3530,7 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = ConstantInt::getAllOnesValue(Ty);
+  Constant *MinusOne = getGlobalContext().getAllOnesValue(Ty);
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
@@ -3602,7 +3602,7 @@ Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = ConstantInt::getAllOnesValue(Ty);
+  Constant *MinusOne = getGlobalContext().getAllOnesValue(Ty);
 
   // In the case of signed arithmetic, we calculate FDiv as follows:
   //   LHS FDiv RHS = (LHS + Sign(RHS) * Offset) Div RHS - Offset,
@@ -4827,7 +4827,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // This treats everything as unknown, and is minimally defensible as
     // correct, although completely useless.
     if (tree_low_cst (ObjSizeTree, 0) < 2)
-      Result = ConstantInt::getAllOnesValue(TD.getIntPtrType());
+      Result = getGlobalContext().getAllOnesValue(TD.getIntPtrType());
     else
       Result = ConstantInt::get(TD.getIntPtrType(), 0);
     return true;

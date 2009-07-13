@@ -10,7 +10,8 @@
 @end
 @implementation  INTF
 @end
-/* { dg-final { scan-assembler ".section __OBJC, __image_info" } } */
+/* LLVM LOCAL accept llvm syntax */
+/* { dg-final { scan-assembler ".section.*__OBJC, __image_info" } } */
 /* LLVM LOCAL accept llvm syntax */
 /* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:.*\n\t.space( |\t)8" } } */
 

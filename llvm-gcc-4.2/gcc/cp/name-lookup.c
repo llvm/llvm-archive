@@ -2114,7 +2114,7 @@ do_nonmember_using_decl (tree scope, tree name, tree oldval, tree oldtype,
       return;
     }
 
-  //LLVM LOCAL begin mainline
+  /* LLVM LOCAL begin mainline */
   /* Shift the old and new bindings around so we're comparing class and
      enumeration names to each other.  */
   if (oldval && DECL_IMPLICIT_TYPEDEF_P (oldval))
@@ -2128,7 +2128,7 @@ do_nonmember_using_decl (tree scope, tree name, tree oldval, tree oldtype,
       decls.type = decls.value;
       decls.value = NULL_TREE;
     }
-  //LLVM LOCAL end mainline
+  /* LLVM LOCAL end mainline */
 
   /* It is impossible to overload a built-in function; any explicit
      declaration eliminates the built-in declaration.  So, if OLDVAL
@@ -2139,7 +2139,7 @@ do_nonmember_using_decl (tree scope, tree name, tree oldval, tree oldtype,
       && !DECL_HIDDEN_FRIEND_P (oldval))
     oldval = NULL_TREE;
 
-  //LLVM LOCAL begin mainline
+  /* LLVM LOCAL begin mainline */
   if (decls.value)
     {
       /* Check for using functions.  */
@@ -2244,7 +2244,7 @@ do_nonmember_using_decl (tree scope, tree name, tree oldval, tree oldtype,
       *newval = *newtype;
       *newtype = NULL_TREE;
     }
-  //LLVM LOCAL end mainline
+  /* LLVM LOCAL end mainline */
 }
 
 /* Process a using-declaration at function scope.  */
@@ -3564,7 +3564,7 @@ same_entity (tree e1, tree e2)
    XXX In what way should I treat extern declarations?
    XXX I don't want to repeat the entire duplicate_decls here */
 
-//LLVM LOCAL begin mainline
+/* LLVM LOCAL begin mainline */
 static void
 ambiguous_decl (struct scope_binding *old, cxx_binding *new, int flags)
 {
@@ -3620,7 +3620,7 @@ ambiguous_decl (struct scope_binding *old, cxx_binding *new, int flags)
       type = NULL_TREE;
     }
 
-//LLVM LOCAL end mainline
+/* LLVM LOCAL end mainline */
   if (!old->value)
     old->value = val;
   /* APPLE LOCAL C++ using lookup 4329536 */
@@ -3631,14 +3631,14 @@ ambiguous_decl (struct scope_binding *old, cxx_binding *new, int flags)
       else
 	{
 	  old->value = tree_cons (NULL_TREE, old->value,
-				  //LLVM LOCAL begin mainline
+				  /* LLVM LOCAL begin mainline */
 				  build_tree_list (NULL_TREE, val));
-	                         //LLVM LOCAL end mainline
+	                         /* LLVM LOCAL end mainline */
 	  TREE_TYPE (old->value) = error_mark_node;
 	}
     }
 
-  //LLVM LOCAL begin mainline
+  /* LLVM LOCAL begin mainline */
   if (!old->type)
     old->type = type;
   else if (type && old->type != type)
@@ -3647,7 +3647,7 @@ ambiguous_decl (struct scope_binding *old, cxx_binding *new, int flags)
 			     build_tree_list (NULL_TREE, type));
       TREE_TYPE (old->type) = error_mark_node;
     }
-  //LLVM LOCAL end mainline
+  /* LLVM LOCAL end mainline */
 }
 
 /* Return the declarations that are members of the namespace NS.  */
@@ -3752,16 +3752,16 @@ unqualified_namespace_lookup (tree name, int flags)
 
   for (; !val; scope = CP_DECL_CONTEXT (scope))
     {
-      //LLVM LOCAL begin mainline
+      /* LLVM LOCAL begin mainline */
       struct scope_binding binding = EMPTY_SCOPE_BINDING;
-      //LLVM LOCAL end mainline
+      /* LLVM LOCAL end mainline */
       cxx_binding *b =
 	 cxx_scope_find_binding_for_name (NAMESPACE_LEVEL (scope), name);
 
       if (b)
-	//LLVM LOCAL begin mainline
+	/* LLVM LOCAL begin mainline */
 	ambiguous_decl (&binding, b, flags);
-	//LLVM LOCAL end mainline
+	/* LLVM LOCAL end mainline */
 
       /* Add all _DECLs seen through local using-directives.  */
       for (level = current_binding_level;
@@ -3786,9 +3786,9 @@ unqualified_namespace_lookup (tree name, int flags)
 	  siter = CP_DECL_CONTEXT (siter);
 	}
 
-      //LLVM LOCAL begin mainline
+      /* LLVM LOCAL begin mainline */
       val = binding.value;
-      //LLVM LOCAL end mainline
+      /* LLVM LOCAL end mainline */
       if (scope == global_namespace)
 	break;
     }
@@ -3818,9 +3818,9 @@ lookup_qualified_name (tree scope, tree name, bool is_type_p, bool complain)
       if (is_type_p)
 	flags |= LOOKUP_PREFER_TYPES;
       if (qualified_lookup_using_namespace (name, scope, &binding, flags))
-	//LLVM LOCAL begin mainline
+	/* LLVM LOCAL begin mainline */
 	t = binding.value;
-	//LLVM LOCAL end mainline
+	/* LLVM LOCAL end mainline */
     }
   else if (is_aggr_type (scope, complain))
     t = lookup_member (scope, name, 2, is_type_p);
@@ -3853,9 +3853,9 @@ lookup_using_namespace (tree name, struct scope_binding *val,
 	  cxx_scope_find_binding_for_name (NAMESPACE_LEVEL (used), name);
 	/* Resolve ambiguities.  */
 	if (val1)
-	  //LLVM LOCAL begin mainline
+	  /* LLVM LOCAL begin mainline */
 	  ambiguous_decl (val, val1, flags);
-	  //LLVM LOCAL end mainline
+	  /* LLVM LOCAL end mainline */
       }
   POP_TIMEVAR_AND_RETURN (TV_NAME_LOOKUP, val->value != error_mark_node);
 }
@@ -3884,9 +3884,9 @@ qualified_lookup_using_namespace (tree name, tree scope,
 	cxx_scope_find_binding_for_name (NAMESPACE_LEVEL (scope), name);
       seen = tree_cons (scope, NULL_TREE, seen);
       if (binding)
-	//LLVM LOCAL begin mainline
+	/* LLVM LOCAL begin mainline */
 	ambiguous_decl (result, binding, flags);
-	//LLVM LOCAL end mainline
+	/* LLVM LOCAL end mainline */
 
       /* Consider strong using directives always, and non-strong ones
 	 if we haven't found a binding yet.  ??? Shouldn't we consider

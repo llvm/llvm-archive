@@ -662,18 +662,19 @@ do {					\
 /* As in the warning above, alias definitions aren't supported on Mach-O. */
 #define TARGET_DOES_NOT_SUPPORT_ALIAS_DEFINITIONS
 
-/* weak_import, a Darwin special, does not make function definitions weak. */
+/* weak_import, a Darwin special, does not make definitions weak. */
 #define TARGET_ADJUST_LLVM_LINKAGE(FN, DECL)                            \
   do {                                                                  \
     if ((DECL) &&                                                       \
-        TREE_CODE (DECL) == FUNCTION_DECL &&                            \
-        !DECL_EXTERNAL (DECL) &&                                        \
+        (TREE_CODE (DECL) != FUNCTION_DECL || !DECL_EXTERNAL (DECL)) && \
         TREE_PUBLIC (DECL) &&                                           \
         DECL_WEAK (DECL) &&                                             \
         ! lookup_attribute ("weak", DECL_ATTRIBUTES (DECL)) &&          \
 	lookup_attribute ("weak_import", DECL_ATTRIBUTES (DECL)) &&     \
         (FN)->hasWeakLinkage()) {                                       \
-      (FN)->setLinkage(Function::ExternalLinkage);                      \
+      (FN)->setLinkage(TREE_CODE(DECL)==FUNCTION_DECL ?                 \
+                       Function::ExternalLinkage :                      \
+                       GlobalValue::ExternalLinkage);                   \
     }                                                                   \
   } while (0)
 

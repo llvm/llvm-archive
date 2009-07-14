@@ -271,6 +271,8 @@ void writeLLVMValues() {
   if (LLVMValues.empty())
     return;
 
+  LLVMContext &Context = getGlobalContext();
+
   std::vector<Constant *> ValuesForPCH;
   for (std::vector<Value *>::iterator I = LLVMValues.begin(),
          E = LLVMValues.end(); I != E; ++I)  {
@@ -279,11 +281,11 @@ void writeLLVMValues() {
     else
       // Non constant values, e.g. arguments, are not at global scope.
       // When PCH is read, only global scope values are used.
-      ValuesForPCH.push_back(getGlobalContext().getNullValue(Type::Int32Ty));
+      ValuesForPCH.push_back(Context.getNullValue(Type::Int32Ty));
   }
 
   // Create string table.
-  Constant *LLVMValuesTable = ConstantStruct::get(ValuesForPCH, false);
+  Constant *LLVMValuesTable = Context.getConstantStruct(ValuesForPCH, false);
 
   // Create variable to hold this string table.
   new GlobalVariable(*TheModule, LLVMValuesTable->getType(), true,
@@ -789,25 +791,26 @@ void llvm_asm_file_start(void) {
 /// initializer suitable for the llvm.global_[cd]tors globals.
 static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                                 const char *Name) {
+  LLVMContext &Context = getGlobalContext();
+  
   std::vector<Constant*> InitList;
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
   
-  const Type *FPTy = FunctionType::get(Type::VoidTy, std::vector<const Type*>(),
-                                       false);
-  FPTy = PointerType::getUnqual(FPTy);
+  const Type *FPTy =
+    Context.getFunctionType(Type::VoidTy, std::vector<const Type*>(), false);
+  FPTy = Context.getPointerTypeUnqual(FPTy);
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
+    StructInit[0] = Context.getConstantInt(Type::Int32Ty, Tors[i].second);
     
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
     StructInit[1] = TheFolder->CreateBitCast(Tors[i].first, FPTy);
-    InitList.push_back(ConstantStruct::get(StructInit, false));
+    InitList.push_back(Context.getConstantStruct(StructInit, false));
   }
-  Constant *Array =
-    ConstantArray::get(ArrayType::get(InitList[0]->getType(), InitList.size()),
-                       InitList);
+  Constant *Array = Context.getConstantArray(
+    Context.getArrayType(InitList[0]->getType(), InitList.size()), InitList);
   new GlobalVariable(*TheModule, Array->getType(), false,
                      GlobalValue::AppendingLinkage,
                      Array, Name);
@@ -816,6 +819,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 // llvm_asm_file_end - Finish the .s file.
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
+  LLVMContext &Context = getGlobalContext();
 
   performLateBackendInitialization();
   createPerFunctionOptimizationPasses();
@@ -834,15 +838,15 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+    const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
     for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
       Constant *C = *AI;
       AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
     }
 
-    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
-    Constant *Init = ConstantArray::get(AT, AUGs);
+    ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
+    Constant *Init = Context.getConstantArray(AT, AUGs);
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
                        GlobalValue::AppendingLinkage, Init,
                        "llvm.used");
@@ -852,8 +856,8 @@ void llvm_asm_file_end(void) {
 
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
-    Constant *Array =
-    ConstantArray::get(ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
+    Constant *Array = Context.getConstantArray(
+      Context.getArrayType(AttributeAnnotateGlobals[0]->getType(),
                                       AttributeAnnotateGlobals.size()),
                        AttributeAnnotateGlobals);
     GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
@@ -987,6 +991,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     TREE_ASM_WRITTEN(decl) = 1;
     return;  // Do not process broken code.
   }
+  
+  LLVMContext &Context = getGlobalContext();
 
   timevar_push(TV_LLVM_GLOBALS);
 
@@ -1055,7 +1061,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   handleVisibility(decl, GA);
 
   if (GA->getType()->canLosslesslyBitCastTo(V->getType()))
-    V->replaceAllUsesWith(ConstantExpr::getBitCast(GA, V->getType()));
+    V->replaceAllUsesWith(Context.getConstantExprBitCast(GA, V->getType()));
   else if (!V->use_empty()) {
     error ("%J Alias %qD used with invalid type!", decl, decl);
     timevar_pop(TV_LLVM_GLOBALS);
@@ -1082,7 +1088,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
 // Convert string to global value. Use existing global if possible.
 Constant* ConvertMetadataStringToGV(const char *str) {
   
-  Constant *Init = ConstantArray::get(std::string(str));
+  Constant *Init = getGlobalContext().getConstantArray(std::string(str));
 
   // Use cached string if it exists.
   static std::map<Constant*, GlobalVariable*> StringCSTCache;
@@ -1102,6 +1108,7 @@ Constant* ConvertMetadataStringToGV(const char *str) {
 /// AddAnnotateAttrsToGlobal - Adds decls that have a
 /// annotate attribute to a vector to be emitted later.
 void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
+  LLVMContext &Context = getGlobalContext();
   
   // Handle annotate attribute on global.
   tree annotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES (decl));
@@ -1109,9 +1116,10 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
     return;
   
   // Get file and line number
-  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *lineNo =
+    Context.getConstantInt(Type::Int32Ty, DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+  const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1139,7 +1147,8 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
         lineNo
       };
  
-      AttributeAnnotateGlobals.push_back(ConstantStruct::get(Element, 4, false));
+      AttributeAnnotateGlobals.push_back(
+        Context.getConstantStruct(Element, 4, false));
     }
       
     // Get next annotate attribute.
@@ -1178,6 +1187,8 @@ void reset_type_and_initializer_llvm(tree decl) {
   // been set.  Don't crash.
   // We can also get here when DECL_LLVM has not been set for some object
   // referenced in the initializer.  Don't crash then either.
+  LLVMContext &Context = getGlobalContext();
+  
   if (errorcount || sorrycount)
     return;
 
@@ -1188,7 +1199,7 @@ void reset_type_and_initializer_llvm(tree decl) {
   handleVisibility(decl, GV);
 
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
-  GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
+  GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
 
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
@@ -1243,6 +1254,8 @@ void emit_global_to_llvm(tree decl) {
   if (!TYPE_SIZE(TREE_TYPE(decl)))
     return;
 
+  LLVMContext &Context = getGlobalContext();
+
   timevar_push(TV_LLVM_GLOBALS);
 
   // Get or create the global variable now.
@@ -1266,7 +1279,7 @@ void emit_global_to_llvm(tree decl) {
     // on it".  When constructing the initializer it might refer to itself.
     // this can happen for things like void *G = &G;
     //
-    GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
+    GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
     Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
   }
 
@@ -1401,6 +1414,7 @@ void emit_global_to_llvm(tree decl) {
 /// well-formed.  If not, emit error messages and return true.  If so, return
 /// false.
 bool ValidateRegisterVariable(tree decl) {
+  LLVMContext &Context = getGlobalContext();
   int RegNumber = decode_reg_name(extractRegisterName(decl));
   const Type *Ty = ConvertType(TREE_TYPE(decl));
 
@@ -1431,10 +1445,10 @@ bool ValidateRegisterVariable(tree decl) {
     if (TREE_THIS_VOLATILE(decl))
       warning(0, "volatile register variables don%'t work as you might wish");
     
-    SET_DECL_LLVM(decl, ConstantInt::getFalse());
+    SET_DECL_LLVM(decl, Context.getConstantIntFalse());
     return false;  // Everything ok.
   }
-  SET_DECL_LLVM(decl, ConstantInt::getTrue());
+  SET_DECL_LLVM(decl, Context.getConstantIntTrue());
   return true;
 }
 
@@ -1461,6 +1475,8 @@ void make_decl_llvm(tree decl) {
   else if (TREE_CODE(decl) == TYPE_DECL || TREE_CODE(decl) == LABEL_DECL)
     abort ();
 #endif
+
+  LLVMContext &Context = getGlobalContext();
   
   // For a duplicate declaration, we can be called twice on the
   // same DECL node.  Don't discard the LLVM already made.
@@ -1567,7 +1583,7 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
+    if (Ty == Type::VoidTy) Ty = Context.getStructType(NULL, NULL);
 
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 

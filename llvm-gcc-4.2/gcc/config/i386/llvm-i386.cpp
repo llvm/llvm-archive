@@ -30,12 +30,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm-i386-target.h"
 
 extern "C" {
 #include "toplev.h"
 }
+
+static LLVMContext &Context = getGlobalContext();
 
 /* TargetIntrinsicLower - For builtins that we want to expand to normal LLVM
  * code, emit the code now.  If we can handle the code, this macro should emit
@@ -109,10 +112,12 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_XORPD:
   case IX86_BUILTIN_ANDNPD:
     if (cast<VectorType>(ResultType)->getNumElements() == 4)  // v4f32
-      Ops[0] = Builder.CreateBitCast(Ops[0], VectorType::get(Type::Int32Ty, 4),
+      Ops[0] = Builder.CreateBitCast(Ops[0], 
+                                     Context.getVectorType(Type::Int32Ty, 4),
                                      "tmp");
     else                                                      // v2f64
-      Ops[0] = Builder.CreateBitCast(Ops[0], VectorType::get(Type::Int64Ty, 2),
+      Ops[0] = Builder.CreateBitCast(Ops[0], 
+                                     Context.getVectorType(Type::Int64Ty, 2),
                                      "tmp");
     
     Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "tmp");
@@ -268,25 +273,25 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 1);
     return true;
   case IX86_BUILTIN_MOVQ: {
-    Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
+    Value *Zero = Context.getConstantInt(Type::Int32Ty, 0);
     Result = BuildVector(Zero, Zero, Zero, Zero, NULL);
     Result = BuildVectorShuffle(Result, Ops[0], 4, 5, 2, 3);
     return true;
   }
   case IX86_BUILTIN_LOADQ: {
-    PointerType *i64Ptr = PointerType::getUnqual(Type::Int64Ty);
+    PointerType *i64Ptr = Context.getPointerTypeUnqual(Type::Int64Ty);
     Ops[0] = Builder.CreateBitCast(Ops[0], i64Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
-    Value *Zero = ConstantInt::get(Type::Int64Ty, 0);
+    Value *Zero = Context.getConstantInt(Type::Int64Ty, 0);
     Result = BuildVector(Zero, Zero, NULL);
-    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
+    Value *Idx = Context.getConstantInt(Type::Int32Ty, 0);
     Result = Builder.CreateInsertElement(Result, Ops[0], Idx, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
   case IX86_BUILTIN_LOADUPS: {
-    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
-    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    VectorType *v4f32 = Context.getVectorType(Type::FloatTy, 4);
+    PointerType *v4f32Ptr = Context.getPointerTypeUnqual(v4f32);
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -294,8 +299,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADUPD: {
-    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
-    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
+    PointerType *v2f64Ptr = Context.getPointerTypeUnqual(v2f64);
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -303,8 +308,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADDQU: {
-    VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
-    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    VectorType *v16i8 = Context.getVectorType(Type::Int8Ty, 16);
+    PointerType *v16i8Ptr = Context.getPointerTypeUnqual(v16i8);
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -312,8 +317,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_STOREUPS: {
-    VectorType *v4f32 = VectorType::get(Type::FloatTy, 4);
-    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    VectorType *v4f32 = Context.getVectorType(Type::FloatTy, 4);
+    PointerType *v4f32Ptr = Context.getPointerTypeUnqual(v4f32);
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -321,8 +326,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_STOREUPD: {
-    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
-    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
+    PointerType *v2f64Ptr = Context.getPointerTypeUnqual(v2f64);
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -330,8 +335,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_STOREDQU: {
-    VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
-    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    VectorType *v16i8 = Context.getVectorType(Type::Int8Ty, 16);
+    PointerType *v16i8Ptr = Context.getPointerTypeUnqual(v16i8);
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -339,20 +344,20 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADHPS: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
+    PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 1, 4, 5);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
   case IX86_BUILTIN_LOADLPS: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
+    PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 5, 2, 3);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -360,7 +365,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADHPD: {
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -368,27 +373,27 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADLPD: {
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 1);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
   }
   case IX86_BUILTIN_STOREHPS: {
-    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
+    VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
+    PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
-    Value *Idx = ConstantInt::get(Type::Int32Ty, 1);
+    Value *Idx = Context.getConstantInt(Type::Int32Ty, 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
     Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "tmp");
     Result = Builder.CreateStore(Ops[1], Ops[0]);
     return true;
   }
   case IX86_BUILTIN_STORELPS: {
-    VectorType *v2f64 = VectorType::get(Type::DoubleTy, 2);
-    PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
+    VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
+    PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
-    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
+    Value *Idx = Context.getConstantInt(Type::Int32Ty, 0);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
     Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "tmp");
     Result = Builder.CreateStore(Ops[1], Ops[0]);
@@ -463,7 +468,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNGEPS: PredCode = 6; flip = true; break;
     case IX86_BUILTIN_CMPORDPS: PredCode = 7; break;
     }
-    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
+    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
@@ -496,7 +501,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNLESS:   PredCode = 6; break;
     case IX86_BUILTIN_CMPORDSS:   PredCode = 7; break;
     }
-    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
+    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
     Result = Builder.CreateCall(cmpss, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -533,7 +538,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNGEPD:   PredCode = 6; flip = true; break;
     case IX86_BUILTIN_CMPORDPD:   PredCode = 7; break;
     }
-    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
+    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
@@ -565,7 +570,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNLESD:   PredCode = 6; break;
     case IX86_BUILTIN_CMPORDSD:   PredCode = 7; break;
     }
-    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
+    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
     Result = Builder.CreateCall(cmpsd, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -576,7 +581,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_ldmxcsr);
     Value *Ptr = CreateTemporary(Type::Int32Ty);
     Builder.CreateStore(Ops[0], Ptr);
-    Ptr = Builder.CreateBitCast(Ptr, PointerType::getUnqual(Type::Int8Ty), "tmp");
+    Ptr = Builder.CreateBitCast(Ptr, Context.getPointerTypeUnqual(Type::Int8Ty), "tmp");
     Result = Builder.CreateCall(ldmxcsr, Ptr);
     return true;
   }
@@ -584,7 +589,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *stmxcsr =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_stmxcsr);
     Value *Ptr  = CreateTemporary(Type::Int32Ty);
-    Value *BPtr = Builder.CreateBitCast(Ptr, PointerType::getUnqual(Type::Int8Ty),
+    Value *BPtr = Builder.CreateBitCast(Ptr, Context.getPointerTypeUnqual(Type::Int8Ty),
                                         "tmp");
     Builder.CreateCall(stmxcsr, BPtr);
     
@@ -851,25 +856,25 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
           if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
             if (VTy->getNumElements() == 2) {
               if (VTy->getElementType()->isInteger()) {
-                Elts.push_back(VectorType::get(Type::Int64Ty, 2));
+                Elts.push_back(Context.getVectorType(Type::Int64Ty, 2));
               } else {
-                Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+                Elts.push_back(Context.getVectorType(Type::DoubleTy, 2));
               }
               Bytes -= 8;
             } else {
               assert(VTy->getNumElements() == 4);
               if (VTy->getElementType()->isInteger()) {
-                Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+                Elts.push_back(Context.getVectorType(Type::Int32Ty, 4));
               } else {
-                Elts.push_back(VectorType::get(Type::FloatTy, 4));
+                Elts.push_back(Context.getVectorType(Type::FloatTy, 4));
               }
               Bytes -= 4;
             }
           } else if (llvm_x86_is_all_integer_types(Ty)) {
-            Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+            Elts.push_back(Context.getVectorType(Type::Int32Ty, 4));
             Bytes -= 4;
           } else {
-            Elts.push_back(VectorType::get(Type::FloatTy, 4));
+            Elts.push_back(Context.getVectorType(Type::FloatTy, 4));
             Bytes -= 4;
           }
         } else if (Class[i+1] == X86_64_SSESF_CLASS) {
@@ -882,10 +887,10 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
           Elts.push_back(Type::DoubleTy);
           Bytes -= 16;
         } else if (Class[i+1] == X86_64_SSEDF_CLASS && Bytes == 16) {
-          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Context.getVectorType(Type::FloatTy, 2));
           Elts.push_back(Type::DoubleTy);
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
-          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Context.getVectorType(Type::FloatTy, 2));
           Elts.push_back(Type::Int64Ty);
         } else if (Class[i+1] == X86_64_NO_CLASS) {
           // padding bytes, don't pass
@@ -1144,9 +1149,9 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
     if (Size <= 8)
       return Type::Int64Ty;
     else if (Size <= 16)
-      return IntegerType::get(128);
+      return Context.getIntegerType(128);
     else if (Size <= 32)
-      return IntegerType::get(256);
+      return Context.getIntegerType(256);
   }
   return NULL;
 }
@@ -1215,23 +1220,23 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
           if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
             if (VTy->getNumElements() == 2) {
               if (VTy->getElementType()->isInteger())
-                Elts.push_back(VectorType::get(Type::Int64Ty, 2));
+                Elts.push_back(Context.getVectorType(Type::Int64Ty, 2));
               else
-                Elts.push_back(VectorType::get(Type::DoubleTy, 2));
+                Elts.push_back(Context.getVectorType(Type::DoubleTy, 2));
               Bytes -= 8;
             } else {
               assert(VTy->getNumElements() == 4);
               if (VTy->getElementType()->isInteger())
-                Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+                Elts.push_back(Context.getVectorType(Type::Int32Ty, 4));
               else
-                Elts.push_back(VectorType::get(Type::FloatTy, 4));
+                Elts.push_back(Context.getVectorType(Type::FloatTy, 4));
               Bytes -= 4;
             }
           } else if (llvm_x86_is_all_integer_types(Ty)) {
-            Elts.push_back(VectorType::get(Type::Int32Ty, 4));
+            Elts.push_back(Context.getVectorType(Type::Int32Ty, 4));
             Bytes -= 4;
           } else {
-            Elts.push_back(VectorType::get(Type::FloatTy, 4));
+            Elts.push_back(Context.getVectorType(Type::FloatTy, 4));
             Bytes -= 4;
           }
         } else if (Class[i+1] == X86_64_SSESF_CLASS) {
@@ -1244,10 +1249,10 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
           Elts.push_back(Type::DoubleTy);
           Bytes -= 16;
         } else if (Class[i+1] == X86_64_SSEDF_CLASS && Bytes == 16) {
-          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Context.getVectorType(Type::FloatTy, 2));
           Elts.push_back(Type::DoubleTy);
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
-          Elts.push_back(VectorType::get(Type::FloatTy, 2));
+          Elts.push_back(Context.getVectorType(Type::FloatTy, 2));
           Elts.push_back(Type::Int64Ty);
         } else if (Class[i+1] == X86_64_NO_CLASS) {
           Elts.push_back(Type::DoubleTy);
@@ -1296,12 +1301,12 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
   if (llvm_x86_should_not_return_complex_in_memory(type)) {
     ElementTypes.push_back(Type::X86_FP80Ty);
     ElementTypes.push_back(Type::X86_FP80Ty);
-    return StructType::get(ElementTypes, STy->isPacked());
+    return Context.getStructType(ElementTypes, STy->isPacked());
   } 
 
   std::vector<const Type*> GCCElts;
   llvm_x86_64_get_multiple_return_reg_classes(type, Ty, GCCElts);
-  return StructType::get(GCCElts, false);
+  return Context.getStructType(GCCElts, false);
 }
 
 // llvm_x86_extract_mrv_array_element - Helper function that help extract 
@@ -1321,12 +1326,12 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
   Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
   const StructType *STy = cast<StructType>(Src->getType());
   llvm::Value *Idxs[3];
-  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
-  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DestFieldNo);
-  Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, DestElemNo);
+  Idxs[0] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
+  Idxs[1] = Context.getConstantInt(llvm::Type::Int32Ty, DestFieldNo);
+  Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, DestElemNo);
   Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
   if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
-    Value *ElemIndex = ConstantInt::get(Type::Int32Ty, SrcElemNo);
+    Value *ElemIndex = Context.getConstantInt(Type::Int32Ty, SrcElemNo);
     Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");
     Builder.CreateStore(EVIElem, GEP, isVolatile);
   } else {
@@ -1359,12 +1364,12 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 
     Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
 
-    Value *E0Index = ConstantInt::get(Type::Int32Ty, 0);
+    Value *E0Index = Context.getConstantInt(Type::Int32Ty, 0);
     Value *EVI0 = Builder.CreateExtractElement(EVI, E0Index, "mrv.v");
     Value *GEP0 = Builder.CreateStructGEP(Dest, 0, "mrv_gep");
     Builder.CreateStore(EVI0, GEP0, isVolatile);
 
-    Value *E1Index = ConstantInt::get(Type::Int32Ty, 1);
+    Value *E1Index = Context.getConstantInt(Type::Int32Ty, 1);
     Value *EVI1 = Builder.CreateExtractElement(EVI, E1Index, "mrv.v");
     Value *GEP1 = Builder.CreateStructGEP(Dest, 1, "mrv_gep");
     Builder.CreateStore(EVI1, GEP1, isVolatile);
@@ -1391,16 +1396,16 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     // Special treatement for _Complex.
     if (const StructType *ComplexType = dyn_cast<StructType>(DestElemType)) {
       llvm::Value *Idxs[3];
-      Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
-      Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DNO);
+      Idxs[0] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
+      Idxs[1] = Context.getConstantInt(llvm::Type::Int32Ty, DNO);
 
-      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
       Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
       Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
       Builder.CreateStore(EVI, GEP, isVolatile);
       ++SNO;
 
-      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 1);
+      Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, 1);
       GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
       EVI = Builder.CreateExtractValue(Src, 1, "mrv_gr");
       Builder.CreateStore(EVI, GEP, isVolatile);

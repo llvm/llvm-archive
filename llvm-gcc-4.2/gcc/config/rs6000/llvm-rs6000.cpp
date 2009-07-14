@@ -29,6 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 
 extern "C" {
@@ -43,6 +44,8 @@ static bool isSVR4ABI() {
 #endif
 }
 
+static LLVMContext &Context = getGlobalContext();
+
 // MergeIntPtrOperand - This merges the int and pointer operands of a GCC
 // intrinsic into a single operand for the LLVM intrinsic.  For example, this
 // turns LVX(4, p) -> llvm.lvx(gep P, 4).  OPNUM specifies the operand number
@@ -53,7 +56,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
                                const Type *ResultType,
                                std::vector<Value*> &Ops,
                                LLVMBuilder &Builder, Value *&Result) {
-  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *VoidPtrTy = Context.getPointerTypeUnqual(Type::Int8Ty);
   
   Function *IntFn = Intrinsic::getDeclaration(TheModule, IID);
   
@@ -174,30 +177,30 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_VSPLTISB:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int8Ty, true);
+      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int8Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int8Ty, 16));
+      Result = Context.getUndef(Context.getVectorType(Type::Int8Ty, 16));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISH:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int16Ty, true);
+      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int16Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int16Ty, 8));
+      Result = Context.getUndef(Context.getVectorType(Type::Int16Ty, 8));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISW:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int32Ty, true);
+      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int32Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int32Ty, 4));
+      Result = Context.getUndef(Context.getVectorType(Type::Int32Ty, 4));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTB:
@@ -245,7 +248,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
       /* Map all of these to a shuffle. */
       unsigned Amt = Elt->getZExtValue() & 15;
-      VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
+      VectorType *v16i8 = Context.getVectorType(Type::Int8Ty, 16);
       Ops[0] = Builder.CreateBitCast(Ops[0], v16i8, "tmp");
       Ops[1] = Builder.CreateBitCast(Ops[1], v16i8, "tmp");
       Result = BuildVectorShuffle(Ops[0], Ops[1],
@@ -295,10 +298,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_ABS_V4SF: {
     // and out sign bits
-    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = Context.getVectorType(Type::Int32Ty, 4);
     Ops[0] = Builder.CreateBitCast(Ops[0], v4i32, "tmp");
-    Constant *C = ConstantInt::get(Type::Int32Ty, 0x7FFFFFFF);
-    C = ConstantVector::get(std::vector<Constant*>(4, C));
+    Constant *C = Context.getConstantInt(Type::Int32Ty, 0x7FFFFFFF);
+    C = Context.getConstantVector(std::vector<Constant*>(4, C));
     Result = Builder.CreateAnd(Ops[0], C, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
@@ -353,7 +356,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VPERM_8HI:
   case ALTIVEC_BUILTIN_VPERM_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    const Type *VecTy = Context.getVectorType(Type::Int32Ty, 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *ActualOps[] = { Op0, Op1, Ops[2]};
@@ -368,7 +371,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VSEL_8HI:
   case ALTIVEC_BUILTIN_VSEL_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    const Type *VecTy = Context.getVectorType(Type::Int32Ty, 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *Op2 = CastToType(Instruction::BitCast, Ops[2], VecTy);

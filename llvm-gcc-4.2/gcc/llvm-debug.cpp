@@ -187,7 +187,7 @@ static const char *getLinkageName(tree Node, Mangler *LLVMMangler) {
   // Use llvm value name as linkage name if it is available.
   if (DECL_LLVM_SET_P(Node)) {
     GlobalValue *V = dyn_cast<GlobalValue>(DECL_LLVM(Node));
-    return LLVMMangler->getValueName(V).c_str();
+    return LLVMMangler->getMangledName(V).c_str();
   }
 
   tree decl_name = DECL_NAME(Node);
@@ -239,7 +239,7 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
     DebugFactory.CreateSubprogram(findRegion(FnDecl),
                                   lang_hooks.dwarf_name(FnDecl, 0),
                                   lang_hooks.dwarf_name(FnDecl, 0),
-                                  LLVMMangler->getValueName(Fn),
+                                  LLVMMangler->getMangledName(Fn),
                                   getOrCreateCompileUnit(Loc.file), CurLineNo,
                                   getOrCreateType(TREE_TYPE(FnDecl)),
                                   Fn->hasInternalLinkage(),
@@ -372,7 +372,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
                                     GV->getNameStr(), 
                                     DispName,
-                                    LLVMMangler->getValueName(GV),
+                                    LLVMMangler->getMangledName(GV),
                                     getOrCreateCompileUnit(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),
                                     true/*definition*/, GV);

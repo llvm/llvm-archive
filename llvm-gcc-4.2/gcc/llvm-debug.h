@@ -47,12 +47,14 @@ class BasicBlock;
 class CallInst;
 class Function;
 class Module;
+class Mangler;
 
 /// DebugInfo - This class gathers all debug information during compilation and
 /// is responsible for emitting to llvm globals or pass directly to the backend.
 class DebugInfo {
 private:
   Module *M;                            // The current module.
+  Mangler *LLVMMangler;                 // The mangler to mangle linkage names.
   DIFactory DebugFactory;               
   const char *CurFullPath;              // Previous location file encountered.
   int CurLineNo;                        // Previous location line# encountered.
@@ -69,6 +71,7 @@ private:
   std::map<tree_node *, DIDescriptor> RegionMap;
 public:
   DebugInfo(Module *m);
+  ~DebugInfo();
 
   /// Initialize - Initialize debug info by creating compile unit for
   /// main_input_filename. This must be invoked after language dependent

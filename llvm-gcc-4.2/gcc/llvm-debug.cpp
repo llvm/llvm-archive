@@ -34,9 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -182,12 +180,12 @@ static expanded_location GetNodeLocation(tree Node, bool UseStub = true) {
   return Location;
 }
 
-static const char *getLinkageName(tree Node, Mangler *LLVMMangler) {
+static const char *getLinkageName(tree Node) {
 
   // Use llvm value name as linkage name if it is available.
   if (DECL_LLVM_SET_P(Node)) {
-    GlobalValue *V = dyn_cast<GlobalValue>(DECL_LLVM(Node));
-    return LLVMMangler->getMangledName(V).c_str();
+    Value *V = DECL_LLVM(Node);
+    return V->getNameStart();
   }
 
   tree decl_name = DECL_NAME(Node);
@@ -210,23 +208,7 @@ DebugInfo::DebugInfo(Module *m)
 , PrevLineNo(0)
 , PrevBB(NULL)
 , RegionStack()
-{
-  assert (TheTarget && "Target is not set!");
-  const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
-  LLVMMangler = new Mangler(*m, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix());
-  // add chars used in ObjC method names so method names aren't mangled
-  LLVMMangler->markCharAcceptable('[');
-  LLVMMangler->markCharAcceptable(']');
-  LLVMMangler->markCharAcceptable('(');
-  LLVMMangler->markCharAcceptable(')');
-  LLVMMangler->markCharAcceptable('-');
-  LLVMMangler->markCharAcceptable('+');
-  LLVMMangler->markCharAcceptable(' ');
-}
-
-DebugInfo::~DebugInfo() {
-  delete LLVMMangler;
-}
+{}
 
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start."
@@ -234,12 +216,13 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                   BasicBlock *CurBB) {
   // Gather location information.
   expanded_location Loc = GetNodeLocation(FnDecl, false);
+  const char *LinkageName = getLinkageName(FnDecl);
 
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(findRegion(FnDecl),
                                   lang_hooks.dwarf_name(FnDecl, 0),
                                   lang_hooks.dwarf_name(FnDecl, 0),
-                                  LLVMMangler->getMangledName(Fn),
+                                  LinkageName,
                                   getOrCreateCompileUnit(Loc.file), CurLineNo,
                                   getOrCreateType(TREE_TYPE(FnDecl)),
                                   Fn->hasInternalLinkage(),
@@ -372,7 +355,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
                                     GV->getNameStr(), 
                                     DispName,
-                                    LLVMMangler->getMangledName(GV),
+                                    getLinkageName(decl), 
                                     getOrCreateCompileUnit(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),
                                     true/*definition*/, GV);
@@ -688,7 +671,7 @@ DIType DebugInfo::createStructType(tree type) {
     expanded_location MemLoc = GetNodeLocation(Member, false);
     
     const char *MemberName = lang_hooks.dwarf_name(Member, 0);        
-    const char *LinkageName = getLinkageName(Member, LLVMMangler);
+    const char *LinkageName = getLinkageName(Member);
     DIType SPTy = getOrCreateType(TREE_TYPE(Member));
     DISubprogram SP = 
       DebugFactory.CreateSubprogram(findRegion(Member), MemberName, MemberName,

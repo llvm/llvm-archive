@@ -50,7 +50,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/System/Program.h"
 
 #include <cassert>
@@ -506,7 +506,7 @@ void llvm_lang_dependent_init(const char *Name) {
 }
 
 oFILEstream *AsmOutStream = 0;
-static raw_ostream *AsmOutRawStream = 0;
+static formatted_raw_ostream *AsmOutRawStream = 0;
 oFILEstream *AsmIntermediateOutStream = 0;
 
 /// Read bytecode from PCH file. Initialize TheModule and setup
@@ -558,7 +558,9 @@ void llvm_pch_write_init(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
   // FIXME: disentangle ostream madness here.  Kill off ostream and FILE.
-  AsmOutRawStream = new raw_os_ostream(*AsmOutStream);
+  AsmOutRawStream =
+    new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
+                              formatted_raw_ostream::DELETE_STREAM);
   AsmOutFile = new OStream(*AsmOutStream);
 
   PerModulePasses = new PassManager();
@@ -763,7 +765,9 @@ void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
   // FIXME: disentangle ostream madness here.  Kill off ostream and FILE.
-  AsmOutRawStream = new raw_os_ostream(*AsmOutStream);
+  AsmOutRawStream =
+    new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
+                              formatted_raw_ostream::DELETE_STREAM);
   AsmOutFile = new OStream(*AsmOutStream);
 
   flag_llvm_pch_read = 0;

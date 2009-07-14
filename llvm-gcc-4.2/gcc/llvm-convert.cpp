@@ -7780,8 +7780,10 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
   // For example if the global's initializer has a different type to the global
   // itself (allowed in GCC but not in LLVM) then the global is changed to have
   // the type of the initializer.  Correct for this now.
-  return TheFolder->CreateBitCast(Val,
-                                  ConvertType(TREE_TYPE(exp))->getPointerTo());
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  if (Ty == Type::VoidTy) Ty = Type::Int8Ty;  // void* -> i8*.
+  
+  return TheFolder->CreateBitCast(Val, Ty->getPointerTo());
 }
 
 /// EmitLV_LABEL_DECL - Someone took the address of a label.

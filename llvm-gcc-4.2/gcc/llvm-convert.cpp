@@ -4288,13 +4288,17 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     // If this output register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
     if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
-      int RegNum = decode_reg_name(extractRegisterName(Operand));
+      const char* RegName = extractRegisterName(Operand);
+      int RegNum = decode_reg_name(RegName);
       if (RegNum >= 0) {
-        unsigned RegNameLen = strlen(reg_names[RegNum]);
+        // Constraints don't have the leading %, the variable names do
+        if (*RegName == '%')
+          RegName++;
+        unsigned RegNameLen = strlen(RegName);
         char *NewConstraint = (char*)alloca(RegNameLen+4);
         NewConstraint[0] = '=';
         NewConstraint[1] = '{';
-        memcpy(NewConstraint+2, reg_names[RegNum], RegNameLen);
+        memcpy(NewConstraint+2, RegName, RegNameLen);
         NewConstraint[RegNameLen+2] = '}';
         NewConstraint[RegNameLen+3] = 0;
         SimplifiedConstraint = NewConstraint;
@@ -4437,27 +4441,29 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     
     // If this output register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
-    int RegNum;
-    if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val) &&
-        (RegNum = decode_reg_name(extractRegisterName(Val))) >= 0) {
-      ConstraintStr += '{';
-      ConstraintStr += reg_names[RegNum];
-      ConstraintStr += '}';
-    } else {
-      // If there is a simpler form for the register constraint, use it.
-      std::string Simplified = CanonicalizeConstraint(Constraint);
-      ConstraintStr += Simplified;
+    if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val)) {
+      const char *RegName = extractRegisterName(Val);
+      int RegNum = decode_reg_name(RegName);
+      if (RegNum >= 0) {
+        if (*RegName == '%')      // Variables have leading %.
+          RegName++;              // Constraints don't.
+        ConstraintStr += '{';
+        ConstraintStr += RegName;
+        ConstraintStr += '}';
+        continue;
+      }
     }
+
+    // If there is a simpler form for the register constraint, use it.
+    std::string Simplified = CanonicalizeConstraint(Constraint);
+    ConstraintStr += Simplified;
   }
   
-  if (ASM_USES(exp)) {
-    // FIXME: Figure out what ASM_USES means.
-    error("%Hcode warrior/ms asm not supported yet in %qs", &EXPR_LOCATION(exp),
-          TREE_STRING_POINTER(ASM_STRING(exp)));
-    if (NumChoices>1)
-      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-    return 0;
-  }
+  // ASM_USES contains info about certain hard regs which are used as inputs.
+  // gcc represents the xH registers on x86 this way because of deficiencies
+  // in the way gcc can represent registers internally.  llvm-gcc can represent
+  // these as normal inputs, so we aren't using ASM_USES.
+  assert(ASM_USES(exp)==0);
   
   // Process clobbers.
 
@@ -4483,8 +4489,10 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += ",~{memory}";
       break;
     default:     // Normal register name.
+      if (*RegName == '%')
+        RegName++;
       ConstraintStr += ",~{";
-      ConstraintStr += reg_names[RegCode];
+      ConstraintStr += RegName;
       ConstraintStr += "}";
       break;
     }

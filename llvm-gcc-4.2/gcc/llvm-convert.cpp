@@ -7841,8 +7841,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
 
   // Create a new complex global.
   Slot = new GlobalVariable(*TheModule, Init->getType(), true,
-                            GlobalVariable::InternalLinkage,
-                            Init, ".cpx");
+                            GlobalVariable::PrivateLinkage, Init, ".cpx");
   return Slot;
 }
 
@@ -7864,19 +7863,17 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   }
     
   // Create a new string global.
-  const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
   GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(), 
                                           StringIsConstant,
-                                          GlobalVariable::InternalLinkage, Init,
-                                           TAI ? 
-                                            TAI->getStringConstantPrefix() : 
-                                            ".str");
+                                          GlobalVariable::PrivateLinkage, Init,
+                                          ".str");
 
   GV->setAlignment(TYPE_ALIGN(TREE_TYPE(exp)) / 8);
 
   if (SlotP) *SlotP = GV;
 #ifdef LLVM_CSTRING_SECTION
   // For Darwin, try to put it into the .cstring section.
+  const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
   if (TAI && TAI->SectionKindForGlobal(GV) == SectionKind::RODataMergeStr)
     // RODataMergeStr implies that StringIsConstant will be true here.
     // The Darwin linker will coalesce strings in this section.

@@ -1099,7 +1099,7 @@ Constant* ConvertMetadataStringToGV(const char *str) {
   
   // Create a new string global.
   GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(), true,
-                                          GlobalVariable::InternalLinkage,
+                                          GlobalVariable::PrivateLinkage,
                                           Init, ".str");
   GV->setSection("llvm.metadata");
   Slot = GV;

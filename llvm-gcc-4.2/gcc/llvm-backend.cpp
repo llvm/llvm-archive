@@ -40,7 +40,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
@@ -337,7 +337,6 @@ void handleVisibility(tree decl, GlobalValue *GV) {
 namespace llvm {
 #define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
 #define Declare(T, M) Declare2(T, M)
-  Declare(LLVM_TARGET_NAME, TargetInfo);
   Declare(LLVM_TARGET_NAME, Target);
   Declare(LLVM_TARGET_NAME, AsmPrinter);
 #undef Declare
@@ -348,7 +347,6 @@ void llvm_initialize_backend(void) {
   // Initialize the LLVM backend.
 #define DoInit2(TARG, MOD)  LLVMInitialize ## TARG ## MOD()
 #define DoInit(T, M) DoInit2(T, M)
-  DoInit(LLVM_TARGET_NAME, TargetInfo);
   DoInit(LLVM_TARGET_NAME, Target);
   DoInit(LLVM_TARGET_NAME, AsmPrinter);
 #undef DoInit
@@ -451,8 +449,8 @@ void llvm_initialize_backend(void) {
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
-  const Target *TME =
-    TargetRegistry::getClosestStaticTargetForModule(*TheModule, Err);
+  const TargetMachineRegistry::entry *TME = 
+    TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
     cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
     exit(1);
@@ -467,7 +465,7 @@ void llvm_initialize_backend(void) {
   LLVM_SET_SUBTARGET_FEATURES(Features);
   FeatureStr = Features.getString();
 #endif
-  TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
+  TheTarget = TME->CtorFn(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());

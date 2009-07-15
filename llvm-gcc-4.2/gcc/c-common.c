@@ -2606,31 +2606,34 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 #ifdef ENABLE_LLVM
     }
 
-  /* In LLVM we want to represent this as &P[i], not as P+i*sizeof(*P). */
-  /* Convert the pointer to char* if it is a pointer to a zero sized object. */
-  if (!size_set)
-    ptrop = convert(build_pointer_type(char_type_node), ptrop);
-  
-  /* If the code is a subtract, construct 0-(ptrdiff_t)val. */
-  if (resultcode == MINUS_EXPR)
-    intop = build_binary_op (MINUS_EXPR,
-                             convert (ssizetype, integer_zero_node),
-                             convert (ssizetype, intop), 1);
-  {
-    tree arrayref, result, folded;
-    arrayref = build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ptrop)), ptrop, intop,
-                       NULL_TREE, NULL_TREE);
-    result = build_unary_op (ADDR_EXPR, arrayref, 0);
-  
-    folded = fold (result);
-    if (folded == result)
-      TREE_CONSTANT (folded) = TREE_CONSTANT (ptrop) & TREE_CONSTANT (intop);
-    
-    /* If the original was void* + int, we converted it to char* + int.  Convert
-       back to the appropriate void* result and match type qualifiers. */
-    if (!size_set || TYPE_QUALS(result_type) != TYPE_QUALS(TREE_TYPE(folded)))
-      folded = convert(result_type, folded);
-    return folded;
+  if (!inside_iasm_block) {
+    /* In LLVM we want to represent this as &P[i], not as P+i*sizeof(*P). */
+    /* Convert the pointer to char* if it is a pointer to a zero sized object.*/
+    if (!size_set)
+      ptrop = convert(build_pointer_type(char_type_node), ptrop);
+
+    /* If the code is a subtract, construct 0-(ptrdiff_t)val. */
+    if (resultcode == MINUS_EXPR)
+      intop = build_binary_op (MINUS_EXPR,
+                               convert (ssizetype, integer_zero_node),
+                               convert (ssizetype, intop), 1);
+    {
+      tree arrayref, result, folded;
+      arrayref = build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ptrop)), ptrop, intop,
+                         NULL_TREE, NULL_TREE);
+      result = build_unary_op (ADDR_EXPR, arrayref, 0);
+
+      folded = fold (result);
+      if (folded == result)
+        TREE_CONSTANT (folded) = TREE_CONSTANT (ptrop) & TREE_CONSTANT (intop);
+
+      /* If the original was void* + int, we converted it to char* + int.
+         Convert back to the appropriate void* result and match type 
+         qualifiers. */
+      if (!size_set || TYPE_QUALS(result_type) != TYPE_QUALS(TREE_TYPE(folded)))
+        folded = convert(result_type, folded);
+      return folded;
+    }
   }
 #endif
   /* LLVM LOCAL end */

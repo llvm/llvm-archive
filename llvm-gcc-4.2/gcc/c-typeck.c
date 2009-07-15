@@ -3331,7 +3331,12 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 
       /* LLVM LOCAL begin */
       /* LLVM wants &x[y] to be kept as an &x[y] for better optimization. */
-#ifndef ENABLE_LLVM
+      /* However we shouldn't do this in asm blocks; we aren't going to be
+         doing anything complicated with addresses, and the asm block code
+         only understands array refs. */
+#ifdef ENABLE_LLVM
+      if (inside_iasm_block) {
+#endif
       /* For &x[y], return x+y */
       if (TREE_CODE (arg) == ARRAY_REF)
 	{
@@ -3344,6 +3349,8 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 				   : op0),
 				  TREE_OPERAND (arg, 1), 1);
 	}
+#ifdef ENABLE_LLVM
+      }
 #endif 
       /* LLVM LOCAL end */
 

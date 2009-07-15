@@ -34,8 +34,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegistry.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
 /// library, allowing the llvm backend to be shared across the various
@@ -100,8 +100,7 @@ void dummy_function() {
   llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
   llvm::DIFactory::DIFactory(*MP->getModule());
   std::string Err;
-  llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*MP->getModule(),
-                                                               Err);
+  llvm::TargetRegister::getClosestStaticTargetForModule(*MP->getModule(), Err);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

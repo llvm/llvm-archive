@@ -6560,25 +6560,27 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
     assert(0 && "Unknown character type!");
   }
   
+  unsigned LenInElts = Len /
+          TREE_INT_CST_LOW(TYPE_SIZE_UNIT(TREE_TYPE(TREE_TYPE(exp))));
   unsigned ConstantSize = StrTy->getNumElements();
   
-  if (Len != ConstantSize) {
-    // If this is a variable sized array type, set the length to Len.
+  if (LenInElts != ConstantSize) {
+    // If this is a variable sized array type, set the length to LenInElts.
     if (ConstantSize == 0) {
       tree Domain = TYPE_DOMAIN(TREE_TYPE(exp));
       if (!Domain || !TYPE_MAX_VALUE(Domain)) {
-        ConstantSize = Len;
-        StrTy = ArrayType::get(ElTy, Len);
+        ConstantSize = LenInElts;
+        StrTy = ArrayType::get(ElTy, LenInElts);
       }
     }
     
-    if (ConstantSize < Len) {
+    if (ConstantSize < LenInElts) {
       // Only some chars are being used, truncate the string: char X[2] = "foo";
       Elts.resize(ConstantSize);
     } else {
       // Fill the end of the string with nulls.
       Constant *C = Constant::getNullValue(ElTy);
-      for (; Len != ConstantSize; ++Len)
+      for (; LenInElts != ConstantSize; ++LenInElts)
         Elts.push_back(C);
     }
   }

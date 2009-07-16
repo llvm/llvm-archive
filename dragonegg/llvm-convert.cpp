@@ -1946,10 +1946,11 @@ void TreeToLLVM::EmitLandingPads() {
 
     // The exception and the personality function.
     Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-    assert(llvm_eh_personality_libfunc
-           && "no exception handling personality function!");
-    Args.push_back(BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
-                                 Context.getPointerTypeUnqual(Type::Int8Ty)));
+abort();//FIXME
+//FIXME    assert(llvm_eh_personality_libfunc
+//FIXME           && "no exception handling personality function!");
+//FIXME    Args.push_back(BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
+//FIXME                                 Context.getPointerTypeUnqual(Type::Int8Ty)));
 
     // Add selections for each handler.
     foreach_reachable_handler(i, false, false, AddHandler, &Handlers);
@@ -1961,36 +1962,37 @@ void TreeToLLVM::EmitLandingPads() {
       // Create a post landing pad for the handler.
       getPostPad(get_eh_region_number(region));
 
-      int RegionKind = classify_eh_handler(region);
-      if (RegionKind < 0) {
-        // Filter - note the length.
-        tree TypeList = get_eh_type_list(region);
-        unsigned Length = list_length(TypeList);
-        Args.reserve(Args.size() + Length + 1);
-        Args.push_back(Context.getConstantInt(Type::Int32Ty, Length + 1));
-
-        // Add the type infos.
-        for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-          tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-          Args.push_back(Emit(TType, 0));
-        }
-      } else if (RegionKind > 0) {
-        // Catch.
-        tree TypeList = get_eh_type_list(region);
-
-        if (!TypeList) {
-          // Catch-all - push a null pointer.
-          Args.push_back(
-            Context.getNullValue(Context.getPointerTypeUnqual(Type::Int8Ty))
-          );
-        } else {
-          // Add the type infos.
-          for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-            tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-            Args.push_back(Emit(TType, 0));
-          }
-        }
-      }
+abort();//FIXME
+//FIXME      int RegionKind = classify_eh_handler(region);
+//FIXME      if (RegionKind < 0) {
+//FIXME        // Filter - note the length.
+//FIXME        tree TypeList = get_eh_type_list(region);
+//FIXME        unsigned Length = list_length(TypeList);
+//FIXME        Args.reserve(Args.size() + Length + 1);
+//FIXME        Args.push_back(Context.getConstantInt(Type::Int32Ty, Length + 1));
+//FIXME
+//FIXME        // Add the type infos.
+//FIXME        for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
+//FIXME          tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
+//FIXME          Args.push_back(Emit(TType, 0));
+//FIXME        }
+//FIXME      } else if (RegionKind > 0) {
+//FIXME        // Catch.
+//FIXME        tree TypeList = get_eh_type_list(region);
+//FIXME
+//FIXME        if (!TypeList) {
+//FIXME          // Catch-all - push a null pointer.
+//FIXME          Args.push_back(
+//FIXME            Context.getNullValue(Context.getPointerTypeUnqual(Type::Int8Ty))
+//FIXME          );
+//FIXME        } else {
+//FIXME          // Add the type infos.
+//FIXME          for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
+//FIXME            tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
+//FIXME            Args.push_back(Emit(TType, 0));
+//FIXME          }
+//FIXME        }
+//FIXME      }
     }
 
     if (can_throw_external_1(i, false, false)) {
@@ -2000,19 +2002,20 @@ void TreeToLLVM::EmitLandingPads() {
 
       // The representation of a catch-all is language specific.
       Value *Catch_All;
-      if (!lang_eh_catch_all) {
-        // Use a "cleanup" - this should be good enough for most languages.
-        Catch_All = Context.getConstantInt(Type::Int32Ty, 0);
-      } else {
-        tree catch_all_type = lang_eh_catch_all();
-        if (catch_all_type == NULL_TREE)
-          // Use a C++ style null catch-all object.
-          Catch_All = Context.getNullValue(
-                                    Context.getPointerTypeUnqual(Type::Int8Ty));
-        else
-          // This language has a type that catches all others.
-          Catch_All = Emit(catch_all_type, 0);
-      }
+abort();//FIXME
+//FIXME      if (!lang_eh_catch_all) {
+//FIXME        // Use a "cleanup" - this should be good enough for most languages.
+//FIXME        Catch_All = Context.getConstantInt(Type::Int32Ty, 0);
+//FIXME      } else {
+//FIXME        tree catch_all_type = lang_eh_catch_all();
+//FIXME        if (catch_all_type == NULL_TREE)
+//FIXME          // Use a C++ style null catch-all object.
+//FIXME          Catch_All = Context.getNullValue(
+//FIXME                                    Context.getPointerTypeUnqual(Type::Int8Ty));
+//FIXME        else
+//FIXME          // This language has a type that catches all others.
+//FIXME          Catch_All = Emit(catch_all_type, 0);
+//FIXME      }
       Args.push_back(Catch_All);
     }
 
@@ -2044,74 +2047,75 @@ void TreeToLLVM::EmitPostPads() {
 
     EmitBlock(PostPad);
 
-    eh_region region = get_eh_region(i);
-    BasicBlock *Dest = getLabelDeclBlock(get_eh_region_tree_label(region));
-
-    int RegionKind = classify_eh_handler(region);
-    if (!RegionKind || !get_eh_type_list(region)) {
-      // Cleanup, catch-all or empty filter - no testing required.
-      Builder.CreateBr(Dest);
-      continue;
-    } else if (RegionKind < 0) {
-      // Filter - the result of a filter selection will be a negative index if
-      // there is a match.
-      Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
-
-      // Compare with the filter action value.
-      Value *Zero = Context.getConstantInt(Select->getType(), 0);
-      Value *Compare = Builder.CreateICmpSLT(Select, Zero);
-
-      // Branch on the compare.
-      BasicBlock *NoFilterBB = BasicBlock::Create("nofilter");
-      Builder.CreateCondBr(Compare, Dest, NoFilterBB);
-      EmitBlock(NoFilterBB);
-    } else if (RegionKind > 0) {
-      // Catch
-      tree TypeList = get_eh_type_list(region);
-
-      Value *Cond = NULL;
-      for (; TypeList; TypeList = TREE_CHAIN (TypeList)) {
-        Value *TType = Emit(lookup_type_for_runtime(TREE_VALUE(TypeList)), 0);
-        TType = BitCastToType(TType, 
-                              Context.getPointerTypeUnqual(Type::Int8Ty));
-
-        // Call get eh type id.
-        Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
-        Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
-
-        // Compare with the exception selector.
-        Value *Compare = Builder.CreateICmpEQ(Select, TypeID);
-
-        Cond = Cond ? Builder.CreateOr(Cond, Compare) : Compare;
-      }
-
-      BasicBlock *NoCatchBB = NULL;
-
-      // If the comparion fails, branch to the next catch that has a
-      // post landing pad.
-      eh_region next_catch = get_eh_next_catch(region);
-      for (; next_catch; next_catch = get_eh_next_catch(next_catch)) {
-        unsigned CatchNo = get_eh_region_number(next_catch);
-
-        if (CatchNo < PostPads.size())
-          NoCatchBB = PostPads[CatchNo];
-
-        if (NoCatchBB)
-          break;
-      }
-
-      if (NoCatchBB) {
-        // Branch on the compare.
-        Builder.CreateCondBr(Cond, Dest, NoCatchBB);
-        continue;
-      }
-
-      // If there is no such catch, execute a RESX if the comparison fails.
-      NoCatchBB = BasicBlock::Create("nocatch");
-      // Branch on the compare.
-      Builder.CreateCondBr(Cond, Dest, NoCatchBB);
-      EmitBlock(NoCatchBB);
-    }
+abort();//FIXME
+//FIXME    eh_region region = get_eh_region(i);
+//FIXME    BasicBlock *Dest = getLabelDeclBlock(get_eh_region_tree_label(region));
+//FIXME
+//FIXME    int RegionKind = classify_eh_handler(region);
+//FIXME    if (!RegionKind || !get_eh_type_list(region)) {
+//FIXME      // Cleanup, catch-all or empty filter - no testing required.
+//FIXME      Builder.CreateBr(Dest);
+//FIXME      continue;
+//FIXME    } else if (RegionKind < 0) {
+//FIXME      // Filter - the result of a filter selection will be a negative index if
+//FIXME      // there is a match.
+//FIXME      Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
+//FIXME
+//FIXME      // Compare with the filter action value.
+//FIXME      Value *Zero = Context.getConstantInt(Select->getType(), 0);
+//FIXME      Value *Compare = Builder.CreateICmpSLT(Select, Zero);
+//FIXME
+//FIXME      // Branch on the compare.
+//FIXME      BasicBlock *NoFilterBB = BasicBlock::Create("nofilter");
+//FIXME      Builder.CreateCondBr(Compare, Dest, NoFilterBB);
+//FIXME      EmitBlock(NoFilterBB);
+//FIXME    } else if (RegionKind > 0) {
+//FIXME      // Catch
+//FIXME      tree TypeList = get_eh_type_list(region);
+//FIXME
+//FIXME      Value *Cond = NULL;
+//FIXME      for (; TypeList; TypeList = TREE_CHAIN (TypeList)) {
+//FIXME        Value *TType = Emit(lookup_type_for_runtime(TREE_VALUE(TypeList)), 0);
+//FIXME        TType = BitCastToType(TType, 
+//FIXME                              Context.getPointerTypeUnqual(Type::Int8Ty));
+//FIXME
+//FIXME        // Call get eh type id.
+//FIXME        Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
+//FIXME        Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
+//FIXME
+//FIXME        // Compare with the exception selector.
+//FIXME        Value *Compare = Builder.CreateICmpEQ(Select, TypeID);
+//FIXME
+//FIXME        Cond = Cond ? Builder.CreateOr(Cond, Compare) : Compare;
+//FIXME      }
+//FIXME
+//FIXME      BasicBlock *NoCatchBB = NULL;
+//FIXME
+//FIXME      // If the comparion fails, branch to the next catch that has a
+//FIXME      // post landing pad.
+//FIXME      eh_region next_catch = get_eh_next_catch(region);
+//FIXME      for (; next_catch; next_catch = get_eh_next_catch(next_catch)) {
+//FIXME        unsigned CatchNo = get_eh_region_number(next_catch);
+//FIXME
+//FIXME        if (CatchNo < PostPads.size())
+//FIXME          NoCatchBB = PostPads[CatchNo];
+//FIXME
+//FIXME        if (NoCatchBB)
+//FIXME          break;
+//FIXME      }
+//FIXME
+//FIXME      if (NoCatchBB) {
+//FIXME        // Branch on the compare.
+//FIXME        Builder.CreateCondBr(Cond, Dest, NoCatchBB);
+//FIXME        continue;
+//FIXME      }
+//FIXME
+//FIXME      // If there is no such catch, execute a RESX if the comparison fails.
+//FIXME      NoCatchBB = BasicBlock::Create("nocatch");
+//FIXME      // Branch on the compare.
+//FIXME      Builder.CreateCondBr(Cond, Dest, NoCatchBB);
+//FIXME      EmitBlock(NoCatchBB);
+//FIXME    }
 
     // Emit a RESX_EXPR which skips handlers with no post landing pad.
     foreach_reachable_handler(i, true, false, AddHandler, &Handlers);
@@ -2151,8 +2155,9 @@ void TreeToLLVM::EmitUnwindBlock() {
     EmitBlock(UnwindBB);
     // Fetch and store exception handler.
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
-    Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
+abort();//FIXME
+//FIXME    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
+//FIXME    Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
     Builder.CreateUnreachable();
   }
 }

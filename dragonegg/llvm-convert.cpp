@@ -761,7 +761,7 @@ Function *TreeToLLVM::EmitFunction() {
       if (e->flags & EDGE_FALLTHRU)
         break;
     if (e && e->dest != bb->next_bb) {
-      Builder.CreateBr(getLabelDeclBlock(tree_block_label (e->dest)));
+      Builder.CreateBr(getLabelDeclBlock(gimple_block_label (e->dest)));
       EmitBlock(BasicBlock::Create(""));
     }
   }

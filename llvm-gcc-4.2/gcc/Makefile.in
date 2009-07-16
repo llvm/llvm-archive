@@ -245,6 +245,11 @@ CPPFLAGS = @CPPFLAGS@
 else
 CPPFLAGS := @CPPFLAGS@ -DENABLE_LLVM $(shell $(LLVMBINPATH)/llvm-config --cppflags)
 
+ifeq ($(BUILDMODE),)
+# When building against an installed copy of llvm, do not go back to the
+# llvm source directory to find headers, since they should all be installed.
+LLVMSRCDIR = $(LLVMOBJDIR)
+else
 # Use llvm-config to get the srcdir that LLVM was configured with, to support
 # srcdir != objdir builds.
 ### FIXME: Relying upon llvm-config doesn't work if we built LLVM in one placed,
@@ -258,6 +263,7 @@ LLVMSRCDIR := $(shell \
     echo "$$P"; \
   fi);
 LLVMSRCDIR := $(shell echo "$(LLVMSRCDIR)" | sed -e 's,;,,')
+endif
 endif
 
 ifdef LLVM_VERSION_INFO

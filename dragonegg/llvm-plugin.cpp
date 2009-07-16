@@ -25,7 +25,7 @@ along with GCC; see the file COPYING.  If not see
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 
 // System headers
 #include <iostream>
@@ -179,8 +179,8 @@ static void LazilyInitializeModule(void) {
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
-  const TargetMachineRegistry::entry *TME =
-    TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Err);
+  const Target *TME =
+    TargetRegistry::getClosestStaticTargetForModule(*TheModule, Err);
   if (!TME) {
     cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
     exit(1);
@@ -195,7 +195,7 @@ static void LazilyInitializeModule(void) {
 //TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
 //TODO  FeatureStr = Features.getString();
 //TODO#endif
-  TheTarget = TME->CtorFn(*TheModule, FeatureStr);
+  TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());

@@ -4185,6 +4185,22 @@ static void FreeConstTupleStrings(const char **ReplacementStrings,
     free((char *)ReplacementStrings[i]);
 }
 
+// When extracting a register name from a DECL_HARD_REGISTER variable,
+// we normally want to look up RegNum in reg_names.  This works on most
+// targets, where ADDITIONAL_REGISTER_NAMES are true synonyms.  It does not
+// work on x86, where ADDITIONAL_REGISTER_NAMES are overlapping subregisters;
+// in particular AH and AL can't be distinguished if we go through reg_names.
+static const char* getConstraintRegNameFromGccTables(const char *RegName,
+                                                     unsigned int RegNum) {
+#ifdef LLVM_DO_NOT_USE_REG_NAMES
+  if (*RegName == '%')
+    RegName++;
+  return RegName;
+#else
+  return reg_names[RegNum];
+#endif
+}
+
 Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   unsigned NumInputs = list_length(ASM_INPUTS(exp));
   unsigned NumOutputs = list_length(ASM_OUTPUTS(exp));
@@ -4303,9 +4319,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const char* RegName = extractRegisterName(Operand);
       int RegNum = decode_reg_name(RegName);
       if (RegNum >= 0) {
-        // Constraints don't have the leading %, the variable names do
-        if (*RegName == '%')
-          RegName++;
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
         unsigned RegNameLen = strlen(RegName);
         char *NewConstraint = (char*)alloca(RegNameLen+4);
         NewConstraint[0] = '=';
@@ -4457,8 +4471,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const char *RegName = extractRegisterName(Val);
       int RegNum = decode_reg_name(RegName);
       if (RegNum >= 0) {
-        if (*RegName == '%')      // Variables have leading %.
-          RegName++;              // Constraints don't.
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
         ConstraintStr += '{';
         ConstraintStr += RegName;
         ConstraintStr += '}';
@@ -4501,8 +4514,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += ",~{memory}";
       break;
     default:     // Normal register name.
-      if (*RegName == '%')
-        RegName++;
+      RegName = getConstraintRegNameFromGccTables(RegName, RegCode);
       ConstraintStr += ",~{";
       ConstraintStr += RegName;
       ConstraintStr += "}";

@@ -286,6 +286,10 @@ int flag_no_asm;
 int flag_iasm_blocks;
 /* APPLE LOCAL end CW asm blocks */
 
+/* LLVM LOCAL begin CW asm blocks */
+int iasm_label_counter;
+/* LLVM LOCAL end CW asm blocks */
+
 /* Nonzero means to treat bitfields as signed unless they say `unsigned'.  */
 
 int flag_signed_bitfields = 1;
@@ -2602,31 +2606,34 @@ pointer_int_sum (enum tree_code resultcode, tree ptrop, tree intop)
 #ifdef ENABLE_LLVM
     }
 
-  /* In LLVM we want to represent this as &P[i], not as P+i*sizeof(*P). */
-  /* Convert the pointer to char* if it is a pointer to a zero sized object. */
-  if (!size_set)
-    ptrop = convert(build_pointer_type(char_type_node), ptrop);
-  
-  /* If the code is a subtract, construct 0-(ptrdiff_t)val. */
-  if (resultcode == MINUS_EXPR)
-    intop = build_binary_op (MINUS_EXPR,
-                             convert (ssizetype, integer_zero_node),
-                             convert (ssizetype, intop), 1);
-  {
-    tree arrayref, result, folded;
-    arrayref = build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ptrop)), ptrop, intop,
-                       NULL_TREE, NULL_TREE);
-    result = build_unary_op (ADDR_EXPR, arrayref, 0);
-  
-    folded = fold (result);
-    if (folded == result)
-      TREE_CONSTANT (folded) = TREE_CONSTANT (ptrop) & TREE_CONSTANT (intop);
-    
-    /* If the original was void* + int, we converted it to char* + int.  Convert
-       back to the appropriate void* result and match type qualifiers. */
-    if (!size_set || TYPE_QUALS(result_type) != TYPE_QUALS(TREE_TYPE(folded)))
-      folded = convert(result_type, folded);
-    return folded;
+  if (!inside_iasm_block) {
+    /* In LLVM we want to represent this as &P[i], not as P+i*sizeof(*P). */
+    /* Convert the pointer to char* if it is a pointer to a zero sized object.*/
+    if (!size_set)
+      ptrop = convert(build_pointer_type(char_type_node), ptrop);
+
+    /* If the code is a subtract, construct 0-(ptrdiff_t)val. */
+    if (resultcode == MINUS_EXPR)
+      intop = build_binary_op (MINUS_EXPR,
+                               convert (ssizetype, integer_zero_node),
+                               convert (ssizetype, intop), 1);
+    {
+      tree arrayref, result, folded;
+      arrayref = build4 (ARRAY_REF, TREE_TYPE(TREE_TYPE(ptrop)), ptrop, intop,
+                         NULL_TREE, NULL_TREE);
+      result = build_unary_op (ADDR_EXPR, arrayref, 0);
+
+      folded = fold (result);
+      if (folded == result)
+        TREE_CONSTANT (folded) = TREE_CONSTANT (ptrop) & TREE_CONSTANT (intop);
+
+      /* If the original was void* + int, we converted it to char* + int.
+         Convert back to the appropriate void* result and match type 
+         qualifiers. */
+      if (!size_set || TYPE_QUALS(result_type) != TYPE_QUALS(TREE_TYPE(folded)))
+        folded = convert(result_type, folded);
+      return folded;
+    }
   }
 #endif
   /* LLVM LOCAL end */
@@ -8305,6 +8312,20 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	  sprintf (buf + strlen (buf), "%s", name);
 	  break;
 	}
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+      /* Labels defined earlier in the asm block will have DECL_INITIAL set
+         at this point; labels we haven't seen yet won't.  LABEL_DECL_UID
+         should be set in either case (when we saw the forward ref, we
+         assumed the target was inside the block; that's what gcc does). */
+      if (DECL_INITIAL (arg))
+        sprintf(buf + strlen(buf), HOST_WIDE_INT_PRINT_DEC "b",
+                LABEL_DECL_UID (arg));
+      else
+        sprintf(buf + strlen(buf), HOST_WIDE_INT_PRINT_DEC "f",
+                LABEL_DECL_UID (arg));
+#else
+/* LLVM LOCAL end */
       TREE_USED (arg) = 1;
       IASM_OFFSET_PREFIX (e, buf);
       arg = build1 (ADDR_EXPR, ptr_type_node, arg);
@@ -8330,6 +8351,8 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 #endif
       iasm_get_register_var (arg, modifier, buf, argnum, must_be_reg, e);
       iasm_force_constraint (0, e);
+/* LLVM LOCAL */
+#endif  /* ENABLE_LLVM */
       break;
 
     case IDENTIFIER_NODE:
@@ -8628,16 +8651,15 @@ iasm_reg_name (tree id)
 tree
 iasm_label (tree labid, bool atsign)
 {
-/* LLVM LOCAL begin */
-/* Unused variables resulting from code change below. */
-#ifdef ENABLE_LLVM
-  tree stmt, label;
-#else
   tree sexpr;
   tree inputs = NULL_TREE, outputs = NULL_TREE, clobbers = NULL_TREE;
   tree stmt;
+/* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   tree label, l;
   tree str, one;
+#else
+  tree label;
 #endif
 /* LLVM LOCAL end */
   STRIP_NOPS (labid);
@@ -8650,8 +8672,7 @@ iasm_label (tree labid, bool atsign)
 
   iasm_buffer[0] = '\0';
   label = iasm_define_label (labid);
-/* LLVM LOCAL */
-#ifdef ENABLE_LLVM
+#if 0
   /* Ideally I'd like to do this, but, it moves the label in:
 
 	nop
@@ -8676,6 +8697,8 @@ iasm_label (tree labid, bool atsign)
 #else
   /* Arrange for the label to be a parameter to the ASM_EXPR, as only then will the
      backend `manage it' for us, say, making a unique copy for inline expansion.  */
+/* LLVM LOCAL */
+#ifndef ENABLE_LLVM
   sprintf (iasm_buffer, "%%l0: # %s", IDENTIFIER_POINTER (DECL_NAME (label)));
 
   l = build1 (ADDR_EXPR, ptr_type_node, label);
@@ -8687,6 +8710,13 @@ iasm_label (tree labid, bool atsign)
   inputs = chainon (NULL_TREE, one);
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
   
+/* LLVM LOCAL begin */
+#else
+  sprintf (iasm_buffer, HOST_WIDE_INT_PRINT_DEC ": # %s",
+           LABEL_DECL_UID (label), IDENTIFIER_POINTER (DECL_NAME (label)));
+  sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
+#endif
+/* LLVM LOCAL end */
   /* Simple asm statements are treated as volatile.  */
   stmt = build_stmt (ASM_EXPR, sexpr, outputs, inputs, clobbers, NULL_TREE);
   ASM_VOLATILE_P (stmt) = 1;
@@ -8826,6 +8856,10 @@ iasm_lookup_label (tree labid)
   strcat (buf, labname);
   newid = get_identifier (buf);
   newid = lookup_label (newid);
+/* LLVM LOCAL begin */  
+  if (LABEL_DECL_UID (newid) == -1)
+    LABEL_DECL_UID (newid) = iasm_label_counter++;
+/* LLVM LOCAL end */
   return newid;
 }
 
@@ -8853,6 +8887,10 @@ iasm_define_label (tree labid)
   strcat (buf, labname);
   newid = get_identifier (buf);
   newid = define_label (input_location, newid);
+  /* LLVM LOCAL begin */
+  if (LABEL_DECL_UID (newid) == -1)
+    LABEL_DECL_UID (newid) = iasm_label_counter++;
+  /* LLVM LOCAL end */
   return newid;
 }
 

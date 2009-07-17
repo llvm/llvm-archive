@@ -7095,6 +7095,8 @@ cp_parser_compound_statement (cp_parser *parser, tree in_statement_expr,
       iasm_state = iasm_asm;
       inside_iasm_block = true;
       iasm_kill_regs = true;
+      /* LLVM LOCAL */
+      iasm_label_counter = 0;
       cp_parser_iasm_line_seq_opt (parser);
       iasm_state = iasm_none;
       iasm_end_block ();
@@ -18063,6 +18065,8 @@ cp_parser_iasm_compound_statement (cp_parser *parser)
   iasm_state = iasm_asm;
   inside_iasm_block = true;
   iasm_kill_regs = true;
+  /* LLVM LOCAL */
+  iasm_label_counter = 0;
   if (!cp_parser_require (parser, CPP_OPEN_BRACE, "`{'"))
     return error_mark_node;
   /* Begin the compound-statement.  */
@@ -18087,6 +18091,8 @@ cp_parser_iasm_top_statement (cp_parser *parser)
   iasm_state = iasm_asm;
   inside_iasm_block = true;
   iasm_kill_regs = true;
+  /* LLVM LOCAL */
+  iasm_label_counter = 0;
   /* Begin the compound-statement.  */
   compound_stmt = begin_compound_stmt (/*has_no_scope=*/false);
   if (!cp_lexer_iasm_bol (parser->lexer))

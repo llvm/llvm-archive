@@ -22060,9 +22060,18 @@ iasm_type_for (tree arg)
       enum machine_mode mode = VOIDmode;
       if (IDENTIFIER_POINTER (arg)[1] == 'e')
 	mode = SImode;
+/* LLVM LOCAL begin */
+/* Accept H registers for LLVM, this totally obviates need for ASM_USES. */
+#ifndef ENABLE_LLVM
       else if (/* IDENTIFIER_POINTER (arg)[2] == 'h'
 		  || */ IDENTIFIER_POINTER (arg)[2] == 'l')
 	mode = QImode;
+#else
+      else if (IDENTIFIER_POINTER (arg)[2] == 'h'
+               || IDENTIFIER_POINTER (arg)[2] == 'l')
+	mode = QImode;
+#endif
+/* LLVM LOCAL end */
       else if (IDENTIFIER_POINTER (arg)[2] == 'x')
 	mode = HImode;
       else if (IDENTIFIER_POINTER (arg)[1] == 'r')

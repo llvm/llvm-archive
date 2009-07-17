@@ -25,6 +25,8 @@ extern bool inside_iasm_block;
 extern bool iasm_kill_regs;
 extern bool iasm_in_operands;
 extern tree iasm_do_id (tree);
+/* LLVM LOCAL */
+extern int iasm_label_counter;
 /* Maximum number of arguments.  */
 #define IASM_MAX_ARG 11
 

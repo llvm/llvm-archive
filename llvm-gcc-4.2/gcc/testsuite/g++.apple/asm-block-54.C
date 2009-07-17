@@ -2,7 +2,8 @@
 /* APPLE LOCAL x86_64 */
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options { -fasm-blocks -msse3 } } */
-/* { dg-final { scan-assembler "movq -\(16|36\)\\\(%ebp\\\), %mm0" } } */
+/* LLVM LOCAL */
+/* { dg-final { scan-assembler "movq -\(16|36|24\)\\\(%ebp\\\), %mm0" } } */
 /* Radar 4515069 */
 
 void foo() {

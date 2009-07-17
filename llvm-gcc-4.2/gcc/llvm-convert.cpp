@@ -518,10 +518,14 @@ void TreeToLLVM::StartFunctionBody() {
   else if (flag_stack_protect == 2)
     Fn->addFnAttr(Attribute::StackProtectReq);
 
+  // Handle naked attribute
+  if (lookup_attribute ("naked", DECL_ATTRIBUTES (FnDecl)))
+    Fn->addFnAttr(Attribute::Naked);
+
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);
-  
+
   // Mark the function "nounwind" if not doing exception handling.
   if (!flag_exceptions)
     Fn->setDoesNotThrow();

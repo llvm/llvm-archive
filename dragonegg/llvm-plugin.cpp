@@ -33,6 +33,8 @@ along with GCC; see the file COPYING.  If not see
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
+#define IN_GCC
+
 extern "C" {
 #include "intl.h"
 }

@@ -557,25 +557,25 @@ DIType DebugInfo::createStructType(tree type) {
     DW_TAG_union_type;
   
   unsigned RunTimeLang = 0;
-  if (TYPE_LANG_SPECIFIC (type)
-      && lang_hooks.types.is_runtime_specific_type (type))
-    {
-      DICompileUnit CU = getOrCreateCompileUnit(main_input_filename);
-      unsigned CULang = CU.getLanguage();
-      switch (CULang) {
-      case DW_LANG_ObjC_plus_plus :
-        RunTimeLang = DW_LANG_ObjC_plus_plus;
-        break;
-      case DW_LANG_ObjC :
-        RunTimeLang = DW_LANG_ObjC;
-        break;
-      case DW_LANG_C_plus_plus :
-        RunTimeLang = DW_LANG_C_plus_plus;
-        break;
-      default:
-        break;
-      }
-    }
+//TODO  if (TYPE_LANG_SPECIFIC (type)
+//TODO      && lang_hooks.types.is_runtime_specific_type (type))
+//TODO    {
+//TODO      DICompileUnit CU = getOrCreateCompileUnit(main_input_filename);
+//TODO      unsigned CULang = CU.getLanguage();
+//TODO      switch (CULang) {
+//TODO      case DW_LANG_ObjC_plus_plus :
+//TODO        RunTimeLang = DW_LANG_ObjC_plus_plus;
+//TODO        break;
+//TODO      case DW_LANG_ObjC :
+//TODO        RunTimeLang = DW_LANG_ObjC;
+//TODO        break;
+//TODO      case DW_LANG_C_plus_plus :
+//TODO        RunTimeLang = DW_LANG_C_plus_plus;
+//TODO        break;
+//TODO      default:
+//TODO        break;
+//TODO      }
+//TODO    }
     
   // Records and classes and unions can all be recursive.  To handle them,
   // we first generate a debug descriptor for the struct as a forward 
@@ -909,8 +909,8 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
    // flag_objc_abi represents Objective-C runtime version number. It is zero
    // for all other language.
    unsigned ObjcRunTimeVer = 0;
-   if (flag_objc_abi != 0 && flag_objc_abi != -1)
-     ObjcRunTimeVer = flag_objc_abi;
+//TODO   if (flag_objc_abi != 0 && flag_objc_abi != -1)
+//TODO     ObjcRunTimeVer = flag_objc_abi;
    DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
                                                         Directory, 
                                                         version_string, isMain,

@@ -435,7 +435,7 @@ public:
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
-    if( Ty->getTypeID() == Type::VoidTyID ) {
+    if (Ty->getTypeID() == Type::VoidTyID) {
       // Handle void explicitly as an opaque type.
       const Type *OpTy = OpaqueType::get();
       C.HandleScalarArgument(OpTy, type);

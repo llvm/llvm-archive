@@ -2,7 +2,7 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options { -fasm-blocks -msse3 } } */
 /* LLVM LOCAL */
-/* { dg-final { scan-assembler "movq -\(16|36|24\)\\\(%ebp\\\), %mm0" } } */
+/* { dg-final { scan-assembler "movq -\(16|32|36|24\)\\\(%ebp\\\), %mm0" } } */
 /* Radar 4515069 */
 
 void foo() {

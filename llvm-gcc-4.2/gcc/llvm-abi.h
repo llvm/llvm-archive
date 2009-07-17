@@ -435,7 +435,12 @@ public:
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
-    if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
+    if( Ty->getTypeID() == Type::VoidTyID ) {
+      // Handle void explicitly as an opaque type.
+      const Type *OpTy = OpaqueType::get();
+      C.HandleScalarArgument(OpTy, type);
+      ScalarElts.push_back(OpTy);
+    } else if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       const Type *PtrTy = PointerType::getUnqual(Ty);
       C.HandleByInvisibleReferenceArgument(PtrTy, type);
       ScalarElts.push_back(PtrTy);

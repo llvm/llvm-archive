@@ -1420,12 +1420,9 @@ bool ValidateRegisterVariable(tree decl) {
   int RegNumber = decode_reg_name(extractRegisterName(decl));
   const Type *Ty = ConvertType(TREE_TYPE(decl));
 
-  // If this has already been processed, don't emit duplicate error messages.
-  if (DECL_LLVM_SET_P(decl)) {
-    // Error state encoded into DECL_LLVM.
-    return cast<ConstantInt>(DECL_LLVM(decl))->getZExtValue();
-  }
-  
+  if (errorcount || sorrycount)
+    return true;  // Do not process broken code.
+
   /* Detect errors in declaring global registers.  */
   if (RegNumber == -1)
     error("%Jregister name not specified for %qD", decl, decl);
@@ -1446,11 +1443,10 @@ bool ValidateRegisterVariable(tree decl) {
   else {
     if (TREE_THIS_VOLATILE(decl))
       warning(0, "volatile register variables don%'t work as you might wish");
-    
-    SET_DECL_LLVM(decl, Context.getConstantIntFalse());
+
     return false;  // Everything ok.
   }
-  SET_DECL_LLVM(decl, Context.getConstantIntTrue());
+
   return true;
 }
 

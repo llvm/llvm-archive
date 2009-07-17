@@ -899,13 +899,6 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   else
     LangTag = DW_LANG_C89;
 
-   const char *Flags = "";
-   // Do this only when RC_DEBUG_OPTIONS environment variable is set to
-   // a nonempty string. This is intended only for internal Apple use.
-   char * debugopt = getenv("RC_DEBUG_OPTIONS");
-   if (debugopt && debugopt[0])
-     Flags = get_arguments();
-
    // flag_objc_abi represents Objective-C runtime version number. It is zero
    // for all other language.
    unsigned ObjcRunTimeVer = 0;
@@ -914,7 +907,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
    DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName, 
                                                         Directory, 
                                                         version_string, isMain,
-                                                        optimize, Flags,
+                                                        optimize, "",
                                                         ObjcRunTimeVer);
   CU = NewCU.getGV();
   return NewCU;

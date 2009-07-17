@@ -30,10 +30,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
 
-extern "C" {
-#include "llvm.h"
-}  
-
 #include <string>
 #include <map>
 #include <vector>

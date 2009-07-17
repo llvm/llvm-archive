@@ -23,26 +23,38 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // This is a C++ source file that implements the debug information gathering.
 //===----------------------------------------------------------------------===//
 
-#include "llvm-debug.h"
-
-#include "llvm-abi.h"
-#include "llvm-internal.h"
+// LLVM headers
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallVector.h"
 
-extern "C" {
+// GCC headers
+#undef VISIBILITY_HIDDEN
+#define IN_GCC
+
+#include "config.h"
+#include "system.h"
+#include "coretypes.h"
+#include "target.h"
+#include "tree.h"
+
+#include "flags.h"
 #include "langhooks.h"
 #include "toplev.h"
-#include "tree.h"
 #include "version.h"
-}
+
+// Plugin headers
+#include "llvm-abi.h"
+#include "llvm-debug.h"
+#include "llvm-internal.h"
+#include "bits_and_bobs.h"
 
 using namespace llvm;
 using namespace llvm::dwarf;

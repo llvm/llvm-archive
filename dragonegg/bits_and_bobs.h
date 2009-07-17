@@ -19,6 +19,18 @@ extern bool llvm_set_decl_p(union tree_node *);
 #define DECL_LLVM_IF_SET(NODE) \
   (DECL_LLVM_SET_P (NODE) ? DECL_LLVM (NODE) : NULL)
 
+// GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
+// These are lazily computed by ConvertType.
+
+extern const Type *llvm_set_type(tree Tr, const Type *Ty);
+
+#define SET_TYPE_LLVM(NODE, TYPE) (const Type *)llvm_set_type(NODE, TYPE)
+
+extern const Type *llvm_get_type(unsigned Index);
+
+#define GET_TYPE_LLVM(NODE) \
+  (const Type *)llvm_get_type( 0 )
+
 // emit_global_to_llvm - Emit the specified VAR_DECL to LLVM as a global
 // variable.
 // FIXME: Should not be here

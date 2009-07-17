@@ -23,7 +23,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // This is the code that converts GCC tree types into LLVM types.
 //===----------------------------------------------------------------------===//
 
-#include "llvm-internal.h"
+// LLVM headers
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -35,16 +35,22 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include <map>
-#undef VISIBILITY_HIDDEN
 
-extern "C" {
+// System headers
+#include <map>
+
+// GCC headers
+#undef VISIBILITY_HIDDEN
+#define IN_GCC
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
-}
+
+// Plugin headers
 #include "llvm-abi.h"
+#include "bits_and_bobs.h"
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM types with GCC trees
@@ -63,53 +69,6 @@ typedef DenseMap<const Type *, unsigned> LTypesMapTy;
 static LTypesMapTy LTypesMap;
 
 static LLVMContext &Context = getGlobalContext();
-
-// GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
-// These are lazily computed by ConvertType.
-
-#define SET_TYPE_SYMTAB_LLVM(NODE, index) \
-  (TYPE_CHECK (NODE)->type.symtab.llvm = index)
-
-// Note down LLVM type for GCC tree node.
-static const Type * llvm_set_type(tree Tr, const Type *Ty) {
-
-  // For x86 long double, llvm records the size of the data (80) while
-  // gcc's TYPE_SIZE including alignment padding.  getTypeAllocSizeInBits
-  // is used to compensate for this.
-  assert((!TYPE_SIZE(Tr) || !Ty->isSized() || !isInt64(TYPE_SIZE(Tr), true) ||
-         getInt64(TYPE_SIZE(Tr), true) == 
-            getTargetData().getTypeAllocSizeInBits(Ty))
-         && "LLVM type size doesn't match GCC type size!");
-
-  unsigned &TypeSlot = LTypesMap[Ty];
-  if (TypeSlot) {
-    // Already in map.
-    SET_TYPE_SYMTAB_LLVM(Tr, TypeSlot);
-    return Ty;
-  }
-
-  unsigned Index = LTypes.size() + 1;
-  LTypes.push_back(Ty);
-  SET_TYPE_SYMTAB_LLVM(Tr, Index);
-  LTypesMap[Ty] = Index;
-
-  return Ty;
-}
-
-#define SET_TYPE_LLVM(NODE, TYPE) (const Type *)llvm_set_type(NODE, TYPE)
-
-// Get LLVM Type for the GCC tree node based on LTypes vector index.
-// When GCC tree node is initialized, it has 0 as the index value. This is
-// why all recorded indexes are offset by 1. 
-extern "C" const Type *llvm_get_type(unsigned Index) {
-  if (Index == 0)
-    return NULL;
-  assert ((Index - 1) < LTypes.size() && "Invalid LLVM Type index");
-  return LTypes[Index - 1];
-}
-
-#define GET_TYPE_LLVM(NODE) \
-  (const Type *)llvm_get_type( TYPE_CHECK (NODE)->type.symtab.llvm)
 
 // Erase type from LTypes vector
 static void llvmEraseLType(const Type *Ty) {

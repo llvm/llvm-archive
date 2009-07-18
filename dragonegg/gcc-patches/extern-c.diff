@@ -1,7 +1,7 @@
 Index: gcc.fsf.master/gcc/flags.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/flags.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/flags.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/flags.h	2009-07-16 06:29:31.411594330 +0200
++++ gcc.fsf.master/gcc/flags.h	2009-07-16 14:18:26.386942015 +0200
 @@ -26,6 +26,10 @@
  #include "options.h"
  #include "real.h"
@@ -24,8 +24,8 @@ Index: gcc.fsf.master/gcc/flags.h
  #endif /* ! GCC_FLAGS_H */
 Index: gcc.fsf.master/gcc/opth-gen.awk
 ===================================================================
---- gcc.fsf.master.orig/gcc/opth-gen.awk	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/opth-gen.awk	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/opth-gen.awk	2009-07-16 06:29:31.375638464 +0200
++++ gcc.fsf.master/gcc/opth-gen.awk	2009-07-16 14:18:26.411868822 +0200
 @@ -66,6 +66,10 @@
  print "#ifndef OPTIONS_H"
  print "#define OPTIONS_H"
@@ -49,8 +49,8 @@ Index: gcc.fsf.master/gcc/opth-gen.awk
  }
 Index: gcc.fsf.master/gcc/tree.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/tree.h	2009-07-06 08:21:55.000000000 +0200
-+++ gcc.fsf.master/gcc/tree.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/tree.h	2009-07-16 06:41:02.916597755 +0200
++++ gcc.fsf.master/gcc/tree.h	2009-07-16 14:18:26.454840309 +0200
 @@ -31,6 +31,10 @@
  #include "alias.h"
  #include "options.h"
@@ -62,7 +62,7 @@ Index: gcc.fsf.master/gcc/tree.h
  /* Codes of tree nodes */
  
  #define DEFTREECODE(SYM, STRING, TYPE, NARGS)   SYM,
-@@ -5299,4 +5303,8 @@
+@@ -5293,4 +5297,8 @@
    for ((arg) = first_const_call_expr_arg ((call), &(iter)); (arg);	\
         (arg) = next_const_call_expr_arg (&(iter)))
  
@@ -73,8 +73,8 @@ Index: gcc.fsf.master/gcc/tree.h
  #endif  /* GCC_TREE_H  */
 Index: gcc.fsf.master/gcc/tree-flow.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/tree-flow.h	2009-07-06 08:21:56.000000000 +0200
-+++ gcc.fsf.master/gcc/tree-flow.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/tree-flow.h	2009-07-16 06:41:02.956597999 +0200
++++ gcc.fsf.master/gcc/tree-flow.h	2009-07-16 14:18:26.470942184 +0200
 @@ -32,6 +32,10 @@
  #include "ipa-reference.h"
  #include "tree-ssa-alias.h"
@@ -86,7 +86,7 @@ Index: gcc.fsf.master/gcc/tree-flow.h
  
  /* Gimple dataflow datastructure. All publicly available fields shall have
     gimple_ accessor defined in tree-flow-inline.h, all publicly modifiable
-@@ -921,4 +925,8 @@
+@@ -920,4 +924,8 @@
  int least_common_multiple (int, int);
  edge redirect_eh_edge (edge e, basic_block new_bb);
  
@@ -97,8 +97,8 @@ Index: gcc.fsf.master/gcc/tree-flow.h
  #endif /* _TREE_FLOW_H  */
 Index: gcc.fsf.master/gcc/gimple.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/gimple.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/gimple.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/gimple.h	2009-07-16 06:29:31.471600868 +0200
++++ gcc.fsf.master/gcc/gimple.h	2009-07-16 14:18:26.490842575 +0200
 @@ -30,6 +30,10 @@
  #include "basic-block.h"
  #include "tree-ssa-operands.h"
@@ -121,8 +121,8 @@ Index: gcc.fsf.master/gcc/gimple.h
  #endif  /* GCC_GIMPLE_H */
 Index: gcc.fsf.master/gcc/configure
 ===================================================================
---- gcc.fsf.master.orig/gcc/configure	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/configure	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/configure	2009-07-16 06:41:02.920597417 +0200
++++ gcc.fsf.master/gcc/configure	2009-07-16 14:18:26.538840612 +0200
 @@ -13982,6 +13982,10 @@
  cat > plugin-version.h <<EOF
  #include "configargs.h"
@@ -147,8 +147,8 @@ Index: gcc.fsf.master/gcc/configure
  # Internationalization
 Index: gcc.fsf.master/gcc/configure.ac
 ===================================================================
---- gcc.fsf.master.orig/gcc/configure.ac	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/configure.ac	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/configure.ac	2009-07-16 06:41:02.932597797 +0200
++++ gcc.fsf.master/gcc/configure.ac	2009-07-16 14:18:26.558871048 +0200
 @@ -1521,6 +1521,10 @@
  cat > plugin-version.h <<EOF
  #include "configargs.h"
@@ -173,8 +173,8 @@ Index: gcc.fsf.master/gcc/configure.ac
  
 Index: gcc.fsf.master/gcc/coretypes.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/coretypes.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/coretypes.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/coretypes.h	2009-07-16 06:29:31.599598745 +0200
++++ gcc.fsf.master/gcc/coretypes.h	2009-07-16 14:18:26.575873119 +0200
 @@ -37,6 +37,10 @@
  #ifndef GCC_CORETYPES_H
  #define GCC_CORETYPES_H
@@ -198,8 +198,8 @@ Index: gcc.fsf.master/gcc/coretypes.h
 +#endif /* coretypes.h */
 Index: gcc.fsf.master/gcc/gcc-plugin.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/gcc-plugin.h	2009-07-06 08:21:56.000000000 +0200
-+++ gcc.fsf.master/gcc/gcc-plugin.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/gcc-plugin.h	2009-07-16 06:29:31.403599057 +0200
++++ gcc.fsf.master/gcc/gcc-plugin.h	2009-07-16 14:18:26.575873119 +0200
 @@ -27,6 +27,10 @@
  #include "config.h"
  #include "system.h"
@@ -222,8 +222,8 @@ Index: gcc.fsf.master/gcc/gcc-plugin.h
  #endif /* GCC_PLUGIN_H */
 Index: gcc.fsf.master/gcc/target.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/target.h	2009-07-06 08:21:55.000000000 +0200
-+++ gcc.fsf.master/gcc/target.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/target.h	2009-07-16 06:29:31.519597011 +0200
++++ gcc.fsf.master/gcc/target.h	2009-07-16 14:18:26.578869635 +0200
 @@ -52,6 +52,10 @@
  #include "tm.h"
  #include "insn-modes.h"
@@ -246,8 +246,8 @@ Index: gcc.fsf.master/gcc/target.h
  #endif /* GCC_TARGET_H */
 Index: gcc.fsf.master/gcc/toplev.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/toplev.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/toplev.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/toplev.h	2009-07-16 06:29:31.507594293 +0200
++++ gcc.fsf.master/gcc/toplev.h	2009-07-16 14:18:26.578869635 +0200
 @@ -23,6 +23,10 @@
  #include "input.h"
  #include "bversion.h"
@@ -270,8 +270,8 @@ Index: gcc.fsf.master/gcc/toplev.h
  #endif /* ! GCC_TOPLEV_H */
 Index: gcc.fsf.master/gcc/tree-pass.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/tree-pass.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/tree-pass.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/tree-pass.h	2009-07-16 06:29:31.515618117 +0200
++++ gcc.fsf.master/gcc/tree-pass.h	2009-07-16 14:18:26.578869635 +0200
 @@ -25,6 +25,10 @@
  
  #include "timevar.h"
@@ -294,8 +294,8 @@ Index: gcc.fsf.master/gcc/tree-pass.h
  #endif /* GCC_TREE_PASS_H */
 Index: gcc.fsf.master/gcc/rtl.h
 ===================================================================
---- gcc.fsf.master.orig/gcc/rtl.h	2009-07-06 08:15:05.000000000 +0200
-+++ gcc.fsf.master/gcc/rtl.h	2009-07-06 13:29:18.000000000 +0200
+--- gcc.fsf.master.orig/gcc/rtl.h	2009-07-16 06:29:31.559601369 +0200
++++ gcc.fsf.master/gcc/rtl.h	2009-07-16 14:18:26.590870925 +0200
 @@ -30,6 +30,10 @@
  #include "fixed-value.h"
  #include "alias.h"
@@ -316,3 +316,29 @@ Index: gcc.fsf.master/gcc/rtl.h
 +#endif /* __cplusplus */
 +
  #endif /* ! GCC_RTL_H */
+Index: gcc.fsf.master/gcc/genflags.c
+===================================================================
+--- gcc.fsf.master.orig/gcc/genflags.c	2009-07-17 17:24:57.634771163 +0200
++++ gcc.fsf.master/gcc/genflags.c	2009-07-17 17:30:14.634798605 +0200
+@@ -268,6 +268,9 @@
+   puts ("   from the machine description file `md'.  */\n");
+   puts ("#ifndef GCC_INSN_FLAGS_H");
+   puts ("#define GCC_INSN_FLAGS_H\n");
++  puts ("#ifdef __cplusplus");
++  puts ("extern \"C\" {");
++  puts ("#endif /* __cplusplus */\n");
+ 
+   /* Read the machine description.  */
+ 
+@@ -290,7 +293,10 @@
+   for (insn_ptr = insns; *insn_ptr; insn_ptr++)
+     gen_proto (*insn_ptr);
+ 
+-  puts("\n#endif /* GCC_INSN_FLAGS_H */");
++  puts ("\n#ifdef __cplusplus");
++  puts ("}");
++  puts ("#endif /* __cplusplus */\n");
++  puts ("#endif /* GCC_INSN_FLAGS_H */");
+ 
+   if (have_error || ferror (stdout) || fflush (stdout) || fclose (stdout))
+     return FATAL_EXIT_CODE;

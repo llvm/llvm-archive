@@ -49,7 +49,7 @@ extern "C" {
 #include "tree-pass.h"
 
 // Plugin headers
-//#include "llvm-internal.h"
+#include "llvm-internal.h"
 
 using namespace llvm;
 
@@ -59,10 +59,13 @@ int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 
 
 // Global state for emitting LLVM IR.
+DebugInfo *TheDebugInfo = 0;
 TargetFolder *TheFolder = 0;
 Module *TheModule = 0;
 TargetMachine *TheTarget = 0;
-//FIXMETypeConverter *TheTypeConverter = 0;
+TypeConverter *TheTypeConverter = 0;
+
+SmallSetVector<Constant*, 32> AttributeUsedGlobals;
 
 /// LazilyConfigureLLVM - Set LLVM configuration options, if not already set.
 /// already created.
@@ -176,7 +179,7 @@ static void LazilyInitializeModule(void) {
 //TODO#endif
   TheModule->setTargetTriple(TargetTriple);
 
-//FIXME  TheTypeConverter = new TypeConverter();
+  TheTypeConverter = new TypeConverter();
 
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.

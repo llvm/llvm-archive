@@ -40,7 +40,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define IN_GCC
 
 #include "config.h"
+extern "C" {
 #include "system.h"
+}
 #include "coretypes.h"
 #include "target.h"
 #include "tree.h"

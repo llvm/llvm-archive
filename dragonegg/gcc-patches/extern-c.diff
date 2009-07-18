@@ -342,3 +342,73 @@ Index: gcc.fsf.master/gcc/genflags.c
  
    if (have_error || ferror (stdout) || fflush (stdout) || fclose (stdout))
      return FATAL_EXIT_CODE;
+Index: gcc.fsf.master/gcc/genpreds.c
+===================================================================
+--- gcc.fsf.master.orig/gcc/genpreds.c	2009-07-18 22:14:45.143289242 +0200
++++ gcc.fsf.master/gcc/genpreds.c	2009-07-18 22:17:05.675291312 +0200
+@@ -1257,6 +1257,8 @@
+ \n\
+ #ifdef HAVE_MACHINE_MODES");
+ 
++  puts ("\n#ifdef __cplusplus\nextern \"C\" {\n#endif /* __cplusplus */\n");
++
+   FOR_ALL_PREDICATES (p)
+     printf ("extern int %s (rtx, enum machine_mode);\n", p->name);
+ 
+@@ -1317,6 +1319,8 @@
+ 	puts ("#define EXTRA_ADDRESS_CONSTRAINT(c_,s_) false\n");
+     }
+ 
++  puts ("#ifdef __cplusplus\n}\n#endif /* __cplusplus */\n");
++
+   puts ("#endif /* tm-preds.h */");
+ }
+ 
+Index: gcc.fsf.master/gcc/input.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/input.h	2009-07-18 21:56:29.891292342 +0200
++++ gcc.fsf.master/gcc/input.h	2009-07-18 21:57:20.579395883 +0200
+@@ -24,6 +24,10 @@
+ 
+ #include "line-map.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ extern GTY(()) struct line_maps *line_table;
+ 
+ /* A value which will never be used to represent a real location.  */
+@@ -65,4 +69,8 @@
+ #define in_system_header_at(LOC) ((expand_location (LOC)).sysp != 0)
+ #define in_system_header (in_system_header_at (input_location))
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif
+Index: gcc.fsf.master/gcc/output.h
+===================================================================
+--- gcc.fsf.master.orig/gcc/output.h	2009-07-18 22:12:12.819292531 +0200
++++ gcc.fsf.master/gcc/output.h	2009-07-18 22:12:50.059322782 +0200
+@@ -22,6 +22,10 @@
+ #ifndef GCC_OUTPUT_H
+ #define GCC_OUTPUT_H
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif /* __cplusplus */
++
+ /* Initialize data in final at the beginning of a compilation.  */
+ extern void init_final (const char *);
+ 
+@@ -654,4 +658,8 @@
+ 
+ #endif
+ 
++#ifdef __cplusplus
++}
++#endif /* __cplusplus */
++
+ #endif /* ! GCC_OUTPUT_H */

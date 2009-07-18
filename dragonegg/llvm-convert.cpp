@@ -743,18 +743,26 @@ Function *TreeToLLVM::EmitFunction() {
   FOR_EACH_BB (bb) {
     for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
          gsi_next (&gsi)) {
-
-      MemRef DestLoc;
       gimple stmt = gsi_stmt (gsi);
 
-      // If this stmt returns an aggregate value (e.g. a call whose result is
-      // ignored), create a temporary to receive the value.  Note that we don't
-      // do this for MODIFY_EXPRs as an efficiency hack.
-      if (isAggregateTreeType(TREE_TYPE(stmt)) && 
-          TREE_CODE(stmt)!= MODIFY_EXPR && TREE_CODE(stmt)!=INIT_EXPR)
-        DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
-
-      Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);
+      switch (gimple_code(stmt)) {
+      case GIMPLE_ASSIGN:
+      case GIMPLE_COND:
+      case GIMPLE_GOTO:
+      case GIMPLE_LABEL:
+      case GIMPLE_RETURN:
+      case GIMPLE_ASM:
+      case GIMPLE_CALL:
+      case GIMPLE_SWITCH:
+      case GIMPLE_NOP:
+      case GIMPLE_PREDICT:
+      case GIMPLE_RESX:
+      default:
+        std::cerr << "Unknown GIMPLE statement during LLVM emission!\n"
+          << "gimple_code: " << gimple_code(stmt) << "\n";
+        print_gimple_stmt(stderr, stmt, 4, 0);
+        abort();
+      }
     }
 
     FOR_EACH_EDGE (e, ei, bb->succs)

@@ -34,6 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -760,10 +761,10 @@ Function *TreeToLLVM::EmitFunction() {
       case GIMPLE_PREDICT:
       case GIMPLE_RESX:
       default:
-        std::cerr << "Unknown GIMPLE statement during LLVM emission!\n"
-          << "gimple_code: " << gimple_code(stmt) << "\n";
         print_gimple_stmt(stderr, stmt, 4, 0);
-        abort();
+        llvm_report_error("Unknown GIMPLE statement during LLVM emission!\n"
+          "gimple_code: " + gimple_code(stmt));
+        break;
       }
     }
 

@@ -458,7 +458,7 @@ static void LazilyInitializeModule(void) {
   if (Initialized)
     return;
 
-  LazilyConfigureLLVM;
+  LazilyConfigureLLVM();
 
   TheModule = new Module("", getGlobalContext());
 

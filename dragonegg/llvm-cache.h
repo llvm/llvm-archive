@@ -45,6 +45,7 @@ struct GTY(()) tree_llvm_map {
   struct tree_map_base base;
   const void *val;
 };
+/* FIXME: Need to use gengtype and tell the GC about this. */
 
 extern bool llvm_has_cached (union tree_node *);
 

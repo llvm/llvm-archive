@@ -52,115 +52,130 @@ extern "C" {
 
 // Plugin headers
 #include "llvm-abi.h"
+#include "llvm-cache.h"
 #include "bits_and_bobs.h"
+
+static LLVMContext &Context = getGlobalContext();
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM types with GCC trees
 //===----------------------------------------------------------------------===//
+
+// GET_TYPE_LLVM/SET_TYPE_LLVM - Associate an LLVM type with each TREE type.
+// These are lazily computed by ConvertType.
+
+const Type *llvm_set_type(tree Tr, const Type *Ty) {
+  assert(TYPE_P(Tr) && "Expected a gcc type!");
+  return (const Type *)llvm_set_cached(Tr, Ty);
+}
+
+const Type *llvm_get_type(tree Tr) {
+  assert(TYPE_P(Tr) && "Expected a gcc type!");
+  return (const Type *)llvm_get_cached(Tr);
+}
+
 //
-// LTypes is a vector of LLVM types. GCC tree nodes keep track of LLVM types 
-// using this vector's index. It is easier to save and restore the index than 
-// the LLVM type pointer while usig PCH. STL vector does not provide fast 
-// searching mechanism which is required to remove LLVM Type entry when type is 
-// refined and replaced by another LLVM Type. This is achieved by maintaining 
-// a map.
-
-// Collection of LLVM Types
-static std::vector<const Type *> LTypes;
-typedef DenseMap<const Type *, unsigned> LTypesMapTy;
-static LTypesMapTy LTypesMap;
-
-static LLVMContext &Context = getGlobalContext();
-
-// Erase type from LTypes vector
-static void llvmEraseLType(const Type *Ty) {
-
-  LTypesMapTy::iterator I = LTypesMap.find(Ty);
-
-  if (I != LTypesMap.end()) {
-    // It is OK to clear this entry instead of removing this entry
-    // to avoid re-indexing of other entries.
-    LTypes[ LTypesMap[Ty] - 1] = NULL;
-    LTypesMap.erase(I);
-  }
-}
-
-// Read LLVM Types string table
-void readLLVMTypesStringTable() {
-
-  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.types");
-  if (!V)
-    return;
-
-  //  Value *GV = TheModule->getValueSymbolTable().lookup("llvm.pch.types");
-  GlobalVariable *GV = cast<GlobalVariable>(V);
-  ConstantStruct *LTypesNames = cast<ConstantStruct>(GV->getOperand(0));
-
-  for (unsigned i = 0; i < LTypesNames->getNumOperands(); ++i) {
-    const Type *Ty = NULL;
-
-    if (ConstantArray *CA = 
-        dyn_cast<ConstantArray>(LTypesNames->getOperand(i))) {
-      std::string Str = CA->getAsString();
-      Ty = TheModule->getTypeByName(Str);
-      assert (Ty != NULL && "Invalid Type in LTypes string table");
-    } 
-    // If V is not a string then it is empty. Insert NULL to represent 
-    // empty entries.
-    LTypes.push_back(Ty);
-  }
-
-  // Now, llvm.pch.types value is not required so remove it from the symbol
-  // table.
-  GV->eraseFromParent();
-}
-
-
-// GCC tree's uses LTypes vector's index to reach LLVM types.
-// Create a string table to hold these LLVM types' names. This string
-// table will be used to recreate LTypes vector after loading PCH.
-void writeLLVMTypesStringTable() {
-  
-  if (LTypes.empty()) 
-    return;
-
-  std::vector<Constant *> LTypesNames;
-  std::map < const Type *, std::string > TypeNameMap;
-
-  // Collect Type Names in advance.
-  const TypeSymbolTable &ST = TheModule->getTypeSymbolTable();
-  TypeSymbolTable::const_iterator TI = ST.begin();
-  for (; TI != ST.end(); ++TI) {
-    TypeNameMap[TI->second] = TI->first;
-  }
-
-  // Populate LTypesNames vector.
-  for (std::vector<const Type *>::iterator I = LTypes.begin(),
-         E = LTypes.end(); I != E; ++I)  {
-    const Type *Ty = *I;
-
-    // Give names to nameless types.
-    if (Ty && TypeNameMap[Ty].empty()) {
-      std::string NewName =
-        TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
-      TheModule->addTypeName(NewName, Ty);
-      TypeNameMap[*I] = NewName;
-    }
-
-    const std::string &TypeName = TypeNameMap[*I];
-    LTypesNames.push_back(Context.getConstantArray(TypeName, false));
-  }
-
-  // Create string table.
-  Constant *LTypesNameTable = Context.getConstantStruct(LTypesNames, false);
-
-  // Create variable to hold this string table.
-  GlobalVariable *GV = new GlobalVariable(*TheModule,   
-                                          LTypesNameTable->getType(), true,
-                                          GlobalValue::ExternalLinkage, 
-                                          LTypesNameTable,
-                                          "llvm.pch.types");
-}
+//TODO// LTypes is a vector of LLVM types. GCC tree nodes keep track of LLVM types 
+//TODO// using this vector's index. It is easier to save and restore the index than 
+//TODO// the LLVM type pointer while usig PCH. STL vector does not provide fast 
+//TODO// searching mechanism which is required to remove LLVM Type entry when type is 
+//TODO// refined and replaced by another LLVM Type. This is achieved by maintaining 
+//TODO// a map.
+//TODO
+//TODO// Collection of LLVM Types
+//TODOstatic std::vector<const Type *> LTypes;
+//TODOtypedef DenseMap<const Type *, unsigned> LTypesMapTy;
+//TODOstatic LTypesMapTy LTypesMap;
+//TODO
+//TODO// Erase type from LTypes vector
+//TODOstatic void llvmEraseLType(const Type *Ty) {
+//TODO
+//TODO  LTypesMapTy::iterator I = LTypesMap.find(Ty);
+//TODO
+//TODO  if (I != LTypesMap.end()) {
+//TODO    // It is OK to clear this entry instead of removing this entry
+//TODO    // to avoid re-indexing of other entries.
+//TODO    LTypes[ LTypesMap[Ty] - 1] = NULL;
+//TODO    LTypesMap.erase(I);
+//TODO  }
+//TODO}
+//TODO
+//TODO// Read LLVM Types string table
+//TODOvoid readLLVMTypesStringTable() {
+//TODO
+//TODO  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.types");
+//TODO  if (!V)
+//TODO    return;
+//TODO
+//TODO  //  Value *GV = TheModule->getValueSymbolTable().lookup("llvm.pch.types");
+//TODO  GlobalVariable *GV = cast<GlobalVariable>(V);
+//TODO  ConstantStruct *LTypesNames = cast<ConstantStruct>(GV->getOperand(0));
+//TODO
+//TODO  for (unsigned i = 0; i < LTypesNames->getNumOperands(); ++i) {
+//TODO    const Type *Ty = NULL;
+//TODO
+//TODO    if (ConstantArray *CA = 
+//TODO        dyn_cast<ConstantArray>(LTypesNames->getOperand(i))) {
+//TODO      std::string Str = CA->getAsString();
+//TODO      Ty = TheModule->getTypeByName(Str);
+//TODO      assert (Ty != NULL && "Invalid Type in LTypes string table");
+//TODO    } 
+//TODO    // If V is not a string then it is empty. Insert NULL to represent 
+//TODO    // empty entries.
+//TODO    LTypes.push_back(Ty);
+//TODO  }
+//TODO
+//TODO  // Now, llvm.pch.types value is not required so remove it from the symbol
+//TODO  // table.
+//TODO  GV->eraseFromParent();
+//TODO}
+//TODO
+//TODO
+//TODO// GCC tree's uses LTypes vector's index to reach LLVM types.
+//TODO// Create a string table to hold these LLVM types' names. This string
+//TODO// table will be used to recreate LTypes vector after loading PCH.
+//TODOvoid writeLLVMTypesStringTable() {
+//TODO  
+//TODO  if (LTypes.empty()) 
+//TODO    return;
+//TODO
+//TODO  std::vector<Constant *> LTypesNames;
+//TODO  std::map < const Type *, std::string > TypeNameMap;
+//TODO
+//TODO  // Collect Type Names in advance.
+//TODO  const TypeSymbolTable &ST = TheModule->getTypeSymbolTable();
+//TODO  TypeSymbolTable::const_iterator TI = ST.begin();
+//TODO  for (; TI != ST.end(); ++TI) {
+//TODO    TypeNameMap[TI->second] = TI->first;
+//TODO  }
+//TODO
+//TODO  // Populate LTypesNames vector.
+//TODO  for (std::vector<const Type *>::iterator I = LTypes.begin(),
+//TODO         E = LTypes.end(); I != E; ++I)  {
+//TODO    const Type *Ty = *I;
+//TODO
+//TODO    // Give names to nameless types.
+//TODO    if (Ty && TypeNameMap[Ty].empty()) {
+//TODO      std::string NewName =
+//TODO        TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
+//TODO      TheModule->addTypeName(NewName, Ty);
+//TODO      TypeNameMap[*I] = NewName;
+//TODO    }
+//TODO
+//TODO    const std::string &TypeName = TypeNameMap[*I];
+//TODO    LTypesNames.push_back(Context.getConstantArray(TypeName, false));
+//TODO  }
+//TODO
+//TODO  // Create string table.
+//TODO  Constant *LTypesNameTable = Context.getConstantStruct(LTypesNames, false);
+//TODO
+//TODO  // Create variable to hold this string table.
+//TODO  GlobalVariable *GV = new GlobalVariable(*TheModule,   
+//TODO                                          LTypesNameTable->getType(), true,
+//TODO                                          GlobalValue::ExternalLinkage, 
+//TODO                                          LTypesNameTable,
+//TODO                                          "llvm.pch.types");
+//TODO}
 
 //===----------------------------------------------------------------------===//
 //                   Recursive Type Handling Code and Data

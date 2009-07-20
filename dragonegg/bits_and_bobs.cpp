@@ -38,10 +38,6 @@ void changeLLVMConstant(Constant *Old, Constant *New) {
 abort();
 }
 
-const Type *llvm_set_type(tree Tr, const Type *Ty) {
-abort();
-}
-
-const Type *llvm_get_type(unsigned Index) {
+void llvmEraseLType(const Type *Ty) {
 abort();
 }

@@ -124,203 +124,203 @@ static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 static void destroyOptimizationPasses();
 
-//===----------------------------------------------------------------------===//
-//                   Matching LLVM Values with GCC DECL trees
-//===----------------------------------------------------------------------===//
-//
-// LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM
-// Values using this vector's index. It is easier to save and restore the index
-// than the LLVM Value pointer while using PCH.
-
-// Collection of LLVM Values
-static std::vector<Value *> LLVMValues;
-typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
-static LLVMValuesMapTy LLVMValuesMap;
-
-/// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
-/// this allows us to efficiently identify and remove them.  Local IDs are IDs
-/// for values that are local to the current function being processed.  These do
-/// not need to go into the PCH file, but DECL_LLVM still needs a valid index
-/// while converting the function.  Using "Local IDs" allows the IDs for
-/// function-local decls to be recycled after the function is done.
-static std::vector<unsigned> LocalLLVMValueIDs;
-
-// Remember the LLVM value for GCC tree node.
-void llvm_set_decl(tree Tr, Value *V) {
-
-  // If there is not any value then do not add new LLVMValues entry.
-  // However clear Tr index if it is non zero.
-  if (!V) {
-    if (GET_DECL_LLVM_INDEX(Tr))
-      SET_DECL_LLVM_INDEX(Tr, 0);
-    return;
-  }
-
-  unsigned &ValueSlot = LLVMValuesMap[V];
-  if (ValueSlot) {
-    // Already in map
-    SET_DECL_LLVM_INDEX(Tr, ValueSlot);
-    return;
-  }
-
-  LLVMValues.push_back(V);
-  unsigned Index = LLVMValues.size();
-  SET_DECL_LLVM_INDEX(Tr, Index);
-  LLVMValuesMap[V] = Index;
-
-  // Remember local values.
-  if (!isa<Constant>(V))
-    LocalLLVMValueIDs.push_back(Index);
-}
-
-// Return TRUE if there is a LLVM Value associate with GCC tree node.
-bool llvm_set_decl_p(tree Tr) {
-  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
-  if (Index == 0)
-    return false;
-
-  return LLVMValues[Index - 1] != 0;
-}
-
-// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
-// If there is not any value associated then use make_decl_llvm() to
-// make LLVM value. When GCC tree node is initialized, it has 0 as the
-// index value. This is why all recorded indices are offset by 1.
-Value *llvm_get_decl(tree Tr) {
-
-  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
-  if (Index == 0) {
-    make_decl_llvm(Tr);
-    Index = GET_DECL_LLVM_INDEX(Tr);
-
-    // If there was an error, we may have disabled creating LLVM values.
-    if (Index == 0) return 0;
-  }
-  assert((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
-  assert(LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
-
-  return LLVMValues[Index - 1];
-}
-
-/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
-/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
-/// At this point we know that New is not in any of these maps.
-void changeLLVMConstant(Constant *Old, Constant *New) {
-  assert(Old->use_empty() && "Old value has uses!");
-
-  if (AttributeUsedGlobals.count(Old)) {
-    AttributeUsedGlobals.remove(Old);
-    AttributeUsedGlobals.insert(New);
-  }
-
-  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
-    if (StaticCtors[i].first == Old)
-      StaticCtors[i].first = New;
-  }
-
-  for (unsigned i = 0, e = StaticDtors.size(); i != e; ++i) {
-    if (StaticDtors[i].first == Old)
-      StaticDtors[i].first = New;
-  }
-
-  assert(!LLVMValuesMap.count(New) && "New cannot be in the LLVMValues map!");
-
-  // Find Old in the table.
-  LLVMValuesMapTy::iterator I = LLVMValuesMap.find(Old);
-  if (I == LLVMValuesMap.end()) return;
-
-  unsigned Idx = I->second-1;
-  assert(Idx < LLVMValues.size() && "Out of range index!");
-  assert(LLVMValues[Idx] == Old && "Inconsistent LLVMValues mapping!");
-
-  LLVMValues[Idx] = New;
-
-  // Remove the old value from the value map.
-  LLVMValuesMap.erase(I);
-
-  // Insert the new value into the value map.  We know that it can't already
-  // exist in the mapping.
-  if (New)
-    LLVMValuesMap[New] = Idx+1;
-}
-
-// Read LLVM Types string table
-void readLLVMValues() {
-  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
-  if (!V)
-    return;
-
-  GlobalVariable *GV = cast<GlobalVariable>(V);
-  ConstantStruct *ValuesFromPCH = cast<ConstantStruct>(GV->getOperand(0));
-
-  for (unsigned i = 0; i < ValuesFromPCH->getNumOperands(); ++i) {
-    Value *Va = ValuesFromPCH->getOperand(i);
-
-    if (!Va) {
-      // If V is empty then insert NULL to represent empty entries.
-      LLVMValues.push_back(Va);
-      continue;
-    }
-    if (ConstantArray *CA = dyn_cast<ConstantArray>(Va)) {
-      std::string Str = CA->getAsString();
-      Va = TheModule->getValueSymbolTable().lookup(Str);
-    }
-    assert (Va != NULL && "Invalid Value in LLVMValues string table");
-    LLVMValues.push_back(Va);
-  }
-
-  // Now, llvm.pch.values is not required so remove it from the symbol table.
-  GV->eraseFromParent();
-}
-
-// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
-// Create a string table to hold these LLVM Values' names. This string
-// table will be used to recreate LTypes vector after loading PCH.
-void writeLLVMValues() {
-  if (LLVMValues.empty())
-    return;
-
-  LLVMContext &Context = getGlobalContext();
-
-  std::vector<Constant *> ValuesForPCH;
-  for (std::vector<Value *>::iterator I = LLVMValues.begin(),
-         E = LLVMValues.end(); I != E; ++I)  {
-    if (Constant *C = dyn_cast_or_null<Constant>(*I))
-      ValuesForPCH.push_back(C);
-    else
-      // Non constant values, e.g. arguments, are not at global scope.
-      // When PCH is read, only global scope values are used.
-      ValuesForPCH.push_back(Context.getNullValue(Type::Int32Ty));
-  }
-
-  // Create string table.
-  Constant *LLVMValuesTable = Context.getConstantStruct(ValuesForPCH, false);
-
-  // Create variable to hold this string table.
-  new GlobalVariable(*TheModule, LLVMValuesTable->getType(), true,
-                     GlobalValue::ExternalLinkage,
-                     LLVMValuesTable,
-                     "llvm.pch.values");
-}
-
-/// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
-void eraseLocalLLVMValues() {
-  // Erase all the local values, these are stored in LocalLLVMValueIDs.
-  while (!LocalLLVMValueIDs.empty()) {
-    unsigned Idx = LocalLLVMValueIDs.back()-1;
-    LocalLLVMValueIDs.pop_back();
-
-    if (Value *V = LLVMValues[Idx]) {
-      assert(!isa<Constant>(V) && "Found global value");
-      LLVMValuesMap.erase(V);
-    }
-
-    if (Idx == LLVMValues.size()-1)
-      LLVMValues.pop_back();
-    else
-      LLVMValues[Idx] = 0;
-  }
-}
+//TODO//===----------------------------------------------------------------------===//
+//TODO//                   Matching LLVM Values with GCC DECL trees
+//TODO//===----------------------------------------------------------------------===//
+//TODO//
+//TODO// LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM
+//TODO// Values using this vector's index. It is easier to save and restore the index
+//TODO// than the LLVM Value pointer while using PCH.
+//TODO
+//TODO// Collection of LLVM Values
+//TODOstatic std::vector<Value *> LLVMValues;
+//TODOtypedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
+//TODOstatic LLVMValuesMapTy LLVMValuesMap;
+//TODO
+//TODO/// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
+//TODO/// this allows us to efficiently identify and remove them.  Local IDs are IDs
+//TODO/// for values that are local to the current function being processed.  These do
+//TODO/// not need to go into the PCH file, but DECL_LLVM still needs a valid index
+//TODO/// while converting the function.  Using "Local IDs" allows the IDs for
+//TODO/// function-local decls to be recycled after the function is done.
+//TODOstatic std::vector<unsigned> LocalLLVMValueIDs;
+//TODO
+//TODO// Remember the LLVM value for GCC tree node.
+//TODOvoid llvm_set_decl(tree Tr, Value *V) {
+//TODO
+//TODO  // If there is not any value then do not add new LLVMValues entry.
+//TODO  // However clear Tr index if it is non zero.
+//TODO  if (!V) {
+//TODO    if (GET_DECL_LLVM_INDEX(Tr))
+//TODO      SET_DECL_LLVM_INDEX(Tr, 0);
+//TODO    return;
+//TODO  }
+//TODO
+//TODO  unsigned &ValueSlot = LLVMValuesMap[V];
+//TODO  if (ValueSlot) {
+//TODO    // Already in map
+//TODO    SET_DECL_LLVM_INDEX(Tr, ValueSlot);
+//TODO    return;
+//TODO  }
+//TODO
+//TODO  LLVMValues.push_back(V);
+//TODO  unsigned Index = LLVMValues.size();
+//TODO  SET_DECL_LLVM_INDEX(Tr, Index);
+//TODO  LLVMValuesMap[V] = Index;
+//TODO
+//TODO  // Remember local values.
+//TODO  if (!isa<Constant>(V))
+//TODO    LocalLLVMValueIDs.push_back(Index);
+//TODO}
+//TODO
+//TODO// Return TRUE if there is a LLVM Value associate with GCC tree node.
+//TODObool llvm_set_decl_p(tree Tr) {
+//TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+//TODO  if (Index == 0)
+//TODO    return false;
+//TODO
+//TODO  return LLVMValues[Index - 1] != 0;
+//TODO}
+//TODO
+//TODO// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
+//TODO// If there is not any value associated then use make_decl_llvm() to
+//TODO// make LLVM value. When GCC tree node is initialized, it has 0 as the
+//TODO// index value. This is why all recorded indices are offset by 1.
+//TODOValue *llvm_get_decl(tree Tr) {
+//TODO
+//TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
+//TODO  if (Index == 0) {
+//TODO    make_decl_llvm(Tr);
+//TODO    Index = GET_DECL_LLVM_INDEX(Tr);
+//TODO
+//TODO    // If there was an error, we may have disabled creating LLVM values.
+//TODO    if (Index == 0) return 0;
+//TODO  }
+//TODO  assert((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
+//TODO  assert(LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
+//TODO
+//TODO  return LLVMValues[Index - 1];
+//TODO}
+//TODO
+//TODO/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
+//TODO/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
+//TODO/// At this point we know that New is not in any of these maps.
+//TODOvoid changeLLVMConstant(Constant *Old, Constant *New) {
+//TODO  assert(Old->use_empty() && "Old value has uses!");
+//TODO
+//TODO  if (AttributeUsedGlobals.count(Old)) {
+//TODO    AttributeUsedGlobals.remove(Old);
+//TODO    AttributeUsedGlobals.insert(New);
+//TODO  }
+//TODO
+//TODO  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
+//TODO    if (StaticCtors[i].first == Old)
+//TODO      StaticCtors[i].first = New;
+//TODO  }
+//TODO
+//TODO  for (unsigned i = 0, e = StaticDtors.size(); i != e; ++i) {
+//TODO    if (StaticDtors[i].first == Old)
+//TODO      StaticDtors[i].first = New;
+//TODO  }
+//TODO
+//TODO  assert(!LLVMValuesMap.count(New) && "New cannot be in the LLVMValues map!");
+//TODO
+//TODO  // Find Old in the table.
+//TODO  LLVMValuesMapTy::iterator I = LLVMValuesMap.find(Old);
+//TODO  if (I == LLVMValuesMap.end()) return;
+//TODO
+//TODO  unsigned Idx = I->second-1;
+//TODO  assert(Idx < LLVMValues.size() && "Out of range index!");
+//TODO  assert(LLVMValues[Idx] == Old && "Inconsistent LLVMValues mapping!");
+//TODO
+//TODO  LLVMValues[Idx] = New;
+//TODO
+//TODO  // Remove the old value from the value map.
+//TODO  LLVMValuesMap.erase(I);
+//TODO
+//TODO  // Insert the new value into the value map.  We know that it can't already
+//TODO  // exist in the mapping.
+//TODO  if (New)
+//TODO    LLVMValuesMap[New] = Idx+1;
+//TODO}
+//TODO
+//TODO// Read LLVM Types string table
+//TODOvoid readLLVMValues() {
+//TODO  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
+//TODO  if (!V)
+//TODO    return;
+//TODO
+//TODO  GlobalVariable *GV = cast<GlobalVariable>(V);
+//TODO  ConstantStruct *ValuesFromPCH = cast<ConstantStruct>(GV->getOperand(0));
+//TODO
+//TODO  for (unsigned i = 0; i < ValuesFromPCH->getNumOperands(); ++i) {
+//TODO    Value *Va = ValuesFromPCH->getOperand(i);
+//TODO
+//TODO    if (!Va) {
+//TODO      // If V is empty then insert NULL to represent empty entries.
+//TODO      LLVMValues.push_back(Va);
+//TODO      continue;
+//TODO    }
+//TODO    if (ConstantArray *CA = dyn_cast<ConstantArray>(Va)) {
+//TODO      std::string Str = CA->getAsString();
+//TODO      Va = TheModule->getValueSymbolTable().lookup(Str);
+//TODO    }
+//TODO    assert (Va != NULL && "Invalid Value in LLVMValues string table");
+//TODO    LLVMValues.push_back(Va);
+//TODO  }
+//TODO
+//TODO  // Now, llvm.pch.values is not required so remove it from the symbol table.
+//TODO  GV->eraseFromParent();
+//TODO}
+//TODO
+//TODO// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
+//TODO// Create a string table to hold these LLVM Values' names. This string
+//TODO// table will be used to recreate LTypes vector after loading PCH.
+//TODOvoid writeLLVMValues() {
+//TODO  if (LLVMValues.empty())
+//TODO    return;
+//TODO
+//TODO  LLVMContext &Context = getGlobalContext();
+//TODO
+//TODO  std::vector<Constant *> ValuesForPCH;
+//TODO  for (std::vector<Value *>::iterator I = LLVMValues.begin(),
+//TODO         E = LLVMValues.end(); I != E; ++I)  {
+//TODO    if (Constant *C = dyn_cast_or_null<Constant>(*I))
+//TODO      ValuesForPCH.push_back(C);
+//TODO    else
+//TODO      // Non constant values, e.g. arguments, are not at global scope.
+//TODO      // When PCH is read, only global scope values are used.
+//TODO      ValuesForPCH.push_back(Context.getNullValue(Type::Int32Ty));
+//TODO  }
+//TODO
+//TODO  // Create string table.
+//TODO  Constant *LLVMValuesTable = Context.getConstantStruct(ValuesForPCH, false);
+//TODO
+//TODO  // Create variable to hold this string table.
+//TODO  new GlobalVariable(*TheModule, LLVMValuesTable->getType(), true,
+//TODO                     GlobalValue::ExternalLinkage,
+//TODO                     LLVMValuesTable,
+//TODO                     "llvm.pch.values");
+//TODO}
+//TODO
+//TODO/// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
+//TODOvoid eraseLocalLLVMValues() {
+//TODO  // Erase all the local values, these are stored in LocalLLVMValueIDs.
+//TODO  while (!LocalLLVMValueIDs.empty()) {
+//TODO    unsigned Idx = LocalLLVMValueIDs.back()-1;
+//TODO    LocalLLVMValueIDs.pop_back();
+//TODO
+//TODO    if (Value *V = LLVMValues[Idx]) {
+//TODO      assert(!isa<Constant>(V) && "Found global value");
+//TODO      LLVMValuesMap.erase(V);
+//TODO    }
+//TODO
+//TODO    if (Idx == LLVMValues.size()-1)
+//TODO      LLVMValues.pop_back();
+//TODO    else
+//TODO      LLVMValues[Idx] = 0;
+//TODO  }
+//TODO}
 
 
 // Forward decl visibility style to global.

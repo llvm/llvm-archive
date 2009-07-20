@@ -1425,16 +1425,8 @@ void emit_global_to_llvm(tree decl) {
   // No debug info for globals when optimization is on.  While this is
   // something that would be accurate and useful to a user, it currently
   // affects some optimizations that, e.g., count uses.
-  if (TheDebugInfo && !optimize) {
-    const char *Name = GV->getName().c_str();
-    const char LPrefix[] = "\01L_OBJC_";
-    const char lPrefix[] = "\01l_OBJC_";
-
-    if (flag_objc_abi == -1 || flag_objc_abi == 0 ||
-        (strncmp(Name, LPrefix, sizeof(LPrefix) - 1) != 0 &&
-         strncmp(Name, lPrefix, sizeof(lPrefix) - 1) != 0))
-      TheDebugInfo->EmitGlobalVariable(GV, decl);
-  }
+  if (TheDebugInfo && !optimize)
+    TheDebugInfo->EmitGlobalVariable(GV, decl);
 
   TREE_ASM_WRITTEN(decl) = 1;
 //TODO  timevar_pop(TV_LLVM_GLOBALS);

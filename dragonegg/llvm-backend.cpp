@@ -43,6 +43,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
@@ -345,19 +346,22 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
-//TODO#ifndef LLVM_TARGET_NAME
-//TODO#error LLVM_TARGET_NAME macro not specified by GCC backend
-//TODO#endif
-//TODO
-//TODOnamespace llvm {
-//TODO#define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
-//TODO#define Declare(T, M) Declare2(T, M)
-//TODO  Declare(LLVM_TARGET_NAME, TargetInfo);
-//TODO  Declare(LLVM_TARGET_NAME, Target);
-//TODO  Declare(LLVM_TARGET_NAME, AsmPrinter);
-//TODO#undef Declare
-//TODO#undef Declare2
-//TODO}
+// FIXME: For the moment, all the world's an x86
+#define LLVM_TARGET_NAME X86
+
+#ifndef LLVM_TARGET_NAME
+#error LLVM_TARGET_NAME macro not specified by GCC backend
+#endif
+
+namespace llvm {
+#define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
+#define Declare(T, M) Declare2(T, M)
+  Declare(LLVM_TARGET_NAME, TargetInfo);
+  Declare(LLVM_TARGET_NAME, Target);
+  Declare(LLVM_TARGET_NAME, AsmPrinter);
+#undef Declare
+#undef Declare2
+}
 
 /// LazilyConfigureLLVM - Set LLVM configuration options, if not already set.
 /// already created.
@@ -365,6 +369,15 @@ static void LazilyConfigureLLVM(void) {
   static bool Configured = false;
   if (Configured)
     return;
+
+  // Initialize the LLVM backend.
+#define DoInit2(TARG, MOD)  LLVMInitialize ## TARG ## MOD()
+#define DoInit(T, M) DoInit2(T, M)
+  DoInit(LLVM_TARGET_NAME, TargetInfo);
+  DoInit(LLVM_TARGET_NAME, Target);
+  DoInit(LLVM_TARGET_NAME, AsmPrinter);
+#undef DoInit
+#undef DoInit2
 
   // Initialize LLVM command line options.
   std::vector<const char*> Args;
@@ -478,20 +491,18 @@ static void LazilyInitializeModule(void) {
   std::string Err;
   const Target *TME =
     TargetRegistry::getClosestStaticTargetForModule(*TheModule, Err);
-  if (!TME) {
-    cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
-    exit(1);
-  }
+  if (!TME)
+    llvm_report_error(Err);
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
-//TODO  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
-//TODO  // backend.
-//TODO#ifdef LLVM_SET_SUBTARGET_FEATURES
-//TODO  SubtargetFeatures Features;
-//TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
-//TODO  FeatureStr = Features.getString();
-//TODO#endif
+  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
+  // backend.
+#ifdef LLVM_SET_SUBTARGET_FEATURES
+  SubtargetFeatures Features;
+  LLVM_SET_SUBTARGET_FEATURES(Features);
+  FeatureStr = Features.getString();
+#endif
   TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
@@ -1814,6 +1825,8 @@ int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 static unsigned int
 execute_emit_llvm (void)
 {
+  LazilyInitializeModule();
+
 //TODO Don't want to use sorry at this stage...
 //TODO  if (cfun->nonlocal_goto_save_area)
 //TODO    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
@@ -1831,8 +1844,7 @@ execute_emit_llvm (void)
   DECL_DEFER_OUTPUT(current_function_decl) = 0;
 
   // Convert the AST to raw/ugly LLVM code.
-//FIXME  TreeToLLVM Emitter(current_function_decl);
-cout << "Yo!\n";
+  TreeToLLVM Emitter(current_function_decl);
 
 //TODO#if 0
 //TODO  if (dump_file) {

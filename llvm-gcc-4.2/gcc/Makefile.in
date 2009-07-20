@@ -1163,7 +1163,7 @@ LLVMTARGETCOMPONENT := \
 LLVMTARGETOBJ := $(shell $(LLVMTARGETCOMPONENT))
 
 ifeq ($(LLVMTARGETOBJ),)
-$(error Unsuported LLVM Target $(target))
+$(error Unsupported LLVM Target $(target))
 endif
 
 # TCE is external backend so we just set target obj to be all to get all 

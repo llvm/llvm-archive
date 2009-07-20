@@ -340,19 +340,19 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
-#ifndef LLVM_TARGET_NAME
-#error LLVM_TARGET_NAME macro not specified by GCC backend
-#endif
-
-namespace llvm {
-#define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
-#define Declare(T, M) Declare2(T, M)
-  Declare(LLVM_TARGET_NAME, TargetInfo);
-  Declare(LLVM_TARGET_NAME, Target);
-  Declare(LLVM_TARGET_NAME, AsmPrinter);
-#undef Declare
-#undef Declare2
-}
+//TODO#ifndef LLVM_TARGET_NAME
+//TODO#error LLVM_TARGET_NAME macro not specified by GCC backend
+//TODO#endif
+//TODO
+//TODOnamespace llvm {
+//TODO#define Declare2(TARG, MOD)   extern "C" void LLVMInitialize ## TARG ## MOD()
+//TODO#define Declare(T, M) Declare2(T, M)
+//TODO  Declare(LLVM_TARGET_NAME, TargetInfo);
+//TODO  Declare(LLVM_TARGET_NAME, Target);
+//TODO  Declare(LLVM_TARGET_NAME, AsmPrinter);
+//TODO#undef Declare
+//TODO#undef Declare2
+//TODO}
 
 /// LazilyConfigureLLVM - Set LLVM configuration options, if not already set.
 /// already created.

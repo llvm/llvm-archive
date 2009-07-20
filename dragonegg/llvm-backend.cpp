@@ -1845,6 +1845,7 @@ execute_emit_llvm (void)
 
   // Convert the AST to raw/ugly LLVM code.
   TreeToLLVM Emitter(current_function_decl);
+  Function *Fn = Emitter.EmitFunction();
 
 //TODO#if 0
 //TODO  if (dump_file) {

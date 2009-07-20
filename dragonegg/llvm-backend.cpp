@@ -76,6 +76,7 @@ extern "C" {
 #include "langhooks.h"
 #include "cgraph.h"
 #include "params.h"
+#include "plugin-version.h"
 
 // Plugin headers
 #include "llvm-internal.h"
@@ -353,35 +354,32 @@ namespace llvm {
 #undef Declare2
 }
 
-void llvm_initialize_backend(void) {
-  // Initialize the LLVM backend.
-#define DoInit2(TARG, MOD)  LLVMInitialize ## TARG ## MOD()
-#define DoInit(T, M) DoInit2(T, M)
-  DoInit(LLVM_TARGET_NAME, TargetInfo);
-  DoInit(LLVM_TARGET_NAME, Target);
-  DoInit(LLVM_TARGET_NAME, AsmPrinter);
-#undef DoInit
-#undef DoInit2
-  
-  // Initialize LLVM options.
+/// LazilyConfigureLLVM - Set LLVM configuration options, if not already set.
+/// already created.
+static void LazilyConfigureLLVM(void) {
+  static bool Configured = false;
+  if (Configured)
+    return;
+
+  // Initialize LLVM command line options.
   std::vector<const char*> Args;
   Args.push_back(progname); // program name
 
-  // Allow targets to specify PIC options and other stuff to the corresponding
-  // LLVM backends.
-#ifdef LLVM_SET_RED_ZONE_FLAG
-  LLVM_SET_RED_ZONE_FLAG(flag_disable_red_zone)
-#endif
-#ifdef LLVM_SET_TARGET_OPTIONS
-  LLVM_SET_TARGET_OPTIONS(Args);
-#endif
-#ifdef LLVM_SET_MACHINE_OPTIONS
-  LLVM_SET_MACHINE_OPTIONS(Args);
-#endif
-#ifdef LLVM_SET_IMPLICIT_FLOAT
-  LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
-#endif
-  
+//TODO  // Allow targets to specify PIC options and other stuff to the corresponding
+//TODO  // LLVM backends.
+//TODO#ifdef LLVM_SET_RED_ZONE_FLAG
+//TODO  LLVM_SET_RED_ZONE_FLAG(flag_disable_red_zone)
+//TODO#endif
+//TODO#ifdef LLVM_SET_TARGET_OPTIONS
+//TODO  LLVM_SET_TARGET_OPTIONS(Args);
+//TODO#endif
+//TODO#ifdef LLVM_SET_MACHINE_OPTIONS
+//TODO  LLVM_SET_MACHINE_OPTIONS(Args);
+//TODO#endif
+//TODO#ifdef LLVM_SET_IMPLICIT_FLOAT
+//TODO  LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
+//TODO#endif
+
   if (time_report)
     Args.push_back("--time-passes");
   if (fast_math_flags_set_p())
@@ -392,71 +390,84 @@ void llvm_initialize_backend(void) {
     Args.push_back("--nozero-initialized-in-bss");
   if (flag_debug_asm)
     Args.push_back("--asm-verbose");
-  if (flag_debug_pass_structure)
-    Args.push_back("--debug-pass=Structure");
-  if (flag_debug_pass_arguments)
-    Args.push_back("--debug-pass=Arguments");
+//TODO  if (flag_debug_pass_structure)
+//TODO    Args.push_back("--debug-pass=Structure");
+//TODO  if (flag_debug_pass_arguments)
+//TODO    Args.push_back("--debug-pass=Arguments");
   if (optimize_size || optimize < 3)
     // Reduce inline limit. Default limit is 200.
     Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 
-  // If there are options that should be passed through to the LLVM backend
-  // directly from the command line, do so now.  This is mainly for debugging
-  // purposes, and shouldn't really be for general use.
-  std::vector<std::string> ArgStrings;
+//TODO  // If there are options that should be passed through to the LLVM backend
+//TODO  // directly from the command line, do so now.  This is mainly for debugging
+//TODO  // purposes, and shouldn't really be for general use.
+//TODO  std::vector<std::string> ArgStrings;
+//TODO
+//TODO  if (flag_limited_precision > 0) {
+//TODO    std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
+//TODO    ArgStrings.push_back(Arg);
+//TODO  }
+//TODO
+//TODO  if (flag_stack_protect > 0) {
+//TODO    std::string Arg("--stack-protector-buffer-size=" +
+//TODO                    utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE)));
+//TODO    ArgStrings.push_back(Arg);
+//TODO  }
+//TODO
+//TODO  for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
+//TODO    Args.push_back(ArgStrings[i].c_str());
+//TODO
+//TODO  std::vector<std::string> LLVM_Optns; // Avoid deallocation before opts parsed!
+//TODO  if (llvm_optns) {
+//TODO    SplitString(llvm_optns, LLVM_Optns);
+//TODO    for(unsigned i = 0, e = LLVM_Optns.size(); i != e; ++i)
+//TODO      Args.push_back(LLVM_Optns[i].c_str());
+//TODO  }
 
-  if (flag_limited_precision > 0) {
-    std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
-    ArgStrings.push_back(Arg);
-  }
-
-  if (flag_stack_protect > 0) {
-    std::string Arg("--stack-protector-buffer-size=" +
-                    utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE)));
-    ArgStrings.push_back(Arg);
-  }
-
-  for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
-    Args.push_back(ArgStrings[i].c_str());
-
-  std::vector<std::string> LLVM_Optns; // Avoid deallocation before opts parsed!
-  if (llvm_optns) {
-    SplitString(llvm_optns, LLVM_Optns);
-    for(unsigned i = 0, e = LLVM_Optns.size(); i != e; ++i)
-      Args.push_back(LLVM_Optns[i].c_str());
-  }
- 
   Args.push_back(0);  // Null terminator.
   int pseudo_argc = Args.size()-1;
-  cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
+  llvm::cl::ParseCommandLineOptions(pseudo_argc, (char**)&Args[0]);
+
+  Configured = true;
+}
+
+/// LazilyInitializeModule - Create a module to output LLVM IR to, if it wasn't
+/// already created.
+static void LazilyInitializeModule(void) {
+  static bool Initialized = false;
+  if (Initialized)
+    return;
+
+  LazilyConfigureLLVM;
 
   TheModule = new Module("", getGlobalContext());
 
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
   // now.
-  std::string TargetTriple = TARGET_NAME;
-#ifdef LLVM_OVERRIDE_TARGET_ARCH
-  std::string Arch = LLVM_OVERRIDE_TARGET_ARCH();
-  if (!Arch.empty()) {
-    std::string::size_type DashPos = TargetTriple.find('-');
-    if (DashPos != std::string::npos)// If we have a sane t-t, replace the arch.
-      TargetTriple = Arch + TargetTriple.substr(DashPos);
-  }
-#endif
-#ifdef LLVM_OVERRIDE_TARGET_VERSION
-  char *NewTriple;
-  bool OverRidden = LLVM_OVERRIDE_TARGET_VERSION(TargetTriple.c_str(),
-                                                 &NewTriple);
-  if (OverRidden)
-    TargetTriple = std::string(NewTriple);
-#endif
+  std::string TargetTriple = "x86_64-linux-gnu"; // FIXME!
+//TODO  std::string TargetTriple = TARGET_NAME;
+//TODO#ifdef LLVM_OVERRIDE_TARGET_ARCH
+//TODO  std::string Arch = LLVM_OVERRIDE_TARGET_ARCH();
+//TODO  if (!Arch.empty()) {
+//TODO    std::string::size_type DashPos = TargetTriple.find('-');
+//TODO    if (DashPos != std::string::npos)// If we have a sane t-t, replace the arch.
+//TODO      TargetTriple = Arch + TargetTriple.substr(DashPos);
+//TODO  }
+//TODO#endif
+//TODO#ifdef LLVM_OVERRIDE_TARGET_VERSION
+//TODO  char *NewTriple;
+//TODO  bool OverRidden = LLVM_OVERRIDE_TARGET_VERSION(TargetTriple.c_str(),
+//TODO                                                 &NewTriple);
+//TODO  if (OverRidden)
+//TODO    TargetTriple = std::string(NewTriple);
+//TODO#endif
   TheModule->setTargetTriple(TargetTriple);
-  
+
   TheTypeConverter = new TypeConverter();
-  
+
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
@@ -469,13 +480,13 @@ void llvm_initialize_backend(void) {
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
-  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
-  // backend.
-#ifdef LLVM_SET_SUBTARGET_FEATURES
-  SubtargetFeatures Features;
-  LLVM_SET_SUBTARGET_FEATURES(Features);
-  FeatureStr = Features.getString();
-#endif
+//TODO  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
+//TODO  // backend.
+//TODO#ifdef LLVM_SET_SUBTARGET_FEATURES
+//TODO  SubtargetFeatures Features;
+//TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
+//TODO  FeatureStr = Features.getString();
+//TODO#endif
   TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
@@ -486,29 +497,38 @@ void llvm_initialize_backend(void) {
   TheModule->setDataLayout(TheTarget->getTargetData()->
                            getStringRepresentation());
 
-  if (optimize)
-    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
-  else
-    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
+//TODO  if (optimize)
+//TODO    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
+//TODO  else
+//TODO    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
 
-  // FIXME - Do not disable debug info while writing pch.
-  if (!flag_pch_file &&
-      debug_info_level > DINFO_LEVEL_NONE)
-    TheDebugInfo = new DebugInfo(TheModule);
-}
-
-/// Set backend options that may only be known at codegen time.
-void performLateBackendInitialization(void) {
-  // The Ada front-end sets flag_exceptions only after processing the file.
-  ExceptionHandling = flag_exceptions;
-  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-       I != E; ++I)
-    if (!I->isDeclaration()) {
-      if (flag_disable_red_zone)
-        I->addFnAttr(Attribute::NoRedZone);
-      if (flag_no_implicit_float)
-        I->addFnAttr(Attribute::NoImplicitFloat);
-    }
+//TODO  // FIXME - Do not disable debug info while writing pch.
+//TODO  if (!flag_pch_file &&
+//TODO      debug_info_level > DINFO_LEVEL_NONE)
+//TODO    TheDebugInfo = new DebugInfo(TheModule);
+//TODO}
+//TODO
+//TODO/// Set backend options that may only be known at codegen time.
+//TODOvoid performLateBackendInitialization(void) {
+//TODO  // The Ada front-end sets flag_exceptions only after processing the file.
+//TODO  ExceptionHandling = flag_exceptions;
+//TODO  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+//TODO       I != E; ++I)
+//TODO    if (!I->isDeclaration()) {
+//TODO      if (flag_disable_red_zone)
+//TODO        I->addFnAttr(Attribute::NoRedZone);
+//TODO      if (flag_no_implicit_float)
+//TODO        I->addFnAttr(Attribute::NoImplicitFloat);
+//TODO    }
+//TODO}
+//TODO
+//TODOvoid llvm_lang_dependent_init(const char *Name) {
+//TODO  if (TheDebugInfo)
+//TODO    TheDebugInfo->Initialize();
+//TODO  if (Name)
+//TODO    TheModule->setModuleIdentifier(Name);
+//TODO}
+  Initialized = true;
 }
 
 void llvm_lang_dependent_init(const char *Name) {

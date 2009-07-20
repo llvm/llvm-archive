@@ -1,4 +1,4 @@
-PLUGIN_SOURCE_FILES=llvm-convert.cpp llvm-debug.cpp llvm-plugin.cpp llvm-types.cpp
+PLUGIN_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-types.cpp
 PLUGIN_OBJECT_FILES=$(patsubst %.cpp,%.o,$(PLUGIN_SOURCE_FILES))
 
 #GCCPLUGIN_DIR:=$(shell $(GCC) -print-file-name=plugin)
@@ -15,7 +15,7 @@ CXXFLAGS+=\
 	-I${GCCSOURCE_DIR}/libcpp/include -I${GCCSOURCE_DIR}/libdecnumber \
 	-I${GCCOBJECT_DIR}/libdecnumber
 
-LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs core target)
+LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core target)
 
 llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ ${LDFLAGS}

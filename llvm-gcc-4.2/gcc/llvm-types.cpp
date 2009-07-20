@@ -1696,7 +1696,7 @@ static DenseMap<std::pair<tree, unsigned int>, tree> LessAlignedTypesMap;
 
 static tree FixBaseClassField(tree Field) {
   tree oldTy = TREE_TYPE(Field);
-  tree &newTy = BaseTypesMap[oldTy];
+  tree newTy = BaseTypesMap[oldTy];
   // If already in table, reuse.
   if (!newTy) {
     newTy = copy_node(oldTy);
@@ -1763,7 +1763,7 @@ static tree FixBaseClassField(tree Field) {
 static tree FixLessAlignedClassField(tree Field) {
   tree oldTy = TREE_TYPE(Field);
   std::pair<tree, unsigned int> p = std::make_pair(oldTy, DECL_ALIGN(Field));
-  tree &newTy = LessAlignedTypesMap[p];
+  tree newTy = LessAlignedTypesMap[p];
   // If already in table, reuse.
   if (!newTy) {
     newTy = copy_node(oldTy);

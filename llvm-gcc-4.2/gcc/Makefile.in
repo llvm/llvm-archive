@@ -965,6 +965,7 @@ endif
 ALL_CXXFLAGS = $(filter-out -Wstrict-prototypes -Wmissing-prototypes \
                             -Wold-style-definition -Wno-overlength-strings, $(ALL_CFLAGS)) -Wno-unused
 ALL_CXXFLAGS += -DTARGET_NAME=\"$(target_noncanonical)\"
+ALL_CXXFLAGS += -frandom-seed=0
 
 # Turn off LLVM assertions in a non-checking build.
 ifndef CHECKING_ENABLED

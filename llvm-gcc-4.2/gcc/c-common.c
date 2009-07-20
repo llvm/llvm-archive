@@ -8001,6 +8001,12 @@ iasm_stmt (tree expr, tree args, int lineno)
 	{
 	  if (TARGET_64BIT)
 	    e.modifier = "l";
+          /* LLVM LOCAL begin apply this only within calls */
+#ifdef ENABLE_LLVM
+          else
+            e.modifier = "P";
+#endif
+          /* LLVM LOCAL end */
 	  iasm_force_constraint ("X", &e);
 	}
     }
@@ -8492,6 +8498,16 @@ iasm_print_operand (char *buf, tree arg, unsigned argnum,
 	      e->modifier = 0;
 	      strcat (buf, "*");
 	    }
+/* LLVM LOCAL begin apply P modifier only within calls. */
+#ifdef ENABLE_LLVM
+          else 
+            {
+              modifier = "";
+              if (e->modifier && strcmp (e->modifier, "P") == 0)
+                modifier = "P";
+            }
+#endif
+/* LLVM LOCAL end */
 #endif
       iasm_get_register_var (arg, modifier, buf, argnum, must_be_reg, e);
       break;

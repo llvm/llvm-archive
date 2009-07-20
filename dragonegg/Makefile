@@ -1,4 +1,4 @@
-PLUGIN_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-types.cpp
+PLUGIN_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-types.cpp bits_and_bobs.cpp
 PLUGIN_OBJECT_FILES=$(patsubst %.cpp,%.o,$(PLUGIN_SOURCE_FILES))
 
 #GCCPLUGIN_DIR:=$(shell $(GCC) -print-file-name=plugin)

@@ -1764,29 +1764,28 @@ void llvm_emit_file_scope_asm(const char *string) {
                                   string);
 }
 
-
-// print_llvm - Print the specified LLVM chunk like an operand, called by
-// print-tree.c for tree dumps.
-//
-void print_llvm(FILE *file, void *LLVM) {
-  oFILEstream FS(file);
-  FS << "LLVM: ";
-  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
-}
-
-// print_llvm_type - Print the specified LLVM type symbolically, called by
-// print-tree.c for tree dumps.
-//
-void print_llvm_type(FILE *file, void *LLVM) {
-  oFILEstream FS(file);
-  FS << "LLVM: ";
-  
-  // FIXME: oFILEstream can probably be removed in favor of a new raw_ostream
-  // adaptor which would be simpler and more efficient.  In the meantime, just
-  // adapt the adaptor.
-  raw_os_ostream RO(FS);
-  WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
-}
+//FIXME// print_llvm - Print the specified LLVM chunk like an operand, called by
+//FIXME// print-tree.c for tree dumps.
+//FIXME//
+//FIXMEvoid print_llvm(FILE *file, void *LLVM) {
+//FIXME  oFILEstream FS(file);
+//FIXME  FS << "LLVM: ";
+//FIXME  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
+//FIXME}
+//FIXME
+//FIXME// print_llvm_type - Print the specified LLVM type symbolically, called by
+//FIXME// print-tree.c for tree dumps.
+//FIXME//
+//FIXMEvoid print_llvm_type(FILE *file, void *LLVM) {
+//FIXME  oFILEstream FS(file);
+//FIXME  FS << "LLVM: ";
+//FIXME  
+//FIXME  // FIXME: oFILEstream can probably be removed in favor of a new raw_ostream
+//FIXME  // adaptor which would be simpler and more efficient.  In the meantime, just
+//FIXME  // adapt the adaptor.
+//FIXME  raw_os_ostream RO(FS);
+//FIXME  WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
+//FIXME}
 
 // Get a register name given its decl.  In 4.2 unlike 4.0 these names
 // have been run through set_user_assembler_name which means they may

@@ -19,9 +19,7 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-#include "llvm-internal.h"
-#include "llvm-debug.h"
-#include "llvm-file-ostream.h"
+// LLVM headers
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
@@ -52,17 +50,24 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/System/Program.h"
 
+// System headers
 #include <cassert>
+
+// GCC headers
 #undef VISIBILITY_HIDDEN
-extern "C" {
+#define IN_GCC
+
 #include "config.h"
+extern "C" {
 #include "system.h"
+}
 #include "coretypes.h"
-#include "flags.h"
+#include "target.h"
 #include "tree.h"
+
+#include "flags.h"
 #include "diagnostic.h"
 #include "output.h"
-#include "target.h"
 #include "toplev.h"
 #include "timevar.h"
 #include "tm.h"
@@ -71,7 +76,12 @@ extern "C" {
 #include "langhooks.h"
 #include "cgraph.h"
 #include "params.h"
-}
+
+// Plugin headers
+#include "llvm-internal.h"
+#include "llvm-debug.h"
+#include "llvm-file-ostream.h"
+#include "bits_and_bobs.h"
 
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;

@@ -25,9 +25,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ValueSymbolTable.h"
-#include "llvm-abi.h"
-#include "llvm-internal.h"
-#include "llvm-debug.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -39,13 +36,16 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/System/Host.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#undef RET
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
 #include <iostream>
+
+#include "llvm-abi.h"
+#include "llvm-internal.h"
+#include "llvm-debug.h"
 
 extern "C" {
 #include "config.h"

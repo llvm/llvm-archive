@@ -39,6 +39,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/System/Host.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#undef RET
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
@@ -4589,8 +4591,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // Give the backend a chance to upgrade the inline asm to LLVM code.  This
   // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->
   // llvm.bswap.
-  if (const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo())
-    TAI->ExpandInlineAsm(CV);
+  if (const TargetLowering *TLI = TheTarget->getTargetLowering())
+    TLI->ExpandInlineAsm(CV);
   
   if (NumChoices>1)
     FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);

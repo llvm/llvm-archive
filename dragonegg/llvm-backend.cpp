@@ -412,9 +412,9 @@ static void LazilyConfigureLLVM(void) {
 //TODO    Args.push_back("--debug-pass=Structure");
 //TODO  if (flag_debug_pass_arguments)
 //TODO    Args.push_back("--debug-pass=Arguments");
-  if (optimize_size || optimize < 3)
-    // Reduce inline limit. Default limit is 200.
-    Args.push_back("--inline-threshold=50");
+//TODO  if (optimize_size || optimize < 3)
+//TODO    // Reduce inline limit. Default limit is 200.
+//TODO    Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 

@@ -1,5 +1,5 @@
 C_SOURCE_FILES=llvm-cache.c
-CPP_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-types.cpp bits_and_bobs.cpp
+CPP_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-target.cpp llvm-types.cpp bits_and_bobs.cpp
 PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 
 #GCCPLUGIN_DIR:=$(shell $(GCC) -print-file-name=plugin)

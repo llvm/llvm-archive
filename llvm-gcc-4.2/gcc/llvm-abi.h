@@ -378,7 +378,7 @@ public:
   void HandleReturnType(tree type, tree fn, bool isBuiltin) {
     unsigned Offset = 0;
     const Type *Ty = ConvertType(type);
-    if (Ty->getTypeID() == Type::VectorTyID) {
+    if (isa<VectorType>(Ty)) {
       // Vector handling is weird on x86.  In particular builtin and
       // non-builtin function of the same return types can use different
       // calling conventions.
@@ -444,7 +444,7 @@ public:
       const Type *PtrTy = PointerType::getUnqual(Ty);
       C.HandleByInvisibleReferenceArgument(PtrTy, type);
       ScalarElts.push_back(PtrTy);
-    } else if (Ty->getTypeID()==Type::VectorTyID) {
+    } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
@@ -729,7 +729,7 @@ public:
   void HandleReturnType(tree type, tree fn, bool isBuiltin) {
     unsigned Offset = 0;
     const Type *Ty = ConvertType(type);
-    if (Ty->getTypeID() == Type::VectorTyID) {
+    if (isa<VectorType>(Ty)) {
       // Vector handling is weird on x86.  In particular builtin and
       // non-builtin function of the same return types can use different
       // calling conventions.
@@ -818,7 +818,7 @@ public:
       if (Attributes) {
         *Attributes |= Attr;
       }
-    } else if (Ty->getTypeID()==Type::VectorTyID) {
+    } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
@@ -857,7 +857,7 @@ public:
           Attr |= Attribute::InReg;
           NumGPR = NumArgRegs;
         }
-      } else if (Ty->getTypeID() == Type::PointerTyID) {
+      } else if (isa<PointerType>(Ty)) {
         if (NumGPR < NumArgRegs) {
           NumGPR++;
         } else {
@@ -865,8 +865,7 @@ public:
         }
       // We don't care about arguments passed in Floating-point or vector
       // registers.
-      } else if (!(Ty->isFloatingPoint() ||
-                   Ty->getTypeID() == Type::VectorTyID)) {
+      } else if (!(Ty->isFloatingPoint() || isa<VectorType>(Ty))) {
         abort();
       }
 

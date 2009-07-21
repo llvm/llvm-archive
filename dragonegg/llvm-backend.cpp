@@ -87,6 +87,7 @@ extern "C" {
 // Plugin headers
 #include "llvm-internal.h"
 #include "llvm-debug.h"
+#include "llvm-target.h"
 //TODO#include "llvm-file-ostream.h"
 #include "bits_and_bobs.h"
 
@@ -346,9 +347,6 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
-// FIXME: For the moment, all the world's an x86
-#define LLVM_TARGET_NAME X86
-
 #ifndef LLVM_TARGET_NAME
 #error LLVM_TARGET_NAME macro not specified by GCC backend
 #endif
@@ -496,13 +494,13 @@ static void LazilyInitializeModule(void) {
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
-  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
-  // backend.
-#ifdef LLVM_SET_SUBTARGET_FEATURES
-  SubtargetFeatures Features;
-  LLVM_SET_SUBTARGET_FEATURES(Features);
-  FeatureStr = Features.getString();
-#endif
+//TODO  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
+//TODO  // backend.
+//TODO#ifdef LLVM_SET_SUBTARGET_FEATURES
+//TODO  SubtargetFeatures Features;
+//TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
+//TODO  FeatureStr = Features.getString();
+//TODO#endif
   TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 

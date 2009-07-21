@@ -1,5 +1,3 @@
-/* LLVM LOCAL begin (ENTIRE FILE!)  */
-#ifdef ENABLE_LLVM
 /* Some target-specific hooks for gcc->llvm conversion
 Copyright (C) 2007 Free Software Foundation, Inc.
 Contributed by Anton Korobeynikov (asl@math.spbu.ru)
@@ -225,6 +223,3 @@ bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
    false)
 
 #endif /* LLVM_ABI_H */
-#endif /* ENABLE_LLVM */
-/* LLVM LOCAL end (ENTIRE FILE!)  */
-

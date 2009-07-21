@@ -1,5 +1,3 @@
-/* LLVM LOCAL begin (ENTIRE FILE!)  */
-#ifdef ENABLE_LLVM
 /* High-level LLVM backend interface 
 Copyright (C) 2005 Free Software Foundation, Inc.
 Contributed by Evan Cheng (evan.cheng@apple.com)
@@ -1489,5 +1487,3 @@ bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
   else 
     return !isSingleElementStructOrArray(type, false, true);
 }
-#endif /* ENABLE_LLVM */
-/* LLVM LOCAL end (ENTIRE FILE!)  */

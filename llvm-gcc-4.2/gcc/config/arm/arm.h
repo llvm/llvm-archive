@@ -363,6 +363,9 @@ extern int arm_arch5e;
 /* Nonzero if this chip supports the ARM Architecture 6 extensions.  */
 extern int arm_arch6;
 
+/* LLVM LOCAL Declare arm_arch7a for use when setting the target triple.  */
+extern int arm_arch7a;
+
 /* Nonzero if this chip can benefit from load scheduling.  */
 extern int arm_ld_sched;
 
@@ -3023,20 +3026,32 @@ enum arm_builtins
  * armv6-apple-darwin, thumbv5-apple-darwin. FIXME: Replace thumb triplets
  * with function notes.
  */
-#define LLVM_OVERRIDE_TARGET_ARCH()					\
-  (TARGET_THUMB								\
-   ? (arm_arch_thumb2							\
-      ? "thumbv6t2" :							\
-      (arm_arch6							\
-       ? "thumbv6" : (arm_arch5e					\
-		      ? "thumbv5e" : (arm_arch5				\
-				      ? "thumbv5" : (arm_arch4t		\
-						     ? "thumbv4t" : ""))))) \
-   : (arm_arch6								\
-      ? "armv6"   : (arm_arch5e						\
-		     ? "armv5e"   : (arm_arch5				\
-				     ? "armv5"   : (arm_arch4t		\
-						    ? "armv4t" : "")))))
+#define LLVM_OVERRIDE_TARGET_ARCH()                                        \
+  (TARGET_THUMB                                                            \
+   ? (arm_arch7a                                                           \
+      ? "thumbv7"                                                          \
+      : (arm_arch_thumb2                                                   \
+         ? "thumbv6t2"                                                     \
+         : (arm_arch6                                                      \
+            ? "thumbv6"                                                    \
+            : (arm_arch5e                                                  \
+               ? "thumbv5e"                                                \
+               : (arm_arch5                                                \
+                  ? "thumbv5"                                              \
+                  : (arm_arch4t                                            \
+                     ? "thumbv4t" : ""))))))                               \
+   : (arm_arch7a                                                           \
+      ? "armv7"                                                            \
+      : (arm_arch_thumb2                                                   \
+         ? "armv6t2"                                                       \
+         : (arm_arch6                                                      \
+            ? "armv6"                                                      \
+            : (arm_arch5e                                                  \
+               ? "armv5e"                                                  \
+               : (arm_arch5                                                \
+                  ? "armv5"                                                \
+                  : (arm_arch4t                                            \
+                     ? "armv4t" : "")))))))
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
   if (TARGET_SOFT_FLOAT)                               \

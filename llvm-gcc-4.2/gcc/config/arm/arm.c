@@ -596,6 +596,9 @@ int arm_arch6 = 0;
 /* Nonzero if this chip supports the ARM 6K extensions.  */
 int arm_arch6k = 0;
 
+/* Nonzero if this chip supports the ARM 7A extensions.  */
+int arm_arch7a = 0;
+
 /* Nonzero if this chip can benefit from load scheduling.  */
 int arm_ld_sched = 0;
 
@@ -1385,6 +1388,7 @@ arm_override_options (void)
   arm_arch5e = (insn_flags & FL_ARCH5E) != 0;
   arm_arch6 = (insn_flags & FL_ARCH6) != 0;
   arm_arch6k = (insn_flags & FL_ARCH6K) != 0;
+  arm_arch7a = (insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A;
   /* LLVM LOCAL begin */
   arm_arch_thumb2 = (insn_flags & FL_THUMB2) != 0;
   /* LLVM LOCAL end */

@@ -19,6 +19,9 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+#ifndef LLVM_I386_TARGET_H
+#define LLVM_I386_TARGET_H
+
 /* LLVM specific stuff for supporting calling convention output */
 #define TARGET_ADJUST_LLVM_CC(CC, type)                         \
   {                                                             \
@@ -223,3 +226,5 @@ bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
    false)
 
 #endif /* LLVM_ABI_H */
+
+#endif /* LLVM_I386_TARGET_H */

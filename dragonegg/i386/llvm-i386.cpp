@@ -23,18 +23,30 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // This is a C++ source file that implements specific llvm IA-32 ABI.
 //===----------------------------------------------------------------------===//
 
-#include "llvm-abi.h"
-#include "llvm-internal.h"
+// LLVM headers
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm-i386-target.h"
 
+// GCC headers
+#undef VISIBILITY_HIDDEN
+#define IN_GCC
+
+#include "config.h"
 extern "C" {
-#include "toplev.h"
+#include "system.h"
 }
+#include "coretypes.h"
+#include "target.h"
+#include "toplev.h"
+#include "tree.h"
+
+// Plugin headers
+#include "llvm-abi.h"
+#include "llvm-internal.h"
+#include "llvm-target.h"
 
 static LLVMContext &Context = getGlobalContext();
 
@@ -147,7 +159,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4)+4, ((EV & 0xc0) >> 6)+4);
     } else {
-      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -157,7 +169,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = BuildVectorShuffle(Ops[0], Ops[1],
                                   ((EV & 0x01) >> 0),   ((EV & 0x02) >> 1)+2);
     } else {
-      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -169,7 +181,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6));
     } else {
-      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -191,7 +203,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6),
                                   4, 5, 6, 7);
     } else {
-      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
       Result = Ops[0];
     }
     

@@ -38,6 +38,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
@@ -530,10 +531,14 @@ void TreeToLLVM::StartFunctionBody() {
   else if (flag_stack_protect == 2)
     Fn->addFnAttr(Attribute::StackProtectReq);
 
+  // Handle naked attribute
+  if (lookup_attribute ("naked", DECL_ATTRIBUTES (FnDecl)))
+    Fn->addFnAttr(Attribute::Naked);
+
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(FnDecl))
     AddAnnotateAttrsToGlobal(Fn, FnDecl);
-  
+
   // Mark the function "nounwind" if not doing exception handling.
   if (!flag_exceptions)
     Fn->setDoesNotThrow();
@@ -2177,6 +2182,24 @@ abort();//FIXME
 //                           ... Expressions ...
 //===----------------------------------------------------------------------===//
 
+static bool canEmitRegisterVariable(tree exp) {
+  // Only variables can be marked as 'register'.
+  if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
+    return false;
+
+  // We can emit inline assembler for access to global register variables.
+  if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
+    return true;
+
+  // Emit inline asm if this is local variable with assembler name on it.
+  if (DECL_ASSEMBLER_NAME_SET_P(exp))
+    return true;
+
+  // Otherwise - it's normal automatic variable.
+  return false;
+}
+
+
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
 /// requires an r-value, this method emits the lvalue computation, then loads
 /// the result.
@@ -2194,8 +2217,7 @@ abort(); //FIXME
 //FIXME    DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
     EmitAutomaticVariableDecl(exp);
     // Fall through.
-  } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
-             TREE_STATIC(exp)) {
+  } else if (canEmitRegisterVariable(exp)) {
     // If this is a register variable, EmitLV can't handle it (there is no
     // l-value of a register variable).  Emit an inline asm node that copies the
     // value out of the specified register.
@@ -2887,8 +2909,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     Builder.Insert(Cast);
     SET_DECL_LLVM(lhs, Cast);
     return Cast;
-  } else if (TREE_CODE(lhs) == VAR_DECL && DECL_REGISTER(lhs) &&
-             TREE_STATIC(lhs)) {
+  } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node
     // that copies the value into the specified register.
@@ -3811,19 +3832,20 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
                                               const MemRef *DestLoc) {
   const Type *Ty = ConvertType(TREE_TYPE(decl));
-  
+
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(decl)) {
     if (Ty->isSingleValueType())
       return Context.getUndef(Ty);
     return 0;   // Just don't copy something into DestLoc.
   }
-  
+
   // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
   FunctionType *FTy =
     Context.getFunctionType(Ty, std::vector<const Type*>(),false);
-  
-  const char *Name = extractRegisterName(decl);
+
+  const char *Name = reg_names[decode_reg_name(extractRegisterName(decl))];
+
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
   CallInst *Call = Builder.CreateCall(IA);
   Call->setDoesNotThrow();
@@ -3836,13 +3858,14 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   // If there was an error, bail out.
   if (ValidateRegisterVariable(decl))
     return;
-  
+
   // Turn this into a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
   std::vector<const Type*> ArgTys;
   ArgTys.push_back(ConvertType(TREE_TYPE(decl)));
   FunctionType *FTy = Context.getFunctionType(Type::VoidTy, ArgTys, false);
-  
-  const char *Name = extractRegisterName(decl);
+
+  const char *Name = reg_names[decode_reg_name(extractRegisterName(decl))];
+
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
   CallInst *Call = Builder.CreateCall(IA, RHS);
   Call->setDoesNotThrow();
@@ -4212,6 +4235,22 @@ static void FreeConstTupleStrings(const char **ReplacementStrings,
     free((char *)ReplacementStrings[i]);
 }
 
+// When extracting a register name from a DECL_HARD_REGISTER variable,
+// we normally want to look up RegNum in reg_names.  This works on most
+// targets, where ADDITIONAL_REGISTER_NAMES are true synonyms.  It does not
+// work on x86, where ADDITIONAL_REGISTER_NAMES are overlapping subregisters;
+// in particular AH and AL can't be distinguished if we go through reg_names.
+static const char* getConstraintRegNameFromGccTables(const char *RegName,
+                                                     unsigned int RegNum) {
+#ifdef LLVM_DO_NOT_USE_REG_NAMES
+  if (*RegName == '%')
+    RegName++;
+  return RegName;
+#else
+  return reg_names[RegNum];
+#endif
+}
+
 Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   unsigned NumInputs = list_length(ASM_INPUTS(exp));
   unsigned NumOutputs = list_length(ASM_OUTPUTS(exp));
@@ -4330,9 +4369,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const char* RegName = extractRegisterName(Operand);
       int RegNum = decode_reg_name(RegName);
       if (RegNum >= 0) {
-        // Constraints don't have the leading %, the variable names do
-        if (*RegName == '%')
-          RegName++;
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
         unsigned RegNameLen = strlen(RegName);
         char *NewConstraint = (char*)alloca(RegNameLen+4);
         NewConstraint[0] = '=';
@@ -4484,8 +4521,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const char *RegName = extractRegisterName(Val);
       int RegNum = decode_reg_name(RegName);
       if (RegNum >= 0) {
-        if (*RegName == '%')      // Variables have leading %.
-          RegName++;              // Constraints don't.
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
         ConstraintStr += '{';
         ConstraintStr += RegName;
         ConstraintStr += '}';
@@ -4522,8 +4558,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += ",~{memory}";
       break;
     default:     // Normal register name.
-      if (*RegName == '%')
-        RegName++;
+      RegName = getConstraintRegNameFromGccTables(RegName, RegCode);
       ConstraintStr += ",~{";
       ConstraintStr += RegName;
       ConstraintStr += "}";
@@ -4576,8 +4611,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   // Give the backend a chance to upgrade the inline asm to LLVM code.  This
   // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->
   // llvm.bswap.
-  if (const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo())
-    TAI->ExpandInlineAsm(CV);
+  if (const TargetLowering *TLI = TheTarget->getTargetLowering())
+    TLI->ExpandInlineAsm(CV);
   
   if (NumChoices>1)
     FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);

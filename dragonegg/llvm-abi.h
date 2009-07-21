@@ -29,6 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define LLVM_ABI_H
 
 #include "llvm-internal.h"
+#include "llvm-target.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
@@ -1125,4 +1126,4 @@ public:
   }
 };
 
-#endif
+#endif /* LLVM_ABI_H */

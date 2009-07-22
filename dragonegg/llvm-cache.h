@@ -28,8 +28,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_CACHE_H
 #define LLVM_CACHE_H
 
-#define IN_GCC
-
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"

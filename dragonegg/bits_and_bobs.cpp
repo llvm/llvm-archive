@@ -4,7 +4,6 @@
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
-#define IN_GCC
 
 #include "config.h"
 extern "C" {

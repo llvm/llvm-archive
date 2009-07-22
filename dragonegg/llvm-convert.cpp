@@ -48,7 +48,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
-#define IN_GCC
 
 #include "config.h"
 extern "C" {

@@ -9,10 +9,11 @@ GCCOBJECT_DIR=/home/duncan/tmp/gcc.fsf.master-objects
 #CFLAGS+=-I$(GCCPLUGINS_DIR)/include -fPIC -O2
 
 CFLAGS+=-Werror -fPIC -g -O2
-CFLAGS+= -I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \
-	 -I${GCCSOURCE_DIR}/gcc -I${GCCSOURCE_DIR}/include \
-	 -I${GCCSOURCE_DIR}/libcpp/include -I${GCCSOURCE_DIR}/libdecnumber \
-	 -I${GCCOBJECT_DIR}/libdecnumber
+CFLAGS+=-DIN_GCC
+CFLAGS+=-I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \
+	-I${GCCSOURCE_DIR}/gcc -I${GCCSOURCE_DIR}/include \
+	-I${GCCSOURCE_DIR}/libcpp/include -I${GCCSOURCE_DIR}/libdecnumber \
+	-I${GCCOBJECT_DIR}/libdecnumber
 CXXFLAGS+=$(CFLAGS) $(shell llvm-config --cppflags)
 
 LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core target x86)

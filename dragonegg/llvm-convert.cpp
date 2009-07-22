@@ -766,7 +766,7 @@ Function *TreeToLLVM::EmitFunction() {
       case GIMPLE_RESX:
       default:
         print_gimple_stmt(stderr, stmt, 4, 0);
-        llvm_report_error("Unknown GIMPLE statement during LLVM emission!\n"
+        llvm_report_error("Unhandled GIMPLE statement during LLVM emission!\n"
           "gimple_code: " + gimple_code(stmt));
         break;
       }

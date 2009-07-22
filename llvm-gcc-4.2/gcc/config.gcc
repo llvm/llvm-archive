@@ -257,23 +257,35 @@ am33_2.0-*-linux*)
 	;;
 strongarm*-*-*)
 	cpu_type=arm
+# LLVM LOCAL begin
+	out_cxx_file=arm/llvm-arm.cpp
+# LLVM LOCAL end                               
 	;;
 arm*-*-*)
 	cpu_type=arm
         # APPLE LOCAL ARM v7 support, merge from Codesourcery.
 	extra_headers="mmintrin.h arm_neon.h"
+# LLVM LOCAL begin
+	out_cxx_file=arm/llvm-arm.cpp
+# LLVM LOCAL end                               
 	;;
 bfin*-*)
 	cpu_type=bfin
 	;;
 ep9312*-*-*)
 	cpu_type=arm
+# LLVM LOCAL begin
+	out_cxx_file=arm/llvm-arm.cpp
+# LLVM LOCAL end                               
 	;;
 frv*)	cpu_type=frv
 	;;
 xscale-*-*)
 	cpu_type=arm
 	extra_headers="mmintrin.h"
+# LLVM LOCAL begin
+	out_cxx_file=arm/llvm-arm.cpp
+# LLVM LOCAL end                               
 	;;
 # APPLE LOCAL begin mainline
 i[34567]86-*-*)

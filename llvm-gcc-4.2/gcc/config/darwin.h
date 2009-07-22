@@ -1472,13 +1472,29 @@ const char *darwin_objc_llvm_special_name_section(const char*);
     argvec.push_back ("--relocation-model=pic");     \
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
     argvec.push_back ("--relocation-model=static")
-#else /* defined (TARGET_386) */
+#elif defined (TARGET_ARM)
+#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+  if (flag_pic)                                      \
+    argvec.push_back ("--relocation-model=pic");     \
+  else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
+    argvec.push_back ("--relocation-model=static");  \
+  if (darwin_iphoneos_version_min)                   \
+    {                                                \
+      const char *p = darwin_iphoneos_version_min;   \
+      if (ISDIGIT (*p) && *p == '1' || *p == '2')    \
+        {                                            \
+          ++p;                                       \
+          if (!p || *p == '.')                       \
+            argvec.push_back("--arm-reserve-r9");    \
+        }                                            \
+    }
+#else /* !TARGET_386 && !TARGET_ARM */
 #define LLVM_SET_TARGET_OPTIONS(argvec)              \
   if (flag_pic)                                      \
     argvec.push_back ("--relocation-model=pic");     \
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
     argvec.push_back ("--relocation-model=static")
-#endif /* defined (TARGET_386) */
+#endif /* !TARGET_386 && !TARGET_ARM */
 
 /* On Darwin _Unwind_Resume is sensitive to the dynamic stack layout; we
    use _Unwind_Resume_or_Rethrow instead.  */

@@ -3226,6 +3226,165 @@ enum arm_builtins
 
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
+
+/* Define a static enumeration of the NEON builtins to be used when
+   converting to LLVM intrinsics.  These names are derived from the
+   neon_builtin_data table in arm.c and should be kept in sync with that.  */
+
+enum neon_builtins
+{
+  NEON_BUILTIN_vadd,
+  NEON_BUILTIN_vaddl,
+  NEON_BUILTIN_vaddw,
+  NEON_BUILTIN_vhadd,
+  NEON_BUILTIN_vqadd,
+  NEON_BUILTIN_vaddhn,
+  NEON_BUILTIN_vmul,
+  NEON_BUILTIN_vmla,
+  NEON_BUILTIN_vmlal,
+  NEON_BUILTIN_vmls,
+  NEON_BUILTIN_vmlsl,
+  NEON_BUILTIN_vqdmulh,
+  NEON_BUILTIN_vqdmlal,
+  NEON_BUILTIN_vqdmlsl,
+  NEON_BUILTIN_vmull,
+  NEON_BUILTIN_vmull_n,
+  NEON_BUILTIN_vmull_lane,
+  NEON_BUILTIN_vqdmull_n,
+  NEON_BUILTIN_vqdmull_lane,
+  NEON_BUILTIN_vqdmulh_n,
+  NEON_BUILTIN_vqdmulh_lane,
+  NEON_BUILTIN_vqdmull,
+  NEON_BUILTIN_vshl,
+  NEON_BUILTIN_vqshl,
+  NEON_BUILTIN_vshr_n,
+  NEON_BUILTIN_vshrn_n,
+  NEON_BUILTIN_vqshrn_n,
+  NEON_BUILTIN_vqshrun_n,
+  NEON_BUILTIN_vshl_n,
+  NEON_BUILTIN_vqshl_n,
+  NEON_BUILTIN_vqshlu_n,
+  NEON_BUILTIN_vshll_n,
+  NEON_BUILTIN_vsra_n,
+  NEON_BUILTIN_vsub,
+  NEON_BUILTIN_vsubl,
+  NEON_BUILTIN_vsubw,
+  NEON_BUILTIN_vqsub,
+  NEON_BUILTIN_vhsub,
+  NEON_BUILTIN_vsubhn,
+  NEON_BUILTIN_vceq,
+  NEON_BUILTIN_vcge,
+  NEON_BUILTIN_vcgt,
+  NEON_BUILTIN_vcage,
+  NEON_BUILTIN_vcagt,
+  NEON_BUILTIN_vtst,
+  NEON_BUILTIN_vabd,
+  NEON_BUILTIN_vabdl,
+  NEON_BUILTIN_vaba,
+  NEON_BUILTIN_vabal,
+  NEON_BUILTIN_vmax,
+  NEON_BUILTIN_vmin,
+  NEON_BUILTIN_vpadd,
+  NEON_BUILTIN_vpaddl,
+  NEON_BUILTIN_vpadal,
+  NEON_BUILTIN_vpmax,
+  NEON_BUILTIN_vpmin,
+  NEON_BUILTIN_vrecps,
+  NEON_BUILTIN_vrsqrts,
+  NEON_BUILTIN_vsri_n,
+  NEON_BUILTIN_vsli_n,
+  NEON_BUILTIN_vabs,
+  NEON_BUILTIN_vqabs,
+  NEON_BUILTIN_vneg,
+  NEON_BUILTIN_vqneg,
+  NEON_BUILTIN_vcls,
+  NEON_BUILTIN_vclz,
+  NEON_BUILTIN_vcnt,
+  NEON_BUILTIN_vrecpe,
+  NEON_BUILTIN_vrsqrte,
+  NEON_BUILTIN_vmvn,
+  NEON_BUILTIN_vget_lane,
+  NEON_BUILTIN_vset_lane,
+  NEON_BUILTIN_vcreate,
+  NEON_BUILTIN_vdup_n,
+  NEON_BUILTIN_vdup_lane,
+  NEON_BUILTIN_vcombine,
+  NEON_BUILTIN_vget_high,
+  NEON_BUILTIN_vget_low,
+  NEON_BUILTIN_vmovn,
+  NEON_BUILTIN_vqmovn,
+  NEON_BUILTIN_vqmovun,
+  NEON_BUILTIN_vmovl,
+  NEON_BUILTIN_vmul_lane,
+  NEON_BUILTIN_vmla_lane,
+  NEON_BUILTIN_vmlal_lane,
+  NEON_BUILTIN_vqdmlal_lane,
+  NEON_BUILTIN_vmls_lane,
+  NEON_BUILTIN_vmlsl_lane,
+  NEON_BUILTIN_vqdmlsl_lane,
+  NEON_BUILTIN_vmul_n,
+  NEON_BUILTIN_vmla_n,
+  NEON_BUILTIN_vmlal_n,
+  NEON_BUILTIN_vqdmlal_n,
+  NEON_BUILTIN_vmls_n,
+  NEON_BUILTIN_vmlsl_n,
+  NEON_BUILTIN_vqdmlsl_n,
+  NEON_BUILTIN_vext,
+  NEON_BUILTIN_vrev64,
+  NEON_BUILTIN_vrev32,
+  NEON_BUILTIN_vrev16,
+  NEON_BUILTIN_vcvt,
+  NEON_BUILTIN_vcvt_n,
+  NEON_BUILTIN_vbsl,
+  NEON_BUILTIN_vtbl1,
+  NEON_BUILTIN_vtbl2,
+  NEON_BUILTIN_vtbl3,
+  NEON_BUILTIN_vtbl4,
+  NEON_BUILTIN_vtbx1,
+  NEON_BUILTIN_vtbx2,
+  NEON_BUILTIN_vtbx3,
+  NEON_BUILTIN_vtbx4,
+  NEON_BUILTIN_vtrn,
+  NEON_BUILTIN_vzip,
+  NEON_BUILTIN_vuzp,
+  NEON_BUILTIN_vreinterpretv8qi,
+  NEON_BUILTIN_vreinterpretv4hi,
+  NEON_BUILTIN_vreinterpretv2si,
+  NEON_BUILTIN_vreinterpretv2sf,
+  NEON_BUILTIN_vreinterpretdi,
+  NEON_BUILTIN_vreinterpretv16qi,
+  NEON_BUILTIN_vreinterpretv8hi,
+  NEON_BUILTIN_vreinterpretv4si,
+  NEON_BUILTIN_vreinterpretv4sf,
+  NEON_BUILTIN_vreinterpretv2di,
+  NEON_BUILTIN_vld1,
+  NEON_BUILTIN_vld1_lane,
+  NEON_BUILTIN_vld1_dup,
+  NEON_BUILTIN_vst1,
+  NEON_BUILTIN_vst1_lane,
+  NEON_BUILTIN_vld2,
+  NEON_BUILTIN_vld2_lane,
+  NEON_BUILTIN_vld2_dup,
+  NEON_BUILTIN_vst2,
+  NEON_BUILTIN_vst2_lane,
+  NEON_BUILTIN_vld3,
+  NEON_BUILTIN_vld3_lane,
+  NEON_BUILTIN_vld3_dup,
+  NEON_BUILTIN_vst3,
+  NEON_BUILTIN_vst3_lane,
+  NEON_BUILTIN_vld4,
+  NEON_BUILTIN_vld4_lane,
+  NEON_BUILTIN_vld4_dup,
+  NEON_BUILTIN_vst4,
+  NEON_BUILTIN_vst4_lane,
+  NEON_BUILTIN_vand,
+  NEON_BUILTIN_vorr,
+  NEON_BUILTIN_veor,
+  NEON_BUILTIN_vbic,
+  NEON_BUILTIN_vorn,
+  NEON_BUILTIN_MAX
+};
+
 #define LLVM_TARGET_INTRINSIC_PREFIX "arm"
 
 /* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
@@ -3285,6 +3444,8 @@ enum arm_builtins
       F.setCPU("arm7tdmi"); \
       break; \
     } \
+    if (TARGET_NEON) \
+      F.AddFeature("neon"); \
   }
 
 /* Encode arm / thumb modes and arm subversion number in the triplet. e.g.
@@ -3334,7 +3495,16 @@ enum arm_builtins
   else if ((ESCAPED_CHAR) == '@') {       		\
     (RESULT) += ASM_COMMENT_START;                      \
   }
-#endif
+
+/* LLVM_TARGET_INTRINSIC_LOWER - To handle builtins, we want to expand the
+   invocation into normal LLVM code.  If the target can handle the builtin, this
+   macro should call the target TreeToLLVM::TargetIntrinsicLower method and
+   return true.  This macro is invoked from a method in the TreeToLLVM class. */
+#define LLVM_TARGET_INTRINSIC_LOWER(EXP, BUILTIN_CODE, DESTLOC, RESULT,       \
+                                    DESTTY, OPS)                              \
+        TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
+
+#endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */
 
 #endif /* ! GCC_ARM_H */

@@ -141,7 +141,7 @@ fi
 
 # ARM may require a sysroot option.  Check if libSystem has an ARM slice
 # as an indication of whether the files in / support ARM.
-if lipo -info /usr/lib/libSystem.dylib | grep arm; then
+if lipo -info /usr/lib/libSystem.dylib | grep armv7; then
   ARM_SYSROOT=/
 else
   if [ -d $ARM_EXTRA_SDK ]; then

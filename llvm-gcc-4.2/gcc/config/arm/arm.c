@@ -16320,45 +16320,63 @@ typedef struct {
   const enum insn_code codes[T_MAX];
   const unsigned int num_vars;
   unsigned int base_fcode;
+  /* LLVM LOCAL begin */
+  /* Map each entry to the corresponding neon_builtins enum value.
+     GCC does not make it easy to identify NEON builtins, but LLVM
+     needs to translate them to intrinsics.  */
+  enum neon_builtins neon_code;
+  /* LLVM LOCAL end */
 } neon_builtin_datum;
 
 #define CF(N,X) CODE_FOR_neon_##N##X
 
+/* LLVM LOCAL begin Add initializers for neon_code field.  */
 #define VAR1(T, N, A) \
-  #N, NEON_##T, UP (A), { CF (N, A) }, 1, 0
+  #N, NEON_##T, UP (A), { CF (N, A) }, 1, 0, \
+  NEON_BUILTIN_##N
 #define VAR2(T, N, A, B) \
-  #N, NEON_##T, UP (A) | UP (B), { CF (N, A), CF (N, B) }, 2, 0
+  #N, NEON_##T, UP (A) | UP (B), { CF (N, A), CF (N, B) }, 2, 0, \
+  NEON_BUILTIN_##N
 #define VAR3(T, N, A, B, C) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C), \
-  { CF (N, A), CF (N, B), CF (N, C) }, 3, 0
+  { CF (N, A), CF (N, B), CF (N, C) }, 3, 0, \
+  NEON_BUILTIN_##N
 #define VAR4(T, N, A, B, C, D) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D), \
-  { CF (N, A), CF (N, B), CF (N, C), CF (N, D) }, 4, 0
+  { CF (N, A), CF (N, B), CF (N, C), CF (N, D) }, 4, 0, \
+  NEON_BUILTIN_##N
 #define VAR5(T, N, A, B, C, D, E) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E), \
-  { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E) }, 5, 0
+  { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E) }, 5, 0, \
+  NEON_BUILTIN_##N
 #define VAR6(T, N, A, B, C, D, E, F) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E) | UP (F), \
-  { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F) }, 6, 0
+  { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F) }, 6, 0, \
+  NEON_BUILTIN_##N
 #define VAR7(T, N, A, B, C, D, E, F, G) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E) | UP (F) | UP (G), \
   { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F), \
-    CF (N, G) }, 7, 0
+    CF (N, G) }, 7, 0, \
+  NEON_BUILTIN_##N
 #define VAR8(T, N, A, B, C, D, E, F, G, H) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E) | UP (F) | UP (G) \
                 | UP (H), \
   { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F), \
-    CF (N, G), CF (N, H) }, 8, 0
+    CF (N, G), CF (N, H) }, 8, 0, \
+  NEON_BUILTIN_##N
 #define VAR9(T, N, A, B, C, D, E, F, G, H, I) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E) | UP (F) | UP (G) \
                 | UP (H) | UP (I), \
   { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F), \
-    CF (N, G), CF (N, H), CF (N, I) }, 9, 0
+    CF (N, G), CF (N, H), CF (N, I) }, 9, 0, \
+  NEON_BUILTIN_##N
 #define VAR10(T, N, A, B, C, D, E, F, G, H, I, J) \
   #N, NEON_##T, UP (A) | UP (B) | UP (C) | UP (D) | UP (E) | UP (F) | UP (G) \
                 | UP (H) | UP (I) | UP (J), \
   { CF (N, A), CF (N, B), CF (N, C), CF (N, D), CF (N, E), CF (N, F), \
-    CF (N, G), CF (N, H), CF (N, I), CF (N, J) }, 10, 0
+    CF (N, G), CF (N, H), CF (N, I), CF (N, J) }, 10, 0, \
+  NEON_BUILTIN_##N
+/* LLVM LOCAL end Add initializers for neon_code field.  */
 
 /* The mode entries in the following table correspond to the "key" type of the
    instruction variant, i.e. equivalent to that which would be specified after
@@ -19162,8 +19180,13 @@ neon_builtin_compare (const void *a, const void *b)
     return 1;
 }
 
-static enum insn_code
-locate_neon_builtin_icode (int fcode, neon_itype *itype)
+/* LLVM LOCAL begin
+   Added neon_code argument below and made the function
+   non-static.  This is needed when translating Neon builtins to LLVM.  */
+enum insn_code
+locate_neon_builtin_icode (int fcode, neon_itype *itype,
+                           enum neon_builtins *neon_code)
+/* LLVM LOCAL end */ 
 {
   neon_builtin_datum key, *found;
   int idx;
@@ -19177,6 +19200,11 @@ locate_neon_builtin_icode (int fcode, neon_itype *itype)
 
   if (itype)
     *itype = found->itype;
+
+  /* LLVM LOCAL begin */
+  if (neon_code)
+    *neon_code = found->neon_code;
+  /* LLVM LOCAL end */
 
   return found->codes[idx];
 }
@@ -19318,7 +19346,8 @@ static rtx
 arm_expand_neon_builtin (rtx target, int fcode, tree arglist)
 {
   neon_itype itype;
-  enum insn_code icode = locate_neon_builtin_icode (fcode, &itype);
+  /* LLVM LOCAL Added 0 argument to following call.  */
+  enum insn_code icode = locate_neon_builtin_icode (fcode, &itype, 0);
   
   switch (itype)
     {

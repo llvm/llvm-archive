@@ -726,9 +726,13 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     }
     // FALL THROUGH.
     type = orig_type;
-  case INTEGER_TYPE:
+  case INTEGER_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    return SET_TYPE_LLVM(type, Context.getIntegerType(TYPE_PRECISION(type)));
+    // The ARM port defines __builtin_neon_xi as a 511-bit type because GCC's
+    // type precision field has only 9 bits.  Treat this as a special case.
+    int precision = TYPE_PRECISION(type) == 511 ? 512 : TYPE_PRECISION(type);
+    return SET_TYPE_LLVM(type, Context.getIntegerType(precision));
+  }
   case REAL_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     switch (TYPE_PRECISION(type)) {

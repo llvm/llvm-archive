@@ -67,38 +67,46 @@ let close_braceblock nesting =
     0 -> Format.printf "@]@,@<0>}"
   | _ -> Format.printf "@]@,@<0>}@]"
 
+(* LLVM LOCAL begin Print macros instead of inline functions.
+   This is needed so that immediate arguments (e.g., lane numbers, shift
+   amounts, etc.) can be checked for validity.  GCC can check them after
+   inlining, but LLVM does inlining separately.  This is not ideal for
+   error messages.  In the simple cases, llvm-gcc will use the GCC builtin
+   names instead of the user-visible ARM intrinsic names.  In cases where
+   the macros convert arguments to/from scalars (where the GCC builtins
+   expect that for some reason), the error messages may not show any context
+   information at all.  This could all be avoided if the compiler recognized
+   the intrinsics directly. *)
 let print_function arity fnname body =
   let ffmt = start_function () in
-  Format.printf "__extension__ static __inline ";
-  let inl = "__attribute__ ((__always_inline__))" in
+  Format.printf "@[<v 2>#define ";
   begin match arity with
     Arity0 ret ->
-      Format.printf "%s %s@,%s (void)" (string_of_vectype ret) inl fnname
+      Format.printf "%s()" fnname
   | Arity1 (ret, arg0) ->
-      Format.printf "%s %s@,%s (%s __a)" (string_of_vectype ret) inl fnname
-                                        (string_of_vectype arg0)
+      Format.printf "%s(__a)" fnname
   | Arity2 (ret, arg0, arg1) ->
-      Format.printf "%s %s@,%s (%s __a, %s __b)"
-        (string_of_vectype ret) inl fnname (string_of_vectype arg0)
-	(string_of_vectype arg1)
+      Format.printf "%s(__a, __b)" fnname
   | Arity3 (ret, arg0, arg1, arg2) ->
-      Format.printf "%s %s@,%s (%s __a, %s __b, %s __c)"
-        (string_of_vectype ret) inl fnname (string_of_vectype arg0)
-	(string_of_vectype arg1) (string_of_vectype arg2)
+      Format.printf "%s(__a, __b, __c)" fnname
   | Arity4 (ret, arg0, arg1, arg2, arg3) ->
-      Format.printf "%s %s@,%s (%s __a, %s __b, %s __c, %s __d)"
-        (string_of_vectype ret) inl fnname (string_of_vectype arg0)
-	(string_of_vectype arg1) (string_of_vectype arg2)
-        (string_of_vectype arg3)
+      Format.printf "%s(__a, __b, __c, __d)" fnname
   end;
-  open_braceblock ffmt;
+  Format.printf " \\@,";
   let rec print_lines = function
     [] -> ()
+  | [line] -> Format.printf "%s \\" line
+  | line::lines -> Format.printf "%s \\@," line; print_lines lines in
+  let print_macro_body = function
+    [] -> ()
   | [line] -> Format.printf "%s" line
-  | line::lines -> Format.printf "%s@," line; print_lines lines in
-  print_lines body;
-  close_braceblock ffmt;
+  | line::lines -> Format.printf "@[<v 3>({ \\@,%s \\@," line;
+                   print_lines lines;
+                   Format.printf "@]@, })" in
+  print_macro_body body;
+  Format.printf "@]";
   end_function ffmt
+(* LLVM LOCAL end Print macros instead of inline functions.  *)
 
 let return_by_ptr features = List.mem ReturnPtr features
 
@@ -142,6 +150,7 @@ let cast_for_return to_ty = "(" ^ (string_of_vectype to_ty) ^ ")"
 
 (* Return a tuple of a list of declarations to go at the start of the function,
    and a list of statements needed to return THING.  *)
+(* LLVM LOCAL begin Remove "return" keywords since these are now macros.  *)
 let return arity return_by_ptr thing =
   match arity with
     Arity0 (ret) | Arity1 (ret, _) | Arity2 (ret, _, _) | Arity3 (ret, _, _, _)
@@ -151,13 +160,14 @@ let return arity return_by_ptr thing =
         if return_by_ptr then
           let sname = string_of_vectype ret in
           [Printf.sprintf "%s __rv;" sname],
-          [thing ^ ";"; "return __rv;"]
+          [thing ^ ";"; "__rv;"]
         else
           let uname = union_string num vec "__rv" in
-          [uname ^ ";"], ["__rv.__o = " ^ thing ^ ";"; "return __rv.__i;"]
+          [uname ^ ";"], ["__rv.__o = " ^ thing ^ ";"; "__rv.__i;"]
     | T_void -> [], [thing ^ ";"]
     | _ ->
-        [], ["return " ^ (cast_for_return ret) ^ thing ^ ";"]
+        [], [(cast_for_return ret) ^ thing ^ ";"]
+(* LLVM LOCAL end Remove "return" keywords since these are now macros.  *)
 
 let rec element_type ctype =
   match ctype with
@@ -173,7 +183,8 @@ let params return_by_ptr ps =
         let decl = Printf.sprintf "%s = { %s };" uname p in
         pdecls := decl :: !pdecls;
         p ^ "u.__o"
-    | _ -> add_cast t p in
+    (* LLVM LOCAL Omit casts so so we get better error messages.  *)
+    | _ -> (* add_cast t *) p in
   let plist = match ps with
     Arity0 _ -> []
   | Arity1 (_, t1) -> [ptype t1 "__a"]
@@ -367,6 +378,8 @@ let print_lines = List.iter (fun s -> Format.printf "%s@\n" s)
 
 let _ =
   print_lines [
+"/* LLVM LOCAL file Changed to use preprocessor macros.  */";
+"/* APPLE LOCAL file v7 support. Merge from Codesourcery */";
 "/* ARM NEON intrinsics include file. This file is generated automatically";
 "   using neon-gen.ml.  Please do not edit manually.";
 "";

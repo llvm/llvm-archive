@@ -431,10 +431,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_VEC_EXT_V16QI:
     Result = Builder.CreateExtractElement(Ops[0], Ops[1], "tmp");
     return true;
+  case IX86_BUILTIN_VEC_SET_V16QI:
+    // Sometimes G++ promotes arguments to int.
+    Ops[1] = Builder.CreateIntCast(Ops[1], Type::Int8Ty, false, "tmp");
+    Result = Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "tmp");
+    return true;
   case IX86_BUILTIN_VEC_SET_V4HI:
   case IX86_BUILTIN_VEC_SET_V8HI:
     // GCC sometimes doesn't produce the right element type.
     Ops[1] = Builder.CreateIntCast(Ops[1], Type::Int16Ty, false, "tmp");
+    Result = Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "tmp");
+    return true;
+  case IX86_BUILTIN_VEC_SET_V4SI:
+    Result = Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "tmp");
+    return true;
+  case IX86_BUILTIN_VEC_SET_V2DI:
     Result = Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2], "tmp");
     return true;
   case IX86_BUILTIN_CMPEQPS:

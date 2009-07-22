@@ -239,7 +239,9 @@ c_common_init_options (unsigned int argc, const char **argv)
 
   flag_exceptions = c_dialect_cxx ();
   /* LLVM local begin One Definition Rule */
+#ifdef ENABLE_LLVM
   flag_odr = c_dialect_cxx ();
+#endif
   /* LLVM local end */
   warn_pointer_arith = c_dialect_cxx ();
   warn_write_strings = c_dialect_cxx();

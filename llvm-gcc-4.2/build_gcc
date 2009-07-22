@@ -332,7 +332,8 @@ for t in $CROSS_TARGETS ; do
    cd $DIR/obj-$BUILD-$t || exit 1
    if [ \! -f Makefile ]; then
     # APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-    $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
+    # APPLE LOCAL don't use --enable-werror for ARM builds
+    $SRC_DIR/configure `echo $CONFIGFLAGS | sed -e "s/--enable-werror//"`  \
      `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
       --program-prefix=$t-apple-darwin$DARWIN_VERS- \
       --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
@@ -378,7 +379,8 @@ for h in $HOSTS ; do
 
       if [ \! -f Makefile ]; then
 	# APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-        $SRC_DIR/configure $CONFIGFLAGS \
+        # APPLE LOCAL don't use --enable-werror for ARM builds
+        $SRC_DIR/configure `echo $CONFIGFLAGS | sed -e "s/--enable-werror//"`  \
 	  `if [ $t = 'arm' ] && [ $h != 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
           --program-prefix=$pp \
           --host=$h-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1

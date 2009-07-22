@@ -42,6 +42,7 @@ struct scope_binding {
 #define EMPTY_SCOPE_BINDING { NULL_TREE, NULL_TREE }
 
 static cxx_scope *innermost_nonclass_level (void);
+
 static cxx_binding *binding_for_name (cxx_scope *, tree);
 static tree lookup_name_innermost_nonclass_level (tree);
 static tree push_overloaded_decl (tree, int, bool);
@@ -3747,13 +3748,18 @@ unqualified_namespace_lookup (tree name, int flags)
   tree siter;
   struct cp_binding_level *level;
   tree val = NULL_TREE;
+#ifndef ENABLE_LLVM
+  struct scope_binding binding = EMPTY_SCOPE_BINDING;
+#endif
 
   timevar_push (TV_NAME_LOOKUP);
 
   for (; !val; scope = CP_DECL_CONTEXT (scope))
     {
       /* LLVM LOCAL begin mainline */
+#ifdef ENABLE_LLVM
       struct scope_binding binding = EMPTY_SCOPE_BINDING;
+#endif
       /* LLVM LOCAL end mainline */
       cxx_binding *b =
 	 cxx_scope_find_binding_for_name (NAMESPACE_LEVEL (scope), name);

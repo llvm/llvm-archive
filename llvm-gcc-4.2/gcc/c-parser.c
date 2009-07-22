@@ -4122,8 +4122,11 @@ c_parser_statement_after_labels (c_parser *parser)
 	  iasm_state = iasm_asm;
 	  inside_iasm_block = true;
 	  iasm_kill_regs = true;
-          /* LLVM LOCAL */
+          /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
           iasm_label_counter = 0;
+#endif
+          /* LLVM LOCAL end */
 	  iasm_in_decl = false;
 	  c_parser_iasm_line_seq_opt (parser);
 	  stmt = NULL_TREE;
@@ -9023,8 +9026,11 @@ c_parser_iasm_compound_statement (c_parser *parser)
   iasm_state = iasm_asm;
   inside_iasm_block = true;
   iasm_kill_regs = true;
-  /* LLVM LOCAL */
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   iasm_label_counter = 0;
+#endif
+  /* LLVM LOCAL end */
   stmt = c_begin_compound_stmt (true);
   /* Parse an (optional) statement-seq.  */
   c_parser_iasm_line_seq_opt (parser);
@@ -9045,8 +9051,11 @@ c_parser_iasm_top_statement (c_parser *parser)
   iasm_state = iasm_asm;
   inside_iasm_block = true;
   iasm_kill_regs = true;
-  /* LLVM LOCAL */
+  /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
   iasm_label_counter = 0;
+#endif
+  /* LLVM LOCAL end */
   stmt = c_begin_compound_stmt (true);
   if (!c_parser_iasm_bol (parser))
     {    

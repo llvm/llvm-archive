@@ -4758,6 +4758,7 @@ mark_weak (tree decl)
       && GET_CODE (XEXP (DECL_RTL (decl), 0)) == SYMBOL_REF)
     SYMBOL_REF_WEAK (XEXP (DECL_RTL (decl), 0)) = 1;
 #endif
+  /* LLVM LOCAL end */
 }
 
 /* Merge weak status between NEWDECL and OLDDECL.  */

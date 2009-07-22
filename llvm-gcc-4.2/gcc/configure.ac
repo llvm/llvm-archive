@@ -963,9 +963,11 @@ MISSING="${CONFIG_SHELL-/bin/sh} $srcdir/../missing"
 
 # See if makeinfo has been installed and is modern enough
 # that we can use it.
+# LLVM LOCAL begin Recognize more recent versions of makeinfo.
 gcc_AC_CHECK_PROG_VER(MAKEINFO, makeinfo, --version,
   [GNU texinfo.* \([0-9][0-9.]*\)],
   [4.[4-9]* | 4.1[0-9]*])
+# LLVM LOCAL end Recognize more recent versions of makeinfo.
 if test $gcc_cv_prog_makeinfo_modern = no; then
   MAKEINFO="$MISSING makeinfo"
   AC_MSG_WARN([

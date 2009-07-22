@@ -433,9 +433,9 @@ do {					\
    %{mmacosx-version-min=*:-macosx_version_min %*} \
    %{miphoneos-version-min=*:-iphoneos_version_min %*} \
    "/* APPLE LOCAL end ARM 5683689 */"\
-   "/* APPLE LOCAL begin llvm */\
+   "/* LLVM LOCAL begin */\
   LLVM_LINK_SPEC \
-   /* APPLE LOCAL end llvm */" \
+   /* LLVM LOCAL end */" \
    %{nomultidefs} \
    %{Zmulti_module:-multi_module} %{Zsingle_module:-single_module} \
    %{Zmultiply_defined*:-multiply_defined %*} \
@@ -550,23 +550,30 @@ do {					\
   { "darwin_iphoneos_libgcc", DARWIN_IPHONEOS_LIBGCC_SPEC },
 
 /* APPLE LOCAL begin ARM 5683689 */
+/* APPLE LOCAL begin link optimizations 6999417 */
 #define DARWIN_DYLIB1_SPEC						\
-  "%{miphoneos-version-min=*: -ldylib1.o}				\
+  "%{miphoneos-version-min=*:						\
+    %:version-compare(< 3.1 miphoneos-version-min= -ldylib1.o)}		\
    %{!miphoneos-version-min=*:						\
      %:version-compare(!> 10.5 mmacosx-version-min= -ldylib1.o)		\
      %:version-compare(>= 10.5 mmacosx-version-min= -ldylib1.10.5.o)}"
 
 /* APPLE LOCAL begin link optimizations 6499452 */
 #define DARWIN_BUNDLE1_SPEC						\
-  "-lbundle1.o"
+  "%{miphoneos-version-min=*:						\
+    %:version-compare(< 3.1 miphoneos-version-min= -lbundle1.o)}	\
+   %{!miphoneos-version-min=*: -lbundle1.o }"
 /* APPLE LOCAL end link optimizations 6499452 */
 
 #define DARWIN_CRT1_SPEC						\
 /* APPLE LOCAL ARM 5823776 iphoneos should use crt1.o */		\
-  "%{miphoneos-version-min=*: -lcrt1.o}					\
+  "%{miphoneos-version-min=*:						\
+    %:version-compare(< 3.1 miphoneos-version-min= -lcrt1.o)		\
+    %:version-compare(>= 3.1 miphoneos-version-min= -lcrt1.3.1.o)}	\
    %{!miphoneos-version-min=*:						\
      %:version-compare(!> 10.5 mmacosx-version-min= -lcrt1.o)		\
      %:version-compare(>= 10.5 mmacosx-version-min= -lcrt1.10.5.o)}"
+/* APPLE LOCAL end link optimizations 6999417 */
 /* APPLE LOCAL end ARM 5683689 */
 
 /* APPLE LOCAL begin prefer -lSystem 6645902 */

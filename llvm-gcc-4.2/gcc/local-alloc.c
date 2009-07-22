@@ -380,7 +380,10 @@ local_alloc (void)
 
   /* APPLE LOCAL begin 5695218 */
   gcc_assert (!reg_inheritance_matrix);
-  if (PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM)
+  /* The max_regno check limits the size of the reg_inheritance_matrix
+     to avoid malloc failure.  10033^2 / 8 = 12MB.  */
+  if (PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM
+      && max_regno <= 10033)
     {
       reg_inheritance_matrix = sbitmap_vector_alloc (max_regno, max_regno);
       sbitmap_vector_zero (reg_inheritance_matrix, max_regno);
@@ -392,7 +395,7 @@ local_alloc (void)
   update_equiv_regs ();
 
   /* APPLE LOCAL begin 5695218 */
-  if (PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM)
+  if (reg_inheritance_matrix)
     {
       reg_inheritance ();
       sbitmap_vector_free (reg_inheritance_matrix);
@@ -893,7 +896,7 @@ update_equiv_regs (void)
 	  src = SET_SRC (set);
 
 	  /* APPLE LOCAL begin 5695218 */
-	  if (PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM)
+	  if (reg_inheritance_matrix)
 	    {
 	      int dstregno;
 		if (REG_P (dest))

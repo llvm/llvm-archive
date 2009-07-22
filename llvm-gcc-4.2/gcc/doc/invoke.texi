@@ -1430,8 +1430,8 @@ compilers as well as previous Apple versions of GCC.  It causes the
 @c APPLE LOCAL begin CW asm blocks
 @item -fasm-blocks
 Enable the use of blocks and entire functions of assembly code within
-a C or C++ file.  The syntax follows that used in CodeWarrior. (APPLE
-ONLY)
+a C or C++ file.  The syntax follows that used in CodeWarrior.  This
+option is not supported for ARM targets.  (APPLE ONLY)
 @c APPLE LOCAL end CW asm blocks
 
 @item -fno-asm
@@ -8511,10 +8511,14 @@ location @code{pc - 12} and the top 8 bits are set, then we know that
 there is a function name embedded immediately preceding this location
 and has length @code{((pc[-3]) & 0xff000000)}.
 
+@c APPLE LOCAL begin v7 thumb is default
 @item -mthumb
 @opindex mthumb
-Generate code for the 16-bit Thumb instruction set.  The default is to
-use the 32-bit ARM instruction set.
+Generate code for the 16-bit Thumb instruction set.  For ARMv7, the default
+is to use the THUMB2 instruction set. For all other architectures, the default
+is to use the 32-bit ARM instruction set. The ARM instruction set may be
+explicitly selected via @option{-mno-thumb} or @option{-marm}.
+@c APPLE LOCAL end v7 thumb is default
 
 @item -mtpcs-frame
 @opindex mtpcs-frame

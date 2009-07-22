@@ -49,15 +49,3 @@ int ix86_regparm;
 extern "C" bool contains_aligned_value_p (tree type) {
 abort();
 }
-
-extern "C" enum machine_mode ix86_getNaturalModeForType(tree type) {
-abort();
-}
-
-extern "C" int ix86_HowToPassArgument(...) {
-abort();
-}
-
-extern "C" int ix86_ClassifyArgument(...) {
-abort();
-}

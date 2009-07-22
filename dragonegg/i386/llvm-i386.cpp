@@ -615,9 +615,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
 /* These are defined in i386.c */
 #define MAX_CLASSES 4
-extern "C" enum machine_mode ix86_getNaturalModeForType(tree);
-extern "C" int ix86_HowToPassArgument(enum machine_mode, tree, int, int*, int*);
-extern "C" int ix86_ClassifyArgument(enum machine_mode, tree,
+extern "C" enum machine_mode type_natural_mode(tree, CUMULATIVE_ARGS *);
+extern "C" int examine_argument(enum machine_mode, const_tree, int, int*, int*);
+extern "C" int classify_argument(enum machine_mode, const_tree,
                                enum x86_64_reg_class classes[MAX_CLASSES], int);
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
@@ -626,8 +626,8 @@ extern "C" int ix86_ClassifyArgument(enum machine_mode, tree,
 static bool llvm_x86_64_should_pass_aggregate_in_memory(tree TreeType,
                                                         enum machine_mode Mode){
   int IntRegs, SSERegs;
-  /* If ix86_HowToPassArgument return 0, then it's passed byval in memory.*/
-  int ret = ix86_HowToPassArgument(Mode, TreeType, 0, &IntRegs, &SSERegs);
+  /* If examine_argument return 0, then it's passed byval in memory.*/
+  int ret = examine_argument(Mode, TreeType, 0, &IntRegs, &SSERegs);
   if (ret==0)
     return true;
   if (ret==1 && IntRegs==0 && SSERegs==0)   // zero-sized struct
@@ -716,7 +716,7 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
   if (llvm_x86_should_pass_aggregate_as_fca(TreeType, Ty))
     return false;
 
-  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  enum machine_mode Mode = type_natural_mode(TreeType, NULL);
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
 
@@ -820,11 +820,11 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     return false;
 
   enum x86_64_reg_class Class[MAX_CLASSES];
-  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  enum machine_mode Mode = type_natural_mode(TreeType, NULL);
   bool totallyEmpty = true;
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
-  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  int NumClasses = classify_argument(Mode, TreeType, Class, 0);
   if (!NumClasses)
     return false;
 
@@ -1065,8 +1065,8 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
 
   // Let gcc specific routine answer the question.
   enum x86_64_reg_class Class[MAX_CLASSES];
-  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
-  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  enum machine_mode Mode = type_natural_mode(TreeType, NULL);
+  int NumClasses = classify_argument(Mode, TreeType, Class, 0);
   if (NumClasses == 0)
     return false;
 
@@ -1108,8 +1108,8 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
     // This logic relies on llvm_suitable_multiple_ret_value_type to have
     // removed anything not expected here.
     enum x86_64_reg_class Class[MAX_CLASSES];
-    enum machine_mode Mode = ix86_getNaturalModeForType(type);
-    int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
+    enum machine_mode Mode = type_natural_mode(type, NULL);
+    int NumClasses = classify_argument(Mode, type, Class, 0);
     if (NumClasses == 0)
       return Type::Int64Ty;
 
@@ -1177,10 +1177,10 @@ void
 llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
                                             std::vector<const Type*> &Elts){
   enum x86_64_reg_class Class[MAX_CLASSES];
-  enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
+  enum machine_mode Mode = type_natural_mode(TreeType, NULL);
   HOST_WIDE_INT Bytes =
     (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
-  int NumClasses = ix86_ClassifyArgument(Mode, TreeType, Class, 0);
+  int NumClasses = classify_argument(Mode, TreeType, Class, 0);
   if (!NumClasses)
      assert(0 && "This type does not need multiple return registers!");
 
@@ -1466,8 +1466,8 @@ bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
   *size = 0;
   if (TARGET_64BIT) {
     enum x86_64_reg_class Class[MAX_CLASSES];
-    enum machine_mode Mode = ix86_getNaturalModeForType(type);
-    int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
+    enum machine_mode Mode = type_natural_mode(type, NULL);
+    int NumClasses = classify_argument(Mode, type, Class, 0);
     *DontCheckAlignment= true;
     if (NumClasses == 1 && (Class[0] == X86_64_INTEGER_CLASS ||
                             Class[0] == X86_64_INTEGERSI_CLASS)) {

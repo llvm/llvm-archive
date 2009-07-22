@@ -27,9 +27,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_DEBUG_H
 #define LLVM_DEBUG_H
 
+// LLVM headers
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
 
+// System headers
 #include <string>
 #include <map>
 #include <vector>

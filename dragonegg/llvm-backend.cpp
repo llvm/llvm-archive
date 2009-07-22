@@ -53,14 +53,14 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 // System headers
 #include <cassert>
+#include <gmp.h>
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
 
-#include "config.h"
 extern "C" {
+#include "config.h"
 #include "system.h"
-}
 #include "coretypes.h"
 #include "target.h"
 #include "tree.h"
@@ -70,9 +70,7 @@ extern "C" {
 #include "flags.h"
 #include "function.h"
 #include "gcc-plugin.h"
-extern "C" {
 #include "intl.h"
-}
 #include "langhooks.h"
 #include "output.h"
 #include "params.h"
@@ -82,6 +80,7 @@ extern "C" {
 #include "tree-inline.h"
 #include "tree-flow.h"
 #include "tree-pass.h"
+}
 
 // Plugin headers
 #include "llvm-internal.h"

@@ -44,15 +44,15 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/DenseMap.h"
 
 // System headers
+#include <gmp.h>
 #include <iostream>
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
 
-#include "config.h"
 extern "C" {
+#include "config.h"
 #include "system.h"
-}
 #include "coretypes.h"
 #include "target.h"
 #include "tree.h"
@@ -72,7 +72,7 @@ extern "C" {
 #include "libfuncs.h"
 #include "tree-flow.h"
 #include "rtl.h"
-extern "C" {
+
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 }

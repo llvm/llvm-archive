@@ -27,10 +27,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_INTERNAL_H
 #define LLVM_INTERNAL_H
 
-#include <vector>
-#include <cassert>
-#include <map>
-#include <string>
+// LLVM headers
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -40,6 +37,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/TargetFolder.h"
+
+// System headers
+#include <vector>
+#include <cassert>
+#include <map>
+#include <string>
 
 namespace llvm {
   class Module;

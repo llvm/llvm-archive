@@ -35,10 +35,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "target.h"
 #include "tree.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
 struct GTY(()) tree_llvm_map {
   struct tree_map_base base;
   const void *val;
@@ -52,9 +48,5 @@ extern const void *llvm_get_cached (union tree_node *);
 extern const void *llvm_set_cached (union tree_node *, const void *);
 
 extern void llvm_init_cache (void);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
 
 #endif /* LLVM_CACHE_H */

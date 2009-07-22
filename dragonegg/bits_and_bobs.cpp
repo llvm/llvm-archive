@@ -2,16 +2,19 @@
 #include "llvm/Constant.h"
 #include "llvm/Value.h"
 
+// System headers
+#include <gmp.h>
+
 // GCC headers
 #undef VISIBILITY_HIDDEN
 
-#include "config.h"
 extern "C" {
+#include "config.h"
 #include "system.h"
-}
 #include "coretypes.h"
 #include "target.h"
 #include "tree.h"
+}
 
 using namespace llvm;
 

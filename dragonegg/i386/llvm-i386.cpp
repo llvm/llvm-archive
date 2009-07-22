@@ -30,17 +30,20 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 
+// System headers
+#include <gmp.h>
+
 // GCC headers
 #undef VISIBILITY_HIDDEN
 
-#include "config.h"
 extern "C" {
+#include "config.h"
 #include "system.h"
-}
 #include "coretypes.h"
 #include "target.h"
 #include "toplev.h"
 #include "tree.h"
+}
 
 // Plugin headers
 #include "llvm-abi.h"

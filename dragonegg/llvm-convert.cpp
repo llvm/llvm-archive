@@ -71,6 +71,7 @@ extern "C" {
 #include "except.h"
 #include "libfuncs.h"
 #include "tree-flow.h"
+#include "tree-pass.h"
 #include "rtl.h"
 
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
@@ -765,9 +766,8 @@ Function *TreeToLLVM::EmitFunction() {
       case GIMPLE_PREDICT:
       case GIMPLE_RESX:
       default:
-        print_gimple_stmt(stderr, stmt, 4, 0);
-        llvm_report_error("Unhandled GIMPLE statement during LLVM emission!\n"
-          "gimple_code: " + gimple_code(stmt));
+        print_gimple_stmt(stderr, stmt, 0, TDF_RAW);
+        llvm_report_error("Unhandled GIMPLE statement during LLVM emission!");
         break;
       }
     }

@@ -71,10 +71,14 @@ const Type *llvm_set_type(tree Tr, const Type *Ty) {
   return (const Type *)llvm_set_cached(Tr, Ty);
 }
 
+#define SET_TYPE_LLVM(NODE, TYPE) llvm_set_type(NODE, TYPE)
+
 const Type *llvm_get_type(tree Tr) {
   assert(TYPE_P(Tr) && "Expected a gcc type!");
   return (const Type *)llvm_get_cached(Tr);
 }
+
+#define GET_TYPE_LLVM(NODE) llvm_get_type(NODE)
 
 //
 //TODO// LTypes is a vector of LLVM types. GCC tree nodes keep track of LLVM types 

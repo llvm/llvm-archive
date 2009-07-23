@@ -7370,6 +7370,9 @@ void ConstantLayoutInfo::ConvertToPacked() {
       PadTy = Context.getArrayType(PadTy, AlignedEltOffs-EltOffs);
     ResultElts.insert(ResultElts.begin()+i, 
                       Context.getNullValue(PadTy));
+    
+    // The padding is now element "i" and just bumped us up to "AlignedEltOffs".
+    EltOffs = AlignedEltOffs;
     ++e;  // One extra element to scan.
   }
 

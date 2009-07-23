@@ -575,7 +575,7 @@ DIType DebugInfo::createStructType(tree type) {
   // recursive) and replace all  uses of the forward declaration with the 
   // final definition. 
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
-  llvm::DIType FwdDecl =
+  llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
                                      GetNodeName(type),
@@ -684,7 +684,7 @@ DIType DebugInfo::createStructType(tree type) {
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   
-  llvm::DIType RealDecl =
+  llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, findRegion(type),
                                      GetNodeName(type),
                                      getOrCreateCompileUnit(Loc.file),
@@ -695,8 +695,7 @@ DIType DebugInfo::createStructType(tree type) {
   
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
-  FwdDecl.getGV()->eraseFromParent();
+  FwdDecl.replaceAllUsesWith(RealDecl);
   return RealDecl;
 }
 

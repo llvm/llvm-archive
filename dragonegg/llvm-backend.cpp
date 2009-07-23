@@ -1480,10 +1480,10 @@ bool ValidateRegisterVariable(tree decl) {
     if (TREE_THIS_VOLATILE(decl))
       warning(0, "volatile register variables don%'t work as you might wish");
     
-    SET_DECL_LLVM(decl, Context.getConstantIntFalse());
+    SET_DECL_LLVM(decl, Context.getFalse());
     return false;  // Everything ok.
   }
-  SET_DECL_LLVM(decl, Context.getConstantIntTrue());
+  SET_DECL_LLVM(decl, Context.getTrue());
   return true;
 }
 

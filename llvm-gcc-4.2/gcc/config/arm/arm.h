@@ -1127,8 +1127,14 @@ extern int arm_structure_size_boundary;
 #define MODES_TIEABLE_P(MODE1, MODE2)  \
   (GET_MODE_CLASS (MODE1) == GET_MODE_CLASS (MODE2))
 
+/* APPLE LOCAL begin 7083296 Build without warnings.  */
+/* The VALID_IWMMXT_REG_MODE macro is used in vec-common.md as a predicate so
+   that it is referenced from the generated insn-opinit.c file, which does
+   not include arm-protos.h.  Define a separate function to avoid warnings.  */
 #define VALID_IWMMXT_REG_MODE(MODE) \
- (arm_vector_mode_supported_p (MODE) || (MODE) == DImode)
+  (valid_iwmmxt_reg_mode (MODE))
+extern int valid_iwmmxt_reg_mode (int);
+/* APPLE LOCAL end 7083296 Build without warnings.  */
 
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
 /* Modes valid for Neon D registers.  */

@@ -18,9 +18,5 @@ int main()
 {
 	return (long) @protocol(PROTO); + (long) @protocol(PROTO1);
 }
-/* { dg-final { if [istarget i?86-*-darwin* ] { scan-assembler "L_ZL23_OBJC_PROTOCOL_\\\$_PROTO1:" } } } */
-/* { dg-final { if [istarget powerpc*-*-darwin* ] { scan-assembler "L_ZL23_OBJC_PROTOCOL_\\\$_PROTO1:" } } } */
-/* { dg-final { if [istarget arm*-*-darwin* ] { scan-assembler "l_OBJC_PROTOCOL_\\\$_PROTO1:" } } } */
-/* { dg-final { if [istarget i?86-*-darwin* ] { scan-assembler "L_ZL23_OBJC_PROTOCOL_\\\$_PROTO2:" } } } */
-/* { dg-final { if [istarget powerpc*-*-darwin* ] { scan-assembler "L_ZL23_OBJC_PROTOCOL_\\\$_PROTO2:" } } } */
-/* { dg-final { if [istarget arm*-*-darwin* ] { scan-assembler "l_OBJC_PROTOCOL_\\\$_PROTO2:" } } } */
+/* { dg-final { scan-assembler "l_OBJC_PROTOCOL_\\\$_PROTO1:" } } */
+/* { dg-final { scan-assembler "l_OBJC_PROTOCOL_\\\$_PROTO2:" } } */

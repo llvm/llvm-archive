@@ -9390,7 +9390,8 @@ arm_adjust_insn_length (rtx insn, int *length)
 
   /* APPLE LOCAL end v7 support. Merge from mainline */
   if (GET_CODE (body) == UNSPEC_VOLATILE
-      && (int) XEXP (body, 1) == VUNSPEC_POOL_STRING)
+      /* APPLE LOCAL 7083296 Build without warnings.  */
+      && XINT (body, 1) == VUNSPEC_POOL_STRING)
     {
       int len = TREE_STRING_LENGTH (SYMBOL_REF_DECL 
 		    (XVECEXP (body, 0, 0)));
@@ -9420,7 +9421,8 @@ arm_adjust_insn_length (rtx insn, int *length)
       /* APPLE LOCAL 6279481 */
       && !TARGET_32BIT
       && GET_CODE (body) == UNSPEC_VOLATILE
-      && (int) XEXP (body, 1) == VUNSPEC_EPILOGUE)
+      /* APPLE LOCAL 7083296 Build without warnings.  */
+      && XINT (body, 1) == VUNSPEC_EPILOGUE)
     {
       *length = handle_thumb_unexpanded_epilogue (false);
     }
@@ -16596,6 +16598,17 @@ valid_neon_mode (enum machine_mode mode)
   return VALID_NEON_DREG_MODE (mode) || VALID_NEON_QREG_MODE (mode);
 }
 
+/* APPLE LOCAL begin 7083296 Build without warnings.  */
+static tree
+make_neon_float_type (void)
+{
+  tree neon_float_type_node = make_node (REAL_TYPE);
+  TYPE_PRECISION (neon_float_type_node) = FLOAT_TYPE_SIZE;
+  layout_type (neon_float_type_node);
+  return neon_float_type_node;
+}
+/* APPLE LOCAL end 7083296 Build without warnings.  */
+
 static void
 arm_init_neon_builtins (void)
 {
@@ -16663,29 +16676,10 @@ arm_init_neon_builtins (void)
   tree neon_polyHI_type_node = make_signed_type (GET_MODE_PRECISION (HImode));
   tree neon_intSI_type_node = make_signed_type (GET_MODE_PRECISION (SImode));
   tree neon_intDI_type_node = make_signed_type (GET_MODE_PRECISION (DImode));
-  tree neon_float_type_node = make_node (REAL_TYPE);
-  TYPE_PRECISION (neon_float_type_node) = FLOAT_TYPE_SIZE;
-  layout_type (neon_float_type_node);
+  /* APPLE LOCAL begin 7083296 Build without warnings.  */
+  tree neon_float_type_node = make_neon_float_type ();
   
-  /* Define typedefs which exactly correspond to the modes we are basing vector
-     types on.  If you change these names you'll need to change
-     the table used by arm_mangle_vector_type too.  */
-  (*lang_hooks.types.register_builtin_type) (neon_intQI_type_node,
-					     "__builtin_neon_qi");
-  (*lang_hooks.types.register_builtin_type) (neon_intHI_type_node,
-					     "__builtin_neon_hi");
-  (*lang_hooks.types.register_builtin_type) (neon_intSI_type_node,
-					     "__builtin_neon_si");
-  (*lang_hooks.types.register_builtin_type) (neon_float_type_node,
-					     "__builtin_neon_sf");
-  (*lang_hooks.types.register_builtin_type) (neon_intDI_type_node,
-					     "__builtin_neon_di");
-
-  (*lang_hooks.types.register_builtin_type) (neon_polyQI_type_node,
-					     "__builtin_neon_poly8");
-  (*lang_hooks.types.register_builtin_type) (neon_polyHI_type_node,
-					     "__builtin_neon_poly16");
-
+  /* APPLE LOCAL end 7083296 Build without warnings.  */
   tree intQI_pointer_node = build_pointer_type (neon_intQI_type_node);
   tree intHI_pointer_node = build_pointer_type (neon_intHI_type_node);
   tree intSI_pointer_node = build_pointer_type (neon_intSI_type_node);
@@ -16738,31 +16732,11 @@ arm_init_neon_builtins (void)
   tree intUSI_type_node = make_unsigned_type (GET_MODE_PRECISION (SImode));
   tree intUDI_type_node = make_unsigned_type (GET_MODE_PRECISION (DImode));
 
-  (*lang_hooks.types.register_builtin_type) (intUQI_type_node,
-					     "__builtin_neon_uqi");
-  (*lang_hooks.types.register_builtin_type) (intUHI_type_node,
-					     "__builtin_neon_uhi");
-  (*lang_hooks.types.register_builtin_type) (intUSI_type_node,
-					     "__builtin_neon_usi");
-  (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
-					     "__builtin_neon_udi");
-
   /* Opaque integer types for structures of vectors.  */
   tree intEI_type_node = make_signed_type (GET_MODE_PRECISION (EImode));
   tree intOI_type_node = make_signed_type (GET_MODE_PRECISION (OImode));
   tree intCI_type_node = make_signed_type (GET_MODE_PRECISION (CImode));
   tree intXI_type_node = make_signed_type (GET_MODE_PRECISION (XImode));
-
-  (*lang_hooks.types.register_builtin_type) (intTI_type_node,
-					     "__builtin_neon_ti");
-  (*lang_hooks.types.register_builtin_type) (intEI_type_node,
-					     "__builtin_neon_ei");
-  (*lang_hooks.types.register_builtin_type) (intOI_type_node,
-					     "__builtin_neon_oi");
-  (*lang_hooks.types.register_builtin_type) (intCI_type_node,
-					     "__builtin_neon_ci");
-  (*lang_hooks.types.register_builtin_type) (intXI_type_node,
-					     "__builtin_neon_xi");
 
   /* Pointers to vector types.  */
   tree V8QI_pointer_node = build_pointer_type (V8QI_type_node);
@@ -17463,6 +17437,47 @@ arm_init_neon_builtins (void)
   tree reinterp_ftype_dreg[5][5];
   tree reinterp_ftype_qreg[5][5];
   tree dreg_types[5], qreg_types[5];
+
+  /* APPLE LOCAL begin 7083296 Build without warnings.  */
+  /* Define typedefs which exactly correspond to the modes we are basing vector
+     types on.  If you change these names you'll need to change
+     the table used by arm_mangle_vector_type too.  */
+  (*lang_hooks.types.register_builtin_type) (neon_intQI_type_node,
+					     "__builtin_neon_qi");
+  (*lang_hooks.types.register_builtin_type) (neon_intHI_type_node,
+					     "__builtin_neon_hi");
+  (*lang_hooks.types.register_builtin_type) (neon_intSI_type_node,
+					     "__builtin_neon_si");
+  (*lang_hooks.types.register_builtin_type) (neon_float_type_node,
+					     "__builtin_neon_sf");
+  (*lang_hooks.types.register_builtin_type) (neon_intDI_type_node,
+					     "__builtin_neon_di");
+
+  (*lang_hooks.types.register_builtin_type) (neon_polyQI_type_node,
+					     "__builtin_neon_poly8");
+  (*lang_hooks.types.register_builtin_type) (neon_polyHI_type_node,
+					     "__builtin_neon_poly16");
+
+  (*lang_hooks.types.register_builtin_type) (intUQI_type_node,
+					     "__builtin_neon_uqi");
+  (*lang_hooks.types.register_builtin_type) (intUHI_type_node,
+					     "__builtin_neon_uhi");
+  (*lang_hooks.types.register_builtin_type) (intUSI_type_node,
+					     "__builtin_neon_usi");
+  (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
+					     "__builtin_neon_udi");
+
+  (*lang_hooks.types.register_builtin_type) (intTI_type_node,
+					     "__builtin_neon_ti");
+  (*lang_hooks.types.register_builtin_type) (intEI_type_node,
+					     "__builtin_neon_ei");
+  (*lang_hooks.types.register_builtin_type) (intOI_type_node,
+					     "__builtin_neon_oi");
+  (*lang_hooks.types.register_builtin_type) (intCI_type_node,
+					     "__builtin_neon_ci");
+  (*lang_hooks.types.register_builtin_type) (intXI_type_node,
+					     "__builtin_neon_xi");
+  /* APPLE LOCAL end 7083296 Build without warnings.  */
 
   dreg_types[0] = V8QI_type_node;
   dreg_types[1] = V4HI_type_node;
@@ -19189,6 +19204,9 @@ neon_builtin_compare (const void *a, const void *b)
 /* LLVM LOCAL begin
    Added neon_code argument below and made the function
    non-static.  This is needed when translating Neon builtins to LLVM.  */
+extern enum insn_code
+locate_neon_builtin_icode (int, neon_itype *, enum neon_builtins *);
+
 enum insn_code
 locate_neon_builtin_icode (int fcode, neon_itype *itype,
                            enum neon_builtins *neon_code)
@@ -22573,6 +22591,18 @@ arm_vector_mode_supported_p (enum machine_mode mode)
   return false;
 }
 
+/* APPLE LOCAL begin 7083296 Build without warnings.  */
+/* Define a separate function to avoid build warnings about missing a
+   prototype for arm_vector_mode_supported_p.  The MODE argument is an int
+   because arm.h is used in contexts where "enum machine_mode" is not
+   defined.  The return type is "int" instead of "bool" for the same reason. */
+int
+valid_iwmmxt_reg_mode (int mode)
+{
+  return (arm_vector_mode_supported_p (mode) || mode == DImode);
+}
+/* APPLE LOCAL end 7083296 Build without warnings.  */
+
 /* Implement TARGET_SHIFT_TRUNCATION_MASK.  SImode shifts use normal
    ARM insns and therefore guarantee that the shift count is modulo 256.
    DImode shifts (those implemented by lib1funcs.asm or by optabs.c)
@@ -23235,9 +23265,11 @@ int arm_label_align (rtx label)
       && GET_CODE (insn) == INSN
       && GET_CODE (PATTERN (insn)) == UNSPEC_VOLATILE)
     {
-      if ((int) XEXP (PATTERN (insn), 1) == VUNSPEC_ALIGN)
+      /* APPLE LOCAL 7083296 Build without warnings.  */
+      if (XINT (PATTERN (insn), 1) == VUNSPEC_ALIGN)
 	return 2;
-      if ((int) XEXP (PATTERN (insn), 1) == VUNSPEC_ALIGN8)
+      /* APPLE LOCAL 7083296 Build without warnings.  */
+      if (XINT (PATTERN (insn), 1) == VUNSPEC_ALIGN8)
 	return 3;
     }
   return align_labels_log;

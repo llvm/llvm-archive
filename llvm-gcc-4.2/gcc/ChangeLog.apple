@@ -1,3 +1,13 @@
+2009-07-24  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 7088565
+	* config/arm/t-darwin (MULTILIB_OPTIONS): Separate options with
+	slashes instead of spaces so that they are mutually exclusive.
+	(MULTILIB_EXCEPTIONS): Stop using gen-darwin-multilib-exceptions.sh.
+	(MULTILIB_MATCHES): Recognize equivalent -march and -mcpu options.
+	* config/arm/gen-darwin-multilib-exceptions.sh: Delete.
+	* config.gcc: Remove duplicate for arm/t-darwin.
+	
 2009-07-09  Jim Grosbach <grosbach@apple.com>
 
 	Radar 6999417

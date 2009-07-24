@@ -130,29 +130,33 @@ ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
 ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
 ARM_EXTRA_SDK=/Developer/SDKs/Extra
 
-# Check if the build system is running Leopard or earlier.  If the Legacy PDK
-# is not installed, the toolchain in / will not support ARM.  Use the iPhone
-# platform directory instead.
-if [ $DARWIN_VERS -le 9 -a ! -d $ARM_EXTRA_SDK ]; then
-  ARM_TOOLROOT=$ARM_PLATFORM
+# If the Phone platform is available, use the ARM tools there, else try /
+if [ -d $ARM_PLATFORM ]; then
+  ARM_TOOLROOT=$ARM_PLATFORM/Developer
 else
   ARM_TOOLROOT=/
 fi
 
-# ARM may require a sysroot option.  Check if libSystem has an ARM slice
-# as an indication of whether the files in / support ARM.
-if lipo -info /usr/lib/libSystem.dylib | grep armv7; then
-  ARM_SYSROOT=/
-else
-  if [ -d $ARM_EXTRA_SDK ]; then
-    ARM_SYSROOT=$ARM_EXTRA_SDK
-  else
-    ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
-  fi
+# Likewise, In order of preference, look for ARM sysroot bits at:
+#   1. $ARM_SDK_EXTRA
+#   2. Phone SDK ($ARM_PLATFORM/Developers/SDKs/$ARM_IPHONE_SDK)
+#   3. /
+if [ -d $ARM_EXTRA_SDK ]; then
+  ARM_SYSROOT=$ARM_EXTRA_SDK
   ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
+else
+  if [ -d $ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK ]; then
+    ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
+    ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
+  else
+    ARM_SYSROOT=/
+    ARM_CONFIG_FLAGS=
+  fi
 fi
 
-# If building an ARM target, check that the required directories exist.
+# If building an ARM target, check that the required directories exist
+# and query the libSystem arm slices to determine which multilibs we should
+# build.
 if echo $TARGETS | grep arm; then
   if [ ! -d $ARM_SYSROOT ]; then
     echo "Error: cannot find ARM SDK to build ARM target"
@@ -162,14 +166,25 @@ if echo $TARGETS | grep arm; then
     echo "Error: $ARM_TOOLROOT directory is not installed"
     exit 1
   fi
+  if [ "x$ARM_MULTILIB_ARCHS" = "x" ] ; then
+    ARM_MULTILIB_ARCHS=`/usr/bin/lipo -info $ARM_SYSROOT/usr/lib/libSystem.dylib | cut -d':' -f 3 | sed -e 's/^ //' -e 's/ $//'`
+  fi;
+  if [ "x$ARM_MULTILIB_ARCHS" == "x" ] ; then
+    echo "Error: missing ARM slices in $ARM_SYSROOT"
+    exit 1
+  else
+    export ARM_MULTILIB_ARCHS
+  fi
 fi
 # APPLE LOCAL end ARM
 
+# LLVM LOCAL begin
 # If we can find an LLVM-GCC, prefer it.
 export CC=/Developer/usr/bin/llvm-gcc
 if [ ! -x $CC ] ; then unset CC ; fi
 export CXX=/Developer/usr/bin/llvm-g++
 if [ ! -x $CXX ] ; then unset CXX ; fi
+# LLVM LOCAL end
 
 ########################################
 # Run the build.
@@ -332,9 +347,8 @@ for t in $CROSS_TARGETS ; do
    cd $DIR/obj-$BUILD-$t || exit 1
    if [ \! -f Makefile ]; then
     # APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-    # APPLE LOCAL don't use --enable-werror for ARM builds
-    $SRC_DIR/configure `echo $CONFIGFLAGS | sed -e "s/--enable-werror//"`  \
-     `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
+    $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
+      `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
       --program-prefix=$t-apple-darwin$DARWIN_VERS- \
       --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
     # APPLE LOCAL end ARM ARM_CONFIGFLAGS
@@ -379,13 +393,20 @@ for h in $HOSTS ; do
 
       if [ \! -f Makefile ]; then
 	# APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-        # APPLE LOCAL don't use --enable-werror for ARM builds
-        $SRC_DIR/configure `echo $CONFIGFLAGS | sed -e "s/--enable-werror//"`  \
+        $SRC_DIR/configure $CONFIGFLAGS \
 	  `if [ $t = 'arm' ] && [ $h != 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
           --program-prefix=$pp \
           --host=$h-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
 	# APPLE LOCAL end ARM ARM_CONFIGFLAGS
       fi
+
+      # For ARM, we need to make sure it picks up the ARM_TOOLROOT versions
+      # of the linker and cctools.
+      if [ $t = 'arm' ] ; then
+        ORIG_COMPILER_PATH=$COMPILER_PATH
+        export COMPILER_PATH=$ARM_TOOLROOT/usr/bin:$COMPILER_PATH
+      fi
+
       if [ $h = $t ] ; then
 	  make $MAKEFLAGS all CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 	  make $MAKEFLAGS DESTDIR=$DIR/dst-$h-$t install-gcc install-target \
@@ -394,6 +415,11 @@ for h in $HOSTS ; do
 	  make $MAKEFLAGS all-gcc CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 	  make $MAKEFLAGS DESTDIR=$DIR/dst-$h-$t install-gcc \
 	      CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+      fi
+
+      if [ $t = 'arm' ] ; then
+        export COMPILER_PATH=$ORIG_COMPILER_PATH
+        unset ORIG_COMPILER_PATH
       fi
     done
   fi

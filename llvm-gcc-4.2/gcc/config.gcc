@@ -821,7 +821,7 @@ arm*-*-elf | ep9312-*-elf)
 arm*-*-darwin*)
 	extra_options="${extra_options} arm/darwin.opt"
         tm_file="${tm_file} arm/darwin.h"
-        tmake_file="${tmake_file} arm/t-darwin arm/t-slibgcc-iphoneos"
+        tmake_file="${tmake_file} arm/t-slibgcc-iphoneos"
 	extra_headers="arm_neon.h"
         ;;
 # APPLE LOCAL end ARM darwin target

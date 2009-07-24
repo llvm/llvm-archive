@@ -793,18 +793,18 @@ void llvm_asm_file_start(void) {
 /// initializer suitable for the llvm.global_[cd]tors globals.
 static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                                 const char *Name) {
-  LLVMContext &Context = getGlobalContext();
-  
   std::vector<Constant*> InitList;
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
+  
+  LLVMContext &Context = getGlobalContext();
   
   const Type *FPTy =
     Context.getFunctionType(Type::VoidTy, std::vector<const Type*>(), false);
   FPTy = Context.getPointerTypeUnqual(FPTy);
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = Context.getConstantInt(Type::Int32Ty, Tors[i].second);
+    StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
     
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
@@ -1118,8 +1118,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
     return;
   
   // Get file and line number
-  Constant *lineNo =
-    Context.getConstantInt(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
   const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
   file = TheFolder->CreateBitCast(file, SBP);

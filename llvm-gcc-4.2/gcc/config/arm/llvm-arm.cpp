@@ -142,14 +142,14 @@ static Value *BuildDup(const Type *ResultType, Value *Val,
   Value *Undef = Context.getUndef(ResultType);
   Value *Result =
     Builder.CreateInsertElement(Undef, Val,
-                                Context.getConstantInt(Type::Int32Ty, 0));
+                                ConstantInt::get(Type::Int32Ty, 0));
 
   // Use a shuffle to move the value into the other lanes.
   unsigned NUnits = VTy->getNumElements();
   if (NUnits > 1) {
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 0));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
     Result = Builder.CreateShuffleVector(Result, Undef,
                                          Context.getConstantVector(Idxs));
   }
@@ -164,7 +164,7 @@ static Value *BuildDupLane(Value *Vec, unsigned LaneVal, unsigned NUnits,
   std::vector<Constant*> Idxs;
   LLVMContext &Context = getGlobalContext();
   for (unsigned i = 0; i != NUnits; ++i)
-    Idxs.push_back(Context.getConstantInt(Type::Int32Ty, LaneVal));
+    Idxs.push_back(ConstantInt::get(Type::Int32Ty, LaneVal));
   return Builder.CreateShuffleVector(Vec, Context.getUndef(Vec->getType()),
                                      Context.getConstantVector(Idxs));
 }
@@ -213,7 +213,7 @@ static bool BuildShiftCountVector(Value *&Op, enum machine_mode Mode,
 
   // Right shifts are represented in NEON intrinsics by a negative shift count.
   LLVMContext &Context = getGlobalContext();
-  Cnt = Context.getConstantInt(Context.getIntegerType(ElemBits),
+  Cnt = ConstantInt::get(Context.getIntegerType(ElemBits),
                                NegateRightShift ? -CntVal : CntVal);
   Op = BuildConstantSplatVector(GET_MODE_NUNITS(Mode), Cnt);
   return true;
@@ -1712,7 +1712,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[0].mode);
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, i));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
                                          Context.getConstantVector(Idxs));
     break;
@@ -1724,7 +1724,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     std::vector<Constant*> Idxs;
     unsigned Idx = (neon_code == NEON_BUILTIN_vget_low ? 0 : NUnits);
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, Idx++));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, Idx++));
     Result = Builder.CreateShuffleVector(Ops[0],
                                          Context.getUndef(Ops[0]->getType()),
                                          Context.getConstantVector(Idxs));
@@ -1788,7 +1788,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     // Translate to a vector shuffle.
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, i + ImmVal));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + ImmVal));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
                                          Context.getConstantVector(Idxs));
     break;
@@ -1814,7 +1814,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = VTy->getNumElements();
     for (unsigned c = ChunkElts; c <= NUnits; c += ChunkElts) {
       for (unsigned i = 0; i != ChunkElts; ++i) {
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, c - i - 1));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, c - i - 1));
       }
     }
     Result = Builder.CreateShuffleVector(Ops[0], Context.getUndef(ResultType),
@@ -1906,8 +1906,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
     for (unsigned EvenOdd = 0; EvenOdd != 2; ++EvenOdd) {
       for (unsigned i = 0; i < NUnits; i += 2) {
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, i + EvenOdd));
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty,
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + EvenOdd));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty,
                                               i + NUnits + EvenOdd));
       }
     }
@@ -1924,8 +1924,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     std::vector<Constant*> Idxs;
     unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
     for (unsigned i = 0; i != NUnits; ++i) {
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, i));
-      Idxs.push_back(Context.getConstantInt(Type::Int32Ty, i + NUnits));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + NUnits));
     }
     Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
                                          Context.getConstantVector(Idxs));
@@ -1941,7 +1941,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
     for (unsigned EvenOdd = 0; EvenOdd != 2; ++EvenOdd) {
       for (unsigned i = 0; i != NUnits; ++i)
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2 * i + EvenOdd));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2 * i + EvenOdd));
     }
     Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
                                          Context.getConstantVector(Idxs));
@@ -1987,7 +1987,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
     Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
-                                 Context.getConstantInt(Type::Int32Ty, N));
+                                 ConstantInt::get(Type::Int32Ty, N));
     Result = BitCastToType(Result, ResultType);
     break;
   }
@@ -2012,9 +2012,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = BitCastToType(Ops[1], VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], Context.getConstantInt(Type::Int32Ty, n));
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
       Value *Elt = Builder.CreateLoad(Addr);
-      Value *Ndx = Context.getConstantInt(Type::Int32Ty,
+      Value *Ndx = ConstantInt::get(Type::Int32Ty,
                                           LaneVal + (n * NUnits));
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
@@ -2040,10 +2040,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Context.getUndef(VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], Context.getConstantInt(Type::Int32Ty, n));
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
       Value *Elt = Builder.CreateLoad(Addr);
       // Insert the value into one lane of the result.
-      Value *Ndx = Context.getConstantInt(Type::Int32Ty, n * NUnits);
+      Value *Ndx = ConstantInt::get(Type::Int32Ty, n * NUnits);
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
     // Use a shuffle to move the value into the other lanes of the vector.
@@ -2051,7 +2051,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       std::vector<Constant*> Idxs;
       for (unsigned n = 0; n != NumVecs; ++n) {
         for (unsigned i = 0; i != NUnits; ++i)
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, n * NUnits));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, n * NUnits));
       }
       Result = Builder.CreateShuffleVector(Result, Context.getUndef(VTy),
                                            Context.getConstantVector(Idxs));
@@ -2084,7 +2084,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
     Value *Vec = BitCastToType(Ops[1], VTy);
     Builder.CreateCall3(intFn, BitCastToType(Ops[0], VPTy), Vec,
-                        Context.getConstantInt(Type::Int32Ty, N));
+                        ConstantInt::get(Type::Int32Ty, N));
     Result = 0;
     break;
   }
@@ -2109,8 +2109,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Vec = BitCastToType(Ops[1], VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], Context.getConstantInt(Type::Int32Ty, n));
-      Value *Ndx = Context.getConstantInt(Type::Int32Ty,
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
+      Value *Ndx = ConstantInt::get(Type::Int32Ty,
                                           LaneVal + (n * NUnits));
       Builder.CreateStore(Builder.CreateExtractElement(Vec, Ndx), Addr);
     }

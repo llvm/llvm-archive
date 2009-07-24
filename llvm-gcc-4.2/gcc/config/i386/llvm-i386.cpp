@@ -273,7 +273,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 1);
     return true;
   case IX86_BUILTIN_MOVQ: {
-    Value *Zero = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *Zero = ConstantInt::get(Type::Int32Ty, 0);
     Result = BuildVector(Zero, Zero, Zero, Zero, NULL);
     Result = BuildVectorShuffle(Result, Ops[0], 4, 5, 2, 3);
     return true;
@@ -282,9 +282,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     PointerType *i64Ptr = Context.getPointerTypeUnqual(Type::Int64Ty);
     Ops[0] = Builder.CreateBitCast(Ops[0], i64Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
-    Value *Zero = Context.getConstantInt(Type::Int64Ty, 0);
+    Value *Zero = ConstantInt::get(Type::Int64Ty, 0);
     Result = BuildVector(Zero, Zero, NULL);
-    Value *Idx = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
     Result = Builder.CreateInsertElement(Result, Ops[0], Idx, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;
@@ -383,7 +383,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
     PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
-    Value *Idx = Context.getConstantInt(Type::Int32Ty, 1);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
     Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "tmp");
     Result = Builder.CreateStore(Ops[1], Ops[0]);
@@ -393,7 +393,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     VectorType *v2f64 = Context.getVectorType(Type::DoubleTy, 2);
     PointerType *f64Ptr = Context.getPointerTypeUnqual(Type::DoubleTy);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
-    Value *Idx = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
     Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "tmp");
     Result = Builder.CreateStore(Ops[1], Ops[0]);
@@ -479,7 +479,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNGEPS: PredCode = 6; flip = true; break;
     case IX86_BUILTIN_CMPORDPS: PredCode = 7; break;
     }
-    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
+    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
@@ -512,7 +512,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNLESS:   PredCode = 6; break;
     case IX86_BUILTIN_CMPORDSS:   PredCode = 7; break;
     }
-    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
+    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
     Result = Builder.CreateCall(cmpss, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -549,7 +549,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNGEPD:   PredCode = 6; flip = true; break;
     case IX86_BUILTIN_CMPORDPD:   PredCode = 7; break;
     }
-    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
+    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
@@ -581,7 +581,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case IX86_BUILTIN_CMPNLESD:   PredCode = 6; break;
     case IX86_BUILTIN_CMPORDSD:   PredCode = 7; break;
     }
-    Value *Pred = Context.getConstantInt(Type::Int8Ty, PredCode);
+    Value *Pred = ConstantInt::get(Type::Int8Ty, PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
     Result = Builder.CreateCall(cmpsd, CallOps, CallOps+3, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -1337,12 +1337,12 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
   Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
   const StructType *STy = cast<StructType>(Src->getType());
   llvm::Value *Idxs[3];
-  Idxs[0] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
-  Idxs[1] = Context.getConstantInt(llvm::Type::Int32Ty, DestFieldNo);
-  Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, DestElemNo);
+  Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+  Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DestFieldNo);
+  Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, DestElemNo);
   Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
   if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
-    Value *ElemIndex = Context.getConstantInt(Type::Int32Ty, SrcElemNo);
+    Value *ElemIndex = ConstantInt::get(Type::Int32Ty, SrcElemNo);
     Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");
     Builder.CreateStore(EVIElem, GEP, isVolatile);
   } else {
@@ -1375,12 +1375,12 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
 
     Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
 
-    Value *E0Index = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *E0Index = ConstantInt::get(Type::Int32Ty, 0);
     Value *EVI0 = Builder.CreateExtractElement(EVI, E0Index, "mrv.v");
     Value *GEP0 = Builder.CreateStructGEP(Dest, 0, "mrv_gep");
     Builder.CreateStore(EVI0, GEP0, isVolatile);
 
-    Value *E1Index = Context.getConstantInt(Type::Int32Ty, 1);
+    Value *E1Index = ConstantInt::get(Type::Int32Ty, 1);
     Value *EVI1 = Builder.CreateExtractElement(EVI, E1Index, "mrv.v");
     Value *GEP1 = Builder.CreateStructGEP(Dest, 1, "mrv_gep");
     Builder.CreateStore(EVI1, GEP1, isVolatile);
@@ -1407,16 +1407,16 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     // Special treatement for _Complex.
     if (const StructType *ComplexType = dyn_cast<StructType>(DestElemType)) {
       llvm::Value *Idxs[3];
-      Idxs[0] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
-      Idxs[1] = Context.getConstantInt(llvm::Type::Int32Ty, DNO);
+      Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
+      Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, DNO);
 
-      Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, 0);
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 0);
       Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
       Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
       Builder.CreateStore(EVI, GEP, isVolatile);
       ++SNO;
 
-      Idxs[2] = Context.getConstantInt(llvm::Type::Int32Ty, 1);
+      Idxs[2] = ConstantInt::get(llvm::Type::Int32Ty, 1);
       GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
       EVI = Builder.CreateExtractValue(Src, 1, "mrv_gr");
       Builder.CreateStore(EVI, GEP, isVolatile);

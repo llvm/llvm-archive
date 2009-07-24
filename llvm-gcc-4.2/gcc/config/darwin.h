@@ -702,9 +702,6 @@ do {					\
   } while (0)
 /* LLVM LOCAL - end radar 6389998 */
 
-/* Assign STRING_CSTs to the .cstring section.  */
-#define LLVM_CSTRING_SECTION "__TEXT,__cstring,cstring_literals"
-#define LLVM_CONST_DATA_SECTION "__DATA,__const"
 #endif
 /* LLVM LOCAL end */
 

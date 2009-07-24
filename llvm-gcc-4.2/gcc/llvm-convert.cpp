@@ -35,7 +35,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -7912,19 +7911,6 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   GV->setAlignment(TYPE_ALIGN(TREE_TYPE(exp)) / 8);
 
   if (SlotP) *SlotP = GV;
-#ifdef LLVM_CSTRING_SECTION
-  // For Darwin, try to put it into the .cstring section.
-  const TargetAsmInfo *TAI = TheTarget->getTargetAsmInfo();
-  if (TAI && TAI->SectionKindForGlobal(GV) == SectionKind::RODataMergeStr)
-    // RODataMergeStr implies that StringIsConstant will be true here.
-    // The Darwin linker will coalesce strings in this section.
-    GV->setSection(LLVM_CSTRING_SECTION);
-#ifdef LLVM_CONST_DATA_SECTION
-  else if (!StringIsConstant)
-    // .const_data ("__DATA, __const" on Darwin).
-    GV->setSection(LLVM_CONST_DATA_SECTION);
-#endif	// LLVM_CONST_DATA_SECTION
-#endif	// LLVM_CSTRING_SECTION
   return GV;
 }
 

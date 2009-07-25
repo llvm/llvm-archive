@@ -3197,7 +3197,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
 Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   if (!Op->getType()->isFloatingPoint()) {
-    Value *OpN = Builder.CreateNeg(Op, (Op->getName()+"neg").c_str());
+    Value *OpN = Builder.CreateNeg(Op, (Op->getNameStr()+"neg").c_str());
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
     Value *Cmp = Builder.CreateICmp(pred, Op, 
@@ -3251,7 +3251,8 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
               cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
     Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
   }
-  return BitCastToType(Builder.CreateNot(Op, (Op->getName()+"not").c_str()),Ty);
+  return BitCastToType(Builder.CreateNot(Op, 
+                                         (Op->getNameStr()+"not").c_str()),Ty);
 }
 
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
@@ -3259,7 +3260,7 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
   if (V->getType() != Type::Int1Ty) 
     V = Builder.CreateICmpNE(V,
           Context.getNullValue(V->getType()), "toBool");
-  V = Builder.CreateNot(V, (V->getName()+"not").c_str());
+  V = Builder.CreateNot(V, (V->getNameStr()+"not").c_str());
   return CastToUIntType(V, ConvertType(TREE_TYPE(exp)));
 }
 
@@ -3437,7 +3438,7 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
   if (RHS->getType() != LHS->getType())
     RHS = Builder.CreateIntCast(RHS, LHS->getType(), false,
-                                (RHS->getName()+".cast").c_str());
+                                (RHS->getNameStr()+".cast").c_str());
   
   return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
 }
@@ -3447,7 +3448,7 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *Amt = Emit(TREE_OPERAND(exp, 1), 0);
   if (Amt->getType() != In->getType())
     Amt = Builder.CreateIntCast(Amt, In->getType(), false,
-                                (Amt->getName()+".cast").c_str());
+                                (Amt->getNameStr()+".cast").c_str());
 
   Value *TypeSize =
     ConstantInt::get(In->getType(),

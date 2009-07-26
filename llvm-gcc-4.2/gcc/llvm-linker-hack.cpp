@@ -100,7 +100,7 @@ void dummy_function() {
   llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
   llvm::DIFactory::DIFactory(*MP->getModule());
   std::string Err;
-  llvm::TargetRegistry::getClosestStaticTargetForModule(*MP->getModule(), Err);
+  llvm::TargetRegistry::lookupTarget("", false, false, Err);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

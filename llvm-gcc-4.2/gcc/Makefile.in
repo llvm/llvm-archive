@@ -1141,7 +1141,7 @@ OBJS-archive = $(EXTRA_OBJS) $(host_hook_obj) tree-inline.o		   \
 OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
 # LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
-OBJS-common += llvm-backend.o llvm-convert.o llvm-types.o llvm-debug.o
+OBJS-common += llvm-backend.o llvm-convert.o llvm-types.o llvm-debug.o llvm-linker-hack.o
 endif
 
 ifneq ($(LLVMOBJDIR),)

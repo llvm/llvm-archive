@@ -453,7 +453,7 @@ void llvm_initialize_backend(void) {
   std::string Err;
   std::string Triple = TheModule->getTargetTriple();
   const Target *TME =
-    TargetRegistry::getClosestStaticTargetForTriple(Triple, Err);
+    TargetRegistry::lokupTarget(Triple, false, false, Err);
   if (!TME) {
     cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
     exit(1);

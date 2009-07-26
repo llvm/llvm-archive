@@ -1074,7 +1074,7 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
       return CI->getOperand(0);
 
   return Builder.CreateCast(Instruction::CastOps(opcode), V, Ty,
-                            V->getNameStart());
+                            V->getName().data());
 }
 
 /// CastToAnyType - Cast the specified value to the specified type making no
@@ -2876,7 +2876,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     // defined - ensure it can be uniquely identified by not folding the cast.
     Instruction::CastOps opc = CastInst::getCastOpcode(RHS, RHSSigned,
                                                        LHSTy, LHSSigned);
-    CastInst *Cast = CastInst::Create(opc, RHS, LHSTy, RHS->getNameStart());
+    CastInst *Cast = CastInst::Create(opc, RHS, LHSTy, RHS->getName());
     if (opc == Instruction::BitCast && RHS->getType() == LHSTy)
       // Simplify this no-op bitcast once the function is emitted.
       UniquedValues.push_back(cast<BitCastInst>(Cast));
@@ -6353,7 +6353,7 @@ Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
       // attribute on a whole struct from one on the first element of the
       // struct.
       BitCastInst *CastFieldPtr = new BitCastInst(FieldPtr,  SBP,
-                                                  FieldPtr->getNameStart());
+                                                  FieldPtr->getName());
       Builder.Insert(CastFieldPtr);
 
       Value *Ops[4] = {

@@ -3231,8 +3231,6 @@ enum arm_builtins
 };
 
 /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
-
 /* Define a static enumeration of the NEON builtins to be used when
    converting to LLVM intrinsics.  These names are derived from the
    neon_builtin_data table in arm.c and should be kept in sync with that.  */
@@ -3391,6 +3389,7 @@ enum neon_builtins
   NEON_BUILTIN_MAX
 };
 
+#ifdef ENABLE_LLVM
 #define LLVM_TARGET_INTRINSIC_PREFIX "arm"
 
 /* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to

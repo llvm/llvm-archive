@@ -303,7 +303,6 @@ int warn_unknown_pragmas; /* Tri state variable.  */
 
 /* APPLE LOCAL begin default to Wformat-security 5764921 */
 /* LLVM LOCAL begin initialize via config/darwin.h */
-#ifdef ENABLE_LLVM
 #ifndef WARN_FORMAT_INIT
 #define WARN_FORMAT_INIT 0
 #endif
@@ -312,9 +311,6 @@ int warn_unknown_pragmas; /* Tri state variable.  */
 #endif
 int warn_format = WARN_FORMAT_INIT;
 int warn_format_security = WARN_FORMAT_SECURITY_INIT;
-#else
-int warn_format = 1;
-#endif
 /* LLVM LOCAL end initialize via config/darwin.h */
 /* APPLE LOCAL end default to Wformat-security 5764921 */
 

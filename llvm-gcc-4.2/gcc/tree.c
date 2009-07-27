@@ -7948,7 +7948,7 @@ note_alternative_entry_points (void)
 /* APPLE LOCAL end CW asm blocks */
 
 /* LLVM LOCAL begin */
-#ifdef ENABLE_LLVM
+/* Do not conditionalize this on ENABLE_LLVM.  The GTY gets used regardless. */
 /* This data structure keeps gcc's garbage collector from
    deleting types created by the llvm virtual base class handling
    stuff in llvm-types.cpp. */
@@ -7959,7 +7959,6 @@ llvm_note_type_used(tree type)
 {
   VEC_safe_push(tree, gc, llvm_types_used, type);
 }
-#endif
 /* LLVM LOCAL end */
 
 /* APPLE LOCAL begin weak_import on property 6676828 */

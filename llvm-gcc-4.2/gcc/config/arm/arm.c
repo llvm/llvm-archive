@@ -23821,8 +23821,8 @@ arm_md_asm_clobbers (tree outputs ATTRIBUTE_UNUSED,
     {
       const char *clobber_name;
       clobber_name = TREE_STRING_POINTER (TREE_VALUE (tail));
-      if (tolower (clobber_name[0]) == 'q' && isdigit (clobber_name[1])
-          && (isdigit (clobber_name[2]) || clobber_name[2] == '\0'))
+      if (TOLOWER (clobber_name[0]) == 'q' && ISDIGIT (clobber_name[1])
+          && (ISDIGIT (clobber_name[2]) || clobber_name[2] == '\0'))
         {
           char regname[4] = "dXX";
           /* found a Q register in the clobber list, so add the D reference

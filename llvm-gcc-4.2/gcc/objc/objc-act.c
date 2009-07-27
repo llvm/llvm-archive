@@ -6200,6 +6200,9 @@ build_message_reference_decl (tree sel_name, tree message_func_ident)
      follow from the alignments of the component types. */
   DECL_ALIGN(decl) = BITS_PER_WORD==32 ? 32 : 128;
   DECL_USER_ALIGN(decl) = 1;
+
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
 #endif
   /* LLVM LOCAL end */
   set_user_assembler_name (decl, buf);
@@ -12504,6 +12507,12 @@ build_protocol_list_address_table (void)
       decl = create_hidden_decl (objc_protocol_type, string);
       DECL_WEAK (decl) = 1;
       set_user_assembler_name (decl, string);
+      /* LLVM LOCAL begin 7069676 */
+#ifdef ENABLE_LLVM
+      /* Let optimizer know that this decl is not removable.  */
+      DECL_PRESERVE_P (decl) = 1;
+#endif
+      /* LLVM LOCAL end 7069676 */
       expr = convert (objc_protocol_type, build_fold_addr_expr (expr));
       /* APPLE LOCAL radar 4561192 */
       objc_set_alignment_attribute (decl, objc_protocol_type);
@@ -12615,7 +12624,12 @@ build_protocollist_reference_decl (tree protocol)
   decl = create_hidden_decl (objc_protocol_type, buf);
   DECL_WEAK (decl) = 1;
   set_user_assembler_name (decl, buf);
-
+  /* LLVM LOCAL begin 7069676 */
+#ifdef ENABLE_LLVM
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
+#endif
+  /* LLVM LOCAL end 7069676 */
   return decl;
 }
 /* APPLE LOCAL end radar 6351990 */
@@ -14194,6 +14208,10 @@ build_v2_protocol_reference (tree p)
   PROTOCOL_V2_FORWARD_DECL (p) = decl;
   /* LLVM LOCAL begin - radar 5476262 */
 #ifdef ENABLE_LLVM
+  /* begin radar 7069676 */
+  /* Let optimizer know that this decl is not removable.  */
+  DECL_PRESERVE_P (decl) = 1;
+  /* end radar 7069676 */
   pushdecl_top_level(decl);
 #endif
   /* LLVM LOCAL end - radar 5476262 */

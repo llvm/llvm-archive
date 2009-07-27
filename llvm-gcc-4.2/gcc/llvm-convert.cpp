@@ -7116,7 +7116,7 @@ Constant *TreeConstantToLLVM::ConvertCOMPLEX_CST(tree exp) {
   std::vector<Constant*> Elts;
   Elts.push_back(Convert(TREE_REALPART(exp)));
   Elts.push_back(Convert(TREE_IMAGPART(exp)));
-  return Context.getConstantStruct(Elts, false);
+  return ConstantStruct::get(Elts, false);
 }
 
 Constant *TreeConstantToLLVM::ConvertNOP_EXPR(tree exp) {
@@ -7302,7 +7302,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   if (AllEltsSameType)
     return Context.getConstantArray(
       Context.getArrayType(ElTy, ResultElts.size()), ResultElts);
-  return Context.getConstantStruct(ResultElts, false);
+  return ConstantStruct::get(ResultElts, false);
 }
 
 
@@ -7723,7 +7723,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
 
   // Okay, we're done, return the computed elements.
   return
-    Context.getConstantStruct(LayoutInfo.ResultElts, LayoutInfo.StructIsPacked);
+    ConstantStruct::get(LayoutInfo.ResultElts, LayoutInfo.StructIsPacked);
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
@@ -7755,7 +7755,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
       Elts.push_back(Context.getNullValue(FillTy));
     }
   }
-  return Context.getConstantStruct(Elts, false);
+  return ConstantStruct::get(Elts, false);
 }
 
 //===----------------------------------------------------------------------===//

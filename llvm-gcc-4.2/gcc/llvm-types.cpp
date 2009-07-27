@@ -192,7 +192,7 @@ void writeLLVMTypesStringTable() {
   }
 
   // Create string table.
-  Constant *LTypesNameTable = Context.getConstantStruct(LTypesNames, false);
+  Constant *LTypesNameTable = ConstantStruct::get(LTypesNames, false);
 
   // Create variable to hold this string table.
   GlobalVariable *GV = new GlobalVariable(*TheModule,   

@@ -136,7 +136,7 @@ static LLVMValuesMapTy LLVMValuesMap;
 /// function-local decls to be recycled after the function is done.
 static std::vector<unsigned> LocalLLVMValueIDs;
 
-// Remember the LLVM value for GCC tree node.
+/// llvm_set_decl - Remember the LLVM value for GCC tree node.
 void llvm_set_decl(tree Tr, Value *V) {
 
   // If there is not any value then do not add new LLVMValues entry.
@@ -164,7 +164,8 @@ void llvm_set_decl(tree Tr, Value *V) {
     LocalLLVMValueIDs.push_back(Index);
 }
 
-// Return TRUE if there is a LLVM Value associate with GCC tree node.
+/// llvm_set_decl_p - Return TRUE if there is a LLVM Value associate with GCC
+/// tree node.
 bool llvm_set_decl_p(tree Tr) {
   unsigned Index = GET_DECL_LLVM_INDEX(Tr);
   if (Index == 0)
@@ -173,10 +174,10 @@ bool llvm_set_decl_p(tree Tr) {
   return LLVMValues[Index - 1] != 0;
 }
 
-// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
-// If there is not any value associated then use make_decl_llvm() to
-// make LLVM value. When GCC tree node is initialized, it has 0 as the
-// index value. This is why all recorded indices are offset by 1.
+/// llvm_get_decl - Get LLVM Value for the GCC tree node based on LLVMValues
+/// vector index.  If there is not any value associated then use
+/// make_decl_llvm() to make LLVM value. When GCC tree node is initialized, it
+/// has 0 as the index value. This is why all recorded indices are offset by 1.
 Value *llvm_get_decl(tree Tr) {
 
   unsigned Index = GET_DECL_LLVM_INDEX(Tr);
@@ -235,7 +236,7 @@ void changeLLVMConstant(Constant *Old, Constant *New) {
     LLVMValuesMap[New] = Idx+1;
 }
 
-// Read LLVM Types string table
+/// readLLVMValues - Read LLVM Types string table
 void readLLVMValues() {
   GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
   if (!V)
@@ -264,9 +265,9 @@ void readLLVMValues() {
   GV->eraseFromParent();
 }
 
-// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
-// Create a string table to hold these LLVM Values' names. This string
-// table will be used to recreate LTypes vector after loading PCH.
+/// writeLLVMValues - GCC tree's uses LLVMValues vector's index to reach LLVM
+/// Values.  Create a string table to hold these LLVM Values' names. This string
+/// table will be used to recreate LTypes vector after loading PCH.
 void writeLLVMValues() {
   if (LLVMValues.empty())
     return;
@@ -313,8 +314,7 @@ void eraseLocalLLVMValues() {
   }
 }
 
-
-// Forward decl visibility style to global.
+/// handleVisibility - Forward decl visibility style to global.
 void handleVisibility(tree decl, GlobalValue *GV) {
   // If decl has visibility specified explicitely (via attribute) - honour
   // it. Otherwise (e.g. visibility specified via -fvisibility=hidden) honour
@@ -489,7 +489,8 @@ void llvm_initialize_backend(void) {
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
-/// Set backend options that may only be known at codegen time.
+/// performLateBackendInitialization - Set backend options that may only be
+/// known at codegen time.
 void performLateBackendInitialization(void) {
   // The Ada front-end sets flag_exceptions only after processing the file.
   ExceptionHandling = flag_exceptions;
@@ -514,7 +515,7 @@ oFILEstream *AsmOutStream = 0;
 static formatted_raw_ostream *AsmOutRawStream = 0;
 oFILEstream *AsmIntermediateOutStream = 0;
 
-/// Read bytecode from PCH file. Initialize TheModule and setup
+/// llvm_pch_read - Read bytecode from PCH file. Initialize TheModule and setup
 /// LTypes vector.
 void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   std::string ModuleName = TheModule->getModuleIdentifier();
@@ -558,7 +559,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   flag_llvm_pch_read = 1;
 }
 
-// Initialize PCH writing. 
+/// llvm_pch_write_init - Initialize PCH writing. 
 void llvm_pch_write_init(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
@@ -765,7 +766,7 @@ static void createPerModuleOptimizationPasses() {
   }
 }
 
-// llvm_asm_file_start - Start the .s file.
+/// llvm_asm_file_start - Start the .s file.
 void llvm_asm_file_start(void) {
   timevar_push(TV_LLVM_INIT);
   AsmOutStream = new oFILEstream(asm_out_file);
@@ -819,7 +820,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                      Array, Name);
 }
 
-// llvm_asm_file_end - Finish the .s file.
+/// llvm_asm_file_end - Finish the .s file.
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
   LLVMContext &Context = getGlobalContext();
@@ -851,8 +852,8 @@ void llvm_asm_file_end(void) {
     ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
     Constant *Init = Context.getConstantArray(AT, AUGs);
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-                       GlobalValue::AppendingLinkage, Init,
-                       "llvm.used");
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.used");
     gv->setSection("llvm.metadata");
     AttributeUsedGlobals.clear();
   }
@@ -936,8 +937,8 @@ void llvm_call_llvm_shutdown(void) {
   llvm_shutdown();
 }
 
-// llvm_emit_code_for_current_function - Top level interface for emitting a
-// function to the .s file.
+/// llvm_emit_code_for_current_function - Top level interface for emitting a
+/// function to the .s file.
 void llvm_emit_code_for_current_function(tree fndecl) {
   if (cfun->nonlocal_goto_save_area)
     sorry("%Jnon-local gotos not supported by LLVM", fndecl);
@@ -988,7 +989,7 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   timevar_pop(TV_LLVM_FUNCS);
 }
 
-// emit_alias_to_llvm - Given decl and target emit alias to target.
+/// emit_alias_to_llvm - Given decl and target emit alias to target.
 void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   if (errorcount || sorrycount) {
     TREE_ASM_WRITTEN(decl) = 1;
@@ -1088,7 +1089,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   return;
 }
 
-// Convert string to global value. Use existing global if possible.
+/// ConvertMetadataStringToGV - Convert string to global value. Use existing
+/// global if possible.
 Constant* ConvertMetadataStringToGV(const char *str) {
   
   Constant *Init = getGlobalContext().getConstantArray(std::string(str));
@@ -1108,8 +1110,8 @@ Constant* ConvertMetadataStringToGV(const char *str) {
   
 }
 
-/// AddAnnotateAttrsToGlobal - Adds decls that have a
-/// annotate attribute to a vector to be emitted later.
+/// AddAnnotateAttrsToGlobal - Adds decls that have a annotate attribute to a
+/// vector to be emitted later.
 void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   LLVMContext &Context = getGlobalContext();
   
@@ -1310,7 +1312,8 @@ void emit_global_to_llvm(tree decl) {
     GV->setThreadLocal(true);
 
   // Set the linkage.
-  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
+  GlobalValue::LinkageTypes Linkage;
+
   if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
       && DECL_LLVM_PRIVATE(decl)) {
     Linkage = GlobalValue::PrivateLinkage;
@@ -1327,6 +1330,8 @@ void emit_global_to_llvm(tree decl) {
     Linkage = GlobalValue::CommonLinkage;
   } else if (DECL_COMDAT(decl)) {
     Linkage = GlobalValue::getLinkOnceLinkage(flag_odr);
+  } else {
+    Linkage = GV->getLinkage();
   }
 
   // Allow loads from constants to be folded even if the constant has weak
@@ -1451,16 +1456,15 @@ bool ValidateRegisterVariable(tree decl) {
 }
 
 
-// make_decl_llvm - Create the DECL_RTL for a VAR_DECL or FUNCTION_DECL.  DECL
-// should have static storage duration.  In other words, it should not be an
-// automatic variable, including PARM_DECLs.
-//
-// There is, however, one exception: this function handles variables explicitly
-// placed in a particular register by the user.
-//
-// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
-// called by DECL_LLVM if a decl doesn't have an LLVM set.
-//
+/// make_decl_llvm - Create the DECL_RTL for a VAR_DECL or FUNCTION_DECL.  DECL
+/// should have static storage duration.  In other words, it should not be an
+/// automatic variable, including PARM_DECLs.
+///
+/// There is, however, one exception: this function handles variables explicitly
+/// placed in a particular register by the user.
+///
+/// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
+/// called by DECL_LLVM if a decl doesn't have an LLVM set.
 void make_decl_llvm(tree decl) {
 #ifdef ENABLE_CHECKING
   // Check that we are not being given an automatic variable.
@@ -1681,9 +1685,9 @@ const char *llvm_get_decl_name(void *LLVM) {
   return "";
 }
 
-// llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
-// weak, but it already had an llvm object created for it. This marks the LLVM
-// object weak as well.
+/// llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
+/// weak, but it already had an llvm object created for it. This marks the LLVM
+/// object weak as well.
 void llvm_mark_decl_weak(tree decl) {
   assert(DECL_LLVM_SET_P(decl) && DECL_WEAK(decl) &&
          isa<GlobalValue>(DECL_LLVM(decl)) && "Decl isn't marked weak!");
@@ -1710,10 +1714,9 @@ void llvm_mark_decl_weak(tree decl) {
   }
 }
 
-// llvm_emit_ctor_dtor - Called to emit static ctors/dtors to LLVM code.  fndecl
-// is a 'void()' FUNCTION_DECL for the code, initprio is the init priority, and
-// isCtor indicates whether this is a ctor or dtor.
-//
+/// llvm_emit_ctor_dtor - Called to emit static ctors/dtors to LLVM code.
+/// fndecl is a 'void()' FUNCTION_DECL for the code, initprio is the init
+/// priority, and isCtor indicates whether this is a ctor or dtor.
 void llvm_emit_ctor_dtor(tree FnDecl, int InitPrio, int isCtor) {
   mark_decl_referenced(FnDecl);  // Inform cgraph that we used the global.
 
@@ -1728,9 +1731,8 @@ void llvm_emit_typedef(tree decl) {
   return;
 }
 
-// llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
-// asm block.
-//
+/// llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
+/// asm block.
 void llvm_emit_file_scope_asm(const char *string) {
   if (TheModule->getModuleInlineAsm().empty())
     TheModule->setModuleInlineAsm(string);
@@ -1739,19 +1741,16 @@ void llvm_emit_file_scope_asm(const char *string) {
                                   string);
 }
 
-
-// print_llvm - Print the specified LLVM chunk like an operand, called by
-// print-tree.c for tree dumps.
-//
+/// print_llvm - Print the specified LLVM chunk like an operand, called by
+/// print-tree.c for tree dumps.
 void print_llvm(FILE *file, void *LLVM) {
   oFILEstream FS(file);
   FS << "LLVM: ";
   WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
 }
 
-// print_llvm_type - Print the specified LLVM type symbolically, called by
-// print-tree.c for tree dumps.
-//
+/// print_llvm_type - Print the specified LLVM type symbolically, called by
+/// print-tree.c for tree dumps.
 void print_llvm_type(FILE *file, void *LLVM) {
   oFILEstream FS(file);
   FS << "LLVM: ";
@@ -1763,12 +1762,11 @@ void print_llvm_type(FILE *file, void *LLVM) {
   WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
 }
 
-// Get a register name given its decl.  In 4.2 unlike 4.0 these names
-// have been run through set_user_assembler_name which means they may
-// have a leading \1 at this point; compensate.
-
+/// extractRegisterName - Get a register name given its decl. In 4.2 unlike 4.0
+/// these names have been run through set_user_assembler_name which means they
+/// may have a leading \1 at this point; compensate.
 const char* extractRegisterName(tree decl) {
   const char* Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
-  return (*Name==1) ? Name+1 : Name;
+  return (*Name == 1) ? Name + 1 : Name;
 }
 /* LLVM LOCAL end (ENTIRE FILE!)  */

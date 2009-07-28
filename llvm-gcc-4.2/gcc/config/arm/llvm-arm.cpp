@@ -151,7 +151,7 @@ static Value *BuildDup(const Type *ResultType, Value *Val,
     for (unsigned i = 0; i != NUnits; ++i)
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
     Result = Builder.CreateShuffleVector(Result, Undef,
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
   }
   return Result;
 }
@@ -166,7 +166,7 @@ static Value *BuildDupLane(Value *Vec, unsigned LaneVal, unsigned NUnits,
   for (unsigned i = 0; i != NUnits; ++i)
     Idxs.push_back(ConstantInt::get(Type::Int32Ty, LaneVal));
   return Builder.CreateShuffleVector(Vec, Context.getUndef(Vec->getType()),
-                                     Context.getConstantVector(Idxs));
+                                     ConstantVector::get(Idxs));
 }
 
 // NEON vector shift counts must be in the range 0..ElemBits-1 for left shifts
@@ -1714,7 +1714,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     for (unsigned i = 0; i != NUnits; ++i)
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, i));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     break;
   }
 
@@ -1727,7 +1727,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, Idx++));
     Result = Builder.CreateShuffleVector(Ops[0],
                                          Context.getUndef(Ops[0]->getType()),
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     break;
   }
 
@@ -1790,7 +1790,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     for (unsigned i = 0; i != NUnits; ++i)
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + ImmVal));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     break;
   }
 
@@ -1818,7 +1818,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
     }
     Result = Builder.CreateShuffleVector(Ops[0], Context.getUndef(ResultType),
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     break;
   }
 
@@ -1912,7 +1912,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
     }
     Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     Type *PtrTy = Result->getType()->getPointerTo();
     Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
     Result = 0;
@@ -1928,7 +1928,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + NUnits));
     }
     Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     Type *PtrTy = Result->getType()->getPointerTo();
     Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
     Result = 0;
@@ -1944,7 +1944,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2 * i + EvenOdd));
     }
     Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         Context.getConstantVector(Idxs));
+                                         ConstantVector::get(Idxs));
     Type *PtrTy = Result->getType()->getPointerTo();
     Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
     Result = 0;
@@ -2058,7 +2058,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, n * NUnits));
       }
       Result = Builder.CreateShuffleVector(Result, Context.getUndef(VTy),
-                                           Context.getConstantVector(Idxs));
+                                           ConstantVector::get(Idxs));
     }
     Type *PtrToWideVec = Context.getPointerTypeUnqual(VTy);
     Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));

@@ -301,7 +301,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     VectorType *v4i32 = Context.getVectorType(Type::Int32Ty, 4);
     Ops[0] = Builder.CreateBitCast(Ops[0], v4i32, "tmp");
     Constant *C = ConstantInt::get(Type::Int32Ty, 0x7FFFFFFF);
-    C = Context.getConstantVector(std::vector<Constant*>(4, C));
+    C = ConstantVector::get(std::vector<Constant*>(4, C));
     Result = Builder.CreateAnd(Ops[0], C, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
     return true;

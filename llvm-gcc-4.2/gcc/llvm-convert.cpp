@@ -4616,7 +4616,7 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
     std::vector<Constant*> CstOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
       CstOps.push_back(cast<Constant>(Ops[i]));
-    return Context.getConstantVector(CstOps);
+    return ConstantVector::get(CstOps);
   }
   
   // Otherwise, insertelement the values to build the vector.
@@ -4675,7 +4675,7 @@ Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
 
   // Turn this into the appropriate shuffle operation.
   return Builder.CreateShuffleVector(InVec1, InVec2, 
-                                     Context.getConstantVector(Idxs));
+                                     ConstantVector::get(Idxs));
 }
 
 //===----------------------------------------------------------------------===//
@@ -7062,7 +7062,7 @@ Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
       Elts.push_back(Zero);
   }
   
-  return Context.getConstantVector(Elts);
+  return ConstantVector::get(Elts);
 }
 
 Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
@@ -7304,7 +7304,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   
   if (TREE_CODE(InitType) == VECTOR_TYPE) {
     assert(AllEltsSameType && "Vector of heterogeneous element types?");
-    return Context.getConstantVector(ResultElts);
+    return ConstantVector::get(ResultElts);
   }
   
   if (AllEltsSameType)

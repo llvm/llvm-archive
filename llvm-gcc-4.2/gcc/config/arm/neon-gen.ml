@@ -70,13 +70,27 @@ let close_braceblock nesting =
 (* LLVM LOCAL begin Print macros instead of inline functions.
    This is needed so that immediate arguments (e.g., lane numbers, shift
    amounts, etc.) can be checked for validity.  GCC can check them after
-   inlining, but LLVM does inlining separately.  This is not ideal for
-   error messages.  In the simple cases, llvm-gcc will use the GCC builtin
-   names instead of the user-visible ARM intrinsic names.  In cases where
-   the macros convert arguments to/from scalars (where the GCC builtins
-   expect that for some reason), the error messages may not show any context
-   information at all.  This could all be avoided if the compiler recognized
-   the intrinsics directly. *)
+   inlining, but LLVM does inlining separately.
+
+   This is not ideal for error messages.  In the simple cases, llvm-gcc will
+   use the GCC builtin names instead of the user-visible ARM intrinsic names.
+   In cases where the macros use unions to convert argument types, the error
+   messages may not show any context information at all.
+
+   The problems with error messages could be avoided if the compiler
+   recognized the intrinsics directly, but that is not trivial.  The
+   user-visible intrinsics need to use the types defined by ARM that
+   distinguish the vector element signedness, whereas the LLVM intrinsics do
+   not care about signedness and also use different struct types (multiple
+   fields instead of arrays) that match the capabilities of tablegen-defined
+   intrinsics.
+
+   Some macros translate to simple intrinsic calls and should not end with
+   semicolons, but for others, which use GCC's statement-expressions to
+   include unions that convert argument and/or return types, the semicolons
+   need to be emitted after every statement.  This is implemented by deferring
+   the emission of trailing semicolons so they are only added in the context
+   of statement-expressions. *)
 let print_function arity fnname body =
   let ffmt = start_function () in
   Format.printf "@[<v 2>#define ";
@@ -95,12 +109,12 @@ let print_function arity fnname body =
   Format.printf " \\@,";
   let rec print_lines = function
     [] -> ()
-  | [line] -> Format.printf "%s \\" line
-  | line::lines -> Format.printf "%s \\@," line; print_lines lines in
+  | [line] -> Format.printf "%s; \\" line
+  | line::lines -> Format.printf "%s; \\@," line; print_lines lines in
   let print_macro_body = function
     [] -> ()
   | [line] -> Format.printf "%s" line
-  | line::lines -> Format.printf "@[<v 3>({ \\@,%s \\@," line;
+  | line::lines -> Format.printf "@[<v 3>({ \\@,%s; \\@," line;
                    print_lines lines;
                    Format.printf "@]@, })" in
   print_macro_body body;
@@ -150,7 +164,7 @@ let cast_for_return to_ty = "(" ^ (string_of_vectype to_ty) ^ ")"
 
 (* Return a tuple of a list of declarations to go at the start of the function,
    and a list of statements needed to return THING.  *)
-(* LLVM LOCAL begin Remove "return" keywords since these are now macros.  *)
+(* LLVM LOCAL begin Omit "return" keywords and trailing semicolons.  *)
 let return arity return_by_ptr thing =
   match arity with
     Arity0 (ret) | Arity1 (ret, _) | Arity2 (ret, _, _) | Arity3 (ret, _, _, _)
@@ -159,15 +173,15 @@ let return arity return_by_ptr thing =
       T_arrayof (num, vec) ->
         if return_by_ptr then
           let sname = string_of_vectype ret in
-          [Printf.sprintf "%s __rv;" sname],
-          [thing ^ ";"; "__rv;"]
+          [Printf.sprintf "%s __rv" sname],
+          [thing; "__rv"]
         else
           let uname = union_string num vec "__rv" in
-          [uname ^ ";"], ["__rv.__o = " ^ thing ^ ";"; "__rv.__i;"]
-    | T_void -> [], [thing ^ ";"]
+          [uname], ["__rv.__o = " ^ thing; "__rv.__i"]
+    | T_void -> [], [thing]
     | _ ->
-        [], [(cast_for_return ret) ^ thing ^ ";"]
-(* LLVM LOCAL end Remove "return" keywords since these are now macros.  *)
+        [], [(cast_for_return ret) ^ thing]
+(* LLVM LOCAL end Omit "return" keywords and trailing semicolons.  *)
 
 let rec element_type ctype =
   match ctype with
@@ -180,7 +194,8 @@ let params return_by_ptr ps =
     match t with
       T_arrayof (num, elts) ->
         let uname = union_string num elts (p ^ "u") in
-        let decl = Printf.sprintf "%s = { %s };" uname p in
+        (* LLVM LOCAL Omit trailing semicolon.  *)
+        let decl = Printf.sprintf "%s = { %s }" uname p in
         pdecls := decl :: !pdecls;
         p ^ "u.__o"
     (* LLVM LOCAL Omit casts so so we get better error messages.  *)

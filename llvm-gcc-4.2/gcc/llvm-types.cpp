@@ -188,7 +188,7 @@ void writeLLVMTypesStringTable() {
     }
 
     const std::string &TypeName = TypeNameMap[*I];
-    LTypesNames.push_back(Context.getConstantArray(TypeName, false));
+    LTypesNames.push_back(ConstantArray::get(TypeName, false));
   }
 
   // Create string table.

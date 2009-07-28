@@ -7117,7 +7117,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
         Elts.push_back(C);
     }
   }
-  return Context.getConstantArray(StrTy, Elts);
+  return ConstantArray::get(StrTy, Elts);
 }
 
 Constant *TreeConstantToLLVM::ConvertCOMPLEX_CST(tree exp) {
@@ -7281,7 +7281,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   
   // Zero length array.
   if (ResultElts.empty())
-    return Context.getConstantArray(
+    return ConstantArray::get(
       cast<ArrayType>(ConvertType(TREE_TYPE(exp))), ResultElts);
   assert(SomeVal && "If we had some initializer, we should have some value!");
   
@@ -7308,7 +7308,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   }
   
   if (AllEltsSameType)
-    return Context.getConstantArray(
+    return ConstantArray::get(
       Context.getArrayType(ElTy, ResultElts.size()), ResultElts);
   return ConstantStruct::get(ResultElts, false);
 }

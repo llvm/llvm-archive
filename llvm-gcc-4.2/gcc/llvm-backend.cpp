@@ -813,7 +813,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
     StructInit[1] = TheFolder->CreateBitCast(Tors[i].first, FPTy);
     InitList.push_back(ConstantStruct::get(StructInit, false));
   }
-  Constant *Array = Context.getConstantArray(
+  Constant *Array = ConstantArray::get(
     Context.getArrayType(InitList[0]->getType(), InitList.size()), InitList);
   new GlobalVariable(*TheModule, Array->getType(), false,
                      GlobalValue::AppendingLinkage,
@@ -850,7 +850,7 @@ void llvm_asm_file_end(void) {
     }
 
     ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
-    Constant *Init = Context.getConstantArray(AT, AUGs);
+    Constant *Init = ConstantArray::get(AT, AUGs);
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
                                          GlobalValue::AppendingLinkage, Init,
                                          "llvm.used");
@@ -860,7 +860,7 @@ void llvm_asm_file_end(void) {
 
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
-    Constant *Array = Context.getConstantArray(
+    Constant *Array = ConstantArray::get(
       Context.getArrayType(AttributeAnnotateGlobals[0]->getType(),
                                       AttributeAnnotateGlobals.size()),
                        AttributeAnnotateGlobals);
@@ -1093,7 +1093,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
 /// global if possible.
 Constant* ConvertMetadataStringToGV(const char *str) {
   
-  Constant *Init = getGlobalContext().getConstantArray(std::string(str));
+  Constant *Init = ConstantArray::get(std::string(str));
 
   // Use cached string if it exists.
   static std::map<Constant*, GlobalVariable*> StringCSTCache;

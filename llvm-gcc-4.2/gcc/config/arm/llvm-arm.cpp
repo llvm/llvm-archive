@@ -1988,7 +1988,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
     Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
                                  ConstantInt::get(Type::Int32Ty, N));
-    Result = BitCastToType(Result, ResultType);
+    Type *PtrToWideVec = Context.getPointerTypeUnqual(Result->getType());
+    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+    Result = 0;
     break;
   }
 
@@ -2018,7 +2020,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                           LaneVal + (n * NUnits));
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
-    Result = BitCastToType(Result, ResultType);
+    Type *PtrToWideVec = Context.getPointerTypeUnqual(VTy);
+    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+    Result = 0;
     break;
   }
 
@@ -2056,7 +2060,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = Builder.CreateShuffleVector(Result, Context.getUndef(VTy),
                                            Context.getConstantVector(Idxs));
     }
-    Result = BitCastToType(Result, ResultType);
+    Type *PtrToWideVec = Context.getPointerTypeUnqual(VTy);
+    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+    Result = 0;
     break;
   }
 
@@ -2082,7 +2088,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
 
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
-    Value *Vec = BitCastToType(Ops[1], VTy);
+    Value *Tmp = CreateTemporary(VTy);
+    Type *PtrToStruct = Context.getPointerTypeUnqual(Ops[1]->getType());
+    Builder.CreateStore(Ops[1], BitCastToType(Tmp, PtrToStruct));
+    Value *Vec = Builder.CreateLoad(Tmp);
     Builder.CreateCall3(intFn, BitCastToType(Ops[0], VPTy), Vec,
                         ConstantInt::get(Type::Int32Ty, N));
     Result = 0;
@@ -2106,7 +2115,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = VTy->getNumElements() / NumVecs;
     if (!isValidLane(Ops[2], NUnits, &LaneVal))
       return UnexpectedError("%Hinvalid lane number", exp, Result);
-    Value *Vec = BitCastToType(Ops[1], VTy);
+    Value *Tmp = CreateTemporary(VTy);
+    Type *PtrToStruct = Context.getPointerTypeUnqual(Ops[1]->getType());
+    Builder.CreateStore(Ops[1], BitCastToType(Tmp, PtrToStruct));
+    Value *Vec = Builder.CreateLoad(Tmp);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
         Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));

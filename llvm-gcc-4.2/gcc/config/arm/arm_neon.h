@@ -3253,55 +3253,55 @@ typedef struct poly16x8x4_t
 
 #define vtbl2_s8(__a, __b) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __au = { __a }; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __au = { __a }; \
      (int8x8_t)__builtin_neon_vtbl2v8qi (__au.__o, __b); \
    })
 
 #define vtbl2_u8(__a, __b) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __au = { __a }; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __au = { __a }; \
      (uint8x8_t)__builtin_neon_vtbl2v8qi (__au.__o, __b); \
    })
 
 #define vtbl2_p8(__a, __b) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __au = { __a }; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __au = { __a }; \
      (poly8x8_t)__builtin_neon_vtbl2v8qi (__au.__o, __b); \
    })
 
 #define vtbl3_s8(__a, __b) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __au = { __a }; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __au = { __a }; \
      (int8x8_t)__builtin_neon_vtbl3v8qi (__au.__o, __b); \
    })
 
 #define vtbl3_u8(__a, __b) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __au = { __a }; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __au = { __a }; \
      (uint8x8_t)__builtin_neon_vtbl3v8qi (__au.__o, __b); \
    })
 
 #define vtbl3_p8(__a, __b) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __au = { __a }; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __au = { __a }; \
      (poly8x8_t)__builtin_neon_vtbl3v8qi (__au.__o, __b); \
    })
 
 #define vtbl4_s8(__a, __b) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __au = { __a }; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __au = { __a }; \
      (int8x8_t)__builtin_neon_vtbl4v8qi (__au.__o, __b); \
    })
 
 #define vtbl4_u8(__a, __b) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __au = { __a }; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __au = { __a }; \
      (uint8x8_t)__builtin_neon_vtbl4v8qi (__au.__o, __b); \
    })
 
 #define vtbl4_p8(__a, __b) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __au = { __a }; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __au = { __a }; \
      (poly8x8_t)__builtin_neon_vtbl4v8qi (__au.__o, __b); \
    })
 
@@ -3316,55 +3316,55 @@ typedef struct poly16x8x4_t
 
 #define vtbx2_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      (int8x8_t)__builtin_neon_vtbx2v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx2_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      (uint8x8_t)__builtin_neon_vtbx2v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx2_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      (poly8x8_t)__builtin_neon_vtbx2v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx3_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      (int8x8_t)__builtin_neon_vtbx3v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx3_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      (uint8x8_t)__builtin_neon_vtbx3v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx3_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      (poly8x8_t)__builtin_neon_vtbx3v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx4_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      (int8x8_t)__builtin_neon_vtbx4v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx4_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      (uint8x8_t)__builtin_neon_vtbx4v8qi (__a, __bu.__o, __c); \
    })
 
 #define vtbx4_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      (poly8x8_t)__builtin_neon_vtbx4v8qi (__a, __bu.__o, __c); \
    })
 
@@ -4654,1642 +4654,1642 @@ typedef struct poly16x8x4_t
 
 #define vld2_s8(__a) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_s16(__a) \
   ({ \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_s32(__a) \
   ({ \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v2si (__a); \
      __rv.__i; \
    })
 
 #define vld2_f32(__a) \
   ({ \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v2sf (__a); \
      __rv.__i; \
    })
 
 #define vld2_u8(__a) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_u16(__a) \
   ({ \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_u32(__a) \
   ({ \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v2si (__a); \
      __rv.__i; \
    })
 
 #define vld2_p8(__a) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_p16(__a) \
   ({ \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_s64(__a) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2di (__a); \
      __rv.__i; \
    })
 
 #define vld2_u64(__a) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2di (__a); \
      __rv.__i; \
    })
 
 #define vld2q_s8(__a) \
   ({ \
-     union { int8x16x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int8x16x2_t __i; __builtin_neon_v16qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld2q_s16(__a) \
   ({ \
-     union { int16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld2q_s32(__a) \
   ({ \
-     union { int32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int32x4x2_t __i; __builtin_neon_v4si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4si (__a); \
      __rv.__i; \
    })
 
 #define vld2q_f32(__a) \
   ({ \
-     union { float32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { float32x4x2_t __i; __builtin_neon_v4sf2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4sf (__a); \
      __rv.__i; \
    })
 
 #define vld2q_u8(__a) \
   ({ \
-     union { uint8x16x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint8x16x2_t __i; __builtin_neon_v16qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld2q_u16(__a) \
   ({ \
-     union { uint16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld2q_u32(__a) \
   ({ \
-     union { uint32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint32x4x2_t __i; __builtin_neon_v4si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v4si (__a); \
      __rv.__i; \
    })
 
 #define vld2q_p8(__a) \
   ({ \
-     union { poly8x16x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly8x16x2_t __i; __builtin_neon_v16qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld2q_p16(__a) \
   ({ \
-     union { poly16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __bu = { __b }; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev2sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { int16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
+     union { int16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { int32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
+     union { int32x4x2_t __i; __builtin_neon_v4si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { float32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { float32x4x2_t __i; __builtin_neon_v4sf2 __o; } __bu = { __b }; \
+     union { float32x4x2_t __i; __builtin_neon_v4sf2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { uint16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
+     union { uint16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { uint32x4x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
+     union { uint32x4x2_t __i; __builtin_neon_v4si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { poly16x8x2_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
+     union { poly16x8x2_t __i; __builtin_neon_v8hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld2_dup_s8(__a) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_s16(__a) \
   ({ \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_s32(__a) \
   ({ \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_f32(__a) \
   ({ \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv2sf (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u8(__a) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u16(__a) \
   ({ \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u32(__a) \
   ({ \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_p8(__a) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_p16(__a) \
   ({ \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_s64(__a) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u64(__a) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_ti __o; } __rv; \
+     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vst2_s8(__a, __b) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__a, __bu.__o); \
    })
 
 #define vst2_s16(__a, __b) \
   ({ \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__a, __bu.__o); \
    })
 
 #define vst2_s32(__a, __b) \
   ({ \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v2si (__a, __bu.__o); \
    })
 
 #define vst2_f32(__a, __b) \
   ({ \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v2sf (__a, __bu.__o); \
    })
 
 #define vst2_u8(__a, __b) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__a, __bu.__o); \
    })
 
 #define vst2_u16(__a, __b) \
   ({ \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__a, __bu.__o); \
    })
 
 #define vst2_u32(__a, __b) \
   ({ \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v2si (__a, __bu.__o); \
    })
 
 #define vst2_p8(__a, __b) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__a, __bu.__o); \
    })
 
 #define vst2_p16(__a, __b) \
   ({ \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__a, __bu.__o); \
    })
 
 #define vst2_s64(__a, __b) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
      __builtin_neon_vst2di (__a, __bu.__o); \
    })
 
 #define vst2_u64(__a, __b) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
      __builtin_neon_vst2di (__a, __bu.__o); \
    })
 
 #define vst2q_s8(__a, __b) \
   ({ \
-     union { int8x16x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int8x16x2_t __i; __builtin_neon_v16qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__a, __bu.__o); \
    })
 
 #define vst2q_s16(__a, __b) \
   ({ \
-     union { int16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__a, __bu.__o); \
    })
 
 #define vst2q_s32(__a, __b) \
   ({ \
-     union { int32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4si (__a, __bu.__o); \
    })
 
 #define vst2q_f32(__a, __b) \
   ({ \
-     union { float32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { float32x4x2_t __i; __builtin_neon_v4sf2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4sf (__a, __bu.__o); \
    })
 
 #define vst2q_u8(__a, __b) \
   ({ \
-     union { uint8x16x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint8x16x2_t __i; __builtin_neon_v16qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__a, __bu.__o); \
    })
 
 #define vst2q_u16(__a, __b) \
   ({ \
-     union { uint16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__a, __bu.__o); \
    })
 
 #define vst2q_u32(__a, __b) \
   ({ \
-     union { uint32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v4si (__a, __bu.__o); \
    })
 
 #define vst2q_p8(__a, __b) \
   ({ \
-     union { poly8x16x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly8x16x2_t __i; __builtin_neon_v16qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__a, __bu.__o); \
    })
 
 #define vst2q_p16(__a, __b) \
   ({ \
-     union { poly16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__a, __bu.__o); \
    })
 
 #define vst2_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { int32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { float32x2x2_t __i; __builtin_neon_v2sf2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2sf (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { uint32x2x2_t __i; __builtin_neon_v2si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { poly8x8x2_t __i; __builtin_neon_v8qi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst2_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x2_t __i; __builtin_neon_ti __o; } __bu = { __b }; \
+     union { poly16x4x2_t __i; __builtin_neon_v4hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { float32x4x2_t __i; __builtin_neon_v4sf2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4sf (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint32x4x2_t __i; __builtin_neon_v4si2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst2q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x2_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly16x8x2_t __i; __builtin_neon_v8hi2 __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vld3_s8(__a) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_s16(__a) \
   ({ \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_s32(__a) \
   ({ \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v2si (__a); \
      __rv.__i; \
    })
 
 #define vld3_f32(__a) \
   ({ \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v2sf (__a); \
      __rv.__i; \
    })
 
 #define vld3_u8(__a) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_u16(__a) \
   ({ \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_u32(__a) \
   ({ \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v2si (__a); \
      __rv.__i; \
    })
 
 #define vld3_p8(__a) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_p16(__a) \
   ({ \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_s64(__a) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3di (__a); \
      __rv.__i; \
    })
 
 #define vld3_u64(__a) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3di (__a); \
      __rv.__i; \
    })
 
 #define vld3q_s8(__a) \
   ({ \
-     union { int8x16x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { int8x16x3_t __i; __builtin_neon_v16qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld3q_s16(__a) \
   ({ \
-     union { int16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { int16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld3q_s32(__a) \
   ({ \
-     union { int32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { int32x4x3_t __i; __builtin_neon_v4si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4si (__a); \
      __rv.__i; \
    })
 
 #define vld3q_f32(__a) \
   ({ \
-     union { float32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { float32x4x3_t __i; __builtin_neon_v4sf3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4sf (__a); \
      __rv.__i; \
    })
 
 #define vld3q_u8(__a) \
   ({ \
-     union { uint8x16x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { uint8x16x3_t __i; __builtin_neon_v16qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld3q_u16(__a) \
   ({ \
-     union { uint16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { uint16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld3q_u32(__a) \
   ({ \
-     union { uint32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { uint32x4x3_t __i; __builtin_neon_v4si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v4si (__a); \
      __rv.__i; \
    })
 
 #define vld3q_p8(__a) \
   ({ \
-     union { poly8x16x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { poly8x16x3_t __i; __builtin_neon_v16qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld3q_p16(__a) \
   ({ \
-     union { poly16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { poly16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __bu = { __b }; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev2sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { int16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { int16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
+     union { int16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { int32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { int32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
+     union { int32x4x3_t __i; __builtin_neon_v4si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { float32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { float32x4x3_t __i; __builtin_neon_v4sf3 __o; } __bu = { __b }; \
+     union { float32x4x3_t __i; __builtin_neon_v4sf3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { uint16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { uint16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
+     union { uint16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { uint32x4x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { uint32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
+     union { uint32x4x3_t __i; __builtin_neon_v4si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
-     union { poly16x8x3_t __i; __builtin_neon_ci __o; } __rv; \
+     union { poly16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
+     union { poly16x8x3_t __i; __builtin_neon_v8hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld3_dup_s8(__a) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_s16(__a) \
   ({ \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_s32(__a) \
   ({ \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_f32(__a) \
   ({ \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv2sf (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u8(__a) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u16(__a) \
   ({ \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u32(__a) \
   ({ \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_p8(__a) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_p16(__a) \
   ({ \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_s64(__a) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u64(__a) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_ei __o; } __rv; \
+     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vst3_s8(__a, __b) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__a, __bu.__o); \
    })
 
 #define vst3_s16(__a, __b) \
   ({ \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__a, __bu.__o); \
    })
 
 #define vst3_s32(__a, __b) \
   ({ \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v2si (__a, __bu.__o); \
    })
 
 #define vst3_f32(__a, __b) \
   ({ \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v2sf (__a, __bu.__o); \
    })
 
 #define vst3_u8(__a, __b) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__a, __bu.__o); \
    })
 
 #define vst3_u16(__a, __b) \
   ({ \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__a, __bu.__o); \
    })
 
 #define vst3_u32(__a, __b) \
   ({ \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v2si (__a, __bu.__o); \
    })
 
 #define vst3_p8(__a, __b) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__a, __bu.__o); \
    })
 
 #define vst3_p16(__a, __b) \
   ({ \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__a, __bu.__o); \
    })
 
 #define vst3_s64(__a, __b) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
      __builtin_neon_vst3di (__a, __bu.__o); \
    })
 
 #define vst3_u64(__a, __b) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
      __builtin_neon_vst3di (__a, __bu.__o); \
    })
 
 #define vst3q_s8(__a, __b) \
   ({ \
-     union { int8x16x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { int8x16x3_t __i; __builtin_neon_v16qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__a, __bu.__o); \
    })
 
 #define vst3q_s16(__a, __b) \
   ({ \
-     union { int16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { int16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__a, __bu.__o); \
    })
 
 #define vst3q_s32(__a, __b) \
   ({ \
-     union { int32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { int32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4si (__a, __bu.__o); \
    })
 
 #define vst3q_f32(__a, __b) \
   ({ \
-     union { float32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { float32x4x3_t __i; __builtin_neon_v4sf3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4sf (__a, __bu.__o); \
    })
 
 #define vst3q_u8(__a, __b) \
   ({ \
-     union { uint8x16x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { uint8x16x3_t __i; __builtin_neon_v16qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__a, __bu.__o); \
    })
 
 #define vst3q_u16(__a, __b) \
   ({ \
-     union { uint16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { uint16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__a, __bu.__o); \
    })
 
 #define vst3q_u32(__a, __b) \
   ({ \
-     union { uint32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { uint32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v4si (__a, __bu.__o); \
    })
 
 #define vst3q_p8(__a, __b) \
   ({ \
-     union { poly8x16x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { poly8x16x3_t __i; __builtin_neon_v16qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__a, __bu.__o); \
    })
 
 #define vst3q_p16(__a, __b) \
   ({ \
-     union { poly16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { poly16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__a, __bu.__o); \
    })
 
 #define vst3_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { int32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { float32x2x3_t __i; __builtin_neon_v2sf3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2sf (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { uint32x2x3_t __i; __builtin_neon_v2si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { poly8x8x3_t __i; __builtin_neon_v8qi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst3_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x3_t __i; __builtin_neon_ei __o; } __bu = { __b }; \
+     union { poly16x4x3_t __i; __builtin_neon_v4hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { int16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { int32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { float32x4x3_t __i; __builtin_neon_v4sf3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4sf (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { uint16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { uint32x4x3_t __i; __builtin_neon_v4si3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst3q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x3_t __i; __builtin_neon_ci __o; } __bu = { __b }; \
+     union { poly16x8x3_t __i; __builtin_neon_v8hi3 __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vld4_s8(__a) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_s16(__a) \
   ({ \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_s32(__a) \
   ({ \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v2si (__a); \
      __rv.__i; \
    })
 
 #define vld4_f32(__a) \
   ({ \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v2sf (__a); \
      __rv.__i; \
    })
 
 #define vld4_u8(__a) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_u16(__a) \
   ({ \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_u32(__a) \
   ({ \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v2si (__a); \
      __rv.__i; \
    })
 
 #define vld4_p8(__a) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_p16(__a) \
   ({ \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_s64(__a) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4di (__a); \
      __rv.__i; \
    })
 
 #define vld4_u64(__a) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4di (__a); \
      __rv.__i; \
    })
 
 #define vld4q_s8(__a) \
   ({ \
-     union { int8x16x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { int8x16x4_t __i; __builtin_neon_v16qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld4q_s16(__a) \
   ({ \
-     union { int16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { int16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld4q_s32(__a) \
   ({ \
-     union { int32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { int32x4x4_t __i; __builtin_neon_v4si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4si (__a); \
      __rv.__i; \
    })
 
 #define vld4q_f32(__a) \
   ({ \
-     union { float32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { float32x4x4_t __i; __builtin_neon_v4sf4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4sf (__a); \
      __rv.__i; \
    })
 
 #define vld4q_u8(__a) \
   ({ \
-     union { uint8x16x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { uint8x16x4_t __i; __builtin_neon_v16qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld4q_u16(__a) \
   ({ \
-     union { uint16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { uint16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld4q_u32(__a) \
   ({ \
-     union { uint32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { uint32x4x4_t __i; __builtin_neon_v4si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v4si (__a); \
      __rv.__i; \
    })
 
 #define vld4q_p8(__a) \
   ({ \
-     union { poly8x16x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { poly8x16x4_t __i; __builtin_neon_v16qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v16qi (__a); \
      __rv.__i; \
    })
 
 #define vld4q_p16(__a) \
   ({ \
-     union { poly16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { poly16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v8hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __bu = { __b }; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev2sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev2si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8qi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { int16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { int16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
+     union { int16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { int32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { int32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
+     union { int32x4x4_t __i; __builtin_neon_v4si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { float32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { float32x4x4_t __i; __builtin_neon_v4sf4 __o; } __bu = { __b }; \
+     union { float32x4x4_t __i; __builtin_neon_v4sf4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4sf (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { uint16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { uint16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
+     union { uint16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { uint32x4x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { uint32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
+     union { uint32x4x4_t __i; __builtin_neon_v4si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev4si (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
-     union { poly16x8x4_t __i; __builtin_neon_xi __o; } __rv; \
+     union { poly16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
+     union { poly16x8x4_t __i; __builtin_neon_v8hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_lanev8hi (__a, __bu.__o, __c); \
      __rv.__i; \
    })
 
 #define vld4_dup_s8(__a) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_s16(__a) \
   ({ \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_s32(__a) \
   ({ \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_f32(__a) \
   ({ \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv2sf (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u8(__a) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u16(__a) \
   ({ \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u32(__a) \
   ({ \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv2si (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_p8(__a) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv8qi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_p16(__a) \
   ({ \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv4hi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_s64(__a) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u64(__a) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_oi __o; } __rv; \
+     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupdi (__a); \
      __rv.__i; \
    })
 
 #define vst4_s8(__a, __b) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__a, __bu.__o); \
    })
 
 #define vst4_s16(__a, __b) \
   ({ \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__a, __bu.__o); \
    })
 
 #define vst4_s32(__a, __b) \
   ({ \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v2si (__a, __bu.__o); \
    })
 
 #define vst4_f32(__a, __b) \
   ({ \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v2sf (__a, __bu.__o); \
    })
 
 #define vst4_u8(__a, __b) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__a, __bu.__o); \
    })
 
 #define vst4_u16(__a, __b) \
   ({ \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__a, __bu.__o); \
    })
 
 #define vst4_u32(__a, __b) \
   ({ \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v2si (__a, __bu.__o); \
    })
 
 #define vst4_p8(__a, __b) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__a, __bu.__o); \
    })
 
 #define vst4_p16(__a, __b) \
   ({ \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__a, __bu.__o); \
    })
 
 #define vst4_s64(__a, __b) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
      __builtin_neon_vst4di (__a, __bu.__o); \
    })
 
 #define vst4_u64(__a, __b) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
      __builtin_neon_vst4di (__a, __bu.__o); \
    })
 
 #define vst4q_s8(__a, __b) \
   ({ \
-     union { int8x16x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { int8x16x4_t __i; __builtin_neon_v16qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__a, __bu.__o); \
    })
 
 #define vst4q_s16(__a, __b) \
   ({ \
-     union { int16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { int16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__a, __bu.__o); \
    })
 
 #define vst4q_s32(__a, __b) \
   ({ \
-     union { int32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { int32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4si (__a, __bu.__o); \
    })
 
 #define vst4q_f32(__a, __b) \
   ({ \
-     union { float32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { float32x4x4_t __i; __builtin_neon_v4sf4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4sf (__a, __bu.__o); \
    })
 
 #define vst4q_u8(__a, __b) \
   ({ \
-     union { uint8x16x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { uint8x16x4_t __i; __builtin_neon_v16qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__a, __bu.__o); \
    })
 
 #define vst4q_u16(__a, __b) \
   ({ \
-     union { uint16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { uint16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__a, __bu.__o); \
    })
 
 #define vst4q_u32(__a, __b) \
   ({ \
-     union { uint32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { uint32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v4si (__a, __bu.__o); \
    })
 
 #define vst4q_p8(__a, __b) \
   ({ \
-     union { poly8x16x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { poly8x16x4_t __i; __builtin_neon_v16qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__a, __bu.__o); \
    })
 
 #define vst4q_p16(__a, __b) \
   ({ \
-     union { poly16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { poly16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__a, __bu.__o); \
    })
 
 #define vst4_lane_s8(__a, __b, __c) \
   ({ \
-     union { int8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { int32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { float32x2x4_t __i; __builtin_neon_v2sf4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2sf (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_u8(__a, __b, __c) \
   ({ \
-     union { uint8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x2x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { uint32x2x4_t __i; __builtin_neon_v2si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2si (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_p8(__a, __b, __c) \
   ({ \
-     union { poly8x8x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly8x8x4_t __i; __builtin_neon_v8qi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__a, __bu.__o, __c); \
    })
 
 #define vst4_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x4x4_t __i; __builtin_neon_oi __o; } __bu = { __b }; \
+     union { poly16x4x4_t __i; __builtin_neon_v4hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_s16(__a, __b, __c) \
   ({ \
-     union { int16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { int16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_s32(__a, __b, __c) \
   ({ \
-     union { int32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { int32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_f32(__a, __b, __c) \
   ({ \
-     union { float32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { float32x4x4_t __i; __builtin_neon_v4sf4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4sf (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_u16(__a, __b, __c) \
   ({ \
-     union { uint16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { uint16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_u32(__a, __b, __c) \
   ({ \
-     union { uint32x4x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { uint32x4x4_t __i; __builtin_neon_v4si4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4si (__a, __bu.__o, __c); \
    })
 
 #define vst4q_lane_p16(__a, __b, __c) \
   ({ \
-     union { poly16x8x4_t __i; __builtin_neon_xi __o; } __bu = { __b }; \
+     union { poly16x8x4_t __i; __builtin_neon_v8hi4 __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__a, __bu.__o, __c); \
    })
 

@@ -16608,6 +16608,41 @@ make_neon_float_type (void)
 }
 /* APPLE LOCAL end 7083296 Build without warnings.  */
 
+/* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+/* Create a new builtin struct type containing NUMVECS fields (where NUMVECS
+   is in the range from 2 to 4) of type VECTYPE.  */
+static tree
+build_multivec_type (tree vectype, unsigned numvecs, const char *tag)
+{
+  tree record, name, fields, fld;
+  char fldname[5];
+  unsigned n;
+
+  record = (*lang_hooks.types.make_type) (RECORD_TYPE);
+  name = build_decl (TYPE_DECL, get_identifier (tag), record);
+  TYPE_NAME (record) = name;
+
+  gcc_assert (numvecs >= 2 && numvecs <= 4);
+  fields = NULL;
+  for (n = 0; n < numvecs; ++n)
+    {
+      /* The fields are created in reverse order because it is easier to
+         chain them together that way.  Number them accordingly.  */
+      sprintf (fldname, "val%u", numvecs - n - 1);
+      fld = build_decl (FIELD_DECL, get_identifier (fldname), vectype);
+      DECL_FIELD_CONTEXT (fld) = record;
+      TREE_CHAIN (fld) = fields;
+      fields = fld;
+    }
+
+  TYPE_FIELDS (record) = fields;
+  layout_type (record);
+  return record;
+}
+#endif /* ENABLE_LLVM */
+/* LLVM LOCAL end multi-vector types */
+
 static void
 arm_init_neon_builtins (void)
 {
@@ -16617,11 +16652,19 @@ arm_init_neon_builtins (void)
 #define qhi_TN neon_polyHI_type_node
 #define si_TN neon_intSI_type_node
 #define di_TN neon_intDI_type_node
+/* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+#define ti_TN V8QI2_type_node
+#define ei_TN V8QI3_type_node
+#define oi_TN V8QI4_type_node
+#else
 #define ti_TN intTI_type_node
 #define ei_TN intEI_type_node
 #define oi_TN intOI_type_node
 #define ci_TN intCI_type_node
 #define xi_TN intXI_type_node
+#endif
+/* LLVM LOCAL end multi-vector types */
 
 #define sf_TN neon_float_type_node
 
@@ -16731,11 +16774,98 @@ arm_init_neon_builtins (void)
   tree intUSI_type_node = make_unsigned_type (GET_MODE_PRECISION (SImode));
   tree intUDI_type_node = make_unsigned_type (GET_MODE_PRECISION (DImode));
 
+  /* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+  tree V8QI2_type_node = build_multivec_type (V8QI_type_node, 2,
+                                              "__builtin_neon_v8qi2");
+  tree V4HI2_type_node = build_multivec_type (V4HI_type_node, 2,
+                                              "__builtin_neon_v4hi2");
+  tree V2SI2_type_node = build_multivec_type (V2SI_type_node, 2,
+                                              "__builtin_neon_v2si2");
+  tree DI2_type_node   = build_multivec_type (neon_intDI_type_node, 2,
+                                              "__builtin_neon_di2");
+  tree V2SF2_type_node = build_multivec_type (V2SF_type_node, 2,
+                                              "__builtin_neon_v2sf2");
+  tree V8QI3_type_node = build_multivec_type (V8QI_type_node, 3,
+                                              "__builtin_neon_v8qi3");
+  tree V4HI3_type_node = build_multivec_type (V4HI_type_node, 3,
+                                              "__builtin_neon_v4hi3");
+  tree V2SI3_type_node = build_multivec_type (V2SI_type_node, 3,
+                                              "__builtin_neon_v2si3");
+  tree DI3_type_node   = build_multivec_type (neon_intDI_type_node, 3,
+                                              "__builtin_neon_di3");
+  tree V2SF3_type_node = build_multivec_type (V2SF_type_node, 3,
+                                              "__builtin_neon_v2sf3");
+  tree V8QI4_type_node = build_multivec_type (V8QI_type_node, 4,
+                                              "__builtin_neon_v8qi4");
+  tree V4HI4_type_node = build_multivec_type (V4HI_type_node, 4,
+                                              "__builtin_neon_v4hi4");
+  tree V2SI4_type_node = build_multivec_type (V2SI_type_node, 4,
+                                              "__builtin_neon_v2si4");
+  tree DI4_type_node   = build_multivec_type (neon_intDI_type_node, 4,
+                                              "__builtin_neon_di4");
+  tree V2SF4_type_node = build_multivec_type (V2SF_type_node, 4,
+                                              "__builtin_neon_v2sf4");
+  tree V16QI2_type_node = build_multivec_type (V16QI_type_node, 2,
+                                               "__builtin_neon_v16qi2");
+  tree V8HI2_type_node = build_multivec_type (V8HI_type_node, 2,
+                                              "__builtin_neon_v8hi2");
+  tree V4SI2_type_node = build_multivec_type (V4SI_type_node, 2,
+                                              "__builtin_neon_v4si2");
+  tree V4SF2_type_node = build_multivec_type (V4SF_type_node, 2,
+                                              "__builtin_neon_v4sf2");
+  tree V16QI3_type_node = build_multivec_type (V16QI_type_node, 3,
+                                               "__builtin_neon_v16qi3");
+  tree V8HI3_type_node = build_multivec_type (V8HI_type_node, 3,
+                                              "__builtin_neon_v8hi3");
+  tree V4SI3_type_node = build_multivec_type (V4SI_type_node, 3,
+                                              "__builtin_neon_v4si3");
+  tree V4SF3_type_node = build_multivec_type (V4SF_type_node, 3,
+                                              "__builtin_neon_v4sf3");
+  tree V16QI4_type_node = build_multivec_type (V16QI_type_node, 4,
+                                               "__builtin_neon_v16qi4");
+  tree V8HI4_type_node = build_multivec_type (V8HI_type_node, 4,
+                                              "__builtin_neon_v8hi4");
+  tree V4SI4_type_node = build_multivec_type (V4SI_type_node, 4,
+                                              "__builtin_neon_v4si4");
+  tree V4SF4_type_node = build_multivec_type (V4SF_type_node, 4,
+                                              "__builtin_neon_v4sf4");
+#else /* ENABLE_LLVM */
   /* Opaque integer types for structures of vectors.  */
   tree intEI_type_node = make_signed_type (GET_MODE_PRECISION (EImode));
   tree intOI_type_node = make_signed_type (GET_MODE_PRECISION (OImode));
   tree intCI_type_node = make_signed_type (GET_MODE_PRECISION (CImode));
   tree intXI_type_node = make_signed_type (GET_MODE_PRECISION (XImode));
+
+  tree V8QI2_type_node = intTI_type_node;
+  tree V4HI2_type_node = intTI_type_node;
+  tree V2SI2_type_node = intTI_type_node;
+  tree DI2_type_node   = intTI_type_node;
+  tree V2SF2_type_node = intTI_type_node;
+  tree V8QI3_type_node = intEI_type_node;
+  tree V4HI3_type_node = intEI_type_node;
+  tree V2SI3_type_node = intEI_type_node;
+  tree DI3_type_node   = intEI_type_node;
+  tree V2SF3_type_node = intEI_type_node;
+  tree V8QI4_type_node = intOI_type_node;
+  tree V4HI4_type_node = intOI_type_node;
+  tree V2SI4_type_node = intOI_type_node;
+  tree DI4_type_node   = intOI_type_node;
+  tree V2SF4_type_node = intOI_type_node;
+  tree V16QI2_type_node = intOI_type_node;
+  tree V8HI2_type_node = intOI_type_node;
+  tree V4SI2_type_node = intOI_type_node;
+  tree V4SF2_type_node = intOI_type_node;
+  tree V16QI3_type_node = intCI_type_node;
+  tree V8HI3_type_node = intCI_type_node;
+  tree V4SI3_type_node = intCI_type_node;
+  tree V4SF3_type_node = intCI_type_node;
+  tree V16QI4_type_node = intXI_type_node;
+  tree V8HI4_type_node = intXI_type_node;
+  tree V4SI4_type_node = intXI_type_node;
+  tree V4SF4_type_node = intXI_type_node;
+#endif /* ENABLE_LLVM */
+  /* LLVM LOCAL end multi-vector types */
 
   /* Pointers to vector types.  */
   tree V8QI_pointer_node = build_pointer_type (V8QI_type_node);
@@ -17159,279 +17289,331 @@ arm_init_neon_builtins (void)
 			      V4SF_type_node, intSI_type_node, NULL);
 
   /* Load size-2 structure operations, double-word.  */
+  /* LLVM LOCAL begin multi-vector types */
+  /* LLVM: To minimize changes to the GCC source, the original wide-integer
+     mode abbrevations (ti, ei, oi, ci, and xi) have not been replaced by
+     vector-type-specific names (e.g., v8qi2, etc.) in the following
+     types.  OI-mode values, however, are type-ambiguous: they can be
+     structs of 4 double-register vectors or 2 quad-register vectors.  In
+     places where this ambiguity exists, "d" and "q" suffixes are added to
+     the "oi" name, i.e., "oid" and "oiq", to distinguish the double- and
+     quad-register types.  */
   tree ti_ftype_const_qi_pointer =
-    build_function_type_list (intTI_type_node, const_intQI_pointer_node, NULL);
+    build_function_type_list (V8QI2_type_node, const_intQI_pointer_node, NULL);
   tree ti_ftype_const_hi_pointer =
-    build_function_type_list (intTI_type_node, const_intHI_pointer_node, NULL);
+    build_function_type_list (V4HI2_type_node, const_intHI_pointer_node, NULL);
   tree ti_ftype_const_si_pointer =
-    build_function_type_list (intTI_type_node, const_intSI_pointer_node, NULL);
+    build_function_type_list (V2SI2_type_node, const_intSI_pointer_node, NULL);
   tree ti_ftype_const_di_pointer =
-    build_function_type_list (intTI_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (DI2_type_node, const_intDI_pointer_node, NULL);
   tree ti_ftype_const_sf_pointer =
-    build_function_type_list (intTI_type_node, const_float_pointer_node, NULL);
+    build_function_type_list (V2SF2_type_node, const_float_pointer_node, NULL);
 
   /* Load size-2 structure operations, quad-word; also load size-4,
      double-word.  */
-  tree oi_ftype_const_qi_pointer =
-    build_function_type_list (intOI_type_node, const_intQI_pointer_node, NULL);
-  tree oi_ftype_const_hi_pointer =
-    build_function_type_list (intOI_type_node, const_intHI_pointer_node, NULL);
-  tree oi_ftype_const_si_pointer =
-    build_function_type_list (intOI_type_node, const_intSI_pointer_node, NULL);
-  tree oi_ftype_const_sf_pointer =
-    build_function_type_list (intOI_type_node, const_float_pointer_node, NULL);
+  tree oiq_ftype_const_qi_pointer =
+    build_function_type_list (V16QI2_type_node, const_intQI_pointer_node, NULL);
+  tree oiq_ftype_const_hi_pointer =
+    build_function_type_list (V8HI2_type_node, const_intHI_pointer_node, NULL);
+  tree oiq_ftype_const_si_pointer =
+    build_function_type_list (V4SI2_type_node, const_intSI_pointer_node, NULL);
+  tree oiq_ftype_const_sf_pointer =
+    build_function_type_list (V4SF2_type_node, const_float_pointer_node, NULL);
+
+  tree oid_ftype_const_qi_pointer =
+    build_function_type_list (V8QI4_type_node, const_intQI_pointer_node, NULL);
+  tree oid_ftype_const_hi_pointer =
+    build_function_type_list (V4HI4_type_node, const_intHI_pointer_node, NULL);
+  tree oid_ftype_const_si_pointer =
+    build_function_type_list (V2SI4_type_node, const_intSI_pointer_node, NULL);
+  tree oid_ftype_const_sf_pointer =
+    build_function_type_list (V2SF4_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-2 structure operations, double-word.  */
   tree ti_ftype_const_qi_pointer_ti_si =
-    build_function_type_list (intTI_type_node, const_intQI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V8QI2_type_node, const_intQI_pointer_node,
+			      V8QI2_type_node, intSI_type_node, NULL);
   tree ti_ftype_const_hi_pointer_ti_si =
-    build_function_type_list (intTI_type_node, const_intHI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4HI2_type_node, const_intHI_pointer_node,
+			      V4HI2_type_node, intSI_type_node, NULL);
   tree ti_ftype_const_si_pointer_ti_si =
-    build_function_type_list (intTI_type_node, const_intSI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V2SI2_type_node, const_intSI_pointer_node,
+			      V2SI2_type_node, intSI_type_node, NULL);
   tree ti_ftype_const_sf_pointer_ti_si =
-    build_function_type_list (intTI_type_node, const_float_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V2SF2_type_node, const_float_pointer_node,
+			      V2SF2_type_node, intSI_type_node, NULL);
 
   /* Load lane size-2 structure operations, quad-word; also load lane size-4,
      double-word.  */
-  tree oi_ftype_const_hi_pointer_oi_si =
-    build_function_type_list (intOI_type_node, const_intHI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
-  tree oi_ftype_const_si_pointer_oi_si =
-    build_function_type_list (intOI_type_node, const_intSI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
-  tree oi_ftype_const_sf_pointer_oi_si =
-    build_function_type_list (intOI_type_node, const_float_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
+  tree oiq_ftype_const_hi_pointer_oiq_si =
+    build_function_type_list (V8HI2_type_node, const_intHI_pointer_node,
+			      V8HI2_type_node, intSI_type_node, NULL);
+  tree oiq_ftype_const_si_pointer_oiq_si =
+    build_function_type_list (V4SI2_type_node, const_intSI_pointer_node,
+			      V4SI2_type_node, intSI_type_node, NULL);
+  tree oiq_ftype_const_sf_pointer_oiq_si =
+    build_function_type_list (V4SF2_type_node, const_float_pointer_node,
+			      V4SF2_type_node, intSI_type_node, NULL);
+
+  tree oid_ftype_const_hi_pointer_oid_si =
+    build_function_type_list (V4HI4_type_node, const_intHI_pointer_node,
+			      V4HI4_type_node, intSI_type_node, NULL);
+  tree oid_ftype_const_si_pointer_oid_si =
+    build_function_type_list (V2SI4_type_node, const_intSI_pointer_node,
+			      V2SI4_type_node, intSI_type_node, NULL);
+  tree oid_ftype_const_sf_pointer_oid_si =
+    build_function_type_list (V2SF4_type_node, const_float_pointer_node,
+			      V2SF4_type_node, intSI_type_node, NULL);
 
   /* Store size-2 structure operations, double-word.  */
   tree void_ftype_qi_pointer_ti =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intTI_type_node, NULL);
+			      V8QI2_type_node, NULL);
   tree void_ftype_hi_pointer_ti =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intTI_type_node, NULL);
+			      V4HI2_type_node, NULL);
   tree void_ftype_si_pointer_ti =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intTI_type_node, NULL);
+			      V2SI2_type_node, NULL);
   tree void_ftype_di_pointer_ti =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      intTI_type_node, NULL);
+			      DI2_type_node, NULL);
   tree void_ftype_sf_pointer_ti =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intTI_type_node, NULL);
+			      V2SF2_type_node, NULL);
 
   /* Store size-2 structure operations, quad-word; also store size-4,
      double-word.  */
-  tree void_ftype_qi_pointer_oi =
+  tree void_ftype_qi_pointer_oiq =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intOI_type_node, NULL);
-  tree void_ftype_hi_pointer_oi =
+			      V16QI2_type_node, NULL);
+  tree void_ftype_hi_pointer_oiq =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intOI_type_node, NULL);
-  tree void_ftype_si_pointer_oi =
+			      V8HI2_type_node, NULL);
+  tree void_ftype_si_pointer_oiq =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intOI_type_node, NULL);
-  tree void_ftype_sf_pointer_oi =
+			      V4SI2_type_node, NULL);
+  tree void_ftype_sf_pointer_oiq =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intOI_type_node, NULL);
+			      V4SF2_type_node, NULL);
+
+  tree void_ftype_qi_pointer_oid =
+    build_function_type_list (void_type_node, intQI_pointer_node,
+			      V8QI4_type_node, NULL);
+  tree void_ftype_hi_pointer_oid =
+    build_function_type_list (void_type_node, intHI_pointer_node,
+			      V4HI4_type_node, NULL);
+  tree void_ftype_si_pointer_oid =
+    build_function_type_list (void_type_node, intSI_pointer_node,
+			      V2SI4_type_node, NULL);
+  tree void_ftype_sf_pointer_oid =
+    build_function_type_list (void_type_node, float_pointer_node,
+			      V2SF4_type_node, NULL);
 
   /* Store lane size-2 structure operations, double-word.  */
   tree void_ftype_qi_pointer_ti_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+			      V8QI2_type_node, intSI_type_node, NULL);
   tree void_ftype_hi_pointer_ti_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+			      V4HI2_type_node, intSI_type_node, NULL);
   tree void_ftype_si_pointer_ti_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+			      V2SI2_type_node, intSI_type_node, NULL);
   tree void_ftype_sf_pointer_ti_si =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intTI_type_node, intSI_type_node, NULL);
+			      V2SF2_type_node, intSI_type_node, NULL);
 
   /* Store lane size-2 structure operations, quad-word; also store
      lane size-4, double-word.  */
-  tree void_ftype_hi_pointer_oi_si =
+  tree void_ftype_hi_pointer_oiq_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_oi_si =
+			      V8HI2_type_node, intSI_type_node, NULL);
+  tree void_ftype_si_pointer_oiq_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_oi_si =
+			      V4SI2_type_node, intSI_type_node, NULL);
+  tree void_ftype_sf_pointer_oiq_si =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
+			      V4SF2_type_node, intSI_type_node, NULL);
+
+  tree void_ftype_hi_pointer_oid_si =
+    build_function_type_list (void_type_node, intHI_pointer_node,
+			      V4HI4_type_node, intSI_type_node, NULL);
+  tree void_ftype_si_pointer_oid_si =
+    build_function_type_list (void_type_node, intSI_pointer_node,
+			      V2SI4_type_node, intSI_type_node, NULL);
+  tree void_ftype_sf_pointer_oid_si =
+    build_function_type_list (void_type_node, float_pointer_node,
+			      V2SF4_type_node, intSI_type_node, NULL);
 
   /* Load size-3 structure operations, double-word.  */
   tree ei_ftype_const_qi_pointer =
-    build_function_type_list (intEI_type_node, const_intQI_pointer_node, NULL);
+    build_function_type_list (V8QI3_type_node, const_intQI_pointer_node, NULL);
   tree ei_ftype_const_hi_pointer =
-    build_function_type_list (intEI_type_node, const_intHI_pointer_node, NULL);
+    build_function_type_list (V4HI3_type_node, const_intHI_pointer_node, NULL);
   tree ei_ftype_const_si_pointer =
-    build_function_type_list (intEI_type_node, const_intSI_pointer_node, NULL);
+    build_function_type_list (V2SI3_type_node, const_intSI_pointer_node, NULL);
   tree ei_ftype_const_di_pointer =
-    build_function_type_list (intEI_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (DI3_type_node, const_intDI_pointer_node, NULL);
   tree ei_ftype_const_sf_pointer =
-    build_function_type_list (intEI_type_node, const_float_pointer_node, NULL);
+    build_function_type_list (V2SF3_type_node, const_float_pointer_node, NULL);
 
   /* Load size-3 structure operations, quad-word.  */
   tree ci_ftype_const_qi_pointer =
-    build_function_type_list (intCI_type_node, const_intQI_pointer_node, NULL);
+    build_function_type_list (V16QI3_type_node, const_intQI_pointer_node, NULL);
   tree ci_ftype_const_hi_pointer =
-    build_function_type_list (intCI_type_node, const_intHI_pointer_node, NULL);
+    build_function_type_list (V8HI3_type_node, const_intHI_pointer_node, NULL);
   tree ci_ftype_const_si_pointer =
-    build_function_type_list (intCI_type_node, const_intSI_pointer_node, NULL);
+    build_function_type_list (V4SI3_type_node, const_intSI_pointer_node, NULL);
   tree ci_ftype_const_sf_pointer =
-    build_function_type_list (intCI_type_node, const_float_pointer_node, NULL);
+    build_function_type_list (V4SF3_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-3 structure operations, double-word.  */
   tree ei_ftype_const_qi_pointer_ei_si =
-    build_function_type_list (intEI_type_node, const_intQI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V8QI3_type_node, const_intQI_pointer_node,
+			      V8QI3_type_node, intSI_type_node, NULL);
   tree ei_ftype_const_hi_pointer_ei_si =
-    build_function_type_list (intEI_type_node, const_intHI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4HI3_type_node, const_intHI_pointer_node,
+			      V4HI3_type_node, intSI_type_node, NULL);
   tree ei_ftype_const_si_pointer_ei_si =
-    build_function_type_list (intEI_type_node, const_intSI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V2SI3_type_node, const_intSI_pointer_node,
+			      V2SI3_type_node, intSI_type_node, NULL);
   tree ei_ftype_const_sf_pointer_ei_si =
-    build_function_type_list (intEI_type_node, const_float_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V2SF3_type_node, const_float_pointer_node,
+			      V2SF3_type_node, intSI_type_node, NULL);
 
   /* Load lane size-3 structure operations, quad-word.  */
   tree ci_ftype_const_hi_pointer_ci_si =
-    build_function_type_list (intCI_type_node, const_intHI_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V8HI3_type_node, const_intHI_pointer_node,
+			      V8HI3_type_node, intSI_type_node, NULL);
   tree ci_ftype_const_si_pointer_ci_si =
-    build_function_type_list (intCI_type_node, const_intSI_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4SI3_type_node, const_intSI_pointer_node,
+			      V4SI3_type_node, intSI_type_node, NULL);
   tree ci_ftype_const_sf_pointer_ci_si =
-    build_function_type_list (intCI_type_node, const_float_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4SF3_type_node, const_float_pointer_node,
+			      V4SF3_type_node, intSI_type_node, NULL);
 
   /* Store size-3 structure operations, double-word.  */
   tree void_ftype_qi_pointer_ei =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intEI_type_node, NULL);
+			      V8QI3_type_node, NULL);
   tree void_ftype_hi_pointer_ei =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intEI_type_node, NULL);
+			      V4HI3_type_node, NULL);
   tree void_ftype_si_pointer_ei =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intEI_type_node, NULL);
+			      V2SI3_type_node, NULL);
   tree void_ftype_di_pointer_ei =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      intEI_type_node, NULL);
+			      DI3_type_node, NULL);
   tree void_ftype_sf_pointer_ei =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intEI_type_node, NULL);
+			      V2SF3_type_node, NULL);
 
   /* Store size-3 structure operations, quad-word.  */
   tree void_ftype_qi_pointer_ci =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intCI_type_node, NULL);
+			      V16QI3_type_node, NULL);
   tree void_ftype_hi_pointer_ci =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intCI_type_node, NULL);
+			      V8HI3_type_node, NULL);
   tree void_ftype_si_pointer_ci =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intCI_type_node, NULL);
+			      V4SI3_type_node, NULL);
   tree void_ftype_sf_pointer_ci =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intCI_type_node, NULL);
+			      V4SF3_type_node, NULL);
 
   /* Store lane size-3 structure operations, double-word.  */
   tree void_ftype_qi_pointer_ei_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+			      V8QI3_type_node, intSI_type_node, NULL);
   tree void_ftype_hi_pointer_ei_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+			      V4HI3_type_node, intSI_type_node, NULL);
   tree void_ftype_si_pointer_ei_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+			      V2SI3_type_node, intSI_type_node, NULL);
   tree void_ftype_sf_pointer_ei_si =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intEI_type_node, intSI_type_node, NULL);
+			      V2SF3_type_node, intSI_type_node, NULL);
 
   /* Store lane size-3 structure operations, quad-word.  */
   tree void_ftype_hi_pointer_ci_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+			      V8HI3_type_node, intSI_type_node, NULL);
   tree void_ftype_si_pointer_ci_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+			      V4SI3_type_node, intSI_type_node, NULL);
   tree void_ftype_sf_pointer_ci_si =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intCI_type_node, intSI_type_node, NULL);
+			      V4SF3_type_node, intSI_type_node, NULL);
 
   /* Load size-4 structure operations, double-word.  */
   tree oi_ftype_const_di_pointer =
-    build_function_type_list (intOI_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (DI4_type_node, const_intDI_pointer_node, NULL);
 
   /* Load size-4 structure operations, quad-word.  */
   tree xi_ftype_const_qi_pointer =
-    build_function_type_list (intXI_type_node, const_intQI_pointer_node, NULL);
+    build_function_type_list (V16QI4_type_node, const_intQI_pointer_node, NULL);
   tree xi_ftype_const_hi_pointer =
-    build_function_type_list (intXI_type_node, const_intHI_pointer_node, NULL);
+    build_function_type_list (V8HI4_type_node, const_intHI_pointer_node, NULL);
   tree xi_ftype_const_si_pointer =
-    build_function_type_list (intXI_type_node, const_intSI_pointer_node, NULL);
+    build_function_type_list (V4SI4_type_node, const_intSI_pointer_node, NULL);
   tree xi_ftype_const_sf_pointer =
-    build_function_type_list (intXI_type_node, const_float_pointer_node, NULL);
+    build_function_type_list (V4SF4_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-4 structure operations, double-word.  */
   tree oi_ftype_const_qi_pointer_oi_si =
-    build_function_type_list (intOI_type_node, const_intQI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V8QI4_type_node, const_intQI_pointer_node,
+			      V8QI4_type_node, intSI_type_node, NULL);
 
   /* Load lane size-4 structure operations, quad-word.  */
   tree xi_ftype_const_hi_pointer_xi_si =
-    build_function_type_list (intXI_type_node, const_intHI_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V8HI4_type_node, const_intHI_pointer_node,
+			      V8HI4_type_node, intSI_type_node, NULL);
   tree xi_ftype_const_si_pointer_xi_si =
-    build_function_type_list (intXI_type_node, const_intSI_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4SI4_type_node, const_intSI_pointer_node,
+			      V4SI4_type_node, intSI_type_node, NULL);
   tree xi_ftype_const_sf_pointer_xi_si =
-    build_function_type_list (intXI_type_node, const_float_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+    build_function_type_list (V4SF4_type_node, const_float_pointer_node,
+			      V4SF4_type_node, intSI_type_node, NULL);
 
   /* Store size-4 structure operations, double-word.  */
   tree void_ftype_di_pointer_oi =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      intOI_type_node, NULL);
+			      DI4_type_node, NULL);
 
   /* Store size-4 structure operations, quad-word.  */
   tree void_ftype_qi_pointer_xi =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intXI_type_node, NULL);
+			      V16QI4_type_node, NULL);
   tree void_ftype_hi_pointer_xi =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intXI_type_node, NULL);
+			      V8HI4_type_node, NULL);
   tree void_ftype_si_pointer_xi =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intXI_type_node, NULL);
+			      V4SI4_type_node, NULL);
   tree void_ftype_sf_pointer_xi =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intXI_type_node, NULL);
+			      V4SF4_type_node, NULL);
 
   /* Store lane size-4 structure operations, double-word.  */
   tree void_ftype_qi_pointer_oi_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
-			      intOI_type_node, intSI_type_node, NULL);
+			      V8QI4_type_node, intSI_type_node, NULL);
 
   /* Store lane size-4 structure operations, quad-word.  */
   tree void_ftype_hi_pointer_xi_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+			      V8HI4_type_node, intSI_type_node, NULL);
   tree void_ftype_si_pointer_xi_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+			      V4SI4_type_node, intSI_type_node, NULL);
   tree void_ftype_sf_pointer_xi_si =
     build_function_type_list (void_type_node, float_pointer_node,
-			      intXI_type_node, intSI_type_node, NULL);
+			      V4SF4_type_node, intSI_type_node, NULL);
+  /* LLVM LOCAL end multi-vector types */
 
   tree reinterp_ftype_dreg[5][5];
   tree reinterp_ftype_qreg[5][5];
@@ -17466,16 +17648,62 @@ arm_init_neon_builtins (void)
   (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
 					     "__builtin_neon_udi");
 
-  (*lang_hooks.types.register_builtin_type) (intTI_type_node,
-					     "__builtin_neon_ti");
-  (*lang_hooks.types.register_builtin_type) (intEI_type_node,
-					     "__builtin_neon_ei");
-  (*lang_hooks.types.register_builtin_type) (intOI_type_node,
-					     "__builtin_neon_oi");
-  (*lang_hooks.types.register_builtin_type) (intCI_type_node,
-					     "__builtin_neon_ci");
-  (*lang_hooks.types.register_builtin_type) (intXI_type_node,
-					     "__builtin_neon_xi");
+  /* LLVM LOCAL begin multi-vector types */
+  (*lang_hooks.types.register_builtin_type) (V8QI2_type_node,
+					     "__builtin_neon_v8qi2");
+  (*lang_hooks.types.register_builtin_type) (V4HI2_type_node,
+					     "__builtin_neon_v4hi2");
+  (*lang_hooks.types.register_builtin_type) (V2SI2_type_node,
+					     "__builtin_neon_v2si2");
+  (*lang_hooks.types.register_builtin_type) (DI2_type_node,
+					     "__builtin_neon_di2");
+  (*lang_hooks.types.register_builtin_type) (V2SF2_type_node,
+					     "__builtin_neon_v2sf2");
+  (*lang_hooks.types.register_builtin_type) (V8QI3_type_node,
+					     "__builtin_neon_v8qi3");
+  (*lang_hooks.types.register_builtin_type) (V4HI3_type_node,
+					     "__builtin_neon_v4hi3");
+  (*lang_hooks.types.register_builtin_type) (V2SI3_type_node,
+					     "__builtin_neon_v2si3");
+  (*lang_hooks.types.register_builtin_type) (DI3_type_node,
+					     "__builtin_neon_di3");
+  (*lang_hooks.types.register_builtin_type) (V2SF3_type_node,
+					     "__builtin_neon_v2sf3");
+  (*lang_hooks.types.register_builtin_type) (V8QI4_type_node,
+					     "__builtin_neon_v8qi4");
+  (*lang_hooks.types.register_builtin_type) (V4HI4_type_node,
+					     "__builtin_neon_v4hi4");
+  (*lang_hooks.types.register_builtin_type) (V2SI4_type_node,
+					     "__builtin_neon_v2si4");
+  (*lang_hooks.types.register_builtin_type) (DI4_type_node,
+					     "__builtin_neon_di4");
+  (*lang_hooks.types.register_builtin_type) (V2SF4_type_node,
+					     "__builtin_neon_v2sf4");
+  (*lang_hooks.types.register_builtin_type) (V16QI2_type_node,
+					     "__builtin_neon_v16qi2");
+  (*lang_hooks.types.register_builtin_type) (V8HI2_type_node,
+					     "__builtin_neon_v8hi2");
+  (*lang_hooks.types.register_builtin_type) (V4SI2_type_node,
+					     "__builtin_neon_v4si2");
+  (*lang_hooks.types.register_builtin_type) (V4SF2_type_node,
+					     "__builtin_neon_v4sf2");
+  (*lang_hooks.types.register_builtin_type) (V16QI3_type_node,
+					     "__builtin_neon_v16qi3");
+  (*lang_hooks.types.register_builtin_type) (V8HI3_type_node,
+					     "__builtin_neon_v8hi3");
+  (*lang_hooks.types.register_builtin_type) (V4SI3_type_node,
+					     "__builtin_neon_v4si3");
+  (*lang_hooks.types.register_builtin_type) (V4SF3_type_node,
+					     "__builtin_neon_v4sf3");
+  (*lang_hooks.types.register_builtin_type) (V16QI4_type_node,
+					     "__builtin_neon_v16qi4");
+  (*lang_hooks.types.register_builtin_type) (V8HI4_type_node,
+					     "__builtin_neon_v8hi4");
+  (*lang_hooks.types.register_builtin_type) (V4SI4_type_node,
+					     "__builtin_neon_v4si4");
+  (*lang_hooks.types.register_builtin_type) (V4SF4_type_node,
+					     "__builtin_neon_v4sf4");
+  /* LLVM LOCAL end multi-vector types */
   /* APPLE LOCAL end 7083296 Build without warnings.  */
 
   dreg_types[0] = V8QI_type_node;
@@ -18663,15 +18891,17 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vld2q cases.  */
-		    case T_V16QI: ftype = oi_ftype_const_qi_pointer; break;
-		    case T_V8HI: ftype = oi_ftype_const_hi_pointer; break;
-		    case T_V4SI: ftype = oi_ftype_const_si_pointer; break;
-		    case T_V4SF: ftype = oi_ftype_const_sf_pointer; break;
+                      /* LLVM LOCAL begin multi-vector types */
+		    case T_V16QI: ftype = oiq_ftype_const_qi_pointer; break;
+		    case T_V8HI: ftype = oiq_ftype_const_hi_pointer; break;
+		    case T_V4SI: ftype = oiq_ftype_const_si_pointer; break;
+		    case T_V4SF: ftype = oiq_ftype_const_sf_pointer; break;
 		      /* vld4 cases.  */
-		    case T_V8QI: ftype = oi_ftype_const_qi_pointer; break;
-		    case T_V4HI: ftype = oi_ftype_const_hi_pointer; break;
-		    case T_V2SI: ftype = oi_ftype_const_si_pointer; break;
-		    case T_V2SF: ftype = oi_ftype_const_sf_pointer; break;
+		    case T_V8QI: ftype = oid_ftype_const_qi_pointer; break;
+		    case T_V4HI: ftype = oid_ftype_const_hi_pointer; break;
+		    case T_V2SI: ftype = oid_ftype_const_si_pointer; break;
+		    case T_V2SF: ftype = oid_ftype_const_sf_pointer; break;
+                      /* LLVM LOCAL end multi-vector types */
 		    case T_DI: ftype = oi_ftype_const_di_pointer; break;
 		    default: gcc_unreachable ();
 		    }
@@ -18756,28 +18986,30 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vld2q_lane cases.  */
+                      /* LLVM LOCAL begin multi-vector types */
 		    case T_V8HI:
-		      ftype = oi_ftype_const_hi_pointer_oi_si;
+		      ftype = oiq_ftype_const_hi_pointer_oiq_si;
 		      break;
 		    case T_V4SI:
-		      ftype = oi_ftype_const_si_pointer_oi_si;
+		      ftype = oiq_ftype_const_si_pointer_oiq_si;
 		      break;
 		    case T_V4SF:
-		      ftype = oi_ftype_const_sf_pointer_oi_si;
+		      ftype = oiq_ftype_const_sf_pointer_oiq_si;
 		      break;
 		      /* vld4_lane cases.  */
 		    case T_V8QI:
 		      ftype = oi_ftype_const_qi_pointer_oi_si;
 		      break;
 		    case T_V4HI:
-		      ftype = oi_ftype_const_hi_pointer_oi_si;
+		      ftype = oid_ftype_const_hi_pointer_oid_si;
 		      break;
 		    case T_V2SI:
-		      ftype = oi_ftype_const_si_pointer_oi_si;
+		      ftype = oid_ftype_const_si_pointer_oid_si;
 		      break;
 		    case T_V2SF:
-		      ftype = oi_ftype_const_sf_pointer_oi_si;
+		      ftype = oid_ftype_const_sf_pointer_oid_si;
 		      break;
+                      /* LLVM LOCAL end multi-vector types */
 		    default:
 		      gcc_unreachable ();
 		    }
@@ -18859,15 +19091,17 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vst2q cases.  */
-		    case T_V16QI: ftype = void_ftype_qi_pointer_oi; break;
-		    case T_V8HI: ftype = void_ftype_hi_pointer_oi; break;
-		    case T_V4SI: ftype = void_ftype_si_pointer_oi; break;
-		    case T_V4SF: ftype = void_ftype_sf_pointer_oi; break;
+                      /* LLVM LOCAL begin multi-vector types */
+		    case T_V16QI: ftype = void_ftype_qi_pointer_oiq; break;
+		    case T_V8HI: ftype = void_ftype_hi_pointer_oiq; break;
+		    case T_V4SI: ftype = void_ftype_si_pointer_oiq; break;
+		    case T_V4SF: ftype = void_ftype_sf_pointer_oiq; break;
 		      /* vst4 cases.  */
-		    case T_V8QI: ftype = void_ftype_qi_pointer_oi; break;
-		    case T_V4HI: ftype = void_ftype_hi_pointer_oi; break;
-		    case T_V2SI: ftype = void_ftype_si_pointer_oi; break;
-		    case T_V2SF: ftype = void_ftype_sf_pointer_oi; break;
+		    case T_V8QI: ftype = void_ftype_qi_pointer_oid; break;
+		    case T_V4HI: ftype = void_ftype_hi_pointer_oid; break;
+		    case T_V2SI: ftype = void_ftype_si_pointer_oid; break;
+		    case T_V2SF: ftype = void_ftype_sf_pointer_oid; break;
+                      /* LLVM LOCAL end multi-vector types */
 		    case T_DI: ftype = void_ftype_di_pointer_oi; break;
 		    default: gcc_unreachable ();
 		    }
@@ -18952,28 +19186,30 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vst2q_lane cases.  */
+                      /* LLVM LOCAL begin multi-vector types */
 		    case T_V8HI:
-		      ftype = void_ftype_hi_pointer_oi_si;
+		      ftype = void_ftype_hi_pointer_oiq_si;
 		      break;
 		    case T_V4SI:
-		      ftype = void_ftype_si_pointer_oi_si;
+		      ftype = void_ftype_si_pointer_oiq_si;
 		      break;
 		    case T_V4SF:
-		      ftype = void_ftype_sf_pointer_oi_si;
+		      ftype = void_ftype_sf_pointer_oiq_si;
 		      break;
 		      /* vst4_lane cases.  */
 		    case T_V8QI:
 		      ftype = void_ftype_qi_pointer_oi_si;
 		      break;
 		    case T_V4HI:
-		      ftype = void_ftype_hi_pointer_oi_si;
+		      ftype = void_ftype_hi_pointer_oid_si;
 		      break;
 		    case T_V2SI:
-		      ftype = void_ftype_si_pointer_oi_si;
+		      ftype = void_ftype_si_pointer_oid_si;
 		      break;
 		    case T_V2SF:
-		      ftype = void_ftype_sf_pointer_oi_si;
+		      ftype = void_ftype_sf_pointer_oid_si;
 		      break;
+                      /* LLVM LOCAL end multi-vector types */
 		    default:
 		      gcc_unreachable ();
 		    }

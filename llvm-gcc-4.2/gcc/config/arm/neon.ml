@@ -62,7 +62,18 @@ type vectype = T_int8x8    | T_int8x16
      XImode : "heXadeca", eight registers (sixteen words).
 *)
 
-type inttype = B_TImode | B_EImode | B_OImode | B_CImode | B_XImode
+(* LLVM LOCAL begin Use a different type for each vector type.  *)
+type inttype = B_TId8mode  | B_EId8mode  | B_OId8mode
+	     | B_TId16mode | B_EId16mode | B_OId16mode
+	     | B_TId32mode | B_EId32mode | B_OId32mode
+	     | B_TId64mode | B_EId64mode | B_OId64mode
+	     | B_TIdSFmode | B_EIdSFmode | B_OIdSFmode
+	     | B_OIq8mode  | B_CIq8mode  | B_XIq8mode
+	     | B_OIq16mode | B_CIq16mode | B_XIq16mode
+	     | B_OIq32mode | B_CIq32mode | B_XIq32mode
+	     | B_OIq64mode | B_CIq64mode | B_XIq64mode
+	     | B_OIqSFmode | B_CIqSFmode | B_XIqSFmode
+(* LLVM LOCAL end Use a different type for each vector type.  *)
 
 type shape_elt = Dreg | Qreg | Corereg | Immed | VecArray of int * shape_elt
                | PtrTo of shape_elt | CstPtrTo of shape_elt
@@ -461,17 +472,60 @@ let vectype_size = function
   | T_uint8x16 | T_uint16x8  | T_uint32x4  | T_uint64x2
   | T_float32x4 | T_poly8x16 | T_poly16x8 -> 128
   | _ -> raise Not_found
+
+(* LLVM LOCAL begin Map vector types to modes.  *)
+let vectype_mode = function
+    T_int8x8 | T_uint8x8 | T_poly8x8 -> V8QI
+  | T_int8x16 | T_uint8x16 | T_poly8x16 -> V16QI
+  | T_int16x4 | T_uint16x4 | T_poly16x4 -> V4HI
+  | T_int16x8 | T_uint16x8 | T_poly16x8 -> V8HI
+  | T_int32x2 | T_uint32x2 -> V2SI
+  | T_int32x4 | T_uint32x4 -> V4SI
+  | T_int64x1 | T_uint64x1 -> DI
+  | T_int64x2 | T_uint64x2 -> V2DI
+  | T_float32x2 -> V2SF
+  | T_float32x4 -> V4SF
+  | _ -> raise Not_found
+(* LLVM LOCAL end Map vector types to modes.  *)
   
 let inttype_for_array num elttype =
   let eltsize = vectype_size elttype in
   let numwords = (num * eltsize) / 32 in
-  match numwords with
-    4 -> B_TImode
-  | 6 -> B_EImode
-  | 8 -> B_OImode
-  | 12 -> B_CImode
-  | 16 -> B_XImode
+  (* LLVM LOCAL begin Match vector type, too. *)
+  let vecmode = vectype_mode elttype in
+  match numwords, vecmode with
+    4, V8QI -> B_TId8mode
+  | 4, V4HI -> B_TId16mode
+  | 4, V2SI -> B_TId32mode
+  | 4, DI   -> B_TId64mode
+  | 4, V2SF -> B_TIdSFmode
+  | 6, V8QI -> B_EId8mode
+  | 6, V4HI -> B_EId16mode
+  | 6, V2SI -> B_EId32mode
+  | 6, DI   -> B_EId64mode
+  | 6, V2SF -> B_EIdSFmode
+  | 8, V8QI -> B_OId8mode
+  | 8, V4HI -> B_OId16mode
+  | 8, V2SI -> B_OId32mode
+  | 8, DI   -> B_OId64mode
+  | 8, V2SF -> B_OIdSFmode
+  | 8, V16QI -> B_OIq8mode
+  | 8, V8HI -> B_OIq16mode
+  | 8, V4SI -> B_OIq32mode
+  | 8, V2DI -> B_OIq64mode
+  | 8, V4SF -> B_OIqSFmode
+  | 12, V16QI -> B_CIq8mode
+  | 12, V8HI -> B_CIq16mode
+  | 12, V4SI -> B_CIq32mode
+  | 12, V2DI -> B_CIq64mode
+  | 12, V4SF -> B_CIqSFmode
+  | 16, V16QI -> B_XIq8mode
+  | 16, V8HI -> B_XIq16mode
+  | 16, V4SI -> B_XIq32mode
+  | 16, V2DI -> B_XIq64mode
+  | 16, V4SF -> B_XIqSFmode
   | _ -> failwith ("no int type for size " ^ string_of_int numwords)
+  (* LLVM LOCAL end Match vector type, too. *)
 
 (* These functions return pairs of (internal, external) types, where "internal"
    types are those seen by GCC, and "external" are those seen by the assembler.
@@ -1707,12 +1761,39 @@ let string_of_vectype vt =
   in
     name (fun x -> x ^ "_t") vt
 
+(* LLVM LOCAL begin Print builtin type names that include the vector type.  *)
 let string_of_inttype = function
-    B_TImode -> "__builtin_neon_ti"
-  | B_EImode -> "__builtin_neon_ei"
-  | B_OImode -> "__builtin_neon_oi"
-  | B_CImode -> "__builtin_neon_ci"
-  | B_XImode -> "__builtin_neon_xi"
+    B_TId8mode  -> "__builtin_neon_v8qi2"
+  | B_TId16mode -> "__builtin_neon_v4hi2"
+  | B_TId32mode -> "__builtin_neon_v2si2"
+  | B_TId64mode -> "__builtin_neon_di2"
+  | B_TIdSFmode -> "__builtin_neon_v2sf2"
+  | B_EId8mode  -> "__builtin_neon_v8qi3"
+  | B_EId16mode -> "__builtin_neon_v4hi3"
+  | B_EId32mode -> "__builtin_neon_v2si3"
+  | B_EId64mode -> "__builtin_neon_di3"
+  | B_EIdSFmode -> "__builtin_neon_v2sf3"
+  | B_OId8mode  -> "__builtin_neon_v8qi4"
+  | B_OId16mode -> "__builtin_neon_v4hi4"
+  | B_OId32mode -> "__builtin_neon_v2si4"
+  | B_OId64mode -> "__builtin_neon_di4"
+  | B_OIdSFmode -> "__builtin_neon_v2sf4"
+  | B_OIq8mode  -> "__builtin_neon_v16qi2"
+  | B_OIq16mode -> "__builtin_neon_v8hi2"
+  | B_OIq32mode -> "__builtin_neon_v4si2"
+  | B_OIq64mode -> "__builtin_neon_v2di2"
+  | B_OIqSFmode -> "__builtin_neon_v4sf2"
+  | B_CIq8mode  -> "__builtin_neon_v16qi3"
+  | B_CIq16mode -> "__builtin_neon_v8hi3"
+  | B_CIq32mode -> "__builtin_neon_v4si3"
+  | B_CIq64mode -> "__builtin_neon_v2di3"
+  | B_CIqSFmode -> "__builtin_neon_v4sf3"
+  | B_XIq8mode  -> "__builtin_neon_v16qi4"
+  | B_XIq16mode -> "__builtin_neon_v8hi4"
+  | B_XIq32mode -> "__builtin_neon_v4si4"
+  | B_XIq64mode -> "__builtin_neon_v2di4"
+  | B_XIqSFmode -> "__builtin_neon_v4sf4"
+(* LLVM LOCAL end Print builtin type names that include the vector type.  *)
 
 let string_of_mode = function
     V8QI -> "v8qi" | V4HI  -> "v4hi"  | V2SI -> "v2si" | V2SF -> "v2sf"

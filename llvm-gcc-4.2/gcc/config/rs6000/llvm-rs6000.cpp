@@ -177,7 +177,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_VSPLTISB:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int8Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int8Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
@@ -187,7 +187,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_VSPLTISH:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int16Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int16Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
@@ -196,7 +196,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_VSPLTISW:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = Context.getConstantExprIntegerCast(Elt, Type::Int32Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int32Ty, true);
       Result = BuildVector(Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Hmask must be an immediate", &EXPR_LOCATION(exp));

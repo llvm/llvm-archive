@@ -1065,7 +1065,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   handleVisibility(decl, GA);
 
   if (GA->getType()->canLosslesslyBitCastTo(V->getType()))
-    V->replaceAllUsesWith(Context.getConstantExprBitCast(GA, V->getType()));
+    V->replaceAllUsesWith(ConstantExpr::getBitCast(GA, V->getType()));
   else if (!V->use_empty()) {
     error ("%J Alias %qD used with invalid type!", decl, decl);
     timevar_pop(TV_LLVM_GLOBALS);

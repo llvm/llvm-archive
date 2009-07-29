@@ -592,7 +592,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_ldmxcsr);
     Value *Ptr = CreateTemporary(Type::Int32Ty);
     Builder.CreateStore(Ops[0], Ptr);
-    Ptr = Builder.CreateBitCast(Ptr, Context.getPointerTypeUnqual(Type::Int8Ty), "tmp");
+    Ptr = Builder.CreateBitCast(Ptr,
+                             Context.getPointerTypeUnqual(Type::Int8Ty), "tmp");
     Result = Builder.CreateCall(ldmxcsr, Ptr);
     return true;
   }
@@ -600,8 +601,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *stmxcsr =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_stmxcsr);
     Value *Ptr  = CreateTemporary(Type::Int32Ty);
-    Value *BPtr = Builder.CreateBitCast(Ptr, Context.getPointerTypeUnqual(Type::Int8Ty),
-                                        "tmp");
+    Value *BPtr = Builder.CreateBitCast(Ptr,
+                             Context.getPointerTypeUnqual(Type::Int8Ty), "tmp");
     Builder.CreateCall(stmxcsr, BPtr);
     
     Result = Builder.CreateLoad(Ptr, "tmp");

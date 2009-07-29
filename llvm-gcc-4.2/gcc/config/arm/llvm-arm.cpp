@@ -1964,32 +1964,45 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateBitCast(Ops[0], ResultType);
     break;
 
-  case NEON_BUILTIN_vld1:
+  case NEON_BUILTIN_vld1: {
+    const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+    assert(VTy && "expected a vector type");
+    if (VTy->getElementType()->isFloatingPoint())
+      intID = Intrinsic::arm_neon_vld1f;
+    else
+      intID = Intrinsic::arm_neon_vld1i;
+    intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
+    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+    break;
+  }
+
   case NEON_BUILTIN_vld2:
   case NEON_BUILTIN_vld3:
   case NEON_BUILTIN_vld4: {
-    const VectorType *VTy =
-      GetVldstType(exp, insn_data[icode].operand[0].mode);
-    if (VTy->getElementType()->isFloatingPoint())
-      intID = Intrinsic::arm_neon_vldf;
-    else
-      intID = Intrinsic::arm_neon_vldi;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
-
-    unsigned N = 0;
-    switch (neon_code) {
-    case NEON_BUILTIN_vld1: N = 1; break;
-    case NEON_BUILTIN_vld2: N = 2; break;
-    case NEON_BUILTIN_vld3: N = 3; break;
-    case NEON_BUILTIN_vld4: N = 4; break;
-    default: assert(false);
+    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+    if (VTy->getElementType()->isFloatingPoint()) {
+      switch (neon_code) {
+      case NEON_BUILTIN_vld2: intID = Intrinsic::arm_neon_vld2f; break;
+      case NEON_BUILTIN_vld3: intID = Intrinsic::arm_neon_vld3f; break;
+      case NEON_BUILTIN_vld4: intID = Intrinsic::arm_neon_vld4f; break;
+      default: assert(false);
+      }
+    } else {
+      switch (neon_code) {
+      case NEON_BUILTIN_vld2: intID = Intrinsic::arm_neon_vld2i; break;
+      case NEON_BUILTIN_vld3: intID = Intrinsic::arm_neon_vld3i; break;
+      case NEON_BUILTIN_vld4: intID = Intrinsic::arm_neon_vld4i; break;
+      default: assert(false);
+      }
     }
-
+    intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
-    Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
-                                 ConstantInt::get(Type::Int32Ty, N));
-    Type *PtrToWideVec = Context.getPointerTypeUnqual(Result->getType());
-    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+    Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+    Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
   }
@@ -2066,34 +2079,57 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vst1:
+  case NEON_BUILTIN_vst1: {
+    const VectorType *VTy = dyn_cast<const VectorType>(Ops[1]->getType());
+    assert(VTy && "expected a vector type");
+    if (VTy->getElementType()->isFloatingPoint())
+      intID = Intrinsic::arm_neon_vst1f;
+    else
+      intID = Intrinsic::arm_neon_vst1i;
+    intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
+    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy), Ops[1]);
+    Result = 0;
+    break;
+  }
+
   case NEON_BUILTIN_vst2:
   case NEON_BUILTIN_vst3:
   case NEON_BUILTIN_vst4: {
-    const VectorType *VTy =
-      GetVldstType(exp, insn_data[icode].operand[1].mode);
-    if (VTy->getElementType()->isFloatingPoint())
-      intID = Intrinsic::arm_neon_vstf;
-    else
-      intID = Intrinsic::arm_neon_vsti;
+    const StructType *STy = dyn_cast<const StructType>(Ops[1]->getType());
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+    if (VTy->getElementType()->isFloatingPoint()) {
+      switch (neon_code) {
+      case NEON_BUILTIN_vst2: intID = Intrinsic::arm_neon_vst2f; break;
+      case NEON_BUILTIN_vst3: intID = Intrinsic::arm_neon_vst3f; break;
+      case NEON_BUILTIN_vst4: intID = Intrinsic::arm_neon_vst4f; break;
+      default: assert(false);
+      }
+    } else {
+      switch (neon_code) {
+      case NEON_BUILTIN_vst2: intID = Intrinsic::arm_neon_vst2i; break;
+      case NEON_BUILTIN_vst3: intID = Intrinsic::arm_neon_vst3i; break;
+      case NEON_BUILTIN_vst4: intID = Intrinsic::arm_neon_vst4i; break;
+      default: assert(false);
+      }
+    }
     intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
-
-    unsigned N = 0;
+    unsigned NumVecs = 0;
     switch (neon_code) {
-    case NEON_BUILTIN_vst1: N = 1; break;
-    case NEON_BUILTIN_vst2: N = 2; break;
-    case NEON_BUILTIN_vst3: N = 3; break;
-    case NEON_BUILTIN_vst4: N = 4; break;
+    case NEON_BUILTIN_vst2: NumVecs = 2; break;
+    case NEON_BUILTIN_vst3: NumVecs = 3; break;
+    case NEON_BUILTIN_vst4: NumVecs = 4; break;
     default: assert(false);
     }
-
+    std::vector<Value*> Args;
     Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
-    Value *Tmp = CreateTemporary(VTy);
-    Type *PtrToStruct = Context.getPointerTypeUnqual(Ops[1]->getType());
-    Builder.CreateStore(Ops[1], BitCastToType(Tmp, PtrToStruct));
-    Value *Vec = Builder.CreateLoad(Tmp);
-    Builder.CreateCall3(intFn, BitCastToType(Ops[0], VPTy), Vec,
-                        ConstantInt::get(Type::Int32Ty, N));
+    Args.push_back(BitCastToType(Ops[0], VPTy));
+    for (unsigned n = 0; n < NumVecs; ++n) {
+      Args.push_back(Builder.CreateExtractValue(Ops[1], n));
+    }
+    Builder.CreateCall(intFn, Args.begin(), Args.end());
     Result = 0;
     break;
   }

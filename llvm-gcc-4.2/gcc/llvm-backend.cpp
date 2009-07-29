@@ -802,8 +802,8 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   LLVMContext &Context = getGlobalContext();
   
   const Type *FPTy =
-    Context.getFunctionType(Type::VoidTy, std::vector<const Type*>(), false);
-  FPTy = Context.getPointerTypeUnqual(FPTy);
+    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
+  FPTy = PointerType::getUnqual(FPTy);
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
     StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
@@ -814,7 +814,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
     InitList.push_back(ConstantStruct::get(StructInit, false));
   }
   Constant *Array = ConstantArray::get(
-    Context.getArrayType(InitList[0]->getType(), InitList.size()), InitList);
+    ArrayType::get(InitList[0]->getType(), InitList.size()), InitList);
   new GlobalVariable(*TheModule, Array->getType(), false,
                      GlobalValue::AppendingLinkage,
                      Array, Name);
@@ -842,14 +842,14 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
+    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
     for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
       Constant *C = *AI;
       AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
     }
 
-    ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
+    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
     Constant *Init = ConstantArray::get(AT, AUGs);
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
                                          GlobalValue::AppendingLinkage, Init,
@@ -861,7 +861,7 @@ void llvm_asm_file_end(void) {
   // Add llvm.global.annotations
   if (!AttributeAnnotateGlobals.empty()) {
     Constant *Array = ConstantArray::get(
-      Context.getArrayType(AttributeAnnotateGlobals[0]->getType(),
+      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
                                       AttributeAnnotateGlobals.size()),
                        AttributeAnnotateGlobals);
     GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
@@ -1123,7 +1123,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   // Get file and line number
   Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
+  const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1585,7 +1585,7 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy) Ty = Context.getStructType(NULL, NULL);
+    if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
 
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 

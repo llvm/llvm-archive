@@ -213,7 +213,7 @@ static bool BuildShiftCountVector(Value *&Op, enum machine_mode Mode,
 
   // Right shifts are represented in NEON intrinsics by a negative shift count.
   LLVMContext &Context = getGlobalContext();
-  Cnt = ConstantInt::get(Context.getIntegerType(ElemBits),
+  Cnt = ConstantInt::get(IntegerType::get(ElemBits),
                                NegateRightShift ? -CntVal : CntVal);
   Op = BuildConstantSplatVector(GET_MODE_NUNITS(Mode), Cnt);
   return true;
@@ -1881,7 +1881,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vtbl3:
   case NEON_BUILTIN_vtbl4: {
     unsigned NUnits = Ops[0]->getType()->getPrimitiveSizeInBits() / 8;
-    intOpTypes[0] = Context.getVectorType(Context.getIntegerType(8), NUnits);
+    intOpTypes[0] = VectorType::get(IntegerType::get(8), NUnits);
     intID = Intrinsic::arm_neon_vtbl;
     intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
@@ -1893,7 +1893,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vtbx3:
   case NEON_BUILTIN_vtbx4: {
     unsigned NUnits = Ops[1]->getType()->getPrimitiveSizeInBits() / 8;
-    intOpTypes[0] = Context.getVectorType(Context.getIntegerType(8), NUnits);
+    intOpTypes[0] = VectorType::get(IntegerType::get(8), NUnits);
     intID = Intrinsic::arm_neon_vtbx;
     intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
     Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
@@ -1972,7 +1972,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       intID = Intrinsic::arm_neon_vld1i;
     intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
-    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
     Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
     break;
   }
@@ -2000,7 +2000,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
     }
     intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
-    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
     Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
     Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
@@ -2033,7 +2033,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                           LaneVal + (n * NUnits));
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
-    Type *PtrToWideVec = Context.getPointerTypeUnqual(VTy);
+    Type *PtrToWideVec = PointerType::getUnqual(VTy);
     Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
     Result = 0;
     break;
@@ -2073,7 +2073,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = Builder.CreateShuffleVector(Result, Context.getUndef(VTy),
                                            ConstantVector::get(Idxs));
     }
-    Type *PtrToWideVec = Context.getPointerTypeUnqual(VTy);
+    Type *PtrToWideVec = PointerType::getUnqual(VTy);
     Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
     Result = 0;
     break;
@@ -2087,7 +2087,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       intID = Intrinsic::arm_neon_vst1i;
     intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
-    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
     Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy), Ops[1]);
     Result = 0;
     break;
@@ -2124,7 +2124,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     std::vector<Value*> Args;
-    Type *VPTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
     Args.push_back(BitCastToType(Ops[0], VPTy));
     for (unsigned n = 0; n < NumVecs; ++n) {
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
@@ -2152,7 +2152,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (!isValidLane(Ops[2], NUnits, &LaneVal))
       return UnexpectedError("%Hinvalid lane number", exp, Result);
     Value *Tmp = CreateTemporary(VTy);
-    Type *PtrToStruct = Context.getPointerTypeUnqual(Ops[1]->getType());
+    Type *PtrToStruct = PointerType::getUnqual(Ops[1]->getType());
     Builder.CreateStore(Ops[1], BitCastToType(Tmp, PtrToStruct));
     Value *Vec = Builder.CreateLoad(Tmp);
     for (unsigned n = 0; n != NumVecs; ++n) {

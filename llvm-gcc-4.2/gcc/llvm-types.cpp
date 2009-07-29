@@ -223,7 +223,7 @@ static FunctionType *GetFunctionType(const PATypeHolder &Res,
   for (unsigned i = 0, e = ArgTys.size(); i != e; ++i)
     ArgTysP.push_back(ArgTys[i]);
   
-  return Context.getFunctionType(Res, ArgTysP, isVarArg);
+  return FunctionType::get(Res, ArgTysP, isVarArg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -711,7 +711,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
     return SET_TYPE_LLVM(type,
-                     Context.getIntegerType(TREE_INT_CST_LOW(TYPE_SIZE(type))));
+                     IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
   }
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?
@@ -720,7 +720,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       if (const Type *Ty = GET_TYPE_LLVM(orig_type))
         return Ty;
 
-      const Type *Ty = Context.getOpaqueType();
+      const Type *Ty = OpaqueType::get();
       TheModule->addTypeName(GetTypeName("enum.", orig_type), Ty);
       return TypeDB.setType(orig_type, Ty);
     }
@@ -731,7 +731,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // The ARM port defines __builtin_neon_xi as a 511-bit type because GCC's
     // type precision field has only 9 bits.  Treat this as a special case.
     int precision = TYPE_PRECISION(type) == 511 ? 512 : TYPE_PRECISION(type);
-    return SET_TYPE_LLVM(type, Context.getIntegerType(precision));
+    return SET_TYPE_LLVM(type, IntegerType::get(precision));
   }
   case REAL_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
@@ -752,7 +752,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 #else
       // 128-bit long doubles map onto { double, double }.
       return SET_TYPE_LLVM(type,
-                           Context.getStructType(Type::DoubleTy, Type::DoubleTy,
+                           StructType::get(Type::DoubleTy, Type::DoubleTy,
                                                  NULL));
 #endif
     }
@@ -761,13 +761,13 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    return SET_TYPE_LLVM(type, Context.getStructType(Ty, Ty, NULL));
+    return SET_TYPE_LLVM(type, StructType::get(Ty, Ty, NULL));
   }
   case VECTOR_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    Ty = Context.getVectorType(Ty, TYPE_VECTOR_SUBPARTS(type));
+    Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
     return SET_TYPE_LLVM(type, Ty);
   }
     
@@ -824,7 +824,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         if (Ty == 0) {
           PointersToReresolve.push_back(type);
           return TypeDB.setType(type, 
-                         Context.getPointerTypeUnqual(Context.getOpaqueType()));
+                         PointerType::getUnqual(OpaqueType::get()));
         }
 
         // A type has already been computed.  However, this may be some sort of 
@@ -842,7 +842,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     
       if (Ty == Type::VoidTy) 
         Ty = Type::Int8Ty;  // void* -> sbyte*
-      return TypeDB.setType(type, Context.getPointerTypeUnqual(Ty));
+      return TypeDB.setType(type, PointerType::getUnqual(Ty));
     }
    
   case METHOD_TYPE:
@@ -904,7 +904,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       NumElements /= ElementSize;
     }
 
-    return TypeDB.setType(type, Context.getArrayType(ElementTy, NumElements));
+    return TypeDB.setType(type, ArrayType::get(ElementTy, NumElements));
   }
   case OFFSET_TYPE:
     // Handle OFFSET_TYPE specially.  This is used for pointers to members,
@@ -1012,7 +1012,7 @@ namespace {
     /// argument is passed by value. It is lowered to a parameter passed by
     /// reference with an additional parameter attribute "ByVal".
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
-      HandleScalarArgument(Context.getPointerTypeUnqual(LLVMTy), type);
+      HandleScalarArgument(PointerType::getUnqual(LLVMTy), type);
     }
 
     /// HandleFCAArgument - This callback is invoked if the aggregate function
@@ -1358,7 +1358,7 @@ struct StructTypeConversionInfo {
   const Type *getLLVMType() const {
     // Use Packed type if Packed is set or all struct fields are bitfields.
     // Empty struct is not packed unless packed is set.
-    return Context.getStructType(Elements,
+    return StructType::get(Elements,
                            Packed || (!Elements.empty() && AllBitFields));
   }
   
@@ -1411,7 +1411,7 @@ struct StructTypeConversionInfo {
     assert (PadBytes > 0 && "Unable to remove extra bytes");
 
     // Update last element type and size, element offset is unchanged.
-    const Type *Pad =  Context.getArrayType(Type::Int8Ty, PadBytes);
+    const Type *Pad =  ArrayType::get(Type::Int8Ty, PadBytes);
     unsigned OriginalSize = ElementSizeInBytes.back();
     Elements.pop_back();
     Elements.push_back(Pad);
@@ -1448,7 +1448,7 @@ struct StructTypeConversionInfo {
           // different offset.
           const Type *Pad = Type::Int8Ty;
           if (PoppedOffset != EndOffset + 1)
-            Pad = Context.getArrayType(Pad, PoppedOffset - EndOffset);
+            Pad = ArrayType::get(Pad, PoppedOffset - EndOffset);
           addElement(Pad, EndOffset, PoppedOffset - EndOffset);
         }
       }
@@ -1480,7 +1480,7 @@ struct StructTypeConversionInfo {
         //  In this example, previous field is C and D is current field.
         addElement(SavedTy, CurOffset, ByteOffset - CurOffset);
       else if (ByteOffset - CurOffset != 1)
-        Pad = Context.getArrayType(Pad, ByteOffset - CurOffset);
+        Pad = ArrayType::get(Pad, ByteOffset - CurOffset);
       addElement(Pad, CurOffset, ByteOffset - CurOffset);
     }
     return true;
@@ -1620,7 +1620,7 @@ void StructTypeConversionInfo::addNewBitField(uint64_t Size,
   unsigned ByteAlignment = getTypeAlignment(NewFieldTy);
   if (FirstUnallocatedByte & (ByteAlignment-1)) {
     // Instead of inserting a nice whole field, insert a small array of ubytes.
-    NewFieldTy = Context.getArrayType(Type::Int8Ty, (Size+7)/8);
+    NewFieldTy = ArrayType::get(Type::Int8Ty, (Size+7)/8);
   }
   
   // Finally, add the new field.
@@ -2084,7 +2084,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
     if (PadBytes) {
       const Type *Pad = Type::Int8Ty;
       if (PadBytes != 1)
-        Pad = Context.getArrayType(Pad, PadBytes);
+        Pad = ArrayType::get(Pad, PadBytes);
       Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
     }
 
@@ -2136,7 +2136,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   }
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaration?
-    const Type *Ty = Context.getOpaqueType();
+    const Type *Ty = OpaqueType::get();
     TheModule->addTypeName(GetTypeName("struct.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
@@ -2200,12 +2200,12 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
           // insert array of i32
           unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
           const Type *PadTy =
-            Context.getArrayType(Type::Int32Ty, Int32ArraySize);
+            ArrayType::get(Type::Int32Ty, Int32ArraySize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            Int32ArraySize, true /* Padding Element */);
         } else {
           const Type *PadTy =
-            Context.getArrayType(Type::Int8Ty, GCCTypeSize-LLVMStructSize);
+            ArrayType::get(Type::Int8Ty, GCCTypeSize-LLVMStructSize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            GCCTypeSize - LLVMLastElementEnd,
                            true /* Padding Element */);
@@ -2314,7 +2314,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   }
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaraion?
-    const Type *Ty = Context.getOpaqueType();
+    const Type *Ty = OpaqueType::get();
     TheModule->addTypeName(GetTypeName("union.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
@@ -2442,13 +2442,13 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
              "LLVM type size doesn't match GCC type size!");
       const Type *PadTy = Type::Int8Ty;
       if (GCCTypeSize-EltSize != 1)
-        PadTy = Context.getArrayType(PadTy, GCCTypeSize-EltSize);
+        PadTy = ArrayType::get(PadTy, GCCTypeSize-EltSize);
       UnionElts.push_back(PadTy);
     }
   }
 
   bool isPacked = 8 * EltAlign > TYPE_ALIGN(type);
-  const Type *ResultTy = Context.getStructType(UnionElts, isPacked);
+  const Type *ResultTy = StructType::get(UnionElts, isPacked);
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
 

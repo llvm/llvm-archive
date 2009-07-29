@@ -119,7 +119,7 @@ static Value *BuildConstantSplatVector(unsigned NumElements, ConstantInt *Val) {
   std::vector<Constant*> CstOps;
   for (unsigned i = 0; i != NumElements; ++i)
     CstOps.push_back(Val);
-  return getGlobalContext().getConstantVector(CstOps);
+  return ConstantVector::get(CstOps);
 }
 
 /// BuildDup - Build a splat operation to duplicate a value into every

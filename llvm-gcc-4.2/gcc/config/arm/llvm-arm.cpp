@@ -255,7 +255,7 @@ GetVldstType(tree exp, enum machine_mode ResultMode) {
   unsigned NumElems =
     (GET_MODE_BITSIZE(ResultMode) + 1) / GET_MODE_BITSIZE(ElemMode);
   const Type *ElemType = ConvertType(TREE_TYPE(ArgTy));
-  return getGlobalContext().getVectorType(ElemType, NumElems);
+  return VectorType::get(ElemType, NumElems);
 }
 
 /// TargetIntrinsicLower - To handle builtins, we want to expand the

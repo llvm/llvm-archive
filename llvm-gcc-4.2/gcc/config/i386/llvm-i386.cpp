@@ -347,7 +347,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 1, 4, 5);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -357,7 +357,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     PointerType *f64Ptr = PointerType::getUnqual(Type::DoubleTy);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 5, 2, 3);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -365,7 +365,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADHPD: {
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -373,7 +373,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADLPD: {
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
-    Ops[1] = BuildVector(Load, Context.getUndef(Type::DoubleTy), NULL);
+    Ops[1] = BuildVector(Load, UndefValue::get(Type::DoubleTy), NULL);
     Ops[1] = Builder.CreateBitCast(Ops[1], ResultType, "tmp");
     Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 1);
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");

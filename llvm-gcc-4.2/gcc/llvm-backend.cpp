@@ -1203,7 +1203,7 @@ void reset_type_and_initializer_llvm(tree decl) {
   handleVisibility(decl, GV);
 
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
-  GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
+  GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
 
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
@@ -1283,7 +1283,7 @@ void emit_global_to_llvm(tree decl) {
     // on it".  When constructing the initializer it might refer to itself.
     // this can happen for things like void *G = &G;
     //
-    GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
+    GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
     Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
   }
 

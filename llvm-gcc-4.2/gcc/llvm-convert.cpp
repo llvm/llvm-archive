@@ -1433,7 +1433,7 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
   
   Value *Ops[2] = {
     V,
-    Context.getConstantPointerNull(Ty)
+    ConstantPointerNull::get(Ty)
   };
   
   Builder.CreateCall(gcrootFun, Ops, Ops+2);
@@ -2364,7 +2364,7 @@ static Value *llvm_load_scalar_argument(Value *L,
                                         unsigned RealSize,
                                         LLVMBuilder &Builder) {
   if (!RealSize)
-    return Context.getUndef(LLVMTy);
+    return UndefValue::get(LLVMTy);
 
   // Not clear what this is supposed to do on big endian machines...
   assert(!BYTES_BIG_ENDIAN && "Unsupported case - please report");
@@ -3811,7 +3811,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(decl)) {
     if (Ty->isSingleValueType())
-      return Context.getUndef(Ty);
+      return UndefValue::get(Ty);
     return 0;   // Just don't copy something into DestLoc.
   }
 
@@ -4620,7 +4620,7 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
   
   // Otherwise, insertelement the values to build the vector.
   Value *Result = 
-    Context.getUndef(VectorType::get(Ops[0]->getType(), Ops.size()));
+    UndefValue::get(VectorType::get(Ops[0]->getType(), Ops.size()));
   
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     Result = Builder.CreateInsertElement(Result, Ops[i], 
@@ -4664,7 +4664,7 @@ Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
   for (unsigned i = 0; i != NumElements; ++i) {
     int idx = va_arg(VA, int);
     if (idx == -1)
-      Idxs.push_back(Context.getUndef(Type::Int32Ty));
+      Idxs.push_back(UndefValue::get(Type::Int32Ty));
     else {
       assert((unsigned)idx < 2*NumElements && "Element index out of range!");
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, idx));
@@ -4826,7 +4826,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
               BuiltinName);
         const Type *ResTy = ConvertType(TREE_TYPE(exp));
         if (ResTy->isSingleValueType())
-          Result = Context.getUndef(ResTy);
+          Result = UndefValue::get(ResTy);
         return true;
       }
       
@@ -6736,7 +6736,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
     if (errorcount || sorrycount) {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
       const PointerType *PTy = PointerType::getUnqual(Ty);
-      LValue LV(Context.getConstantPointerNull(PTy), 1);
+      LValue LV(ConstantPointerNull::get(PTy), 1);
       return LV;
     }
     assert(0 && "INTERNAL ERROR: Referencing decl that hasn't been laid out");

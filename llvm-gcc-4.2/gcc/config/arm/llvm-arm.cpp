@@ -139,7 +139,7 @@ static Value *BuildDup(const Type *ResultType, Value *Val,
   }
 
   // Insert the value into lane 0 of an undef vector.
-  Value *Undef = Context.getUndef(ResultType);
+  Value *Undef = UndefValue::get(ResultType);
   Value *Result =
     Builder.CreateInsertElement(Undef, Val,
                                 ConstantInt::get(Type::Int32Ty, 0));
@@ -165,7 +165,7 @@ static Value *BuildDupLane(Value *Vec, unsigned LaneVal, unsigned NUnits,
   LLVMContext &Context = getGlobalContext();
   for (unsigned i = 0; i != NUnits; ++i)
     Idxs.push_back(ConstantInt::get(Type::Int32Ty, LaneVal));
-  return Builder.CreateShuffleVector(Vec, Context.getUndef(Vec->getType()),
+  return Builder.CreateShuffleVector(Vec, UndefValue::get(Vec->getType()),
                                      ConstantVector::get(Idxs));
 }
 
@@ -1726,7 +1726,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     for (unsigned i = 0; i != NUnits; ++i)
       Idxs.push_back(ConstantInt::get(Type::Int32Ty, Idx++));
     Result = Builder.CreateShuffleVector(Ops[0],
-                                         Context.getUndef(Ops[0]->getType()),
+                                         UndefValue::get(Ops[0]->getType()),
                                          ConstantVector::get(Idxs));
     break;
   }
@@ -1817,7 +1817,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, c - i - 1));
       }
     }
-    Result = Builder.CreateShuffleVector(Ops[0], Context.getUndef(ResultType),
+    Result = Builder.CreateShuffleVector(Ops[0], UndefValue::get(ResultType),
                                          ConstantVector::get(Idxs));
     break;
   }
@@ -2054,7 +2054,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     unsigned NUnits = VTy->getNumElements() / NumVecs;
-    Result = Context.getUndef(VTy);
+    Result = UndefValue::get(VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
         Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
@@ -2070,7 +2070,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         for (unsigned i = 0; i != NUnits; ++i)
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, n * NUnits));
       }
-      Result = Builder.CreateShuffleVector(Result, Context.getUndef(VTy),
+      Result = Builder.CreateShuffleVector(Result, UndefValue::get(VTy),
                                            ConstantVector::get(Idxs));
     }
     Type *PtrToWideVec = PointerType::getUnqual(VTy);

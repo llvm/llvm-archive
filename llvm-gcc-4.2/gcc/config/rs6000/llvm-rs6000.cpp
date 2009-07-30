@@ -182,7 +182,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = Context.getUndef(VectorType::get(Type::Int8Ty, 16));
+      Result = UndefValue::get(VectorType::get(Type::Int8Ty, 16));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISH:
@@ -191,7 +191,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = Context.getUndef(VectorType::get(Type::Int16Ty, 8));
+      Result = UndefValue::get(VectorType::get(Type::Int16Ty, 8));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISW:
@@ -200,7 +200,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = BuildVector(Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
-      Result = Context.getUndef(VectorType::get(Type::Int32Ty, 4));
+      Result = UndefValue::get(VectorType::get(Type::Int32Ty, 4));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTB:

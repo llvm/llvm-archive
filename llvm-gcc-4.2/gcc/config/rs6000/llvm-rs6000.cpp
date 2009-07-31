@@ -344,7 +344,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *smax = Intrinsic::getDeclaration(TheModule, smax_iid[N]);
     Function *subss = Intrinsic::getDeclaration(TheModule, subss_iid[N]);
 
-    Value *ActualOps[] = {getGlobalContext().getNullValue(ResultType), Ops[0] };
+    Value *ActualOps[] = {Constant::getNullValue(ResultType), Ops[0] };
     Result = Builder.CreateCall(subss, ActualOps, ActualOps+2, "tmp");
     ActualOps[0] = Ops[0];
     ActualOps[1] = Result;

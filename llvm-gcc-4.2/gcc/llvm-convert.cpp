@@ -1154,7 +1154,7 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
     // it is dead.  This allows us to insert allocas in order without having to
     // scan for an insertion point. Use BitCast for int -> int
     AllocaInsertionPoint = CastInst::Create(Instruction::BitCast,
-      Context.getNullValue(Type::Int32Ty),
+      Constant::getNullValue(Type::Int32Ty),
       Type::Int32Ty, "alloca point");
     // Insert it as the first instruction in the entry block.
     Fn->begin()->getInstList().insert(Fn->begin()->begin(),
@@ -1323,7 +1323,7 @@ static void ZeroAggregate(MemRef DestLoc, LLVMBuilder &Builder) {
   const Type *ElTy =
     cast<PointerType>(DestLoc.Ptr->getType())->getElementType();
   if (ElTy->isSingleValueType()) {
-    StoreInst *St = Builder.CreateStore(Context.getNullValue(ElTy),
+    StoreInst *St = Builder.CreateStore(Constant::getNullValue(ElTy),
                                         DestLoc.Ptr, DestLoc.Volatile);
     St->setAlignment(DestLoc.getAlignment());
   } else if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
@@ -1614,7 +1614,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       // before initialization doesn't get garbage results to follow.
       const Type *T = cast<PointerType>(AI->getType())->getElementType();
       EmitTypeGcroot(AI, decl);
-      Builder.CreateStore(Context.getNullValue(T), AI);
+      Builder.CreateStore(Constant::getNullValue(T), AI);
     }
   
   if (TheDebugInfo) {
@@ -1977,7 +1977,7 @@ void TreeToLLVM::EmitLandingPads() {
         if (!TypeList) {
           // Catch-all - push a null pointer.
           Args.push_back(
-            Context.getNullValue(PointerType::getUnqual(Type::Int8Ty))
+            Constant::getNullValue(PointerType::getUnqual(Type::Int8Ty))
           );
         } else {
           // Add the type infos.
@@ -2003,7 +2003,7 @@ void TreeToLLVM::EmitLandingPads() {
         tree catch_all_type = lang_eh_catch_all();
         if (catch_all_type == NULL_TREE)
           // Use a C++ style null catch-all object.
-          Catch_All = Context.getNullValue(
+          Catch_All = Constant::getNullValue(
                                     PointerType::getUnqual(Type::Int8Ty));
         else
           // This language has a type that catches all others.
@@ -2225,7 +2225,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   } else {
     // This is a bitfield reference.
     if (!LV.BitSize)
-      return Context.getNullValue(Ty);
+      return Constant::getNullValue(Ty);
 
     const Type *ValTy = cast<PointerType>(LV.Ptr->getType())->getElementType();
     unsigned ValSizeInBits = ValTy->getPrimitiveSizeInBits();
@@ -3201,7 +3201,7 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
     Value *Cmp = Builder.CreateICmp(pred, Op, 
-                    Context.getNullValue(Op->getType()), "abscond");
+                    Constant::getNullValue(Op->getType()), "abscond");
     return Builder.CreateSelect(Cmp, Op, OpN, "abs");
   }
 
@@ -3259,7 +3259,7 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
   Value *V = Emit(TREE_OPERAND(exp, 0), 0);
   if (V->getType() != Type::Int1Ty) 
     V = Builder.CreateICmpNE(V,
-          Context.getNullValue(V->getType()), "toBool");
+          Constant::getNullValue(V->getType()), "toBool");
   V = Builder.CreateNot(V, (V->getNameStr()+"not").c_str());
   return CastToUIntType(V, ConvertType(TREE_TYPE(exp)));
 }
@@ -3418,10 +3418,10 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
   LHS = Builder.CreateICmpNE(LHS, 
-                             Context.getNullValue(LHS->getType()),
+                             Constant::getNullValue(LHS->getType()),
                              "toBool");
   RHS = Builder.CreateICmpNE(RHS, 
-                             Context.getNullValue(RHS->getType()),
+                             Constant::getNullValue(RHS->getType()),
                              "toBool");
   
   Value *Res = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
@@ -3564,7 +3564,7 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = Context.getAllOnesValue(Ty);
+  Constant *MinusOne = Constant::getAllOnesValue(Ty);
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
@@ -3636,7 +3636,7 @@ Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
-  Constant *MinusOne = Context.getAllOnesValue(Ty);
+  Constant *MinusOne = Constant::getAllOnesValue(Ty);
 
   // In the case of signed arithmetic, we calculate FDiv as follows:
   //   LHS FDiv RHS = (LHS + Sign(RHS) * Offset) Div RHS - Offset,
@@ -4911,7 +4911,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // This treats everything as unknown, and is minimally defensible as
     // correct, although completely useless.
     if (tree_low_cst (ObjSizeTree, 0) < 2)
-      Result = Context.getAllOnesValue(TD.getIntPtrType());
+      Result = Constant::getAllOnesValue(TD.getIntPtrType());
     else
       Result = ConstantInt::get(TD.getIntPtrType(), 0);
     return true;
@@ -5055,9 +5055,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));
     Value *Cond =
       Builder.CreateICmpEQ(Amt, 
-                           Context.getNullValue(Amt->getType()));
+                           Constant::getNullValue(Amt->getType()));
     Result = Builder.CreateSelect(Cond,
-                           Context.getNullValue(Result->getType()),
+                           Constant::getNullValue(Result->getType()),
                                   Result);
     return true;
   }
@@ -5535,7 +5535,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
       if (Ty != Type::VoidTy)
-        Result = Context.getNullValue(Ty);
+        Result = Constant::getNullValue(Ty);
       return true;
     }
 #endif  // FIXME: Should handle these GCC extensions eventually.
@@ -5600,7 +5600,7 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
 }
 
 bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {
-  Result = Context.getNullValue(ConvertType(TREE_TYPE(exp)));
+  Result = Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
   return true;
 }
 
@@ -5715,7 +5715,7 @@ bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
   unsigned DstAlign = getPointerAlignment(Dst);
 
   Value *DstV = Emit(Dst, 0);
-  Value *Val = Context.getNullValue(Type::Int32Ty);
+  Value *Val = Constant::getNullValue(Type::Int32Ty);
   Value *Len = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
   EmitMemSet(DstV, Val, Len, DstAlign);
   return true;
@@ -5761,7 +5761,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
   
   // Default to highly local read.
   if (ReadWrite == 0)
-    ReadWrite = Context.getNullValue(Type::Int32Ty);
+    ReadWrite = Constant::getNullValue(Type::Int32Ty);
   if (Locality == 0)
     Locality = ConstantInt::get(Type::Int32Ty, 3);
   
@@ -6867,7 +6867,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
     std::vector<Value *> BuildVecOps;
     
     // Insert zero initializers for any uninitialized values.
-    Constant *Zero = Context.getNullValue(PTy->getElementType());
+    Constant *Zero = Constant::getNullValue(PTy->getElementType());
     BuildVecOps.resize(cast<VectorType>(Ty)->getNumElements(), Zero);
 
     // Insert all of the elements here.
@@ -7047,7 +7047,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
   if (!TREE_VECTOR_CST_ELTS(exp))
-    return Context.getNullValue(ConvertType(TREE_TYPE(exp)));
+    return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
 
   std::vector<Constant*> Elts;
   for (tree elt = TREE_VECTOR_CST_ELTS(exp); elt; elt = TREE_CHAIN(elt))
@@ -7056,7 +7056,7 @@ Constant *TreeConstantToLLVM::ConvertVECTOR_CST(tree exp) {
   // The vector should be zero filled if insufficient elements are provided.
   if (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp))) {
     tree EltType = TREE_TYPE(TREE_TYPE(exp));
-    Constant *Zero = Context.getNullValue(ConvertType(EltType));
+    Constant *Zero = Constant::getNullValue(ConvertType(EltType));
     while (Elts.size() < TYPE_VECTOR_SUBPARTS(TREE_TYPE(exp)))
       Elts.push_back(Zero);
   }
@@ -7111,7 +7111,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       Elts.resize(ConstantSize);
     } else {
       // Fill the end of the string with nulls.
-      Constant *C = Context.getNullValue(ElTy);
+      Constant *C = Constant::getNullValue(ElTy);
       for (; LenInElts != ConstantSize; ++LenInElts)
         Elts.push_back(C);
     }
@@ -7185,7 +7185,7 @@ Constant *TreeConstantToLLVM::ConvertCONSTRUCTOR(tree exp) {
   // when array is filled during program initialization.
   if (CONSTRUCTOR_ELTS(exp) == 0 ||
       VEC_length(constructor_elt, CONSTRUCTOR_ELTS(exp)) == 0)  // All zeros?
-    return Context.getNullValue(ConvertType(TREE_TYPE(exp)));
+    return Constant::getNullValue(ConvertType(TREE_TYPE(exp)));
 
   switch (TREE_CODE(TREE_TYPE(exp))) {
   default: 
@@ -7292,7 +7292,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   //       of an array.  This can occur in cases where we have an array of
   //       unions, and the various unions had different pieces init'd.
   const Type *ElTy = SomeVal->getType();
-  Constant *Filler = Context.getNullValue(ElTy);
+  Constant *Filler = Constant::getNullValue(ElTy);
   bool AllEltsSameType = true;
   for (unsigned i = 0, e = ResultElts.size(); i != e; ++i) {
     if (ResultElts[i] == 0)
@@ -7378,7 +7378,7 @@ void ConstantLayoutInfo::ConvertToPacked() {
     if (AlignedEltOffs-EltOffs != 1)
       PadTy = ArrayType::get(PadTy, AlignedEltOffs-EltOffs);
     ResultElts.insert(ResultElts.begin()+i, 
-                      Context.getNullValue(PadTy));
+                      Constant::getNullValue(PadTy));
     
     // The padding is now element "i" and just bumped us up to "AlignedEltOffs".
     EltOffs = AlignedEltOffs;
@@ -7465,7 +7465,7 @@ AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
     if (GCCFieldOffsetInBits/8-NextFieldByteStart != 1)
       FillTy = ArrayType::get(FillTy,
                               GCCFieldOffsetInBits/8-NextFieldByteStart);
-    ResultElts.push_back(Context.getNullValue(FillTy));
+    ResultElts.push_back(Constant::getNullValue(FillTy));
 
     NextFieldByteStart = GCCFieldOffsetInBits/8;
     
@@ -7651,7 +7651,7 @@ void ConstantLayoutInfo::HandleTailPadding(uint64_t GCCStructBitSize) {
     const Type *FillTy = Type::Int8Ty;
     if (GCCStructSize - NextFieldByteStart != 1)
       FillTy = ArrayType::get(FillTy, GCCStructSize - NextFieldByteStart);
-    ResultElts.push_back(Context.getNullValue(FillTy));
+    ResultElts.push_back(Constant::getNullValue(FillTy));
     NextFieldByteStart = GCCStructSize;
   
     // At this point, we know that our struct should have the right size.
@@ -7759,7 +7759,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
         FillTy = Type::Int8Ty;
       else
         FillTy = ArrayType::get(Type::Int8Ty, UnionSize - InitSize);
-      Elts.push_back(Context.getNullValue(FillTy));
+      Elts.push_back(Constant::getNullValue(FillTy));
     }
   }
   return ConstantStruct::get(Elts, false);
@@ -7994,7 +7994,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
     Constant *Ops[] = {
       StructAddrLV,
-      Context.getNullValue(Type::Int32Ty),
+      Constant::getNullValue(Type::Int32Ty),
       ConstantInt::get(Type::Int32Ty, MemberIndex)
     };
     FieldPtr = TheFolder->CreateGetElementPtr(StructAddrLV, Ops+1, 2);

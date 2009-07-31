@@ -282,7 +282,7 @@ void writeLLVMValues() {
     else
       // Non constant values, e.g. arguments, are not at global scope.
       // When PCH is read, only global scope values are used.
-      ValuesForPCH.push_back(Context.getNullValue(Type::Int32Ty));
+      ValuesForPCH.push_back(Constant::getNullValue(Type::Int32Ty));
   }
 
   // Create string table.
@@ -1271,7 +1271,7 @@ void emit_global_to_llvm(tree decl) {
     // This global should be zero initialized.  Reconvert the type in case the
     // forward def of the global and the real def differ in type (e.g. declared
     // as 'int A[]', and defined as 'int A[100]').
-    Init = getGlobalContext().getNullValue(ConvertType(TREE_TYPE(decl)));
+    Init = Constant::getNullValue(ConvertType(TREE_TYPE(decl)));
   } else {
     assert((TREE_CONSTANT(DECL_INITIAL(decl)) || 
             TREE_CODE(DECL_INITIAL(decl)) == STRING_CST) &&

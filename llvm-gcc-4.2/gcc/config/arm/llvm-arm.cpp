@@ -51,7 +51,7 @@ static bool UnexpectedError(const char *msg, tree exp, Value *&Result) {
   // Set the Result to an undefined value.
   const Type *ResTy = ConvertType(TREE_TYPE(exp));
   if (ResTy->isSingleValueType())
-    Result = getGlobalContext().getUndef(ResTy);
+    Result = UndefValue::get(ResTy);
 
   // Return true, which can be propagated as the return value of
   // TargetIntrinsicLower, to indicate that no further error message
@@ -1393,7 +1393,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       return BadImmediateError(exp, Result);
     Result = Builder.CreateICmp(ICmpInst::ICMP_NE,
                                 Builder.CreateAnd(Ops[0], Ops[1]),
-                                Context.getConstantAggregateZero(ResultType));
+                                ConstantAggregateZero::get(ResultType));
     Result = Builder.CreateSExt(Result, ResultType);
     break;
 

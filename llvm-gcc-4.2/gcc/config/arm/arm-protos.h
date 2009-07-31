@@ -257,7 +257,7 @@ extern void arm_pr_long_calls_off (struct cpp_reader *);
 extern int arm_field_ms_struct_align (tree);
 
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
-extern const char * arm_mangle_vector_type (tree);
+extern const char *arm_mangle_type (tree);
 
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */
 /* APPLE LOCAL v7 support. Fix compact switch tables */

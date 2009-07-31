@@ -492,8 +492,8 @@ static tree arm_md_asm_clobbers (tree, tree, tree);
 /* APPLE LOCAL end ARM darwin local binding */
 
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
-#undef TARGET_MANGLE_VECTOR_TYPE
-#define TARGET_MANGLE_VECTOR_TYPE arm_mangle_vector_type
+#undef TARGET_MANGLE_TYPE
+#define TARGET_MANGLE_TYPE arm_mangle_type
 /* APPLE LOCAL end support. Merge from Codesourcery */
 
 /* APPLE LOCAL begin ARM reliable backtraces */
@@ -17622,7 +17622,7 @@ arm_init_neon_builtins (void)
   /* APPLE LOCAL begin 7083296 Build without warnings.  */
   /* Define typedefs which exactly correspond to the modes we are basing vector
      types on.  If you change these names you'll need to change
-     the table used by arm_mangle_vector_type too.  */
+     the table used by arm_mangle_type too.  */
   (*lang_hooks.types.register_builtin_type) (neon_intQI_type_node,
 					     "__builtin_neon_qi");
   (*lang_hooks.types.register_builtin_type) (neon_intHI_type_node,
@@ -23612,11 +23612,12 @@ static arm_mangle_map_entry arm_mangle_map[] = {
 };
 
 const char *
-arm_mangle_vector_type (tree type)
+arm_mangle_type (tree type)
 {
   arm_mangle_map_entry *pos = arm_mangle_map;
 
-  gcc_assert (TREE_CODE (type) == VECTOR_TYPE);
+  if (TREE_CODE (type) != VECTOR_TYPE)
+    return NULL;
 
   /* Check the mode of the vector type, and the name of the vector
      element type, against the table.  */

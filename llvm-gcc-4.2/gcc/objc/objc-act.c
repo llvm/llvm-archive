@@ -8229,6 +8229,19 @@ struct objc_try_context
 
 static struct objc_try_context *cur_try_context;
 
+/* LLVM LOCAL begin 7069718 */
+#ifdef ENABLE_LLVM
+/* Do nothing (return NULL_TREE).  */
+static tree return_null_tree (void);
+
+tree
+return_null_tree (void)
+{
+  return NULL_TREE;
+}
+#endif
+/* LLVM LOCAL end 7069718 */
+
 /* This hook, called via lang_eh_runtime_type, generates a runtime object
    that represents TYPE.  For Objective-C, this is just the class name.  */
 /* ??? Isn't there a class object or some such?  Is it easy to get?  */
@@ -8312,6 +8325,13 @@ objc_init_exceptions (void)
       lang_eh_runtime_type = objc_eh_runtime_type;
     }
 #endif
+
+  /* LLVM LOCAL begin 7069718 */
+#ifdef ENABLE_LLVM
+  if (flag_objc_zerocost_exceptions)
+    lang_eh_catch_all = return_null_tree;
+#endif
+  /* LLVM LOCAL end 7069718 */
 }
 
 /* Build an EXC_PTR_EXPR, or the moral equivalent.  In the case of Darwin,

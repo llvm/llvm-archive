@@ -1459,10 +1459,6 @@ arm_override_options (void)
       /* APPLE LOCAL end ARM interworking */
     }
 
-/* LLVM LOCAL */
-/* LLVM does not yet support Thumb2, so Thumb should not be enabled
-   by default for llvm-gcc.  */
-#ifndef ENABLE_LLVM
   /* APPLE LOCAL begin 6150882 use thumb2 by default for v7 */
   /* If we're compiling for v7, we should default to using thumb2
      codegen. */
@@ -1470,8 +1466,6 @@ arm_override_options (void)
       && thumb_option < 0)
     thumb_option = 1;
   /* APPLE LOCAL end 6150882 use thumb2 by default for v7 */
-#endif
-/* LLVM LOCAL */
 
   if (TARGET_THUMB && !(insn_flags & FL_THUMB))
     {

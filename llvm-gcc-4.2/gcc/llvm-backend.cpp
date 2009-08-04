@@ -1409,10 +1409,10 @@ void emit_global_to_llvm(tree decl) {
 
     // Handle used decls
     if (DECL_PRESERVE_P (decl)) {
-      if (DECL_LLVM_PRIVATE (decl))
-        AttributeUsedGlobals.insert(GV);
-      else if (DECL_LLVM_LINKER_PRIVATE (decl))
+      if (DECL_LLVM_LINKER_PRIVATE (decl))
         AttributeCompilerUsedGlobals.insert(GV);
+      else
+        AttributeUsedGlobals.insert(GV);
     }
   
     // Add annotate attributes for globals

@@ -1264,7 +1264,8 @@ L10:	cmp	ip, #0
 	.code	32
 	FUNC_START div0
 
-	stmfd	sp!, {r1, lr}
+	/* LLVM LOCAL mainline */
+	do_push	{r1, lr}
 	mov	r0, #SIGFPE
 	bl	SYM(raise) __PLT__
 	/* APPLE LOCAL ARM MACH assembler */

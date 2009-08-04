@@ -415,7 +415,11 @@ void TreeToLLVM::StartFunctionBody() {
   // allows C functions declared as "T foo() {}" to be treated like 
   // "T foo(void) {}" and allows us to handle functions with K&R-style
   // definitions correctly.
-  if (TYPE_ARG_TYPES(TREE_TYPE(FnDecl)) == 0) {
+  // Don't do this for c++. In c++ "T foo() {}" is not varargs and
+  // if the user typed "T foo(...)", he probably wants a varargs
+  // function. This also avoids a warning in instcombine. See
+  // llvm.org/PR4678
+  if (TYPE_ARG_TYPES(TREE_TYPE(FnDecl)) == 0 &&  !c_dialect_cxx()) {
     FTy = TheTypeConverter->ConvertArgListToFnType(TREE_TYPE(FnDecl),
                                                    DECL_ARGUMENTS(FnDecl),
                                                    static_chain,

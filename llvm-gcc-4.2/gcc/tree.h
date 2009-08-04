@@ -2927,6 +2927,8 @@ struct tree_parm_decl GTY(())
 #ifdef ENABLE_LLVM
 #define DECL_LLVM_PRIVATE(NODE) \
   (DECL_WITH_VIS_CHECK (NODE)->decl_with_vis.llvm_private_flag)
+#define DECL_LLVM_LINKER_PRIVATE(NODE) \
+  (DECL_WITH_VIS_CHECK (NODE)->decl_with_vis.llvm_linker_private_flag)
 #endif
 /* LLVM LOCAL end */
 
@@ -3069,6 +3071,7 @@ struct tree_decl_with_vis GTY(())
 
  /* LLVM LOCAL begin */
  unsigned llvm_private_flag : 1;
+ unsigned llvm_linker_private_flag : 1;
  /* LLVM LOCAL end */
 
  ENUM_BITFIELD(symbol_visibility) visibility : 2;
@@ -3091,7 +3094,7 @@ struct tree_decl_with_vis GTY(())
  unsigned block_synthesized_function : 1;
  /* APPLE LOCAL radar 5847976 */
  unsigned block_weak : 1;
- /* 4 unused bits (llvm). */
+ /* 3 unused bits (llvm). */
  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
  /* APPLE LOCAL end radar 5732232 - blocks */
 };

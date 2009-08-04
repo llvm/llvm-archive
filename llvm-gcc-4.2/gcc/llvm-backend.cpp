@@ -102,6 +102,7 @@ static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
+SmallSetVector<Constant*, 32> AttributeCompilerUsedGlobals;
 std::vector<Constant*> AttributeAnnotateGlobals;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
@@ -203,6 +204,11 @@ void changeLLVMConstant(Constant *Old, Constant *New) {
   if (AttributeUsedGlobals.count(Old)) {
     AttributeUsedGlobals.remove(Old);
     AttributeUsedGlobals.insert(New);
+  }
+
+  if (AttributeCompilerUsedGlobals.count(Old)) {
+    AttributeCompilerUsedGlobals.remove(Old);
+    AttributeCompilerUsedGlobals.insert(New);
   }
 
   for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
@@ -788,6 +794,7 @@ void llvm_asm_file_start(void) {
     sys::Program::ChangeStdoutToBinary();
 
   AttributeUsedGlobals.clear();
+  AttributeCompilerUsedGlobals.clear();
   timevar_pop(TV_LLVM_INIT);
 }
 
@@ -843,7 +850,8 @@ void llvm_asm_file_end(void) {
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
     const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
-    for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
       Constant *C = *AI;
       AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
@@ -856,6 +864,25 @@ void llvm_asm_file_end(void) {
                                          "llvm.used");
     gv->setSection("llvm.metadata");
     AttributeUsedGlobals.clear();
+  }
+
+  if (!AttributeCompilerUsedGlobals.empty()) {
+    std::vector<Constant *> ACUGs;
+    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeCompilerUsedGlobals.begin(),
+           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
+    Constant *Init = ConstantArray::get(AT, ACUGs);
+    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.compiler.used");
+    gv->setSection("llvm.metadata");
+    AttributeCompilerUsedGlobals.clear();
   }
 
   // Add llvm.global.annotations
@@ -1051,6 +1078,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   // A weak alias has TREE_PUBLIC set but not the other bits.
   if (DECL_LLVM_PRIVATE(decl))
     Linkage = GlobalValue::PrivateLinkage;
+  else if (DECL_LLVM_LINKER_PRIVATE(decl))
+    Linkage = GlobalValue::LinkerPrivateLinkage;
   else if (DECL_WEAK(decl))
     // The user may have explicitly asked for weak linkage - ignore flag_odr.
     Linkage = GlobalValue::WeakAnyLinkage;
@@ -1317,6 +1346,9 @@ void emit_global_to_llvm(tree decl) {
   if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
       && DECL_LLVM_PRIVATE(decl)) {
     Linkage = GlobalValue::PrivateLinkage;
+  } else if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
+             && DECL_LLVM_LINKER_PRIVATE(decl)) {
+    Linkage = GlobalValue::LinkerPrivateLinkage;
   } else if (!TREE_PUBLIC(decl)) {
     Linkage = GlobalValue::InternalLinkage;
   } else if (DECL_WEAK(decl)) {
@@ -1376,8 +1408,12 @@ void emit_global_to_llvm(tree decl) {
     }
 
     // Handle used decls
-    if (DECL_PRESERVE_P (decl))
-      AttributeUsedGlobals.insert(GV);
+    if (DECL_PRESERVE_P (decl)) {
+      if (DECL_LLVM_PRIVATE (decl))
+        AttributeUsedGlobals.insert(GV);
+      else if (DECL_LLVM_LINKER_PRIVATE (decl))
+        AttributeCompilerUsedGlobals.insert(GV);
+    }
   
     // Add annotate attributes for globals
     if (DECL_ATTRIBUTES(decl))

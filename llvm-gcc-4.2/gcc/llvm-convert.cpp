@@ -474,6 +474,8 @@ void TreeToLLVM::StartFunctionBody() {
   // Compute the linkage that the function should get.
   if (DECL_LLVM_PRIVATE(FnDecl)) {
     Fn->setLinkage(Function::PrivateLinkage);
+  } else if (DECL_LLVM_LINKER_PRIVATE(FnDecl)) {
+    Fn->setLinkage(Function::LinkerPrivateLinkage);
   } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
     Fn->setLinkage(Function::InternalLinkage);
   } else if (DECL_COMDAT(FnDecl)) {
@@ -1995,21 +1997,21 @@ void TreeToLLVM::EmitLandingPads() {
       // what exception is being unwound, append a catch-all.
 
       // The representation of a catch-all is language specific.
-      Value *Catch_All;
+      Value *CatchAll;
       if (!lang_eh_catch_all) {
         // Use a "cleanup" - this should be good enough for most languages.
-        Catch_All = ConstantInt::get(Type::Int32Ty, 0);
+        CatchAll = ConstantInt::get(Type::Int32Ty, 0);
       } else {
         tree catch_all_type = lang_eh_catch_all();
         if (catch_all_type == NULL_TREE)
           // Use a C++ style null catch-all object.
-          Catch_All = Constant::getNullValue(
+          CatchAll = Constant::getNullValue(
                                     PointerType::getUnqual(Type::Int8Ty));
         else
           // This language has a type that catches all others.
-          Catch_All = Emit(catch_all_type, 0);
+          CatchAll = Emit(catch_all_type, 0);
       }
-      Args.push_back(Catch_All);
+      Args.push_back(CatchAll);
     }
 
     // Emit the selector call.

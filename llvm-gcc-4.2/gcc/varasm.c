@@ -755,23 +755,45 @@ strip_reg_name (const char *name)
 void
 set_user_assembler_name (tree decl, const char *name)
 {
-  char *starred = alloca (strlen (name) + 2);
+  size_t len = strlen (name);
+  char *starred = alloca (len + 2);
   /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   starred[0] = '*';
   strcpy (starred + 1, name);
 #else
-  /* If the name isn't an LLVM intrinsic, add a starting '\1' character to
-   * indicate that the target assembler shouldn't modify the name.  If it *is*
-   * an LLVM intrinsic name, just set the name, to support code like this:
-   *     unsigned bswap(unsigned) __asm__("llvm.bswap");
-   */
-  if (name[0] != 'l' || name[1] != 'l' || name[2] != 'v' || name[3] != 'm'
-      || name[4] != '.') {
-    starred[0] = 1;
-    strcpy (starred + 1, name);
-  } else {
-    strcpy (starred, name);
+  {
+    /* If the name isn't an LLVM intrinsic, add a starting '\1' character to
+       indicate that the target assembler shouldn't modify the name.  If it *is*
+       an LLVM intrinsic name, just set the name, to support code like this:
+           unsigned bswap(unsigned) __asm__("llvm.bswap");  */
+    bool has_llvm_prefix =
+      (len > 5 && name[0] == 'l' && name[1] == 'l' && name[2] == 'v' &&
+       name[3] == 'm' && name[4] == '.');
+
+    /* If the name is an OBJC metadata name, then don't prepend a '\1' character
+       to it. Instead, mark it as either "private" or "linker private".  */
+    bool has_objc_prefix =
+      (len > 7 && (name[0] == 'l' || name[0] == 'L') && name[1] == '_' &&
+       ((name[2] == 'O' && name[3] == 'B' && name[4] == 'J' && name[5] == 'C') ||
+        (name[2] == 'o' && name[3] == 'b' && name[4] == 'j' && name[5] == 'c')) &&
+       name[6] == '_');
+
+    if (!has_llvm_prefix && !has_objc_prefix) {
+      starred[0] = 1;
+      strcpy (starred + 1, name);
+    } else {
+      strcpy (starred, name);
+
+      if (has_objc_prefix) {
+        DECL_LLVM_PRIVATE (decl) = (name[0] == 'L');
+        DECL_LLVM_LINKER_PRIVATE (decl) = (name[0] == 'l');
+
+        /* Remove the "[Ll]_" prefix. The LLVM assembly printer is now
+           intelligent enough to add the appropriate prefix to the name.  */
+        strcpy (starred, &name[2]);
+      }
+    }
   }
 #endif
   /* LLVM LOCAL end */

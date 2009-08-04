@@ -179,11 +179,8 @@ fi
 # APPLE LOCAL end ARM
 
 # LLVM LOCAL begin
-# If we can find an LLVM-GCC, prefer it.
-export CC=/Developer/usr/bin/llvm-gcc
-if [ ! -x $CC ] ; then unset CC ; fi
-export CXX=/Developer/usr/bin/llvm-g++
-if [ ! -x $CXX ] ; then unset CXX ; fi
+# If the user has CC set in their environment unset it now
+unset CC
 # LLVM LOCAL end
 
 ########################################

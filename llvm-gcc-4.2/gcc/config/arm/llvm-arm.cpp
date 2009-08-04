@@ -269,7 +269,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       std::vector<Value*> &Ops) {
   neon_datatype datatype = neon_datatype_unspecified;
   bool isRounded = false;
-  Intrinsic::ID intID;
+  Intrinsic::ID intID = Intrinsic::not_intrinsic;
   Function *intFn;
   const Type* intOpTypes[2];
 
@@ -2013,7 +2013,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld4_lane: {
     const VectorType *VTy =
       GetVldstType(exp, insn_data[icode].operand[0].mode);
-    unsigned LaneVal, NumVecs;
+    unsigned LaneVal, NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vld1_lane: NumVecs = 1; break;
     case NEON_BUILTIN_vld2_lane: NumVecs = 2; break;
@@ -2140,7 +2140,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vst4_lane: {
     const VectorType *VTy =
       GetVldstType(exp, insn_data[icode].operand[1].mode);
-    unsigned LaneVal, NumVecs;
+    unsigned LaneVal, NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vst1_lane: NumVecs = 1; break;
     case NEON_BUILTIN_vst2_lane: NumVecs = 2; break;

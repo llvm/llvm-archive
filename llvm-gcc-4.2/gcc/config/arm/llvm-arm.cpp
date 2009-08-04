@@ -2045,7 +2045,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld4_dup: {
     const VectorType *VTy =
       GetVldstType(exp, insn_data[icode].operand[0].mode);
-    unsigned NumVecs;
+    unsigned NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vld1_dup: NumVecs = 1; break;
     case NEON_BUILTIN_vld2_dup: NumVecs = 2; break;

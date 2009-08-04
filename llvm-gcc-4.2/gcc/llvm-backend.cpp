@@ -474,7 +474,7 @@ void llvm_initialize_backend(void) {
   LLVM_SET_SUBTARGET_FEATURES(Features);
   FeatureStr = Features.getString();
 #endif
-  TheTarget = TME->createTargetMachine(*TheModule, Triple, FeatureStr);
+  TheTarget = TME->createTargetMachine(Triple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());

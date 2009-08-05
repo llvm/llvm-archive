@@ -1220,6 +1220,10 @@ create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUni
   DECL_IGNORED_P (decl) = 1;
   DECL_ARTIFICIAL (decl) = 1;
   DECL_CONTEXT (decl) = NULL_TREE;
+  /* LLVM LOCAL begin 7115749 this object is constant. */
+  TREE_CONSTANT (decl) = 1;
+  TREE_READONLY (decl) = 1;
+  /* LLVM LOCAL end */
 
   attribute = tree_cons (NULL_TREE, build_string (len, section_name), NULL_TREE);
   attribute = tree_cons (get_identifier ("section"), attribute, NULL_TREE);

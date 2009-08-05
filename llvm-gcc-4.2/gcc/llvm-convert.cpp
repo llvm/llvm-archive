@@ -4559,7 +4559,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   default: 
     std::vector<const Type*> TmpVec(CallResultTypes.begin(),
                                     CallResultTypes.end());
-    CallResultType = StructType::get(TmpVec);
+    CallResultType = StructType::get(Context, TmpVec);
     break;
   }
   
@@ -6778,7 +6778,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   // If we have "extern void foo", make the global have type {} instead of
   // type void.
-  if (Ty == Type::VoidTy) Ty = StructType::get(NULL, NULL);
+  if (Ty == Type::VoidTy) Ty = StructType::get(Context);
   const PointerType *PTy = PointerType::getUnqual(Ty);
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
   if (DECL_ALIGN(exp)) {
@@ -7129,7 +7129,7 @@ Constant *TreeConstantToLLVM::ConvertCOMPLEX_CST(tree exp) {
   std::vector<Constant*> Elts;
   Elts.push_back(Convert(TREE_REALPART(exp)));
   Elts.push_back(Convert(TREE_IMAGPART(exp)));
-  return ConstantStruct::get(Elts, false);
+  return ConstantStruct::get(Context, Elts, false);
 }
 
 Constant *TreeConstantToLLVM::ConvertNOP_EXPR(tree exp) {
@@ -7315,7 +7315,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   if (AllEltsSameType)
     return ConstantArray::get(
       ArrayType::get(ElTy, ResultElts.size()), ResultElts);
-  return ConstantStruct::get(ResultElts, false);
+  return ConstantStruct::get(Context, ResultElts, false);
 }
 
 
@@ -7735,8 +7735,8 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     LayoutInfo.HandleTailPadding(getInt64(StructTypeSizeTree, true));
 
   // Okay, we're done, return the computed elements.
-  return
-    ConstantStruct::get(LayoutInfo.ResultElts, LayoutInfo.StructIsPacked);
+  return ConstantStruct::get(Context, LayoutInfo.ResultElts, 
+                             LayoutInfo.StructIsPacked);
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
@@ -7768,7 +7768,7 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
       Elts.push_back(Constant::getNullValue(FillTy));
     }
   }
-  return ConstantStruct::get(Elts, false);
+  return ConstantStruct::get(Context, Elts, false);
 }
 
 //===----------------------------------------------------------------------===//

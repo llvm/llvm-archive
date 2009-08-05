@@ -623,7 +623,7 @@ public:
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned i = 0;
     if (ArraySize) {
@@ -661,7 +661,7 @@ public:
       if (OrigElts[i]==Type::VoidTy)
         Elts[i] = wordType;
 
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned Size = getTargetData().getTypeAllocSize(STy);
     const StructType *InSTy = dyn_cast<StructType>(Ty);
@@ -1062,7 +1062,7 @@ public:
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned i = 0;
     if (ArraySize) {
@@ -1102,7 +1102,7 @@ public:
       if (OrigElts[i]==Type::VoidTy)
         Elts[i] = wordType;
 
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned Size = getTargetData().getTypeAllocSize(STy);
     const StructType *InSTy = dyn_cast<StructType>(Ty);

@@ -192,7 +192,7 @@ void writeLLVMTypesStringTable() {
   }
 
   // Create string table.
-  Constant *LTypesNameTable = ConstantStruct::get(LTypesNames, false);
+  Constant *LTypesNameTable = ConstantStruct::get(Context, LTypesNames, false);
 
   // Create variable to hold this string table.
   GlobalVariable *GV = new GlobalVariable(*TheModule,   
@@ -752,8 +752,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 #else
       // 128-bit long doubles map onto { double, double }.
       return SET_TYPE_LLVM(type,
-                           StructType::get(Type::DoubleTy, Type::DoubleTy,
-                                                 NULL));
+                           StructType::get(Context, Type::DoubleTy,
+                                           Type::DoubleTy, NULL));
 #endif
     }
     
@@ -761,7 +761,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    return SET_TYPE_LLVM(type, StructType::get(Ty, Ty, NULL));
+    return SET_TYPE_LLVM(type, StructType::get(Context, Ty, Ty, NULL));
   }
   case VECTOR_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
@@ -1358,7 +1358,7 @@ struct StructTypeConversionInfo {
   const Type *getLLVMType() const {
     // Use Packed type if Packed is set or all struct fields are bitfields.
     // Empty struct is not packed unless packed is set.
-    return StructType::get(Elements,
+    return StructType::get(Context, Elements,
                            Packed || (!Elements.empty() && AllBitFields));
   }
   
@@ -2448,7 +2448,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   }
 
   bool isPacked = 8 * EltAlign > TYPE_ALIGN(type);
-  const Type *ResultTy = StructType::get(UnionElts, isPacked);
+  const Type *ResultTy = StructType::get(Context, UnionElts, isPacked);
   const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
   TypeDB.setType(type, ResultTy);
 

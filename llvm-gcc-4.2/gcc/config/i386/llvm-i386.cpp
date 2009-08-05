@@ -1313,12 +1313,12 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
   if (llvm_x86_should_not_return_complex_in_memory(type)) {
     ElementTypes.push_back(Type::X86_FP80Ty);
     ElementTypes.push_back(Type::X86_FP80Ty);
-    return StructType::get(ElementTypes, STy->isPacked());
+    return StructType::get(Context, ElementTypes, STy->isPacked());
   } 
 
   std::vector<const Type*> GCCElts;
   llvm_x86_64_get_multiple_return_reg_classes(type, Ty, GCCElts);
-  return StructType::get(GCCElts, false);
+  return StructType::get(Context, GCCElts, false);
 }
 
 // llvm_x86_extract_mrv_array_element - Helper function that help extract 

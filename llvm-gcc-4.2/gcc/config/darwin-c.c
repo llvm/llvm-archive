@@ -1209,8 +1209,9 @@ create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUni
 
   for (l = 0; l < *numUniChars; l++)
     initlist = tree_cons (NULL_TREE, build_int_cst (char_type_node, uniCharBuf[l]), initlist);
+  /* LLVM LOCAL utf16 has two trailing nulls 7095855 */
   type = build_array_type (char_type_node,
-                           build_index_type (build_int_cst (NULL_TREE, *numUniChars)));
+                           build_index_type (build_int_cst (NULL_TREE, *numUniChars + 1)));
   name = (char *)alloca (strlen (name_prefix) + 10);
   sprintf (name, "%s%d", name_prefix, ++num);
   decl = build_decl (VAR_DECL, get_identifier (name), type);

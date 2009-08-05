@@ -13,4 +13,4 @@ int main() {
     return (int)(long)@"foo";
 }
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler "(LC1|__unnamed_1_0):.*\n\t.quad\t_OBJC_CLASS_\\\$_NSConstantString" } } */
+/* { dg-final { scan-assembler "(LC1|__unnamed_1_0|___unnamed_1):.*\n\t.quad\t_OBJC_CLASS_\\\$_NSConstantString" } } */

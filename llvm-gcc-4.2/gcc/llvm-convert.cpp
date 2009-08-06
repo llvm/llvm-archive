@@ -7710,19 +7710,31 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     if (!isBitfield(Field))
       LayoutInfo.AddFieldToRecordConstant(Val, GCCFieldOffsetInBits);
     else {
-      assert(isa<ConstantInt>(Val) && "Can only init bitfield with constant");
+      // Bitfields can only be initialized with constants (integer constant
+      // expressions).
+      ConstantInt *ValC = cast<ConstantInt>(Val);
       uint64_t FieldSizeInBits = getInt64(DECL_SIZE(Field), true);
       uint64_t ValueSizeInBits = Val->getType()->getPrimitiveSizeInBits();
+      
+      // G++ has various bugs handling {} initializers where it doesn't
+      // synthesize a zero node of the right type.  Instead of figuring out G++,
+      // just hack around it by special casing zero and allowing it to be the
+      // wrong size.
+      if (ValueSizeInBits < FieldSizeInBits && ValC->isZero()) {
+        APInt ValAsInt = ValC->getValue();
+        ValC = ConstantInt::get(Context, ValAsInt.zext(FieldSizeInBits));
+        ValueSizeInBits = FieldSizeInBits;
+      }
+      
       assert(ValueSizeInBits >= FieldSizeInBits &&
              "disagreement between LLVM and GCC on bitfield size");
       if (ValueSizeInBits != FieldSizeInBits) {
         // Fields are allowed to be smaller than their type.  Simply discard
         // the unwanted upper bits in the field value.
-        APInt ValAsInt = cast<ConstantInt>(Val)->getValue();
-        Val = ConstantInt::get(Context, ValAsInt.trunc(FieldSizeInBits));
+        APInt ValAsInt = ValC->getValue();
+        ValC = ConstantInt::get(Context, ValAsInt.trunc(FieldSizeInBits));
       }
-      LayoutInfo.AddBitFieldToRecordConstant(cast<ConstantInt>(Val),
-                                             GCCFieldOffsetInBits);
+      LayoutInfo.AddBitFieldToRecordConstant(ValC, GCCFieldOffsetInBits);
     }
   }
 

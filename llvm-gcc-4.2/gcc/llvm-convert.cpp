@@ -7017,7 +7017,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     // do not match.  FLOAT_WORDS_BIG_ENDIAN describes the target endianness.
     // The host's used to be available in HOST_WORDS_BIG_ENDIAN, but the gcc
     // maintainers removed this in a fit of cleanliness between 4.0 
-    // and 4.2. For now, host and target endianness must match.
+    // and 4.2. llvm::sys has a substitute.
 
     UArr[0] = RealArr[0];   // Long -> int convert
     UArr[1] = RealArr[1];
@@ -7086,14 +7086,34 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
            "Length in bytes should be a multiple of element size");
     const unsigned short *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len/2; ++i)
-      Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
+    for (unsigned i = 0; i != Len/2; ++i) {
+      // gcc has constructed the initializer elements in the target endianness,
+      // but we're going to treat them as ordinary shorts from here, with
+      // host endianness.  Adjust if necessary.
+      if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
+        Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
+      else
+        Elts.push_back(ConstantInt::get(Type::Int16Ty, 
+          ((InStr[i] << 8)  & 0xff00) | 
+          ((InStr[i] >> 8)  & 0x00ff)));
+    }
   } else if (ElTy == Type::Int32Ty) {
     assert((Len&3) == 0 &&
            "Length in bytes should be a multiple of element size");
     const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
-    for (unsigned i = 0; i != Len/4; ++i)
-      Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
+    for (unsigned i = 0; i != Len/4; ++i) {
+      // gcc has constructed the initializer elements in the target endianness,
+      // but we're going to treat them as ordinary shorts from here, with
+      // host endianness.  Adjust if necessary.
+      if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
+        Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
+      else
+        Elts.push_back(ConstantInt::get(Type::Int32Ty, 
+          ((InStr[i] << 24) & 0xff000000) |
+          ((InStr[i] << 8)  & 0x00ff0000) | 
+          ((InStr[i] >> 8)  & 0x0000ff00) |
+          ((InStr[i] >> 24) & 0x000000ff)));
+    }
   } else {
     assert(0 && "Unknown character type!");
   }

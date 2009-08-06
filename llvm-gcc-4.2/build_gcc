@@ -167,7 +167,7 @@ if echo $TARGETS | grep arm; then
     exit 1
   fi
   if [ "x$ARM_MULTILIB_ARCHS" = "x" ] ; then
-    ARM_MULTILIB_ARCHS=`/usr/bin/lipo -info $ARM_SYSROOT/usr/lib/libSystem.dylib | cut -d':' -f 3 | sed -e 's/^ //' -e 's/ $//'`
+    ARM_MULTILIB_ARCHS=`/usr/bin/lipo -info $ARM_SYSROOT/usr/lib/libSystem.dylib | cut -d':' -f 3 | sed -e 's/x86_64//' -e 's/i386//' -e 's/ppc7400//' -e 's/ppc64//' -e 's/^ *//' -e 's/ $//'`
   fi;
   if [ "x$ARM_MULTILIB_ARCHS" == "x" ] ; then
     echo "Error: missing ARM slices in $ARM_SYSROOT"

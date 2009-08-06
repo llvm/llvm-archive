@@ -3130,6 +3130,37 @@ case ${target} in
 		if test x$target_cpu_cname = x
 		then
 			target_cpu_default2=TARGET_CPU_generic
+                        # LLVM LOCAL begin arm default cpu
+			case ${target} in
+				armv5-*-* | armv5t-*-*)
+					target_cpu_default2=TARGET_CPU_arm10tdmi
+					;;
+				armv5e-*-* | armv5te-*-*)
+					target_cpu_default2=TARGET_CPU_arm1026ejs
+					;;
+				armv6-*-* | armv6j-*-*)
+					target_cpu_default2=TARGET_CPU_arm1136js
+					;;
+				armv6k-*-*)
+					target_cpu_default2=TARGET_CPU_mpcore
+					;;
+				armv6z-*-* | armv6zk-*-*)
+					target_cpu_default2=TARGET_CPU_arm1176jzs
+					;;
+				armv6t2-*-*)
+					target_cpu_default2=TARGET_CPU_arm1156t2s
+					;;
+				armv7-*-* | armv7a-*-* | armv7l-*-* | armv7-a-*-*)
+					target_cpu_default2=TARGET_CPU_cortexa8
+					;;
+				armv7r-*-* | armv7-r-*-*)
+					target_cpu_default2=TARGET_CPU_cortexr4
+					;;
+				armv7m-*-* | armv7-m-*-*)
+					target_cpu_default2=TARGET_CPU_cortexm3
+					;;
+			esac
+                        # LLVM LOCAL end arm default cpu
 		else
 			target_cpu_default2=TARGET_CPU_$target_cpu_cname
 		fi

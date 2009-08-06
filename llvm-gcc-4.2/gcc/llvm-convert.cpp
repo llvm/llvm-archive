@@ -7103,7 +7103,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
     const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len/4; ++i) {
       // gcc has constructed the initializer elements in the target endianness,
-      // but we're going to treat them as ordinary shorts from here, with
+      // but we're going to treat them as ordinary ints from here, with
       // host endianness.  Adjust if necessary.
       if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
         Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));

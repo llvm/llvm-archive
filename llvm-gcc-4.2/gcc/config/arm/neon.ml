@@ -1347,16 +1347,24 @@ let ops =
        re: inlining, or tweaking the ABI used for intrinsics (a special call
        attribute?).
     *)
-    Vtrn, [ReturnPtr], Pair_result Dreg, "vtrn", bits_2, pf_su_8_32;
-    Vtrn, [ReturnPtr], Pair_result Qreg, "vtrnQ", bits_2, pf_su_8_32;
+    (* LLVM LOCAL begin Use return by value instead of ReturnPtr. *)
+    Vtrn, [], Use_operands [| VecArray (2, Dreg); Dreg; Dreg |],
+      "vtrn", bits_2, pf_su_8_32;
+    Vtrn, [], Use_operands [| VecArray (2, Qreg); Qreg; Qreg |],
+      "vtrnQ", bits_2, pf_su_8_32;
     
     (* Zip elements.  *)
-    Vzip, [ReturnPtr], Pair_result Dreg, "vzip", bits_2, pf_su_8_32;
-    Vzip, [ReturnPtr], Pair_result Qreg, "vzipQ", bits_2, pf_su_8_32;
+    Vzip, [], Use_operands [| VecArray (2, Dreg); Dreg; Dreg |],
+      "vzip", bits_2, pf_su_8_32;
+    Vzip, [], Use_operands [| VecArray (2, Qreg); Qreg; Qreg |],
+      "vzipQ", bits_2, pf_su_8_32;
     
     (* Unzip elements.  *)
-    Vuzp, [ReturnPtr], Pair_result Dreg, "vuzp", bits_2, pf_su_8_32;
-    Vuzp, [ReturnPtr], Pair_result Qreg, "vuzpQ", bits_2, pf_su_8_32;
+    Vuzp, [], Use_operands [| VecArray (2, Dreg); Dreg; Dreg |],
+      "vuzp", bits_2, pf_su_8_32;
+    Vuzp, [], Use_operands [| VecArray (2, Qreg); Qreg; Qreg |],
+      "vuzpQ", bits_2, pf_su_8_32;
+    (* LLVM LOCAL end Use return by value instead of ReturnPtr. *)
     
     (* Element/structure loads.  VLD1 variants.  *)
     Vldx 1,

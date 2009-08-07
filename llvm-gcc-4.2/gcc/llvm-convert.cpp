@@ -7084,7 +7084,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   } else if (ElTy == Type::Int16Ty) {
     assert((Len&1) == 0 &&
            "Length in bytes should be a multiple of element size");
-    const unsigned short *InStr =
+    const uint16_t *InStr =
       (const unsigned short *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len/2; ++i) {
       // gcc has constructed the initializer elements in the target endianness,
@@ -7093,14 +7093,12 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
         Elts.push_back(ConstantInt::get(Type::Int16Ty, InStr[i]));
       else
-        Elts.push_back(ConstantInt::get(Type::Int16Ty, 
-          ((InStr[i] << 8)  & 0xff00) | 
-          ((InStr[i] >> 8)  & 0x00ff)));
+        Elts.push_back(ConstantInt::get(Type::Int16Ty, ByteSwap_16(InStr[i])));
     }
   } else if (ElTy == Type::Int32Ty) {
     assert((Len&3) == 0 &&
            "Length in bytes should be a multiple of element size");
-    const unsigned *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
+    const uint32_t *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len/4; ++i) {
       // gcc has constructed the initializer elements in the target endianness,
       // but we're going to treat them as ordinary ints from here, with
@@ -7108,11 +7106,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
         Elts.push_back(ConstantInt::get(Type::Int32Ty, InStr[i]));
       else
-        Elts.push_back(ConstantInt::get(Type::Int32Ty, 
-          ((InStr[i] << 24) & 0xff000000) |
-          ((InStr[i] << 8)  & 0x00ff0000) | 
-          ((InStr[i] >> 8)  & 0x0000ff00) |
-          ((InStr[i] >> 24) & 0x000000ff)));
+        Elts.push_back(ConstantInt::get(Type::Int32Ty, ByteSwap_32(InStr[i])));
     }
   } else {
     assert(0 && "Unknown character type!");

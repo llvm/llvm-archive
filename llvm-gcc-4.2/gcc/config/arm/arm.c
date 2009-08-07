@@ -16673,6 +16673,20 @@ arm_init_neon_builtins (void)
 #define v4sf_TN V4SF_type_node
 #define v2di_TN V2DI_type_node
 
+/* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+#define pv8qi_TN V8QI2_type_node
+#define pv4hi_TN V4HI2_type_node
+#define pv2si_TN V2SI2_type_node
+#define pv2sf_TN V2SF2_type_node
+#define pdi_TN DI2_type_node
+
+#define pv16qi_TN V16QI2_type_node
+#define pv8hi_TN V8HI2_type_node
+#define pv4si_TN V4SI2_type_node
+#define pv4sf_TN V4SF2_type_node
+#define pv2di_TN V2DI2_type_node
+#else /* !ENABLE_LLVM */
 #define pv8qi_TN V8QI_pointer_node
 #define pv4hi_TN V4HI_pointer_node
 #define pv2si_TN V2SI_pointer_node
@@ -16684,6 +16698,8 @@ arm_init_neon_builtins (void)
 #define pv4si_TN V4SI_pointer_node
 #define pv4sf_TN V4SF_pointer_node
 #define pv2di_TN V2DI_pointer_node
+#endif /* !ENABLE_LLVM */
+/* LLVM LOCAL end multi-vector types */
 
 #define void_TN void_type_node
 
@@ -16695,6 +16711,15 @@ arm_init_neon_builtins (void)
 #define TYPE4(A,B,C,D) \
   tree A##_##ftype##_##B##_##C##_##D = build_function_type_list (A##_TN, \
     B##_TN, C##_TN, D##_TN, NULL)
+/* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+#define TYPE4_RESULTPAIR(A,B,C,D) \
+  tree A##_##ftype##_##B##_##C##_##D = build_function_type_list (B##_TN, \
+    C##_TN, D##_TN, NULL)
+#else
+#define TYPE4_RESULTPAIR(A,B,C,D) TYPE4(A,B,C,D)
+#endif
+/* LLVM LOCAL end multi-vector types */
 #define TYPE5(A,B,C,D,E) \
   tree A##_##ftype##_##B##_##C##_##D##_##E = build_function_type_list (A##_TN, \
     B##_TN, C##_TN, D##_TN, E##_TN, NULL)
@@ -16808,6 +16833,8 @@ arm_init_neon_builtins (void)
                                               "__builtin_neon_v4si2");
   tree V4SF2_type_node = build_multivec_type (V4SF_type_node, 2,
                                               "__builtin_neon_v4sf2");
+  tree V2DI2_type_node = build_multivec_type (V2DI_type_node, 2,
+                                              "__builtin_neon_v2di2");
   tree V16QI3_type_node = build_multivec_type (V16QI_type_node, 3,
                                                "__builtin_neon_v16qi3");
   tree V8HI3_type_node = build_multivec_type (V8HI_type_node, 3,
@@ -16858,8 +16885,6 @@ arm_init_neon_builtins (void)
   tree V8HI4_type_node = intXI_type_node;
   tree V4SI4_type_node = intXI_type_node;
   tree V4SF4_type_node = intXI_type_node;
-#endif /* ENABLE_LLVM */
-  /* LLVM LOCAL end multi-vector types */
 
   /* Pointers to vector types.  */
   tree V8QI_pointer_node = build_pointer_type (V8QI_type_node);
@@ -16871,6 +16896,8 @@ arm_init_neon_builtins (void)
   tree V4SI_pointer_node = build_pointer_type (V4SI_type_node);
   tree V4SF_pointer_node = build_pointer_type (V4SF_type_node);
   tree V2DI_pointer_node = build_pointer_type (V2DI_type_node);
+#endif /* ENABLE_LLVM */
+  /* LLVM LOCAL end multi-vector types */
 
   /* Binops, all-doubleword arithmetic.  */
   TYPE4 (v8qi, v8qi, v8qi, si);
@@ -17132,17 +17159,19 @@ arm_init_neon_builtins (void)
   TYPE5 (v2di, v2di, v2di, si, si);
 
   /* Operations which return results as pairs.  */
-  TYPE4 (void, pv8qi, v8qi, v8qi);
-  TYPE4 (void, pv4hi, v4hi, v4hi);
-  TYPE4 (void, pv2si, v2si, v2si);
-  TYPE4 (void, pv2sf, v2sf, v2sf);
-  TYPE4 (void, pdi, di, di);
+  /* LLVM LOCAL begin multi-vector types */
+  TYPE4_RESULTPAIR (void, pv8qi, v8qi, v8qi);
+  TYPE4_RESULTPAIR (void, pv4hi, v4hi, v4hi);
+  TYPE4_RESULTPAIR (void, pv2si, v2si, v2si);
+  TYPE4_RESULTPAIR (void, pv2sf, v2sf, v2sf);
+  TYPE4_RESULTPAIR (void, pdi, di, di);
 
-  TYPE4 (void, pv16qi, v16qi, v16qi);
-  TYPE4 (void, pv8hi, v8hi, v8hi);
-  TYPE4 (void, pv4si, v4si, v4si);
-  TYPE4 (void, pv4sf, v4sf, v4sf);
-  TYPE4 (void, pv2di, v2di, v2di);
+  TYPE4_RESULTPAIR (void, pv16qi, v16qi, v16qi);
+  TYPE4_RESULTPAIR (void, pv8hi, v8hi, v8hi);
+  TYPE4_RESULTPAIR (void, pv4si, v4si, v4si);
+  TYPE4_RESULTPAIR (void, pv4sf, v4sf, v4sf);
+  TYPE4_RESULTPAIR (void, pv2di, v2di, v2di);
+  /* LLVM LOCAL end multi-vector types */
 
   /* Table look-up.  */
   TYPE3 (v8qi, v8qi, v8qi);

@@ -1900,53 +1900,31 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vtrn: {
-    // Translate this to a vector shuffle.
-    std::vector<Constant*> Idxs;
-    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
-    for (unsigned EvenOdd = 0; EvenOdd != 2; ++EvenOdd) {
-      for (unsigned i = 0; i < NUnits; i += 2) {
-        Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + EvenOdd));
-        Idxs.push_back(ConstantInt::get(Type::Int32Ty,
-                                              i + NUnits + EvenOdd));
+  case NEON_BUILTIN_vtrn:
+  case NEON_BUILTIN_vzip:
+  case NEON_BUILTIN_vuzp: {
+    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+    if (VTy->getElementType()->isFloatingPoint()) {
+      switch (neon_code) {
+      case NEON_BUILTIN_vtrn: intID = Intrinsic::arm_neon_vtrnf; break;
+      case NEON_BUILTIN_vzip: intID = Intrinsic::arm_neon_vzipf; break;
+      case NEON_BUILTIN_vuzp: intID = Intrinsic::arm_neon_vuzpf; break;
+      default: assert(false);
+      }
+    } else {
+      switch (neon_code) {
+      case NEON_BUILTIN_vtrn: intID = Intrinsic::arm_neon_vtrni; break;
+      case NEON_BUILTIN_vzip: intID = Intrinsic::arm_neon_vzipi; break;
+      case NEON_BUILTIN_vuzp: intID = Intrinsic::arm_neon_vuzpi; break;
+      default: assert(false);
       }
     }
-    Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         ConstantVector::get(Idxs));
-    Type *PtrTy = Result->getType()->getPointerTo();
-    Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
-    Result = 0;
-    break;
-  }
-
-  case NEON_BUILTIN_vzip: {
-    // Translate this to a vector shuffle.
-    std::vector<Constant*> Idxs;
-    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
-    for (unsigned i = 0; i != NUnits; ++i) {
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i));
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + NUnits));
-    }
-    Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         ConstantVector::get(Idxs));
-    Type *PtrTy = Result->getType()->getPointerTo();
-    Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
-    Result = 0;
-    break;
-  }
-
-  case NEON_BUILTIN_vuzp: {
-    // Translate this to a vector shuffle.
-    std::vector<Constant*> Idxs;
-    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
-    for (unsigned EvenOdd = 0; EvenOdd != 2; ++EvenOdd) {
-      for (unsigned i = 0; i != NUnits; ++i)
-        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2 * i + EvenOdd));
-    }
-    Result = Builder.CreateShuffleVector(Ops[1], Ops[2],
-                                         ConstantVector::get(Idxs));
-    Type *PtrTy = Result->getType()->getPointerTo();
-    Builder.CreateStore(Result, BitCastToType(Ops[0], PtrTy));
+    intFn = Intrinsic::getDeclaration(TheModule, intID, (const Type **)&VTy, 1);
+    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
   }

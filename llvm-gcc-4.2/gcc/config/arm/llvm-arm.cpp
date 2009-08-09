@@ -1880,11 +1880,38 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vtbl2:
   case NEON_BUILTIN_vtbl3:
   case NEON_BUILTIN_vtbl4: {
-    unsigned NUnits = Ops[0]->getType()->getPrimitiveSizeInBits() / 8;
-    intOpTypes[0] = VectorType::get(IntegerType::get(8), NUnits);
-    intID = Intrinsic::arm_neon_vtbl;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    unsigned TblVecs = 0;
+    switch (neon_code) {
+    case NEON_BUILTIN_vtbl1:
+      intID = Intrinsic::arm_neon_vtbl1;
+      TblVecs = 1;
+      break;
+    case NEON_BUILTIN_vtbl2:
+      intID = Intrinsic::arm_neon_vtbl2;
+      TblVecs = 2;
+      break;
+    case NEON_BUILTIN_vtbl3:
+      intID = Intrinsic::arm_neon_vtbl3;
+      TblVecs = 3;
+      break;
+    case NEON_BUILTIN_vtbl4:
+      intID = Intrinsic::arm_neon_vtbl4;
+      TblVecs = 4;
+      break;
+    default:
+      assert(false);
+    }
+    intFn = Intrinsic::getDeclaration(TheModule, intID);
+    std::vector<Value*> Args;
+    if (TblVecs == 1) {
+      Args.push_back(Ops[0]);
+    } else {
+      for (unsigned n = 0; n < TblVecs; ++n) {
+        Args.push_back(Builder.CreateExtractValue(Ops[0], n));
+      }
+    }
+    Args.push_back(Ops[1]);
+    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
     break;
   }
 
@@ -1892,11 +1919,39 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vtbx2:
   case NEON_BUILTIN_vtbx3:
   case NEON_BUILTIN_vtbx4: {
-    unsigned NUnits = Ops[1]->getType()->getPrimitiveSizeInBits() / 8;
-    intOpTypes[0] = VectorType::get(IntegerType::get(8), NUnits);
-    intID = Intrinsic::arm_neon_vtbx;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
-    Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
+    unsigned TblVecs = 0;
+    switch (neon_code) {
+    case NEON_BUILTIN_vtbx1:
+      intID = Intrinsic::arm_neon_vtbx1;
+      TblVecs = 1;
+      break;
+    case NEON_BUILTIN_vtbx2:
+      intID = Intrinsic::arm_neon_vtbx2;
+      TblVecs = 2;
+      break;
+    case NEON_BUILTIN_vtbx3:
+      intID = Intrinsic::arm_neon_vtbx3;
+      TblVecs = 3;
+      break;
+    case NEON_BUILTIN_vtbx4:
+      intID = Intrinsic::arm_neon_vtbx4;
+      TblVecs = 4;
+      break;
+    default:
+      assert(false);
+    }
+    intFn = Intrinsic::getDeclaration(TheModule, intID);
+    std::vector<Value*> Args;
+    Args.push_back(Ops[0]);
+    if (TblVecs == 1) {
+      Args.push_back(Ops[1]);
+    } else {
+      for (unsigned n = 0; n < TblVecs; ++n) {
+        Args.push_back(Builder.CreateExtractValue(Ops[1], n));
+      }
+    }
+    Args.push_back(Ops[2]);
+    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
     break;
   }
 

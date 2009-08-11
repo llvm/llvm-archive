@@ -59,6 +59,7 @@ extern "C" {
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "except.h"
 #include "flags.h"
 #include "tree.h"
 #include "diagnostic.h"
@@ -499,7 +500,10 @@ void llvm_initialize_backend(void) {
 /// known at codegen time.
 void performLateBackendInitialization(void) {
   // The Ada front-end sets flag_exceptions only after processing the file.
-  ExceptionHandling = flag_exceptions;
+  if (USING_SJLJ_EXCEPTIONS)
+    SjLjExceptionHandling = flag_exceptions;
+  else
+    DwarfExceptionHandling = flag_exceptions;
   for (Module::iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
     if (!I->isDeclaration()) {

@@ -115,12 +115,21 @@ static GTY ((param_is (union tree_node)))
   htab_t type_to_runtime_map;
 
 /* Describe the SjLj_Function_Context structure.  */
+#ifndef ENABLE_LLVM
 static GTY(()) tree sjlj_fc_type_node;
 static int sjlj_fc_call_site_ofs;
 static int sjlj_fc_data_ofs;
 static int sjlj_fc_personality_ofs;
 static int sjlj_fc_lsda_ofs;
 static int sjlj_fc_jbuf_ofs;
+#else
+tree sjlj_fc_type_node;
+int sjlj_fc_call_site_ofs;
+int sjlj_fc_data_ofs;
+int sjlj_fc_personality_ofs;
+int sjlj_fc_lsda_ofs;
+int sjlj_fc_jbuf_ofs;
+#endif
 
 /* Describes one exception region.  */
 struct eh_region GTY(())
@@ -276,7 +285,7 @@ static int ehspec_filter_eq (const void *, const void *);
 static hashval_t ehspec_filter_hash (const void *);
 static int add_ttypes_entry (htab_t, tree);
 static int add_ehspec_entry (htab_t, htab_t, tree);
-static void assign_filter_values (void);
+/*static void assign_filter_values (void); */
 static void build_post_landing_pads (void);
 static void connect_post_landing_pads (void);
 static void dw2_build_landing_pads (void);
@@ -1376,7 +1385,7 @@ add_ehspec_entry (htab_t ehspec_hash, htab_t ttypes_hash, tree list)
    we use lots of landing pads, and so every type or list can share
    the same filter value, which saves table space.  */
 
-static void
+/*static*/ void
 assign_filter_values (void)
 {
   int i;

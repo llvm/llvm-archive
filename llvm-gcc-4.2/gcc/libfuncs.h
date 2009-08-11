@@ -82,9 +82,15 @@ extern GTY(()) tree llvm_libfunc_table[LTI_MAX];
 #ifdef ENABLE_LLVM
 #define llvm_unwind_resume_libfunc	(llvm_libfunc_table[LTI_unwind_resume])
 #define llvm_eh_personality_libfunc	(llvm_libfunc_table[LTI_eh_personality])
+#define llvm_unwind_sjlj_register_libfunc \
+  (llvm_libfunc_table[LTI_unwind_sjlj_register])
+#define llvm_unwind_sjlj_unregister_libfunc \
+  (llvm_libfunc_table[LTI_unwind_sjlj_unregister])
 #else
 #define llvm_unwind_resume_libfunc	unwind_resume_libfunc
 #define llvm_eh_personality_libfunc	eh_personality_libfunc
+#define llvm_unwind_sjlj_register_libfunc unwind_sjlj_register_libfunc
+#define llvm_unwind_sjlj_unregister_libfunc unwind_sjlj_unregister_libfunc
 #endif
 /* LLVM LOCAL end */
 

@@ -297,7 +297,9 @@ class TreeToLLVM {
   Function *Fn;
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
+  BasicBlock *DispatchBB;
   unsigned ReturnOffset;
+  MemRef FunctionContext; // For SJLJ exception handling
 
   // State that changes as the function is emitted.
 
@@ -450,6 +452,12 @@ private: // Helper functions.
   Value *EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
   Value *EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
   Value *EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, unsigned Align);
+
+  /// EmitSjLjDispatcher - Emit SJLJ EH dispatcher
+  void EmitSjLjDispatcher();
+
+  /// EmitSjLjLandingPads - Emit SJLJ EH landing pads.
+  void EmitSjLjLandingPads();
 
   /// EmitLandingPads - Emit EH landing pads.
   void EmitLandingPads();

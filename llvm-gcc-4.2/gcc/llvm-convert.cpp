@@ -3604,6 +3604,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
   bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
+  bool IsExactDiv  = TREE_CODE(exp) == EXACT_DIV_EXPR;
 
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
@@ -3622,7 +3623,11 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     RHS = BitCastToType(RHS, Ty);
   }
 
-  Value *V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
+  Value *V;
+  if (Opc == Instruction::SDiv && IsExactDiv)
+    V = Builder.CreateExactSDiv(LHS, RHS);
+  else
+    V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   if (ResTy != Ty)
     V = BitCastToType(V, ResTy);
   return V;
@@ -3767,22 +3772,7 @@ Value *TreeToLLVM::EmitEXACT_DIV_EXPR(tree exp, const MemRef *DestLoc) {
   // Unsigned EXACT_DIV_EXPR -> normal udiv.
   if (TYPE_UNSIGNED(TREE_TYPE(exp)))
     return EmitBinOp(exp, DestLoc, Instruction::UDiv);
-  
-  // If this is a signed EXACT_DIV_EXPR by a constant, and we know that
-  // the RHS is a multiple of two, we strength reduce the result to use
-  // a signed SHR here.  We have no way in LLVM to represent EXACT_DIV_EXPR
-  // precisely, so this transform can't currently be performed at the LLVM
-  // level.  This is commonly used for pointer subtraction. 
-  if (TREE_CODE(TREE_OPERAND(exp, 1)) == INTEGER_CST) {
-    uint64_t IntValue = getINTEGER_CSTVal(TREE_OPERAND(exp, 1));
-    if (isPowerOf2_64(IntValue)) {
-      // Create an ashr instruction, by the log of the division amount.
-      Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-      return Builder.CreateAShr(LHS, ConstantInt::get(LHS->getType(),
-                                                      Log2_64(IntValue)));
-    }
-  }
-  
+
   // Otherwise, emit this as a normal signed divide.
   return EmitBinOp(exp, DestLoc, Instruction::SDiv);
 }

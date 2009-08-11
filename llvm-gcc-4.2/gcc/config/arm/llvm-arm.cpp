@@ -1476,11 +1476,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
 
   case NEON_BUILTIN_vpadd:
-    if (datatype == neon_datatype_float)
-      intID = Intrinsic::arm_neon_vpaddf;
-    else if (datatype == neon_datatype_signed ||
-             datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vpaddi;
+    if (datatype == neon_datatype_float ||
+        datatype == neon_datatype_signed ||
+        datatype == neon_datatype_unsigned)
+      intID = Intrinsic::arm_neon_vpadd;
     else
       return BadImmediateError(exp, Result);
 

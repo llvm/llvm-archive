@@ -3663,7 +3663,9 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
         if (Opc == Instruction::Sub)
           EltOffset = -EltOffset;
         Constant *C = ConstantInt::get(Type::Int64Ty, EltOffset);
-        Value *V = Builder.CreateGEP(LHS, C);
+        Value *V = flag_wrapv ?
+                   Builder.CreateGEP(LHS, C) :
+                   Builder.CreateInBoundsGEP(LHS, C);
         return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
       }
     }
@@ -6694,7 +6696,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE)
       Idx.push_back(ConstantInt::get(IntPtrTy, 0));
     Idx.push_back(IndexVal);
-    Value *Ptr = Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end());
+    Value *Ptr = flag_wrapv ?
+      Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end()) :
+      Builder.CreateInBoundsGEP(ArrayAddr, Idx.begin(), Idx.end());
 
     const Type *ElementTy = ConvertType(ElementType);
     unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));
@@ -6719,7 +6723,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (isa<ConstantInt>(IndexVal))
     Alignment = MinAlign(ArrayAlign,
                          cast<ConstantInt>(IndexVal)->getZExtValue());
-  Value *Ptr = Builder.CreateGEP(ArrayAddr, IndexVal);
+  Value *Ptr = flag_wrapv ?
+    Builder.CreateGEP(ArrayAddr, IndexVal) :
+    Builder.CreateInBoundsGEP(ArrayAddr, IndexVal);
   return LValue(BitCastToType(Ptr,
                 PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
                 Alignment);

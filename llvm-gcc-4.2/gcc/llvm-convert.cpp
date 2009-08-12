@@ -3605,6 +3605,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
   bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
   bool IsExactDiv  = TREE_CODE(exp) == EXACT_DIV_EXPR;
+  bool IsPlus      = TREE_CODE(exp) == PLUS_EXPR;
 
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
@@ -3626,6 +3627,8 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   Value *V;
   if (Opc == Instruction::SDiv && IsExactDiv)
     V = Builder.CreateExactSDiv(LHS, RHS);
+  else if (Opc == Instruction::Add && IsPlus && TyIsSigned && !flag_wrapv)
+    V = Builder.CreateNSWAdd(LHS, RHS);
   else
     V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   if (ResTy != Ty)

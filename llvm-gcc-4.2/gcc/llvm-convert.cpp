@@ -2057,19 +2057,17 @@ void TreeToLLVM::EmitSjLjLandingPads() {
       continue;
 
     CreateExceptionValues();
-
     EmitBlock(LandingPad);
 
-    // Fetch and store the exception selector.
     // Get the exception value from the function context
     llvm::Value *Idxs[2];
     Idxs[0] = ConstantInt::get(llvm::Type::Int32Ty, 0);
     Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, 2);
-    Value *FieldPtr
-      = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "jbuf_gep");
+    Value *FCDataPtr
+      = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "fc_data_gep");
     Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, 0);
     Value *ElemPtr
-      = Builder.CreateGEP (FieldPtr, Idxs, Idxs+2, "jbuf_exc_gep");
+      = Builder.CreateGEP (FCDataPtr, Idxs, Idxs+2, "exception_gep");
     Value *Ex = Builder.CreateLoad (ElemPtr);
     const Type *ExceptionValueTy =
       cast<PointerType>(ExceptionValue->getType())->getElementType();
@@ -2129,7 +2127,9 @@ void TreeToLLVM::EmitSjLjLandingPads() {
 
       // The representation of a catch-all is language specific.
       Value *Catch_All;
-      if (!lang_eh_catch_all) {
+      // SJLJ exception runtime handles "all cleanups" just fine, unlike
+      // DWARF.
+      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
         // Use a "cleanup" - this should be good enough for most languages.
         Catch_All = ConstantInt::get(Type::Int32Ty, 0);
       } else {
@@ -2144,13 +2144,14 @@ void TreeToLLVM::EmitSjLjLandingPads() {
       }
       Args.push_back(Catch_All);
     }
-    // Add this in when we do catch() blocks
-#if 0
     // Emit the selector call.
-    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
+    Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
                                        "eh_select");
+    // Fetch and store the exception selector.
+    Idxs[1] = ConstantInt::get(llvm::Type::Int32Ty, 1);
+    ElemPtr = Builder.CreateGEP (FCDataPtr, Idxs, Idxs+2, "handler_gep");
+    Value *Select = Builder.CreateLoad (ElemPtr);
     Builder.CreateStore(Select, ExceptionSelectorValue);
-#endif
     // Branch to the post landing pad for the first reachable handler.
     assert(!Handlers.empty() && "Landing pad but no handler?");
     Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));

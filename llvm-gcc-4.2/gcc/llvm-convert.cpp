@@ -1056,6 +1056,10 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   // result is not used then GCC sometimes sets the tree type to VOID_TYPE, so
   // don't take VOID_TYPE too seriously here.
   assert((Result == 0 || VOID_TYPE_P(TREE_TYPE(exp)) ||
+          // FIXME: The vector stuff isn't straight-forward. Sometimes X86 can
+          // pass it back as a scalar value. Disable checking if it's a
+          // vector. This should be made better, though.
+          isa<VectorType>(ConvertType(TREE_TYPE(exp))) ||
           Result->getType() == ConvertType(TREE_TYPE(exp))) &&
           "Value has wrong type!");
   return Result;

@@ -22965,6 +22965,9 @@ iasm_print_op (char *buf, tree arg, unsigned argnum, tree *uses,
 	      }
 	  }
 
+        /* Complicated expression as JMP or CALL target. */
+        if (e->modifier && strcmp(e->modifier, "A") == 0)
+          strcat (buf, "*");
 	e->as_immediate = true;
 	iasm_print_operand (buf, op1, argnum, uses,
 			    must_be_reg, must_not_be_reg, e);

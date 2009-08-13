@@ -56,7 +56,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
                                const Type *ResultType,
                                std::vector<Value*> &Ops,
                                LLVMBuilder &Builder, Value *&Result) {
-  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *VoidPtrTy = PointerType::getUnqual(Type::getInt8Ty(Context));
   
   Function *IntFn = Intrinsic::getDeclaration(TheModule, IID);
   
@@ -71,7 +71,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
   Ops[OpNum] = Ptr;
   Value *V = Builder.CreateCall(IntFn, &Ops[0], &Ops[0]+Ops.size());
   
-  if (V->getType() != Type::VoidTy) {
+  if (V->getType() != Type::getVoidTy(Context)) {
     V->setName("tmp");
     Result = V;
   }
@@ -80,10 +80,10 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
 // GetAltivecTypeNumFromType - Given an LLVM type, return a unique ID for
 // the type in the range 0-3.
 static int GetAltivecTypeNumFromType(const Type *Ty) {
-  return ((Ty == Type::Int32Ty) ? 0 : \
-          ((Ty == Type::Int16Ty) ? 1 : \
-           ((Ty == Type::Int8Ty) ? 2 : \
-            ((Ty == Type::FloatTy) ? 3 : -1))));
+  return ((Ty == Type::getInt32Ty(Context)) ? 0 : \
+          ((Ty == Type::getInt16Ty(Context)) ? 1 : \
+           ((Ty == Type::getInt8Ty(Context)) ? 2 : \
+            ((Ty == Type::getFloatTy(Context)) ? 3 : -1))));
 }
 
 // TargetIntrinsicLower - To handle builtins, we want to expand the
@@ -177,30 +177,30 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_VSPLTISB:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int8Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::getInt8Ty(Context), true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt,
                            Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int8Ty, 16));
+      Result = UndefValue::get(VectorType::get(Type::getInt8Ty(Context), 16));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISH:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int16Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::getInt16Ty(Context), true);
       Result = BuildVector(Elt, Elt, Elt, Elt,  Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Helement must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int16Ty, 8));
+      Result = UndefValue::get(VectorType::get(Type::getInt16Ty(Context), 8));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTISW:
     if (Constant *Elt = dyn_cast<ConstantInt>(Ops[0])) {
-      Elt = ConstantExpr::getIntegerCast(Elt, Type::Int32Ty, true);
+      Elt = ConstantExpr::getIntegerCast(Elt, Type::getInt32Ty(Context), true);
       Result = BuildVector(Elt, Elt, Elt, Elt, NULL);
     } else {
       error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
-      Result = UndefValue::get(VectorType::get(Type::Int32Ty, 4));
+      Result = UndefValue::get(VectorType::get(Type::getInt32Ty(Context), 4));
     }
     return true;
   case ALTIVEC_BUILTIN_VSPLTB:
@@ -248,7 +248,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
       /* Map all of these to a shuffle. */
       unsigned Amt = Elt->getZExtValue() & 15;
-      VectorType *v16i8 = VectorType::get(Type::Int8Ty, 16);
+      VectorType *v16i8 = VectorType::get(Type::getInt8Ty(Context), 16);
       Ops[0] = Builder.CreateBitCast(Ops[0], v16i8, "tmp");
       Ops[1] = Builder.CreateBitCast(Ops[1], v16i8, "tmp");
       Result = BuildVectorShuffle(Ops[0], Ops[1],
@@ -298,9 +298,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case ALTIVEC_BUILTIN_ABS_V4SF: {
     // and out sign bits
-    VectorType *v4i32 = VectorType::get(Type::Int32Ty, 4);
+    VectorType *v4i32 = VectorType::get(Type::getInt32Ty(Context), 4);
     Ops[0] = Builder.CreateBitCast(Ops[0], v4i32, "tmp");
-    Constant *C = ConstantInt::get(Type::Int32Ty, 0x7FFFFFFF);
+    Constant *C = ConstantInt::get(Type::getInt32Ty(Context), 0x7FFFFFFF);
     C = ConstantVector::get(std::vector<Constant*>(4, C));
     Result = Builder.CreateAnd(Ops[0], C, "tmp");
     Result = Builder.CreateBitCast(Result, ResultType, "tmp");
@@ -356,7 +356,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VPERM_8HI:
   case ALTIVEC_BUILTIN_VPERM_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    const Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *ActualOps[] = { Op0, Op1, Ops[2]};
@@ -371,7 +371,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VSEL_8HI:
   case ALTIVEC_BUILTIN_VSEL_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::Int32Ty, 4);
+    const Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *Op2 = CastToType(Instruction::BitCast, Ops[2], VecTy);
@@ -454,17 +454,17 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
       abort();
     case 32:
       // Pass _Complex long double in eight registers.
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
       // FALLTRHOUGH
     case 16:
       // Pass _Complex long long/double in four registers.
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
+      Elts.push_back(Type::getInt32Ty(Context));
       break;
     case 8:
       // Pass _Complex int/long/float in two registers.
@@ -472,12 +472,12 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
       // which will be decomposed into two i32 elements. The first element will
       // have the split attribute set, which is used to trigger 8-byte alignment
       // in the backend.
-      Elts.push_back(Type::Int64Ty);
+      Elts.push_back(Type::getInt64Ty(Context));
       break;
     case 4:
     case 2:
       // Pass _Complex short/char in one register.
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(Context));
       break;
     }
     

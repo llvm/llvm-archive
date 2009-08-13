@@ -28,6 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 
 extern "C" {
@@ -36,6 +37,8 @@ extern "C" {
 #include "rtl.h"
 #include "insn-config.h"
 #include "recog.h"
+
+static LLVMContext &Context = getGlobalContext();
 
 enum neon_itype { neon_itype_dummy };
 extern enum insn_code locate_neon_builtin_icode
@@ -142,14 +145,14 @@ static Value *BuildDup(const Type *ResultType, Value *Val,
   Value *Undef = UndefValue::get(ResultType);
   Value *Result =
     Builder.CreateInsertElement(Undef, Val,
-                                ConstantInt::get(Type::Int32Ty, 0));
+                                ConstantInt::get(Type::getInt32Ty(Context), 0));
 
   // Use a shuffle to move the value into the other lanes.
   unsigned NUnits = VTy->getNumElements();
   if (NUnits > 1) {
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
+      Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), 0));
     Result = Builder.CreateShuffleVector(Result, Undef,
                                          ConstantVector::get(Idxs));
   }
@@ -164,7 +167,7 @@ static Value *BuildDupLane(Value *Vec, unsigned LaneVal, unsigned NUnits,
   std::vector<Constant*> Idxs;
   LLVMContext &Context = getGlobalContext();
   for (unsigned i = 0; i != NUnits; ++i)
-    Idxs.push_back(ConstantInt::get(Type::Int32Ty, LaneVal));
+    Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), LaneVal));
   return Builder.CreateShuffleVector(Vec, UndefValue::get(Vec->getType()),
                                      ConstantVector::get(Idxs));
 }
@@ -213,7 +216,7 @@ static bool BuildShiftCountVector(Value *&Op, enum machine_mode Mode,
 
   // Right shifts are represented in NEON intrinsics by a negative shift count.
   LLVMContext &Context = getGlobalContext();
-  Cnt = ConstantInt::get(IntegerType::get(ElemBits),
+  Cnt = ConstantInt::get(IntegerType::get(Context, sElemBits),
                                NegateRightShift ? -CntVal : CntVal);
   Op = BuildConstantSplatVector(GET_MODE_NUNITS(Mode), Cnt);
   return true;
@@ -1703,7 +1706,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[0].mode);
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i));
+      Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), i));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
                                          ConstantVector::get(Idxs));
     break;
@@ -1715,7 +1718,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     std::vector<Constant*> Idxs;
     unsigned Idx = (neon_code == NEON_BUILTIN_vget_low ? 0 : NUnits);
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, Idx++));
+      Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), Idx++));
     Result = Builder.CreateShuffleVector(Ops[0],
                                          UndefValue::get(Ops[0]->getType()),
                                          ConstantVector::get(Idxs));
@@ -1779,7 +1782,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     // Translate to a vector shuffle.
     std::vector<Constant*> Idxs;
     for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(ConstantInt::get(Type::Int32Ty, i + ImmVal));
+      Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), i + ImmVal));
     Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
                                          ConstantVector::get(Idxs));
     break;
@@ -1805,7 +1808,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned NUnits = VTy->getNumElements();
     for (unsigned c = ChunkElts; c <= NUnits; c += ChunkElts) {
       for (unsigned i = 0; i != ChunkElts; ++i) {
-        Idxs.push_back(ConstantInt::get(Type::Int32Ty, c - i - 1));
+        Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), c - i - 1));
       }
     }
     Result = Builder.CreateShuffleVector(Ops[0], UndefValue::get(ResultType),
@@ -1981,7 +1984,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld1: {
     intID = Intrinsic::arm_neon_vld1;
     intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
     break;
   }
@@ -1999,7 +2002,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
-    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
     Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
@@ -2026,9 +2029,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = BitCastToType(Ops[1], VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
       Value *Elt = Builder.CreateLoad(Addr);
-      Value *Ndx = ConstantInt::get(Type::Int32Ty,
+      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context),
                                           LaneVal + (n * NUnits));
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
@@ -2056,10 +2059,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = UndefValue::get(VTy);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
       Value *Elt = Builder.CreateLoad(Addr);
       // Insert the value into one lane of the result.
-      Value *Ndx = ConstantInt::get(Type::Int32Ty, n * NUnits);
+      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context), n * NUnits);
       Result = Builder.CreateInsertElement(Result, Elt, Ndx);
     }
     // Use a shuffle to move the value into the other lanes of the vector.
@@ -2067,7 +2070,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       std::vector<Constant*> Idxs;
       for (unsigned n = 0; n != NumVecs; ++n) {
         for (unsigned i = 0; i != NUnits; ++i)
-          Idxs.push_back(ConstantInt::get(Type::Int32Ty, n * NUnits));
+          Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), n * NUnits));
       }
       Result = Builder.CreateShuffleVector(Result, UndefValue::get(VTy),
                                            ConstantVector::get(Idxs));
@@ -2082,7 +2085,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     const Type *VTy = Ops[1]->getType();
     intID = Intrinsic::arm_neon_vst1;
     intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
-    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy), Ops[1]);
     Result = 0;
     break;
@@ -2109,7 +2112,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     std::vector<Value*> Args;
-    Type *VPTy = PointerType::getUnqual(Type::Int8Ty);
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     Args.push_back(BitCastToType(Ops[0], VPTy));
     for (unsigned n = 0; n < NumVecs; ++n) {
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
@@ -2142,8 +2145,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Vec = Builder.CreateLoad(Tmp);
     for (unsigned n = 0; n != NumVecs; ++n) {
       Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::Int32Ty, n));
-      Value *Ndx = ConstantInt::get(Type::Int32Ty,
+        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
+      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context),
                                           LaneVal + (n * NUnits));
       Builder.CreateStore(Builder.CreateExtractElement(Vec, Ndx), Addr);
     }

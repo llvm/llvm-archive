@@ -212,19 +212,19 @@ static const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset)
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
   *Offset = 0;
   if (Size == 0)
-    return Type::VoidTy;
+    return Type::getVoidTy(getGlobalContext());
   else if (Size == 1)
-    return Type::Int8Ty;
+    return Type::getInt8Ty(getGlobalContext());
   else if (Size == 2)
-    return Type::Int16Ty;
+    return Type::getInt16Ty(getGlobalContext());
   else if (Size <= 4)
-    return Type::Int32Ty;
+    return Type::getInt32Ty(getGlobalContext());
   else if (Size <= 8)
-    return Type::Int64Ty;
+    return Type::getInt64Ty(getGlobalContext());
   else if (Size <= 16)
-    return IntegerType::get(128);
+    return IntegerType::get(getGlobalContext(), 128);
   else if (Size <= 32)
-    return IntegerType::get(256);
+    return IntegerType::get(getGlobalContext(), 256);
 
   return NULL;
 }
@@ -286,7 +286,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 #endif
 
 // LLVM_BYVAL_ALIGNMENT - Returns the alignment of the type in bytes, if known,
-// in the context of its use as a function parameter.
+// in the getGlobalContext() of its use as a function parameter.
 // Note that the alignment in the TYPE node is usually the alignment appropriate
 // when the type is used within a struct, which may or may not be appropriate
 // here.
@@ -389,7 +389,7 @@ public:
         C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
+    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -435,7 +435,7 @@ public:
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
-    if (Ty == Type::VoidTy) {
+    if (Ty == Type::getVoidTy(getGlobalContext())) {
       // Handle void explicitly as an opaque type.
       const Type *OpTy = OpaqueType::get();
       C.HandleScalarArgument(OpTy, type);
@@ -590,7 +590,8 @@ public:
     // don't bitcast aggregate value to Int64 if its alignment is different
     // from Int64 alignment. ARM backend needs this.
     unsigned Align = TYPE_ALIGN(type)/8;
-    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    unsigned Int64Align =
+        getTargetData().getABITypeAlignment(Type::getInt64Ty(getGlobalContext()));
     bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
 
     // FIXME: In cases where we can, we should use the original struct.
@@ -605,21 +606,22 @@ public:
     const Type *ArrayElementType = NULL;
     if (ArraySize) {
       Size = Size % ElementSize;
-      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ArrayElementType = (UseInt64) ?
+          Type::getInt64Ty(getGlobalContext()) : Type::getInt32Ty(getGlobalContext());
       ATy = ArrayType::get(ArrayElementType, ArraySize);
       Elts.push_back(ATy);
     }
 
     if (Size >= 4) {
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(getGlobalContext()));
       Size -= 4;
     }
     if (Size >= 2) {
-      Elts.push_back(Type::Int16Ty);
+      Elts.push_back(Type::getInt16Ty(getGlobalContext()));
       Size -= 2;
     }
     if (Size >= 1) {
-      Elts.push_back(Type::Int8Ty);
+      Elts.push_back(Type::getInt8Ty(getGlobalContext()));
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
@@ -655,10 +657,10 @@ public:
     // that occupies storage but has no useful information, and is not passed
     // anywhere".  Happens on x86-64.
     std::vector<const Type*> Elts(OrigElts);
-    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
-                                                                 Type::Int64Ty;
+    const Type* wordType = getTargetData().getPointerSize() == 4 ?
+        Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::VoidTy)
+      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
         Elts[i] = wordType;
 
     const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
@@ -680,7 +682,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::VoidTy) {
+      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))
@@ -740,7 +742,7 @@ public:
         C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
+    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -1029,7 +1031,8 @@ public:
     // don't bitcast aggregate value to Int64 if its alignment is different
     // from Int64 alignment. ARM backend needs this.
     unsigned Align = TYPE_ALIGN(type)/8;
-    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    unsigned Int64Align =
+        getTargetData().getABITypeAlignment(Type::getInt64Ty(getGlobalContext()));
     bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
 
     // FIXME: In cases where we can, we should use the original struct.
@@ -1044,21 +1047,22 @@ public:
     const Type *ArrayElementType = NULL;
     if (ArraySize) {
       Size = Size % ElementSize;
-      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ArrayElementType = (UseInt64) ?
+          Type::getInt64Ty(getGlobalContext()) : Type::getInt32Ty(getGlobalContext());
       ATy = ArrayType::get(ArrayElementType, ArraySize);
       Elts.push_back(ATy);
     }
 
     if (Size >= 4) {
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(getGlobalContext()));
       Size -= 4;
     }
     if (Size >= 2) {
-      Elts.push_back(Type::Int16Ty);
+      Elts.push_back(Type::getInt16Ty(getGlobalContext()));
       Size -= 2;
     }
     if (Size >= 1) {
-      Elts.push_back(Type::Int8Ty);
+      Elts.push_back(Type::getInt8Ty(getGlobalContext()));
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
@@ -1096,10 +1100,10 @@ public:
     // that occupies storage but has no useful information, and is not passed
     // anywhere".  Happens on x86-64.
     std::vector<const Type*> Elts(OrigElts);
-    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
-                                                                 Type::Int64Ty;
+    const Type* wordType = getTargetData().getPointerSize() == 4
+      ? Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::VoidTy)
+      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
         Elts[i] = wordType;
 
     const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
@@ -1121,7 +1125,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::VoidTy) {
+      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))

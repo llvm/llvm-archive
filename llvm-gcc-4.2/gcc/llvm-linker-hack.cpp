@@ -95,7 +95,7 @@ void dummy_function() {
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
   
-  llvm::getGlobalContext();
+  llvm::Type::getInt8Ty(llvm::getGlobalContext());
 
   llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
   llvm::DIFactory::DIFactory(*MP->getModule());

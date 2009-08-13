@@ -188,7 +188,7 @@ void writeLLVMTypesStringTable() {
     }
 
     const std::string &TypeName = TypeNameMap[*I];
-    LTypesNames.push_back(ConstantArray::get(TypeName, false));
+    LTypesNames.push_back(ConstantArray::get(Context, TypeName, false));
   }
 
   // Create string table.
@@ -693,7 +693,7 @@ bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type,
 //===----------------------------------------------------------------------===//
 
 const Type *TypeConverter::ConvertType(tree orig_type) {
-  if (orig_type == error_mark_node) return Type::Int32Ty;
+  if (orig_type == error_mark_node) return Type::getInt32Ty(Context);
   
   // LLVM doesn't care about variants such as const, volatile, or restrict.
   tree type = TYPE_MAIN_VARIANT(orig_type);
@@ -703,7 +703,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     fprintf(stderr, "Unknown type to convert:\n");
     debug_tree(type);
     abort();
-  case VOID_TYPE:   return SET_TYPE_LLVM(type, Type::VoidTy);
+  case VOID_TYPE:   return SET_TYPE_LLVM(type, Type::getVoidTy(Context));
   case RECORD_TYPE: return ConvertRECORD(type, orig_type);
   case QUAL_UNION_TYPE:
   case UNION_TYPE:  return ConvertUNION(type, orig_type);
@@ -711,7 +711,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
     return SET_TYPE_LLVM(type,
-                     IntegerType::get(TREE_INT_CST_LOW(TYPE_SIZE(type))));
+                     IntegerType::get(Context, TREE_INT_CST_LOW(TYPE_SIZE(type))));
   }
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?
@@ -731,7 +731,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // The ARM port defines __builtin_neon_xi as a 511-bit type because GCC's
     // type precision field has only 9 bits.  Treat this as a special case.
     int precision = TYPE_PRECISION(type) == 511 ? 512 : TYPE_PRECISION(type);
-    return SET_TYPE_LLVM(type, IntegerType::get(precision));
+    return SET_TYPE_LLVM(type, IntegerType::get(Context, precision));
   }
   case REAL_TYPE:
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
@@ -740,9 +740,9 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       fprintf(stderr, "Unknown FP type!\n");
       debug_tree(type);
       abort();        
-    case 32: return SET_TYPE_LLVM(type, Type::FloatTy);
-    case 64: return SET_TYPE_LLVM(type, Type::DoubleTy);
-    case 80: return SET_TYPE_LLVM(type, Type::X86_FP80Ty);
+    case 32: return SET_TYPE_LLVM(type, Type::getFloatTy(Context));
+    case 64: return SET_TYPE_LLVM(type, Type::getDoubleTy(Context));
+    case 80: return SET_TYPE_LLVM(type, Type::getX86_FP80Ty(Context));
     case 128:
 #ifdef TARGET_POWERPC
              return SET_TYPE_LLVM(type, Type::PPC_FP128Ty);
@@ -752,8 +752,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 #else
       // 128-bit long doubles map onto { double, double }.
       return SET_TYPE_LLVM(type,
-                           StructType::get(Context, Type::DoubleTy,
-                                           Type::DoubleTy, NULL));
+                           StructType::get(Context, Type::getDoubleTy(Context),
+                                           Type::getDoubleTy(Context), NULL));
 #endif
     }
     
@@ -805,8 +805,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       // Restore ConvertingStruct for the caller.
       ConvertingStruct = false;
       
-      if (Actual == Type::VoidTy) 
-        Actual = Type::Int8Ty;  // void* -> sbyte*
+      if (Actual == Type::getVoidTy(Context)) 
+        Actual = Type::getInt8Ty(Context);  // void* -> sbyte*
       
       // Update the type, potentially updating TYPE_LLVM(type).
       const OpaqueType *OT = cast<OpaqueType>(Ty->getElementType());
@@ -840,8 +840,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         Ty = ConvertType(TREE_TYPE(type));
       }
     
-      if (Ty == Type::VoidTy) 
-        Ty = Type::Int8Ty;  // void* -> sbyte*
+      if (Ty == Type::getVoidTy(Context)) 
+        Ty = Type::getInt8Ty(Context);  // void* -> sbyte*
       return TypeDB.setType(type, PointerType::getUnqual(Ty));
     }
    
@@ -873,7 +873,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       // that the gcc array type has constant size, using an i8 for the element
       // type ensures we can produce an LLVM array of the right size.
       ElementSize = 8;
-      ElementTy = Type::Int8Ty;
+      ElementTy = Type::getInt8Ty(Context);
     }
 
     uint64_t NumElements;
@@ -912,8 +912,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // integer directly.
     switch (getTargetData().getPointerSize()) {
     default: assert(0 && "Unknown pointer size!");
-    case 4: return Type::Int32Ty;
-    case 8: return Type::Int64Ty;
+    case 4: return Type::getInt32Ty(Context);
+    case 8: return Type::getInt64Ty(Context);
     }
   }
 }
@@ -964,7 +964,7 @@ namespace {
     void HandleShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       // This function either returns void or the shadow argument,
       // depending on the target.
-      RetTy = RetPtr ? PtrArgTy : Type::VoidTy;
+      RetTy = RetPtr ? PtrArgTy : Type::getVoidTy(Context);
 
       // In any case, there is a dummy shadow argument though!
       ArgTypes.push_back(PtrArgTy);
@@ -995,9 +995,9 @@ namespace {
       if (KNRPromotion) {
         if (type == float_type_node)
           LLVMTy = ConvertType(double_type_node);
-        else if (LLVMTy == Type::Int16Ty || LLVMTy == Type::Int8Ty ||
-                 LLVMTy == Type::Int1Ty)
-          LLVMTy = Type::Int32Ty;
+        else if (LLVMTy == Type::getInt16Ty(Context) || LLVMTy == Type::getInt8Ty(Context) ||
+                 LLVMTy == Type::getInt1Ty(Context))
+          LLVMTy = Type::getInt32Ty(Context);
       }
       ArgTypes.push_back(LLVMTy);
     }
@@ -1050,7 +1050,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
                        unsigned &CallingConv, AttrListPtr &PAL) {
   tree ReturnType = TREE_TYPE(type);
   std::vector<PATypeHolder> ArgTys;
-  PATypeHolder RetTy(Type::VoidTy);
+  PATypeHolder RetTy(Type::getVoidTy(Context));
   
   FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
   TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
@@ -1112,7 +1112,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
 const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
                     unsigned &CallingConv, AttrListPtr &PAL) {
-  PATypeHolder RetTy = Type::VoidTy;
+  PATypeHolder RetTy = Type::getVoidTy(Context);
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
@@ -1397,13 +1397,13 @@ struct StructTypeConversionInfo {
     const Type *LastType = Elements.back();
     unsigned PadBytes = 0;
 
-    if (LastType == Type::Int8Ty)
+    if (LastType == Type::getInt8Ty(Context))
       PadBytes = 1 - NoOfBytesToRemove;
-    else if (LastType == Type::Int16Ty)
+    else if (LastType == Type::getInt16Ty(Context))
       PadBytes = 2 - NoOfBytesToRemove;
-    else if (LastType == Type::Int32Ty)
+    else if (LastType == Type::getInt32Ty(Context))
       PadBytes = 4 - NoOfBytesToRemove;
-    else if (LastType == Type::Int64Ty)
+    else if (LastType == Type::getInt64Ty(Context))
       PadBytes = 8 - NoOfBytesToRemove;
     else
       return;
@@ -1411,7 +1411,7 @@ struct StructTypeConversionInfo {
     assert (PadBytes > 0 && "Unable to remove extra bytes");
 
     // Update last element type and size, element offset is unchanged.
-    const Type *Pad =  ArrayType::get(Type::Int8Ty, PadBytes);
+    const Type *Pad =  ArrayType::get(Type::getInt8Ty(Context), PadBytes);
     unsigned OriginalSize = ElementSizeInBytes.back();
     Elements.pop_back();
     Elements.push_back(Pad);
@@ -1446,7 +1446,7 @@ struct StructTypeConversionInfo {
           // field we just popped.  Otherwise we might end up with a
           // gcc non-bitfield being mapped to an LLVM field with a
           // different offset.
-          const Type *Pad = Type::Int8Ty;
+          const Type *Pad = Type::getInt8Ty(Context);
           if (PoppedOffset != EndOffset + 1)
             Pad = ArrayType::get(Pad, PoppedOffset - EndOffset);
           addElement(Pad, EndOffset, PoppedOffset - EndOffset);
@@ -1469,7 +1469,7 @@ struct StructTypeConversionInfo {
     // padding.
     if (NextByteOffset < ByteOffset) {
       uint64_t CurOffset = getNewElementByteOffset(1);
-      const Type *Pad = Type::Int8Ty;
+      const Type *Pad = Type::getInt8Ty(Context);
       if (SavedTy && LastFieldStartsAtNonByteBoundry) 
         // We want to reuse SavedType to access this bit field.
         // e.g. struct __attribute__((packed)) { 
@@ -1606,21 +1606,21 @@ void StructTypeConversionInfo::addNewBitField(uint64_t Size,
   // additional bits required after FirstunallocatedByte to cover new field.
   const Type *NewFieldTy;
   if (Size <= 8)
-    NewFieldTy = Type::Int8Ty;
+    NewFieldTy = Type::getInt8Ty(Context);
   else if (Size <= 16)
-    NewFieldTy = Type::Int16Ty;
+    NewFieldTy = Type::getInt16Ty(Context);
   else if (Size <= 32)
-    NewFieldTy = Type::Int32Ty;
+    NewFieldTy = Type::getInt32Ty(Context);
   else {
     assert(Size <= 64 && "Bitfield too large!");
-    NewFieldTy = Type::Int64Ty;
+    NewFieldTy = Type::getInt64Ty(Context);
   }
 
   // Check that the alignment of NewFieldTy won't cause a gap in the structure!
   unsigned ByteAlignment = getTypeAlignment(NewFieldTy);
   if (FirstUnallocatedByte & (ByteAlignment-1)) {
     // Instead of inserting a nice whole field, insert a small array of ubytes.
-    NewFieldTy = ArrayType::get(Type::Int8Ty, (Size+7)/8);
+    NewFieldTy = ArrayType::get(Type::getInt8Ty(Context), (Size+7)/8);
   }
   
   // Finally, add the new field.
@@ -2082,7 +2082,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
       PadBytes = StartOffsetInBits/8-FirstUnallocatedByte;
 
     if (PadBytes) {
-      const Type *Pad = Type::Int8Ty;
+      const Type *Pad = Type::getInt8Ty(Context);
       if (PadBytes != 1)
         Pad = ArrayType::get(Pad, PadBytes);
       Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
@@ -2192,20 +2192,20 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
       // If only one byte is needed then insert i8.
       if (GCCTypeSize-LLVMLastElementEnd == 1)
-        Info->addElement(Type::Int8Ty, 1, 1);
+        Info->addElement(Type::getInt8Ty(Context), 1, 1);
       else {
         if (((GCCTypeSize-LLVMStructSize) % 4) == 0 &&
             (Info->getAlignmentAsLLVMStruct() %
-             Info->getTypeAlignment(Type::Int32Ty)) == 0) {
+             Info->getTypeAlignment(Type::getInt32Ty(Context))) == 0) {
           // insert array of i32
           unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize)/4;
           const Type *PadTy =
-            ArrayType::get(Type::Int32Ty, Int32ArraySize);
+            ArrayType::get(Type::getInt32Ty(Context), Int32ArraySize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            Int32ArraySize, true /* Padding Element */);
         } else {
           const Type *PadTy =
-            ArrayType::get(Type::Int8Ty, GCCTypeSize-LLVMStructSize);
+            ArrayType::get(Type::getInt8Ty(Context), GCCTypeSize-LLVMStructSize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            GCCTypeSize - LLVMLastElementEnd,
                            true /* Padding Element */);
@@ -2440,7 +2440,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     if (EltSize != GCCTypeSize) {
       assert(EltSize < GCCTypeSize &&
              "LLVM type size doesn't match GCC type size!");
-      const Type *PadTy = Type::Int8Ty;
+      const Type *PadTy = Type::getInt8Ty(Context);
       if (GCCTypeSize-EltSize != 1)
         PadTy = ArrayType::get(PadTy, GCCTypeSize-EltSize);
       UnionElts.push_back(PadTy);

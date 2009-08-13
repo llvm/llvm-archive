@@ -289,7 +289,7 @@ void writeLLVMValues() {
     else
       // Non constant values, e.g. arguments, are not at global scope.
       // When PCH is read, only global scope values are used.
-      ValuesForPCH.push_back(Constant::getNullValue(Type::Int32Ty));
+      ValuesForPCH.push_back(Constant::getNullValue(Type::getInt32Ty(Context)));
   }
 
   // Create string table.
@@ -813,11 +813,12 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   LLVMContext &Context = getGlobalContext();
   
   const Type *FPTy =
-    FunctionType::get(Type::VoidTy, std::vector<const Type*>(), false);
+    FunctionType::get(Type::getVoidTy(Context),
+                      std::vector<const Type*>(), false);
   FPTy = PointerType::getUnqual(FPTy);
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = ConstantInt::get(Type::Int32Ty, Tors[i].second);
+    StructInit[0] = ConstantInt::get(Type::getInt32Ty(Context), Tors[i].second);
     
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
@@ -853,7 +854,7 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
@@ -872,7 +873,7 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeCompilerUsedGlobals.empty()) {
     std::vector<Constant *> ACUGs;
-    const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeCompilerUsedGlobals.begin(),
            AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
@@ -1126,7 +1127,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
 /// global if possible.
 Constant* ConvertMetadataStringToGV(const char *str) {
   
-  Constant *Init = ConstantArray::get(std::string(str));
+  Constant *Init = ConstantArray::get(getGlobalContext(), std::string(str));
 
   // Use cached string if it exists.
   static std::map<Constant*, GlobalVariable*> StringCSTCache;
@@ -1154,9 +1155,10 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
     return;
   
   // Get file and line number
-  Constant *lineNo = ConstantInt::get(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *lineNo = ConstantInt::get(Type::getInt32Ty(Context),
+                                      DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+  const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1625,7 +1627,7 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy)
+    if (Ty == Type::getVoidTy(Context))
       Ty = StructType::get(Context);
 
     if (Name[0] == 0) {   // Global has no name.

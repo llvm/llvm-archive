@@ -31,6 +31,6 @@ extern struct objc_class _NSConstantStringClassReference;
 const NSConstantString *appKey = @"MyApp";
 
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler ".section.*__OBJC, __cstring_object" } } */
+/* { dg-final { scan-assembler ".section.*__OBJC,__cstring_object" } } */
 /* LLVM LOCAL accept llvm syntax */
 /* { dg-final { scan-assembler ".long\t__NSConstantStringClassReference\n\t.long\t.*\n\t.long\t5.*\n" } } */

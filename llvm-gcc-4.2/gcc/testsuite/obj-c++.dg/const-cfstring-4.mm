@@ -10,6 +10,6 @@ typedef const struct __CFString * CFStringRef;
 CFStringRef appKey = (CFStringRef) @"com.apple.soundpref";
 
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler ".section.*__DATA, __cfstring" } } */
+/* { dg-final { scan-assembler ".section.*__DATA,__cfstring" } } */
 /* LLVM LOCAL accept llvm syntax */
 /* { dg-final { scan-assembler ".long\t___CFConstantStringClassReference\n\t.long\t1992.*\n\t.long\t.*\n\t.long\t19.*\n" } } */

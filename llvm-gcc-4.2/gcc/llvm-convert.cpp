@@ -2030,8 +2030,10 @@ void TreeToLLVM::EmitSjLjDispatcher () {
 
     // Figure out which landing pad to go to via the call_site
     // FIXME: would this be better as a switch? Probably.
+    unsigned FirstPad = 0;
     for (unsigned region = 1 ; region < LandingPads.size() ; ++region) {
       if (LandingPads[region]) {
+        if (!FirstPad) FirstPad = region;
         Value *RegionNo = ConstantInt::get(llvm::Type::Int32Ty, region - 1);
         Value *Compare = Builder.CreateICmpEQ(CallSite, RegionNo);
         // Branch on the compare.
@@ -2040,7 +2042,8 @@ void TreeToLLVM::EmitSjLjDispatcher () {
         EmitBlock(NextDispatch);
       }
     }
-    Builder.CreateBr(LandingPads[1]);
+    assert(FirstPad && "EH dispatcher, but no landing pads present!");
+    Builder.CreateBr(LandingPads[FirstPad]);
   }
 }
 

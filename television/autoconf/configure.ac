@@ -17,9 +17,6 @@ AC_CONFIG_MAKEFILE(lib/Snapshot/Makefile)
 AC_CONFIG_MAKEFILE(tools/Makefile)
 AC_CONFIG_MAKEFILE(tools/llvm-tv/Makefile)
 
-dnl Verify that the source directory is valid
-AC_CONFIG_SRCDIR(["Makefile.common.in"])
-
 dnl Find the LLVM source and object directories, whose locations may
 dnl have been specified by the user. By default, assume we've unpacked this
 dnl project in projects/<project-name>, as is customary, and look in ../..

@@ -720,7 +720,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       if (const Type *Ty = GET_TYPE_LLVM(orig_type))
         return Ty;
 
-      const Type *Ty = OpaqueType::get();
+      const Type *Ty = OpaqueType::get(Context);
       TheModule->addTypeName(GetTypeName("enum.", orig_type), Ty);
       return TypeDB.setType(orig_type, Ty);
     }
@@ -824,7 +824,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         if (Ty == 0) {
           PointersToReresolve.push_back(type);
           return TypeDB.setType(type, 
-                         PointerType::getUnqual(OpaqueType::get()));
+                         PointerType::getUnqual(OpaqueType::get(Context)));
         }
 
         // A type has already been computed.  However, this may be some sort of 
@@ -2136,7 +2136,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   }
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaration?
-    const Type *Ty = OpaqueType::get();
+    const Type *Ty = OpaqueType::get(Context);
     TheModule->addTypeName(GetTypeName("struct.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
@@ -2314,7 +2314,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   }
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaraion?
-    const Type *Ty = OpaqueType::get();
+    const Type *Ty = OpaqueType::get(Context);
     TheModule->addTypeName(GetTypeName("union.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }

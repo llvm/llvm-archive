@@ -437,7 +437,7 @@ public:
     std::vector<const Type*> Elts;
     if (Ty == Type::getVoidTy(getGlobalContext())) {
       // Handle void explicitly as an opaque type.
-      const Type *OpTy = OpaqueType::get();
+      const Type *OpTy = OpaqueType::get(getGlobalContext());
       C.HandleScalarArgument(OpTy, type);
       ScalarElts.push_back(OpTy);
     } else if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.

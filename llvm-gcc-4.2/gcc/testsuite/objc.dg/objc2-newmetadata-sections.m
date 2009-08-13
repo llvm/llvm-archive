@@ -9,6 +9,6 @@
 
 @implementation INTF @end
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler ".section.*__DATA, __objc_const" } } */
+/* { dg-final { scan-assembler ".section.*__DATA,__objc_const" } } */
 /* LLVM LOCAL accept llvm syntax */
-/* { dg-final { scan-assembler ".section.*__DATA, __objc_data" } } */
+/* { dg-final { scan-assembler ".section.*__DATA,__objc_data" } } */

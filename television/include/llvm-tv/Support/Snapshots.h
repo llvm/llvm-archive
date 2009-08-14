@@ -1,10 +1,10 @@
 //===- Snapshots.h - Snapshot utility functions ---------------*- C++ -*---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -17,9 +17,11 @@
 #include <vector>
 
 namespace llvm {
-  
+
+class Module;
+
 void ReadSnapshots(std::vector<std::string> &oldModules,
-                   std::vector<Module*> NewModules); 
+                   std::vector<llvm::Module*> NewModules);
 
 }
 

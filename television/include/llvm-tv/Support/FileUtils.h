@@ -1,10 +1,10 @@
 //===- FileUtils.h - File system utility functions for snapshotting -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // File-system functionality useful for snapshotting (Unix-specific).
@@ -31,6 +31,6 @@ bool DirectoryExists (const std::string &dirPath);
 
 void EnsureDirectoryExists (const std::string &dirPath);
 
-};
+}
 
 #endif

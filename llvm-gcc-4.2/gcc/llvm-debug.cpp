@@ -486,12 +486,13 @@ DIType DebugInfo::createArrayType(tree type) {
       // FIXME - handle dynamic ranges
       tree MinValue = TYPE_MIN_VALUE(Domain);
       tree MaxValue = TYPE_MAX_VALUE(Domain);
-      if (MinValue && MaxValue &&
-          isInt64(MinValue, 0) && isInt64(MaxValue, 0)) {
-        uint64_t Low = getINTEGER_CSTVal(MinValue);
-        uint64_t Hi = getINTEGER_CSTVal(MaxValue);
-        Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
-      }
+      uint64_t Low = 0;
+      uint64_t Hi = 0;
+      if (MinValue && isInt64(MinValue, 0))
+	Low = getINTEGER_CSTVal(MinValue);
+      if (MaxValue && isInt64(MaxValue, 0))
+	Hi = getINTEGER_CSTVal(MaxValue);
+      Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
     }
     EltTy = TREE_TYPE(atype);
   }

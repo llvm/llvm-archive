@@ -216,8 +216,8 @@ static bool BuildShiftCountVector(Value *&Op, enum machine_mode Mode,
 
   // Right shifts are represented in NEON intrinsics by a negative shift count.
   LLVMContext &Context = getGlobalContext();
-  Cnt = ConstantInt::get(IntegerType::get(Context, sElemBits),
-                               NegateRightShift ? -CntVal : CntVal);
+  Cnt = ConstantInt::get(IntegerType::get(Context, ElemBits),
+                         NegateRightShift ? -CntVal : CntVal);
   Op = BuildConstantSplatVector(GET_MODE_NUNITS(Mode), Cnt);
   return true;
 }

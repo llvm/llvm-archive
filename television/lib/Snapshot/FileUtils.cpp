@@ -1,10 +1,10 @@
 //===- FileUtils.cpp - File system utility functions for snapshotting -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file is Unix-specific; to become part of LLVM it needs to be made
@@ -30,7 +30,7 @@ unsigned llvm::GetNumFilesInDir(const std::string &path) {
   if (n < 0)
     perror("scandir");
   else {
-    while(n--)
+    while (n--)
       free(namelist[n]);
     free(namelist);
   }
@@ -67,4 +67,3 @@ void llvm::EnsureDirectoryExists (const std::string &dirPath) {
   if (!DirectoryExists (dirPath))
     mkdir (dirPath.c_str (), 0777);
 }
-

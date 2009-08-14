@@ -20,8 +20,8 @@ namespace llvm {
 
 class Module;
 
-void ReadSnapshots(std::vector<std::string> &oldModules,
-                   std::vector<llvm::Module*> NewModules);
+void ReadSnapshots(const std::vector<std::string> &oldModules,
+                   std::vector<Module*> &NewModules);
 
 }
 

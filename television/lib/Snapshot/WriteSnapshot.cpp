@@ -1,25 +1,26 @@
 //===- Snapshot.cpp - Snapshot Module views and communicate with llvm-tv --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // * If llvm-tv is not running, start it.
 // * Send update to llvm-tv each time this pass is called on the command line,
-//   e.g.  opt -snapshot -licm -snapshot -gcse -snapshot ... 
+//   e.g.  opt -snapshot -licm -snapshot -gcse -snapshot ...
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm-tv/Support/FileUtils.h"
 #include "llvm-tv/Config.h"
 #include <csignal>
@@ -42,13 +43,17 @@ namespace {
   struct Snapshot : public ModulePass {
     /// getAnalysisUsage - this pass does not require or invalidate any analysis
     ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
-    
+
+    Snapshot() : ModulePass(&ID) {}
+
     /// runOnModule - save the Module in a pre-defined location with our naming
     /// strategy
     bool runOnModule(Module &M);
+
+    static char ID;
 
   private:
     bool sendSignalToLLVMTV();
@@ -60,7 +65,9 @@ namespace {
   static unsigned int PassPosition = 1;
   /// The name of the command-line option to invoke the snapshot pass
   const std::string SnapshotCmd = "snapshot";
-  RegisterOpt<Snapshot> X("snapshot", "Snapshot a module, signal llvm-tv");
+
+  char Snapshot::ID = 0;
+  RegisterPass<Snapshot> X("snapshot", "Snapshot a module, signal llvm-tv");
 }
 
 
@@ -83,7 +90,7 @@ bool Snapshot::runOnModule(Module &M) {
     findOption(PassPosition++) + ".bc";
 
   std::ofstream os(Filename.c_str());
-  WriteBytecodeToFile(&M, os);
+  WriteBitcodeToFile(&M, os);
   os.close();
 
   // Communicate to llvm-tv that we have added a new snapshot
@@ -91,25 +98,26 @@ bool Snapshot::runOnModule(Module &M) {
 
   // Since we were not successful in sending a signal to an already-running
   // instance of llvm-tv, start a new instance and send a signal to it.
-  sys::Path llvmtvExe = FindExecutable("llvm-tv", ""); 
-  if (llvmtvExe.isValid() && !llvmtvExe.isEmpty() && llvmtvExe.isFile() &&
+  sys::PathWithStatus llvmtvExe = FindExecutable("llvm-tv", "", 0);
+  if (llvmtvExe.isValid() && !llvmtvExe.isEmpty() &&
+      llvmtvExe.getFileStatus()->isFile &&
       llvmtvExe.canExecute()) {
     int pid = fork();
     // Child process morphs into llvm-tv
     if (!pid) {
-      char *argv[1]; argv[0] = 0; 
+      char *argv[1]; argv[0] = 0;
       if (execve(llvmtvExe.toString().c_str(), argv, environ) == -1) {
         perror("execve");
         return false;
       }
     }
-    
+
     // parent waits for llvm-tv to write out its pid to a file
     // and then sends it a signal
     sleep(3);
     sendSignalToLLVMTV();
   } else
-    std::cerr << "Cannot find llvm-tv in the path!\n";
+    errs() << "Cannot find llvm-tv in the path!\n";
 
   return false;
 }

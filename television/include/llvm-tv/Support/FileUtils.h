@@ -27,9 +27,9 @@ unsigned GetNumFilesInDir(const std::string &path);
 ///
 void GetFilesInDir(const std::string &path, std::vector<std::string> &list);
 
-bool DirectoryExists (const std::string &dirPath);
+bool DirectoryExists(const std::string &dirPath);
 
-void EnsureDirectoryExists (const std::string &dirPath);
+void EnsureDirectoryExists(const std::string &dirPath);
 
 }
 

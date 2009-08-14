@@ -22,7 +22,7 @@ How to compile:
 
 1. You must have wxWindows installed on your system, and wx-config has to be
    in your path.
-   
+
    Make absolutely sure that wxwindows's configure picks up the same
    C++ compiler that you're using for llvm. Otherwise, you may get
    weird link errors when trying to link the llvm-tv tool.
@@ -36,7 +36,7 @@ How to compile:
 % gmake
 
 Example of usage:
- 
+
 % llvm-tv.exe &
    The .exe is not a typo; this command starts up the visualizer in
    the background using its wrapper script.

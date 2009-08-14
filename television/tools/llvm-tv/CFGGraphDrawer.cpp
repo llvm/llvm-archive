@@ -17,7 +17,7 @@ wxImage *CFGGraphDrawer::drawFunctionGraph (Function *fn) {
   PM.run (*fn);
   MP->releaseModule (); // Don't delete it when you go away, says I
   delete MP;
-  return buildwxImageFromDotFile ("cfg." + fn->getName() + ".dot");
+  return buildwxImageFromDotFile ("cfg." + fn->getName().str() + ".dot");
 }
 
 std::string CFGGraphDrawer::getDisplayTitle (TVTreeItemData *item) {

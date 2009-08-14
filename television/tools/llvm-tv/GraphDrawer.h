@@ -15,7 +15,7 @@
 namespace llvm {
   class Module;
   class Function;
-};
+}
 
 class TVTreeItemData;
 
@@ -25,7 +25,7 @@ class GraphDrawer : public ItemDisplayer {
   PictureCanvas *myPictureCanvas;
 
 protected:
-  static wxImage *buildwxImageFromDotFile (const std::string filename);
+  static wxImage *buildwxImageFromDotFile (const std::string &filename);
   GraphDrawer (wxWindow *parent)
     : myPictureCanvas (new PictureCanvas (parent)) { }
 

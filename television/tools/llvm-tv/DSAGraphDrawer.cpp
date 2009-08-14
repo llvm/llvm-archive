@@ -19,7 +19,7 @@ using namespace llvm;
 // DSGraphDrawer implementation
 wxImage *DSGraphDrawer::drawModuleGraph(Module *M) {
   PassManager PM;
-  PM.add(new TargetData("llvm-tv", M));
+  PM.add(new TargetData(M));
   PM.add(getModulePass());
   PM.run(*M);
   return buildwxImageFromDotFile(getFilename(M));
@@ -28,7 +28,7 @@ wxImage *DSGraphDrawer::drawModuleGraph(Module *M) {
 wxImage *DSGraphDrawer::drawFunctionGraph(Function *F) {
   Module *M = F->getParent();
   PassManager PM;
-  PM.add(new TargetData("llvm-tv", M));
+  PM.add(new TargetData(M));
   PM.add(getFunctionPass(F));
   PM.run(*M);
   return buildwxImageFromDotFile(getFilename(F));
@@ -46,7 +46,7 @@ Pass *BUGraphDrawer::getModulePass() {
 }
 
 std::string BUGraphDrawer::getFilename(Function *F) {
-  return "buds." + F->getName() + ".dot";
+  return "buds." + F->getName().str() + ".dot";
 }
 
 std::string BUGraphDrawer::getFilename(Module *M) {
@@ -72,7 +72,7 @@ Pass *TDGraphDrawer::getModulePass() {
 }
 
 std::string TDGraphDrawer::getFilename(Function *F) {
-  return "tdds." + F->getName() + ".dot";
+  return "tdds." + F->getName().str() + ".dot";
 }
 
 std::string TDGraphDrawer::getFilename(Module *M) {
@@ -98,7 +98,7 @@ Pass *LocalGraphDrawer::getModulePass() {
 }
 
 std::string LocalGraphDrawer::getFilename(Function *F) {
-  return "localds." + F->getName() + ".dot";
+  return "localds." + F->getName().str() + ".dot";
 }
 
 std::string LocalGraphDrawer::getFilename(Module *M) {

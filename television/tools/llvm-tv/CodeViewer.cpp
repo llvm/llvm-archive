@@ -16,7 +16,7 @@ void TVCodeItem::SetLabel() {
   if (!Val)
     label = "<badref>";
   else if (BasicBlock *BB = dyn_cast<BasicBlock>(Val))
-    label = BB->getName() + ":";
+    label = BB->getName().str() + ":";
   else if (Instruction *I = dyn_cast<Instruction>(Val)) {
     std::ostringstream out;
     I->print(out);
@@ -37,7 +37,7 @@ void TVCodeItem::SetLabel() {
   } else
     label = "<invalid value>";
 
-  SetText(label.c_str());
+  SetText(wxString(label.c_str(), wxConvUTF8));
 }
 
 //===----------------------------------------------------------------------===//
@@ -95,7 +95,8 @@ TVCodeListCtrl::TVCodeListCtrl(wxWindow *_parent)
                wxLC_LIST) {
 }
 
-void TVCodeListCtrl::changeItemTextAttrs (TVCodeItem *item, wxColour *newColor, 
+void TVCodeListCtrl::changeItemTextAttrs (TVCodeItem *item,
+                                          const wxColour *newColor,
                                           int newFontWeight) {
   item->m_itemId = ItemToIndex[item];
   item->SetTextColour(*newColor);
@@ -132,7 +133,7 @@ void TVCodeListCtrl::OnItemDeselected(wxListEvent &event) {
   if (User *U = dyn_cast<User>(V))
     for (User::op_iterator op = U->op_begin(), e = U->op_end(); op != e; ++op)
       if (TVCodeItem *TCI = ValueToItem[*op])
-        changeItemTextAttrs (ValueToItem[*op], wxBLACK, wxNORMAL);
+        changeItemTextAttrs (TCI, wxBLACK, wxNORMAL);
 
 }
 

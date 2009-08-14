@@ -4,8 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TVFRAME_H
-#define TVFRAME_H
+#ifndef LLVMTV_TVFRAME_H
+#define LLVMTV_TVFRAME_H
 
 #include "TVSnapshotList.h"
 #include "TVWindowIDs.h"
@@ -18,25 +18,26 @@
 #include <string>
 #include <vector>
 
+class TVFrame;
+
 /// TVTreeCtrl - A specialization of wxTreeCtrl that displays a list of LLVM
 /// Modules and Functions from a snapshot
 ///
-class TVFrame;
 class TVTreeCtrl : public wxTreeCtrl {
   TVFrame *myFrame;
 public:
-  TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
-                         const wxPoint& pos = wxDefaultPosition,
-                         const wxSize& size = wxDefaultSize,
-                         long style = wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE
-                                    | wxSUNKEN_BORDER);
+  TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
+             const wxPoint& pos = wxDefaultPosition,
+             const wxSize& size = wxDefaultSize,
+             long style = wxTR_HIDE_ROOT | wxTR_DEFAULT_STYLE
+                        | wxSUNKEN_BORDER);
   virtual ~TVTreeCtrl() { }
   void AddSnapshotsToTree(TVSnapshotList*);
   void updateSnapshotList(TVSnapshotList*);
   void OnSelChanged(wxTreeEvent &event);
   TVTreeItemData *GetSelectedItemData ();
 
-  DECLARE_EVENT_TABLE();
+  DECLARE_EVENT_TABLE()
 };
 
 ///==---------------------------------------------------------------------==///
@@ -56,7 +57,8 @@ public:
   void OnSelChanged (wxNotebookEvent &event);
   bool AddItemDisplayer (ItemDisplayer *displayWidget);
   void SetSelectedItem (TVTreeItemData *newSelectedItem);
-  DECLARE_EVENT_TABLE ()
+
+  DECLARE_EVENT_TABLE()
 };
 
 ///==---------------------------------------------------------------------==///
@@ -67,7 +69,7 @@ public:
 class TVApplication;
 class TVFrame : public wxFrame {
   TVApplication *myApp;
-  
+
   wxSplitterWindow *splitterWindow; // divides this into left & right sides
   TVTreeCtrl *myTreeCtrl;           // left side - displays tree view of module
   TVNotebook *notebook;             // right side - tab views w/ item displayers
@@ -91,7 +93,7 @@ class TVFrame : public wxFrame {
   void initializeSnapshotListAndView ();
   void updateDisplayedItem (TVTreeItemData *newlyDisplayedItem);
 
-  DECLARE_EVENT_TABLE ();
+  DECLARE_EVENT_TABLE()
 };
 
-#endif // TVFRAME_H
+#endif // LLVMTV_TVFRAME_H

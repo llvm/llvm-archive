@@ -12,9 +12,9 @@ using namespace llvm;
 
 extern void FatalErrorBox (const std::string msg);
 
-wxImage *GraphDrawer::buildwxImageFromDotFile (const std::string filename) {
+wxImage *GraphDrawer::buildwxImageFromDotFile (const std::string &filename) {
   sys::Path File (filename);
-  if (! File.readable ())
+  if (! File.canRead ())
     FatalErrorBox ("buildwxImageFromDotFile() got passed a bogus filename: '"
                    + filename + "'");
 
@@ -25,7 +25,7 @@ wxImage *GraphDrawer::buildwxImageFromDotFile (const std::string filename) {
   unlink (filename.c_str ());
 
   wxImage *img = new wxImage;
-  if (!img->LoadFile ("image.png"))
+  if (!img->LoadFile (wxString("image.png", wxConvUTF8)))
     FatalErrorBox("buildwxImageFromDotFile() produced a non-loadable PNG file");
 
   unlink ("image.png");
@@ -42,7 +42,8 @@ void GraphDrawer::displayItem (TVTreeItemData *item) {
       frame->Show (false);
     std::string errMsg = "Sorry, you can't draw that kind of graph on "
                          + item->getTitle() + ".";
-    wxMessageBox (errMsg.c_str (), "Error");
+    wxMessageBox (wxString(errMsg.c_str(), wxConvUTF8),
+                  wxString("Error", wxConvUTF8));
     return;
   }
   myPictureCanvas->SetImage (graphImage);

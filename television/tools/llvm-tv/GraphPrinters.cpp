@@ -1,10 +1,10 @@
 //===- GraphPrinters.cpp - DOT printers for various graph types -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines several printers for various different types of graphs used
@@ -21,6 +21,7 @@
 #include "llvm/Analysis/DataStructure/DataStructure.h"
 #include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Support/raw_ostream.h"
 #include <fstream>
 using namespace llvm;
 
@@ -30,7 +31,7 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
   std::string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
-  
+
   if (F.good())
     WriteGraph(F, GT);
   else
@@ -49,7 +50,7 @@ namespace llvm {
     static std::string getGraphName(CallGraph *F) {
       return "Call Graph";
     }
-    
+
     static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
@@ -67,7 +68,7 @@ namespace {
     }
 
     void print(std::ostream &OS) const {}
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<CallGraph>();
       AU.setPreservesAll();
@@ -98,7 +99,7 @@ namespace {
         DS->getGlobalsGraph().print(of);
         of.close();
       } else
-        std::cerr << "Error writing to " << File << "!\n";
+        errs() << "Error writing to " << File << "!\n";
       return false;
     }
 
@@ -119,7 +120,7 @@ namespace {
   public:
     DSFunctionPrinter(Function *_F) : F(_F) {}
 
-    bool runOnModule(Module &M) { 
+    bool runOnModule(Module &M) {
       DSType *DS = &getAnalysis<DSType>();
       std::string File = getFilename(*F);
       std::ofstream of(File.c_str());
@@ -185,7 +186,7 @@ namespace {
     std::string getFilename() { return "localds.dot"; }
   };
   struct LocalFunctionPrinter : public DSFunctionPrinter<LocalDataStructures> {
-    LocalFunctionPrinter(Function *F) 
+    LocalFunctionPrinter(Function *F)
       : DSFunctionPrinter<LocalDataStructures>(F) {}
     std::string getFilename(Function &F) {
       return "localds." + F.getName() + ".dot";

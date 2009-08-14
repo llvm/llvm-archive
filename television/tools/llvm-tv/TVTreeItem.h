@@ -21,7 +21,7 @@ namespace llvm {
 }
 
 /// TVTreeItemData - Base class for LLVM TV Tree Data
-///  
+///
 class TVTreeItemData : public wxTreeItemData {
 public:
   const wxChar *GetDesc() const { return m_desc.c_str(); }
@@ -49,37 +49,37 @@ protected:
 };
 
 /// TVTreeModuleItem - Tree Item containing a Module
-///  
+///
 class TVTreeModuleItem : public TVTreeItemData {
 private:
   llvm::Module *myModule;
 public:
-  TVTreeModuleItem(const wxString& desc, llvm::Module *mod) 
+  TVTreeModuleItem(const wxString& desc, llvm::Module *mod)
     : TVTreeItemData(desc), myModule(mod) {}
-  
+
   void print(std::ostream &out);
   wxImage *graphOn(GraphDrawer *grapher) {
     return grapher->drawModuleGraph (myModule);
   }
   void viewCodeOn(TVCodeViewer *viewer) { viewer->viewModuleCode (myModule); }
 
-  virtual std::string getTitle () { return m_desc.c_str(); }
+  virtual std::string getTitle () { return std::string(m_desc.mb_str()); }
   virtual std::string dsGraphName () { return "globals graph"; }
 };
 
 
 /// TVTreeFunctionItem - Tree Item containing a Function
-///  
+///
 class TVTreeFunctionItem : public TVTreeItemData {
 private:
   llvm::Function *myFunc;
 public:
   TVTreeFunctionItem(const wxString& desc, llvm::Function *func)
     : TVTreeItemData(desc),  myFunc(func) {}
-  
+
   void print(std::ostream &out);
   wxImage *graphOn(GraphDrawer *grapher) {
-    return grapher->drawFunctionGraph (myFunc); 
+    return grapher->drawFunctionGraph (myFunc);
   }
   void viewCodeOn(TVCodeViewer *viewer) { viewer->viewFunctionCode (myFunc); }
 

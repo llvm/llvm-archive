@@ -745,10 +745,10 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 80: return SET_TYPE_LLVM(type, Type::getX86_FP80Ty(Context));
     case 128:
 #ifdef TARGET_POWERPC
-             return SET_TYPE_LLVM(type, Type::PPC_FP128Ty);
+      return SET_TYPE_LLVM(type, Type::getPPC_FP128Ty(Context));
 #elif 0
              // This is for IEEE double extended, e.g. Sparc
-             return SET_TYPE_LLVM(type, Type::FP128Ty);
+      return SET_TYPE_LLVM(type, Type::getFP128Ty(Context));
 #else
       // 128-bit long doubles map onto { double, double }.
       return SET_TYPE_LLVM(type,

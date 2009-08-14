@@ -295,6 +295,8 @@ class TreeToLLVM {
   const TargetData &TD;
   tree_node *FnDecl;
   Function *Fn;
+  BasicBlock *SjLjEHSetupBB;
+  BasicBlock *PostEntryBB;
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
   BasicBlock *DispatchBB;

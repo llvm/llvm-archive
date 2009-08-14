@@ -637,73 +637,15 @@ void TreeToLLVM::StartFunctionBody() {
   // Register the frame with the unwind machinery if there are exception
   // handling regions in the function.
   if (USING_SJLJ_EXCEPTIONS && current_function_has_exception_handlers()) {
-
-    CreateExceptionValues();
-
-    // Create a function context on the stack
-    FunctionContext =
-      CreateTempLoc (ConvertType(sjlj_fc_type_node));
-    llvm::Value *Idxs[2];
-    Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-
-    // Assign the unwind personality function address
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 3);
-    Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2,
-                                         "personality_gep");
-    const Type *FieldTy =
-      cast<PointerType>(FieldPtr->getType())->getElementType();
-    Value *Val =
-      Builder.CreateBitCast(DECL_LLVM(llvm_eh_personality_libfunc), FieldTy);
-    Builder.CreateStore(Val, FieldPtr);
-
-    // Load the address for the language specific data area (LSDA)
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 4);
-    FieldPtr
-      = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "lsda_gep");
-    FieldTy = cast<PointerType>(FieldPtr->getType())->getElementType();
-    Val = 
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::eh_sjlj_lsda),
-                         "eh_lsda");
-    Builder.CreateStore(Val, FieldPtr);
-
-    // builtin_setjmp() stuff goes here.
-    //   1. Save the frame pointer.
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 5);
-    FieldPtr
-      = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "jbuf_gep");
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-    Value *ElemPtr
-      = Builder.CreateGEP (FieldPtr, Idxs, Idxs+2, "jbuf_fp_gep");
-    FieldTy = cast<PointerType>(ElemPtr->getType())->getElementType();
-    // FIXME: The EmitBuiltinExtractReturnAddr() function comes close to
-    //  what we want here. Refactor it so that it does, or make a common
-    //  helper function.
-    Val = Builder.CreateCall
-      (Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress),
-       ConstantInt::get(llvm::Type::getInt32Ty(Context), 0));
-    Val = BitCastToType(Val, FieldTy);
-    Builder.CreateStore(Val, ElemPtr);
-
-    FieldPtr = BitCastToType(FieldPtr, 
-                             llvm::Type::getInt8Ty(Context)->getPointerTo());
-    Value *DispatchVal = Builder.CreateCall
-      (Intrinsic::getDeclaration(TheModule, Intrinsic::eh_sjlj_setjmp),
-       FieldPtr);
-    // check the return value of the setjmp. non-zero goes to dispatcher
-    Value *Zero = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-    Value *Compare = Builder.CreateICmpEQ(DispatchVal, Zero);
-
-    // Branch on the compare.
-    DispatchBB = BasicBlock::Create(Context, "dispatch");
-    BasicBlock *PostEntryBB = BasicBlock::Create(Context, "post_entry");
-    Builder.CreateCondBr(Compare, PostEntryBB, DispatchBB);
+    // We have exception regions, but we may or may not actually end up
+    // needing to actively do anything about it. We'll know at the end
+    // of the function by whether any landing pads have been created.
+    // So for now, we just create a block for where to add the necessary
+    // bits.
+    SjLjEHSetupBB = BasicBlock::Create(Context, "setup_sjlj_eh");
+    Builder.CreateBr(SjLjEHSetupBB);
+    PostEntryBB = BasicBlock::Create(Context, "post_entry");
     EmitBlock(PostEntryBB);
-
-    // Register the context and note that this call cannot throw
-    CallInst *RegisterCall = 
-      Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_register_libfunc),
-                       FunctionContext.Ptr);
   }
 
   // Create a new block for the return node, but don't insert it yet.
@@ -711,16 +653,93 @@ void TreeToLLVM::StartFunctionBody() {
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
+  // If we're using SJLJ exceptions and there are any landing pads for this
+  // function, we need to insert the setup code in the prologue, and add
+  // the unregister call here.
+  if (USING_SJLJ_EXCEPTIONS && current_function_has_exception_handlers()) {
+    // Send the current BB to the return block just like it would if we
+    // weren't doing this bit.
+    Builder.CreateBr(ReturnBB);
+
+    assert(SjLjEHSetupBB && "Exception handling needed but no setup block??");
+    EmitBlock(SjLjEHSetupBB);
+
+    if (LandingPads.size() > 0) {
+      // Get a pointer to the function context
+      llvm::Value *Idxs[2];
+      Idxs[0] = ConstantInt::get(Type::getInt32Ty(Context), 0);
+
+      // Assign the unwind personality function address
+      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 3);
+      Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2,
+                                           "personality_gep");
+      const Type *FieldTy =
+        cast<PointerType>(FieldPtr->getType())->getElementType();
+      Value *Val =
+        Builder.CreateBitCast(DECL_LLVM(llvm_eh_personality_libfunc), FieldTy);
+      Builder.CreateStore(Val, FieldPtr);
+
+      // Load the address for the language specific data area (LSDA)
+      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 4);
+      FieldPtr
+        = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "lsda_gep");
+      FieldTy = cast<PointerType>(FieldPtr->getType())->getElementType();
+      Val =
+        Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+                                                     Intrinsic::eh_sjlj_lsda),
+                           "eh_lsda");
+      Builder.CreateStore(Val, FieldPtr);
+
+      // builtin_setjmp() stuff goes here.
+      //   1. Save the frame pointer.
+      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 5);
+      FieldPtr
+        = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "jbuf_gep");
+      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 0);
+      Value *ElemPtr
+        = Builder.CreateGEP (FieldPtr, Idxs, Idxs+2, "jbuf_fp_gep");
+      FieldTy = cast<PointerType>(ElemPtr->getType())->getElementType();
+      // FIXME: The EmitBuiltinExtractReturnAddr() function comes close to
+      //  what we want here. Refactor it so that it does, or make a common
+      //  helper function.
+      Val = Builder.CreateCall
+        (Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress),
+         ConstantInt::get(Type::getInt32Ty(Context), 0));
+      Val = BitCastToType(Val, FieldTy);
+      Builder.CreateStore(Val, ElemPtr);
+
+      FieldPtr = 
+        BitCastToType(FieldPtr, Type::getInt8Ty(Context)->getPointerTo());
+      Value *DispatchVal = Builder.CreateCall
+        (Intrinsic::getDeclaration(TheModule, Intrinsic::eh_sjlj_setjmp),
+         FieldPtr);
+      // check the return value of the setjmp. non-zero goes to dispatcher
+      Value *Zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
+      Value *Compare = Builder.CreateICmpEQ(DispatchVal, Zero);
+
+      // Branch on the compare.
+      DispatchBB = BasicBlock::Create(Context, "dispatch");
+      BasicBlock *PostSetupBB = BasicBlock::Create(Context, "sjlj_eh_register");
+      Builder.CreateCondBr(Compare, PostSetupBB, DispatchBB);
+      EmitBlock(PostSetupBB);
+
+      // Register the context and note that this call cannot throw
+      CallInst *RegisterCall =
+        Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_register_libfunc),
+                           FunctionContext.Ptr);
+    }
+    // Go back to the end of the prologue
+    Builder.CreateBr(PostEntryBB);
+  }
+
   // Insert the return block at the end of the function.
   EmitBlock(ReturnBB);
 
-  if (USING_SJLJ_EXCEPTIONS) {
+  if (USING_SJLJ_EXCEPTIONS && LandingPads.size() > 0) {
     // Un-register the frame with the unwind machinery if there are exception
     // handling regions in the function.
-    if (current_function_has_exception_handlers()) {
-      Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_unregister_libfunc),
-                         FunctionContext.Ptr);
-    }
+    Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_unregister_libfunc),
+                       FunctionContext.Ptr);
   }
 
   SmallVector <Value *, 4> RetVals;
@@ -1998,6 +2017,9 @@ void TreeToLLVM::CreateExceptionValues() {
                                               (IntPtr == Type::getInt32Ty(Context) ?
                                                Intrinsic::eh_typeid_for_i32 :
                                                Intrinsic::eh_typeid_for_i64));
+  // For SJLJ, create a function context on the stack
+  if (USING_SJLJ_EXCEPTIONS)
+    FunctionContext = CreateTempLoc (ConvertType(sjlj_fc_type_node));
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling
@@ -2021,7 +2043,10 @@ static void AddHandler (struct eh_region *region, void *data) {
 /// EmitSjLjDispatcher - Emit SJLJ EH dispatcher
 void TreeToLLVM::EmitSjLjDispatcher () {
   if (DispatchBB) {
+    assert(LandingPads.size() > 0 && "Dispatch block without landing pads?");
+
     EmitBlock(DispatchBB);
+
     // Get the call_site value
     llvm::Value *Idxs[2];
     Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
@@ -2906,6 +2931,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
         LandingPad = ThisPad;
 
         if (USING_SJLJ_EXCEPTIONS) {
+          CreateExceptionValues();
           // Mark the call site so we'll dispatch to the right landing pad
           // when we get an exception passed back.
           llvm::Value *Idxs[2];
@@ -2913,8 +2939,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
           Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 1);
           Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr,
                                                Idxs, Idxs+2, "call_site_gep");
-//          FieldPtr = BitCastToType(FieldPtr,
-//                                   llvm::Type::getInt32Ty(Context)->getPointerTo());
           const Type *FieldTy = 
             cast<PointerType>(FieldPtr->getType())->getElementType();
           Constant *CallSiteIdx = ConstantInt::get(FieldTy, RegionNo, true);

@@ -1,15 +1,15 @@
+#===- television/Makefile ----------------------------------*- Makefile -*-===##
 #
-# This is a sample Makefile for a project that uses LLVM.
+#                     The LLVM Compiler Infrastructure
 #
+# This file is distributed under the University of Illinois Open Source
+# License. See LICENSE.TXT for details.
+#
+##===----------------------------------------------------------------------===##
 
-#
-# Indicates our relative path to the top of the project's root directory.
-#
 LEVEL = .
 
-#
-# Directories that needs to be built.
-#
+# Directories that need to be built.
 DIRS = lib tools
 
 #
@@ -26,4 +26,3 @@ include $(LEVEL)/Makefile.common
 
 distclean:: clean
 	${RM} -f Makefile.common Makefile.config config.log config.status
-

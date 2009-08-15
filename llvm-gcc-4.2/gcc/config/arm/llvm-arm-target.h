@@ -21,11 +21,17 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
-/* LLVM specific stuff for supporting calling convention output */
+/* LLVM specific code to select the calling conventions. The AAPCS
+   specification says that varargs functions must use the base standard
+   instead of the VFP hard float variant. We check for that with
+   (isVoid || hasArgList). */
 #define TARGET_ADJUST_LLVM_CC(CC, type)				\
   {								\
     if (TARGET_AAPCS_BASED)					\
-      CC = (TARGET_VFP && TARGET_HARD_FLOAT_ABI ?		\
+      CC = ((TARGET_VFP && TARGET_HARD_FLOAT_ABI &&		\
+             ((TYPE_ARG_TYPES(type) == 0) ||			\
+              (TREE_VALUE(tree_last(TYPE_ARG_TYPES(type))) ==	\
+               void_type_node))) ?				\
 	    CallingConv::ARM_AAPCS_VFP :			\
 	    CallingConv::ARM_AAPCS);				\
     else							\

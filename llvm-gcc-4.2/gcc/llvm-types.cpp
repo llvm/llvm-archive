@@ -938,6 +938,9 @@ namespace {
       isShadowRet = false;
     }
 
+    /// getCallingConv - This provides the desired CallingConv for the function.
+    CallingConv::ID& getCallingConv(void) { return CallingConv; }
+
     bool isShadowReturn() const { return isShadowRet; }
 
     /// HandleScalarResult - This callback is invoked if the function returns a

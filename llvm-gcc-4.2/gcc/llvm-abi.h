@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-internal.h"
 
 #include "llvm/Attributes.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetData.h"
@@ -271,7 +272,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // registers. The routine should also return by reference a vector of the
 // types of the registers being used. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E) \
     false
 #endif
 
@@ -281,7 +282,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // the aggregate. Note, this routine should return false if none of the needed
 // registers are available.
 #ifndef LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR) \
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC) \
     false
 #endif
 
@@ -463,9 +464,12 @@ public:
       ScalarElts.push_back(Ty);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
       C.HandleFCAArgument(Ty, type);
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
+                                                        C.getCallingConv(),
+                                                        Elts)) {
       if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts,
-                                                   C.isShadowReturn()))
+                                                   C.isShadowReturn(),
+                                                   C.getCallingConv()))
         PassInMixedRegisters(type, Ty, Elts, ScalarElts);
       else {
         C.HandleByValArgument(Ty, type);
@@ -874,7 +878,9 @@ public:
       if (Attributes) {
         *Attributes |= Attr;
       }
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
+                                                        C.getCallingConv(),
+                                                        Elts)) {
       HOST_WIDE_INT SrcSize = int_size_in_bytes(type);
       
       // With the SVR4 ABI, the only aggregates which are passed in registers

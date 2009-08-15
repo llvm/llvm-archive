@@ -251,13 +251,17 @@ namespace {
     std::vector<Value*> LocStack;
     std::vector<std::string> NameStack;
     unsigned Offset;
+    CallingConv::ID &CallingConv;
     bool isShadowRet;
     FunctionPrologArgumentConversion(tree FnDecl,
                                      Function::arg_iterator &ai,
-                                     const LLVMBuilder &B)
-      : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0),
+                                     const LLVMBuilder &B, CallingConv::ID &CC)
+      : FunctionDecl(FnDecl), AI(ai), Builder(B), Offset(0), CallingConv(CC),
         isShadowRet(false) {}
     
+    /// getCallingConv - This provides the desired CallingConv for the function.
+    CallingConv::ID& getCallingConv(void) { return CallingConv; }
+
     bool isShadowReturn() {
       return isShadowRet;
     }
@@ -386,13 +390,14 @@ namespace {
 // passed in memory byval.
 static bool isPassedByVal(tree type, const Type *Ty,
                           std::vector<const Type*> &ScalarArgs,
-                          bool isShadowRet) {
+                          bool isShadowRet, CallingConv::ID &CC) {
   if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty))
     return true;
 
   std::vector<const Type*> Args;
-  if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Args) &&
-      LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs, isShadowRet))
+  if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, CC, Args) &&
+      LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs, isShadowRet,
+                                              CC))
     // We want to pass the whole aggregate in registers but only some of the
     // registers are available.
     return true;
@@ -550,7 +555,7 @@ void TreeToLLVM::StartFunctionBody() {
   Function::arg_iterator AI = Fn->arg_begin();
 
   // Rename and alloca'ify real arguments.
-  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder);
+  FunctionPrologArgumentConversion Client(FnDecl, AI, Builder, CallingConv);
   TheLLVMABI<FunctionPrologArgumentConversion> ABIConverter(Client);
 
   // Handle the DECL_RESULT.
@@ -575,7 +580,7 @@ void TreeToLLVM::StartFunctionBody() {
          LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(TREE_TYPE(Args))) ||
         (!ArgTy->isSingleValueType() &&
          isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs,
-                       Client.isShadowReturn()))) {
+                       Client.isShadowReturn(), CallingConv))) {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);
@@ -2680,6 +2685,7 @@ namespace {
     LLVMBuilder &Builder;
     Value *TheValue;
     MemRef RetBuf;
+    CallingConv::ID &CallingConv;
     bool isShadowRet;
     bool isAggrRet;
     unsigned Offset;
@@ -2688,10 +2694,14 @@ namespace {
                                    const FunctionType *FnTy,
                                    const MemRef *destloc,
                                    bool ReturnSlotOpt,
-                                   LLVMBuilder &b)
+                                   LLVMBuilder &b,
+                                   CallingConv::ID &CC)
       : CallOperands(ops), FTy(FnTy), DestLoc(destloc),
-        useReturnSlot(ReturnSlotOpt), Builder(b), isShadowRet(false),
-        isAggrRet(false), Offset(0) { }
+        useReturnSlot(ReturnSlotOpt), Builder(b), CallingConv(CC),
+        isShadowRet(false), isAggrRet(false), Offset(0) { }
+
+    /// getCallingConv - This provides the desired CallingConv for the function.
+    CallingConv::ID& getCallingConv(void) { return CallingConv; }
 
     // Push the address of an argument.
     void pushAddress(Value *Loc) {
@@ -2970,7 +2980,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   const FunctionType *FTy = cast<FunctionType>(PFTy->getElementType());
   FunctionCallArgumentConversion Client(CallOperands, FTy, DestLoc,
                                         CALL_EXPR_RETURN_SLOT_OPT(exp),
-                                        Builder);
+                                        Builder, CallingConvention);
   TheLLVMABI<FunctionCallArgumentConversion> ABIConverter(Client);
 
   // Handle the result, including struct returns.

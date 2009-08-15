@@ -3503,7 +3503,7 @@ extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*,
                                               std::vector<const Type*>&);
 
 /* FIXME this is needed for 64-bit  */
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E) \
    llvm_rs6000_should_pass_aggregate_in_mixed_regs((T), (TY), (E))
 
 extern tree llvm_rs6000_should_return_vector_as_scalar(tree, bool);

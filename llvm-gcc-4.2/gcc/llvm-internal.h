@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include <cassert>
 #include <map>
 #include <string>
+#include "llvm/CallingConv.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -157,7 +158,7 @@ public:
   const FunctionType *ConvertFunctionType(tree_node *type,
                                           tree_node *decl,
                                           tree_node *static_chain,
-                                          unsigned &CallingConv,
+                                          CallingConv::ID &CallingConv,
                                           AttrListPtr &PAL);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
@@ -166,7 +167,7 @@ public:
   const FunctionType *ConvertArgListToFnType(tree_node *type,
                                              tree_node *arglist,
                                              tree_node *static_chain,
-                                             unsigned &CallingConv,
+                                             CallingConv::ID &CallingConv,
                                              AttrListPtr &PAL);
   
 private:

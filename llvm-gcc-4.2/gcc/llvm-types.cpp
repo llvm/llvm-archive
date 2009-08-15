@@ -851,7 +851,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       return Ty;
       
     // No declaration to pass through, passing NULL.
-    unsigned CallingConv;
+    CallingConv::ID CallingConv;
     AttrListPtr PAL;
     return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
                                                     CallingConv, PAL));
@@ -926,13 +926,13 @@ namespace {
   class FunctionTypeConversion : public DefaultABIClient {
     PATypeHolder &RetTy;
     std::vector<PATypeHolder> &ArgTypes;
-    unsigned &CallingConv;
+    CallingConv::ID &CallingConv;
     bool isShadowRet;
     bool KNRPromotion;
     unsigned Offset;
   public:
     FunctionTypeConversion(PATypeHolder &retty, std::vector<PATypeHolder> &AT,
-                           unsigned &CC, bool KNR)
+                           CallingConv::ID &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR), Offset(0) {
       CallingConv = CallingConv::C;
       isShadowRet = false;
@@ -1047,7 +1047,7 @@ static Attributes HandleArgumentExtension(tree ArgTy) {
 /// specified result type for the function.
 const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree type, tree Args, tree static_chain,
-                       unsigned &CallingConv, AttrListPtr &PAL) {
+                       CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   tree ReturnType = TREE_TYPE(type);
   std::vector<PATypeHolder> ArgTys;
   PATypeHolder RetTy(Type::getVoidTy(Context));
@@ -1111,7 +1111,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
 
 const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
-                    unsigned &CallingConv, AttrListPtr &PAL) {
+                    CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   PATypeHolder RetTy = Type::getVoidTy(Context);
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;

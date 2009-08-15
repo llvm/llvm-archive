@@ -1578,7 +1578,7 @@ void make_decl_llvm(tree decl) {
     // when we have something like __builtin_memset and memset in the same file.
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
-      unsigned CC;
+      CallingConv::ID CC;
       AttrListPtr PAL;
       const FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,

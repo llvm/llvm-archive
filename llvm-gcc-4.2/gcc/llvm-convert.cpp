@@ -408,7 +408,7 @@ void TreeToLLVM::StartFunctionBody() {
   // Determine the FunctionType and calling convention for this function.
   tree static_chain = cfun->static_chain_decl;
   const FunctionType *FTy;
-  unsigned CallingConv;
+  CallingConv::ID CallingConv;
   AttrListPtr PAL;
 
   // If the function has no arguments and is varargs (...), turn it into a
@@ -2614,7 +2614,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
           TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == BLOCK_POINTER_TYPE)
          && "Not calling a function pointer?");
   tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
-  unsigned CallingConv;
+  CallingConv::ID CallingConv;
   AttrListPtr PAL;
 
   const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,

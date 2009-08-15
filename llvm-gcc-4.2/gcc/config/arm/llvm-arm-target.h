@@ -38,5 +38,24 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
       CC = CallingConv::ARM_APCS;				\
   }
 
+#ifdef LLVM_ABI_H
+
+extern bool
+llvm_arm_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
+                                             CallingConv::ID&,
+                                             std::vector<const Type*>&);
+
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E)		\
+   llvm_arm_should_pass_aggregate_in_mixed_regs((T), (TY), (CC), (E))
+
+extern
+bool llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
+                                                 std::vector<const Type*>&,
+                                                 bool, CallingConv::ID&);
+
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC)		\
+   llvm_arm_aggregate_partially_passed_in_regs((E), (SE), (ISR), (CC))
+
+#endif /* LLVM_ABI_H */
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -25,11 +25,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm-abi.h"
 #include "llvm-internal.h"
+#include "llvm/CallingConv.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm-arm-target.h"
 
 extern "C" {
 #include "insn-codes.h"
@@ -2191,6 +2193,412 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
 
   return true;
+}
+
+// "Fundamental Data Types" according to the AAPCS spec.  These are used
+// to check that a given aggregate meets the criteria for a "homogeneous
+// aggregate."
+enum arm_fdts {
+  ARM_FDT_INVALID,
+  
+  ARM_FDT_UNSIGNED_BYTE,
+  ARM_FDT_SIGNED_BYTE,
+  ARM_FDT_UNSIGNED_HALF_WORD,
+  ARM_FDT_SIGNED_HALF_WORD,
+  ARM_FDT_UNSIGNED_WORD,
+  ARM_FDT_SIGNED_WORD,
+  ARM_FDT_UNSIGNED_DOUBLE_WORD,
+  ARM_FDT_SIGNED_DOUBLE_WORD,
+  
+  ARM_FDT_HALF_FLOAT,
+  ARM_FDT_FLOAT,
+  ARM_FDT_DOUBLE,
+  
+  ARM_FDT_VECTOR_64,
+  ARM_FDT_VECTOR_128,
+  
+  ARM_FDT_POINTER_DATA,
+  ARM_FDT_POINTER_CODE,
+  
+  ARM_FDT_MAX
+};
+
+// Classify type according to the number of fundamental data types contained
+// among its members.  Returns true if type is a homogeneous aggregate.
+static bool
+vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
+                                int *fdt_counts)
+{
+  bool result = false;
+  HOST_WIDE_INT bytes =
+    (mode == BLKmode) ? int_size_in_bytes (type) : (int) GET_MODE_SIZE (mode);
+  
+  if (type && AGGREGATE_TYPE_P (type))
+  {
+    int i;
+    int cnt = 0;
+    tree field;
+
+    // Zero sized arrays or structures are not homogeneous aggregates.
+    if (!bytes)
+      return 0;
+
+    // Classify each field of records.
+    switch (TREE_CODE (type))
+    {
+      case RECORD_TYPE:
+      // For classes first merge in the field of the subclasses.
+      if (TYPE_BINFO (type)) {
+        tree binfo, base_binfo;
+        int basenum;
+
+        for (binfo = TYPE_BINFO (type), basenum = 0;
+             BINFO_BASE_ITERATE (binfo, basenum, base_binfo); basenum++) {
+          int offset = tree_low_cst (BINFO_OFFSET (base_binfo), 0) * 4;
+          tree type = BINFO_TYPE (base_binfo);
+
+          result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE (type), type,
+                                                   fdt_counts);
+          if (!result)
+            return false;
+        }
+      }
+      // And now merge the fields of structure.
+      for (field = TYPE_FIELDS (type); field; field = TREE_CHAIN (field)) {
+        if (TREE_CODE (field) == FIELD_DECL) {
+          if (TREE_TYPE (field) == error_mark_node)
+            continue;
+
+          result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TREE_TYPE(field)),
+                                                   TREE_TYPE(field),
+                                                   fdt_counts);
+          if (!result)
+            return false;
+        }
+      }
+      break;
+
+      case ARRAY_TYPE:
+        // Arrays are handled as small records.
+        {
+          int array_fdt_counts[ARM_FDT_MAX] = { 0 };
+          
+          result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TREE_TYPE(type)),
+                                                   TREE_TYPE(type),
+                                                   array_fdt_counts);
+
+          cnt = bytes / int_size_in_bytes(TREE_TYPE(type));
+          for (i = 0; i < ARM_FDT_MAX; ++i)
+            fdt_counts[i] += array_fdt_counts[i] * cnt;
+            
+          if (!result)
+            return false;
+        }
+      break;
+      
+      case UNION_TYPE:
+      case QUAL_UNION_TYPE:
+        {
+          // Unions are similar to RECORD_TYPE.
+          int union_fdt_counts[ARM_FDT_MAX] = { 0 };
+
+          // Unions are not derived.
+          gcc_assert (!TYPE_BINFO (type)
+                      || !BINFO_N_BASE_BINFOS (TYPE_BINFO (type)));
+          for (field = TYPE_FIELDS (type); field; field = TREE_CHAIN (field)) {
+            int union_field_fdt_counts[ARM_FDT_MAX] = { 0 };
+
+            if (TREE_CODE (field) == FIELD_DECL) {
+              if (TREE_TYPE (field) == error_mark_node)
+                continue;
+
+              result = vfp_arg_homogeneous_aggregate_p(
+                          TYPE_MODE(TREE_TYPE(field)),
+                          TREE_TYPE(field),
+                          union_field_fdt_counts);
+              if (!result)
+                return false;
+            
+              // track largest union field
+              for (i = 0; i < ARM_FDT_MAX; ++i) {
+                if (union_field_fdt_counts[i] > 4)  // bail early if we can
+                  return false;
+                
+                union_fdt_counts[i] = MAX(union_fdt_counts[i],
+                                          union_field_fdt_counts[i]);
+                union_field_fdt_counts[i] = 0;  // clear it out for next iter
+              }
+            }
+          }
+          
+          // check for only one type across all union fields
+          cnt = 0;
+          for (i = 0; i < ARM_FDT_MAX; ++i) {
+            if (union_fdt_counts[i])
+              ++cnt;
+          
+            if (cnt > 1)
+              return false;
+              
+            fdt_counts[i] += union_fdt_counts[i];
+          }
+        }
+      break;
+
+      default:
+      assert(0 && "What type is this?");
+    }
+    
+    // Walk through fdt_counts and decide if we're a homogeneous aggregate.
+    result = false;
+    
+    // Make sure that only one FDT is used.
+    cnt = 0;
+    for (i = 0; i < ARM_FDT_MAX; ++i) {
+      if (fdt_counts[i])
+        ++cnt;
+    
+      if (cnt > 1)
+        return false;
+    }
+
+    // Make sure that one FDT is 4 or less elements in size.
+    if (fdt_counts[ARM_FDT_HALF_FLOAT] > 1 &&
+        fdt_counts[ARM_FDT_HALF_FLOAT] <= 4)
+      result = true;
+    else if (fdt_counts[ARM_FDT_FLOAT] > 1 &&
+             fdt_counts[ARM_FDT_FLOAT] <= 4)
+      result = true;
+    else if (fdt_counts[ARM_FDT_DOUBLE] > 1 &&
+             fdt_counts[ARM_FDT_DOUBLE] <= 4)
+      result = true;
+    else if (fdt_counts[ARM_FDT_VECTOR_64] > 1 &&
+             fdt_counts[ARM_FDT_VECTOR_64] <= 4)
+      result = true;
+    else if (fdt_counts[ARM_FDT_VECTOR_128] > 1 &&
+             fdt_counts[ARM_FDT_VECTOR_128] <= 4)
+      result = true;
+    
+    return result;
+  }
+  
+  if (type)
+  {
+    int idx = 0;
+    int cnt = 0;
+    
+    switch (TREE_CODE(type))
+    {
+    case REAL_TYPE:
+      idx = (TYPE_PRECISION(type) == 32) ? 
+              ARM_FDT_FLOAT :
+              ((TYPE_PRECISION(type) == 64) ?
+                ARM_FDT_DOUBLE :
+                ARM_FDT_INVALID);
+      cnt = 1;
+      break;
+      
+    case COMPLEX_TYPE:
+      {
+        tree subtype = TREE_TYPE(type);
+        idx = (TYPE_PRECISION(subtype) == 32) ? 
+                ARM_FDT_FLOAT :
+                ((TYPE_PRECISION(subtype) == 64) ?
+                  ARM_FDT_DOUBLE :
+                  ARM_FDT_INVALID);
+        cnt = 2;
+      }
+      break;
+      
+    case VECTOR_TYPE:
+      idx = (bytes == 8) ?
+              ARM_FDT_VECTOR_64 :
+              (bytes == 16) ?
+                ARM_FDT_VECTOR_128 :
+                ARM_FDT_INVALID;
+      cnt = 1;
+      break;
+      
+    case INTEGER_TYPE:
+    case POINTER_TYPE:
+    case ENUMERAL_TYPE:
+    case BOOLEAN_TYPE:
+    case REFERENCE_TYPE:
+    case FUNCTION_TYPE:
+    case METHOD_TYPE:
+    default:
+      return false;     // All of these disqualify.
+    }
+    
+    fdt_counts[idx] += cnt;
+    return true;
+  }
+  else
+    assert(0 && "what type was this?");
+  
+  return false;
+}
+
+// Walk over an LLVM Type that we know is a homogeneous aggregate and
+// push the proper LLVM Types that represent the register types to pass
+// that struct member in.
+static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
+{
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I) {
+    const Type *STy = I->get();
+    if (const VectorType *VTy = dyn_cast<VectorType>(STy)) {
+      switch (VTy->getBitWidth())
+      {
+        case 64:  // v2f32
+          Elts.push_back(VectorType::get(Type::getFloatTy(Context), 2));
+          break;
+        case 128: // v2f64
+          Elts.push_back(VectorType::get(Type::getDoubleTy(Context), 2));
+          break;
+        default:
+          assert (0 && "invalid vector type");
+      }
+    } else if (const ArrayType *ATy = dyn_cast<ArrayType>(STy)) {
+      const Type *ETy = ATy->getElementType();
+      
+      for (uint64_t i = ATy->getNumElements(); i > 0; --i)
+        Elts.push_back(ETy);
+    } else if (STy->getNumContainedTypes())
+      push_elts(STy, Elts);
+    else
+      Elts.push_back(STy);
+  }
+}
+
+// Target hook for llvm-abi.h. It returns true if an aggregate of the
+// specified type should be passed in a number of registers of mixed types.
+// It also returns a vector of types that correspond to the registers used
+// for parameter passing. This only applies to AAPCS-VFP "homogeneous
+// aggregates" as specified in 4.3.5 of the AAPCS spec.
+bool
+llvm_arm_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
+                                             CallingConv::ID &CC,
+                                             std::vector<const Type*> &Elts) {
+  // Homogeneous aggregates are an AAPCS-VFP feature.
+  if ((CC != CallingConv::ARM_AAPCS_VFP) ||
+      !(TARGET_AAPCS_BASED && TARGET_VFP && TARGET_HARD_FLOAT_ABI))
+    return false;
+
+  // Alas, we can't use LLVM Types to figure this out because we need to
+  // examine unions closely.  We'll have to walk the GCC TreeType.
+  int fdt_counts[ARM_FDT_MAX] = { 0 };
+  bool result = false;
+  result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TreeType), TreeType,
+                                           fdt_counts);
+
+  // Walk Ty and push LLVM types corresponding to register types onto
+  // Elts.
+  if (result)
+    push_elts(Ty, Elts);
+  
+  return result;
+}  
+
+static bool alloc_next_spr(bool *SPRs)
+{
+  for (int i = 0; i < 16; ++i)
+    if (!SPRs[i]) {
+      SPRs[i] = true;
+      return true;
+    }
+  return false;
+}
+
+static bool alloc_next_dpr(bool *SPRs)
+{
+  for (int i = 0; i < 16; i += 2)
+    if (!SPRs[i]) {
+      SPRs[i] = SPRs[i+1] = true;
+      return true;
+    }
+  return false;
+}
+
+static bool alloc_next_qpr(bool *SPRs) {
+  for (int i = 0; i < 16; i += 4)
+    if (!SPRs[i]) {
+      SPRs[i] = SPRs[i+1] = SPRs[i+2] = SPRs[i+3] = true;
+      return true;
+    }
+  return false;
+}
+
+// count_num_registers_uses - Simulate argument passing reg allocation in SPRs.
+// Caller is expected to zero out SPRs.  Returns true if all of ScalarElts fit
+// in registers.
+static bool count_num_registers_uses(std::vector<const Type*> &ScalarElts,
+                                     bool *SPRs) {
+  for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
+    const Type *Ty = ScalarElts[i];
+    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      switch (VTy->getBitWidth())
+      {
+        case 64:
+          if (!alloc_next_dpr(SPRs))
+            return false;
+          break;
+        case 128:
+          if (!alloc_next_qpr(SPRs))
+            return false;
+          break;
+        default:
+          assert(0);
+      }
+    } else if (Ty->isInteger() || isa<PointerType>(Ty) ||
+               Ty==Type::getVoidTy(Context)) {
+      ;
+    } else {
+      // Floating point scalar argument.
+      assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
+             "Expecting a floating point primitive type!");
+      switch (Ty->getTypeID())
+      {
+        case Type::FloatTyID:
+          if (!alloc_next_spr(SPRs))
+            return false;
+          break;
+        case Type::DoubleTyID:
+          if (!alloc_next_spr(SPRs))
+            return false;
+          break;
+        default:
+          assert(0);
+      }
+    }
+  }
+  return true;
+}
+
+// Target hook for llvm-abi.h. This is called when an aggregate is being passed
+// in registers. If there are only enough available parameter registers to pass
+// part of the aggregate, return true. That means the aggregate should instead
+// be passed in memory.
+bool
+llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
+                                            std::vector<const Type*> &ScalarElts,
+                                            bool isShadowReturn,
+                                            CallingConv::ID &CC) {
+  // Homogeneous aggregates are an AAPCS-VFP feature.
+  if ((CC != CallingConv::ARM_AAPCS_VFP) ||
+      !(TARGET_AAPCS_BASED && TARGET_VFP && TARGET_HARD_FLOAT_ABI))
+    return true;
+
+  bool SPRs[16] = { 0 };                    // represents S0-S16
+
+  // Figure out which SPRs are available.
+  if (!count_num_registers_uses(ScalarElts, SPRs))
+    return true;
+
+  if (!count_num_registers_uses(Elts, SPRs))
+    return true;
+    
+  return false;                            // it all fit in registers!
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

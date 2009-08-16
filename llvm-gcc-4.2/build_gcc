@@ -133,6 +133,11 @@ ARM_EXTRA_SDK=/Developer/SDKs/Extra
 # If the Phone platform is available, use the ARM tools there, else try /
 if [ -d $ARM_PLATFORM ]; then
   ARM_TOOLROOT=$ARM_PLATFORM/Developer
+  # If it's being built for iPhoneOS, assume the llvmCore bits are under
+  # iPhoneOS platform directory.
+  if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
+    LLVMCORE_PATH="${ARM_PLATFORM}${LLVMCORE_PATH}"
+  fi
 else
   ARM_TOOLROOT=/
 fi

@@ -19,21 +19,30 @@ along with GCC; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/PrettyStackTrace.h"
 
 extern "C" {
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "errors.h"
 #include "tm.h"
 #include "toplev.h"
+
+extern const char *progname;
+}
+
+static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+  fprintf(stderr, "%s: error in backend: %s\n", progname, Message.c_str());
+  exit(FATAL_EXIT_CODE);
 }
 
 // We define main() to call toplev_main(), which is defined in toplev.c.
 // We do this so that C++ code has its static constructors called as required.
-//
 
 int main (int argc, char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
+  llvm::llvm_install_error_handler(LLVMErrorHandler);
   return toplev_main (argc, (const char **) argv);
 }

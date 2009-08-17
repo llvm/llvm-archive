@@ -20,19 +20,20 @@ a transformation is modifying the code.
 
 How to compile:
 
-1. You must have wxWindows installed on your system, and wx-config has to be
+1. You must have wxWidgets installed on your system, and wx-config has to be
    in your path.
 
-   Make absolutely sure that wxwindows's configure picks up the same
+   Make absolutely sure that wxWidgets' configure picks up the same
    C++ compiler that you're using for llvm. Otherwise, you may get
    weird link errors when trying to link the llvm-tv tool.
 
 2. Configure and compile llvm-tv (you need an LLVM source and build trees):
 
 % cd path/to/llvm-tv
-% ./configure --with-llvmsrc=[path] --with-llvmobj=[path]
-   If you're building in llvm/projects/llvm-tv, then you don't need
-   to specify these --with options.
+# If you're building in llvm/projects/llvm-tv, then you don't need
+# to specify the --with-llvm-* options.
+% ./configure --with-llvm-src=[path] --with-llvm-obj=[path] \
+              --with-poolalloc-src=[path] --with-poolalloc-obj=[path]
 % gmake
 
 Example of usage:

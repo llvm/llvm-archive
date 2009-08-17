@@ -33,6 +33,9 @@ USE_APPLE_PB_SUPPORT = all
 RC_ARCHS := ppc i386
 HOSTS = $(RC_ARCHS)
 targets = echo $(RC_ARCHS)
+ifeq ($(RC_ProjectName),llvmgcc42_Embedded)
+targets += arm
+endif
 TARGETS := $(shell $(targets))
 
 SRCROOT = .

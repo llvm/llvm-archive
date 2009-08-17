@@ -1866,11 +1866,20 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vbsl:
+  case NEON_BUILTIN_vbsl: {
+    // Canonicalize the vector type to have 32-bit integer elements.
+    const VectorType *VTy = dyn_cast<const VectorType>(Ops[0]->getType());
+    assert(VTy && "expected a vector type");
+    VTy = VectorType::get(Type::getInt32Ty(Context), VTy->getBitWidth() / 32);
+    Ops[0] = Builder.CreateBitCast(Ops[0], VTy);
+    Ops[1] = Builder.CreateBitCast(Ops[1], VTy);
+    Ops[2] = Builder.CreateBitCast(Ops[2], VTy);
     Result = Builder.CreateOr(Builder.CreateAnd(Ops[1], Ops[0]),
                               Builder.CreateAnd(Ops[2],
                                                 Builder.CreateNot(Ops[0])));
+    Result = Builder.CreateBitCast(Result, ResultType);
     break;
+  }
 
   case NEON_BUILTIN_vtbl1:
   case NEON_BUILTIN_vtbl2:

@@ -297,9 +297,7 @@ class TreeToLLVM {
   Function *Fn;
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
-  BasicBlock *DispatchBB;
   unsigned ReturnOffset;
-  MemRef FunctionContext; // For SJLJ exception handling
 
   // State that changes as the function is emitted.
 

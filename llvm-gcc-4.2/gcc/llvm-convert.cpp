@@ -158,7 +158,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
     TD(getTargetData()), Builder(Context, *TheFolder) {
   FnDecl = fndecl;
   Fn = 0;
-  ReturnBB = UnwindBB = DispatchBB = 0;
+  ReturnBB = UnwindBB = 0;
   ReturnOffset = 0;
   
   if (TheDebugInfo) {
@@ -635,113 +635,13 @@ void TreeToLLVM::StartFunctionBody() {
       EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
 
-  // Register the frame with the unwind machinery if there are exception
-  // handling regions in the function.
-  if (USING_SJLJ_EXCEPTIONS && current_function_has_exception_handlers()) {
-    // We have exception regions, but we may or may not actually end up
-    // needing to actively do anything about it. We'll know at the end
-    // of the function by whether any landing pads have been created.
-    // So for now, we just create a block for where to add the necessary
-    // bits.
-    SjLjEHSetupBB = BasicBlock::Create(Context, "setup_sjlj_eh");
-    Builder.CreateBr(SjLjEHSetupBB);
-    PostEntryBB = BasicBlock::Create(Context, "post_entry");
-    EmitBlock(PostEntryBB);
-  }
-
   // Create a new block for the return node, but don't insert it yet.
   ReturnBB = BasicBlock::Create(Context, "return");
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
-  // If we're using SJLJ exceptions and there are any landing pads for this
-  // function, we need to insert the setup code in the prologue, and add
-  // the unregister call here.
-  if (USING_SJLJ_EXCEPTIONS && current_function_has_exception_handlers()) {
-    // Send the current BB to the return block just like it would if we
-    // weren't doing this bit.
-    Builder.CreateBr(ReturnBB);
-
-    assert(SjLjEHSetupBB && "Exception handling needed but no setup block??");
-    EmitBlock(SjLjEHSetupBB);
-
-    if (LandingPads.size() > 0) {
-      // Get a pointer to the function context
-      llvm::Value *Idxs[2];
-      Idxs[0] = ConstantInt::get(Type::getInt32Ty(Context), 0);
-
-      // Assign the unwind personality function address
-      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 3);
-      Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2,
-                                           "personality_gep");
-      const Type *FieldTy =
-        cast<PointerType>(FieldPtr->getType())->getElementType();
-      Value *Val =
-        Builder.CreateBitCast(DECL_LLVM(llvm_eh_personality_libfunc), FieldTy);
-      Builder.CreateStore(Val, FieldPtr);
-
-      // Load the address for the language specific data area (LSDA)
-      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 4);
-      FieldPtr
-        = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "lsda_gep");
-      FieldTy = cast<PointerType>(FieldPtr->getType())->getElementType();
-      Val =
-        Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                     Intrinsic::eh_sjlj_lsda),
-                           "eh_lsda");
-      Builder.CreateStore(Val, FieldPtr);
-
-      // builtin_setjmp() stuff goes here.
-      //   1. Save the frame pointer.
-      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 5);
-      FieldPtr
-        = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "jbuf_gep");
-      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), 0);
-      Value *ElemPtr
-        = Builder.CreateGEP (FieldPtr, Idxs, Idxs+2, "jbuf_fp_gep");
-      FieldTy = cast<PointerType>(ElemPtr->getType())->getElementType();
-      // FIXME: The EmitBuiltinExtractReturnAddr() function comes close to
-      //  what we want here. Refactor it so that it does, or make a common
-      //  helper function.
-      Val = Builder.CreateCall
-        (Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress),
-         ConstantInt::get(Type::getInt32Ty(Context), 0));
-      Val = BitCastToType(Val, FieldTy);
-      Builder.CreateStore(Val, ElemPtr);
-
-      FieldPtr = 
-        BitCastToType(FieldPtr, Type::getInt8Ty(Context)->getPointerTo());
-      Value *DispatchVal = Builder.CreateCall
-        (Intrinsic::getDeclaration(TheModule, Intrinsic::eh_sjlj_setjmp),
-         FieldPtr);
-      // check the return value of the setjmp. non-zero goes to dispatcher
-      Value *Zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
-      Value *Compare = Builder.CreateICmpEQ(DispatchVal, Zero);
-
-      // Branch on the compare.
-      DispatchBB = BasicBlock::Create(Context, "dispatch");
-      BasicBlock *PostSetupBB = BasicBlock::Create(Context, "sjlj_eh_register");
-      Builder.CreateCondBr(Compare, PostSetupBB, DispatchBB);
-      EmitBlock(PostSetupBB);
-
-      // Register the context and note that this call cannot throw
-      CallInst *RegisterCall =
-        Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_register_libfunc),
-                           FunctionContext.Ptr);
-    }
-    // Go back to the end of the prologue
-    Builder.CreateBr(PostEntryBB);
-  }
-
   // Insert the return block at the end of the function.
   EmitBlock(ReturnBB);
-
-  if (USING_SJLJ_EXCEPTIONS && LandingPads.size() > 0) {
-    // Un-register the frame with the unwind machinery if there are exception
-    // handling regions in the function.
-    Builder.CreateCall(DECL_LLVM(llvm_unwind_sjlj_unregister_libfunc),
-                       FunctionContext.Ptr);
-  }
 
   SmallVector <Value *, 4> RetVals;
 
@@ -802,22 +702,15 @@ Function *TreeToLLVM::FinishFunctionBody() {
     Builder.CreateAggregateRet(RetVals.data(), RetVals.size());
 
   // Emit pending exception handling code.
-  if (USING_SJLJ_EXCEPTIONS) {
-    EmitSjLjLandingPads();
-    EmitPostPads();
-    EmitSjLjDispatcher();
-    EmitUnwindBlock();
-  } else {
-    EmitLandingPads();
-    EmitPostPads();
-    EmitUnwindBlock();
-  }
+  EmitLandingPads();
+  EmitPostPads();
+  EmitUnwindBlock();
 
   // If this function takes the address of a label, emit the indirect goto
   // block.
   if (IndirectGotoBlock) {
     EmitBlock(IndirectGotoBlock);
-    
+
     // Change the default destination to go to one of the other destinations, if
     // there is any other dest.
     SwitchInst *SI = cast<SwitchInst>(IndirectGotoBlock->getTerminator());
@@ -2018,9 +1911,6 @@ void TreeToLLVM::CreateExceptionValues() {
                                               (IntPtr == Type::getInt32Ty(Context) ?
                                                Intrinsic::eh_typeid_for_i32 :
                                                Intrinsic::eh_typeid_for_i64));
-  // For SJLJ, create a function context on the stack
-  if (USING_SJLJ_EXCEPTIONS)
-    FunctionContext = CreateTempLoc (ConvertType(sjlj_fc_type_node));
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling
@@ -2040,158 +1930,6 @@ BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
 static void AddHandler (struct eh_region *region, void *data) {
   ((std::vector<struct eh_region *> *)data)->push_back(region);
 }
-
-/// EmitSjLjDispatcher - Emit SJLJ EH dispatcher
-void TreeToLLVM::EmitSjLjDispatcher () {
-  if (DispatchBB) {
-    assert(LandingPads.size() > 0 && "Dispatch block without landing pads?");
-
-    EmitBlock(DispatchBB);
-
-    // Get the call_site value
-    llvm::Value *Idxs[2];
-    Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 1);
-    Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2,
-                                  "call_site_gep");
-    Value *CallSite = Builder.CreateLoad(FieldPtr, "call_site");
-
-    // Figure out which landing pad to go to via the call_site
-    // FIXME: would this be better as a switch? Probably.
-    unsigned FirstPad = 0;
-    for (unsigned region = 1 ; region < LandingPads.size() ; ++region) {
-      if (LandingPads[region]) {
-        if (!FirstPad) FirstPad = region;
-        Value *RegionNo = ConstantInt::get(llvm::Type::getInt32Ty(Context), region - 1);
-        Value *Compare = Builder.CreateICmpEQ(CallSite, RegionNo);
-        // Branch on the compare.
-        BasicBlock *NextDispatch = BasicBlock::Create(Context, "dispatch");
-        Builder.CreateCondBr(Compare, LandingPads[region], NextDispatch);
-        EmitBlock(NextDispatch);
-      }
-    }
-    assert(FirstPad && "EH dispatcher, but no landing pads present!");
-    Builder.CreateBr(LandingPads[FirstPad]);
-  }
-}
-
-
-/// EmitSjLjLandingPads - Emit EH landing pads.
-void TreeToLLVM::EmitSjLjLandingPads() {
-  std::vector<Value*> Args;
-  std::vector<struct eh_region *> Handlers;
-
-  for (unsigned i = 1; i < LandingPads.size(); ++i) {
-    BasicBlock *LandingPad = LandingPads[i];
-
-    if (!LandingPad)
-      continue;
-
-    CreateExceptionValues();
-    EmitBlock(LandingPad);
-
-    // Get the exception value from the function context
-    llvm::Value *Idxs[2];
-    Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 2);
-    Value *FCDataPtr
-      = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2, "fc_data_gep");
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-    Value *ElemPtr
-      = Builder.CreateGEP (FCDataPtr, Idxs, Idxs+2, "exception_gep");
-    Value *Ex = Builder.CreateLoad (ElemPtr);
-    const Type *ExceptionValueTy =
-      cast<PointerType>(ExceptionValue->getType())->getElementType();
-    Ex = CastToAnyType(Ex, false, ExceptionValueTy, false);
-    Builder.CreateStore(Ex, ExceptionValue);
-
-
-    // The exception and the personality function.
-    Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-    assert(llvm_eh_personality_libfunc
-           && "no exception handling personality function!");
-    Args.push_back(BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
-                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
-    // Add selections for each handler.
-    foreach_reachable_handler(i, false, AddHandler, &Handlers);
-
-    for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I) {
-      struct eh_region *region = *I;
-
-      // Create a post landing pad for the handler.
-      getPostPad(get_eh_region_number(region));
-      int RegionKind = classify_eh_handler(region);
-      if (RegionKind < 0) {
-        // Filter - note the length.
-        tree TypeList = get_eh_type_list(region);
-        unsigned Length = list_length(TypeList);
-        Args.reserve(Args.size() + Length + 1);
-        Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), Length + 1));
-
-        // Add the type infos.
-        for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-          tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-          Args.push_back(Emit(TType, 0));
-        }
-      } else if (RegionKind > 0) {
-        // Catch.
-        tree TypeList = get_eh_type_list(region);
-
-        if (!TypeList) {
-          // Catch-all - push a null pointer.
-          Args.push_back(Constant::getNullValue(
-              PointerType::getUnqual(Type::getInt8Ty(Context))));
-        } else {
-          // Add the type infos.
-          for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-            tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-            Args.push_back(Emit(TType, 0));
-          }
-        }
-      }
-    }
-    if (can_throw_external_1(i, false)) {
-      // Some exceptions from this region may not be caught by any handler.
-      // Since invokes are required to branch to the unwind label no matter
-      // what exception is being unwound, append a catch-all.
-
-      // The representation of a catch-all is language specific.
-      Value *Catch_All;
-      // SJLJ exception runtime handles "all cleanups" just fine, unlike
-      // DWARF.
-      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
-        // Use a "cleanup" - this should be good enough for most languages.
-        Catch_All = ConstantInt::get(Type::getInt32Ty(Context), 0);
-      } else {
-        tree catch_all_type = lang_eh_catch_all();
-        if (catch_all_type == NULL_TREE)
-          // Use a C++ style null catch-all object.
-          Catch_All =
-            Constant::getNullValue(PointerType::getUnqual(Type::getInt8Ty(Context)));
-        else
-          // This language has a type that catches all others.
-          Catch_All = Emit(catch_all_type, 0);
-      }
-      Args.push_back(Catch_All);
-    }
-    // Emit the selector call.
-    Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
-                                       "eh_select");
-    // Fetch and store the exception selector.
-    Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 1);
-    ElemPtr = Builder.CreateGEP (FCDataPtr, Idxs, Idxs+2, "handler_gep");
-    Value *Select = Builder.CreateLoad (ElemPtr);
-    Builder.CreateStore(Select, ExceptionSelectorValue);
-    // Branch to the post landing pad for the first reachable handler.
-    assert(!Handlers.empty() && "Landing pad but no handler?");
-    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-
-    Handlers.clear();
-    Args.clear();
-  }
-}
-
 
 /// EmitLandingPads - Emit EH landing pads.
 void TreeToLLVM::EmitLandingPads() {
@@ -2270,7 +2008,7 @@ void TreeToLLVM::EmitLandingPads() {
 
       // The representation of a catch-all is language specific.
       Value *CatchAll;
-      if (!lang_eh_catch_all) {
+      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
         // Use a "cleanup" - this should be good enough for most languages.
         CatchAll = ConstantInt::get(Type::getInt32Ty(Context), 0);
       } else {
@@ -2418,17 +2156,6 @@ void TreeToLLVM::EmitUnwindBlock() {
   if (UnwindBB) {
     CreateExceptionValues();
     EmitBlock(UnwindBB);
-    if (USING_SJLJ_EXCEPTIONS) {
-      // Mark the call_site as -1 since we're signalling to continue
-      // the unwind now.
-      llvm::Value *Idxs[2];
-      Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-      Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 1);
-      Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr, Idxs, Idxs+2,
-                                           "call_site_gep");
-      const Type *FieldTy = cast<PointerType>(FieldPtr->getType())->getElementType();
-      Builder.CreateStore(ConstantInt::get(FieldTy, (uint64_t)-1, true), FieldPtr);
-    }
     // Fetch and store exception handler.
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
     assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
@@ -2935,25 +2662,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
           ThisPad = BasicBlock::Create(Context, "lpad");
 
         LandingPad = ThisPad;
-
-        if (USING_SJLJ_EXCEPTIONS) {
-          CreateExceptionValues();
-          // Mark the call site so we'll dispatch to the right landing pad
-          // when we get an exception passed back.
-          llvm::Value *Idxs[2];
-          Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-          Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 1);
-          Value *FieldPtr = Builder.CreateGEP (FunctionContext.Ptr,
-                                               Idxs, Idxs+2, "call_site_gep");
-          const Type *FieldTy = 
-            cast<PointerType>(FieldPtr->getType())->getElementType();
-          Constant *CallSiteIdx = ConstantInt::get(FieldTy, RegionNo, true);
-          Builder.CreateStore(CallSiteIdx, FieldPtr);
-          // Tell the back end what the call-site value is
-          Builder.CreateCall
-            (Intrinsic::getDeclaration(TheModule, Intrinsic::eh_sjlj_callsite),
-             CallSiteIdx);
-        }
       } else {
         assert(can_throw_external_1(RegionNo, false) &&
                "Must-not-throw region handled by runtime?");

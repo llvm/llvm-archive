@@ -10,10 +10,14 @@
 #include "DSAGraphDrawer.h"
 #include "PictureFrame.h"
 #include "TVApplication.h"
-#include "TVFrame.h"
 #include "TVTextCtrl.h"
 #include "TVTreeItem.h"
+#undef _DEBUG
+#undef __WXDEBUG__
+#include "TVFrame.h"
+#include "wxUtils.h"
 #include "llvm-tv/Config.h"
+#include "llvm/System/Path.h"
 #include <cassert>
 #include <dirent.h>
 #include <errno.h>
@@ -25,7 +29,7 @@ TVTreeCtrl::TVTreeCtrl(wxWindow *parent, TVFrame *frame, const wxWindowID id,
                        const wxPoint& pos, const wxSize& size,
                        long style)
   : wxTreeCtrl(parent, id, pos, size, style), myFrame (frame) {
-  wxTreeItemId rootId = AddRoot("Snapshots", -1, -1,TVTreeRootItem::instance());
+  AddRoot(wxT("Snapshots"), -1, -1, TVTreeRootItem::instance());
 }
 
 /// AddSnapshotsToTree - Given a list of snapshots the tree is populated
@@ -35,19 +39,19 @@ void TVTreeCtrl::AddSnapshotsToTree(TVSnapshotList *list) {
   for (TVSnapshotList::iterator I = list->begin(), E = list->end();
        I != E; ++I) {
     // Get the Module associated with this snapshot and add it to the tree
-    Module *M = I->getModule();
-    wxTreeItemId id = AppendItem(rootId, I->label(), -1, -1,
-                                 new TVTreeModuleItem(I->label(), M));
+    Module *M = (*I)->getModule();
+    wxTreeItemId id = AppendItem(rootId, wxS((*I)->label()), -1, -1,
+                                 new TVTreeModuleItem(wxS((*I)->label()), M));
 
     // Loop over functions in the module and add them to the tree as children
     for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
       Function *F = I;
-      if (!F->isExternal()) {
-        const char *FuncName = F->getName().c_str();
+      if (!F->isDeclaration()) {
+        wxString FuncName = wxS(F->getName().str());
         AppendItem(id, FuncName, -1, -1, new TVTreeFunctionItem(FuncName, I));
       }
     }
-  }   
+  }
 }
 
 /// updateSnapshotList - Update the tree with the current snapshot list
@@ -80,8 +84,8 @@ END_EVENT_TABLE ()
 void TVTextCtrl::displayItem (TVTreeItemData *item) {
   std::ostringstream Out;
   item->print (Out);
-  myTextCtrl->SetValue ("");
-  myTextCtrl->AppendText (Out.str ().c_str ());
+  myTextCtrl->SetValue (wxT(""));
+  myTextCtrl->AppendText (wxS(Out.str ()));
   myTextCtrl->ShowPosition (0);
   myTextCtrl->SetInsertionPoint (0);
 }
@@ -100,17 +104,17 @@ void TVFrame::updateDisplayedItem (TVTreeItemData *newlySelectedItem) {
 }
 
 void TVFrame::refreshSnapshotList () {
-  
   if (!myApp->getSnapshotList()->refreshList())
-    FatalErrorBox ("trying to open directory " + myApp->getSnapshotList()->getSnapshotDirName() + ": "
-                   + strerror(errno));
+    FatalErrorBox ("trying to open directory " +
+                   myApp->getSnapshotList()->getSnapshotDirName() + ": " +
+                   strerror(errno));
   if (myTreeCtrl != 0)
     myTreeCtrl->updateSnapshotList(myApp->getSnapshotList());
 }
 
 void TVFrame::initializeSnapshotListAndView () {
   refreshSnapshotList ();
-  SetStatusText ("Snapshot list has been loaded.");
+  SetStatusText (wxT("Snapshot list has been loaded."));
 }
 
 //==------------------------------------------------------------------------==//
@@ -130,7 +134,7 @@ bool TVNotebook::AddItemDisplayer (ItemDisplayer *displayer) {
   displayers.resize (1 + pageIndex);
   displayers[pageIndex] = displayer;
   return AddPage (displayer->getWindow (),
-                  displayer->getDisplayTitle (0).c_str (), true);
+                  wxS(displayer->getDisplayTitle (0)), true);
 }
 
 void TVNotebook::OnSelChanged (wxNotebookEvent &event) {
@@ -146,16 +150,17 @@ END_EVENT_TABLE ()
 
 //==------------------------------------------------------------------------==//
 
-static const wxString Explanation
-  ("Click on a Module or Function in the left-hand pane\n"
-   "to display its code in the right-hand pane. Then, you\n"
-   "can choose from the View menu to see graphical code views.\n"); 
+static const wxString Explanation(
+    "Click on a Module or Function in the left-hand pane\n"
+    "to display its code in the right-hand pane. Then, you\n"
+    "can choose from the View menu to see graphical code views.\n",
+    wxConvUTF8);
 
 /// TVFrame constructor - used to set up typical appearance of visualizer's
 /// top-level window.
 ///
 TVFrame::TVFrame (TVApplication *app, const char *title)
-  : wxFrame (NULL, -1, title), myApp (app) {
+  : wxFrame (NULL, -1, wxS(title)), myApp (app) {
   // Set up appearance
   CreateStatusBar ();
   SetSize (wxRect (100, 100, 500, 200));
@@ -184,7 +189,7 @@ TVFrame::TVFrame (TVApplication *app, const char *title)
 /// OnHelp - display the help dialog
 ///
 void TVFrame::OnHelp (wxCommandEvent &event) {
-  wxMessageBox (Explanation, "Help with LLVM-TV");
+  wxMessageBox (Explanation, wxT("Help with LLVM-TV"));
 }
 
 /// OnExit - respond to a request to exit the program.
@@ -196,10 +201,11 @@ void TVFrame::OnExit (wxCommandEvent &event) {
 /// OnExit - respond to a request to display the About box.
 ///
 void TVFrame::OnAbout (wxCommandEvent &event) {
-  wxMessageBox("LLVM Visualization Tool\n\n"
-               "By Misha Brukman, Tanya Brethour, and Brian Gaeke\n"
-               "Copyright (C) 2004 University of Illinois at Urbana-Champaign\n"
-               "http://llvm.cs.uiuc.edu", "About LLVM-TV");
+  wxMessageBox(wxT("LLVM Visualization Tool\n\n"
+                   "By Misha Brukman, Tanya Brethour, and Brian Gaeke\n"
+                   "Copyright (C) 2004 University of Illinois at Urbana-Champaign\n"
+                   "http://llvm.cs.uiuc.edu"),
+               wxT("About LLVM-TV"));
 }
 
 /// OnRefresh - respond to a request to refresh the list
@@ -209,13 +215,20 @@ void TVFrame::OnRefresh (wxCommandEvent &event) {
 }
 
 void TVFrame::OnOpen (wxCommandEvent &event) {
-  wxFileDialog d (this, "Choose a bytecode file to display");
+  wxFileDialog d (this, wxT("Choose a bytecode file to display"));
   int result = d.ShowModal ();
   if (result == wxID_CANCEL) return;
   // FIXME: the rest of this method can be moved into the "snapshots
   // list" object
-  std::string command = std::string("cp ") + std::string(d.GetPath ().c_str ()) + " " + snapshotsPath;
-  system (command.c_str ());
+  llvm::sys::Path source(std::string(d.GetPath().mb_str()));
+  llvm::sys::Path dest(snapshotsPath);
+  dest.appendComponent(source.getLast());
+  std::string ErrMsg;
+  llvm::sys::CopyFile(dest, source, &ErrMsg);
+  if (!ErrMsg.empty()) {
+    errs() << "Error copying bitcode file to snapshots dir: " << ErrMsg << "\n";
+    return;
+  }
   refreshSnapshotList ();
 }
 
@@ -231,7 +244,7 @@ void TVApplication::OpenGraphView (TVTreeItemData *item) {
   PictureFrame *wind = new PictureFrame (this);
   allMyWindows.push_back (wind);
   ItemDisplayer *drawer = new Grapher (wind);
-  wind->SetTitle (drawer->getDisplayTitle (item).c_str ());
+  wind->SetTitle (wxS(drawer->getDisplayTitle (item)));
   allMyDisplayers.push_back (drawer);
   drawer->displayItem (item);
 }

@@ -14,12 +14,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "dsa/DSGraph.h"
+#include "dsa/DataStructure.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Value.h"
-#include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/DataStructure/DataStructure.h"
-#include "llvm/Analysis/DataStructure/DSGraph.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
@@ -51,7 +51,9 @@ namespace llvm {
       return "Call Graph";
     }
 
-    static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
+    static std::string getNodeLabel(CallGraphNode *Node,
+                                    CallGraph *Graph,
+                                    bool ShortName) {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
       else
@@ -62,21 +64,27 @@ namespace llvm {
 
 namespace {
   struct CallGraphPrinter : public ModulePass {
+    CallGraphPrinter() : ModulePass(&ID) {}
+
     virtual bool runOnModule(Module &M) {
       WriteGraphToFile(std::cerr, "callgraph", &getAnalysis<CallGraph>());
       return false;
     }
 
-    void print(std::ostream &OS) const {}
+    //void print(std::ostream &OS) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<CallGraph>();
       AU.setPreservesAll();
     }
+
+    static const char ID;
   };
 
-  RegisterAnalysis<CallGraphPrinter> P2("print-callgraph",
-                                        "Print Call Graph to 'dot' file");
+  const char CallGraphPrinter::ID = 0;
+
+  RegisterPass<CallGraphPrinter> P2("print-callgraph",
+                                    "Print Call Graph to 'dot' file");
 }
 
 //===----------------------------------------------------------------------===//
@@ -91,25 +99,32 @@ namespace {
     virtual std::string getFilename() = 0;
 
   public:
+    DSModulePrinter() : ModulePass(&ID) {}
+
     bool runOnModule(Module &M) {
       DSType *DS = &getAnalysis<DSType>();
       std::string File = getFilename();
       std::ofstream of(File.c_str());
       if (of.good()) {
-        DS->getGlobalsGraph().print(of);
+        DS->getGlobalsGraph()->print(of);
         of.close();
       } else
         errs() << "Error writing to " << File << "!\n";
       return false;
     }
 
-    void print(std::ostream &os) const {}
+    //void print(std::ostream &os) const {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.template addRequired<DSType>();
       AU.setPreservesAll();
     }
+
+    static char ID;
   };
+
+  template<class DSType>
+  char DSModulePrinter<DSType>::ID;
 
   template<class DSType>
   class DSFunctionPrinter : public ModulePass {
@@ -118,31 +133,36 @@ namespace {
     virtual std::string getFilename(Function &F) = 0;
 
   public:
-    DSFunctionPrinter(Function *_F) : F(_F) {}
+    DSFunctionPrinter(Function *_F) : ModulePass(&ID), F(_F) {}
 
     bool runOnModule(Module &M) {
       DSType *DS = &getAnalysis<DSType>();
       std::string File = getFilename(*F);
       std::ofstream of(File.c_str());
       if (of.good()) {
-        if (DS->hasGraph(*F)) {
-          DS->getDSGraph(*F).print(of);
+        if (DS->hasDSGraph(*F)) {
+          DS->getDSGraph(*F)->print(of);
           of.close();
         } else
           // Can be more creative and print the analysis name here
-          std::cerr << "No DSGraph for: " << F->getName() << "\n";
+          errs() << "No DSGraph for: " << F->getName() << "\n";
       } else
-        std::cerr << "Error writing to " << File << "!\n";
+        errs() << "Error writing to " << File << "!\n";
       return false;
     }
 
-    void print(std::ostream &os) const {}
+    //void print(std::ostream &os) const {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.template addRequired<DSType>();
       AU.setPreservesAll();
     }
+
+    static const char ID;
   };
+
+  template<class DSType>
+  const char DSFunctionPrinter<DSType>::ID = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -156,7 +176,7 @@ namespace {
   struct BUFunctionPrinter : public DSFunctionPrinter<BUDataStructures> {
     BUFunctionPrinter(Function *F) : DSFunctionPrinter<BUDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "buds." + F.getName() + ".dot";
+      return "buds." + F.getName().str() + ".dot";
     }
   };
 }
@@ -172,7 +192,7 @@ namespace {
   struct TDFunctionPrinter : public DSFunctionPrinter<TDDataStructures> {
     TDFunctionPrinter(Function *F) : DSFunctionPrinter<TDDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "tdds." + F.getName() + ".dot";
+      return "tdds." + F.getName().str() + ".dot";
     }
   };
 }
@@ -189,7 +209,7 @@ namespace {
     LocalFunctionPrinter(Function *F)
       : DSFunctionPrinter<LocalDataStructures>(F) {}
     std::string getFilename(Function &F) {
-      return "localds." + F.getName() + ".dot";
+      return "localds." + F.getName().str() + ".dot";
     }
   };
 }

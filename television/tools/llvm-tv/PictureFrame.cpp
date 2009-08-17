@@ -3,12 +3,11 @@
 
 // PictureFrame implementation
 
-bool PictureFrame::OnClose (wxCloseEvent &event) {
+void PictureFrame::OnClose(wxCloseEvent &event) {
   myApp->GoodbyeFrom (this);
-  Destroy ();
-  return true;
+  Destroy();
 }
 
-BEGIN_EVENT_TABLE (PictureFrame, wxFrame)
-  EVT_CLOSE (PictureFrame::OnClose)
-END_EVENT_TABLE ()
+BEGIN_EVENT_TABLE(PictureFrame, wxFrame)
+  EVT_CLOSE(PictureFrame::OnClose)
+END_EVENT_TABLE()

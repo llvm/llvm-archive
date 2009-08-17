@@ -8,7 +8,7 @@
 #define TVAPPLICATION_H
 
 #include "TVSnapshotList.h"
-#include "wx/wx.h"
+#include <wx/wx.h>
 #include <string>
 #include <vector>
 

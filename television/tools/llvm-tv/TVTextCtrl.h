@@ -3,12 +3,12 @@
 
 #include "TVWindowIDs.h"
 #include "ItemDisplayer.h"
-#include "wx/textctrl.h"
+#include <wx/textctrl.h>
 
 class TVTextCtrl : public ItemDisplayer {
   wxTextCtrl *myTextCtrl;
  public:
-  TVTextCtrl (wxWindow *_parent, const wxString &_value = "") {
+  TVTextCtrl (wxWindow *_parent, const wxString &_value = wxT("")) {
     myTextCtrl = new wxTextCtrl (_parent, LLVM_TV_TEXT_CTRL, _value,
       wxDefaultPosition, wxDefaultSize,
       wxTE_READONLY | wxTE_MULTILINE | wxHSCROLL);

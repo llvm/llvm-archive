@@ -16,3 +16,18 @@ include $(LEVEL)/Makefile.config
 # Include LLVM's Master Makefile.
 #
 include $(LLVM_SRC_ROOT)/Makefile.rules
+
+# Make sure we  can access PoolAlloc's headers and libraries
+PALibDir = $(POOLALLOC_OBJ_ROOT)/$(BuildMode)/lib
+CPP.Flags += -I$(POOLALLOC_SRC_ROOT)/include
+LD.Flags += -L$(PALibDir)
+
+# Link in PoolAlloc libraries
+ifdef PALIBS
+PALibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(PALIBS)))
+PALibsOptions := $(patsubst %.o, $(PALibDir)/%.o, $(PALibsOptions))
+PAUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(PALIBS)))
+PALibsPaths   := $(addprefix $(PALibDir)/,$(PAUsedLibs))
+
+ExtraLibs     += $(PALibsPaths)
+endif

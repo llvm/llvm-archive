@@ -6,6 +6,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/StringExtras.h"
+#include <wx/string.h>
 #include <wx/listctrl.h>
 #include <map>
 #include <sstream>

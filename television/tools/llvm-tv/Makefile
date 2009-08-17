@@ -1,14 +1,16 @@
 LEVEL = ../..
 TOOLNAME = llvm-tv
-LLVMLIBS = LLVMAnalysis.a LLVMBCReader LLVMBCWriter LLVMDataStructure \
-           LLVMipa.a LLVMSupport.a LLVMTarget.a LLVMCore LLVMTransformUtils.a \
-           LLVMSystem.a LLVMbzip2
+LLVMLIBS = LLVMAnalysis.a LLVMBitReader.a LLVMBitWriter.a \
+           LLVMipa.a LLVMSupport.a LLVMTarget.a LLVMCore.a \
+           LLVMTransformUtils.a LLVMSupport.a LLVMSystem.a
 
-# note: delete when FileUtils is assimilated into libsupport
-USEDLIBS = LLVMTVSnapshot
+USEDLIBS = LLVMTVSnapshot.a
 
-CPPFLAGS = $(shell wx-config --cflags)
-TOOLLINKOPTSB = $(shell wx-config --libs)
+# LLVMDataStructure.a comes from PoolAlloc, not LLVM proper.
+PALIBS = LLVMDataStructure.a
+
+CPPFLAGS = $(shell wx-config --cxxflags) -fno-strict-aliasing
+TOOLLINKOPTSB = $(shell wx-config --debug=yes --libs)
 WXDIR = $(shell wx-config --prefix)
 WXLIB = $(WXDIR)/lib
 
@@ -17,14 +19,16 @@ include $(LEVEL)/Makefile.common
 all :: $(LLVMToolDir)/llvm-tv.exe \
        $(LLVMToolDir)/opt-snap
 
-LLVMTV = $(PROJ_OBJ_ROOT)/Debug/bin/llvm-tv
+LLVMTV = $(PROJ_OBJ_ROOT)/$(BuildMode)/bin/llvm-tv
 
 $(LLVMToolDir)/llvm-tv.exe: Makefile
-	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH $(LLVMTV) \
-		"2&>1 > /dev/null" > $@
+	echo "Creating llvm-tv.exe script"
+	echo exec env LD_LIBRARY_PATH=$(WXLIB):$(LibDir):\$$LD_LIBRARY_PATH $(LLVMTV) \
+		> $@
 	chmod u+x $@
 
 $(LLVMToolDir)/opt-snap: Makefile
+	echo "Creating opt-snap script"
 	echo exec env LD_LIBRARY_PATH=$(WXLIB):\$$LD_LIBRARY_PATH \
 		OPTPASSES=\"$$\*\" opt -load=$(LibDir)/libLLVMTVSnapshot.so $$\* > $@
 	chmod u+x $@

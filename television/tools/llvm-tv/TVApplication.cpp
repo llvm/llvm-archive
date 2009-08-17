@@ -5,10 +5,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeViewer.h"
-#include "TVApplication.h"
 #include "TVFrame.h"
 #include "llvm-tv/Support/FileUtils.h"
 #include "llvm-tv/Config.h"
+#undef _DEBUG
+#undef __WXDEBUG__
+#include "TVApplication.h"
+#include "wxUtils.h"
 #include <wx/image.h>
 #include <cerrno>
 #include <iostream>
@@ -35,32 +38,32 @@ void TVApplication::ReceivedSignal () {
 /// FatalErrorBox - pop up an error message and quit.
 ///
 void FatalErrorBox (const std::string msg) {
-  wxMessageBox(msg.c_str (), "Fatal Error", wxOK | wxICON_ERROR);
+  wxMessageBox(wxS(msg), wxT("Fatal Error"), wxOK | wxICON_ERROR);
   exit (1);
 }
 
 static void setUpMenus (wxFrame *frame) {
   wxMenuBar *menuBar = new wxMenuBar ();
 
-  wxMenu *fileMenu = new wxMenu ("", 0);
-  fileMenu->Append (wxID_OPEN, "Add module...");
-  fileMenu->Append (LLVM_TV_REFRESH, "Refresh list");
-  fileMenu->Append (wxID_EXIT, "Quit");
-  menuBar->Append (fileMenu, "File");
+  wxMenu *fileMenu = new wxMenu (wxT(""), 0);
+  fileMenu->Append (wxID_OPEN, wxT("Add module..."));
+  fileMenu->Append (LLVM_TV_REFRESH, wxT("Refresh list"));
+  fileMenu->Append (wxID_EXIT, wxT("Quit"));
+  menuBar->Append (fileMenu, wxT("File"));
 
-  wxMenu *viewMenu = new wxMenu ("", 0);
-  viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, "View call graph");
-  viewMenu->Append (LLVM_TV_CFGVIEW, "View control-flow graph");
-  viewMenu->Append (LLVM_TV_BUDS_VIEW, "View BU datastructure graph");
-  viewMenu->Append (LLVM_TV_TDDS_VIEW, "View TD datastructure graph");
-  viewMenu->Append (LLVM_TV_LOCALDS_VIEW, "View Local datastructure graph");
-  viewMenu->Append (LLVM_TV_CODEVIEW, "View code (interactive)");
-  menuBar->Append (viewMenu, "View");
+  wxMenu *viewMenu = new wxMenu (wxT(""), 0);
+  viewMenu->Append (LLVM_TV_CALLGRAPHVIEW, wxT("View call graph"));
+  viewMenu->Append (LLVM_TV_CFGVIEW, wxT("View control-flow graph"));
+  viewMenu->Append (LLVM_TV_BUDS_VIEW, wxT("View BU datastructure graph"));
+  viewMenu->Append (LLVM_TV_TDDS_VIEW, wxT("View TD datastructure graph"));
+  viewMenu->Append (LLVM_TV_LOCALDS_VIEW, wxT("View Local datastructure graph"));
+  viewMenu->Append (LLVM_TV_CODEVIEW, wxT("View code (interactive)"));
+  menuBar->Append (viewMenu, wxT("View"));
 
-  wxMenu *helpMenu = new wxMenu ("", 0);
-  helpMenu->Append (wxID_HELP_CONTENTS, "Help with LLVM-TV");
-  helpMenu->Append (wxID_ABOUT, "About LLVM-TV");
-  menuBar->Append (helpMenu, "Help");
+  wxMenu *helpMenu = new wxMenu (wxT(""), 0);
+  helpMenu->Append (wxID_HELP_CONTENTS, wxT("Help with LLVM-TV"));
+  helpMenu->Append (wxID_ABOUT, wxT("About LLVM-TV"));
+  menuBar->Append (helpMenu, wxT("Help"));
 
   frame->SetMenuBar (menuBar);
 }

@@ -23,10 +23,13 @@ class TVSnapshot {
   void readBytecodeFile ();
   void fixLabel () { myLabel = basename ((char*)myLabel.c_str ()) ; }
  public:
-  //TVSnapshot () : M (0), filename (), myLabel (filename) { }
-  TVSnapshot (const std::string &_name) : M (0), filename (_name), myLabel (filename) { fixLabel(); }
-  TVSnapshot (const char *_name) : M (0), filename (_name), myLabel (filename) { fixLabel(); }
-  const char *label () const { return myLabel.c_str (); } 
+  explicit TVSnapshot (const std::string &_name)
+      : M (0), filename (_name), myLabel (filename) { fixLabel(); }
+  explicit TVSnapshot (const char *_name)
+      : M (0), filename (_name), myLabel (filename) { fixLabel(); }
+  ~TVSnapshot() { delete M; }
+
+  const char *label () const { return myLabel.c_str (); }
   unsigned getTimestamp () const { return (unsigned) strtol (label(), 0, 0); }
   bool operator < (const TVSnapshot &s) const {
     return getTimestamp () < s.getTimestamp ();

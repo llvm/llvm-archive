@@ -617,6 +617,8 @@ host_alias
 target_alias
 LLVM_SRC
 LLVM_OBJ
+POOLALLOC_SRC
+POOLALLOC_OBJ
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1193,8 +1195,10 @@ if test -n "$ac_init_help"; then
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-llvmsrc          Location of LLVM Source Code
-  --with-llvmobj          Location of LLVM Object Code
+  --with-llvm-src         Location of LLVM Source Code
+  --with-llvm-obj         Location of LLVM Object Code
+  --with-poolalloc-src    Location of PoolAlloc Source Code
+  --with-poolalloc-obj    Location of PoolAlloc Object Code
 
 Report bugs to <llvmbugs@cs.uiuc.edu>.
 _ACEOF
@@ -1680,9 +1684,9 @@ ac_config_commands="$ac_config_commands tools/llvm-tv/Makefile"
 
 
 
-# Check whether --with-llvmsrc was given.
-if test "${with_llvmsrc+set}" = set; then
-  withval=$with_llvmsrc; LLVM_SRC=$withval
+# Check whether --with-llvm-src was given.
+if test "${with_llvm_src+set}" = set; then
+  withval=$with_llvm_src; LLVM_SRC=$withval
 
 else
   LLVM_SRC=`cd ${srcdir}/../..; pwd`
@@ -1690,12 +1694,33 @@ else
 fi
 
 
-# Check whether --with-llvmobj was given.
-if test "${with_llvmobj+set}" = set; then
-  withval=$with_llvmobj; LLVM_OBJ=$withval
+# Check whether --with-llvm-obj was given.
+if test "${with_llvm_obj+set}" = set; then
+  withval=$with_llvm_obj; LLVM_OBJ=$withval
 
 else
   LLVM_OBJ=`cd ../..; pwd`
+
+fi
+
+
+
+# Check whether --with-poolalloc-src was given.
+if test "${with_poolalloc_src+set}" = set; then
+  withval=$with_poolalloc_src; POOLALLOC_SRC=$withval
+
+else
+  POOLALLOC_SRC=`cd ${srcdir}/../..; pwd`
+
+fi
+
+
+# Check whether --with-poolalloc-obj was given.
+if test "${with_poolalloc_obj+set}" = set; then
+  withval=$with_poolalloc_obj; POOLALLOC_OBJ=$withval
+
+else
+  POOLALLOC_OBJ=`cd ../..; pwd`
 
 fi
 
@@ -2388,11 +2413,13 @@ host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
 LLVM_SRC!$LLVM_SRC$ac_delim
 LLVM_OBJ!$LLVM_OBJ$ac_delim
+POOLALLOC_SRC!$POOLALLOC_SRC$ac_delim
+POOLALLOC_OBJ!$POOLALLOC_OBJ$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 41; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 43; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

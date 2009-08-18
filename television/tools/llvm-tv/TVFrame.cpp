@@ -201,10 +201,10 @@ void TVFrame::OnExit (wxCommandEvent &event) {
 /// OnExit - respond to a request to display the About box.
 ///
 void TVFrame::OnAbout (wxCommandEvent &event) {
-  wxMessageBox(wxT("LLVM Visualization Tool\n\n"
+  wxMessageBox(wxT("LLVM Transformation Visualizer (LLVM-TV)\n\n"
                    "By Misha Brukman, Tanya Brethour, and Brian Gaeke\n"
                    "Copyright (C) 2004 University of Illinois at Urbana-Champaign\n"
-                   "http://llvm.cs.uiuc.edu"),
+                   "http://llvm.org"),
                wxT("About LLVM-TV"));
 }
 

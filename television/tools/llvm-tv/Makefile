@@ -23,8 +23,9 @@ LLVMTV = $(PROJ_OBJ_ROOT)/$(BuildMode)/bin/llvm-tv
 
 $(LLVMToolDir)/llvm-tv.exe: Makefile
 	echo "Creating llvm-tv.exe script"
-	echo exec env LD_LIBRARY_PATH=$(WXLIB):$(LibDir):\$$LD_LIBRARY_PATH $(LLVMTV) \
-		> $@
+	echo exec env \
+		LD_LIBRARY_PATH=$(WXLIB):$(LibDir):$(PALibDir):\$$LD_LIBRARY_PATH \
+		$(LLVMTV) > $@
 	chmod u+x $@
 
 $(LLVMToolDir)/opt-snap: Makefile

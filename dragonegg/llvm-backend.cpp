@@ -1879,12 +1879,12 @@ static struct rtl_opt_pass pass_emit_llvm =
       NULL,					/* next */
       0,					/* static_pass_number */
       TV_EXPAND,				/* tv_id */
-      PROP_gimple_lcf | PROP_gimple_leh |
-	PROP_gimple_lomp | PROP_cfg,		/* properties_required */
+      PROP_ssa | PROP_gimple_leh
+        | PROP_gimple_lomp | PROP_cfg,		/* properties_required */
       0,					/* properties_provided */
       PROP_ssa | PROP_trees,			/* properties_destroyed */
-      TODO_dump_func | TODO_verify_flow
-        | TODO_verify_stmts,			/* todo_flags_start */
+      TODO_dump_func | TODO_verify_ssa
+        | TODO_verify_flow | TODO_verify_stmts,	/* todo_flags_start */
       TODO_ggc_collect				/* todo_flags_finish */
     }
 };

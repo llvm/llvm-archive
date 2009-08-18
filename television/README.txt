@@ -27,14 +27,40 @@ How to compile:
    C++ compiler that you're using for llvm. Otherwise, you may get
    weird link errors when trying to link the llvm-tv tool.
 
-2. Configure and compile llvm-tv (you need an LLVM source and build trees):
+2. Check out LLVM:
 
-% cd path/to/llvm-tv
+# We're checking out this version and not trunk since poolalloc doesn't build
+# with top of trunk LLVM.
+% svn -q co -r 78786 http://llvm.org/svn/llvm-project/llvm/trunk llvm
+
+3. Configure and build LLVM:
+
+% cd path/to/llvm-obj
+% ~/llvm/configure [configure opts]
+% make
+
+4. Check out PoolAlloc (we need it for the DataStructure library):
+
+% svn -q co http://llvm.org/svn/llvm-project/poolalloc/trunk poolalloc
+
+5. Configure and build PoolAlloc:
+
+% cd path/to/poolalloc-obj
+% ~/poolalloc/configure --with-llvmsrc=[path] \
+                        --with-llvmobj=[path]
+% make
+
+2. Configure and compile llvm-tv:
+
+% cd path/to/llvm-tv-obj
 # If you're building in llvm/projects/llvm-tv, then you don't need
 # to specify the --with-llvm-* options.
-% ./configure --with-llvm-src=[path] --with-llvm-obj=[path] \
-              --with-poolalloc-src=[path] --with-poolalloc-obj=[path]
-% gmake
+% ~/llvm-tv/configure --with-llvm-src=[path] --with-llvm-obj=[path] \
+                      --with-poolalloc-src=[path] --with-poolalloc-obj=[path]
+% make
+
+Note: the llvm-tv.exe and opt-snap scripts will be placed into LLVM's binary
+directory, not the LLVM-TV binary directory.
 
 Example of usage:
 

@@ -13,8 +13,7 @@ TVTreeRootItem* TVTreeRootItem::instance() {
 }
 
 void TVTreeModuleItem::print(std::ostream &os) {
-  // TODO: update to current LLVM API.
-  //myModule->print(os);
+  os << *myModule;
 }
 
 void TVTreeFunctionItem::print(std::ostream &os) {

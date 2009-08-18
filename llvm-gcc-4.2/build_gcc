@@ -86,9 +86,6 @@ LLVM_SUBMIT_VERSION="${10}"
 # The eleventh parameter is the subversion number of the submission, e.g. 03.
 LLVM_SUBMIT_SUBVERSION="${11}"
 
-# LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
-LLVM_BIN_DIR=$DEST_ROOT/../bin
-
 # LLVM LOCAL end
 
 # The current working directory is where the build will happen.
@@ -137,6 +134,7 @@ if [ -d $ARM_PLATFORM ]; then
   # iPhoneOS platform directory.
   if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
     LLVMCORE_PATH="${ARM_PLATFORM}${LLVMCORE_PATH}"
+    DEST_ROOT="${ARM_PLATFORM}${DEST_ROOT}"
   fi
 else
   ARM_TOOLROOT=/
@@ -600,11 +598,17 @@ done
 # LLVM LOCAL begin
 # Compress manpages
 gzip -f $MDIR/*
-mkdir -p $DEST_DIR/Developer/usr/share/man/man1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
+
+if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
+MAN1_DIR=${DEST_DIR}${ARM_PLATFORM}/Developer/usr/share/man/man1
+else
+MAN1_DIR=$DEST_DIR/Developer/usr/share/man/man1
+fi
+mkdir -p ${MAN1_DIR}
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-gcc.1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-g++.1
+gzip -f ${MAN1_DIR}/llvm-gcc.1
+gzip -f ${MAN1_DIR}/llvm-g++.1
 # LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers
@@ -690,6 +694,10 @@ fi
 
 # LLVM LOCAL begin
 # Set up the llvm-gcc/llvm-g++ symlinks.
+
+# LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
+LLVM_BIN_DIR=$DEST_ROOT/../bin
+
 mkdir -p $DEST_DIR$LLVM_BIN_DIR
 cd $DEST_DIR$LLVM_BIN_DIR
 ln -s -f ../llvm-gcc-$MAJ_VERS/bin/llvm-gcc-$MAJ_VERS llvm-gcc-$MAJ_VERS || exit 1
@@ -715,11 +723,20 @@ for t in $TARGETS ; do
     ln -s ../../libllvmgcc.dylib
 done
 
-if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-    mkdir -p $DEST_DIR/usr/bin
-    cd $DEST_DIR/usr/bin
-    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+if [ "x$RC_ProjectName" == "xllvmgcc42_Embedded" ]; then
+    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+        mkdir -p $DEST_DIR${ARM_PLATFORM}/usr/bin
+        cd $DEST_DIR${ARM_PLATFORM}/usr/bin
+        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+    fi
+else
+    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+        mkdir -p $DEST_DIR/usr/bin
+        cd $DEST_DIR/usr/bin
+        ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+        ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+    fi
 fi
 # LLVM LOCAL end
 

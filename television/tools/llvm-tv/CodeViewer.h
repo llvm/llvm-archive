@@ -7,12 +7,12 @@
 #ifndef CODEVIEWER_H
 #define CODEVIEWER_H
 
+#include "ItemDisplayer.h"
 #include <wx/wx.h>
 #include <wx/listctrl.h>
 #include <map>
 #include <string>
 #include <vector>
-#include "ItemDisplayer.h"
 
 class TVApplication;
 

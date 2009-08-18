@@ -2,6 +2,7 @@
 #include "TVApplication.h"
 #include "TVTreeItem.h"
 #include "TVFrame.h"
+#include "wxUtils.h"
 #include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Value.h"
@@ -20,7 +21,7 @@ void TVCodeItem::SetLabel() {
     label = BB->getName().str() + ":";
   else if (Instruction *I = dyn_cast<Instruction>(Val)) {
     std::ostringstream out;
-    I->print(out);
+    out << *I;
     label = out.str();
     // Post-processing for more attractive display
     for (unsigned i = 0; i != label.length(); ++i)
@@ -30,33 +31,34 @@ void TVCodeItem::SetLabel() {
         label[i] = ' ';
         label.insert(label.begin()+i+1, ' ');
       } else if (label[i] == ';') {                      // Delete comments!
-        unsigned Idx = label.find('\n', i+1);            // Find end of line
-        label.erase(label.begin()+i, label.begin()+Idx);
+        label.erase(label.begin()+i, label.end());
         --i;
       }
-
   } else
     label = "<invalid value>";
 
-  SetText(wxString(label.c_str(), wxConvUTF8));
+  SetText(wxS(label));
 }
 
 //===----------------------------------------------------------------------===//
 
+// FIXME: calling Show() after Hide() does not seem to bring back the display of
+// items, so we are disabling them for now, but we'll need to revisit this if
+// the refresh rate is too slow.
 void TVCodeListCtrl::refreshView() {
   // Hide the list while rewriting it from scratch to speed up rendering
-  Hide();
+  // Hide();
 
   // Clear out the list and then re-add all the items.
   long index = 0;
   ClearAll();
   for (Items::iterator i = itemList.begin(), e = itemList.end(); i != e; ++i) {
-    InsertItem(index, (**i).m_text.c_str());
+    InsertItem(index, (*i)->GetText());
     ItemToIndex[*i] = index;
     ++index;
   }
 
-  Show();
+  // Show();
 }
 
 template<class T> void wipe (T x) { delete x; }

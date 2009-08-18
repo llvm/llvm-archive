@@ -1493,9 +1493,6 @@ const char *darwin_objc_llvm_special_name_section(const char*);
     argvec.push_back ("--relocation-model=static")
 #endif /* !TARGET_386 && !TARGET_ARM */
 
-/* On Darwin _Unwind_Resume is sensitive to the dynamic stack layout; we
-   use _Unwind_Resume_or_Rethrow instead.  */
-#define LLVM_STACKSENSITIVE_UNWIND_RESUME 1
 #endif
 /* LLVM LOCAL end */
 

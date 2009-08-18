@@ -23,6 +23,7 @@
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
+#include <iostream>
 using namespace llvm;
 
 template<typename GraphType>

@@ -67,6 +67,7 @@ extern "C" {
 
 #include "cgraph.h"
 #include "diagnostic.h"
+#include "except.h"
 #include "flags.h"
 #include "function.h"
 #include "gcc-plugin.h"
@@ -75,7 +76,6 @@ extern "C" {
 #include "output.h"
 #include "params.h"
 #include "plugin-version.h"
-#include "tm.h"
 #include "toplev.h"
 #include "tree-inline.h"
 #include "tree-flow.h"
@@ -117,6 +117,7 @@ static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
+SmallSetVector<Constant*, 32> AttributeCompilerUsedGlobals;
 std::vector<Constant*> AttributeAnnotateGlobals;
 
 /// PerFunctionPasses - This is the list of cleanup passes run per-function
@@ -151,7 +152,7 @@ static void destroyOptimizationPasses();
 //TODO/// function-local decls to be recycled after the function is done.
 //TODOstatic std::vector<unsigned> LocalLLVMValueIDs;
 //TODO
-//TODO// Remember the LLVM value for GCC tree node.
+//TODO/// llvm_set_decl - Remember the LLVM value for GCC tree node.
 //TODOvoid llvm_set_decl(tree Tr, Value *V) {
 //TODO
 //TODO  // If there is not any value then do not add new LLVMValues entry.
@@ -179,7 +180,8 @@ static void destroyOptimizationPasses();
 //TODO    LocalLLVMValueIDs.push_back(Index);
 //TODO}
 //TODO
-//TODO// Return TRUE if there is a LLVM Value associate with GCC tree node.
+//TODO/// llvm_set_decl_p - Return TRUE if there is a LLVM Value associate with GCC
+//TODO/// tree node.
 //TODObool llvm_set_decl_p(tree Tr) {
 //TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
 //TODO  if (Index == 0)
@@ -188,10 +190,10 @@ static void destroyOptimizationPasses();
 //TODO  return LLVMValues[Index - 1] != 0;
 //TODO}
 //TODO
-//TODO// Get LLVM Value for the GCC tree node based on LLVMValues vector index.
-//TODO// If there is not any value associated then use make_decl_llvm() to
-//TODO// make LLVM value. When GCC tree node is initialized, it has 0 as the
-//TODO// index value. This is why all recorded indices are offset by 1.
+//TODO/// llvm_get_decl - Get LLVM Value for the GCC tree node based on LLVMValues
+//TODO/// vector index.  If there is not any value associated then use
+//TODO/// make_decl_llvm() to make LLVM value. When GCC tree node is initialized, it
+//TODO/// has 0 as the index value. This is why all recorded indices are offset by 1.
 //TODOValue *llvm_get_decl(tree Tr) {
 //TODO
 //TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
@@ -217,6 +219,11 @@ static void destroyOptimizationPasses();
 //TODO  if (AttributeUsedGlobals.count(Old)) {
 //TODO    AttributeUsedGlobals.remove(Old);
 //TODO    AttributeUsedGlobals.insert(New);
+//TODO  }
+//TODO
+//TODO  if (AttributeCompilerUsedGlobals.count(Old)) {
+//TODO    AttributeCompilerUsedGlobals.remove(Old);
+//TODO    AttributeCompilerUsedGlobals.insert(New);
 //TODO  }
 //TODO
 //TODO  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
@@ -250,7 +257,7 @@ static void destroyOptimizationPasses();
 //TODO    LLVMValuesMap[New] = Idx+1;
 //TODO}
 //TODO
-//TODO// Read LLVM Types string table
+//TODO/// readLLVMValues - Read LLVM Types string table
 //TODOvoid readLLVMValues() {
 //TODO  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");
 //TODO  if (!V)
@@ -279,9 +286,9 @@ static void destroyOptimizationPasses();
 //TODO  GV->eraseFromParent();
 //TODO}
 //TODO
-//TODO// GCC tree's uses LLVMValues vector's index to reach LLVM Values.
-//TODO// Create a string table to hold these LLVM Values' names. This string
-//TODO// table will be used to recreate LTypes vector after loading PCH.
+//TODO/// writeLLVMValues - GCC tree's uses LLVMValues vector's index to reach LLVM
+//TODO/// Values.  Create a string table to hold these LLVM Values' names. This string
+//TODO/// table will be used to recreate LTypes vector after loading PCH.
 //TODOvoid writeLLVMValues() {
 //TODO  if (LLVMValues.empty())
 //TODO    return;
@@ -296,11 +303,11 @@ static void destroyOptimizationPasses();
 //TODO    else
 //TODO      // Non constant values, e.g. arguments, are not at global scope.
 //TODO      // When PCH is read, only global scope values are used.
-//TODO      ValuesForPCH.push_back(Context.getNullValue(Type::Int32Ty));
+//TODO      ValuesForPCH.push_back(Constant::getNullValue(Type::getInt32Ty(Context)));
 //TODO  }
 //TODO
 //TODO  // Create string table.
-//TODO  Constant *LLVMValuesTable = Context.getConstantStruct(ValuesForPCH, false);
+//TODO  Constant *LLVMValuesTable = ConstantStruct::get(Context, ValuesForPCH, false);
 //TODO
 //TODO  // Create variable to hold this string table.
 //TODO  new GlobalVariable(*TheModule, LLVMValuesTable->getType(), true,
@@ -328,8 +335,7 @@ static void destroyOptimizationPasses();
 //TODO  }
 //TODO}
 
-
-// Forward decl visibility style to global.
+/// handleVisibility - Forward decl visibility style to global.
 void handleVisibility(tree decl, GlobalValue *GV) {
   // If decl has visibility specified explicitely (via attribute) - honour
   // it. Otherwise (e.g. visibility specified via -fvisibility=hidden) honour
@@ -485,8 +491,9 @@ static void LazilyInitializeModule(void) {
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
+  std::string Triple = TheModule->getTargetTriple();
   const Target *TME =
-    TargetRegistry::getClosestStaticTargetForModule(*TheModule, Err);
+    TargetRegistry::lookupTarget(Triple, Err);
   if (!TME)
     llvm_report_error(Err);
 
@@ -499,7 +506,7 @@ static void LazilyInitializeModule(void) {
 //TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
 //TODO  FeatureStr = Features.getString();
 //TODO#endif
-  TheTarget = TME->createTargetMachine(*TheModule, FeatureStr);
+  TheTarget = TME->createTargetMachine(Triple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());
@@ -520,10 +527,14 @@ static void LazilyInitializeModule(void) {
 //TODO    TheDebugInfo = new DebugInfo(TheModule);
 //TODO}
 //TODO
-//TODO/// Set backend options that may only be known at codegen time.
+//TODO/// performLateBackendInitialization - Set backend options that may only be
+//TODO/// known at codegen time.
 //TODOvoid performLateBackendInitialization(void) {
 //TODO  // The Ada front-end sets flag_exceptions only after processing the file.
-//TODO  ExceptionHandling = flag_exceptions;
+//TODO  if (USING_SJLJ_EXCEPTIONS)
+//TODO    SjLjExceptionHandling = flag_exceptions;
+//TODO  else
+//TODO    DwarfExceptionHandling = flag_exceptions;
 //TODO  for (Module::iterator I = TheModule->begin(), E = TheModule->end();
 //TODO       I != E; ++I)
 //TODO    if (!I->isDeclaration()) {
@@ -554,7 +565,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODOstatic formatted_raw_ostream *AsmOutRawStream = 0;
 //TODOoFILEstream *AsmIntermediateOutStream = 0;
 //TODO
-//TODO/// Read bytecode from PCH file. Initialize TheModule and setup
+//TODO/// llvm_pch_read - Read bytecode from PCH file. Initialize TheModule and setup
 //TODO/// LTypes vector.
 //TODOvoid llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 //TODO  std::string ModuleName = TheModule->getModuleIdentifier();
@@ -598,7 +609,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  flag_llvm_pch_read = 1;
 //TODO}
 //TODO
-//TODO// Initialize PCH writing. 
+//TODO/// llvm_pch_write_init - Initialize PCH writing. 
 //TODOvoid llvm_pch_write_init(void) {
 //TODO  timevar_push(TV_LLVM_INIT);
 //TODO  AsmOutStream = new oFILEstream(asm_out_file);
@@ -805,7 +816,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  }
 //TODO}
 //TODO
-//TODO// llvm_asm_file_start - Start the .s file.
+//TODO/// llvm_asm_file_start - Start the .s file.
 //TODOvoid llvm_asm_file_start(void) {
 //TODO  timevar_push(TV_LLVM_INIT);
 //TODO  AsmOutStream = new oFILEstream(asm_out_file);
@@ -827,6 +838,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO    sys::Program::ChangeStdoutToBinary();
 //TODO
 //TODO  AttributeUsedGlobals.clear();
+//TODO  AttributeCompilerUsedGlobals.clear();
 //TODO  timevar_pop(TV_LLVM_INIT);
 //TODO}
 
@@ -834,32 +846,33 @@ void llvm_lang_dependent_init(const char *Name) {
 /// initializer suitable for the llvm.global_[cd]tors globals.
 static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                                 const char *Name) {
-  LLVMContext &Context = getGlobalContext();
-  
   std::vector<Constant*> InitList;
   std::vector<Constant*> StructInit;
   StructInit.resize(2);
   
+  LLVMContext &Context = getGlobalContext();
+  
   const Type *FPTy =
-    Context.getFunctionType(Type::VoidTy, std::vector<const Type*>(), false);
-  FPTy = Context.getPointerTypeUnqual(FPTy);
+    FunctionType::get(Type::getVoidTy(Context),
+                      std::vector<const Type*>(), false);
+  FPTy = PointerType::getUnqual(FPTy);
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
-    StructInit[0] = Context.getConstantInt(Type::Int32Ty, Tors[i].second);
+    StructInit[0] = ConstantInt::get(Type::getInt32Ty(Context), Tors[i].second);
     
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
     StructInit[1] = TheFolder->CreateBitCast(Tors[i].first, FPTy);
-    InitList.push_back(Context.getConstantStruct(StructInit, false));
+    InitList.push_back(ConstantStruct::get(Context, StructInit, false));
   }
-  Constant *Array = Context.getConstantArray(
-    Context.getArrayType(InitList[0]->getType(), InitList.size()), InitList);
+  Constant *Array = ConstantArray::get(
+    ArrayType::get(InitList[0]->getType(), InitList.size()), InitList);
   new GlobalVariable(*TheModule, Array->getType(), false,
                      GlobalValue::AppendingLinkage,
                      Array, Name);
 }
 
-//TODO// llvm_asm_file_end - Finish the .s file.
+//TODO/// llvm_asm_file_end - Finish the .s file.
 //TODOvoid llvm_asm_file_end(void) {
 //TODO  timevar_push(TV_LLVM_PERFILE);
 //TODO  LLVMContext &Context = getGlobalContext();
@@ -881,26 +894,46 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO
 //TODO  if (!AttributeUsedGlobals.empty()) {
 //TODO    std::vector<Constant *> AUGs;
-//TODO    const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
-//TODO    for (SmallSetVector<Constant *,32>::iterator AI = AttributeUsedGlobals.begin(),
+//TODO    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+//TODO    for (SmallSetVector<Constant *,32>::iterator
+//TODO           AI = AttributeUsedGlobals.begin(),
 //TODO           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
 //TODO      Constant *C = *AI;
 //TODO      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
 //TODO    }
 //TODO
-//TODO    ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
-//TODO    Constant *Init = Context.getConstantArray(AT, AUGs);
+//TODO    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
+//TODO    Constant *Init = ConstantArray::get(AT, AUGs);
 //TODO    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-//TODO                       GlobalValue::AppendingLinkage, Init,
-//TODO                       "llvm.used");
+//TODO                                         GlobalValue::AppendingLinkage, Init,
+//TODO                                         "llvm.used");
 //TODO    gv->setSection("llvm.metadata");
 //TODO    AttributeUsedGlobals.clear();
 //TODO  }
 //TODO
+//TODO  if (!AttributeCompilerUsedGlobals.empty()) {
+//TODO    std::vector<Constant *> ACUGs;
+//TODO    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+//TODO    for (SmallSetVector<Constant *,32>::iterator
+//TODO           AI = AttributeCompilerUsedGlobals.begin(),
+//TODO           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
+//TODO      Constant *C = *AI;
+//TODO      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+//TODO    }
+//TODO
+//TODO    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
+//TODO    Constant *Init = ConstantArray::get(AT, ACUGs);
+//TODO    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+//TODO                                         GlobalValue::AppendingLinkage, Init,
+//TODO                                         "llvm.compiler.used");
+//TODO    gv->setSection("llvm.metadata");
+//TODO    AttributeCompilerUsedGlobals.clear();
+//TODO  }
+//TODO
 //TODO  // Add llvm.global.annotations
 //TODO  if (!AttributeAnnotateGlobals.empty()) {
-//TODO    Constant *Array = Context.getConstantArray(
-//TODO      Context.getArrayType(AttributeAnnotateGlobals[0]->getType(),
+//TODO    Constant *Array = ConstantArray::get(
+//TODO      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
 //TODO                                      AttributeAnnotateGlobals.size()),
 //TODO                       AttributeAnnotateGlobals);
 //TODO    GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
@@ -976,8 +1009,8 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO  llvm_shutdown();
 //TODO}
 //TODO
-//TODO// llvm_emit_code_for_current_function - Top level interface for emitting a
-//TODO// function to the .s file.
+//TODO/// llvm_emit_code_for_current_function - Top level interface for emitting a
+//TODO/// function to the .s file.
 //TODOvoid llvm_emit_code_for_current_function(tree fndecl) {
 //TODO  if (cfun->nonlocal_goto_save_area)
 //TODO    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
@@ -1028,7 +1061,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO  timevar_pop(TV_LLVM_FUNCS);
 //TODO}
 
-// emit_alias_to_llvm - Given decl and target emit alias to target.
+/// emit_alias_to_llvm - Given decl and target emit alias to target.
 void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   if (errorcount || sorrycount) {
     TREE_ASM_WRITTEN(decl) = 1;
@@ -1090,6 +1123,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   // A weak alias has TREE_PUBLIC set but not the other bits.
   if (false)//FIXME DECL_LLVM_PRIVATE(decl))
     Linkage = GlobalValue::PrivateLinkage;
+  else if (false)//FIXME DECL_LLVM_LINKER_PRIVATE(decl))
+    Linkage = GlobalValue::LinkerPrivateLinkage;
   else if (DECL_WEAK(decl))
     // The user may have explicitly asked for weak linkage - ignore flag_odr.
     Linkage = GlobalValue::WeakAnyLinkage;
@@ -1104,7 +1139,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   handleVisibility(decl, GA);
 
   if (GA->getType()->canLosslesslyBitCastTo(V->getType()))
-    V->replaceAllUsesWith(Context.getConstantExprBitCast(GA, V->getType()));
+    V->replaceAllUsesWith(ConstantExpr::getBitCast(GA, V->getType()));
   else if (!V->use_empty()) {
     error ("%J Alias %qD used with invalid type!", decl, decl);
 //TODO    timevar_pop(TV_LLVM_GLOBALS);
@@ -1128,10 +1163,11 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   return;
 }
 
-// Convert string to global value. Use existing global if possible.
+/// ConvertMetadataStringToGV - Convert string to global value. Use existing
+/// global if possible.
 Constant* ConvertMetadataStringToGV(const char *str) {
   
-  Constant *Init = getGlobalContext().getConstantArray(std::string(str));
+  Constant *Init = ConstantArray::get(getGlobalContext(), std::string(str));
 
   // Use cached string if it exists.
   static std::map<Constant*, GlobalVariable*> StringCSTCache;
@@ -1148,8 +1184,8 @@ Constant* ConvertMetadataStringToGV(const char *str) {
   
 }
 
-/// AddAnnotateAttrsToGlobal - Adds decls that have a
-/// annotate attribute to a vector to be emitted later.
+/// AddAnnotateAttrsToGlobal - Adds decls that have a annotate attribute to a
+/// vector to be emitted later.
 void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   LLVMContext &Context = getGlobalContext();
   
@@ -1159,10 +1195,10 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
     return;
   
   // Get file and line number
-  Constant *lineNo =
-    Context.getConstantInt(Type::Int32Ty, DECL_SOURCE_LINE(decl));
+  Constant *lineNo = ConstantInt::get(Type::getInt32Ty(Context),
+                                      DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
+  const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1191,7 +1227,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
       };
  
       AttributeAnnotateGlobals.push_back(
-        Context.getConstantStruct(Element, 4, false));
+        ConstantStruct::get(Context, Element, 4, false));
     }
       
     // Get next annotate attribute.
@@ -1242,7 +1278,7 @@ void reset_type_and_initializer_llvm(tree decl) {
   handleVisibility(decl, GV);
 
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
-  GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
+  GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
 
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
@@ -1310,7 +1346,7 @@ void emit_global_to_llvm(tree decl) {
     // This global should be zero initialized.  Reconvert the type in case the
     // forward def of the global and the real def differ in type (e.g. declared
     // as 'int A[]', and defined as 'int A[100]').
-    Init = getGlobalContext().getNullValue(ConvertType(TREE_TYPE(decl)));
+    Init = Constant::getNullValue(ConvertType(TREE_TYPE(decl)));
   } else {
     assert((TREE_CONSTANT(DECL_INITIAL(decl)) || 
             TREE_CODE(DECL_INITIAL(decl)) == STRING_CST) &&
@@ -1322,7 +1358,7 @@ void emit_global_to_llvm(tree decl) {
     // on it".  When constructing the initializer it might refer to itself.
     // this can happen for things like void *G = &G;
     //
-    GV->setInitializer(Context.getUndef(GV->getType()->getElementType()));
+    GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
     Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
   }
 
@@ -1351,10 +1387,14 @@ void emit_global_to_llvm(tree decl) {
     GV->setThreadLocal(true);
 
   // Set the linkage.
-  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
+  GlobalValue::LinkageTypes Linkage;
+
   if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
       && false) {// FIXME DECL_LLVM_PRIVATE(decl)) {
     Linkage = GlobalValue::PrivateLinkage;
+  } else if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
+             && false) {//FIXME DECL_LLVM_LINKER_PRIVATE(decl)) {
+    Linkage = GlobalValue::LinkerPrivateLinkage;
   } else if (!TREE_PUBLIC(decl)) {
     Linkage = GlobalValue::InternalLinkage;
   } else if (DECL_WEAK(decl)) {
@@ -1368,6 +1408,8 @@ void emit_global_to_llvm(tree decl) {
     Linkage = GlobalValue::CommonLinkage;
   } else if (DECL_COMDAT(decl)) {
     Linkage = GlobalValue::getLinkOnceLinkage(flag_odr);
+  } else {
+    Linkage = GV->getLinkage();
   }
 
   // Allow loads from constants to be folded even if the constant has weak
@@ -1412,8 +1454,12 @@ void emit_global_to_llvm(tree decl) {
     }
 
     // Handle used decls
-    if (DECL_PRESERVE_P (decl))
-      AttributeUsedGlobals.insert(GV);
+    if (DECL_PRESERVE_P (decl)) {
+      if (false)//FIXME DECL_LLVM_LINKER_PRIVATE (decl))
+        AttributeCompilerUsedGlobals.insert(GV);
+      else
+        AttributeUsedGlobals.insert(GV);
+    }
   
     // Add annotate attributes for globals
     if (DECL_ATTRIBUTES(decl))
@@ -1453,12 +1499,9 @@ bool ValidateRegisterVariable(tree decl) {
   int RegNumber = decode_reg_name(extractRegisterName(decl));
   const Type *Ty = ConvertType(TREE_TYPE(decl));
 
-  // If this has already been processed, don't emit duplicate error messages.
-  if (DECL_LLVM_SET_P(decl)) {
-    // Error state encoded into DECL_LLVM.
-    return cast<ConstantInt>(DECL_LLVM(decl))->getZExtValue();
-  }
-  
+  if (errorcount || sorrycount)
+    return true;  // Do not process broken code.
+
   /* Detect errors in declaring global registers.  */
   if (RegNumber == -1)
     error("%Jregister name not specified for %qD", decl, decl);
@@ -1479,25 +1522,23 @@ bool ValidateRegisterVariable(tree decl) {
   else {
     if (TREE_THIS_VOLATILE(decl))
       warning(0, "volatile register variables don%'t work as you might wish");
-    
-    SET_DECL_LLVM(decl, Context.getFalse());
+
     return false;  // Everything ok.
   }
-  SET_DECL_LLVM(decl, Context.getTrue());
+
   return true;
 }
 
 
-// make_decl_llvm - Create the DECL_RTL for a VAR_DECL or FUNCTION_DECL.  DECL
-// should have static storage duration.  In other words, it should not be an
-// automatic variable, including PARM_DECLs.
-//
-// There is, however, one exception: this function handles variables explicitly
-// placed in a particular register by the user.
-//
-// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
-// called by DECL_LLVM if a decl doesn't have an LLVM set.
-//
+/// make_decl_llvm - Create the DECL_RTL for a VAR_DECL or FUNCTION_DECL.  DECL
+/// should have static storage duration.  In other words, it should not be an
+/// automatic variable, including PARM_DECLs.
+///
+/// There is, however, one exception: this function handles variables explicitly
+/// placed in a particular register by the user.
+///
+/// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
+/// called by DECL_LLVM if a decl doesn't have an LLVM set.
 void make_decl_llvm(tree decl) {
 #ifdef ENABLE_CHECKING
   // Check that we are not being given an automatic variable.
@@ -1569,7 +1610,7 @@ void make_decl_llvm(tree decl) {
     // when we have something like __builtin_memset and memset in the same file.
     Function *FnEntry = TheModule->getFunction(Name);
     if (FnEntry == 0) {
-      unsigned CC;
+      CallingConv::ID CC;
       AttrListPtr PAL;
       const FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
@@ -1618,7 +1659,8 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::VoidTy) Ty = Context.getStructType(NULL, NULL);
+    if (Ty == Type::getVoidTy(Context))
+      Ty = StructType::get(Context);
 
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 
@@ -1718,9 +1760,9 @@ const char *llvm_get_decl_name(void *LLVM) {
   return "";
 }
 
-// llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
-// weak, but it already had an llvm object created for it. This marks the LLVM
-// object weak as well.
+/// llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
+/// weak, but it already had an llvm object created for it. This marks the LLVM
+/// object weak as well.
 void llvm_mark_decl_weak(tree decl) {
   assert(DECL_LLVM_SET_P(decl) && DECL_WEAK(decl) &&
          isa<GlobalValue>(DECL_LLVM(decl)) && "Decl isn't marked weak!");
@@ -1747,10 +1789,9 @@ void llvm_mark_decl_weak(tree decl) {
   }
 }
 
-// llvm_emit_ctor_dtor - Called to emit static ctors/dtors to LLVM code.  fndecl
-// is a 'void()' FUNCTION_DECL for the code, initprio is the init priority, and
-// isCtor indicates whether this is a ctor or dtor.
-//
+/// llvm_emit_ctor_dtor - Called to emit static ctors/dtors to LLVM code.
+/// fndecl is a 'void()' FUNCTION_DECL for the code, initprio is the init
+/// priority, and isCtor indicates whether this is a ctor or dtor.
 void llvm_emit_ctor_dtor(tree FnDecl, int InitPrio, int isCtor) {
   mark_decl_referenced(FnDecl);  // Inform cgraph that we used the global.
 
@@ -1765,9 +1806,8 @@ void llvm_emit_typedef(tree decl) {
   return;
 }
 
-// llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
-// asm block.
-//
+/// llvm_emit_file_scope_asm - Emit the specified string as a file-scope inline
+/// asm block.
 void llvm_emit_file_scope_asm(const char *string) {
   if (TheModule->getModuleInlineAsm().empty())
     TheModule->setModuleInlineAsm(string);
@@ -1776,18 +1816,16 @@ void llvm_emit_file_scope_asm(const char *string) {
                                   string);
 }
 
-//FIXME// print_llvm - Print the specified LLVM chunk like an operand, called by
-//FIXME// print-tree.c for tree dumps.
-//FIXME//
+//FIXME/// print_llvm - Print the specified LLVM chunk like an operand, called by
+//FIXME/// print-tree.c for tree dumps.
 //FIXMEvoid print_llvm(FILE *file, void *LLVM) {
 //FIXME  oFILEstream FS(file);
 //FIXME  FS << "LLVM: ";
 //FIXME  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
 //FIXME}
 //FIXME
-//FIXME// print_llvm_type - Print the specified LLVM type symbolically, called by
-//FIXME// print-tree.c for tree dumps.
-//FIXME//
+//FIXME/// print_llvm_type - Print the specified LLVM type symbolically, called by
+//FIXME/// print-tree.c for tree dumps.
 //FIXMEvoid print_llvm_type(FILE *file, void *LLVM) {
 //FIXME  oFILEstream FS(file);
 //FIXME  FS << "LLVM: ";
@@ -1799,13 +1837,12 @@ void llvm_emit_file_scope_asm(const char *string) {
 //FIXME  WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
 //FIXME}
 
-// Get a register name given its decl.  In 4.2 unlike 4.0 these names
-// have been run through set_user_assembler_name which means they may
-// have a leading \1 at this point; compensate.
-
+/// extractRegisterName - Get a register name given its decl. In 4.2 unlike 4.0
+/// these names have been run through set_user_assembler_name which means they
+/// may have a leading \1 at this point; compensate.
 const char* extractRegisterName(tree decl) {
   const char* Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
-  return (*Name==1) ? Name+1 : Name;
+  return (*Name == 1) ? Name + 1 : Name;
 }
 
 

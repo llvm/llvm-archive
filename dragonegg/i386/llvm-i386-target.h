@@ -210,7 +210,7 @@ extern bool
 llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
                                                 std::vector<const Type*>&);
 
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E)           \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E)       \
   (TARGET_64BIT ?                                                    \
    llvm_x86_64_should_pass_aggregate_in_mixed_regs((T), (TY), (E)) : \
    llvm_x86_32_should_pass_aggregate_in_mixed_regs((T), (TY), (E)))
@@ -220,7 +220,7 @@ bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
                                                     std::vector<const Type*>&,
                                                     bool);
 
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR)           \
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC)       \
   (TARGET_64BIT ?                                                     \
    llvm_x86_64_aggregate_partially_passed_in_regs((E), (SE), (ISR)) : \
    false)

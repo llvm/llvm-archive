@@ -28,6 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define LLVM_INTERNAL_H
 
 // LLVM headers
+#include "llvm/CallingConv.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -151,7 +152,7 @@ public:
   const FunctionType *ConvertFunctionType(tree_node *type,
                                           tree_node *decl,
                                           tree_node *static_chain,
-                                          unsigned &CallingConv,
+                                          CallingConv::ID &CallingConv,
                                           AttrListPtr &PAL);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
@@ -160,7 +161,7 @@ public:
   const FunctionType *ConvertArgListToFnType(tree_node *type,
                                              tree_node *arglist,
                                              tree_node *static_chain,
-                                             unsigned &CallingConv,
+                                             CallingConv::ID &CallingConv,
                                              AttrListPtr &PAL);
   
 private:
@@ -444,6 +445,12 @@ private: // Helper functions.
   Value *EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
   Value *EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size, unsigned Align);
   Value *EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size, unsigned Align);
+
+  /// EmitSjLjDispatcher - Emit SJLJ EH dispatcher
+  void EmitSjLjDispatcher();
+
+  /// EmitSjLjLandingPads - Emit SJLJ EH landing pads.
+  void EmitSjLjLandingPads();
 
   /// EmitLandingPads - Emit EH landing pads.
   void EmitLandingPads();

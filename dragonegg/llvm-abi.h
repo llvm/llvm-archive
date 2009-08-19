@@ -29,9 +29,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define LLVM_ABI_H
 
 // LLVM headers
+#include "llvm/Attributes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Attributes.h"
 #include "llvm/Target/TargetData.h"
 
 // System headers
@@ -218,19 +218,19 @@ static const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset)
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
   *Offset = 0;
   if (Size == 0)
-    return Type::VoidTy;
+    return Type::getVoidTy(getGlobalContext());
   else if (Size == 1)
-    return Type::Int8Ty;
+    return Type::getInt8Ty(getGlobalContext());
   else if (Size == 2)
-    return Type::Int16Ty;
+    return Type::getInt16Ty(getGlobalContext());
   else if (Size <= 4)
-    return Type::Int32Ty;
+    return Type::getInt32Ty(getGlobalContext());
   else if (Size <= 8)
-    return Type::Int64Ty;
+    return Type::getInt64Ty(getGlobalContext());
   else if (Size <= 16)
-    return IntegerType::get(128);
+    return IntegerType::get(getGlobalContext(), 128);
   else if (Size <= 32)
-    return IntegerType::get(256);
+    return IntegerType::get(getGlobalContext(), 256);
 
   return NULL;
 }
@@ -277,7 +277,7 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // registers. The routine should also return by reference a vector of the
 // types of the registers being used. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS
-#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, E) \
+#define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E) \
     false
 #endif
 
@@ -287,12 +287,12 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // the aggregate. Note, this routine should return false if none of the needed
 // registers are available.
 #ifndef LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR) \
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC) \
     false
 #endif
 
 // LLVM_BYVAL_ALIGNMENT - Returns the alignment of the type in bytes, if known,
-// in the context of its use as a function parameter.
+// in the getGlobalContext() of its use as a function parameter.
 // Note that the alignment in the TYPE node is usually the alignment appropriate
 // when the type is used within a struct, which may or may not be appropriate
 // here.
@@ -384,7 +384,7 @@ public:
   void HandleReturnType(tree type, tree fn, bool isBuiltin) {
     unsigned Offset = 0;
     const Type *Ty = ConvertType(type);
-    if (Ty->getTypeID() == Type::VectorTyID) {
+    if (isa<VectorType>(Ty)) {
       // Vector handling is weird on x86.  In particular builtin and
       // non-builtin function of the same return types can use different
       // calling conventions.
@@ -395,7 +395,7 @@ public:
         C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
+    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -441,11 +441,16 @@ public:
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
-    if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
+    if (Ty == Type::getVoidTy(getGlobalContext())) {
+      // Handle void explicitly as an opaque type.
+      const Type *OpTy = OpaqueType::get(getGlobalContext());
+      C.HandleScalarArgument(OpTy, type);
+      ScalarElts.push_back(OpTy);
+    } else if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
       const Type *PtrTy = PointerType::getUnqual(Ty);
       C.HandleByInvisibleReferenceArgument(PtrTy, type);
       ScalarElts.push_back(PtrTy);
-    } else if (Ty->getTypeID()==Type::VectorTyID) {
+    } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
@@ -464,9 +469,12 @@ public:
       ScalarElts.push_back(Ty);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
       C.HandleFCAArgument(Ty, type);
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
+                                                        C.getCallingConv(),
+                                                        Elts)) {
       if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts,
-                                                   C.isShadowReturn()))
+                                                   C.isShadowReturn(),
+                                                   C.getCallingConv()))
         PassInMixedRegisters(type, Ty, Elts, ScalarElts);
       else {
         C.HandleByValArgument(Ty, type);
@@ -591,7 +599,8 @@ public:
     // don't bitcast aggregate value to Int64 if its alignment is different
     // from Int64 alignment. ARM backend needs this.
     unsigned Align = TYPE_ALIGN(type)/8;
-    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    unsigned Int64Align =
+        getTargetData().getABITypeAlignment(Type::getInt64Ty(getGlobalContext()));
     bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
 
     // FIXME: In cases where we can, we should use the original struct.
@@ -606,25 +615,26 @@ public:
     const Type *ArrayElementType = NULL;
     if (ArraySize) {
       Size = Size % ElementSize;
-      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ArrayElementType = (UseInt64) ?
+          Type::getInt64Ty(getGlobalContext()) : Type::getInt32Ty(getGlobalContext());
       ATy = ArrayType::get(ArrayElementType, ArraySize);
       Elts.push_back(ATy);
     }
 
     if (Size >= 4) {
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(getGlobalContext()));
       Size -= 4;
     }
     if (Size >= 2) {
-      Elts.push_back(Type::Int16Ty);
+      Elts.push_back(Type::getInt16Ty(getGlobalContext()));
       Size -= 2;
     }
     if (Size >= 1) {
-      Elts.push_back(Type::Int8Ty);
+      Elts.push_back(Type::getInt8Ty(getGlobalContext()));
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned i = 0;
     if (ArraySize) {
@@ -656,13 +666,13 @@ public:
     // that occupies storage but has no useful information, and is not passed
     // anywhere".  Happens on x86-64.
     std::vector<const Type*> Elts(OrigElts);
-    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
-                                                                 Type::Int64Ty;
+    const Type* wordType = getTargetData().getPointerSize() == 4 ?
+        Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::VoidTy)
+      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
         Elts[i] = wordType;
 
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned Size = getTargetData().getTypeAllocSize(STy);
     const StructType *InSTy = dyn_cast<StructType>(Ty);
@@ -681,7 +691,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::VoidTy) {
+      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))
@@ -730,7 +740,7 @@ public:
   void HandleReturnType(tree type, tree fn, bool isBuiltin) {
     unsigned Offset = 0;
     const Type *Ty = ConvertType(type);
-    if (Ty->getTypeID() == Type::VectorTyID) {
+    if (isa<VectorType>(Ty)) {
       // Vector handling is weird on x86.  In particular builtin and
       // non-builtin function of the same return types can use different
       // calling conventions.
@@ -741,7 +751,7 @@ public:
         C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::VoidTy) {
+    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -819,7 +829,7 @@ public:
       if (Attributes) {
         *Attributes |= Attr;
       }
-    } else if (Ty->getTypeID()==Type::VectorTyID) {
+    } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
         PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
@@ -858,7 +868,7 @@ public:
           Attr |= Attribute::InReg;
           NumGPR = NumArgRegs;
         }
-      } else if (Ty->getTypeID() == Type::PointerTyID) {
+      } else if (isa<PointerType>(Ty)) {
         if (NumGPR < NumArgRegs) {
           NumGPR++;
         } else {
@@ -866,15 +876,16 @@ public:
         }
       // We don't care about arguments passed in Floating-point or vector
       // registers.
-      } else if (!(Ty->isFloatingPoint() ||
-                   Ty->getTypeID() == Type::VectorTyID)) {
+      } else if (!(Ty->isFloatingPoint() || isa<VectorType>(Ty))) {
         abort();
       }
 
       if (Attributes) {
         *Attributes |= Attr;
       }
-    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, Elts)) {
+    } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
+                                                        C.getCallingConv(),
+                                                        Elts)) {
       HOST_WIDE_INT SrcSize = int_size_in_bytes(type);
       
       // With the SVR4 ABI, the only aggregates which are passed in registers
@@ -1031,7 +1042,8 @@ public:
     // don't bitcast aggregate value to Int64 if its alignment is different
     // from Int64 alignment. ARM backend needs this.
     unsigned Align = TYPE_ALIGN(type)/8;
-    unsigned Int64Align = getTargetData().getABITypeAlignment(Type::Int64Ty);
+    unsigned Int64Align =
+        getTargetData().getABITypeAlignment(Type::getInt64Ty(getGlobalContext()));
     bool UseInt64 = DontCheckAlignment ? true : (Align >= Int64Align);
 
     // FIXME: In cases where we can, we should use the original struct.
@@ -1046,25 +1058,26 @@ public:
     const Type *ArrayElementType = NULL;
     if (ArraySize) {
       Size = Size % ElementSize;
-      ArrayElementType = (UseInt64)?Type::Int64Ty:Type::Int32Ty;
+      ArrayElementType = (UseInt64) ?
+          Type::getInt64Ty(getGlobalContext()) : Type::getInt32Ty(getGlobalContext());
       ATy = ArrayType::get(ArrayElementType, ArraySize);
       Elts.push_back(ATy);
     }
 
     if (Size >= 4) {
-      Elts.push_back(Type::Int32Ty);
+      Elts.push_back(Type::getInt32Ty(getGlobalContext()));
       Size -= 4;
     }
     if (Size >= 2) {
-      Elts.push_back(Type::Int16Ty);
+      Elts.push_back(Type::getInt16Ty(getGlobalContext()));
       Size -= 2;
     }
     if (Size >= 1) {
-      Elts.push_back(Type::Int8Ty);
+      Elts.push_back(Type::getInt8Ty(getGlobalContext()));
       Size -= 1;
     }
     assert(Size == 0 && "Didn't cover value?");
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned i = 0;
     if (ArraySize) {
@@ -1098,13 +1111,13 @@ public:
     // that occupies storage but has no useful information, and is not passed
     // anywhere".  Happens on x86-64.
     std::vector<const Type*> Elts(OrigElts);
-    const Type* wordType = getTargetData().getPointerSize() == 4 ? Type::Int32Ty :
-                                                                 Type::Int64Ty;
+    const Type* wordType = getTargetData().getPointerSize() == 4
+      ? Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::VoidTy)
+      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
         Elts[i] = wordType;
 
-    const StructType *STy = StructType::get(Elts, false);
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned Size = getTargetData().getTypeAllocSize(STy);
     const StructType *InSTy = dyn_cast<StructType>(Ty);
@@ -1123,7 +1136,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::VoidTy) {
+      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))

@@ -200,7 +200,7 @@ static const char *getLinkageName(tree Node) {
   // Use llvm value name as linkage name if it is available.
   if (DECL_LLVM_SET_P(Node)) {
     Value *V = DECL_LLVM(Node);
-    return V->getNameStart();
+    return V->getName().data();
   }
 
   tree decl_name = DECL_NAME(Node);
@@ -500,12 +500,13 @@ DIType DebugInfo::createArrayType(tree type) {
       // FIXME - handle dynamic ranges
       tree MinValue = TYPE_MIN_VALUE(Domain);
       tree MaxValue = TYPE_MAX_VALUE(Domain);
-      if (MinValue && MaxValue &&
-          isInt64(MinValue, 0) && isInt64(MaxValue, 0)) {
-        uint64_t Low = getINTEGER_CSTVal(MinValue);
-        uint64_t Hi = getINTEGER_CSTVal(MaxValue);
-        Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
-      }
+      uint64_t Low = 0;
+      uint64_t Hi = 0;
+      if (MinValue && isInt64(MinValue, 0))
+	Low = getINTEGER_CSTVal(MinValue);
+      if (MaxValue && isInt64(MaxValue, 0))
+	Hi = getINTEGER_CSTVal(MaxValue);
+      Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
     }
     EltTy = TREE_TYPE(atype);
   }
@@ -589,7 +590,7 @@ DIType DebugInfo::createStructType(tree type) {
   // recursive) and replace all  uses of the forward declaration with the 
   // final definition. 
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
-  llvm::DIType FwdDecl =
+  llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
                                      GetNodeName(type),
@@ -698,7 +699,7 @@ DIType DebugInfo::createStructType(tree type) {
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
   
-  llvm::DIType RealDecl =
+  llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, findRegion(type),
                                      GetNodeName(type),
                                      getOrCreateCompileUnit(Loc.file),
@@ -709,8 +710,7 @@ DIType DebugInfo::createStructType(tree type) {
   
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
-  FwdDecl.getGV()->eraseFromParent();
+  FwdDecl.replaceAllUsesWith(RealDecl);
   return RealDecl;
 }
 

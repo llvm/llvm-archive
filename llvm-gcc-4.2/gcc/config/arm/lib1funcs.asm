@@ -187,7 +187,7 @@ LSYM(Lend_fde):
 	ldr     lr, [sp], #8 ; \
 	bx      lr
 /* APPLE LOCAL begin v7 support. Merge from mainline */
-#if definded (__thumb2__)
+#if defined (__thumb2__)
 #define RETLDM1(...) \
 	pop     {__VA_ARGS__, lr} ; \
 	bx      lr

@@ -491,9 +491,8 @@ static void LazilyInitializeModule(void) {
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
-  std::string Triple = TheModule->getTargetTriple();
   const Target *TME =
-    TargetRegistry::lookupTarget(Triple, Err);
+    TargetRegistry::lookupTarget(TargetTriple, Err);
   if (!TME)
     llvm_report_error(Err);
 
@@ -506,7 +505,7 @@ static void LazilyInitializeModule(void) {
 //TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
 //TODO  FeatureStr = Features.getString();
 //TODO#endif
-  TheTarget = TME->createTargetMachine(Triple, FeatureStr);
+  TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());

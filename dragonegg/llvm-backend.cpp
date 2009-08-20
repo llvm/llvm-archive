@@ -85,6 +85,7 @@ extern "C" {
 // Plugin headers
 #include "llvm-internal.h"
 #include "llvm-debug.h"
+#include "llvm-file-ostream.h"
 #include "llvm-target.h"
 //TODO#include "llvm-file-ostream.h"
 #include "bits_and_bobs.h"
@@ -1901,6 +1902,13 @@ execute_emit_llvm (void)
   TREE_ASM_WRITTEN(current_function_decl) = 1;
 
   execute_free_datastructures ();
+
+  // When debugging, append the LLVM IR to the dump file.
+  if (dump_file) {
+    oFILEstream dump_stream(dump_file);
+    Fn->print(dump_stream);
+  }
+
   return 0;
 }
 

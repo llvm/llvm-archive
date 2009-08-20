@@ -1953,21 +1953,59 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vtrn:
-  case NEON_BUILTIN_vzip:
-  case NEON_BUILTIN_vuzp: {
-    const StructType *STy = dyn_cast<const StructType>(ResultType);
-    assert(STy && "expected a struct type");
-    const Type *VTy = STy->getElementType(0);
-    switch (neon_code) {
-    case NEON_BUILTIN_vtrn: intID = Intrinsic::arm_neon_vtrn; break;
-    case NEON_BUILTIN_vzip: intID = Intrinsic::arm_neon_vzip; break;
-    case NEON_BUILTIN_vuzp: intID = Intrinsic::arm_neon_vuzp; break;
-    default: assert(false);
+  case NEON_BUILTIN_vtrn: {
+    // Translate this to a pair of vector shuffles.
+    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
+    const Type *Int32Ty = Type::getInt32Ty(Context);
+    for (unsigned Elt = 0; Elt != 2; ++Elt) {
+      std::vector<Constant*> Idxs;
+      for (unsigned i = 0; i < NUnits; i += 2) {
+        Idxs.push_back(ConstantInt::get(Int32Ty, i + Elt));
+        Idxs.push_back(ConstantInt::get(Int32Ty, i + NUnits + Elt));
+      }
+      Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
+                                           ConstantVector::get(Idxs));
+      Value *Addr = Builder.CreateConstInBoundsGEP2_32(DestLoc->Ptr, 0, Elt);
+      Builder.CreateStore(Result, Addr);
     }
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
-    Builder.CreateStore(Result, DestLoc->Ptr);
+    Result = 0;
+    break;
+  }
+
+  case NEON_BUILTIN_vzip: {
+    // Translate this to a pair of vector shuffles.
+    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
+    const Type *Int32Ty = Type::getInt32Ty(Context);
+    unsigned Idx = 0;
+    for (unsigned Elt = 0; Elt != 2; ++Elt) {
+      std::vector<Constant*> Idxs;
+      for (unsigned i = 0; i != NUnits; i += 2) {
+        Idxs.push_back(ConstantInt::get(Int32Ty, Idx));
+        Idxs.push_back(ConstantInt::get(Int32Ty, Idx + NUnits));
+        Idx += 1;
+      }
+      Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
+                                           ConstantVector::get(Idxs));
+      Value *Addr = Builder.CreateConstInBoundsGEP2_32(DestLoc->Ptr, 0, Elt);
+      Builder.CreateStore(Result, Addr);
+    }
+    Result = 0;
+    break;
+  }
+
+  case NEON_BUILTIN_vuzp: {
+    // Translate this to a pair of vector shuffles.
+    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
+    const Type *Int32Ty = Type::getInt32Ty(Context);
+    for (unsigned Elt = 0; Elt != 2; ++Elt) {
+      std::vector<Constant*> Idxs;
+      for (unsigned i = 0; i != NUnits; ++i)
+        Idxs.push_back(ConstantInt::get(Int32Ty, 2 * i + Elt));
+      Result = Builder.CreateShuffleVector(Ops[0], Ops[1],
+                                           ConstantVector::get(Idxs));
+      Value *Addr = Builder.CreateConstInBoundsGEP2_32(DestLoc->Ptr, 0, Elt);
+      Builder.CreateStore(Result, Addr);
+    }
     Result = 0;
     break;
   }

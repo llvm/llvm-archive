@@ -1,0 +1,3 @@
+export target=$TARGET_TRIPLE
+. $GCCSOURCE_DIR/gcc/config.gcc
+echo $cpu_type

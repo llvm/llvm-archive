@@ -468,23 +468,22 @@ static void LazilyInitializeModule(void) {
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
   // now.
-  std::string TargetTriple = "x86_64-linux-gnu"; // FIXME!
-//TODO  std::string TargetTriple = TARGET_NAME;
-//TODO#ifdef LLVM_OVERRIDE_TARGET_ARCH
-//TODO  std::string Arch = LLVM_OVERRIDE_TARGET_ARCH();
-//TODO  if (!Arch.empty()) {
-//TODO    std::string::size_type DashPos = TargetTriple.find('-');
-//TODO    if (DashPos != std::string::npos)// If we have a sane t-t, replace the arch.
-//TODO      TargetTriple = Arch + TargetTriple.substr(DashPos);
-//TODO  }
-//TODO#endif
-//TODO#ifdef LLVM_OVERRIDE_TARGET_VERSION
-//TODO  char *NewTriple;
-//TODO  bool OverRidden = LLVM_OVERRIDE_TARGET_VERSION(TargetTriple.c_str(),
-//TODO                                                 &NewTriple);
-//TODO  if (OverRidden)
-//TODO    TargetTriple = std::string(NewTriple);
-//TODO#endif
+  std::string TargetTriple = TARGET_NAME;
+#ifdef LLVM_OVERRIDE_TARGET_ARCH
+  std::string Arch = LLVM_OVERRIDE_TARGET_ARCH();
+  if (!Arch.empty()) {
+    std::string::size_type DashPos = TargetTriple.find('-');
+    if (DashPos != std::string::npos)// If we have a sane t-t, replace the arch.
+      TargetTriple = Arch + TargetTriple.substr(DashPos);
+  }
+#endif
+#ifdef LLVM_OVERRIDE_TARGET_VERSION
+  char *NewTriple;
+  bool OverRidden = LLVM_OVERRIDE_TARGET_VERSION(TargetTriple.c_str(),
+                                                 &NewTriple);
+  if (OverRidden)
+    TargetTriple = std::string(NewTriple);
+#endif
   TheModule->setTargetTriple(TargetTriple);
 
   TheTypeConverter = new TypeConverter();

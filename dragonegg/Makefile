@@ -8,8 +8,10 @@ PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 
 #CFLAGS+=-I$(GCCPLUGINS_DIR)/include -fPIC -O2
 
+TARGET_TRIPLE:=$(shell $(GCCOBJECT_DIR)/gcc/xgcc -v 2>&1 | grep "^Target:" | sed -e "s/^Target: *//")
+
 CFLAGS+=-Werror -fPIC -g -O2
-CFLAGS+=-DIN_GCC
+CFLAGS+=-DIN_GCC -DTARGET_NAME=\"$(TARGET_TRIPLE)\"
 CFLAGS+=-I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \
 	-I${GCCSOURCE_DIR}/gcc -I${GCCSOURCE_DIR}/include \
 	-I${GCCSOURCE_DIR}/libcpp/include -I${GCCSOURCE_DIR}/libdecnumber \

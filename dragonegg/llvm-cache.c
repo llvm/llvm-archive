@@ -86,4 +86,6 @@ const void *llvm_set_cached (union tree_node *t, const void *val) {
   }
 
   (*slot)->val = val;
+
+  return val;
 }

@@ -2163,6 +2163,16 @@ typedef struct
 #define SUBTARGET_NAME_ENCODING_LENGTHS
 #endif
 
+/* LLVM LOCAL begin default name encoding */
+#ifndef ENABLE_LLVM
+#define DEFAULT_NAME_ENCODING_LENGTHS		\
+  case '*':  return 1;
+#else
+#define DEFAULT_NAME_ENCODING_LENGTHS		\
+  case '\1':  return 1;
+#endif
+/* LLVM LOCAL end default name encoding */
+
 /* This is a C fragment for the inside of a switch statement.
    Each case label should return the number of characters to
    be stripped from the start of a function's name, if that
@@ -2170,14 +2180,14 @@ typedef struct
 /* LLVM LOCAL */
 #if TARGET_MACHO
 #define ARM_NAME_ENCODING_LENGTHS		\
-  case '*':  return 1;				\
+  DEFAULT_NAME_ENCODING_LENGTHS			\
   SUBTARGET_NAME_ENCODING_LENGTHS
 /* LLVM LOCAL begin name encoding */
 #else
 #define ARM_NAME_ENCODING_LENGTHS		\
   case SHORT_CALL_FLAG_CHAR: return 1;		\
   case LONG_CALL_FLAG_CHAR:  return 1;		\
-  case '*':  return 1;				\
+  DEFAULT_NAME_ENCODING_LENGTHS			\
   SUBTARGET_NAME_ENCODING_LENGTHS
 #endif
 /* LLVM LOCAL end name encoding */

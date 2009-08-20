@@ -729,9 +729,11 @@ Function *TreeToLLVM::FinishFunctionBody() {
       SI->setSuccessor(0, SI->getSuccessor(1));
   }
 
-  // Remove any cached LLVM values that are local to this function.  Such values
-  // may be deleted when the optimizers run, so would be dangerous to keep.
-  eraseLocalLLVMValues();
+// Local llvm values should probably just be cached in a local map, making this
+// routine unnecessary.
+//TODO  // Remove any cached LLVM values that are local to this function.  Such values
+//TODO  // may be deleted when the optimizers run, so would be dangerous to keep.
+//TODO  eraseLocalLLVMValues();
 
   // Simplify any values that were uniqued using a no-op bitcast.
   for (std::vector<BitCastInst *>::iterator I = UniquedValues.begin(),

@@ -351,6 +351,32 @@ namespace llvm {
 #undef Declare2
 }
 
+// GuessAtInliningThreshold - Figure out a reasonable threshold to pass llvm's
+// inliner.  There are 12 user-settable gcc params that affect inlining.  llvm
+// (so far) only has one knob; the param that corresponds most closely, and
+// which we use, is max-inline-insns-auto (set by -finline-limit, which is
+// what most users actually use).  This maps only very approximately to what
+// llvm's inliner is doing, but it's the best we've got.
+static unsigned GuessAtInliningThreshold() {
+  unsigned threshold = 200;
+  // Get the default value for gcc's max-inline-insns-auto.  This is the value
+  // after all language and target dependent changes to the global default are
+  // applied, but before parsing the command line.
+  unsigned default_miia = default_max_inline_insns_auto;
+  // See if the actual value is the same as the default.
+  unsigned miia = MAX_INLINE_INSNS_AUTO;
+  if (miia == default_miia) {
+    if (optimize_size || optimize < 3)
+      // Reduce inline limit.
+      threshold = 50;
+  } else {
+    // We have an overriding user-specified value.  Multiply by 20/9, which is
+    // the Magic Number converting 90 to 200.
+    threshold = miia * 20 / 9;
+  }
+  return threshold;
+}
+
 void llvm_initialize_backend(void) {
   // Initialize the LLVM backend.
 #define DoInit2(TARG, MOD)  LLVMInitialize ## TARG ## MOD()
@@ -394,9 +420,6 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (optimize_size || optimize < 3)
-    // Reduce inline limit. Default limit is 200.
-    Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 
@@ -404,6 +427,12 @@ void llvm_initialize_backend(void) {
   // directly from the command line, do so now.  This is mainly for debugging
   // purposes, and shouldn't really be for general use.
   std::vector<std::string> ArgStrings;
+
+  if (flag_inline_trees > 1) {
+    unsigned threshold = GuessAtInliningThreshold();
+    std::string Arg("--inline-threshold="+utostr(threshold));
+    ArgStrings.push_back(Arg);
+  }
 
   if (flag_limited_precision > 0) {
     std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));

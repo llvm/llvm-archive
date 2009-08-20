@@ -73,6 +73,13 @@ const char *const tree_code_class_strings[] =
 tree generic_block_literal_struct_type;
 /* APPLE LOCAL end 6353006  */
 
+/* LLVM LOCAL begin */
+/* The value of MAX_INLINE_INSNS_AUTO after all target-dependent changes
+   are applied to the global default (which many targets do), but before
+   command line flags are handled. */
+unsigned default_max_inline_insns_auto;
+/* LLVM LOCAL end */
+
 /* obstack.[ch] explicitly declined to prototype this.  */
 extern int _obstack_allocated_p (struct obstack *h, void *obj);
 

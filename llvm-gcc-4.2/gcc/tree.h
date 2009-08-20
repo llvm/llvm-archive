@@ -4892,4 +4892,10 @@ extern GTY(()) tree generic_block_literal_struct_type;
 
 /* APPLE LOCAL end radar 6300081  */
 
+/* LLVM LOCAL begin */
+/* The value of MAX_INLINE_INSNS_AUTO after all target-dependent changes
+   are applied to the global default (which many targets do), but before
+   command line flags are handled. */
+extern unsigned default_max_inline_insns_auto;
+/* LLVM LOCAL end */
 #endif  /* GCC_TREE_H  */

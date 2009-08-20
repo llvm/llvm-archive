@@ -454,13 +454,12 @@ void llvm_initialize_backend(void) {
   TheModule->setTargetTriple(TargetTriple);
   
   TheTypeConverter = new TypeConverter();
-  
+
   // Create the TargetMachine we will be generating code with.
   // FIXME: Figure out how to select the target and pass down subtarget info.
   std::string Err;
-  std::string Triple = TheModule->getTargetTriple();
   const Target *TME =
-    TargetRegistry::lookupTarget(Triple, Err);
+    TargetRegistry::lookupTarget(TargetTriple, Err);
   if (!TME) {
     cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
     exit(1);
@@ -475,7 +474,7 @@ void llvm_initialize_backend(void) {
   LLVM_SET_SUBTARGET_FEATURES(Features);
   FeatureStr = Features.getString();
 #endif
-  TheTarget = TME->createTargetMachine(Triple, FeatureStr);
+  TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());

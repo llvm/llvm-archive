@@ -3474,17 +3474,9 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *Amt = Emit(TREE_OPERAND(exp, 1), 0);
 
   if (isa<PointerType>(In->getType())) {
-    const Type *Ty = 0;
-
-    switch (getInt64(TYPE_SIZE (TREE_TYPE (TREE_OPERAND (exp, 0))), true)) {
-    default: assert(0 && "Pointer size in bits not a power of 2!");
-    case 1:  Ty = Type::getInt1Ty(Context);  break;
-    case 8:  Ty = Type::getInt8Ty(Context);  break;
-    case 16: Ty = Type::getInt16Ty(Context); break;
-    case 32: Ty = Type::getInt32Ty(Context); break;
-    case 64: Ty = Type::getInt64Ty(Context); break;
-    }
-
+    const Type *Ty =
+      IntegerType::get(Context,
+                       TYPE_PRECISION(TREE_TYPE (TREE_OPERAND (exp, 0))));
     In = Builder.CreatePtrToInt(In, Ty,
                                 (In->getNameStr()+".cast").c_str());
   }

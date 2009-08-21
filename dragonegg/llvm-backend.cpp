@@ -1981,6 +1981,14 @@ static struct rtl_opt_pass pass_rtl_null =
     }
 };
 
+/// llvm_plugin_info - Information about this plugin.  Users can access this
+/// using "gcc --help -v".
+static struct plugin_info llvm_plugin_info = {
+  REVISION,	// version
+  // TODO provide something useful here
+  NULL		// help
+};
+
 /// plugin_init - The initialization routine called by GCC.  Defined in
 /// gcc-plugin.h.
 int plugin_init (struct plugin_name_args *plugin_info,
@@ -2021,6 +2029,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
       }
     }
   }
+
+  // Provide our version and help information.
+  register_callback (plugin_name, PLUGIN_INFO, NULL, &llvm_plugin_info);
 
   // Replace rtl expansion with gimple to LLVM conversion.
   pass_info.pass = &pass_emit_llvm.pass;

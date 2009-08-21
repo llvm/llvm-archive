@@ -3320,8 +3320,7 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
 
   if (isa<PointerType>(In->getType())) {
     const Type *Ty =
-      IntegerType::get(Context,
-                       TYPE_PRECISION(TREE_TYPE (TREE_OPERAND (exp, 0))));
+      IntegerType::get(TYPE_PRECISION(TREE_TYPE (TREE_OPERAND (exp, 0))));
     In = Builder.CreatePtrToInt(In, Ty,
                                 (In->getNameStr()+".cast").c_str());
   }

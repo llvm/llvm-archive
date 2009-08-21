@@ -2479,3 +2479,14 @@ extern int sparc_indent_opcode;
 
 /* The number of Pmode words for the setjmp buffer.  */
 #define JMP_BUF_SIZE 12
+
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME Sparc
+
+#endif /* ENABLE_LLVM */
+/* LLVM LOCAL end */

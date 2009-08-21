@@ -567,3 +567,13 @@ targetm.resolve_overloaded_builtin = spu_resolve_overloaded_builtin;	\
 extern GTY(()) rtx spu_compare_op0;
 extern GTY(()) rtx spu_compare_op1;
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME CellSPU
+
+#endif /* ENABLE_LLVM */
+/* LLVM LOCAL end */

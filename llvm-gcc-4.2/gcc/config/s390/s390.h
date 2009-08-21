@@ -30,6 +30,16 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include <config/s390/fixdfdi.h>
 #endif
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME SystemZ
+#endif
+/* LLVM LOCAL end */
+
+
 /* Which processor to generate code or schedule for. The cpu attribute
    defines a list that mirrors this list, so changes to s390.md must be
    made at the same time.  */

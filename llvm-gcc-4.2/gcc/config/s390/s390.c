@@ -52,6 +52,11 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "optabs.h"
 #include "tree-gimple.h"
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#undef INSN_SCHEDULING
+#endif
+/* LLVM LOCAL end */
 
 /* Define the specific costs for a given cpu.  */
 
@@ -4196,7 +4201,9 @@ s390_expand_cs_hqi (enum machine_mode mode, rtx target, rtx mem, rtx cmp, rtx ne
   if (ac.aligned && MEM_P (cmp))
     {
       cmpv = force_reg (SImode, val);
-      store_bit_field (cmpv, GET_MODE_BITSIZE (mode), 0, SImode, cmp);
+      /* LLVM LOCAL begin */
+      store_bit_field (cmpv, GET_MODE_BITSIZE (mode), 0, SImode, cmp, NULL_TREE);
+      /* LLVM LOCAL end */
     }
   else
     cmpv = force_reg (SImode, expand_simple_binop (SImode, IOR, cmp, val,
@@ -4204,7 +4211,9 @@ s390_expand_cs_hqi (enum machine_mode mode, rtx target, rtx mem, rtx cmp, rtx ne
   if (ac.aligned && MEM_P (new))
     {
       newv = force_reg (SImode, val);
-      store_bit_field (newv, GET_MODE_BITSIZE (mode), 0, SImode, new);
+      /* LLVM LOCAL begin */
+      store_bit_field (newv, GET_MODE_BITSIZE (mode), 0, SImode, new, NULL_TREE);
+      /* LLVM LOCAL end */
     }
   else
     newv = force_reg (SImode, expand_simple_binop (SImode, IOR, new, val,
@@ -4281,7 +4290,9 @@ s390_expand_atomic (enum machine_mode mode, enum rtx_code code,
       /* FALLTHRU */
     case SET: 
       if (ac.aligned && MEM_P (val))
-	store_bit_field (new, GET_MODE_BITSIZE (mode), 0, SImode, val);
+        /* LLVM LOCAL begin */
+	store_bit_field (new, GET_MODE_BITSIZE (mode), 0, SImode, val, NULL_TREE);
+	/* LLVM LOCAL end */
       else
 	{
 	  new = expand_simple_binop (SImode, AND, new, ac.modemaski,
@@ -5033,7 +5044,11 @@ s390_split_branches (void)
 
   /* We need correct insn addresses.  */
 
+  /* LLVM LOCAL begin */
+#ifdef INSN_SCHEDULING
   shorten_branches (get_insns ());
+#endif
+  /* LLVM LOCAL end */
 
   /* Find all branches that exceed 64KB, and split them.  */
 
@@ -5724,7 +5739,11 @@ s390_mainpool_finish (struct constant_pool *pool)
     }
 
   /* We need correct insn addresses.  */
+  /* LLVM LOCAL begin */
+#ifdef INSN_SCHEDULING
   shorten_branches (get_insns ());
+#endif
+  /* LLVM LOCAL end */
 
   /* On zSeries, we use a LARL to load the pool register.  The pool is
      located in the .rodata section, so we emit it after the function.  */
@@ -5848,8 +5867,11 @@ s390_chunkify_start (void)
 
 
   /* We need correct insn addresses.  */
-
+  /* LLVM LOCAL begin */
+#ifdef INSN_SCHEDULING
   shorten_branches (get_insns ());
+#endif
+  /* LLVM LOCAL end */
 
   /* Scan all insns and move literals to pool chunks.  */
 
@@ -6092,7 +6114,11 @@ s390_chunkify_start (void)
   /* Recompute insn addresses.  */
 
   init_insn_lengths ();
+  /* LLVM LOCAL begin */
+#ifdef INSN_SCHEDULING
   shorten_branches (get_insns ());
+#endif
+  /* LLVM LOCAL end */
 
   return pool_list;
 }

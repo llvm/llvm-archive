@@ -1160,6 +1160,7 @@ LLVMTARGETCOMPONENT := \
     sparcv9-*-*) echo sparc;; \
     spu-*-*) echo cellspu;; \
     tce-*-*) echo tce;; \
+    s390x-*-*) echo systemz;; \
    esac
 LLVMTARGETOBJ := $(shell $(LLVMTARGETCOMPONENT))
 

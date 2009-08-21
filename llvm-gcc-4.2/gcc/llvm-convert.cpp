@@ -3317,6 +3317,11 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
 Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *In  = Emit(TREE_OPERAND(exp, 0), 0);
   Value *Amt = Emit(TREE_OPERAND(exp, 1), 0);
+
+  if (isa<PointerType>(In->getType()))
+    In = Builder.CreatePtrToInt(In, Amt->getType(),
+                                (In->getNameStr()+".cast").c_str());
+
   if (Amt->getType() != In->getType())
     Amt = Builder.CreateIntCast(Amt, In->getType(), false,
                                 (Amt->getName()+".cast").c_str());

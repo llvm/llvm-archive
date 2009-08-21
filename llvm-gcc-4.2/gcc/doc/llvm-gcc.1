@@ -16,7 +16,7 @@ llvm-gcc is a C, C++, Objective-C and Objective-C++ compiler. llvm-gcc uses gcc 
 .Pp
 .Bl -tag -width -indent
 .It Fl flto
-Enables Link Time Optimization. Link Time Optimization is performed by ld(1) transparently using the LLVM optimizer. The object file generated contains intermediate LLVM bitcode instead of Mach-O objects.
+Enables Link Time Optimization. Link Time Optimization is performed by ld(1) transparently using the LLVM optimizer. The object file generated contains intermediate LLVM bitcode instead of Mach-O objects. This option disables debugging information.
 .It Fl O4
 Enables Link Time Optimization in addition to all optimizations enabled at -O3.
 .El

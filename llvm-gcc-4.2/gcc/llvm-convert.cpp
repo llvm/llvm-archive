@@ -2159,7 +2159,21 @@ void TreeToLLVM::EmitUnwindBlock() {
     // Fetch and store exception handler.
     Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
     assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
+
+    // As we're emitting a naked call (not an expression) going through
+    // EmitCallOf would be wasteful and incorrect. Manually adjust
+    // the calling convention for this call here if necessary.
+#ifdef TARGET_ADJUST_LLVM_CC
+    tree fntype = TREE_TYPE(llvm_unwind_resume_libfunc);
+    CallingConv::ID CallingConvention = CallingConv::C;
+
+    TARGET_ADJUST_LLVM_CC(CallingConvention, fntype);
+    CallInst *Call = Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc),
+					Arg);
+    Call->setCallingConv(CallingConvention);
+#else
     Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
+#endif
     Builder.CreateUnreachable();
   }
 }

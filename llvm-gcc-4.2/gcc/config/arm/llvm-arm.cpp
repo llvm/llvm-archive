@@ -241,28 +241,6 @@ static bool isValidLane(Value *LnOp, int NUnits, unsigned *pLaneVal = 0) {
   return true;
 }
 
-/// GetVldstType - Get the vector type of a NEON vector load/store instruction.
-/// For NEON vector structs used in vldN/vstN instruction (2 <= N <= 4), GCC
-/// treats NEON vector structs as scalars, but LLVM uses wide vector types
-/// that combine all the vectors in a struct.  For example, int8x8x4 (4 int8x8
-/// vectors) is treated as a single vector of 32 i8 elements.  Since none of
-/// the instruction operands identify the vector mode, get the element type
-/// from the pointer type of the first argument and the total size from the
-/// result mode.
-static const VectorType *
-GetVldstType(tree exp, enum machine_mode ResultMode) {
-  tree FnDecl = get_callee_fndecl(exp);
-  tree ArgTy = TREE_VALUE(TYPE_ARG_TYPES(TREE_TYPE(FnDecl)));
-  assert(ArgTy && POINTER_TYPE_P (ArgTy) && "Expected a pointer type!");
-  enum machine_mode ElemMode = TYPE_MODE(TREE_TYPE(ArgTy));
-  // Note: Because of a field size limitation in GCC, the NEON XI mode is
-  // defined as 511 bits instead of 512.  Add one below to adjust for this.
-  unsigned NumElems =
-    (GET_MODE_BITSIZE(ResultMode) + 1) / GET_MODE_BITSIZE(ElemMode);
-  const Type *ElemType = ConvertType(TREE_TYPE(ArgTy));
-  return VectorType::get(ElemType, NumElems);
-}
-
 /// TargetIntrinsicLower - To handle builtins, we want to expand the
 /// invocation into normal LLVM code.  If the target can handle the builtin,
 /// this function should emit the expanded code and return true.
@@ -2051,74 +2029,97 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vld1_lane:
+  case NEON_BUILTIN_vld1_lane: {
+    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[0].mode);
+    if (!isValidLane(Ops[2], NUnits))
+      return UnexpectedError("%Hinvalid lane number", exp, Result);
+    Value *Elt = Builder.CreateLoad(Ops[0]);
+    Result = Builder.CreateInsertElement(Ops[1], Elt, Ops[2]);
+    break;
+  }
+
   case NEON_BUILTIN_vld2_lane:
   case NEON_BUILTIN_vld3_lane:
   case NEON_BUILTIN_vld4_lane: {
-    const VectorType *VTy =
-      GetVldstType(exp, insn_data[icode].operand[0].mode);
-    unsigned LaneVal, NumVecs = 0;
+    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+    if (!isValidLane(Ops[2], VTy->getNumElements()))
+      return UnexpectedError("%Hinvalid lane number", exp, Result);
     switch (neon_code) {
-    case NEON_BUILTIN_vld1_lane: NumVecs = 1; break;
+    case NEON_BUILTIN_vld2_lane: intID = Intrinsic::arm_neon_vld2lane; break;
+    case NEON_BUILTIN_vld3_lane: intID = Intrinsic::arm_neon_vld3lane; break;
+    case NEON_BUILTIN_vld4_lane: intID = Intrinsic::arm_neon_vld4lane; break;
+    default: assert(false);
+    }
+    intOpTypes[0] = VTy;
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+    unsigned NumVecs = 0;
+    switch (neon_code) {
     case NEON_BUILTIN_vld2_lane: NumVecs = 2; break;
     case NEON_BUILTIN_vld3_lane: NumVecs = 3; break;
     case NEON_BUILTIN_vld4_lane: NumVecs = 4; break;
     default: assert(false);
     }
-    unsigned NUnits = VTy->getNumElements() / NumVecs;
-    if (!isValidLane(Ops[2], NUnits, &LaneVal))
-      return UnexpectedError("%Hinvalid lane number", exp, Result);
-    Result = BitCastToType(Ops[1], VTy);
+    std::vector<Value*> Args;
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+    Args.push_back(BitCastToType(Ops[0], VPTy));
     for (unsigned n = 0; n != NumVecs; ++n) {
-      Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
-      Value *Elt = Builder.CreateLoad(Addr);
-      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context),
-                                          LaneVal + (n * NUnits));
-      Result = Builder.CreateInsertElement(Result, Elt, Ndx);
+      Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
-    Type *PtrToWideVec = PointerType::getUnqual(VTy);
-    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+    Args.push_back(Ops[2]); // lane number
+    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
   }
 
   case NEON_BUILTIN_vld1_dup:
+    Result = BuildDup(ResultType, Builder.CreateLoad(Ops[0]), Builder);
+    break;
+
   case NEON_BUILTIN_vld2_dup:
   case NEON_BUILTIN_vld3_dup:
   case NEON_BUILTIN_vld4_dup: {
-    const VectorType *VTy =
-      GetVldstType(exp, insn_data[icode].operand[0].mode);
+    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+
+    // First use a vldN_lane intrinsic to load into lane 0 of undef vectors.
+    switch (neon_code) {
+    case NEON_BUILTIN_vld2_dup: intID = Intrinsic::arm_neon_vld2lane; break;
+    case NEON_BUILTIN_vld3_dup: intID = Intrinsic::arm_neon_vld3lane; break;
+    case NEON_BUILTIN_vld4_dup: intID = Intrinsic::arm_neon_vld4lane; break;
+    default: assert(false);
+    }
+    intOpTypes[0] = VTy;
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
     unsigned NumVecs = 0;
     switch (neon_code) {
-    case NEON_BUILTIN_vld1_dup: NumVecs = 1; break;
     case NEON_BUILTIN_vld2_dup: NumVecs = 2; break;
     case NEON_BUILTIN_vld3_dup: NumVecs = 3; break;
     case NEON_BUILTIN_vld4_dup: NumVecs = 4; break;
     default: assert(false);
     }
-    unsigned NUnits = VTy->getNumElements() / NumVecs;
-    Result = UndefValue::get(VTy);
+    std::vector<Value*> Args;
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+    Args.push_back(BitCastToType(Ops[0], VPTy));
     for (unsigned n = 0; n != NumVecs; ++n) {
-      Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
-      Value *Elt = Builder.CreateLoad(Addr);
-      // Insert the value into one lane of the result.
-      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context), n * NUnits);
-      Result = Builder.CreateInsertElement(Result, Elt, Ndx);
+      Args.push_back(UndefValue::get(VTy));
     }
-    // Use a shuffle to move the value into the other lanes of the vector.
-    if (NUnits > 1) {
-      std::vector<Constant*> Idxs;
-      for (unsigned n = 0; n != NumVecs; ++n) {
-        for (unsigned i = 0; i != NUnits; ++i)
-          Idxs.push_back(ConstantInt::get(Type::getInt32Ty(Context), n * NUnits));
-      }
-      Result = Builder.CreateShuffleVector(Result, UndefValue::get(VTy),
-                                           ConstantVector::get(Idxs));
+    Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), 0));
+    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+
+    // Now splat the values in lane 0 to the rest of the elements.
+    for (unsigned n = 0; n != NumVecs; ++n) {
+      Value *Vec = Builder.CreateExtractValue(Result, n);
+      Vec = BuildDupLane(Vec, 0, VTy->getNumElements(), Builder);
+      Result = Builder.CreateInsertValue(Result, Vec, n);
     }
-    Type *PtrToWideVec = PointerType::getUnqual(VTy);
-    Builder.CreateStore(Result, BitCastToType(DestLoc->Ptr, PtrToWideVec));
+
+    Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
   }
@@ -2156,7 +2157,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     std::vector<Value*> Args;
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     Args.push_back(BitCastToType(Ops[0], VPTy));
-    for (unsigned n = 0; n < NumVecs; ++n) {
+    for (unsigned n = 0; n != NumVecs; ++n) {
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
     Builder.CreateCall(intFn, Args.begin(), Args.end());
@@ -2164,34 +2165,47 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
   }
 
-  case NEON_BUILTIN_vst1_lane:
+  case NEON_BUILTIN_vst1_lane: {
+    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[1].mode);
+    if (!isValidLane(Ops[2], NUnits))
+      return UnexpectedError("%Hinvalid lane number", exp, Result);
+    Builder.CreateStore(Builder.CreateExtractElement(Ops[1], Ops[2]), Ops[0]);
+    Result = 0;
+    break;
+  }
+
   case NEON_BUILTIN_vst2_lane:
   case NEON_BUILTIN_vst3_lane:
   case NEON_BUILTIN_vst4_lane: {
-    const VectorType *VTy =
-      GetVldstType(exp, insn_data[icode].operand[1].mode);
-    unsigned LaneVal, NumVecs = 0;
+    const StructType *STy = dyn_cast<const StructType>(Ops[1]->getType());
+    assert(STy && "expected a struct type");
+    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    assert(VTy && "expected a vector type");
+    if (!isValidLane(Ops[2], VTy->getNumElements()))
+      return UnexpectedError("%Hinvalid lane number", exp, Result);
     switch (neon_code) {
-    case NEON_BUILTIN_vst1_lane: NumVecs = 1; break;
+    case NEON_BUILTIN_vst2_lane: intID = Intrinsic::arm_neon_vst2lane; break;
+    case NEON_BUILTIN_vst3_lane: intID = Intrinsic::arm_neon_vst3lane; break;
+    case NEON_BUILTIN_vst4_lane: intID = Intrinsic::arm_neon_vst4lane; break;
+    default: assert(false);
+    }
+    intOpTypes[0] = VTy;
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+    unsigned NumVecs = 0;
+    switch (neon_code) {
     case NEON_BUILTIN_vst2_lane: NumVecs = 2; break;
     case NEON_BUILTIN_vst3_lane: NumVecs = 3; break;
     case NEON_BUILTIN_vst4_lane: NumVecs = 4; break;
     default: assert(false);
     }
-    unsigned NUnits = VTy->getNumElements() / NumVecs;
-    if (!isValidLane(Ops[2], NUnits, &LaneVal))
-      return UnexpectedError("%Hinvalid lane number", exp, Result);
-    Value *Tmp = CreateTemporary(VTy);
-    Type *PtrToStruct = PointerType::getUnqual(Ops[1]->getType());
-    Builder.CreateStore(Ops[1], BitCastToType(Tmp, PtrToStruct));
-    Value *Vec = Builder.CreateLoad(Tmp);
+    std::vector<Value*> Args;
+    Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+    Args.push_back(BitCastToType(Ops[0], VPTy));
     for (unsigned n = 0; n != NumVecs; ++n) {
-      Value *Addr = (n == 0) ? Ops[0] :
-        Builder.CreateGEP(Ops[0], ConstantInt::get(Type::getInt32Ty(Context), n));
-      Value *Ndx = ConstantInt::get(Type::getInt32Ty(Context),
-                                          LaneVal + (n * NUnits));
-      Builder.CreateStore(Builder.CreateExtractElement(Vec, Ndx), Addr);
+      Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
+    Args.push_back(Ops[2]); // lane number
+    Builder.CreateCall(intFn, Args.begin(), Args.end());
     Result = 0;
     break;
   }

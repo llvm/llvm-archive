@@ -1815,9 +1815,13 @@ void llvm_emit_file_scope_asm(const char *string) {
 /// print_llvm - Print the specified LLVM chunk like an operand, called by
 /// print-tree.c for tree dumps.
 void print_llvm(FILE *file, void *LLVM) {
+  // FIXME: oFILEstream can probably be removed in favor of a new raw_ostream
+  // adaptor which would be simpler and more efficient.  In the meantime, just
+  // adapt the adaptor.
   oFILEstream FS(file);
-  FS << "LLVM: ";
-  WriteAsOperand(FS, (Value*)LLVM, true, TheModule);
+  raw_os_ostream FSS(FS);
+  FSS << "LLVM: ";
+  WriteAsOperand(FSS, (Value*)LLVM, true, TheModule);
 }
 
 /// print_llvm_type - Print the specified LLVM type symbolically, called by

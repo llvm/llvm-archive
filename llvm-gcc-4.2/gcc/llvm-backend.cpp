@@ -49,7 +49,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/System/Program.h"
 
@@ -93,8 +92,6 @@ DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
-llvm::OStream *AsmOutFile = 0;
-llvm::OStream *AsmIntermediateOutFile = 0;
 
 /// DisableLLVMOptimizations - Allow the user to specify:
 /// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
@@ -490,7 +487,7 @@ void llvm_initialize_backend(void) {
   const Target *TME =
     TargetRegistry::lookupTarget(TargetTriple, Err);
   if (!TME) {
-    cerr << "Did not get a target machine! Triplet is " << TargetTriple << '\n';
+    errs() << "Did not get a target machine! Triplet is " << TargetTriple<<'\n';
     exit(1);
   }
 
@@ -577,8 +574,8 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   }
 
   if (!TheModule) {
-    cerr << "Error reading bytecodes from PCH file\n";
-    cerr << ErrMsg << "\n";
+    errs() << "Error reading bytecodes from PCH file\n";
+    errs() << ErrMsg << "\n";
     exit(1);
   }
 
@@ -605,7 +602,6 @@ void llvm_pch_write_init(void) {
   AsmOutRawStream =
     new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
                               formatted_raw_ostream::DELETE_STREAM);
-  AsmOutFile = new OStream(*AsmOutStream);
 
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
@@ -689,7 +685,7 @@ static void createPerFunctionOptimizationPasses() {
                                            OptLevel)) {
     default:
     case FileModel::Error:
-      cerr << "Error interfacing to target machine!\n";
+      errs() << "Error interfacing to target machine!\n";
       exit(1);
     case FileModel::AsmFile:
       break;
@@ -697,7 +693,7 @@ static void createPerFunctionOptimizationPasses() {
 
     if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
                                              OptLevel)) {
-      cerr << "Error interfacing to target machine!\n";
+      errs() << "Error interfacing to target machine!\n";
       exit(1);
     }
   }
@@ -784,7 +780,7 @@ static void createPerModuleOptimizationPasses() {
                                              OptLevel)) {
       default:
       case FileModel::Error:
-        cerr << "Error interfacing to target machine!\n";
+        errs() << "Error interfacing to target machine!\n";
         exit(1);
       case FileModel::AsmFile:
         break;
@@ -792,7 +788,7 @@ static void createPerModuleOptimizationPasses() {
 
       if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
                                                OptLevel)) {
-        cerr << "Error interfacing to target machine!\n";
+        errs() << "Error interfacing to target machine!\n";
         exit(1);
       }
     }
@@ -812,8 +808,6 @@ void llvm_asm_file_start(void) {
   AsmOutRawStream =
     new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
                               formatted_raw_ostream::DELETE_STREAM);
-  AsmOutFile = new OStream(*AsmOutStream);
-
   flag_llvm_pch_read = 0;
 
   if (emit_llvm_bc || emit_llvm)
@@ -946,7 +940,6 @@ void llvm_asm_file_end(void) {
     strcat(&asm_intermediate_out_filename[0],".0");
     FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
     AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
-    AsmIntermediateOutFile = new OStream(*AsmIntermediateOutStream);
     raw_ostream *AsmIntermediateRawOutStream = 
       new raw_os_ostream(*AsmIntermediateOutStream);
     if (emit_llvm_bc)
@@ -961,8 +954,6 @@ void llvm_asm_file_end(void) {
     fflush(asm_intermediate_out_file);
     delete AsmIntermediateOutStream;
     AsmIntermediateOutStream = 0;
-    delete AsmIntermediateOutFile;
-    AsmIntermediateOutFile = 0;
   }
 
   // Run module-level optimizers, if any are present.
@@ -987,8 +978,6 @@ void llvm_asm_file_end(void) {
   AsmOutRawStream = 0;
   delete AsmOutStream;
   AsmOutStream = 0;
-  delete AsmOutFile;
-  AsmOutFile = 0;
   timevar_pop(TV_LLVM_PERFILE);
 }
 

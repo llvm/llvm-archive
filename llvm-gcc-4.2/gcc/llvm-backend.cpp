@@ -616,7 +616,7 @@ void llvm_pch_write_init(void) {
 
   // Emit an LLVM .bc file to the output.  This is used when passed
   // -emit-llvm -c to the GCC driver.
-  PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
+  PerModulePasses->add(createBitcodeWriterPass(*AsmOutRawStream));
   
   // Disable emission of .ident into the output file... which is completely
   // wrong for llvm/.bc emission cases.
@@ -750,7 +750,7 @@ static void createPerModuleOptimizationPasses() {
   if (emit_llvm_bc) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
-    PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
+    PerModulePasses->add(createBitcodeWriterPass(*AsmOutRawStream));
     HasPerModulePasses = true;
   } else if (emit_llvm) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
@@ -950,7 +950,7 @@ void llvm_asm_file_end(void) {
     raw_ostream *AsmIntermediateRawOutStream = 
       new raw_os_ostream(*AsmIntermediateOutStream);
     if (emit_llvm_bc)
-      IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
+     IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateRawOutStream));
     if (emit_llvm)
       IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
     IntermediatePM->run(*TheModule);

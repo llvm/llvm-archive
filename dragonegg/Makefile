@@ -27,4 +27,4 @@ llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ ${LDFLAGS}
 
 clean::
-	rm -f *.o *.so
+	rm -f *.o *.so $(ARCH_DIR)/*.o

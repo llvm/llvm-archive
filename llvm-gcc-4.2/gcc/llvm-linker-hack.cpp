@@ -33,7 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 
@@ -47,7 +47,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 void dummy_function() {
   llvm::ModuleProvider *MP = new llvm::ExistingModuleProvider(0);
   llvm::LLVMContext Ctxt;
-
+  llvm::raw_os_ostream XXStr(*(std::ostream*)0);
   llvm::createVerifierPass();
   llvm::createBitcodeWriterPass(llvm::outs());
   llvm::WriteBitcodeToFile(0, llvm::outs());

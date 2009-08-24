@@ -2008,14 +2008,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
 
   // Check that the running gcc is the same as the gcc we were built against.
   // If not, refuse to load.  This seems wise when developing against a fast
-  // moving gcc tree.
-  // TODO: Make the check milder if doing a "release build".
+  // moving gcc tree.  TODO: Use a milder check if doing a "release build".
   if (!plugin_default_version_check (version, &gcc_version)) {
-    // TODO: calling a gcc routine when there is a version mismatch is
-    // dangerous.  On the other hand, failing without an explanation is
-    // obscure.  Could send a message to std::cerr instead, but bypassing
-    // the gcc error reporting and translating mechanism is kind of sucky.
-    error(G_("plugin %qs: gcc version mismatch"), plugin_name);
+    errs() << "Incompatible plugin version\n";
     return 1;
   }
 

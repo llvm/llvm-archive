@@ -682,12 +682,6 @@ decode_options (unsigned int argc, const char **argv)
   OPTIMIZATION_OPTIONS (optimize, optimize_size);
 #endif
 
-  /* LLVM LOCAL begin hook up -finline-limit */
-  /* Remember the value of MAX_INLINE_INSNS_AUTO after applying target-dependent
-     changes to the defaults, but before command line options are parsed. */
-  default_max_inline_insns_auto = MAX_INLINE_INSNS_AUTO;
-  /* LLVM LOCAL end */
-
   /* APPLE LOCAL begin AV 3846092 */
   /* We have apple local patch to disable -fstrict-aliasing when -O2 is used.
      However do not disable it when -ftree-vectorize is used. Clobber its value

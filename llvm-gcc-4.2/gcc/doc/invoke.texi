@@ -5402,6 +5402,12 @@ parameters controlling inlining.
 abstract measurement of function's size.  In no way does it represent a count
 of assembly instructions and as such its exact meaning might change from one
 release to an another.
+@c LLVM LOCAL begin
+This option has no effect in llvm-gcc.  The always_inline and noinline
+parameters are honored, but none of the other inlining parameters have any
+effect; there is no specific user control on the amount of inlining done.  The
+compiler will do less inlining at -O2 or -Os than at -O3.
+@c LLVM LOCAL end
 
 @item -fkeep-inline-functions
 @opindex fkeep-inline-functions

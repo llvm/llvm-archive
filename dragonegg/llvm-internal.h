@@ -36,8 +36,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/TargetFolder.h"
+#include "llvm/Support/raw_os_ostream.h"
 
 // System headers
 #include <vector>
@@ -84,10 +84,6 @@ extern TargetFolder *TheFolder;
 
 /// getTargetData - Return the current TargetData object from TheTarget.
 const TargetData &getTargetData();
-
-/// AsmOutFile - A C++ ostream wrapper around asm_out_file.
-///
-extern llvm::OStream *AsmOutFile;
 
 /// AttributeUsedGlobals - The list of globals that are marked attribute(used).
 extern SmallSetVector<Constant *,32> AttributeUsedGlobals;

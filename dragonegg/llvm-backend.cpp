@@ -47,7 +47,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/System/Program.h"
 
@@ -108,8 +107,6 @@ DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
-llvm::OStream *AsmOutFile = 0;
-llvm::OStream *AsmIntermediateOutFile = 0;
 
 /// DisableLLVMOptimizations - Allow the user to specify:
 /// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
@@ -352,6 +349,32 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
+//TODO// GuessAtInliningThreshold - Figure out a reasonable threshold to pass llvm's
+//TODO// inliner.  There are 12 user-settable gcc params that affect inlining.  llvm
+//TODO// (so far) only has one knob; the param that corresponds most closely, and
+//TODO// which we use, is max-inline-insns-auto (set by -finline-limit, which is
+//TODO// what most users actually use).  This maps only very approximately to what
+//TODO// llvm's inliner is doing, but it's the best we've got.
+//TODOstatic unsigned GuessAtInliningThreshold() {
+//TODO  unsigned threshold = 200;
+//TODO  // Get the default value for gcc's max-inline-insns-auto.  This is the value
+//TODO  // after all language and target dependent changes to the global default are
+//TODO  // applied, but before parsing the command line.
+//TODO  unsigned default_miia = default_max_inline_insns_auto;
+//TODO  // See if the actual value is the same as the default.
+//TODO  unsigned miia = MAX_INLINE_INSNS_AUTO;
+//TODO  if (miia == default_miia) {
+//TODO    if (optimize_size || optimize < 3)
+//TODO      // Reduce inline limit.
+//TODO      threshold = 50;
+//TODO  } else {
+//TODO    // We have an overriding user-specified value.  Multiply by 20/9, which is
+//TODO    // the Magic Number converting 90 to 200.
+//TODO    threshold = miia * 20 / 9;
+//TODO  }
+//TODO  return threshold;
+//TODO}
+
 #ifndef LLVM_TARGET_NAME
 #error LLVM_TARGET_NAME macro not specified by GCC backend
 #endif
@@ -415,9 +438,6 @@ static void LazilyConfigureLLVM(void) {
 //TODO    Args.push_back("--debug-pass=Structure");
 //TODO  if (flag_debug_pass_arguments)
 //TODO    Args.push_back("--debug-pass=Arguments");
-//TODO  if (optimize_size || optimize < 3)
-//TODO    // Reduce inline limit. Default limit is 200.
-//TODO    Args.push_back("--inline-threshold=50");
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 
@@ -425,6 +445,12 @@ static void LazilyConfigureLLVM(void) {
 //TODO  // directly from the command line, do so now.  This is mainly for debugging
 //TODO  // purposes, and shouldn't really be for general use.
 //TODO  std::vector<std::string> ArgStrings;
+//TODO
+//TODO  if (flag_inline_trees > 1) {
+//TODO    unsigned threshold = GuessAtInliningThreshold();
+//TODO    std::string Arg("--inline-threshold="+utostr(threshold));
+//TODO    ArgStrings.push_back(Arg);
+//TODO  }
 //TODO
 //TODO  if (flag_limited_precision > 0) {
 //TODO    std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
@@ -588,8 +614,8 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  }
 //TODO
 //TODO  if (!TheModule) {
-//TODO    cerr << "Error reading bytecodes from PCH file\n";
-//TODO    cerr << ErrMsg << "\n";
+//TODO    errs() << "Error reading bytecodes from PCH file\n";
+//TODO    errs() << ErrMsg << "\n";
 //TODO    exit(1);
 //TODO  }
 //TODO
@@ -616,7 +642,6 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  AsmOutRawStream =
 //TODO    new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
 //TODO                              formatted_raw_ostream::DELETE_STREAM);
-//TODO  AsmOutFile = new OStream(*AsmOutStream);
 //TODO
 //TODO  PerModulePasses = new PassManager();
 //TODO  PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
@@ -700,7 +725,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO                                           OptLevel)) {
 //TODO    default:
 //TODO    case FileModel::Error:
-//TODO      cerr << "Error interfacing to target machine!\n";
+//TODO      errs() << "Error interfacing to target machine!\n";
 //TODO      exit(1);
 //TODO    case FileModel::AsmFile:
 //TODO      break;
@@ -708,7 +733,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO
 //TODO    if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
 //TODO                                             OptLevel)) {
-//TODO      cerr << "Error interfacing to target machine!\n";
+//TODO      errs() << "Error interfacing to target machine!\n";
 //TODO      exit(1);
 //TODO    }
 //TODO  }
@@ -795,7 +820,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO                                             OptLevel)) {
 //TODO      default:
 //TODO      case FileModel::Error:
-//TODO        cerr << "Error interfacing to target machine!\n";
+//TODO        errs() << "Error interfacing to target machine!\n";
 //TODO        exit(1);
 //TODO      case FileModel::AsmFile:
 //TODO        break;
@@ -803,7 +828,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO
 //TODO      if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
 //TODO                                               OptLevel)) {
-//TODO        cerr << "Error interfacing to target machine!\n";
+//TODO        errs() << "Error interfacing to target machine!\n";
 //TODO        exit(1);
 //TODO      }
 //TODO    }
@@ -823,7 +848,6 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  AsmOutRawStream =
 //TODO    new formatted_raw_ostream(*new raw_os_ostream(*AsmOutStream),
 //TODO                              formatted_raw_ostream::DELETE_STREAM);
-//TODO  AsmOutFile = new OStream(*AsmOutStream);
 //TODO
 //TODO  flag_llvm_pch_read = 0;
 //TODO
@@ -957,7 +981,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO    strcat(&asm_intermediate_out_filename[0],".0");
 //TODO    FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
 //TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
-//TODO    AsmIntermediateOutFile = new OStream(*AsmIntermediateOutStream);
 //TODO    raw_ostream *AsmIntermediateRawOutStream = 
 //TODO      new raw_os_ostream(*AsmIntermediateOutStream);
 //TODO    if (emit_llvm_bc)
@@ -972,8 +995,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO    fflush(asm_intermediate_out_file);
 //TODO    delete AsmIntermediateOutStream;
 //TODO    AsmIntermediateOutStream = 0;
-//TODO    delete AsmIntermediateOutFile;
-//TODO    AsmIntermediateOutFile = 0;
 //TODO  }
 //TODO
 //TODO  // Run module-level optimizers, if any are present.
@@ -998,8 +1019,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO  AsmOutRawStream = 0;
 //TODO  delete AsmOutStream;
 //TODO  AsmOutStream = 0;
-//TODO  delete AsmOutFile;
-//TODO  AsmOutFile = 0;
 //TODO  timevar_pop(TV_LLVM_PERFILE);
 //TODO}
 //TODO

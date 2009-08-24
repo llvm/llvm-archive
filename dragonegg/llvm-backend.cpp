@@ -84,9 +84,7 @@ extern "C" {
 // Plugin headers
 #include "llvm-internal.h"
 #include "llvm-debug.h"
-#include "llvm-file-ostream.h"
 #include "llvm-target.h"
-//TODO#include "llvm-file-ostream.h"
 #include "bits_and_bobs.h"
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -1898,14 +1896,6 @@ execute_emit_llvm (void)
   TreeToLLVM Emitter(current_function_decl);
   Function *Fn = Emitter.EmitFunction();
 
-//TODO#if 0
-//TODO  if (dump_file) {
-//TODO    fprintf (dump_file,
-//TODO             "\n\n;;\n;; Full LLVM generated for this function:\n;;\n");
-//TODO    Fn->dump();
-//TODO  }
-//TODO#endif
-//TODO
 //TODO  performLateBackendInitialization();
 //TODO  createPerFunctionOptimizationPasses();
 //TODO
@@ -1922,7 +1912,7 @@ execute_emit_llvm (void)
 
   // When debugging, append the LLVM IR to the dump file.
   if (dump_file) {
-    oFILEstream dump_stream(dump_file);
+    raw_fd_ostream dump_stream(fileno(dump_file), false);
     Fn->print(dump_stream);
   }
 

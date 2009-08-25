@@ -37,7 +37,7 @@ Value *llvm_get_decl(tree t) {
 
 bool llvm_set_decl_p(tree t) {
   assert(HAS_RTL_P(t) && "Expected a gcc decl with RTL!");
-  llvm_has_cached(t);
+  return llvm_has_cached(t);
 }
 
 void eraseLocalLLVMValues() {

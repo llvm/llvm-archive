@@ -79,6 +79,7 @@ extern "C" {
 #include "tree-inline.h"
 #include "tree-flow.h"
 #include "tree-pass.h"
+#include "version.h"
 }
 
 // Plugin headers
@@ -99,17 +100,22 @@ static int flag_disable_red_zone = 0;
 // Non-zero if implicit floating point instructions are disabled.
 static int flag_no_implicit_float = 0;
 
+/// llvm_asm_file_name - Name of file to use for assembly code output.
+static const char *llvm_asm_file_name;
+
 // Global state for the LLVM backend.
 Module *TheModule = 0;
 DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
+llvm::raw_ostream *OutStream = 0; // Stream to write assembly code to.
+llvm::formatted_raw_ostream FormattedOutStream;
 
-/// DisableLLVMOptimizations - Allow the user to specify:
-/// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
-/// optimizations off.
-static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
+static bool DisableLLVMOptimizations = false;//TODO
+static bool emit_llvm = false;//TODO
+static bool emit_llvm_bc = false;//TODO
+static int flag_inline_trees = 2;//TODO
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
@@ -125,7 +131,7 @@ static FunctionPassManager *CodeGenPasses = 0;
 
 static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
-static void destroyOptimizationPasses();
+//TODOstatic void destroyOptimizationPasses();
 
 //TODO//===----------------------------------------------------------------------===//
 //TODO//                   Matching LLVM Values with GCC DECL trees
@@ -489,6 +495,30 @@ static void LazilyInitializeModule(void) {
 
   TheModule = new Module("", getGlobalContext());
 
+  if (main_input_filename)
+    TheModule->setModuleIdentifier(main_input_filename);
+
+  // Insert a special .ident directive to identify the version of the plugin
+  // which compiled this code.  The format of the .ident string is patterned
+  // after the ones produced by GCC.
+#ifdef IDENT_ASM_OP
+  if (!flag_no_ident) {
+    const char *pkg_version = "(GNU) ";
+
+    if (strcmp ("(GCC) ", pkgversion_string))
+      pkg_version = pkgversion_string;
+
+    std::string IdentString = IDENT_ASM_OP;
+    IdentString += "\"GCC: ";
+    IdentString += pkg_version;
+    IdentString += version_string;
+    IdentString += "; LLVM: ";
+    IdentString += REVISION;
+    IdentString += '"';
+    TheModule->setModuleInlineAsm(IdentString);
+  }
+#endif
+
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
   // now.
@@ -548,6 +578,8 @@ static void LazilyInitializeModule(void) {
 //TODO  if (!flag_pch_file &&
 //TODO      debug_info_level > DINFO_LEVEL_NONE)
 //TODO    TheDebugInfo = new DebugInfo(TheModule);
+//TODO  if (TheDebugInfo)
+//TODO    TheDebugInfo->Initialize();
 //TODO}
 //TODO
 //TODO/// performLateBackendInitialization - Set backend options that may only be
@@ -567,25 +599,27 @@ static void LazilyInitializeModule(void) {
 //TODO        I->addFnAttr(Attribute::NoImplicitFloat);
 //TODO    }
 //TODO}
-//TODO
-//TODOvoid llvm_lang_dependent_init(const char *Name) {
-//TODO  if (TheDebugInfo)
-//TODO    TheDebugInfo->Initialize();
-//TODO  if (Name)
-//TODO    TheModule->setModuleIdentifier(Name);
-//TODO}
   Initialized = true;
 }
 
-void llvm_lang_dependent_init(const char *Name) {
-  if (TheDebugInfo)
-    TheDebugInfo->Initialize();
-  if (Name)
-    TheModule->setModuleIdentifier(Name);
+/// InitializeOutputStreams - Initialize the assembly code output streams.
+static void InitializeOutputStreams(bool Binary) {
+  assert(!OutStream && "Output stream already initialized!");
+  std::string Error;
+  unsigned Flags = raw_fd_ostream::F_Force;
+
+  if (Binary)
+    Flags |= raw_fd_ostream::F_Binary;
+
+  OutStream = new raw_fd_ostream(llvm_asm_file_name, Error, Flags);
+
+  if (!Error.empty())
+    llvm_report_error(Error);
+
+  FormattedOutStream.setStream(*OutStream,
+                               formatted_raw_ostream::PRESERVE_STREAM);
 }
 
-//TODOoFILEstream *AsmOutStream = 0;
-//TODOstatic formatted_raw_ostream *AsmOutRawStream = 0;
 //TODOoFILEstream *AsmIntermediateOutStream = 0;
 //TODO
 //TODO/// llvm_pch_read - Read bytecode from PCH file. Initialize TheModule and setup
@@ -650,7 +684,7 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO
 //TODO  // Emit an LLVM .bc file to the output.  This is used when passed
 //TODO  // -emit-llvm -c to the GCC driver.
-//TODO  PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
+//TODO  PerModulePasses->add(createBitcodeWriterPass(*AsmOutStream));
 //TODO  
 //TODO  // Disable emission of .ident into the output file... which is completely
 //TODO  // wrong for llvm/.bc emission cases.
@@ -670,174 +704,178 @@ void llvm_lang_dependent_init(const char *Name) {
 //TODO  PerModulePasses   = 0;
 //TODO  CodeGenPasses     = 0;
 //TODO}
-//TODO
-//TODOstatic void createPerFunctionOptimizationPasses() {
-//TODO  if (PerFunctionPasses) 
-//TODO    return;
-//TODO
-//TODO  // Create and set up the per-function pass manager.
-//TODO  // FIXME: Move the code generator to be function-at-a-time.
-//TODO  PerFunctionPasses =
-//TODO    new FunctionPassManager(new ExistingModuleProvider(TheModule));
-//TODO  PerFunctionPasses->add(new TargetData(*TheTarget->getTargetData()));
-//TODO
-//TODO  // In -O0 if checking is disabled, we don't even have per-function passes.
-//TODO  bool HasPerFunctionPasses = false;
-//TODO#ifdef ENABLE_CHECKING
-//TODO  PerFunctionPasses->add(createVerifierPass());
-//TODO  HasPerFunctionPasses = true;
-//TODO#endif
-//TODO
-//TODO  if (optimize > 0 && !DisableLLVMOptimizations) {
-//TODO    HasPerFunctionPasses = true;
-//TODO    PerFunctionPasses->add(createCFGSimplificationPass());
-//TODO    if (optimize == 1)
-//TODO      PerFunctionPasses->add(createPromoteMemoryToRegisterPass());
-//TODO    else
-//TODO      PerFunctionPasses->add(createScalarReplAggregatesPass());
-//TODO    PerFunctionPasses->add(createInstructionCombiningPass());
-//TODO  }
-//TODO
-//TODO  // If there are no module-level passes that have to be run, we codegen as
-//TODO  // each function is parsed.
-//TODO  // FIXME: We can't figure this out until we know there are no always-inline
-//TODO  // functions.
-//TODO  // FIXME: This is disabled right now until bugs can be worked out.  Reenable
-//TODO  // this for fast -O0 compiles!
-//TODO  if (!emit_llvm_bc && !emit_llvm && 0) {
-//TODO    FunctionPassManager *PM = PerFunctionPasses;    
-//TODO    HasPerFunctionPasses = true;
-//TODO
-//TODO    CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
-//TODO
-//TODO    switch (optimize) {
-//TODO    default: break;
-//TODO    case 0: OptLevel = CodeGenOpt::None; break;
-//TODO    case 3: OptLevel = CodeGenOpt::Aggressive; break;
-//TODO    }
-//TODO
-//TODO    // Normal mode, emit a .s file by running the code generator.
-//TODO    // Note, this also adds codegenerator level optimization passes.
-//TODO    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
-//TODO                                           TargetMachine::AssemblyFile,
-//TODO                                           OptLevel)) {
-//TODO    default:
-//TODO    case FileModel::Error:
-//TODO      errs() << "Error interfacing to target machine!\n";
-//TODO      exit(1);
-//TODO    case FileModel::AsmFile:
-//TODO      break;
-//TODO    }
-//TODO
-//TODO    if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
-//TODO                                             OptLevel)) {
-//TODO      errs() << "Error interfacing to target machine!\n";
-//TODO      exit(1);
-//TODO    }
-//TODO  }
-//TODO  
-//TODO  if (HasPerFunctionPasses) {
-//TODO    PerFunctionPasses->doInitialization();
-//TODO  } else {
-//TODO    delete PerFunctionPasses;
-//TODO    PerFunctionPasses = 0;
-//TODO  }
-//TODO}
-//TODO
-//TODOstatic void createPerModuleOptimizationPasses() {
-//TODO  if (PerModulePasses)
-//TODO    // llvm_pch_write_init has already created the per module passes.
-//TODO    return;
-//TODO
-//TODO  // FIXME: AT -O0/O1, we should stream out functions at a time.
-//TODO  PerModulePasses = new PassManager();
-//TODO  PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
-//TODO  bool HasPerModulePasses = false;
-//TODO
-//TODO  if (!DisableLLVMOptimizations) {
-//TODO    bool NeedAlwaysInliner = false;
-//TODO    llvm::Pass *InliningPass = 0;
-//TODO    if (flag_inline_trees > 1) {                // respect -fno-inline-functions
-//TODO      InliningPass = createFunctionInliningPass();    // Inline small functions
-//TODO    } else {
-//TODO      // If full inliner is not run, check if always-inline is needed to handle
-//TODO      // functions that are  marked as always_inline.
-//TODO      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-//TODO           I != E; ++I)
-//TODO        if (I->hasFnAttr(Attribute::AlwaysInline)) {
-//TODO          NeedAlwaysInliner = true;
-//TODO          break;
-//TODO        }
-//TODO
-//TODO      if (NeedAlwaysInliner)
-//TODO        InliningPass = createAlwaysInlinerPass();  // Inline always_inline funcs
-//TODO    }
-//TODO
-//TODO    HasPerModulePasses = true;
-//TODO    createStandardModulePasses(PerModulePasses, optimize,
-//TODO                               optimize_size || optimize < 3,
-//TODO                               flag_unit_at_a_time, flag_unroll_loops,
-//TODO                               !flag_no_simplify_libcalls, flag_exceptions,
-//TODO                               InliningPass);
-//TODO  }
-//TODO
-//TODO  if (emit_llvm_bc) {
-//TODO    // Emit an LLVM .bc file to the output.  This is used when passed
-//TODO    // -emit-llvm -c to the GCC driver.
-//TODO    PerModulePasses->add(CreateBitcodeWriterPass(*AsmOutStream));
-//TODO    HasPerModulePasses = true;
-//TODO  } else if (emit_llvm) {
-//TODO    // Emit an LLVM .ll file to the output.  This is used when passed 
-//TODO    // -emit-llvm -S to the GCC driver.
-//TODO    PerModulePasses->add(createPrintModulePass(AsmOutRawStream));
-//TODO    HasPerModulePasses = true;
-//TODO  } else {
-//TODO    // If there are passes we have to run on the entire module, we do codegen
-//TODO    // as a separate "pass" after that happens.
-//TODO    // However if there are no module-level passes that have to be run, we
-//TODO    // codegen as each function is parsed.
-//TODO    // FIXME: This is disabled right now until bugs can be worked out.  Reenable
-//TODO    // this for fast -O0 compiles!
-//TODO    if (PerModulePasses || 1) {
-//TODO      FunctionPassManager *PM = CodeGenPasses =
-//TODO        new FunctionPassManager(new ExistingModuleProvider(TheModule));
-//TODO      PM->add(new TargetData(*TheTarget->getTargetData()));
-//TODO
-//TODO      CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
-//TODO
-//TODO      switch (optimize) {
-//TODO      default: break;
-//TODO      case 0: OptLevel = CodeGenOpt::None; break;
-//TODO      case 3: OptLevel = CodeGenOpt::Aggressive; break;
-//TODO      }
-//TODO
-//TODO      // Normal mode, emit a .s file by running the code generator.
-//TODO      // Note, this also adds codegenerator level optimization passes.
-//TODO      switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
-//TODO                                             TargetMachine::AssemblyFile,
-//TODO                                             OptLevel)) {
-//TODO      default:
-//TODO      case FileModel::Error:
-//TODO        errs() << "Error interfacing to target machine!\n";
-//TODO        exit(1);
-//TODO      case FileModel::AsmFile:
-//TODO        break;
-//TODO      }
-//TODO
-//TODO      if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
-//TODO                                               OptLevel)) {
-//TODO        errs() << "Error interfacing to target machine!\n";
-//TODO        exit(1);
-//TODO      }
-//TODO    }
-//TODO  }
-//TODO
-//TODO  if (!HasPerModulePasses) {
-//TODO    delete PerModulePasses;
-//TODO    PerModulePasses = 0;
-//TODO  }
-//TODO}
-//TODO
+
+static void createPerFunctionOptimizationPasses() {
+  if (PerFunctionPasses) 
+    return;
+
+  // Create and set up the per-function pass manager.
+  // FIXME: Move the code generator to be function-at-a-time.
+  PerFunctionPasses =
+    new FunctionPassManager(new ExistingModuleProvider(TheModule));
+  PerFunctionPasses->add(new TargetData(*TheTarget->getTargetData()));
+
+  // In -O0 if checking is disabled, we don't even have per-function passes.
+  bool HasPerFunctionPasses = false;
+#ifdef ENABLE_CHECKING
+  PerFunctionPasses->add(createVerifierPass());
+  HasPerFunctionPasses = true;
+#endif
+
+  if (optimize > 0 && !DisableLLVMOptimizations) {
+    HasPerFunctionPasses = true;
+    PerFunctionPasses->add(createCFGSimplificationPass());
+    if (optimize == 1)
+      PerFunctionPasses->add(createPromoteMemoryToRegisterPass());
+    else
+      PerFunctionPasses->add(createScalarReplAggregatesPass());
+    PerFunctionPasses->add(createInstructionCombiningPass());
+  }
+
+  // If there are no module-level passes that have to be run, we codegen as
+  // each function is parsed.
+  // FIXME: We can't figure this out until we know there are no always-inline
+  // functions.
+  // FIXME: This is disabled right now until bugs can be worked out.  Reenable
+  // this for fast -O0 compiles!
+  if (!emit_llvm_bc && !emit_llvm && 0) {
+    FunctionPassManager *PM = PerFunctionPasses;    
+    HasPerFunctionPasses = true;
+
+    CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+
+    switch (optimize) {
+    default: break;
+    case 0: OptLevel = CodeGenOpt::None; break;
+    case 3: OptLevel = CodeGenOpt::Aggressive; break;
+    }
+
+    // Normal mode, emit a .s file by running the code generator.
+    // Note, this also adds codegenerator level optimization passes.
+    InitializeOutputStreams(false);
+    switch (TheTarget->addPassesToEmitFile(*PM, FormattedOutStream,
+                                           TargetMachine::AssemblyFile,
+                                           OptLevel)) {
+    default:
+    case FileModel::Error:
+      errs() << "Error interfacing to target machine!\n";
+      exit(1);
+    case FileModel::AsmFile:
+      break;
+    }
+
+    if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
+                                             OptLevel)) {
+      errs() << "Error interfacing to target machine!\n";
+      exit(1);
+    }
+  }
+  
+  if (HasPerFunctionPasses) {
+    PerFunctionPasses->doInitialization();
+  } else {
+    delete PerFunctionPasses;
+    PerFunctionPasses = 0;
+  }
+}
+
+static void createPerModuleOptimizationPasses() {
+  if (PerModulePasses)
+    // llvm_pch_write_init has already created the per module passes.
+    return;
+
+  // FIXME: AT -O0/O1, we should stream out functions at a time.
+  PerModulePasses = new PassManager();
+  PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
+  bool HasPerModulePasses = false;
+
+  if (!DisableLLVMOptimizations) {
+    bool NeedAlwaysInliner = false;
+    llvm::Pass *InliningPass = 0;
+    if (flag_inline_trees > 1) {                // respect -fno-inline-functions
+      InliningPass = createFunctionInliningPass();    // Inline small functions
+    } else {
+      // If full inliner is not run, check if always-inline is needed to handle
+      // functions that are  marked as always_inline.
+      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+           I != E; ++I)
+        if (I->hasFnAttr(Attribute::AlwaysInline)) {
+          NeedAlwaysInliner = true;
+          break;
+        }
+
+      if (NeedAlwaysInliner)
+        InliningPass = createAlwaysInlinerPass();  // Inline always_inline funcs
+    }
+
+    HasPerModulePasses = true;
+    createStandardModulePasses(PerModulePasses, optimize,
+                               optimize_size || optimize < 3,
+                               flag_unit_at_a_time, flag_unroll_loops,
+                               !flag_no_simplify_libcalls, flag_exceptions,
+                               InliningPass);
+  }
+
+  if (emit_llvm_bc) {
+    // Emit an LLVM .bc file to the output.  This is used when passed
+    // -emit-llvm -c to the GCC driver.
+    InitializeOutputStreams(true);
+    PerModulePasses->add(createBitcodeWriterPass(*OutStream));
+    HasPerModulePasses = true;
+  } else if (emit_llvm) {
+    // Emit an LLVM .ll file to the output.  This is used when passed 
+    // -emit-llvm -S to the GCC driver.
+    InitializeOutputStreams(false);
+    PerModulePasses->add(createPrintModulePass(OutStream));
+    HasPerModulePasses = true;
+  } else {
+    // If there are passes we have to run on the entire module, we do codegen
+    // as a separate "pass" after that happens.
+    // However if there are no module-level passes that have to be run, we
+    // codegen as each function is parsed.
+    // FIXME: This is disabled right now until bugs can be worked out.  Reenable
+    // this for fast -O0 compiles!
+    if (PerModulePasses || 1) {
+      FunctionPassManager *PM = CodeGenPasses =
+        new FunctionPassManager(new ExistingModuleProvider(TheModule));
+      PM->add(new TargetData(*TheTarget->getTargetData()));
+
+      CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+
+      switch (optimize) {
+      default: break;
+      case 0: OptLevel = CodeGenOpt::None; break;
+      case 3: OptLevel = CodeGenOpt::Aggressive; break;
+      }
+
+      // Normal mode, emit a .s file by running the code generator.
+      // Note, this also adds codegenerator level optimization passes.
+      InitializeOutputStreams(false);
+      switch (TheTarget->addPassesToEmitFile(*PM, FormattedOutStream,
+                                             TargetMachine::AssemblyFile,
+                                             OptLevel)) {
+      default:
+      case FileModel::Error:
+        errs() << "Error interfacing to target machine!\n";
+        exit(1);
+      case FileModel::AsmFile:
+        break;
+      }
+
+      if (TheTarget->addPassesToEmitFileFinish(*PM, (MachineCodeEmitter *)0,
+                                               OptLevel)) {
+        errs() << "Error interfacing to target machine!\n";
+        exit(1);
+      }
+    }
+  }
+
+  if (!HasPerModulePasses) {
+    delete PerModulePasses;
+    PerModulePasses = 0;
+  }
+}
+
 //TODO/// llvm_asm_file_start - Start the .s file.
 //TODOvoid llvm_asm_file_start(void) {
 //TODO  timevar_push(TV_LLVM_INIT);
@@ -893,81 +931,83 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                      Array, Name);
 }
 
-//TODO/// llvm_asm_file_end - Finish the .s file.
-//TODOvoid llvm_asm_file_end(void) {
+/// llvm_finish_unit - Finish the .s file.
+static void llvm_finish_unit(void *gcc_data, void *user_data) {
+  LazilyInitializeModule();
+
 //TODO  timevar_push(TV_LLVM_PERFILE);
-//TODO  LLVMContext &Context = getGlobalContext();
-//TODO
+  LLVMContext &Context = getGlobalContext();
+
 //TODO  performLateBackendInitialization();
-//TODO  createPerFunctionOptimizationPasses();
+  createPerFunctionOptimizationPasses();
 //TODO
 //TODO  if (flag_pch_file) {
 //TODO    writeLLVMTypesStringTable();
 //TODO    writeLLVMValues();
 //TODO  }
-//TODO
-//TODO  // Add an llvm.global_ctors global if needed.
-//TODO  if (!StaticCtors.empty())
-//TODO    CreateStructorsList(StaticCtors, "llvm.global_ctors");
-//TODO  // Add an llvm.global_dtors global if needed.
-//TODO  if (!StaticDtors.empty())
-//TODO    CreateStructorsList(StaticDtors, "llvm.global_dtors");
-//TODO
-//TODO  if (!AttributeUsedGlobals.empty()) {
-//TODO    std::vector<Constant *> AUGs;
-//TODO    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
-//TODO    for (SmallSetVector<Constant *,32>::iterator
-//TODO           AI = AttributeUsedGlobals.begin(),
-//TODO           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
-//TODO      Constant *C = *AI;
-//TODO      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
-//TODO    }
-//TODO
-//TODO    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
-//TODO    Constant *Init = ConstantArray::get(AT, AUGs);
-//TODO    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-//TODO                                         GlobalValue::AppendingLinkage, Init,
-//TODO                                         "llvm.used");
-//TODO    gv->setSection("llvm.metadata");
-//TODO    AttributeUsedGlobals.clear();
-//TODO  }
-//TODO
-//TODO  if (!AttributeCompilerUsedGlobals.empty()) {
-//TODO    std::vector<Constant *> ACUGs;
-//TODO    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
-//TODO    for (SmallSetVector<Constant *,32>::iterator
-//TODO           AI = AttributeCompilerUsedGlobals.begin(),
-//TODO           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
-//TODO      Constant *C = *AI;
-//TODO      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
-//TODO    }
-//TODO
-//TODO    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
-//TODO    Constant *Init = ConstantArray::get(AT, ACUGs);
-//TODO    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-//TODO                                         GlobalValue::AppendingLinkage, Init,
-//TODO                                         "llvm.compiler.used");
-//TODO    gv->setSection("llvm.metadata");
-//TODO    AttributeCompilerUsedGlobals.clear();
-//TODO  }
-//TODO
-//TODO  // Add llvm.global.annotations
-//TODO  if (!AttributeAnnotateGlobals.empty()) {
-//TODO    Constant *Array = ConstantArray::get(
-//TODO      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
-//TODO                                      AttributeAnnotateGlobals.size()),
-//TODO                       AttributeAnnotateGlobals);
-//TODO    GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
-//TODO                                         GlobalValue::AppendingLinkage, Array,
-//TODO                                         "llvm.global.annotations");
-//TODO    gv->setSection("llvm.metadata");
-//TODO    AttributeAnnotateGlobals.clear();
-//TODO  }
-//TODO
-//TODO  // Finish off the per-function pass.
-//TODO  if (PerFunctionPasses)
-//TODO    PerFunctionPasses->doFinalization();
-//TODO
+
+  // Add an llvm.global_ctors global if needed.
+  if (!StaticCtors.empty())
+    CreateStructorsList(StaticCtors, "llvm.global_ctors");
+  // Add an llvm.global_dtors global if needed.
+  if (!StaticDtors.empty())
+    CreateStructorsList(StaticDtors, "llvm.global_dtors");
+
+  if (!AttributeUsedGlobals.empty()) {
+    std::vector<Constant *> AUGs;
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeUsedGlobals.begin(),
+           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
+    Constant *Init = ConstantArray::get(AT, AUGs);
+    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.used");
+    gv->setSection("llvm.metadata");
+    AttributeUsedGlobals.clear();
+  }
+
+  if (!AttributeCompilerUsedGlobals.empty()) {
+    std::vector<Constant *> ACUGs;
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeCompilerUsedGlobals.begin(),
+           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
+    Constant *Init = ConstantArray::get(AT, ACUGs);
+    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.compiler.used");
+    gv->setSection("llvm.metadata");
+    AttributeCompilerUsedGlobals.clear();
+  }
+
+  // Add llvm.global.annotations
+  if (!AttributeAnnotateGlobals.empty()) {
+    Constant *Array = ConstantArray::get(
+      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
+                                      AttributeAnnotateGlobals.size()),
+                       AttributeAnnotateGlobals);
+    GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
+                                         GlobalValue::AppendingLinkage, Array,
+                                         "llvm.global.annotations");
+    gv->setSection("llvm.metadata");
+    AttributeAnnotateGlobals.clear();
+  }
+
+  // Finish off the per-function pass.
+  if (PerFunctionPasses)
+    PerFunctionPasses->doFinalization();
+
 //TODO  // Emit intermediate file before module level optimization passes are run.
 //TODO  if (flag_debug_llvm_module_opt) {
 //TODO    
@@ -975,14 +1015,14 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO    IntermediatePM->add(new TargetData(*TheTarget->getTargetData()));
 //TODO
 //TODO    char asm_intermediate_out_filename[MAXPATHLEN];
-//TODO    strcpy(&asm_intermediate_out_filename[0], asm_file_name);
+//TODO    strcpy(&asm_intermediate_out_filename[0], llvm_asm_file_name);
 //TODO    strcat(&asm_intermediate_out_filename[0],".0");
 //TODO    FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
 //TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
 //TODO    raw_ostream *AsmIntermediateRawOutStream = 
 //TODO      new raw_os_ostream(*AsmIntermediateOutStream);
 //TODO    if (emit_llvm_bc)
-//TODO      IntermediatePM->add(CreateBitcodeWriterPass(*AsmIntermediateOutStream));
+//TODO      IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateOutStream));
 //TODO    if (emit_llvm)
 //TODO      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
 //TODO    IntermediatePM->run(*TheModule);
@@ -994,32 +1034,31 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 //TODO    delete AsmIntermediateOutStream;
 //TODO    AsmIntermediateOutStream = 0;
 //TODO  }
-//TODO
-//TODO  // Run module-level optimizers, if any are present.
-//TODO  createPerModuleOptimizationPasses();
-//TODO  if (PerModulePasses)
-//TODO    PerModulePasses->run(*TheModule);
-//TODO  
-//TODO  // Run the code generator, if present.
-//TODO  if (CodeGenPasses) {
-//TODO    CodeGenPasses->doInitialization();
-//TODO    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-//TODO         I != E; ++I)
-//TODO      if (!I->isDeclaration())
-//TODO        CodeGenPasses->run(*I);
-//TODO    CodeGenPasses->doFinalization();
-//TODO  }
-//TODO
-//TODO  AsmOutRawStream->flush();
-//TODO  AsmOutStream->flush();
-//TODO  fflush(asm_out_file);
+
+  // Run module-level optimizers, if any are present.
+  createPerModuleOptimizationPasses();
+  if (PerModulePasses)
+    PerModulePasses->run(*TheModule);
+  
+  // Run the code generator, if present.
+  if (CodeGenPasses) {
+    CodeGenPasses->doInitialization();
+    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+         I != E; ++I)
+      if (!I->isDeclaration())
+        CodeGenPasses->run(*I);
+    CodeGenPasses->doFinalization();
+  }
+
+  FormattedOutStream.flush();
+  OutStream->flush();
 //TODO  delete AsmOutRawStream;
 //TODO  AsmOutRawStream = 0;
 //TODO  delete AsmOutStream;
 //TODO  AsmOutStream = 0;
 //TODO  timevar_pop(TV_LLVM_PERFILE);
-//TODO}
-//TODO
+}
+
 //TODO// llvm_call_llvm_shutdown - Release LLVM global state.
 //TODOvoid llvm_call_llvm_shutdown(void) {
 //TODO  llvm_shutdown();
@@ -1897,13 +1936,13 @@ execute_emit_llvm (void)
   Function *Fn = Emitter.EmitFunction();
 
 //TODO  performLateBackendInitialization();
-//TODO  createPerFunctionOptimizationPasses();
-//TODO
-//TODO  if (PerFunctionPasses)
-//TODO    PerFunctionPasses->run(*Fn);
-//TODO
-//TODO  // TODO: Nuke the .ll code for the function at -O[01] if we don't want to
-//TODO  // inline it or something else.
+  createPerFunctionOptimizationPasses();
+
+  if (PerFunctionPasses)
+    PerFunctionPasses->run(*Fn);
+
+  // TODO: Nuke the .ll code for the function at -O[01] if we don't want to
+  // inline it or something else.
 
   // Finally, we have written out this function!
   TREE_ASM_WRITTEN(current_function_decl) = 1;
@@ -1917,6 +1956,31 @@ execute_emit_llvm (void)
   }
 
   return 0;
+}
+
+/// TakeoverAsmOutput - Obtain exclusive use of the assembly code output file.
+/// Any GCC output will be thrown away.
+static void TakeoverAsmOutput(void) {
+  // Calculate the output file name as in init_asm_output (toplev.c).
+  if (!dump_base_name && main_input_filename)
+    dump_base_name = main_input_filename[0] ? main_input_filename : "gccdump";
+
+  if (!main_input_filename && !asm_file_name) {
+    llvm_asm_file_name = "-";
+  } else if (!asm_file_name) {
+    int len = strlen (dump_base_name);
+    char *dumpname = XNEWVEC (char, len + 6);
+
+    memcpy (dumpname, dump_base_name, len + 1);
+    strip_off_ending (dumpname, len);
+    strcat (dumpname, ".s");
+    llvm_asm_file_name = dumpname;
+  } else {
+    llvm_asm_file_name = asm_file_name;
+  }
+
+  // Redirect any GCC output to /dev/null.
+  asm_file_name = HOST_BIT_BUCKET;
 }
 
 /// pass_emit_llvm - RTL pass that turns gimple functions into LLVM IR.
@@ -2037,6 +2101,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
   // Provide our version and help information.
   register_callback (plugin_name, PLUGIN_INFO, NULL, &llvm_plugin_info);
 
+  // Obtain exclusive use of the assembly code output file.
+  TakeoverAsmOutput();
+
   // Replace rtl expansion with gimple to LLVM conversion.
   pass_info.pass = &pass_emit_llvm.pass;
   pass_info.reference_pass_name = "expand";
@@ -2066,6 +2133,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
   }
+
+  // Finish the .s file.
+  register_callback (plugin_name, PLUGIN_FINISH_UNIT, llvm_finish_unit, NULL);
 
   return 0;
 }

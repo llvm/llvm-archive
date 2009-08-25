@@ -21,7 +21,7 @@ CFLAGS+=-I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \
 	-I${GCCOBJECT_DIR}/libdecnumber -I.
 CXXFLAGS+=$(CFLAGS) $(shell llvm-config --cppflags)
 
-LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core target x86)
+LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core ipo scalaropts target x86)
 
 llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ ${LDFLAGS}

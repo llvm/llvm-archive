@@ -109,8 +109,8 @@ DebugInfo *TheDebugInfo = 0;
 TargetMachine *TheTarget = 0;
 TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
-llvm::raw_ostream *OutStream = 0; // Stream to write assembly code to.
-llvm::formatted_raw_ostream FormattedOutStream;
+raw_ostream *OutStream = 0; // Stream to write assembly code to.
+formatted_raw_ostream FormattedOutStream;
 
 static bool DisableLLVMOptimizations = false;//TODO
 static bool emit_llvm = false;//TODO

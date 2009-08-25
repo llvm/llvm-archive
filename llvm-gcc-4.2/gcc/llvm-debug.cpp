@@ -576,10 +576,18 @@ DIType DebugInfo::createStructType(tree type) {
   // recursive) and replace all  uses of the forward declaration with the 
   // final definition. 
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
+  // FIXME: findRegion() is not able to find context all the time. This
+  // means when type names in different context match then FwdDecl is
+  // reused because MDNodes are uniqued. To avoid this, use type context
+  /// also while creating FwdDecl for now.
+  std::string FwdName;
+  if (TYPE_CONTEXT(type))
+    FwdName = GetNodeName(TYPE_CONTEXT(type));
+  FwdName = FwdName + GetNodeName(type);
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
-                                     GetNodeName(type),
+                                     FwdName,
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 
                                      0, 0, 0, llvm::DIType::FlagFwdDecl,
@@ -859,7 +867,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                 bool isMain) {
   if (!FullPath)
     FullPath = main_input_filename;
-  GlobalVariable *&CU = CUCache[FullPath];
+  MDNode *&CU = CUCache[FullPath];
   if (CU)
     return DICompileUnit(CU);
 
@@ -907,7 +915,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                         version_string, isMain,
                                                         optimize, Flags,
                                                         ObjcRunTimeVer);
-  CU = NewCU.getGV();
+  CU = NewCU.getNode();
   return NewCU;
 }
 

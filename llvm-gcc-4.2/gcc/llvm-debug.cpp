@@ -584,13 +584,16 @@ DIType DebugInfo::createStructType(tree type) {
   if (TYPE_CONTEXT(type))
     FwdName = GetNodeName(TYPE_CONTEXT(type));
   FwdName = FwdName + GetNodeName(type);
+  unsigned Flags = llvm::DIType::FlagFwdDecl;
+  if (TYPE_BLOCK_IMPL_STRUCT(type))
+    Flags |= llvm::DIType::FlagClosure;
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
                                      FwdName,
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 
-                                     0, 0, 0, llvm::DIType::FlagFwdDecl,
+                                     0, 0, 0, Flags,
                                      llvm::DIType(), llvm::DIArray(),
                                      RunTimeLang);
   
@@ -699,7 +702,7 @@ DIType DebugInfo::createStructType(tree type) {
                                      getOrCreateCompileUnit(Loc.file),
                                      Loc.line, 
                                      NodeSizeInBits(type), NodeAlignInBits(type),
-                                     0, 0, llvm::DIType(), Elements,
+                                     0, Flags, llvm::DIType(), Elements,
                                      RunTimeLang);
   
   // Now that we have a real decl for the struct, replace anything using the
@@ -803,10 +806,17 @@ DIType DebugInfo::getOrCreateType(tree type) {
     
     case POINTER_TYPE:
     case REFERENCE_TYPE:
-    case BLOCK_POINTER_TYPE:
       Ty = createPointerType(type);
       break;
-    
+
+    case BLOCK_POINTER_TYPE: {
+      DEBUGASSERT (generic_block_literal_struct_type && 
+                   "Generic struct type for Blocks is missing!");
+      tree tmp_type = build_pointer_type(generic_block_literal_struct_type);
+      Ty = createPointerType(tmp_type);
+      break;
+    }
+
     case OFFSET_TYPE: {
       // gen_type_die(TYPE_OFFSET_BASETYPE(type), context_die);
       // gen_type_die(TREE_TYPE(type), context_die);

@@ -12,7 +12,7 @@ CPP_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp \
 		 $(ARCH_DIR)/llvm-target.cpp llvm-types.cpp bits_and_bobs.cpp
 PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 
-CFLAGS+=-Werror -fPIC -g -O2
+CFLAGS+=-Wall -Werror -fPIC -g -O2
 CFLAGS+=-DIN_GCC -DREVISION=\"$(REVISION)\" \
 	-DTARGET_NAME=\"$(TARGET_TRIPLE)\" -I$(ARCH_DIR)
 CFLAGS+=-I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \

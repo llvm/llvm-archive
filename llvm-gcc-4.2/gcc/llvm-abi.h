@@ -112,7 +112,7 @@ struct DefaultABIClient {
 
 /// isAggregateTreeType - Return true if the specified GCC type is an aggregate
 /// that cannot live in an LLVM register.
-static bool isAggregateTreeType(tree type) {
+static inline bool isAggregateTreeType(tree type) {
   return TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == ARRAY_TYPE ||
          TREE_CODE(type) == UNION_TYPE  || TREE_CODE(type) == QUAL_UNION_TYPE ||
          TREE_CODE(type) == COMPLEX_TYPE;
@@ -128,7 +128,7 @@ static bool isAggregateTreeType(tree type) {
 
 // doNotUseShadowReturn - Return true if the specified GCC type 
 // should not be returned using a pointer to struct parameter. 
-static bool doNotUseShadowReturn(tree type, tree fndecl) {
+static inline bool doNotUseShadowReturn(tree type, tree fndecl) {
   if (!TYPE_SIZE(type))
     return false;
   if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
@@ -148,8 +148,9 @@ static bool doNotUseShadowReturn(tree type, tree fndecl) {
 /// fields in addition to the single element that has data.  If 
 /// rejectFatBitField, and the single element is a bitfield of a type that's
 /// bigger than the struct, return null anyway.
-static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
-                                         bool rejectFatBitfield) {
+static inline
+tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
+                                  bool rejectFatBitfield) {
   // Scalars are good.
   if (!isAggregateTreeType(type)) return type;
   
@@ -197,7 +198,7 @@ static tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
 
 /// isZeroSizedStructOrUnion - Returns true if this is a struct or union 
 /// which is zero bits wide.
-static bool isZeroSizedStructOrUnion(tree type) {
+static inline bool isZeroSizedStructOrUnion(tree type) {
   if (TREE_CODE(type) != RECORD_TYPE &&
       TREE_CODE(type) != UNION_TYPE &&
       TREE_CODE(type) != QUAL_UNION_TYPE)
@@ -208,7 +209,8 @@ static bool isZeroSizedStructOrUnion(tree type) {
 // getLLVMScalarTypeForStructReturn - Return LLVM Type if TY can be 
 // returned as a scalar, otherwise return NULL. This is the default
 // target independent implementation.
-static const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
+static inline
+const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
   const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
   *Offset = 0;
@@ -233,7 +235,7 @@ static const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset)
 // getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
 // returns as multiple values, otherwise return NULL. This is the default
 // target independent implementation.
-static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
+static inline const Type* getLLVMAggregateTypeForStructReturn(tree type) {
   return NULL;
 }
 
@@ -353,9 +355,10 @@ static const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 #define LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Src,Dest,V,B)     \
   llvm_default_extract_multiple_return_value((Src),(Dest),(V),(B))
 #endif
-static void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
-                                                       bool isVolatile,
-                                                       LLVMBuilder &Builder) {
+static inline
+void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
+                                                bool isVolatile,
+                                                LLVMBuilder &Builder) {
   assert (0 && "LLVM_EXTRACT_MULTIPLE_RETURN_VALUE is not implemented!");
 }
 

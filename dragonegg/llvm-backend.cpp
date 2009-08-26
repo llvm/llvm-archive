@@ -115,7 +115,6 @@ formatted_raw_ostream FormattedOutStream;
 static bool DisableLLVMOptimizations = false;//TODO
 static bool emit_llvm = false;//TODO
 static bool emit_llvm_bc = false;//TODO
-static int flag_inline_trees = 2;//TODO
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
@@ -787,23 +786,8 @@ static void createPerModuleOptimizationPasses() {
   bool HasPerModulePasses = false;
 
   if (!DisableLLVMOptimizations) {
-    bool NeedAlwaysInliner = false;
-    llvm::Pass *InliningPass = 0;
-    if (flag_inline_trees > 1) {                // respect -fno-inline-functions
-      InliningPass = createFunctionInliningPass();    // Inline small functions
-    } else {
-      // If full inliner is not run, check if always-inline is needed to handle
-      // functions that are  marked as always_inline.
-      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-           I != E; ++I)
-        if (I->hasFnAttr(Attribute::AlwaysInline)) {
-          NeedAlwaysInliner = true;
-          break;
-        }
-
-      if (NeedAlwaysInliner)
-        InliningPass = createAlwaysInlinerPass();  // Inline always_inline funcs
-    }
+    // Inline small functions.
+    llvm::Pass *InliningPass = createFunctionInliningPass();
 
     HasPerModulePasses = true;
     createStandardModulePasses(PerModulePasses, optimize,

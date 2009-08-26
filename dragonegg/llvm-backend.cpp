@@ -512,7 +512,7 @@ static void LazilyInitializeModule(void) {
     IdentString += "\"GCC: ";
     IdentString += pkg_version;
     IdentString += version_string;
-    IdentString += "; LLVM: ";
+    IdentString += " LLVM: ";
     IdentString += REVISION;
     IdentString += '"';
     TheModule->setModuleInlineAsm(IdentString);

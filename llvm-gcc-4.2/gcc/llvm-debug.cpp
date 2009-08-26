@@ -605,7 +605,6 @@ DIType DebugInfo::createStructType(tree type) {
       tree BInfoType = BINFO_TYPE (BInfo);
       DIType BaseClass = getOrCreateType(BInfoType);
       
-      expanded_location loc = GetNodeLocation(type);
       // FIXME : name, size, align etc...
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 

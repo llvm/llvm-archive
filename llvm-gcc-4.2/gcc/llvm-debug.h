@@ -59,7 +59,7 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  std::map<std::string, MDNode *> CUCache;
+  std::map<std::string, GlobalVariable *> CUCache;
   std::map<tree_node *, DIType> TypeCache;
                                         // Cache of previously constructed 
                                         // Types.

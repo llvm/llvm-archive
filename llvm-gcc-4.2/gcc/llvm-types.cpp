@@ -590,7 +590,6 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   case ARRAY_TYPE: {
     unsigned EltSizeBits = TREE_INT_CST_LOW(TYPE_SIZE(TREE_TYPE(type)));
     unsigned NumElts = cast<ArrayType>(ConvertType(type))->getNumElements();
-    unsigned OverlapElt = (unsigned)PadStartBits/EltSizeBits;
 
     // Check each element for overlap.  This is inelegant, but effective.
     for (unsigned i = 0; i != NumElts; ++i)

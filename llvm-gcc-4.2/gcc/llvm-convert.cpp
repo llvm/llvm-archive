@@ -3452,8 +3452,6 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
 Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
 
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
@@ -4348,7 +4346,6 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   for (tree Output = ASM_OUTPUTS(exp); Output;
        Output = TREE_CHAIN(Output), ++ValNum) {
     tree Operand = TREE_VALUE(Output);
-    tree type = TREE_TYPE(Operand);
 
     // Parse the output constraint.
     const char *Constraint = Constraints[ValNum];
@@ -6096,21 +6093,16 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
     return true;
   }
 
-  tree last_parm = tree_last(DECL_ARGUMENTS(current_function_decl));
   tree chain = TREE_CHAIN(arglist);
 
   // Check for errors.
   if (fold_builtin_next_arg (chain))
     return true;
 
-  tree arg = TREE_VALUE(chain);
-
   Value *ArgVal = Emit(TREE_VALUE(arglist), 0);
 
   Constant *llvm_va_start_fn = Intrinsic::getDeclaration(TheModule,
                                                          Intrinsic::vastart);
-  const Type *FTy =
-    cast<PointerType>(llvm_va_start_fn->getType())->getElementType();
   ArgVal = BitCastToType(ArgVal, PointerType::getUnqual(Type::getInt8Ty(Context)));
   Builder.CreateCall(llvm_va_start_fn, ArgVal);
   return true;
@@ -6355,7 +6347,6 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
 Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
   tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
 
-  const Type *OrigPtrTy = FieldPtr->getType();
   const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
 
   Function *Fn = Intrinsic::getDeclaration(TheModule,
@@ -6749,6 +6740,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
         && (TREE_STATIC(exp) || DECL_EXTERNAL(exp))) {
       layout_decl(exp, 0);
 
+#if 0
       // This mirrors code in layout_decl for munging the RTL.  Here we actually
       // emit a NEW declaration for the global variable, now that it has been
       // laid out.  We then tell the compiler to "forward" any uses of the old
@@ -6756,13 +6748,12 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
       if (Value *Val = DECL_LLVM_IF_SET(exp)) {
         //fprintf(stderr, "***\n*** SHOULD HANDLE GLOBAL VARIABLES!\n***\n");
         //assert(0 && "Reimplement this with replace all uses!");
-#if 0
         SET_DECL_LLVM(exp, 0);
         // Create a new global variable declaration
         llvm_assemble_external(exp);
         V2GV(Val)->ForwardedGlobal = V2GV(DECL_LLVM(exp));
-#endif
       }
+#endif
     }
   }
 
@@ -6861,7 +6852,7 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
   } else {
     // If the input is a scalar, emit to a temporary.
     Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
-    StoreInst *S = Builder.CreateStore(Emit(Op, 0), Dest);
+    Builder.CreateStore(Emit(Op, 0), Dest);
     // The type is the type of the expression.
     Dest = BitCastToType(Dest,
                      PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
@@ -8047,7 +8038,6 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
   unsigned BitStart = getComponentRefOffsetInBits(exp);
-  unsigned BitSize  = 0;
   Constant *FieldPtr;
   const TargetData &TD = getTargetData();
 

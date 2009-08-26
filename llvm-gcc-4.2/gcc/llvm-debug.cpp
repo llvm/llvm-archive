@@ -600,8 +600,6 @@ DIType DebugInfo::createStructType(tree type) {
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
   
   if (tree binfo = TYPE_BINFO(type)) {
-    VEC (tree, gc) *accesses = BINFO_BASE_ACCESSES (binfo);
-    
     for (unsigned i = 0, e = BINFO_N_BASE_BINFOS(binfo); i != e; ++i) {
       tree BInfo = BINFO_BASE_BINFO(binfo, i);
       tree BInfoType = BINFO_TYPE (BInfo);

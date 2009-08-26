@@ -1029,8 +1029,6 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     TREE_ASM_WRITTEN(decl) = 1;
     return;  // Do not process broken code.
   }
-  
-  LLVMContext &Context = getGlobalContext();
 
   timevar_push(TV_LLVM_GLOBALS);
 
@@ -1228,8 +1226,6 @@ void reset_type_and_initializer_llvm(tree decl) {
   // been set.  Don't crash.
   // We can also get here when DECL_LLVM has not been set for some object
   // referenced in the initializer.  Don't crash then either.
-  LLVMContext &Context = getGlobalContext();
-  
   if (errorcount || sorrycount)
     return;
 
@@ -1294,8 +1290,6 @@ void emit_global_to_llvm(tree decl) {
   // If we encounter a forward declaration then do not emit the global yet.
   if (!TYPE_SIZE(TREE_TYPE(decl)))
     return;
-
-  LLVMContext &Context = getGlobalContext();
 
   timevar_push(TV_LLVM_GLOBALS);
 
@@ -1465,7 +1459,6 @@ void emit_global_to_llvm(tree decl) {
 /// well-formed.  If not, emit error messages and return true.  If so, return
 /// false.
 bool ValidateRegisterVariable(tree decl) {
-  LLVMContext &Context = getGlobalContext();
   int RegNumber = decode_reg_name(extractRegisterName(decl));
   const Type *Ty = ConvertType(TREE_TYPE(decl));
 

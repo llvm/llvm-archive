@@ -2087,6 +2087,8 @@ int plugin_init (struct plugin_name_args *plugin_info,
   // Turn off all gcc optimization passes.
   if (disable_gcc_optimizations) {
     // TODO: figure out a good way of turning off ipa passes.
+    // Could just set optimize to zero (after taking a copy), but this would
+    // also impact front-end optimizations.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "*all_optimizations";
     pass_info.ref_pass_instance_number = 0;

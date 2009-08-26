@@ -95,10 +95,10 @@ int flag_llvm_pch_read;
 int flag_no_simplify_libcalls;
 
 // Non-zero if red-zone is disabled.
-static int flag_disable_red_zone = 0;
+//TODOstatic int flag_disable_red_zone = 0;
 
 // Non-zero if implicit floating point instructions are disabled.
-static int flag_no_implicit_float = 0;
+//TODOstatic int flag_no_implicit_float = 0;
 
 /// llvm_asm_file_name - Name of file to use for assembly code output.
 static const char *llvm_asm_file_name;

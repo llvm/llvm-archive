@@ -7059,7 +7059,8 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[1]) << 32);
     UArr[1] = (uint16_t)RealArr[2];
     return ConstantFP::get(Context, APFloat(APInt(80, 2, UArr)));
-  } else if (Ty==Type::getPPC_FP128Ty(Context)) {
+  } else if (Ty==Type::getPPC_FP128Ty(Context) ||
+             Ty==Type::getFP128Ty(Context)) {
     long RealArr[4];
     uint64_t UArr[2];
     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
@@ -7068,7 +7069,9 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[1]));
     UArr[1] = ((uint64_t)((uint32_t)RealArr[2]) << 32) |
               ((uint64_t)((uint32_t)RealArr[3]));
-    return ConstantFP::get(Context, APFloat(APInt(128, 2, UArr)));
+    return ConstantFP::get(Context,
+                           APFloat(APInt(128, 2, UArr),
+                                   /*isIEEE*/ Ty==Type::getFP128Ty(Context)));
   }
   assert(0 && "Floating point type not handled yet");
   return 0;   // outwit compiler warning

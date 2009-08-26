@@ -928,134 +928,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                      Array, Name);
 }
 
-/// llvm_finish_unit - Finish the .s file.
-static void llvm_finish_unit(void *gcc_data, void *user_data) {
-  LazilyInitializeModule();
-
-//TODO  timevar_push(TV_LLVM_PERFILE);
-  LLVMContext &Context = getGlobalContext();
-
-//TODO  performLateBackendInitialization();
-  createPerFunctionOptimizationPasses();
-//TODO
-//TODO  if (flag_pch_file) {
-//TODO    writeLLVMTypesStringTable();
-//TODO    writeLLVMValues();
-//TODO  }
-
-  // Add an llvm.global_ctors global if needed.
-  if (!StaticCtors.empty())
-    CreateStructorsList(StaticCtors, "llvm.global_ctors");
-  // Add an llvm.global_dtors global if needed.
-  if (!StaticDtors.empty())
-    CreateStructorsList(StaticDtors, "llvm.global_dtors");
-
-  if (!AttributeUsedGlobals.empty()) {
-    std::vector<Constant *> AUGs;
-    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
-    for (SmallSetVector<Constant *,32>::iterator
-           AI = AttributeUsedGlobals.begin(),
-           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
-      Constant *C = *AI;
-      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
-    }
-
-    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
-    Constant *Init = ConstantArray::get(AT, AUGs);
-    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-                                         GlobalValue::AppendingLinkage, Init,
-                                         "llvm.used");
-    gv->setSection("llvm.metadata");
-    AttributeUsedGlobals.clear();
-  }
-
-  if (!AttributeCompilerUsedGlobals.empty()) {
-    std::vector<Constant *> ACUGs;
-    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
-    for (SmallSetVector<Constant *,32>::iterator
-           AI = AttributeCompilerUsedGlobals.begin(),
-           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
-      Constant *C = *AI;
-      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
-    }
-
-    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
-    Constant *Init = ConstantArray::get(AT, ACUGs);
-    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
-                                         GlobalValue::AppendingLinkage, Init,
-                                         "llvm.compiler.used");
-    gv->setSection("llvm.metadata");
-    AttributeCompilerUsedGlobals.clear();
-  }
-
-  // Add llvm.global.annotations
-  if (!AttributeAnnotateGlobals.empty()) {
-    Constant *Array = ConstantArray::get(
-      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
-                                      AttributeAnnotateGlobals.size()),
-                       AttributeAnnotateGlobals);
-    GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
-                                         GlobalValue::AppendingLinkage, Array,
-                                         "llvm.global.annotations");
-    gv->setSection("llvm.metadata");
-    AttributeAnnotateGlobals.clear();
-  }
-
-  // Finish off the per-function pass.
-  if (PerFunctionPasses)
-    PerFunctionPasses->doFinalization();
-
-//TODO  // Emit intermediate file before module level optimization passes are run.
-//TODO  if (flag_debug_llvm_module_opt) {
-//TODO    
-//TODO    static PassManager *IntermediatePM = new PassManager();
-//TODO    IntermediatePM->add(new TargetData(*TheTarget->getTargetData()));
-//TODO
-//TODO    char asm_intermediate_out_filename[MAXPATHLEN];
-//TODO    strcpy(&asm_intermediate_out_filename[0], llvm_asm_file_name);
-//TODO    strcat(&asm_intermediate_out_filename[0],".0");
-//TODO    FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
-//TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
-//TODO    raw_ostream *AsmIntermediateRawOutStream = 
-//TODO      new raw_os_ostream(*AsmIntermediateOutStream);
-//TODO    if (emit_llvm_bc)
-//TODO      IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateOutStream));
-//TODO    if (emit_llvm)
-//TODO      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
-//TODO    IntermediatePM->run(*TheModule);
-//TODO    AsmIntermediateRawOutStream->flush();
-//TODO    delete AsmIntermediateRawOutStream;
-//TODO    AsmIntermediateRawOutStream = 0;
-//TODO    AsmIntermediateOutStream->flush();
-//TODO    fflush(asm_intermediate_out_file);
-//TODO    delete AsmIntermediateOutStream;
-//TODO    AsmIntermediateOutStream = 0;
-//TODO  }
-
-  // Run module-level optimizers, if any are present.
-  createPerModuleOptimizationPasses();
-  if (PerModulePasses)
-    PerModulePasses->run(*TheModule);
-  
-  // Run the code generator, if present.
-  if (CodeGenPasses) {
-    CodeGenPasses->doInitialization();
-    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
-         I != E; ++I)
-      if (!I->isDeclaration())
-        CodeGenPasses->run(*I);
-    CodeGenPasses->doFinalization();
-  }
-
-  FormattedOutStream.flush();
-  OutStream->flush();
-//TODO  delete AsmOutRawStream;
-//TODO  AsmOutRawStream = 0;
-//TODO  delete AsmOutStream;
-//TODO  AsmOutStream = 0;
-//TODO  timevar_pop(TV_LLVM_PERFILE);
-}
-
 //TODO// llvm_call_llvm_shutdown - Release LLVM global state.
 //TODOvoid llvm_call_llvm_shutdown(void) {
 //TODO  llvm_shutdown();
@@ -1890,6 +1762,31 @@ const char* extractRegisterName(tree decl) {
   return (*Name == 1) ? Name + 1 : Name;
 }
 
+/// TakeoverAsmOutput - Obtain exclusive use of the assembly code output file.
+/// Any GCC output will be thrown away.
+static void TakeoverAsmOutput(void) {
+  // Calculate the output file name as in init_asm_output (toplev.c).
+  if (!dump_base_name && main_input_filename)
+    dump_base_name = main_input_filename[0] ? main_input_filename : "gccdump";
+
+  if (!main_input_filename && !asm_file_name) {
+    llvm_asm_file_name = "-";
+  } else if (!asm_file_name) {
+    int len = strlen (dump_base_name);
+    char *dumpname = XNEWVEC (char, len + 6);
+
+    memcpy (dumpname, dump_base_name, len + 1);
+    strip_off_ending (dumpname, len);
+    strcat (dumpname, ".s");
+    llvm_asm_file_name = dumpname;
+  } else {
+    llvm_asm_file_name = asm_file_name;
+  }
+
+  // Redirect any GCC output to /dev/null.
+  asm_file_name = HOST_BIT_BUCKET;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             Plugin interface
@@ -1899,7 +1796,8 @@ const char* extractRegisterName(tree decl) {
 // the GPL compatible University of Illinois/NCSA Open Source License.
 int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 
-/// execute_emit_llvm - Turn a gimple function into LLVM IR.
+/// execute_emit_llvm - Turn a gimple function into LLVM IR.  This is called by
+/// GCC once for each function in the compilation unit.
 static unsigned int
 execute_emit_llvm (void)
 {
@@ -1948,31 +1846,6 @@ execute_emit_llvm (void)
   return 0;
 }
 
-/// TakeoverAsmOutput - Obtain exclusive use of the assembly code output file.
-/// Any GCC output will be thrown away.
-static void TakeoverAsmOutput(void) {
-  // Calculate the output file name as in init_asm_output (toplev.c).
-  if (!dump_base_name && main_input_filename)
-    dump_base_name = main_input_filename[0] ? main_input_filename : "gccdump";
-
-  if (!main_input_filename && !asm_file_name) {
-    llvm_asm_file_name = "-";
-  } else if (!asm_file_name) {
-    int len = strlen (dump_base_name);
-    char *dumpname = XNEWVEC (char, len + 6);
-
-    memcpy (dumpname, dump_base_name, len + 1);
-    strip_off_ending (dumpname, len);
-    strcat (dumpname, ".s");
-    llvm_asm_file_name = dumpname;
-  } else {
-    llvm_asm_file_name = asm_file_name;
-  }
-
-  // Redirect any GCC output to /dev/null.
-  asm_file_name = HOST_BIT_BUCKET;
-}
-
 /// pass_emit_llvm - RTL pass that turns gimple functions into LLVM IR.
 static struct rtl_opt_pass pass_emit_llvm =
 {
@@ -1996,13 +1869,142 @@ static struct rtl_opt_pass pass_emit_llvm =
 };
 
 
+/// llvm_finish_unit - Finish the .s file.  This is called by GCC once the
+/// compilation unit has been completely processed.
+static void llvm_finish_unit(void *gcc_data, void *user_data) {
+  LazilyInitializeModule();
+
+//TODO  timevar_push(TV_LLVM_PERFILE);
+  LLVMContext &Context = getGlobalContext();
+
+//TODO  performLateBackendInitialization();
+  createPerFunctionOptimizationPasses();
+//TODO
+//TODO  if (flag_pch_file) {
+//TODO    writeLLVMTypesStringTable();
+//TODO    writeLLVMValues();
+//TODO  }
+
+  // Add an llvm.global_ctors global if needed.
+  if (!StaticCtors.empty())
+    CreateStructorsList(StaticCtors, "llvm.global_ctors");
+  // Add an llvm.global_dtors global if needed.
+  if (!StaticDtors.empty())
+    CreateStructorsList(StaticDtors, "llvm.global_dtors");
+
+  if (!AttributeUsedGlobals.empty()) {
+    std::vector<Constant *> AUGs;
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeUsedGlobals.begin(),
+           AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      AUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, AUGs.size());
+    Constant *Init = ConstantArray::get(AT, AUGs);
+    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.used");
+    gv->setSection("llvm.metadata");
+    AttributeUsedGlobals.clear();
+  }
+
+  if (!AttributeCompilerUsedGlobals.empty()) {
+    std::vector<Constant *> ACUGs;
+    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    for (SmallSetVector<Constant *,32>::iterator
+           AI = AttributeCompilerUsedGlobals.begin(),
+           AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
+      Constant *C = *AI;
+      ACUGs.push_back(TheFolder->CreateBitCast(C, SBP));
+    }
+
+    ArrayType *AT = ArrayType::get(SBP, ACUGs.size());
+    Constant *Init = ConstantArray::get(AT, ACUGs);
+    GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
+                                         GlobalValue::AppendingLinkage, Init,
+                                         "llvm.compiler.used");
+    gv->setSection("llvm.metadata");
+    AttributeCompilerUsedGlobals.clear();
+  }
+
+  // Add llvm.global.annotations
+  if (!AttributeAnnotateGlobals.empty()) {
+    Constant *Array = ConstantArray::get(
+      ArrayType::get(AttributeAnnotateGlobals[0]->getType(),
+                                      AttributeAnnotateGlobals.size()),
+                       AttributeAnnotateGlobals);
+    GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
+                                         GlobalValue::AppendingLinkage, Array,
+                                         "llvm.global.annotations");
+    gv->setSection("llvm.metadata");
+    AttributeAnnotateGlobals.clear();
+  }
+
+  // Finish off the per-function pass.
+  if (PerFunctionPasses)
+    PerFunctionPasses->doFinalization();
+
+//TODO  // Emit intermediate file before module level optimization passes are run.
+//TODO  if (flag_debug_llvm_module_opt) {
+//TODO    
+//TODO    static PassManager *IntermediatePM = new PassManager();
+//TODO    IntermediatePM->add(new TargetData(*TheTarget->getTargetData()));
+//TODO
+//TODO    char asm_intermediate_out_filename[MAXPATHLEN];
+//TODO    strcpy(&asm_intermediate_out_filename[0], llvm_asm_file_name);
+//TODO    strcat(&asm_intermediate_out_filename[0],".0");
+//TODO    FILE *asm_intermediate_out_file = fopen(asm_intermediate_out_filename, "w+b");
+//TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
+//TODO    raw_ostream *AsmIntermediateRawOutStream = 
+//TODO      new raw_os_ostream(*AsmIntermediateOutStream);
+//TODO    if (emit_llvm_bc)
+//TODO      IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateOutStream));
+//TODO    if (emit_llvm)
+//TODO      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
+//TODO    IntermediatePM->run(*TheModule);
+//TODO    AsmIntermediateRawOutStream->flush();
+//TODO    delete AsmIntermediateRawOutStream;
+//TODO    AsmIntermediateRawOutStream = 0;
+//TODO    AsmIntermediateOutStream->flush();
+//TODO    fflush(asm_intermediate_out_file);
+//TODO    delete AsmIntermediateOutStream;
+//TODO    AsmIntermediateOutStream = 0;
+//TODO  }
+
+  // Run module-level optimizers, if any are present.
+  createPerModuleOptimizationPasses();
+  if (PerModulePasses)
+    PerModulePasses->run(*TheModule);
+  
+  // Run the code generator, if present.
+  if (CodeGenPasses) {
+    CodeGenPasses->doInitialization();
+    for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+         I != E; ++I)
+      if (!I->isDeclaration())
+        CodeGenPasses->run(*I);
+    CodeGenPasses->doFinalization();
+  }
+
+  FormattedOutStream.flush();
+  OutStream->flush();
+//TODO  delete AsmOutRawStream;
+//TODO  AsmOutRawStream = 0;
+//TODO  delete AsmOutStream;
+//TODO  AsmOutStream = 0;
+//TODO  timevar_pop(TV_LLVM_PERFILE);
+}
+
+
 /// gate_null - Gate method for a pass that does nothing.
 static bool
 gate_null (void)
 {
   return false;
 }
-
 
 /// pass_gimple_null - Gimple pass that does nothing.
 static struct gimple_opt_pass pass_gimple_null =
@@ -2044,6 +2046,7 @@ static struct rtl_opt_pass pass_rtl_null =
     }
 };
 
+
 /// llvm_plugin_info - Information about this plugin.  Users can access this
 /// using "gcc --help -v".
 static struct plugin_info llvm_plugin_info = {
@@ -2052,8 +2055,10 @@ static struct plugin_info llvm_plugin_info = {
   NULL		// help
 };
 
-/// plugin_init - The initialization routine called by GCC.  Defined in
-/// gcc-plugin.h.
+
+/// plugin_init - Plugin initialization routine, called by GCC.  This is the
+/// first code executed in the plugin (except for constructors).  Configure
+/// the plugin and setup GCC, taking over optimization and code generation.
 int plugin_init (struct plugin_name_args *plugin_info,
                  struct plugin_gcc_version *version) {
   const char *plugin_name = plugin_info->base_name;
@@ -2088,13 +2093,25 @@ int plugin_init (struct plugin_name_args *plugin_info,
     }
   }
 
-  // Provide our version and help information.
+  // Provide GCC with our version and help information.
   register_callback (plugin_name, PLUGIN_INFO, NULL, &llvm_plugin_info);
 
-  // Obtain exclusive use of the assembly code output file.
+  // Obtain exclusive use of the assembly code output file.  This stops GCC from
+  // writing anything at all to the assembly file - only we get to write to it.
   TakeoverAsmOutput();
 
-  // Replace rtl expansion with gimple to LLVM conversion.
+  // Turn off all gcc optimization passes.
+  if (disable_gcc_optimizations) {
+    // TODO: figure out a good way of turning off ipa passes.
+    pass_info.pass = &pass_gimple_null.pass;
+    pass_info.reference_pass_name = "*all_optimizations";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+  }
+
+  // Replace rtl expansion with gimple to LLVM conversion.  This results in each
+  // GCC function in the compilation unit being passed to execute_emit_llvm.
   pass_info.pass = &pass_emit_llvm.pass;
   pass_info.reference_pass_name = "expand";
   pass_info.ref_pass_instance_number = 0;
@@ -2114,17 +2131,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
   pass_info.pos_op = PASS_POS_REPLACE;
   register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-  if (disable_gcc_optimizations) {
-    // Turn off all gcc optimization passes.
-    // TODO: figure out a good way of turning off ipa passes.
-    pass_info.pass = &pass_gimple_null.pass;
-    pass_info.reference_pass_name = "*all_optimizations";
-    pass_info.ref_pass_instance_number = 0;
-    pass_info.pos_op = PASS_POS_REPLACE;
-    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
-  }
-
-  // Finish the .s file.
+  // Finish the .s file once the compilation unit has been completely processed.
   register_callback (plugin_name, PLUGIN_FINISH_UNIT, llvm_finish_unit, NULL);
 
   return 0;

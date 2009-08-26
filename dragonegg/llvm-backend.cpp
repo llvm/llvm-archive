@@ -606,12 +606,9 @@ static void LazilyInitializeModule(void) {
 static void InitializeOutputStreams(bool Binary) {
   assert(!OutStream && "Output stream already initialized!");
   std::string Error;
-  unsigned Flags = raw_fd_ostream::F_Force;
 
-  if (Binary)
-    Flags |= raw_fd_ostream::F_Binary;
-
-  OutStream = new raw_fd_ostream(llvm_asm_file_name, Error, Flags);
+  OutStream = new raw_fd_ostream(llvm_asm_file_name, Error,
+                                 Binary ? raw_fd_ostream::F_Binary : 0);
 
   if (!Error.empty())
     llvm_report_error(Error);

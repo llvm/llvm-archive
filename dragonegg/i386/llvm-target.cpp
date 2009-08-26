@@ -1318,7 +1318,6 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     return NULL;
 
   const StructType *STy = cast<StructType>(Ty);
-  unsigned NumElements = STy->getNumElements();
   std::vector<const Type *> ElementTypes;
 
   // Special handling for _Complex.
@@ -1418,7 +1417,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     } 
 
     // Special treatement for _Complex.
-    if (const StructType *ComplexType = dyn_cast<StructType>(DestElemType)) {
+    if (isa<StructType>(DestElemType)) {
       llvm::Value *Idxs[3];
       Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
       Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DNO);

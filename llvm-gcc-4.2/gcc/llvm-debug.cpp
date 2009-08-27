@@ -704,11 +704,11 @@ DIType DebugInfo::createStructType(tree type) {
 DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
   
   DIType Ty;
-  if (tree Name = TYPE_NAME(type)) {
-    if (TREE_CODE(Name) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(Name)) {
-      expanded_location TypeDefLoc = GetNodeLocation(Name);
-      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(type),
-                                          GetNodeName(Name), 
+  if (tree TyDef = TYPE_NAME(type)) {
+    if (TREE_CODE(TyDef) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(TyDef)) {
+      expanded_location TypeDefLoc = GetNodeLocation(TyDef);
+      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(TyDef),
+                                          GetNodeName(TyDef), 
                                           getOrCreateCompileUnit(TypeDefLoc.file),
                                           TypeDefLoc.line,
                                           0 /*size*/,
@@ -716,8 +716,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                           0 /*offset */, 
                                           0 /*flags*/, 
                                           MainTy);
-      // Set the slot early to prevent recursion difficulties.
-      TypeCache[type] = Ty;
+      TypeCache[TyDef] = Ty;
       return Ty;
     }
   }

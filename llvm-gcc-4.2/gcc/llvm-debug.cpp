@@ -578,7 +578,7 @@ DIType DebugInfo::createStructType(tree type) {
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
   unsigned Flags = llvm::DIType::FlagFwdDecl;
   if (TYPE_BLOCK_IMPL_STRUCT(type))
-    Flags |= llvm::DIType::FlagClosure;
+    Flags |= llvm::DIType::FlagAppleBlock;
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),

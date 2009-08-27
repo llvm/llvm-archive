@@ -36,7 +36,9 @@
 #include "tsystem.h"
 #include <fcntl.h> /* for creat() */
 #include "coretypes.h"
-#include "tm.h"
+/* LLVM LOCAL begin -- commented out */
+/* #include "tm.h" */
+/* LLVM LOCAL end */
 
 #if 0
 #include "sparc/gmon.h"

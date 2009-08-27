@@ -131,7 +131,13 @@ Boston, MA 02110-1301, USA.  */
 
 /* Define for support of TFmode long double.
    SPARC ABI says that long double is 4 words.  */
+/* LLVM LOCAL begin set long double size to 64 -- FIXME : remove this once llvm sparc backend supports long double */
+#if defined(ENABLE_LLVM) || defined( __llvm__ )
+#define LONG_DOUBLE_TYPE_SIZE 64
+#else
 #define LONG_DOUBLE_TYPE_SIZE 128
+#endif 
+/* LLVM LOCAL end */
 
 /* But indicate that it isn't supported by the hardware.  */
 #define WIDEST_HARDWARE_FP_SIZE 64

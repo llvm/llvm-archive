@@ -401,6 +401,7 @@ DIType DebugInfo::createBasicType(tree type) {
     break;
   }
   }
+
   return 
     DebugFactory.CreateBasicType(getOrCreateCompileUnit(main_input_filename),
                                  TypeName, 
@@ -445,7 +446,10 @@ DIType DebugInfo::createPointerType(tree type) {
     DW_TAG_pointer_type :
     DW_TAG_reference_type;
   expanded_location Loc = GetNodeLocation(type);
-  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), "", 
+
+  std::string PName;
+  FromTy.getName(PName);
+  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), PName,
                                          getOrCreateCompileUnit(NULL), 
                                          0 /*line no*/, 
                                          NodeSizeInBits(type),
@@ -576,13 +580,22 @@ DIType DebugInfo::createStructType(tree type) {
   // recursive) and replace all  uses of the forward declaration with the 
   // final definition. 
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
+  // FIXME: findRegion() is not able to find context all the time. This
+  // means when type names in different context match then FwdDecl is
+  // reused because MDNodes are uniqued. To avoid this, use type context
+  /// also while creating FwdDecl for now.
+  std::string FwdName;
+  if (TYPE_CONTEXT(type))
+    FwdName = GetNodeName(TYPE_CONTEXT(type));
+  FwdName = FwdName + GetNodeName(type);
   unsigned Flags = llvm::DIType::FlagFwdDecl;
   if (TYPE_BLOCK_IMPL_STRUCT(type))
     Flags |= llvm::DIType::FlagAppleBlock;
+
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
-                                     GetNodeName(type),
+                                     FwdName,
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 
                                      0, 0, 0, Flags,
@@ -594,7 +607,7 @@ DIType DebugInfo::createStructType(tree type) {
     return FwdDecl;
   
   // Insert into the TypeCache so that recursive uses will find it.
-  TypeCache[type] =  FwdDecl;
+  TypeCache[type] =  FwdDecl.getNode();
   
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -684,7 +697,7 @@ DIType DebugInfo::createStructType(tree type) {
   
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
-  
+
   llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, findRegion(type),
                                      GetNodeName(type),
@@ -705,6 +718,9 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
   
   DIType Ty;
   if (tree TyDef = TYPE_NAME(type)) {
+      std::map<tree_node *, MDNode *>::iterator I = TypeCache.find(TyDef);
+      if (I != TypeCache.end())
+        return DIType(I->second);
     if (TREE_CODE(TyDef) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(TyDef)) {
       expanded_location TypeDefLoc = GetNodeLocation(TyDef);
       Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(TyDef),
@@ -716,7 +732,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                           0 /*offset */, 
                                           0 /*flags*/, 
                                           MainTy);
-      TypeCache[TyDef] = Ty;
+      TypeCache[TyDef] = Ty.getNode();
       return Ty;
     }
   }
@@ -746,7 +762,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                          MainTy);
   
   if (TYPE_VOLATILE(type) || TYPE_READONLY(type)) {
-    TypeCache[type] = Ty;
+    TypeCache[type] = Ty.getNode();
     return Ty;
   }
 
@@ -766,10 +782,10 @@ DIType DebugInfo::getOrCreateType(tree type) {
   if (TREE_CODE(type) == VOID_TYPE) return DIType();
   
   // Check to see if the compile unit already has created this type.
-  DIType &Slot = TypeCache[type];
-  if (!Slot.isNull())
-    return Slot;
-  
+  std::map<tree_node *, MDNode *>::iterator I = TypeCache.find(type);
+  if (I != TypeCache.end())
+    return DIType(I->second);
+
   DIType MainTy;
   if (type != TYPE_MAIN_VARIANT(type) && TYPE_MAIN_VARIANT(type))
     MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
@@ -835,7 +851,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
       Ty = createBasicType(type);
       break;
   }
-  TypeCache[type] = Ty;
+  TypeCache[type] = Ty.getNode();
   return Ty;
 }
 
@@ -861,7 +877,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                 bool isMain) {
   if (!FullPath)
     FullPath = main_input_filename;
-  GlobalVariable *&CU = CUCache[FullPath];
+  MDNode *&CU = CUCache[FullPath];
   if (CU)
     return DICompileUnit(CU);
 
@@ -909,7 +925,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                         version_string, isMain,
                                                         optimize, Flags,
                                                         ObjcRunTimeVer);
-  CU = NewCU.getGV();
+  CU = NewCU.getNode();
   return NewCU;
 }
 

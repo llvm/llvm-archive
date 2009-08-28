@@ -17,7 +17,7 @@ be not usable at all.
                            First Step: Build LLVM
 //===----------------------------------------------------------------------===//
 
-First, check out LLVM from Subversion, then build it in optimized mode (a 
+First, check out LLVM from Subversion, then build it in optimized mode (a
 Release build, as opposed to a Debug one)):
 
   make ENABLE_OPTIMIZED=1
@@ -56,7 +56,7 @@ If llvm-gcc doesn't build right, try building LLVM with OPTIMIZE_OPTION=-O2.
 This may be host compiler version specific.
 
 If you get an error message building llvm-gcc like this:
-  ...gcc/libgcc_s.so.1: version `GCC_4.2.0' not found (required by 
+  ...gcc/libgcc_s.so.1: version `GCC_4.2.0' not found (required by
               /usr/lib/libstdc++.so.6)
 
 you are probably hitting http://llvm.org/PR896.  Please reconfigure with the
@@ -77,25 +77,31 @@ First step: Upgrade your Xcode installation: you need at least Xcode 2.4.
 
 Next, decide if you want Objective-C support.  If so:
     EXTRALANGS=,objc,obj-c++
-    
+
 If building for Darwin/PPC:
     TRIPLE=powerpc-apple-darwin8 (Tiger)
     TRIPLE=powerpc-apple-darwin9 (Leopard)
-  
+
 If building for Darwin/X86 (32- and 64-bit support):
     TARGETOPTIONS='--with-arch=nocona --with-tune=generic'
     TRIPLE=i686-apple-darwin8 (Tiger)
     TRIPLE=i686-apple-darwin9 (Leopard)
-    
+    TRIPLE=i686-apple-darwin10 (Snow Leopard)
+
 If building for Darwin/X86 (32-bit support only):
     TARGETOPTIONS='--with-arch=pentium-m --with-tune=prescott --disable-multilib'
     TRIPLE=i686-apple-darwin8 (Tiger)
     TRIPLE=i686-apple-darwin9 (Leopard)
+    TRIPLE=i686-apple-darwin10 (Snow Leopard)
+
+The Triples are very important, otherwise your llvm-gcc/g++ may not be able
+to find the header files below.
 
 In addition, you *must* specify the following options to configure:
 
-  --with-gxx-include-dir=/usr/include/c++/4.0.0
-  --build=$TRIPLE --host=$TRIPLE --target=$TRIPLE 
+     --with-gxx-include-dir=/usr/include/c++/4.0.0 (Leopard)
+     --with-gxx-include-dir=/usr/include/c++/4.2.1 (Snow Leopard)
+     --build=$TRIPLE --host=$TRIPLE --target=$TRIPLE
 
 With these options, llvm-gcc will build the same way as Apple's system GCC.
 
@@ -116,17 +122,17 @@ Version Identifier:
   If you want LLVM to include an identifying marker in the --version output,
   build llvm-gcc with LLVM_VERSION_INFO=XXX.  For example, to build the LLVM
   2.5 Release front-end, use 'make LLVM_VERSION_INFO=2.5'.  This will cause the
-  front-end to print: "gcc version 4.2.1 (Based on Apple Inc. build 5555) 
+  front-end to print: "gcc version 4.2.1 (Based on Apple Inc. build 5555)
   (LLVM build 2.5)" as the version number.
-  
+
   BUILDOPTIONS=LLVM_VERSION_INFO=whatever
-  
+
 
 //===----------------------------------------------------------------------===//
                         Configure, Build, Install, Test
 //===----------------------------------------------------------------------===//
 
-Next, make an object directory and install directory as siblings to the 
+Next, make an object directory and install directory as siblings to the
 llvm-gcc source directory, and build and install llvm-gcc:
 
 $ mkdir obj
@@ -152,7 +158,7 @@ libstdc++ ('-lstdc++') and subsequently link C++ executables correctly.
 
 //===-----------------------
 
-Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc 
+Note that if you prefer to bootstrap llvm-gcc (so that the final llvm-gcc
 executables have been compiled with llvm-gcc itself), replace "make" with
 "make bootstrap".
 

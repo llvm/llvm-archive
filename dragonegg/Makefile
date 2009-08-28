@@ -1,5 +1,5 @@
-GCCSOURCE_DIR=/home/duncan/tmp/gcc.fsf.master
-GCCOBJECT_DIR=/home/duncan/tmp/gcc.fsf.master-objects
+GCCSOURCE_DIR=$(HOME)/GCC/src/
+GCCOBJECT_DIR=$(HOME)/GCC/objects/
 #GCCPLUGIN_DIR:=$(shell $(GCC) -print-file-name=plugin)
 
 REVISION:=$(shell svnversion -n .)

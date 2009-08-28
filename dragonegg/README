@@ -5,11 +5,11 @@
 Step 1: Build gcc
 -----------------
 
-Check out gcc mainline from the gcc subversion repository:
-  svn checkout svn://gcc.gnu.org/svn/gcc/trunk SomeLocalDir
+Check out the gcc lto branch from the gcc subversion repository:
+  svn checkout svn://gcc.gnu.org/svn/gcc/branches/lto SomeLocalDir
 Apply the patches in the gcc-patches subdirectory, if any.  Hopefully one day
 the plugin will work with an unpatched gcc, but for the moment a few small
-patches need to be applied.
+patches need to be applied.  Configure gcc with your favorite options.
 Build gcc, and install it somewhere.
 
 Step 2: Build the plugin

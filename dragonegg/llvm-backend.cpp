@@ -1780,6 +1780,18 @@ static void TakeoverAsmOutput(void) {
 int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 
 
+/// llvm_start_unit - Perform late initialization.  This is called by GCC just
+/// before processing the compilation unit.
+static void llvm_start_unit(void *gcc_data, void *user_data) {
+  if (!quiet_flag)
+    errs() << "Starting compilation unit\n";
+
+  // Output LLVM IR if the user requested generation of lto data.
+  emit_llvm = flag_generate_lto != 0;
+  flag_generate_lto = 0;
+}
+
+
 /// gate_emission - Whether to turn gimple into LLVM IR.
 static bool gate_emission(void) {
   // Don't bother doing anything if the program has errors.
@@ -1795,6 +1807,9 @@ static void emit_variable(tree decl) {
 
 /// emit_variables - Turn GCC variables into LLVM IR.
 static unsigned int emit_variables(void) {
+  if (!quiet_flag)
+    errs() << "Emitting variables\n";
+
   LazilyInitializeModule();
 
   struct varpool_node *vnode;
@@ -1899,6 +1914,9 @@ static struct rtl_opt_pass pass_emit_functions =
 /// llvm_finish_unit - Finish the .s file.  This is called by GCC once the
 /// compilation unit has been completely processed.
 static void llvm_finish_unit(void *gcc_data, void *user_data) {
+  if (!quiet_flag)
+    errs() << "Finishing compilation unit\n";
+
   LazilyInitializeModule();
 
 //TODO  timevar_push(TV_LLVM_PERFILE);
@@ -2123,13 +2141,12 @@ int plugin_init (struct plugin_name_args *plugin_info,
     }
   }
 
-  // Output LLVM IR if the user requested generation of lto data.
-  emit_llvm = flag_generate_lto != 0;
-  flag_generate_lto = 0;
-
   // Obtain exclusive use of the assembly code output file.  This stops GCC from
   // writing anything at all to the assembly file - only we get to write to it.
   TakeoverAsmOutput();
+
+  // Perform late initialization just before processing the compilation unit.
+  register_callback (plugin_name, PLUGIN_START_UNIT, llvm_start_unit, NULL);
 
   // Add an ipa pass that emits global variables.  This causes emit_variable to
   // be called for each GCC static variable.

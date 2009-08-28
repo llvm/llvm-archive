@@ -113,8 +113,7 @@ raw_ostream *OutStream = 0; // Stream to write assembly code to.
 formatted_raw_ostream FormattedOutStream;
 
 static bool DisableLLVMOptimizations = false;//TODO
-static bool emit_llvm = false;//TODO
-static bool emit_llvm_bc = false;//TODO
+static bool emit_llvm = false;
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
@@ -734,7 +733,7 @@ static void createPerFunctionOptimizationPasses() {
   // functions.
   // FIXME: This is disabled right now until bugs can be worked out.  Reenable
   // this for fast -O0 compiles!
-  if (!emit_llvm_bc && !emit_llvm && 0) {
+  if (!emit_llvm && 0) {
     FunctionPassManager *PM = PerFunctionPasses;    
     HasPerFunctionPasses = true;
 
@@ -797,7 +796,7 @@ static void createPerModuleOptimizationPasses() {
                                InliningPass);
   }
 
-  if (emit_llvm_bc) {
+  if (emit_llvm && 0) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
     InitializeOutputStreams(true);
@@ -868,7 +867,7 @@ static void createPerModuleOptimizationPasses() {
 //TODO
 //TODO  flag_llvm_pch_read = 0;
 //TODO
-//TODO  if (emit_llvm_bc || emit_llvm)
+//TODO  if (emit_llvm)
 //TODO    // Disable emission of .ident into the output file... which is completely
 //TODO    // wrong for llvm/.bc emission cases.
 //TODO    flag_no_ident = 1;
@@ -1780,11 +1779,55 @@ static void TakeoverAsmOutput(void) {
 // the GPL compatible University of Illinois/NCSA Open Source License.
 int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 
-/// execute_emit_llvm - Turn a gimple function into LLVM IR.  This is called by
-/// GCC once for each function in the compilation unit.
-static unsigned int
-execute_emit_llvm (void)
+
+/// gate_emission - Whether to turn gimple into LLVM IR.
+static bool gate_emission(void) {
+  // Don't bother doing anything if the program has errors.
+  return !errorcount && !sorrycount;
+}
+
+
+/// emit_variable - Turn a GCC variable into LLVM IR.  This is called by GCC
+/// once for each variable in the compilation unit.
+static void emit_variable(tree decl) {
+  debug_tree(decl);
+}
+
+/// emit_variables - Turn GCC variables into LLVM IR.
+static unsigned int emit_variables(void) {
+  LazilyInitializeModule();
+
+  struct varpool_node *vnode;
+  FOR_EACH_STATIC_VARIABLE (vnode)
+    emit_variable(vnode->decl);
+
+  return 0;
+}
+
+/// pass_emit_variables - IPA pass that turns GCC variables into LLVM IR.
+static struct simple_ipa_opt_pass pass_emit_variables =
 {
+    {
+      SIMPLE_IPA_PASS,
+      "emit_variables",	/* name */
+      gate_emission,	/* gate */
+      emit_variables,	/* execute */
+      NULL,		/* sub */
+      NULL,		/* next */
+      0,		/* static_pass_number */
+      TV_EXPAND,	/* tv_id */
+      0,		/* properties_required */
+      0,		/* properties_provided */
+      0,		/* properties_destroyed */
+      0,            	/* todo_flags_start */
+      0			/* todo_flags_finish */
+    }
+};
+
+
+/// emit_function - Turn a gimple function into LLVM IR.  This is called by
+/// GCC once for each function in the compilation unit.
+static unsigned int emit_function (void) {
   LazilyInitializeModule();
 
 //TODO Don't want to use sorry at this stage...
@@ -1830,14 +1873,14 @@ execute_emit_llvm (void)
   return 0;
 }
 
-/// pass_emit_llvm - RTL pass that turns gimple functions into LLVM IR.
-static struct rtl_opt_pass pass_emit_llvm =
+/// pass_emit_functions - RTL pass that turns gimple functions into LLVM IR.
+static struct rtl_opt_pass pass_emit_functions =
 {
     {
       RTL_PASS,
-      "emit_llvm",				/* name */
-      NULL,					/* gate */
-      execute_emit_llvm,			/* execute */
+      "emit_functions",				/* name */
+      gate_emission,				/* gate */
+      emit_function,				/* execute */
       NULL,					/* sub */
       NULL,					/* next */
       0,					/* static_pass_number */
@@ -1944,7 +1987,7 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
 //TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
 //TODO    raw_ostream *AsmIntermediateRawOutStream = 
 //TODO      new raw_os_ostream(*AsmIntermediateOutStream);
-//TODO    if (emit_llvm_bc)
+//TODO    if (emit_llvm && 0)
 //TODO      IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateOutStream));
 //TODO    if (emit_llvm)
 //TODO      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
@@ -1995,18 +2038,18 @@ static struct gimple_opt_pass pass_gimple_null =
 {
     {
       GIMPLE_PASS,
-      NULL,					/* name */
-      gate_null,				/* gate */
-      NULL,					/* execute */
-      NULL,					/* sub */
-      NULL,					/* next */
-      0,					/* static_pass_number */
-      TV_NONE,					/* tv_id */
-      0,					/* properties_required */
-      0,					/* properties_provided */
-      0,					/* properties_destroyed */
-      0,					/* todo_flags_start */
-      0						/* todo_flags_finish */
+      NULL,		/* name */
+      gate_null,	/* gate */
+      NULL,		/* execute */
+      NULL,		/* sub */
+      NULL,		/* next */
+      0,		/* static_pass_number */
+      TV_NONE,		/* tv_id */
+      0,		/* properties_required */
+      0,		/* properties_provided */
+      0,		/* properties_destroyed */
+      0,		/* todo_flags_start */
+      0			/* todo_flags_finish */
     }
 };
 
@@ -2015,18 +2058,18 @@ static struct rtl_opt_pass pass_rtl_null =
 {
     {
       RTL_PASS,
-      NULL,					/* name */
-      gate_null,				/* gate */
-      NULL,					/* execute */
-      NULL,					/* sub */
-      NULL,					/* next */
-      0,					/* static_pass_number */
-      TV_NONE,					/* tv_id */
-      0,					/* properties_required */
-      0,					/* properties_provided */
-      0,					/* properties_destroyed */
-      0,					/* todo_flags_start */
-      0						/* todo_flags_finish */
+      NULL,		/* name */
+      gate_null,	/* gate */
+      NULL,		/* execute */
+      NULL,		/* sub */
+      NULL,		/* next */
+      0,		/* static_pass_number */
+      TV_NONE,		/* tv_id */
+      0,		/* properties_required */
+      0,		/* properties_provided */
+      0,		/* properties_destroyed */
+      0,		/* todo_flags_start */
+      0			/* todo_flags_finish */
     }
 };
 
@@ -2057,6 +2100,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
     return 1;
   }
 
+  // Provide GCC with our version and help information.
+  register_callback (plugin_name, PLUGIN_INFO, NULL, &llvm_plugin_info);
+
   // Process any plugin arguments.
   {
     int argc = plugin_info->argc;
@@ -2077,16 +2123,25 @@ int plugin_init (struct plugin_name_args *plugin_info,
     }
   }
 
-  // Provide GCC with our version and help information.
-  register_callback (plugin_name, PLUGIN_INFO, NULL, &llvm_plugin_info);
+  // Output LLVM IR if the user requested generation of lto data.
+  emit_llvm = flag_generate_lto != 0;
+  flag_generate_lto = 0;
 
   // Obtain exclusive use of the assembly code output file.  This stops GCC from
   // writing anything at all to the assembly file - only we get to write to it.
   TakeoverAsmOutput();
 
+  // Add an ipa pass that emits global variables.  This causes emit_variable to
+  // be called for each GCC static variable.
+  pass_info.pass = &pass_emit_variables.pass;
+  pass_info.reference_pass_name = "matrix-reorg";
+  pass_info.ref_pass_instance_number = 0;
+  pass_info.pos_op = PASS_POS_INSERT_AFTER;
+  register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
   // Turn off all gcc optimization passes.
   if (disable_gcc_optimizations) {
-    // TODO: figure out a good way of turning off ipa passes.
+    // TODO: figure out a good way of turning off ipa optimization passes.
     // Could just set optimize to zero (after taking a copy), but this would
     // also impact front-end optimizations.
     pass_info.pass = &pass_gimple_null.pass;
@@ -2097,8 +2152,8 @@ int plugin_init (struct plugin_name_args *plugin_info,
   }
 
   // Replace rtl expansion with gimple to LLVM conversion.  This results in each
-  // GCC function in the compilation unit being passed to execute_emit_llvm.
-  pass_info.pass = &pass_emit_llvm.pass;
+  // GCC function in the compilation unit being passed to emit_function.
+  pass_info.pass = &pass_emit_functions.pass;
   pass_info.reference_pass_name = "expand";
   pass_info.ref_pass_instance_number = 0;
   pass_info.pos_op = PASS_POS_REPLACE;

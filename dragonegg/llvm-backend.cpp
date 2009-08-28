@@ -87,6 +87,9 @@ extern "C" {
 #include "llvm-debug.h"
 #include "llvm-target.h"
 #include "bits_and_bobs.h"
+extern "C" {
+#include "llvm-cache.h"
+}
 
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;
@@ -1439,7 +1442,7 @@ bool ValidateRegisterVariable(tree decl) {
 ///
 /// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
 /// called by DECL_LLVM if a decl doesn't have an LLVM set.
-void make_decl_llvm(tree decl) {
+Value *make_decl_llvm(tree decl) {
 #ifdef ENABLE_CHECKING
   // Check that we are not being given an automatic variable.
   // A weak alias has TREE_PUBLIC set but not the other bits.
@@ -1456,10 +1459,11 @@ void make_decl_llvm(tree decl) {
   
   // For a duplicate declaration, we can be called twice on the
   // same DECL node.  Don't discard the LLVM already made.
-  if (DECL_LLVM_SET_P(decl)) return;
+  if (Value *V = (Value *)llvm_get_cached(decl))
+    return V;
 
   if (errorcount || sorrycount)
-    return;  // Do not process broken code.
+    return NULL;  // Do not process broken code.
   
   
   // Global register variable with asm name, e.g.:
@@ -1468,7 +1472,7 @@ void make_decl_llvm(tree decl) {
     // This  just verifies that the variable is ok.  The actual "load/store"
     // code paths handle accesses to the variable.
     ValidateRegisterVariable(decl);
-    return;
+    return NULL;
   }
   
 //TODO  timevar_push(TV_LLVM_GLOBALS);
@@ -1550,7 +1554,7 @@ void make_decl_llvm(tree decl) {
         G->eraseFromParent();
       }
     }
-    SET_DECL_LLVM(decl, FnEntry);
+    return SET_DECL_LLVM(decl, FnEntry);
   } else {
     assert((TREE_CODE(decl) == VAR_DECL ||
             TREE_CODE(decl) == CONST_DECL) && "Not a function or var decl?");
@@ -1646,7 +1650,7 @@ void make_decl_llvm(tree decl) {
     if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL_P(decl))
       GV->setThreadLocal(true);
 
-    SET_DECL_LLVM(decl, GV);
+    return SET_DECL_LLVM(decl, GV);
   }
 //TODO  timevar_pop(TV_LLVM_GLOBALS);
 }
@@ -1799,12 +1803,6 @@ static bool gate_emission(void) {
 }
 
 
-/// emit_variable - Turn a GCC variable into LLVM IR.  This is called by GCC
-/// once for each variable in the compilation unit.
-static void emit_variable(tree decl) {
-  debug_tree(decl);
-}
-
 /// emit_variables - Turn GCC variables into LLVM IR.
 static unsigned int emit_variables(void) {
   if (!quiet_flag)
@@ -1814,7 +1812,7 @@ static unsigned int emit_variables(void) {
 
   struct varpool_node *vnode;
   FOR_EACH_STATIC_VARIABLE (vnode)
-    emit_variable(vnode->decl);
+    emit_global_to_llvm(vnode->decl);
 
   return 0;
 }
@@ -2148,8 +2146,8 @@ int plugin_init (struct plugin_name_args *plugin_info,
   // Perform late initialization just before processing the compilation unit.
   register_callback (plugin_name, PLUGIN_START_UNIT, llvm_start_unit, NULL);
 
-  // Add an ipa pass that emits global variables.  This causes emit_variable to
-  // be called for each GCC static variable.
+  // Add an ipa pass that emits global variables, calling emit_global_to_llvm
+  // for each GCC static variable.
   pass_info.pass = &pass_emit_variables.pass;
   pass_info.reference_pass_name = "matrix-reorg";
   pass_info.ref_pass_instance_number = 0;

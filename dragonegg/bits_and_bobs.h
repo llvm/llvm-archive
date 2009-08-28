@@ -6,7 +6,7 @@ union tree_node;
 
 namespace llvm { class Value; }
 
-extern void llvm_set_decl (union tree_node *, Value *);
+extern Value *llvm_set_decl (union tree_node *, Value *);
 extern Value *llvm_get_decl(union tree_node *);
 #define DECL_LLVM(NODE) (llvm_get_decl(NODE))
 #define SET_DECL_LLVM(NODE, LLVM) (llvm_set_decl (NODE,LLVM))

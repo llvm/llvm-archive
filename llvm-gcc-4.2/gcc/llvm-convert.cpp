@@ -4487,12 +4487,25 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           }
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
           unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
-          if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
+          if (OTyBits == 0 || OpTyBits == 0) {
             error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
             return 0;
+          } else if (OTyBits < OpTyBits) {
+            // Truncate the input to match the output.
+            Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
+                               OTy, CallResultIsSigned[Match]);
+            // Big endian may be doable; I just don't know what the
+            // behavior is supposed to be.
+            if (BYTES_BIG_ENDIAN) {
+              error("%Hunsupported inline asm: input constraint with a "
+                    "matching output constraint of incompatible type!",
+                    &EXPR_LOCATION(exp));
+            }
+            OpTy = Op->getType();
           } else if (OTyBits > OpTyBits) {
+            // Extend the input to match the output.
             Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
                                OTy, CallResultIsSigned[Match]);
             if (BYTES_BIG_ENDIAN) {

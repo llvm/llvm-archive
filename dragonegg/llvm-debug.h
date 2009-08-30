@@ -137,4 +137,4 @@ public:
 
 } // end namespace llvm
 
-#endif
+#endif /* LLVM_DEBUG_H */

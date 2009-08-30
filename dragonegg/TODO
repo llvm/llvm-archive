@@ -27,3 +27,6 @@ we might as well rename target directories like i386/ to x86/ instead, and
 eliminate use of gcc's config.gcc script.  This also means that LLVM_TARGET_NAME
 could be defined from the Makefile rather than being specified in llvm-target.h.
 Maybe LLVM_TARGET_INTRINSIC_PREFIX could go too.
+
+Teach the build system that the plugin needs to be rebuilt if any of the bits of
+LLVM/gcc it depends on changes.

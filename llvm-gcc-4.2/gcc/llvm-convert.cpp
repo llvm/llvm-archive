@@ -4487,25 +4487,23 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           }
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
           unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
-          if (OTyBits == 0 || OpTyBits == 0) {
+          if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
+            // It's tempting to implement the OTyBits < OpTyBits case by truncating
+            // Op down to OTy, however that breaks in the case of an inline asm
+            // constraint that corresponds to a single register, because the
+            // user can write code that assumes the whole register is defined,
+            // despite the output operand being only a subset of the register. For
+            // example:
+            //
+            //   asm ("sarl $10, %%eax" : "=a"(c) : "0"(1000000));
+            //
+            // The expected behavior is for %eax to be fully defined with the value
+            // 1000000 immediately before the asm.
             error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
             return 0;
-          } else if (OTyBits < OpTyBits) {
-            // Truncate the input to match the output.
-            Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
-                               OTy, CallResultIsSigned[Match]);
-            // Big endian may be doable; I just don't know what the
-            // behavior is supposed to be.
-            if (BYTES_BIG_ENDIAN) {
-              error("%Hunsupported inline asm: input constraint with a "
-                    "matching output constraint of incompatible type!",
-                    &EXPR_LOCATION(exp));
-            }
-            OpTy = Op->getType();
           } else if (OTyBits > OpTyBits) {
-            // Extend the input to match the output.
             Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
                                OTy, CallResultIsSigned[Match]);
             if (BYTES_BIG_ENDIAN) {

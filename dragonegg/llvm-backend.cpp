@@ -1790,9 +1790,11 @@ static void llvm_start_unit(void *gcc_data, void *user_data) {
   if (!quiet_flag)
     errs() << "Starting compilation unit\n";
 
+#ifdef ENABLE_LTO
   // Output LLVM IR if the user requested generation of lto data.
   emit_llvm = flag_generate_lto != 0;
   flag_generate_lto = 0;
+#endif
 }
 
 

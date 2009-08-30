@@ -2,6 +2,7 @@ GCCSOURCE_DIR=$(HOME)/GCC/src/
 GCCOBJECT_DIR=$(HOME)/GCC/objects/
 #GCCPLUGIN_DIR:=$(shell $(GCC) -print-file-name=plugin)
 
+# Replace with an informative string when doing a release.
 REVISION:=$(shell svnversion -n .)
 
 TARGET_TRIPLE:=$(shell $(GCCOBJECT_DIR)/gcc/xgcc -v 2>&1 | grep "^Target:" | sed -e "s/^Target: *//")

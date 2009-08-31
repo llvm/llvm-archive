@@ -1138,9 +1138,11 @@ extern int valid_iwmmxt_reg_mode (int);
 
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
 /* Modes valid for Neon D registers.  */
+/* LLVM LOCAL begin */
 #define VALID_NEON_DREG_MODE(MODE) \
   ((MODE) == V2SImode || (MODE) == V4HImode || (MODE) == V8QImode \
-   || (MODE) == V2SFmode || (MODE) == DImode)
+   || (MODE) == V2SFmode || (MODE) == V1DImode)
+/* LLVM LOCAL end */
 
 /* Modes valid for Neon Q registers.  */
 #define VALID_NEON_QREG_MODE(MODE) \
@@ -3365,7 +3367,9 @@ enum neon_builtins
   NEON_BUILTIN_vreinterpretv4hi,
   NEON_BUILTIN_vreinterpretv2si,
   NEON_BUILTIN_vreinterpretv2sf,
-  NEON_BUILTIN_vreinterpretdi,
+  /* LLVM LOCAL begin */
+  NEON_BUILTIN_vreinterpretv1di,
+  /* LLVM LOCAL end */
   NEON_BUILTIN_vreinterpretv16qi,
   NEON_BUILTIN_vreinterpretv8hi,
   NEON_BUILTIN_vreinterpretv4si,

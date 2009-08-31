@@ -168,7 +168,8 @@
 (define_mode_macro VD [V8QI V4HI V2SI V2SF])
 
 ;; Double-width vector modes plus 64-bit elements.
-(define_mode_macro VDX [V8QI V4HI V2SI V2SF DI])
+;; LLVM LOCAL
+(define_mode_macro VDX [V8QI V4HI V2SI V2SF V1DI])
 
 ;; Same, without floating-point elements.
 (define_mode_macro VDI [V8QI V4HI V2SI])
@@ -203,8 +204,9 @@
 ;; Narrowable modes.
 (define_mode_macro VN [V8HI V4SI V2DI])
 
-;; All supported vector modes (except singleton DImode).
-(define_mode_macro VDQ [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF V2DI])
+;; All supported vector modes.
+;; LLVM LOCAL
+(define_mode_macro VDQ [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF V2DI V1DI])
 
 ;; All supported vector modes (except those with 64-bit integer elements).
 (define_mode_macro VDQW [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF])
@@ -212,14 +214,17 @@
 ;; Supported integer vector modes (not 64 bit elements).
 (define_mode_macro VDQIW [V8QI V16QI V4HI V8HI V2SI V4SI])
 
-;; Supported integer vector modes (not singleton DI)
-(define_mode_macro VDQI [V8QI V16QI V4HI V8HI V2SI V4SI V2DI])
+;; Supported integer vector modes
+;; LLVM LOCAL
+(define_mode_macro VDQI [V8QI V16QI V4HI V8HI V2SI V4SI V2DI V1DI])
 
 ;; Vector modes, including 64-bit integer elements.
-(define_mode_macro VDQX [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF DI V2DI])
+;; LLVM LOCAL
+(define_mode_macro VDQX [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF V1DI V2DI])
 
 ;; Vector modes including 64-bit integer elements, but no floats.
-(define_mode_macro VDQIX [V8QI V16QI V4HI V8HI V2SI V4SI DI V2DI])
+;; LLVM LOCAL
+(define_mode_macro VDQIX [V8QI V16QI V4HI V8HI V2SI V4SI V1DI V2DI])
 
 ;; Vector modes for float->int conversions.
 (define_mode_macro VCVTF [V2SF V4SF])
@@ -252,7 +257,8 @@
 (define_mode_macro VE [V8QI V16QI])
 
 ;; Modes with 64-bit elements only.
-(define_mode_macro V64 [DI V2DI])
+;; LLVM LOCAL
+(define_mode_macro V64 [V1DI V2DI])
 
 ;; Modes with 32-bit elements only.
 (define_mode_macro V32 [V2SI V2SF V4SI V4SF])
@@ -266,7 +272,8 @@
 			  (V4HI "HI") (V8HI "HI")
                           (V2SI "SI") (V4SI "SI")
                           (V2SF "SF") (V4SF "SF")
-                          (DI "DI")   (V2DI "DI")])
+;; LLVM LOCAL
+                          (V1DI "DI") (V2DI "DI")])
 
 ;; Mode of pair of elements for each vector mode, to define transfer
 ;; size for structure lane/dup loads and stores.
@@ -274,7 +281,8 @@
 			      (V4HI "SI") (V8HI "SI")
                               (V2SI "V2SI") (V4SI "V2SI")
                               (V2SF "V2SF") (V4SF "V2SF")
-                              (DI "V2DI")   (V2DI "V2DI")])
+;; LLVM LOCAL
+                              (V1DI "V2DI") (V2DI "V2DI")])
 
 ;; Similar, for three elements.
 ;; ??? Should we define extra modes so that sizes of all three-element
@@ -283,21 +291,24 @@
 			        (V4HI "V4HI") (V8HI "V4HI")
                                 (V2SI "V4SI") (V4SI "V4SI")
                                 (V2SF "V4SF") (V4SF "V4SF")
-                                (DI "EI")     (V2DI "EI")])
+;; LLVM LOCAL
+                                (V1DI "EI")   (V2DI "EI")])
 
 ;; Similar, for four elements.
 (define_mode_attr V_four_elem [(V8QI "SI")   (V16QI "SI")
 			       (V4HI "V4HI") (V8HI "V4HI")
                                (V2SI "V4SI") (V4SI "V4SI")
                                (V2SF "V4SF") (V4SF "V4SF")
-                               (DI "OI")     (V2DI "OI")])
+;; LLVM LOCAL
+                               (V1DI "OI")   (V2DI "OI")])
 
 ;; Register width from element mode
 (define_mode_attr V_reg [(V8QI "P") (V16QI "q")
                          (V4HI "P") (V8HI  "q")
                          (V2SI "P") (V4SI  "q")
                          (V2SF "P") (V4SF  "q")
-                         (DI   "P") (V2DI  "q")])
+;; LLVM LOCAL
+                         (V1DI "P") (V2DI  "q")])
 
 ;; Wider modes with the same number of elements.
 (define_mode_attr V_widen [(V8QI "V8HI") (V4HI "V4SI") (V2SI "V2DI")])
@@ -308,55 +319,64 @@
 ;; Modes with half the number of equal-sized elements.
 (define_mode_attr V_HALF [(V16QI "V8QI") (V8HI "V4HI")
 			  (V4SI  "V2SI") (V4SF "V2SF")
-                          (V2DI "DI")])
+;; LLVM LOCAL
+                          (V2DI  "V1DI")])
 
 ;; Same, but lower-case.
 (define_mode_attr V_half [(V16QI "v8qi") (V8HI "v4hi")
 			  (V4SI  "v2si") (V4SF "v2sf")
-                          (V2DI "di")])
+;; LLVM LOCAL
+                          (V2DI "v1di")])
 
 ;; Modes with twice the number of equal-sized elements.
 (define_mode_attr V_DOUBLE [(V8QI "V16QI") (V4HI "V8HI")
 			    (V2SI "V4SI") (V2SF "V4SF")
-                            (DI "V2DI")])
+;; LLVM LOCAL
+                            (V1DI "V2DI")])
 
 ;; Same, but lower-case.
 (define_mode_attr V_double [(V8QI "v16qi") (V4HI "v8hi")
 			    (V2SI "v4si") (V2SF "v4sf")
-                            (DI "v2di")])
+;; LLVM LOCAL
+                            (V1DI "v2di")])
 
 ;; Modes with double-width elements.
 (define_mode_attr V_double_width [(V8QI "V4HI") (V16QI "V8HI")
 				  (V4HI "V2SI") (V8HI "V4SI")
-				  (V2SI "DI")   (V4SI "V2DI")])
+;; LLVM LOCAL
+				  (V2SI "V1DI") (V4SI "V2DI")])
 
 ;; Mode of result of comparison operations (and bit-select operand 1).
 (define_mode_attr V_cmp_result [(V8QI "V8QI") (V16QI "V16QI")
 			        (V4HI "V4HI") (V8HI  "V8HI")
                                 (V2SI "V2SI") (V4SI  "V4SI")
                                 (V2SF "V2SI") (V4SF  "V4SI")
-                                (DI   "DI")   (V2DI  "V2DI")])
+;; LLVM LOCAL
+                                (V1DI "V1DI") (V2DI  "V2DI")])
 
 ;; Get element type from double-width mode, for operations where we don't care
 ;; about signedness.
 (define_mode_attr V_if_elem [(V8QI "i8")  (V16QI "i8")
 			     (V4HI "i16") (V8HI  "i16")
                              (V2SI "i32") (V4SI  "i32")
-                             (DI   "i64") (V2DI  "i64")
+;; LLVM LOCAL
+                             (V1DI "i64") (V2DI  "i64")
 			     (V2SF "f32") (V4SF  "f32")])
 
 ;; Same, but for operations which work on signed values.
 (define_mode_attr V_s_elem [(V8QI "s8")  (V16QI "s8")
 			    (V4HI "s16") (V8HI  "s16")
                             (V2SI "s32") (V4SI  "s32")
-                            (DI   "s64") (V2DI  "s64")
+;; LLVM LOCAL
+                            (V1DI "s64") (V2DI  "s64")
 			    (V2SF "f32") (V4SF  "f32")])
 
 ;; Same, but for operations which work on unsigned values.
 (define_mode_attr V_u_elem [(V8QI "u8")  (V16QI "u8")
 			    (V4HI "u16") (V8HI  "u16")
                             (V2SI "u32") (V4SI  "u32")
-                            (DI   "u64") (V2DI  "u64")
+;; LLVM LOCAL
+                            (V1DI "u64") (V2DI  "u64")
                             (V2SF "f32") (V4SF  "f32")])
 
 ;; Element types for extraction of unsigned scalars.
@@ -368,7 +388,8 @@
 (define_mode_attr V_sz_elem [(V8QI "8")  (V16QI "8")
 			     (V4HI "16") (V8HI  "16")
                              (V2SI "32") (V4SI  "32")
-                             (DI   "64") (V2DI  "64")
+;; LLVM LOCAL
+                             (V1DI "64") (V2DI  "64")
 			     (V2SF "32") (V4SF  "32")])
 
 ;; Element sizes for duplicating ARM registers to all elements of a vector.
@@ -379,14 +400,16 @@
 			  (V4HI "TI") (V8HI  "OI")
                           (V2SI "TI") (V4SI  "OI")
                           (V2SF "TI") (V4SF  "OI")
-                          (DI   "TI") (V2DI  "OI")])
+;; LLVM LOCAL
+                          (V1DI "TI") (V2DI  "OI")])
 
 ;; Same, but lower-case.
 (define_mode_attr V_pair [(V8QI "ti") (V16QI "oi")
 			  (V4HI "ti") (V8HI  "oi")
                           (V2SI "ti") (V4SI  "oi")
                           (V2SF "ti") (V4SF  "oi")
-                          (DI   "ti") (V2DI  "oi")])
+;; LLVM LOCAL
+                          (V1DI "ti") (V2DI  "oi")])
 
 ;; Operations on two halves of a quadword vector.
 (define_code_macro vqh_ops [plus smin smax umin umax])
@@ -408,7 +431,8 @@
 			   (V4HI "") (V8HI "")
                            (V2SI "") (V4SI "")
                            (V2SF "") (V4SF "")
-                           (DI "_neon") (V2DI "")])
+;; LLVM LOCAL
+                           (V1DI "") (V2DI "")])
 
 ;; Scalars to be presented to scalar multiplication instructions
 ;; must satisfy the following constraints.
@@ -496,27 +520,31 @@
 (define_mode_attr Is_float_mode [(V8QI "false") (V16QI "false")
 				 (V4HI "false") (V8HI "false")
 				 (V2SI "false") (V4SI "false")
-				 (V2SF "true") (V4SF "true")
-				 (DI "false") (V2DI "false")])
+				 (V2SF "true")  (V4SF "true")
+;; LLVM LOCAL
+				 (V1DI "false") (V2DI "false")])
 
-(define_mode_attr Scalar_mul_8_16 [(V8QI "true") (V16QI "true")
-				   (V4HI "true") (V8HI "true")
+(define_mode_attr Scalar_mul_8_16 [(V8QI "true")  (V16QI "true")
+				   (V4HI "true")  (V8HI "true")
 				   (V2SI "false") (V4SI "false")
 				   (V2SF "false") (V4SF "false")
-				   (DI "false") (V2DI "false")])
+;; LLVM LOCAL
+				   (V1DI "false") (V2DI "false")])
 
 
 (define_mode_attr Is_d_reg [(V8QI "true") (V16QI "false")
                             (V4HI "true") (V8HI  "false")
                             (V2SI "true") (V4SI  "false")
                             (V2SF "true") (V4SF  "false")
-                            (DI   "true") (V2DI  "false")])
+;; LLVM LOCAL
+                            (V1DI "true") (V2DI  "false")])
 
 (define_mode_attr V_mode_nunits [(V8QI "8") (V16QI "16")
                                  (V4HI "4") (V8HI "8")
                                  (V2SI "2") (V4SI "4")
                                  (V2SF "2") (V4SF "4")
-                                 (DI "1")   (V2DI "2")])
+;; LLVM LOCAL
+                                 (V1DI "1") (V2DI "2")])
 
 ;; FIXME: Attributes are probably borked.
 (define_insn "*neon_mov<mode>"
@@ -866,11 +894,8 @@
 
 ;; Doubleword and quadword arithmetic.
 
-;; NOTE: vadd/vsub and some other instructions also support 64-bit integer
-;; element size, which we could potentially use for "long long" operations. We
-;; don't want to do this at present though, because moving values from the
-;; vector unit to the ARM core is currently slow and 64-bit addition (etc.) is
-;; easy to do with ARM instructions anyway.
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 (define_insn "*add<mode>3_neon"
   [(set (match_operand:VDQ 0 "s_register_operand" "=w")
@@ -938,23 +963,8 @@
   [(set_attr "neon_type" "neon_int_1")]
 )
 
-(define_insn "iordi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand" "=w,w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w,0")
-		    (match_operand:DI 2 "neon_logic_op2" "w,Dl")]
-                    UNSPEC_VORR))]
-  "TARGET_NEON"
-{
-  switch (which_alternative)
-    {
-    case 0: return "vorr\t%P0, %P1, %P2";
-    case 1: return neon_output_logic_immediate ("vorr", &operands[2],
-		     DImode, 0, VALID_NEON_QREG_MODE (DImode));
-    default: gcc_unreachable ();
-    }
-}
-  [(set_attr "neon_type" "neon_int_1")]
-)
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 ;; The concrete forms of the Neon immediate-logic instructions are vbic and
 ;; vorr. We support the pseudo-instruction vand instead, because that
@@ -978,23 +988,8 @@
   [(set_attr "neon_type" "neon_int_1")]
 )
 
-(define_insn "anddi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand" "=w,w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w,0")
-		    (match_operand:DI 2 "neon_inv_logic_op2" "w,DL")]
-                    UNSPEC_VAND))]
-  "TARGET_NEON"
-{
-  switch (which_alternative)
-    {
-    case 0: return "vand\t%P0, %P1, %P2";
-    case 1: return neon_output_logic_immediate ("vand", &operands[2],
-    		     DImode, 1, VALID_NEON_QREG_MODE (DImode));
-    default: gcc_unreachable ();
-    }
-}
-  [(set_attr "neon_type" "neon_int_1")]
-)
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 (define_insn "orn<mode>3_neon"
   [(set (match_operand:VDQ 0 "s_register_operand" "=w")
@@ -1005,15 +1000,8 @@
   [(set_attr "neon_type" "neon_int_1")]
 )
 
-(define_insn "orndi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w")
-		    (match_operand:DI 2 "s_register_operand" "w")]
-                    UNSPEC_VORN))]
-  "TARGET_NEON"
-  "vorn\t%P0, %P1, %P2"
-  [(set_attr "neon_type" "neon_int_1")]
-)
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 (define_insn "bic<mode>3_neon"
   [(set (match_operand:VDQ 0 "s_register_operand" "=w")
@@ -1024,15 +1012,8 @@
   [(set_attr "neon_type" "neon_int_1")]
 )
 
-(define_insn "bicdi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w")
-		     (match_operand:DI 2 "s_register_operand" "w")]
-                    UNSPEC_VBIC))]
-  "TARGET_NEON"
-  "vbic\t%P0, %P1, %P2"
-  [(set_attr "neon_type" "neon_int_1")]
-)
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 (define_insn "xor<mode>3"
   [(set (match_operand:VDQ 0 "s_register_operand" "=w")
@@ -1043,15 +1024,8 @@
   [(set_attr "neon_type" "neon_int_1")]
 )
 
-(define_insn "xordi3_neon"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w")
-		     (match_operand:DI 2 "s_register_operand" "w")]
-                    UNSPEC_VEOR))]
-  "TARGET_NEON"
-  "veor\t%P0, %P1, %P2"
-  [(set_attr "neon_type" "neon_int_1")]
-)
+;; LLVM LOCAL begin
+;; LLVM LOCAL end
 
 (define_insn "one_cmpl<mode>2"
   [(set (match_operand:VDQ 0 "s_register_operand" "=w")
@@ -1477,6 +1451,17 @@
 
   DONE;
 })
+
+;; LLVM LOCAL begin
+(define_insn "reduc_splus_v1di"
+  [(set (match_operand:V1DI 0 "s_register_operand" "=w")
+	(unspec:V1DI [(match_operand:V1DI 1 "s_register_operand" "w")]
+		     UNSPEC_VPADD))]
+  "TARGET_NEON"
+  "vadd.i64\t%P0, %e1, %f1"
+  [(set_attr "neon_type" "neon_int_1")]
+)
+;; LLVM LOCAL end
 
 (define_insn "reduc_splus_v2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
@@ -2452,9 +2437,10 @@
 ; with this insn. Operand 3 (info word) is ignored because it does nothing
 ; useful with 64-bit elements.
 
-(define_insn "neon_vget_lanedi"
+;; LLVM LOCAL begin
+(define_insn "neon_vget_lanev1di"
   [(set (match_operand:DI 0 "s_register_operand" "=r")
-       (unspec:DI [(match_operand:DI 1 "s_register_operand" "w")
+       (unspec:DI [(match_operand:V1DI 1 "s_register_operand" "w")
                    (match_operand:SI 2 "immediate_operand" "i")
                    (match_operand:SI 3 "immediate_operand" "i")]
                   UNSPEC_VGET_LANE))]
@@ -2463,6 +2449,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
+;; LLVM LOCAL end
 
 (define_insn "neon_vget_lane<mode>"
   [(set (match_operand:<V_elem> 0 "s_register_operand" "=r")
@@ -2525,17 +2512,19 @@
 
 ; See neon_vget_lanedi comment for reasons operands 2 & 3 are ignored.
 
-(define_insn "neon_vset_lanedi"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "r")
-		    (match_operand:DI 2 "s_register_operand" "0")
-                    (match_operand:SI 3 "immediate_operand" "i")]
+;; LLVM LOCAL begin
+(define_insn "neon_vset_lanev1di"
+  [(set (match_operand:V1DI 0 "s_register_operand" "=w")
+	(unspec:V1DI [(match_operand:DI 1 "s_register_operand" "r")
+		      (match_operand:V1DI 2 "s_register_operand" "0")
+                      (match_operand:SI 3 "immediate_operand" "i")]
                    UNSPEC_VSET_LANE))]
   "TARGET_NEON"
   "vmov%?\t%P0, %Q1, %R1  @ di"
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
+;; LLVM LOCAL end
 
 (define_insn "neon_vset_lane<mode>"
   [(set (match_operand:VQ 0 "s_register_operand" "=w")
@@ -2604,15 +2593,17 @@
    (set_attr "neon_type" "neon_bp_simple")]
 )
 
-(define_insn "neon_vdup_ndi"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "r")]
-                   UNSPEC_VDUP_N))]
+;; LLVM LOCAL begin
+(define_insn "neon_vdup_nv1di"
+  [(set (match_operand:V1DI 0 "s_register_operand" "=w")
+	(unspec:V1DI [(match_operand:DI 1 "s_register_operand" "r")]
+                     UNSPEC_VDUP_N))]
   "TARGET_NEON"
   "vmov%?\t%P0, %Q1, %R1"
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
+;; LLVM LOCAL end
 
 (define_insn "neon_vdup_nv2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
@@ -2648,21 +2639,24 @@
 )
 
 ; Scalar index is ignored, since only zero is valid here.
-(define_expand "neon_vdup_lanedi"
-  [(set (match_operand:DI 0 "s_register_operand" "=w")
-	(unspec:DI [(match_operand:DI 1 "s_register_operand" "w")
-		    (match_operand:SI 2 "immediate_operand" "i")]
-                   UNSPEC_VDUP_LANE))]
+;; LLVM LOCAL begin
+(define_expand "neon_vdup_lanev1di"
+  [(set (match_operand:V1DI 0 "s_register_operand" "=w")
+	(unspec:V1DI [(match_operand:V1DI 1 "s_register_operand" "w")
+		      (match_operand:SI 2 "immediate_operand" "i")]
+                     UNSPEC_VDUP_LANE))]
   "TARGET_NEON"
 {
   emit_move_insn (operands[0], operands[1]);
   DONE;
 })
+;; LLVM LOCAL end
 
 ; Likewise.
 (define_insn "neon_vdup_lanev2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
-	(unspec:V2DI [(match_operand:DI 1 "s_register_operand" "w")
+;; LLVM LOCAL
+	(unspec:V2DI [(match_operand:V1DI 1 "s_register_operand" "w")
 		      (match_operand:SI 2 "immediate_operand" "i")]
                      UNSPEC_VDUP_LANE))]
   "TARGET_NEON"
@@ -3809,14 +3803,16 @@
   DONE;
 })
 
-(define_expand "neon_vreinterpretdi<mode>"
-  [(match_operand:DI 0 "s_register_operand" "")
+;; LLVM LOCAL begin
+(define_expand "neon_vreinterpretv1di<mode>"
+  [(match_operand:V1DI 0 "s_register_operand" "")
    (match_operand:VDX 1 "s_register_operand" "")]
   "TARGET_NEON"
 {
   neon_reinterpret (operands[0], operands[1]);
   DONE;
 })
+;; LLVM LOCAL end
 
 (define_expand "neon_vreinterpretv16qi<mode>"
   [(match_operand:V16QI 0 "s_register_operand" "")

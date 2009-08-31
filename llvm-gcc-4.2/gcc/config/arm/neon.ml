@@ -104,9 +104,10 @@ type arity = Arity0 of vectype
 	   | Arity3 of vectype * vectype * vectype * vectype
            | Arity4 of vectype * vectype * vectype * vectype * vectype
 
-type vecmode = V8QI | V4HI | V2SI | V2SF | DI
+(* LLVM LOCAL *)
+type vecmode = V8QI | V4HI | V2SI | V2SF | V1DI
              | V16QI | V8HI | V4SI | V4SF | V2DI
-             | QI | HI | SI | SF
+             | QI | HI | SI | SF | DI
 
 type opcode =
   (* Binary ops.  *)
@@ -355,7 +356,8 @@ let rec mode_of_elt elt shape =
   in match shape with
     All (_, Dreg) | By_scalar Dreg | Pair_result Dreg | Unary_scalar Dreg
   | Binary_imm Dreg | Long_noreg Dreg | Wide_noreg Dreg ->
-      [| V8QI; V4HI; if flt then V2SF else V2SI; DI |].(idx)
+(* LLVM LOCAL *)
+      [| V8QI; V4HI; if flt then V2SF else V2SI; V1DI |].(idx)
   | All (_, Qreg) | By_scalar Qreg | Pair_result Qreg | Unary_scalar Qreg
   | Binary_imm Qreg | Long_noreg Qreg | Wide_noreg Qreg ->
       [| V16QI; V8HI; if flt then V4SF else V4SI; V2DI |].(idx)
@@ -363,7 +365,8 @@ let rec mode_of_elt elt shape =
       [| QI; HI; if flt then SF else SI; DI |].(idx)
   | Long | Wide | Wide_lane | Wide_scalar
   | Long_imm ->
-      [| V8QI; V4HI; V2SI; DI |].(idx)
+(* LLVM LOCAL *)
+      [| V8QI; V4HI; V2SI; V1DI |].(idx)
   | Narrow | Narrow_imm -> [| V16QI; V8HI; V4SI; V2DI |].(idx)
   | Use_operands ops -> mode_of_elt elt (All (0, (find_key_operand ops)))
   | _ -> failwith "invalid shape"
@@ -481,7 +484,8 @@ let vectype_mode = function
   | T_int16x8 | T_uint16x8 | T_poly16x8 -> V8HI
   | T_int32x2 | T_uint32x2 -> V2SI
   | T_int32x4 | T_uint32x4 -> V4SI
-  | T_int64x1 | T_uint64x1 -> DI
+(* LLVM LOCAL *)
+  | T_int64x1 | T_uint64x1 -> V1DI
   | T_int64x2 | T_uint64x2 -> V2DI
   | T_float32x2 -> V2SF
   | T_float32x4 -> V4SF
@@ -497,17 +501,20 @@ let inttype_for_array num elttype =
     4, V8QI -> B_TId8mode
   | 4, V4HI -> B_TId16mode
   | 4, V2SI -> B_TId32mode
-  | 4, DI   -> B_TId64mode
+(* LLVM LOCAL *)
+  | 4, V1DI -> B_TId64mode
   | 4, V2SF -> B_TIdSFmode
   | 6, V8QI -> B_EId8mode
   | 6, V4HI -> B_EId16mode
   | 6, V2SI -> B_EId32mode
-  | 6, DI   -> B_EId64mode
+(* LLVM LOCAL *)
+  | 6, V1DI -> B_EId64mode
   | 6, V2SF -> B_EIdSFmode
   | 8, V8QI -> B_OId8mode
   | 8, V4HI -> B_OId16mode
   | 8, V2SI -> B_OId32mode
-  | 8, DI   -> B_OId64mode
+(* LLVM LOCAL *)
+  | 8, V1DI -> B_OId64mode
   | 8, V2SF -> B_OIdSFmode
   | 8, V16QI -> B_OIq8mode
   | 8, V8HI -> B_OIq16mode
@@ -1807,7 +1814,8 @@ let string_of_mode = function
     V8QI -> "v8qi" | V4HI  -> "v4hi"  | V2SI -> "v2si" | V2SF -> "v2sf"
   | DI   -> "di"   | V16QI -> "v16qi" | V8HI -> "v8hi" | V4SI -> "v4si"
   | V4SF -> "v4sf" | V2DI  -> "v2di"  | QI -> "qi" | HI -> "hi" | SI -> "si"
-  | SF -> "sf"
+(* LLVM LOCAL *)
+  | SF -> "sf"     | V1DI  -> "v1di"
 
 (* Use uppercase chars for letters which form part of the intrinsic name, but
    should be omitted from the builtin name (the info is passed in an extra

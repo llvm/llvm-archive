@@ -345,8 +345,9 @@ let deftypes () =
     (fun (cbase, abase, esize, enum) ->
       let attr =
         match enum with
-          1 -> ""
-        | _ -> Printf.sprintf "\t__attribute__ ((__vector_size__ (%d)))"
+(* LLVM LOCAL begin *)
+(* LLVM LOCAL end *)
+          _ -> Printf.sprintf "\t__attribute__ ((__vector_size__ (%d)))"
                               (esize * enum / 8) in
       Format.printf "typedef %s %s%dx%d_t%s;@\n" cbase abase esize enum attr)
     typeinfo;

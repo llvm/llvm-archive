@@ -46,14 +46,14 @@ extern "C" {
 typedef __builtin_neon_qi int8x8_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_hi int16x4_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_si int32x2_t	__attribute__ ((__vector_size__ (8)));
-typedef __builtin_neon_di int64x1_t;
+typedef __builtin_neon_di int64x1_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_sf float32x2_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_poly8 poly8x8_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_poly16 poly16x4_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_uqi uint8x8_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_uhi uint16x4_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_usi uint32x2_t	__attribute__ ((__vector_size__ (8)));
-typedef __builtin_neon_udi uint64x1_t;
+typedef __builtin_neon_udi uint64x1_t	__attribute__ ((__vector_size__ (8)));
 typedef __builtin_neon_qi int8x16_t	__attribute__ ((__vector_size__ (16)));
 typedef __builtin_neon_hi int16x8_t	__attribute__ ((__vector_size__ (16)));
 typedef __builtin_neon_si int32x4_t	__attribute__ ((__vector_size__ (16)));
@@ -411,7 +411,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vaddv2si (__a, __b, 1)
 
 #define vadd_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vadddi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vaddv1di (__a, __b, 1)
 
 #define vadd_f32(__a, __b) \
   (float32x2_t)__builtin_neon_vaddv2sf (__a, __b, 5)
@@ -426,7 +426,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vaddv2si (__a, __b, 0)
 
 #define vadd_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vadddi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vaddv1di (__a, __b, 0)
 
 #define vaddq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vaddv16qi (__a, __b, 1)
@@ -573,7 +573,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vqaddv2si (__a, __b, 1)
 
 #define vqadd_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vqadddi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vqaddv1di (__a, __b, 1)
 
 #define vqadd_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vqaddv8qi (__a, __b, 0)
@@ -585,7 +585,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqaddv2si (__a, __b, 0)
 
 #define vqadd_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqadddi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vqaddv1di (__a, __b, 0)
 
 #define vqaddq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vqaddv16qi (__a, __b, 1)
@@ -888,7 +888,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vsubv2si (__a, __b, 1)
 
 #define vsub_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vsubdi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vsubv1di (__a, __b, 1)
 
 #define vsub_f32(__a, __b) \
   (float32x2_t)__builtin_neon_vsubv2sf (__a, __b, 5)
@@ -903,7 +903,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vsubv2si (__a, __b, 0)
 
 #define vsub_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vsubdi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vsubv1di (__a, __b, 0)
 
 #define vsubq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vsubv16qi (__a, __b, 1)
@@ -1014,7 +1014,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vqsubv2si (__a, __b, 1)
 
 #define vqsub_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vqsubdi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vqsubv1di (__a, __b, 1)
 
 #define vqsub_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vqsubv8qi (__a, __b, 0)
@@ -1026,7 +1026,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqsubv2si (__a, __b, 0)
 
 #define vqsub_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqsubdi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vqsubv1di (__a, __b, 0)
 
 #define vqsubq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vqsubv16qi (__a, __b, 1)
@@ -1725,7 +1725,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vshlv2si (__a, __b, 1)
 
 #define vshl_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vshldi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vshlv1di (__a, __b, 1)
 
 #define vshl_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vshlv8qi (__a, __b, 0)
@@ -1737,7 +1737,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vshlv2si (__a, __b, 0)
 
 #define vshl_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vshldi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vshlv1di (__a, __b, 0)
 
 #define vshlq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vshlv16qi (__a, __b, 1)
@@ -1773,7 +1773,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vshlv2si (__a, __b, 3)
 
 #define vrshl_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vshldi (__a, __b, 3)
+  (int64x1_t)__builtin_neon_vshlv1di (__a, __b, 3)
 
 #define vrshl_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vshlv8qi (__a, __b, 2)
@@ -1785,7 +1785,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vshlv2si (__a, __b, 2)
 
 #define vrshl_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vshldi (__a, __b, 2)
+  (uint64x1_t)__builtin_neon_vshlv1di (__a, __b, 2)
 
 #define vrshlq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vshlv16qi (__a, __b, 3)
@@ -1821,7 +1821,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vqshlv2si (__a, __b, 1)
 
 #define vqshl_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vqshldi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vqshlv1di (__a, __b, 1)
 
 #define vqshl_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vqshlv8qi (__a, __b, 0)
@@ -1833,7 +1833,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqshlv2si (__a, __b, 0)
 
 #define vqshl_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqshldi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vqshlv1di (__a, __b, 0)
 
 #define vqshlq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vqshlv16qi (__a, __b, 1)
@@ -1869,7 +1869,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vqshlv2si (__a, __b, 3)
 
 #define vqrshl_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vqshldi (__a, __b, 3)
+  (int64x1_t)__builtin_neon_vqshlv1di (__a, __b, 3)
 
 #define vqrshl_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vqshlv8qi (__a, __b, 2)
@@ -1881,7 +1881,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqshlv2si (__a, __b, 2)
 
 #define vqrshl_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqshldi (__a, __b, 2)
+  (uint64x1_t)__builtin_neon_vqshlv1di (__a, __b, 2)
 
 #define vqrshlq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vqshlv16qi (__a, __b, 3)
@@ -1917,7 +1917,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vshr_nv2si (__a, __b, 1)
 
 #define vshr_n_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vshr_ndi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vshr_nv1di (__a, __b, 1)
 
 #define vshr_n_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vshr_nv8qi (__a, __b, 0)
@@ -1929,7 +1929,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vshr_nv2si (__a, __b, 0)
 
 #define vshr_n_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vshr_ndi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vshr_nv1di (__a, __b, 0)
 
 #define vshrq_n_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vshr_nv16qi (__a, __b, 1)
@@ -1965,7 +1965,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vshr_nv2si (__a, __b, 3)
 
 #define vrshr_n_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vshr_ndi (__a, __b, 3)
+  (int64x1_t)__builtin_neon_vshr_nv1di (__a, __b, 3)
 
 #define vrshr_n_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vshr_nv8qi (__a, __b, 2)
@@ -1977,7 +1977,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vshr_nv2si (__a, __b, 2)
 
 #define vrshr_n_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vshr_ndi (__a, __b, 2)
+  (uint64x1_t)__builtin_neon_vshr_nv1di (__a, __b, 2)
 
 #define vrshrq_n_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vshr_nv16qi (__a, __b, 3)
@@ -2103,7 +2103,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vshl_nv2si (__a, __b, 1)
 
 #define vshl_n_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vshl_ndi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vshl_nv1di (__a, __b, 1)
 
 #define vshl_n_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vshl_nv8qi (__a, __b, 0)
@@ -2115,7 +2115,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vshl_nv2si (__a, __b, 0)
 
 #define vshl_n_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vshl_ndi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vshl_nv1di (__a, __b, 0)
 
 #define vshlq_n_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vshl_nv16qi (__a, __b, 1)
@@ -2151,7 +2151,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vqshl_nv2si (__a, __b, 1)
 
 #define vqshl_n_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vqshl_ndi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vqshl_nv1di (__a, __b, 1)
 
 #define vqshl_n_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vqshl_nv8qi (__a, __b, 0)
@@ -2163,7 +2163,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqshl_nv2si (__a, __b, 0)
 
 #define vqshl_n_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqshl_ndi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vqshl_nv1di (__a, __b, 0)
 
 #define vqshlq_n_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vqshl_nv16qi (__a, __b, 1)
@@ -2199,7 +2199,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vqshlu_nv2si (__a, __b, 1)
 
 #define vqshlu_n_s64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vqshlu_ndi (__a, __b, 1)
+  (uint64x1_t)__builtin_neon_vqshlu_nv1di (__a, __b, 1)
 
 #define vqshluq_n_s8(__a, __b) \
   (uint8x16_t)__builtin_neon_vqshlu_nv16qi (__a, __b, 1)
@@ -2241,7 +2241,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vsra_nv2si (__a, __b, __c, 1)
 
 #define vsra_n_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vsra_ndi (__a, __b, __c, 1)
+  (int64x1_t)__builtin_neon_vsra_nv1di (__a, __b, __c, 1)
 
 #define vsra_n_u8(__a, __b, __c) \
   (uint8x8_t)__builtin_neon_vsra_nv8qi (__a, __b, __c, 0)
@@ -2253,7 +2253,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vsra_nv2si (__a, __b, __c, 0)
 
 #define vsra_n_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vsra_ndi (__a, __b, __c, 0)
+  (uint64x1_t)__builtin_neon_vsra_nv1di (__a, __b, __c, 0)
 
 #define vsraq_n_s8(__a, __b, __c) \
   (int8x16_t)__builtin_neon_vsra_nv16qi (__a, __b, __c, 1)
@@ -2289,7 +2289,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vsra_nv2si (__a, __b, __c, 3)
 
 #define vrsra_n_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vsra_ndi (__a, __b, __c, 3)
+  (int64x1_t)__builtin_neon_vsra_nv1di (__a, __b, __c, 3)
 
 #define vrsra_n_u8(__a, __b, __c) \
   (uint8x8_t)__builtin_neon_vsra_nv8qi (__a, __b, __c, 2)
@@ -2301,7 +2301,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vsra_nv2si (__a, __b, __c, 2)
 
 #define vrsra_n_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vsra_ndi (__a, __b, __c, 2)
+  (uint64x1_t)__builtin_neon_vsra_nv1di (__a, __b, __c, 2)
 
 #define vrsraq_n_s8(__a, __b, __c) \
   (int8x16_t)__builtin_neon_vsra_nv16qi (__a, __b, __c, 3)
@@ -2337,7 +2337,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vsri_nv2si (__a, __b, __c)
 
 #define vsri_n_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vsri_ndi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vsri_nv1di (__a, __b, __c)
 
 #define vsri_n_u8(__a, __b, __c) \
   (uint8x8_t)__builtin_neon_vsri_nv8qi (__a, __b, __c)
@@ -2349,7 +2349,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vsri_nv2si (__a, __b, __c)
 
 #define vsri_n_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vsri_ndi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vsri_nv1di (__a, __b, __c)
 
 #define vsri_n_p8(__a, __b, __c) \
   (poly8x8_t)__builtin_neon_vsri_nv8qi (__a, __b, __c)
@@ -2397,7 +2397,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vsli_nv2si (__a, __b, __c)
 
 #define vsli_n_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vsli_ndi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vsli_nv1di (__a, __b, __c)
 
 #define vsli_n_u8(__a, __b, __c) \
   (uint8x8_t)__builtin_neon_vsli_nv8qi (__a, __b, __c)
@@ -2409,7 +2409,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vsli_nv2si (__a, __b, __c)
 
 #define vsli_n_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vsli_ndi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vsli_nv1di (__a, __b, __c)
 
 #define vsli_n_p8(__a, __b, __c) \
   (poly8x8_t)__builtin_neon_vsli_nv8qi (__a, __b, __c)
@@ -2697,10 +2697,10 @@ typedef struct poly16x8x4_t
   (poly16_t)__builtin_neon_vget_lanev4hi (__a, __b, 4)
 
 #define vget_lane_s64(__a, __b) \
-  (int64_t)__builtin_neon_vget_lanedi (__a, __b, 1)
+  (int64_t)__builtin_neon_vget_lanev1di (__a, __b, 1)
 
 #define vget_lane_u64(__a, __b) \
-  (uint64_t)__builtin_neon_vget_lanedi (__a, __b, 0)
+  (uint64_t)__builtin_neon_vget_lanev1di (__a, __b, 0)
 
 #define vgetq_lane_s8(__a, __b) \
   (int8_t)__builtin_neon_vget_lanev16qi (__a, __b, 1)
@@ -2763,10 +2763,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vset_lanev4hi (__a, __b, __c)
 
 #define vset_lane_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vset_lanedi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vset_lanev1di (__a, __b, __c)
 
 #define vset_lane_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vset_lanedi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vset_lanev1di (__a, __b, __c)
 
 #define vsetq_lane_s8(__a, __b, __c) \
   (int8x16_t)__builtin_neon_vset_lanev16qi (__a, __b, __c)
@@ -2811,7 +2811,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vcreatev2si (__a)
 
 #define vcreate_s64(__a) \
-  (int64x1_t)__builtin_neon_vcreatedi (__a)
+  (int64x1_t)__builtin_neon_vcreatev1di (__a)
 
 #define vcreate_f32(__a) \
   (float32x2_t)__builtin_neon_vcreatev2sf (__a)
@@ -2826,7 +2826,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vcreatev2si (__a)
 
 #define vcreate_u64(__a) \
-  (uint64x1_t)__builtin_neon_vcreatedi (__a)
+  (uint64x1_t)__builtin_neon_vcreatev1di (__a)
 
 #define vcreate_p8(__a) \
   (poly8x8_t)__builtin_neon_vcreatev8qi (__a)
@@ -2862,10 +2862,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vdup_nv4hi (__a)
 
 #define vdup_n_s64(__a) \
-  (int64x1_t)__builtin_neon_vdup_ndi (__a)
+  (int64x1_t)__builtin_neon_vdup_nv1di (__a)
 
 #define vdup_n_u64(__a) \
-  (uint64x1_t)__builtin_neon_vdup_ndi (__a)
+  (uint64x1_t)__builtin_neon_vdup_nv1di (__a)
 
 #define vdupq_n_s8(__a) \
   (int8x16_t)__builtin_neon_vdup_nv16qi (__a)
@@ -2928,10 +2928,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vdup_nv4hi (__a)
 
 #define vmov_n_s64(__a) \
-  (int64x1_t)__builtin_neon_vdup_ndi (__a)
+  (int64x1_t)__builtin_neon_vdup_nv1di (__a)
 
 #define vmov_n_u64(__a) \
-  (uint64x1_t)__builtin_neon_vdup_ndi (__a)
+  (uint64x1_t)__builtin_neon_vdup_nv1di (__a)
 
 #define vmovq_n_s8(__a) \
   (int8x16_t)__builtin_neon_vdup_nv16qi (__a)
@@ -2994,10 +2994,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vdup_lanev4hi (__a, __b)
 
 #define vdup_lane_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vdup_lanedi (__a, __b)
+  (int64x1_t)__builtin_neon_vdup_lanev1di (__a, __b)
 
 #define vdup_lane_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vdup_lanedi (__a, __b)
+  (uint64x1_t)__builtin_neon_vdup_lanev1di (__a, __b)
 
 #define vdupq_lane_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vdup_lanev16qi (__a, __b)
@@ -3042,7 +3042,7 @@ typedef struct poly16x8x4_t
   (int32x4_t)__builtin_neon_vcombinev2si (__a, __b)
 
 #define vcombine_s64(__a, __b) \
-  (int64x2_t)__builtin_neon_vcombinedi (__a, __b)
+  (int64x2_t)__builtin_neon_vcombinev1di (__a, __b)
 
 #define vcombine_f32(__a, __b) \
   (float32x4_t)__builtin_neon_vcombinev2sf (__a, __b)
@@ -3057,7 +3057,7 @@ typedef struct poly16x8x4_t
   (uint32x4_t)__builtin_neon_vcombinev2si (__a, __b)
 
 #define vcombine_u64(__a, __b) \
-  (uint64x2_t)__builtin_neon_vcombinedi (__a, __b)
+  (uint64x2_t)__builtin_neon_vcombinev1di (__a, __b)
 
 #define vcombine_p8(__a, __b) \
   (poly8x16_t)__builtin_neon_vcombinev8qi (__a, __b)
@@ -3714,7 +3714,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vextv2si (__a, __b, __c)
 
 #define vext_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vextdi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vextv1di (__a, __b, __c)
 
 #define vext_f32(__a, __b, __c) \
   (float32x2_t)__builtin_neon_vextv2sf (__a, __b, __c)
@@ -3729,7 +3729,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vextv2si (__a, __b, __c)
 
 #define vext_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vextdi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vextv1di (__a, __b, __c)
 
 #define vext_p8(__a, __b, __c) \
   (poly8x8_t)__builtin_neon_vextv8qi (__a, __b, __c)
@@ -3888,7 +3888,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vbslv2si (__a, __b, __c)
 
 #define vbsl_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vbsldi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vbslv1di (__a, __b, __c)
 
 #define vbsl_f32(__a, __b, __c) \
   (float32x2_t)__builtin_neon_vbslv2sf (__a, __b, __c)
@@ -3903,7 +3903,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vbslv2si (__a, __b, __c)
 
 #define vbsl_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vbsldi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vbslv1di (__a, __b, __c)
 
 #define vbsl_p8(__a, __b, __c) \
   (poly8x8_t)__builtin_neon_vbslv8qi (__a, __b, __c)
@@ -4332,7 +4332,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vld1v2si (__a)
 
 #define vld1_s64(__a) \
-  (int64x1_t)__builtin_neon_vld1di (__a)
+  (int64x1_t)__builtin_neon_vld1v1di (__a)
 
 #define vld1_f32(__a) \
   (float32x2_t)__builtin_neon_vld1v2sf (__a)
@@ -4347,7 +4347,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vld1v2si (__a)
 
 #define vld1_u64(__a) \
-  (uint64x1_t)__builtin_neon_vld1di (__a)
+  (uint64x1_t)__builtin_neon_vld1v1di (__a)
 
 #define vld1_p8(__a) \
   (poly8x8_t)__builtin_neon_vld1v8qi (__a)
@@ -4416,10 +4416,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vld1_lanev4hi (__a, __b, __c)
 
 #define vld1_lane_s64(__a, __b, __c) \
-  (int64x1_t)__builtin_neon_vld1_lanedi (__a, __b, __c)
+  (int64x1_t)__builtin_neon_vld1_lanev1di (__a, __b, __c)
 
 #define vld1_lane_u64(__a, __b, __c) \
-  (uint64x1_t)__builtin_neon_vld1_lanedi (__a, __b, __c)
+  (uint64x1_t)__builtin_neon_vld1_lanev1di (__a, __b, __c)
 
 #define vld1q_lane_s8(__a, __b, __c) \
   (int8x16_t)__builtin_neon_vld1_lanev16qi (__a, __b, __c)
@@ -4482,10 +4482,10 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vld1_dupv4hi (__a)
 
 #define vld1_dup_s64(__a) \
-  (int64x1_t)__builtin_neon_vld1_dupdi (__a)
+  (int64x1_t)__builtin_neon_vld1_dupv1di (__a)
 
 #define vld1_dup_u64(__a) \
-  (uint64x1_t)__builtin_neon_vld1_dupdi (__a)
+  (uint64x1_t)__builtin_neon_vld1_dupv1di (__a)
 
 #define vld1q_dup_s8(__a) \
   (int8x16_t)__builtin_neon_vld1_dupv16qi (__a)
@@ -4530,7 +4530,7 @@ typedef struct poly16x8x4_t
   __builtin_neon_vst1v2si (__a, __b)
 
 #define vst1_s64(__a, __b) \
-  __builtin_neon_vst1di (__a, __b)
+  __builtin_neon_vst1v1di (__a, __b)
 
 #define vst1_f32(__a, __b) \
   __builtin_neon_vst1v2sf (__a, __b)
@@ -4545,7 +4545,7 @@ typedef struct poly16x8x4_t
   __builtin_neon_vst1v2si (__a, __b)
 
 #define vst1_u64(__a, __b) \
-  __builtin_neon_vst1di (__a, __b)
+  __builtin_neon_vst1v1di (__a, __b)
 
 #define vst1_p8(__a, __b) \
   __builtin_neon_vst1v8qi (__a, __b)
@@ -4614,10 +4614,10 @@ typedef struct poly16x8x4_t
   __builtin_neon_vst1_lanev4hi (__a, __b, __c)
 
 #define vst1_lane_s64(__a, __b, __c) \
-  __builtin_neon_vst1_lanedi (__a, __b, __c)
+  __builtin_neon_vst1_lanev1di (__a, __b, __c)
 
 #define vst1_lane_u64(__a, __b, __c) \
-  __builtin_neon_vst1_lanedi (__a, __b, __c)
+  __builtin_neon_vst1_lanev1di (__a, __b, __c)
 
 #define vst1q_lane_s8(__a, __b, __c) \
   __builtin_neon_vst1_lanev16qi (__a, __b, __c)
@@ -4718,14 +4718,14 @@ typedef struct poly16x8x4_t
 #define vld2_s64(__a) \
   ({ \
      union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld2di (__a); \
+     __rv.__o = __builtin_neon_vld2v1di (__a); \
      __rv.__i; \
    })
 
 #define vld2_u64(__a) \
   ({ \
      union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld2di (__a); \
+     __rv.__o = __builtin_neon_vld2v1di (__a); \
      __rv.__i; \
    })
 
@@ -4978,14 +4978,14 @@ typedef struct poly16x8x4_t
 #define vld2_dup_s64(__a) \
   ({ \
      union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld2_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld2_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u64(__a) \
   ({ \
      union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld2_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld2_dupv1di (__a); \
      __rv.__i; \
    })
 
@@ -5046,13 +5046,13 @@ typedef struct poly16x8x4_t
 #define vst2_s64(__a, __b) \
   ({ \
      union { int64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
-     __builtin_neon_vst2di (__a, __bu.__o); \
+     __builtin_neon_vst2v1di (__a, __bu.__o); \
    })
 
 #define vst2_u64(__a, __b) \
   ({ \
      union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
-     __builtin_neon_vst2di (__a, __bu.__o); \
+     __builtin_neon_vst2v1di (__a, __bu.__o); \
    })
 
 #define vst2q_s8(__a, __b) \
@@ -5265,14 +5265,14 @@ typedef struct poly16x8x4_t
 #define vld3_s64(__a) \
   ({ \
      union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld3di (__a); \
+     __rv.__o = __builtin_neon_vld3v1di (__a); \
      __rv.__i; \
    })
 
 #define vld3_u64(__a) \
   ({ \
      union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld3di (__a); \
+     __rv.__o = __builtin_neon_vld3v1di (__a); \
      __rv.__i; \
    })
 
@@ -5525,14 +5525,14 @@ typedef struct poly16x8x4_t
 #define vld3_dup_s64(__a) \
   ({ \
      union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld3_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld3_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u64(__a) \
   ({ \
      union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld3_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld3_dupv1di (__a); \
      __rv.__i; \
    })
 
@@ -5593,13 +5593,13 @@ typedef struct poly16x8x4_t
 #define vst3_s64(__a, __b) \
   ({ \
      union { int64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
-     __builtin_neon_vst3di (__a, __bu.__o); \
+     __builtin_neon_vst3v1di (__a, __bu.__o); \
    })
 
 #define vst3_u64(__a, __b) \
   ({ \
      union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
-     __builtin_neon_vst3di (__a, __bu.__o); \
+     __builtin_neon_vst3v1di (__a, __bu.__o); \
    })
 
 #define vst3q_s8(__a, __b) \
@@ -5812,14 +5812,14 @@ typedef struct poly16x8x4_t
 #define vld4_s64(__a) \
   ({ \
      union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld4di (__a); \
+     __rv.__o = __builtin_neon_vld4v1di (__a); \
      __rv.__i; \
    })
 
 #define vld4_u64(__a) \
   ({ \
      union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld4di (__a); \
+     __rv.__o = __builtin_neon_vld4v1di (__a); \
      __rv.__i; \
    })
 
@@ -6072,14 +6072,14 @@ typedef struct poly16x8x4_t
 #define vld4_dup_s64(__a) \
   ({ \
      union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld4_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld4_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u64(__a) \
   ({ \
      union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
-     __rv.__o = __builtin_neon_vld4_dupdi (__a); \
+     __rv.__o = __builtin_neon_vld4_dupv1di (__a); \
      __rv.__i; \
    })
 
@@ -6140,13 +6140,13 @@ typedef struct poly16x8x4_t
 #define vst4_s64(__a, __b) \
   ({ \
      union { int64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
-     __builtin_neon_vst4di (__a, __bu.__o); \
+     __builtin_neon_vst4v1di (__a, __bu.__o); \
    })
 
 #define vst4_u64(__a, __b) \
   ({ \
      union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
-     __builtin_neon_vst4di (__a, __bu.__o); \
+     __builtin_neon_vst4v1di (__a, __bu.__o); \
    })
 
 #define vst4q_s8(__a, __b) \
@@ -6303,7 +6303,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vandv2si (__a, __b, 1)
 
 #define vand_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vanddi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vandv1di (__a, __b, 1)
 
 #define vand_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vandv8qi (__a, __b, 0)
@@ -6315,7 +6315,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vandv2si (__a, __b, 0)
 
 #define vand_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vanddi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vandv1di (__a, __b, 0)
 
 #define vandq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vandv16qi (__a, __b, 1)
@@ -6351,7 +6351,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vorrv2si (__a, __b, 1)
 
 #define vorr_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vorrdi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vorrv1di (__a, __b, 1)
 
 #define vorr_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vorrv8qi (__a, __b, 0)
@@ -6363,7 +6363,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vorrv2si (__a, __b, 0)
 
 #define vorr_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vorrdi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vorrv1di (__a, __b, 0)
 
 #define vorrq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vorrv16qi (__a, __b, 1)
@@ -6399,7 +6399,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_veorv2si (__a, __b, 1)
 
 #define veor_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_veordi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_veorv1di (__a, __b, 1)
 
 #define veor_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_veorv8qi (__a, __b, 0)
@@ -6411,7 +6411,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_veorv2si (__a, __b, 0)
 
 #define veor_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_veordi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_veorv1di (__a, __b, 0)
 
 #define veorq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_veorv16qi (__a, __b, 1)
@@ -6447,7 +6447,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vbicv2si (__a, __b, 1)
 
 #define vbic_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vbicdi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vbicv1di (__a, __b, 1)
 
 #define vbic_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vbicv8qi (__a, __b, 0)
@@ -6459,7 +6459,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vbicv2si (__a, __b, 0)
 
 #define vbic_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vbicdi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vbicv1di (__a, __b, 0)
 
 #define vbicq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vbicv16qi (__a, __b, 1)
@@ -6495,7 +6495,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vornv2si (__a, __b, 1)
 
 #define vorn_s64(__a, __b) \
-  (int64x1_t)__builtin_neon_vorndi (__a, __b, 1)
+  (int64x1_t)__builtin_neon_vornv1di (__a, __b, 1)
 
 #define vorn_u8(__a, __b) \
   (uint8x8_t)__builtin_neon_vornv8qi (__a, __b, 0)
@@ -6507,7 +6507,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vornv2si (__a, __b, 0)
 
 #define vorn_u64(__a, __b) \
-  (uint64x1_t)__builtin_neon_vorndi (__a, __b, 0)
+  (uint64x1_t)__builtin_neon_vornv1di (__a, __b, 0)
 
 #define vornq_s8(__a, __b) \
   (int8x16_t)__builtin_neon_vornv16qi (__a, __b, 1)
@@ -6544,7 +6544,7 @@ typedef struct poly16x8x4_t
   (poly8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_p8_s64(__a) \
-  (poly8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (poly8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_p8_f32(__a) \
   (poly8x8_t)__builtin_neon_vreinterpretv8qiv2sf (__a)
@@ -6559,7 +6559,7 @@ typedef struct poly16x8x4_t
   (poly8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_p8_u64(__a) \
-  (poly8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (poly8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_p8_p16(__a) \
   (poly8x8_t)__builtin_neon_vreinterpretv8qiv4hi (__a)
@@ -6604,7 +6604,7 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_p16_s64(__a) \
-  (poly16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (poly16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_p16_f32(__a) \
   (poly16x4_t)__builtin_neon_vreinterpretv4hiv2sf (__a)
@@ -6619,7 +6619,7 @@ typedef struct poly16x8x4_t
   (poly16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_p16_u64(__a) \
-  (poly16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (poly16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_p16_p8(__a) \
   (poly16x4_t)__builtin_neon_vreinterpretv4hiv8qi (__a)
@@ -6664,7 +6664,7 @@ typedef struct poly16x8x4_t
   (float32x2_t)__builtin_neon_vreinterpretv2sfv2si (__a)
 
 #define vreinterpret_f32_s64(__a) \
-  (float32x2_t)__builtin_neon_vreinterpretv2sfdi (__a)
+  (float32x2_t)__builtin_neon_vreinterpretv2sfv1di (__a)
 
 #define vreinterpret_f32_u8(__a) \
   (float32x2_t)__builtin_neon_vreinterpretv2sfv8qi (__a)
@@ -6676,7 +6676,7 @@ typedef struct poly16x8x4_t
   (float32x2_t)__builtin_neon_vreinterpretv2sfv2si (__a)
 
 #define vreinterpret_f32_u64(__a) \
-  (float32x2_t)__builtin_neon_vreinterpretv2sfdi (__a)
+  (float32x2_t)__builtin_neon_vreinterpretv2sfv1di (__a)
 
 #define vreinterpret_f32_p8(__a) \
   (float32x2_t)__builtin_neon_vreinterpretv2sfv8qi (__a)
@@ -6715,34 +6715,34 @@ typedef struct poly16x8x4_t
   (float32x4_t)__builtin_neon_vreinterpretv4sfv8hi (__a)
 
 #define vreinterpret_s64_s8(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_s64_s16(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpret_s64_s32(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv2si (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div2si (__a)
 
 #define vreinterpret_s64_f32(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv2sf (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div2sf (__a)
 
 #define vreinterpret_s64_u8(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_s64_u16(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpret_s64_u32(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv2si (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div2si (__a)
 
 #define vreinterpret_s64_u64(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdidi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div1di (__a)
 
 #define vreinterpret_s64_p8(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_s64_p16(__a) \
-  (int64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (int64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpretq_s64_s8(__a) \
   (int64x2_t)__builtin_neon_vreinterpretv2div16qi (__a)
@@ -6775,34 +6775,34 @@ typedef struct poly16x8x4_t
   (int64x2_t)__builtin_neon_vreinterpretv2div8hi (__a)
 
 #define vreinterpret_u64_s8(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_u64_s16(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpret_u64_s32(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv2si (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div2si (__a)
 
 #define vreinterpret_u64_s64(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdidi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div1di (__a)
 
 #define vreinterpret_u64_f32(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv2sf (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div2sf (__a)
 
 #define vreinterpret_u64_u8(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_u64_u16(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpret_u64_u32(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv2si (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div2si (__a)
 
 #define vreinterpret_u64_p8(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv8qi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div8qi (__a)
 
 #define vreinterpret_u64_p16(__a) \
-  (uint64x1_t)__builtin_neon_vreinterpretdiv4hi (__a)
+  (uint64x1_t)__builtin_neon_vreinterpretv1div4hi (__a)
 
 #define vreinterpretq_u64_s8(__a) \
   (uint64x2_t)__builtin_neon_vreinterpretv2div16qi (__a)
@@ -6841,7 +6841,7 @@ typedef struct poly16x8x4_t
   (int8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_s8_s64(__a) \
-  (int8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (int8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_s8_f32(__a) \
   (int8x8_t)__builtin_neon_vreinterpretv8qiv2sf (__a)
@@ -6856,7 +6856,7 @@ typedef struct poly16x8x4_t
   (int8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_s8_u64(__a) \
-  (int8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (int8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_s8_p8(__a) \
   (int8x8_t)__builtin_neon_vreinterpretv8qiv8qi (__a)
@@ -6901,7 +6901,7 @@ typedef struct poly16x8x4_t
   (int16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_s16_s64(__a) \
-  (int16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (int16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_s16_f32(__a) \
   (int16x4_t)__builtin_neon_vreinterpretv4hiv2sf (__a)
@@ -6916,7 +6916,7 @@ typedef struct poly16x8x4_t
   (int16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_s16_u64(__a) \
-  (int16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (int16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_s16_p8(__a) \
   (int16x4_t)__builtin_neon_vreinterpretv4hiv8qi (__a)
@@ -6961,7 +6961,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vreinterpretv2siv4hi (__a)
 
 #define vreinterpret_s32_s64(__a) \
-  (int32x2_t)__builtin_neon_vreinterpretv2sidi (__a)
+  (int32x2_t)__builtin_neon_vreinterpretv2siv1di (__a)
 
 #define vreinterpret_s32_f32(__a) \
   (int32x2_t)__builtin_neon_vreinterpretv2siv2sf (__a)
@@ -6976,7 +6976,7 @@ typedef struct poly16x8x4_t
   (int32x2_t)__builtin_neon_vreinterpretv2siv2si (__a)
 
 #define vreinterpret_s32_u64(__a) \
-  (int32x2_t)__builtin_neon_vreinterpretv2sidi (__a)
+  (int32x2_t)__builtin_neon_vreinterpretv2siv1di (__a)
 
 #define vreinterpret_s32_p8(__a) \
   (int32x2_t)__builtin_neon_vreinterpretv2siv8qi (__a)
@@ -7024,7 +7024,7 @@ typedef struct poly16x8x4_t
   (uint8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_u8_s64(__a) \
-  (uint8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (uint8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_u8_f32(__a) \
   (uint8x8_t)__builtin_neon_vreinterpretv8qiv2sf (__a)
@@ -7036,7 +7036,7 @@ typedef struct poly16x8x4_t
   (uint8x8_t)__builtin_neon_vreinterpretv8qiv2si (__a)
 
 #define vreinterpret_u8_u64(__a) \
-  (uint8x8_t)__builtin_neon_vreinterpretv8qidi (__a)
+  (uint8x8_t)__builtin_neon_vreinterpretv8qiv1di (__a)
 
 #define vreinterpret_u8_p8(__a) \
   (uint8x8_t)__builtin_neon_vreinterpretv8qiv8qi (__a)
@@ -7084,7 +7084,7 @@ typedef struct poly16x8x4_t
   (uint16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_u16_s64(__a) \
-  (uint16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (uint16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_u16_f32(__a) \
   (uint16x4_t)__builtin_neon_vreinterpretv4hiv2sf (__a)
@@ -7096,7 +7096,7 @@ typedef struct poly16x8x4_t
   (uint16x4_t)__builtin_neon_vreinterpretv4hiv2si (__a)
 
 #define vreinterpret_u16_u64(__a) \
-  (uint16x4_t)__builtin_neon_vreinterpretv4hidi (__a)
+  (uint16x4_t)__builtin_neon_vreinterpretv4hiv1di (__a)
 
 #define vreinterpret_u16_p8(__a) \
   (uint16x4_t)__builtin_neon_vreinterpretv4hiv8qi (__a)
@@ -7144,7 +7144,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vreinterpretv2siv2si (__a)
 
 #define vreinterpret_u32_s64(__a) \
-  (uint32x2_t)__builtin_neon_vreinterpretv2sidi (__a)
+  (uint32x2_t)__builtin_neon_vreinterpretv2siv1di (__a)
 
 #define vreinterpret_u32_f32(__a) \
   (uint32x2_t)__builtin_neon_vreinterpretv2siv2sf (__a)
@@ -7156,7 +7156,7 @@ typedef struct poly16x8x4_t
   (uint32x2_t)__builtin_neon_vreinterpretv2siv4hi (__a)
 
 #define vreinterpret_u32_u64(__a) \
-  (uint32x2_t)__builtin_neon_vreinterpretv2sidi (__a)
+  (uint32x2_t)__builtin_neon_vreinterpretv2siv1di (__a)
 
 #define vreinterpret_u32_p8(__a) \
   (uint32x2_t)__builtin_neon_vreinterpretv2siv8qi (__a)

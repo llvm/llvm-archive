@@ -423,7 +423,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vreinterpretv4hi:
   case NEON_BUILTIN_vreinterpretv2si:
   case NEON_BUILTIN_vreinterpretv2sf:
-  case NEON_BUILTIN_vreinterpretdi:
+  case NEON_BUILTIN_vreinterpretv1di:
   case NEON_BUILTIN_vreinterpretv16qi:
   case NEON_BUILTIN_vreinterpretv8hi:
   case NEON_BUILTIN_vreinterpretv4si:
@@ -669,7 +669,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vreinterpretv4hi:
   case NEON_BUILTIN_vreinterpretv2si:
   case NEON_BUILTIN_vreinterpretv2sf:
-  case NEON_BUILTIN_vreinterpretdi:
+  case NEON_BUILTIN_vreinterpretv1di:
     allow_128bit_modes = false;
     allow_64bit_elements = true;
     break;
@@ -715,7 +715,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   if (modeCheckOpnd >= 0) {
 
     switch (insn_data[icode].operand[modeCheckOpnd].mode) {
-    case V8QImode: case V4HImode: case V2SImode: case DImode: case V2SFmode:
+    case V8QImode: case V4HImode: case V2SImode: case V1DImode: case V2SFmode:
       if (!allow_64bit_modes)
         return BadModeError(exp, Result);
       break;
@@ -765,7 +765,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         if (!allow_32bit_elements)
           return BadModeError(exp, Result);
         break;
-      case DImode: case V2DImode:
+      case V1DImode: case V2DImode:
         if (!allow_64bit_elements)
           return BadModeError(exp, Result);
         break;
@@ -1992,7 +1992,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vreinterpretv4hi:
   case NEON_BUILTIN_vreinterpretv2si:
   case NEON_BUILTIN_vreinterpretv2sf:
-  case NEON_BUILTIN_vreinterpretdi:
+  case NEON_BUILTIN_vreinterpretv1di:
   case NEON_BUILTIN_vreinterpretv16qi:
   case NEON_BUILTIN_vreinterpretv8hi:
   case NEON_BUILTIN_vreinterpretv4si:

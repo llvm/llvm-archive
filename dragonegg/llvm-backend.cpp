@@ -1786,6 +1786,8 @@ int plugin_is_GPL_compatible; // This plugin is GPL compatible.
 
 /// llvm_start_unit - Perform late initialization.  This is called by GCC just
 /// before processing the compilation unit.
+/// NOTE: called even when only doing syntax checking, so do not initialize the
+/// module etc here.
 static void llvm_start_unit(void *gcc_data, void *user_data) {
   if (!quiet_flag)
     errs() << "Starting compilation unit\n";

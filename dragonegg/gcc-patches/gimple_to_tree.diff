@@ -1,7 +1,7 @@
-Index: gcc.fsf.master/gcc/cfgexpand.c
+Index: lto/gcc/cfgexpand.c
 ===================================================================
---- gcc.fsf.master.orig/gcc/cfgexpand.c	2009-08-20 14:04:30.060847582 +0200
-+++ gcc.fsf.master/gcc/cfgexpand.c	2009-08-20 14:04:36.327849397 +0200
+--- lto.orig/gcc/cfgexpand.c	2009-08-31 10:39:47.371256259 +0200
++++ lto/gcc/cfgexpand.c	2009-08-31 10:49:52.283196375 +0200
 @@ -124,7 +124,7 @@
     GIMPLE tuple STMT and returns the same statement in the form of a
     tree.  */
@@ -11,3 +11,12 @@ Index: gcc.fsf.master/gcc/cfgexpand.c
  gimple_to_tree (gimple stmt)
  {
    tree t;
+@@ -363,7 +363,7 @@
+ 
+ /* Release back to GC memory allocated by gimple_to_tree.  */
+ 
+-static void
++void
+ release_stmt_tree (gimple stmt, tree stmt_tree)
+ {
+   tree_ann_common_t ann;

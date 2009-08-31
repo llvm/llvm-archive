@@ -16,16 +16,16 @@ PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 CFLAGS+=-Wall -Werror -fPIC -g -O2
 CFLAGS+=-DIN_GCC -DREVISION=\"$(REVISION)\" \
 	-DTARGET_NAME=\"$(TARGET_TRIPLE)\" -I$(ARCH_DIR)
-CFLAGS+=-I${GCCOBJECT_DIR}/gcc -I${GCCOBJECT_DIR}/gcc/include \
-	-I${GCCSOURCE_DIR}/gcc -I${GCCSOURCE_DIR}/include \
-	-I${GCCSOURCE_DIR}/libcpp/include -I${GCCSOURCE_DIR}/libdecnumber \
-	-I${GCCOBJECT_DIR}/libdecnumber -I.
+CFLAGS+=-I$(GCCOBJECT_DIR)/gcc -I$(GCCOBJECT_DIR)/gcc/include \
+	-I$(GCCSOURCE_DIR)/gcc -I$(GCCSOURCE_DIR)/include \
+	-I$(GCCSOURCE_DIR)/libcpp/include -I$(GCCSOURCE_DIR)/libdecnumber \
+	-I$(GCCOBJECT_DIR)/libdecnumber -I.
 CXXFLAGS+=$(CFLAGS) $(shell llvm-config --cppflags)
 
 LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core ipo scalaropts target x86)
 
 llvm.so: $(PLUGIN_OBJECT_FILES)
-	$(CXX) -shared $^ -o $@ ${LDFLAGS}
+	$(CXX) -shared $^ -o $@ $(LDFLAGS)
 
 clean::
 	rm -f *.o *.so $(ARCH_DIR)/*.o

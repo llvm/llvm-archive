@@ -445,6 +445,9 @@ DIType DebugInfo::createPointerType(tree type) {
                   TREE_CODE(type) == BLOCK_POINTER_TYPE) ?
     DW_TAG_pointer_type :
     DW_TAG_reference_type;
+  unsigned Flags = 0;
+  if (type_is_block_byref_struct(type))
+    Flags |= llvm::DIType::FlagBlockByrefStruct;
   expanded_location Loc = GetNodeLocation(type);
 
   std::string PName;
@@ -455,7 +458,7 @@ DIType DebugInfo::createPointerType(tree type) {
                                          NodeSizeInBits(type),
                                          NodeAlignInBits(type),
                                          0 /*offset */, 
-                                         0 /* flags */, 
+                                         Flags, 
                                          FromTy);
 }
 
@@ -591,7 +594,8 @@ DIType DebugInfo::createStructType(tree type) {
   unsigned Flags = llvm::DIType::FlagFwdDecl;
   if (TYPE_BLOCK_IMPL_STRUCT(type))
     Flags |= llvm::DIType::FlagAppleBlock;
-
+  if (type_is_block_byref_struct(type))
+    Flags |= llvm::DIType::FlagBlockByrefStruct;
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),

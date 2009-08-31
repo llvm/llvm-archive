@@ -7975,4 +7975,37 @@ bool in_objc_property_decl_context (void) {
 }
 /* APPLE LOCAL end weak_import on property 6676828 */
 
+/* APPLE LOCAL begin radar 6419781 */
+bool
+type_is_block_byref_struct (tree type)
+{
+  bool ret_value = false;
+
+  if (!type)
+    return false;
+
+  if (TREE_CODE (type) == POINTER_TYPE)
+    type = TREE_TYPE (type);
+
+  if (!type 
+      || ! TYPE_NAME (type)
+      || ! (TREE_CODE (type) == RECORD_TYPE))
+    return false;
+
+  if (TREE_CODE (TYPE_NAME (type)) == IDENTIFIER_NODE
+      && strncmp (IDENTIFIER_POINTER (TYPE_NAME (type)),
+                  "__Block_byref_", 14) == 0)
+    return true;
+  else if (TREE_CODE (TYPE_NAME (type)) == TYPE_DECL
+           && DECL_NAME (TYPE_NAME (type))
+           && IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type)))
+           && (strncmp 
+               (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (type))),
+                "__Block_byref_", 14) == 0))
+    return true;
+  else
+    return false;
+}
+/* APPLE LOCAL begin end 6419781 */
+
 #include "gt-tree.h"

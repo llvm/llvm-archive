@@ -750,6 +750,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
 }
 
 extern "C" tree gimple_to_tree(gimple);
+extern "C" void release_stmt_tree (gimple, tree);
 
 Function *TreeToLLVM::EmitFunction() {
   // Set up parameters and prepare for return, for the function.
@@ -777,17 +778,19 @@ Function *TreeToLLVM::EmitFunction() {
       case GIMPLE_PREDICT:
       case GIMPLE_RESX: {
         // TODO Handle gimple directly, rather than converting to a tree.
-        MemRef DestLoc;
         tree stmt = gimple_to_tree(gimple_stmt);
 
         // If this stmt returns an aggregate value (e.g. a call whose result is
         // ignored), create a temporary to receive the value.  Note that we don't
         // do this for MODIFY_EXPRs as an efficiency hack.
+        MemRef DestLoc;
         if (isAggregateTreeType(TREE_TYPE(stmt)) &&
             TREE_CODE(stmt)!= MODIFY_EXPR && TREE_CODE(stmt)!=INIT_EXPR)
           DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
 
         Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);
+
+        release_stmt_tree(gimple_stmt, stmt);
         break;
       }
 

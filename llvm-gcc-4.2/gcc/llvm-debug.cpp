@@ -272,7 +272,7 @@ void DebugInfo::EmitRegionStart(BasicBlock *CurBB) {
   llvm::DIDescriptor D;
   if (!RegionStack.empty())
     D = RegionStack.back();
-  D = DebugFactory.CreateBlock(D);
+  D = DebugFactory.CreateLexicalBlock(D);
   RegionStack.push_back(D);
   DebugFactory.InsertRegionStart(D, CurBB);
 }

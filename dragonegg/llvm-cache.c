@@ -33,6 +33,11 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "stdio.h" //QQ
 
+struct GTY(()) tree_llvm_map {
+  struct tree_map_base base;
+  const void * GTY((skip)) val;
+};
+
 #define tree_llvm_map_eq tree_map_base_eq
 #define tree_llvm_map_hash tree_map_base_hash
 #define tree_llvm_map_marked_p tree_map_base_marked_p

@@ -35,12 +35,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "target.h"
 #include "tree.h"
 
-struct GTY(()) tree_llvm_map {
-  struct tree_map_base base;
-  const void *val;
-};
-/* FIXME: Need to use gengtype and tell the GC about this. */
-
 extern bool llvm_has_cached (union tree_node *);
 
 extern const void *llvm_get_cached (union tree_node *);

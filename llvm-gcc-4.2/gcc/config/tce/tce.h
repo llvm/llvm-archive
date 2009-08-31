@@ -1,4 +1,4 @@
-// LLVM LOCAL begin - TCE target
+/* LLVM LOCAL begin - TCE target */
 /*
 Definitions of TCE target 
 Mikael Lepistö (mikael.lepisto@tut.fi)
@@ -34,6 +34,7 @@ extern int target_flags;
 /* To make llvm-backend.cpp recognice us ok... */
 #define LLVM_OVERRIDE_TARGET_ARCH() "mips"
 
+#define LLVM_TARGET_NAME Mips
 
 #define TARGET_CPU_CPP_BUILTINS()	   \
   do						           \
@@ -842,4 +843,4 @@ do										\
    The compiler will try both labelings, looking for one that is valid, and
    will reload one or both registers only if neither labeling works.  */
 #define REG_OK_FOR_INDEX_P(X) REG_OK_FOR_BASE_P (X)
-// LLVM LOCAL end - TCE target
+/* LLVM LOCAL end - TCE target */

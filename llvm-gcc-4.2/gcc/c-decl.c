@@ -3586,10 +3586,6 @@ c_maybe_initialize_eh (void)
     = llvm_init_one_libfunc (USING_SJLJ_EXCEPTIONS
                              ? "__gcc_personality_sj0"
                              : "__gcc_personality_v0");
-  llvm_unwind_sjlj_register_libfunc 
-    = llvm_init_one_libfunc ("_Unwind_SjLj_Register");
-  llvm_unwind_sjlj_unregister_libfunc
-    = llvm_init_one_libfunc ("_Unwind_SjLj_Unregister");
 #else
   eh_personality_libfunc
     = init_one_libfunc (USING_SJLJ_EXCEPTIONS

@@ -7975,7 +7975,7 @@ bool in_objc_property_decl_context (void) {
 }
 /* APPLE LOCAL end weak_import on property 6676828 */
 
-/* APPLE LOCAL begin radar 6419781 */
+/* LLVM LOCAL begin radar 6419781 */
 bool
 type_is_block_byref_struct (tree type)
 {
@@ -8004,6 +8004,6 @@ type_is_block_byref_struct (tree type)
   else
     return false;
 }
-/* APPLE LOCAL begin end 6419781 */
+/* LLVM LOCAL begin end 6419781 */
 
 #include "gt-tree.h"

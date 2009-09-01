@@ -4892,8 +4892,8 @@ extern GTY(()) tree generic_block_literal_struct_type;
 
 /* APPLE LOCAL end radar 6300081  */
 
-/* APPLE LOCAL begin radar 6419781 */
+/* LLVM LOCAL begin radar 6419781 */
 extern bool type_is_block_byref_struct (tree);
-/* APPLE LOCAL end radar 6419781 */
+/* LLVM LOCAL end radar 6419781 */
 
 #endif  /* GCC_TREE_H  */

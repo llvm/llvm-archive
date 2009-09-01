@@ -7979,8 +7979,6 @@ bool in_objc_property_decl_context (void) {
 bool
 type_is_block_byref_struct (tree type)
 {
-  bool ret_value = false;
-
   if (!type)
     return false;
 

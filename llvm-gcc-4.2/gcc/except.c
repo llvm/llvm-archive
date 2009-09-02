@@ -4085,7 +4085,7 @@ default_init_unwind_resume_libfunc (void)
      and even requires additional instructions on some targets. */
   const char *name = USING_SJLJ_EXCEPTIONS ?
                        "_Unwind_SjLj_Resume"
-                       : "_Unwind_Resume_or_Rethrow";
+                       : "_Unwind_Resume";
   tree decl = build_decl (FUNCTION_DECL, get_identifier (name),
                           build_function_type_list (void_type_node,
                                                     ptr_type_node, NULL_TREE));

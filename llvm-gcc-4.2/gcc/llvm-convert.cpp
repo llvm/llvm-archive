@@ -1998,30 +1998,10 @@ void TreeToLLVM::EmitLandingPads() {
             Args.push_back(Emit(TType, 0));
           }
         }
-      }
-    }
-
-    if (can_throw_external_1(i, false)) {
-      // Some exceptions from this region may not be caught by any handler.
-      // Since invokes are required to branch to the unwind label no matter
-      // what exception is being unwound, append a catch-all.
-
-      // The representation of a catch-all is language specific.
-      Value *CatchAll;
-      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
-        // Use a "cleanup" - this should be good enough for most languages.
-        CatchAll = ConstantInt::get(Type::getInt32Ty(Context), 0);
       } else {
-        tree catch_all_type = lang_eh_catch_all();
-        if (catch_all_type == NULL_TREE)
-          // Use a C++ style null catch-all object.
-          CatchAll = Constant::getNullValue(
-                                    PointerType::getUnqual(Type::getInt8Ty(Context)));
-        else
-          // This language has a type that catches all others.
-          CatchAll = Emit(catch_all_type, 0);
+	// Cleanup region.
+	Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), 0));
       }
-      Args.push_back(CatchAll);
     }
 
     // Emit the selector call.

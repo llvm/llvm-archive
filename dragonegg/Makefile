@@ -13,6 +13,9 @@ CPP_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp \
 		 $(ARCH_DIR)/llvm-target.cpp llvm-types.cpp bits_and_bobs.cpp
 PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 
+GTYPE_INPUT_FILE=$(PWD)/llvm-cache.c
+GTYPE_OUTPUT_FILE=$(PWD)/gt-llvm-cache.h
+
 CFLAGS+=-Wall -Werror -fPIC -g -O2
 CFLAGS+=-DIN_GCC -DREVISION=\"$(REVISION)\" \
 	-DTARGET_NAME=\"$(TARGET_TRIPLE)\" -I$(ARCH_DIR)
@@ -27,5 +30,12 @@ LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core
 llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ $(LDFLAGS)
 
+llvm-cache.c: gt-llvm-cache.h
+
+gt-llvm-cache.h:
+	cd $(GCCOBJECT_DIR)/gcc && ./build/gengtype \
+	  -P $(GTYPE_OUTPUT_FILE) $(GCCSOURCE_DIR) gtyp-input.list \
+	    $(GTYPE_INPUT_FILE)
+
 clean::
-	rm -f *.o *.so $(ARCH_DIR)/*.o
+	rm -f *.o *.so $(ARCH_DIR)/*.o $(GTYPE_OUTPUT_FILE)

@@ -31,7 +31,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "ggc.h"
 #include "target.h"
 #include "tree.h"
 

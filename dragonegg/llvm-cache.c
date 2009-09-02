@@ -29,7 +29,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-cache.h"
 
 // GCC headers
-#include "hashtab.h"
+#include "ggc.h"
 
 #include "stdio.h" //QQ
 
@@ -94,3 +94,5 @@ const void *llvm_set_cached (union tree_node *t, const void *val) {
 
   return val;
 }
+
+#include "gt-llvm-cache.h"

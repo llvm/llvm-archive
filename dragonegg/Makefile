@@ -13,8 +13,8 @@ CPP_SOURCE_FILES=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp \
 		 $(ARCH_DIR)/llvm-target.cpp llvm-types.cpp bits_and_bobs.cpp
 PLUGIN_OBJECT_FILES=$(C_SOURCE_FILES:.c=.o) $(CPP_SOURCE_FILES:.cpp=.o)
 
-GTYPE_INPUT_FILE=$(PWD)/llvm-cache.c
-GTYPE_OUTPUT_FILE=$(PWD)/gt-llvm-cache.h
+GENGTYPE_INPUT=$(PWD)/llvm-cache.c
+GENGTYPE_OUTPUT=$(PWD)/gt-llvm-cache.h
 
 CFLAGS+=-Wall -Werror -fPIC -g -O2
 CFLAGS+=-DIN_GCC -DREVISION=\"$(REVISION)\" \
@@ -34,8 +34,10 @@ llvm-cache.c: gt-llvm-cache.h
 
 gt-llvm-cache.h:
 	cd $(GCCOBJECT_DIR)/gcc && ./build/gengtype \
-	  -P $(GTYPE_OUTPUT_FILE) $(GCCSOURCE_DIR) gtyp-input.list \
-	    $(GTYPE_INPUT_FILE)
+	  -P $(GENGTYPE_OUTPUT) $(GCCSOURCE_DIR) gtyp-input.list \
+	    $(GENGTYPE_INPUT)
+	sed -i "s/ggc_cache_tab .*\[\]/ggc_cache_tab gt_ggc_rc__gt_llvm_cache_h[]/" $(GENGTYPE_OUTPUT)
+	sed -i "s/ggc_root_tab .*\[\]/ggc_root_tab gt_pch_rc__gt_llvm_cache_h[]/" $(GENGTYPE_OUTPUT)
 
 clean::
-	rm -f *.o *.so $(ARCH_DIR)/*.o $(GTYPE_OUTPUT_FILE)
+	rm -f *.o *.so $(ARCH_DIR)/*.o $(GENGTYPE_OUTPUT)

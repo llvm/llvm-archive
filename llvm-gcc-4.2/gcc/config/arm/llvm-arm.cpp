@@ -510,7 +510,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vabd:
   case NEON_BUILTIN_vabdl:
   case NEON_BUILTIN_vaba:
-  case NEON_BUILTIN_vabal:
   case NEON_BUILTIN_vmax:
   case NEON_BUILTIN_vmin:
   case NEON_BUILTIN_vpaddl:
@@ -527,6 +526,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vuzp:
     break;
 
+  case NEON_BUILTIN_vabal:
   case NEON_BUILTIN_vmla:
   case NEON_BUILTIN_vmls:
   case NEON_BUILTIN_vpadal:

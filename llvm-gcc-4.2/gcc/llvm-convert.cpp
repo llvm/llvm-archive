@@ -37,12 +37,12 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
-#include <iostream>
 
 extern "C" {
 #include "config.h"
@@ -766,8 +766,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   
   switch (TREE_CODE(exp)) {
   default:
-    std::cerr << "Unhandled expression!\n"
-              << "TREE_CODE: " << TREE_CODE(exp) << "\n";
+    errs() << "Unhandled expression!\n"
+           << "TREE_CODE: " << TREE_CODE(exp) << "\n";
     debug_tree(exp);
     abort();
 
@@ -935,7 +935,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // Needs to be in sync with EmitVIEW_CONVERT_EXPR.
   switch (TREE_CODE(exp)) {
   default:
-    std::cerr << "Unhandled lvalue expression!\n";
+    errs() << "Unhandled lvalue expression!\n";
     debug_tree(exp);
     abort();
   
@@ -988,7 +988,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 //===----------------------------------------------------------------------===//
 
 void TreeToLLVM::TODO(tree exp) {
-  std::cerr << "Unhandled tree node\n";
+  errs() << "Unhandled tree node\n";
   if (exp) debug_tree(exp);
   abort();  
 }

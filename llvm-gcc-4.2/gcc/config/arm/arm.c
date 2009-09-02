@@ -23527,8 +23527,9 @@ bool iasm_memory_clobber (const char *ARG_UNUSED (opcode))
 /* APPLE LOCAL end ARM MACH assembler */
 
 /* APPLE LOCAL begin ARM darwin optimization defaults */
+/* LLVM LOCAL fix warning on non-Darwin */ 
 void
-optimization_options (int level, int size ATTRIBUTE_UNUSED)
+optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
 {
   /* disable strict aliasing; breaks too much existing code.  */
 #if TARGET_MACHO

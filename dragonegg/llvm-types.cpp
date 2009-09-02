@@ -724,8 +724,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     case 128:
 #ifdef TARGET_POWERPC
       return SET_TYPE_LLVM(type, Type::getPPC_FP128Ty(Context));
-#elif 0
-             // This is for IEEE double extended, e.g. Sparc
+#elif defined(TARGET_ZARCH) || defined(TARGET_CPU_sparc)  // FIXME: Use some generic define.
+      // This is for IEEE double extended, e.g. Sparc
       return SET_TYPE_LLVM(type, Type::getFP128Ty(Context));
 #else
       // 128-bit long doubles map onto { double, double }.

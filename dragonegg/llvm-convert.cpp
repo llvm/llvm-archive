@@ -34,8 +34,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
@@ -44,7 +46,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 // System headers
 #include <gmp.h>
-#include <iostream>
 
 // GCC headers
 #undef VISIBILITY_HIDDEN
@@ -832,9 +833,11 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   switch (TREE_CODE(exp)) {
   default:
-    std::cerr << "Unhandled expression!\n"
-              << "TREE_CODE: " << TREE_CODE(exp) << "\n";
-    debug_tree(exp);
+    DEBUG({
+        llvm::errs() << "Unhandled expression!\n"
+                     << "TREE_CODE: " << TREE_CODE(exp) << "\n";
+        debug_tree(exp);
+      });
     abort();
 
   // Control flow
@@ -1028,8 +1031,10 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 
   switch (TREE_CODE(exp)) {
   default:
-    std::cerr << "Unhandled lvalue expression!\n";
-    debug_tree(exp);
+    DEBUG({
+        errs() << "Unhandled lvalue expression!\n";
+        debug_tree(exp);
+      });
     abort();
 
   case PARM_DECL:
@@ -1111,7 +1116,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 //===----------------------------------------------------------------------===//
 
 void TreeToLLVM::TODO(tree exp) {
-  std::cerr << "Unhandled tree node\n";
+  DEBUG(errs() << "Unhandled tree node\n");
   if (exp) debug_tree(exp);
   abort();
 }
@@ -4534,6 +4539,17 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
           unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
           if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
+            // It's tempting to implement the OTyBits < OpTyBits case by truncating
+            // Op down to OTy, however that breaks in the case of an inline asm
+            // constraint that corresponds to a single register, because the
+            // user can write code that assumes the whole register is defined,
+            // despite the output operand being only a subset of the register. For
+            // example:
+            //
+            //   asm ("sarl $10, %%eax" : "=a"(c) : "0"(1000000));
+            //
+            // The expected behavior is for %eax to be fully defined with the value
+            // 1000000 immediately before the asm.
             error_at(EXPR_LOCATION(exp),
                      "unsupported inline asm: input constraint with a matching "
                      "output constraint of incompatible type!");
@@ -7145,7 +7161,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   } else if (ElTy == Type::getInt32Ty(Context)) {
     assert((Len&3) == 0 &&
            "Length in bytes should be a multiple of element size");
-    const uint32_t *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
+    const uint32_t *InStr = (const uint32_t *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len/4; ++i) {
       // gcc has constructed the initializer elements in the target endianness,
       // but we're going to treat them as ordinary ints from here, with

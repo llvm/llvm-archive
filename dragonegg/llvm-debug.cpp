@@ -287,7 +287,7 @@ void DebugInfo::EmitRegionStart(BasicBlock *CurBB) {
   llvm::DIDescriptor D;
   if (!RegionStack.empty())
     D = RegionStack.back();
-  D = DebugFactory.CreateBlock(D);
+  D = DebugFactory.CreateLexicalBlock(D);
   RegionStack.push_back(D);
   DebugFactory.InsertRegionStart(D, CurBB);
 }
@@ -416,6 +416,7 @@ DIType DebugInfo::createBasicType(tree type) {
     break;
   }
   }
+
   return 
     DebugFactory.CreateBasicType(getOrCreateCompileUnit(main_input_filename),
                                  TypeName, 
@@ -455,17 +456,20 @@ DIType DebugInfo::createPointerType(tree type) {
   DIType FromTy = getOrCreateType(TREE_TYPE(type));
   // type* and type&
   // FIXME: Should BLOCK_POINTER_TYP have its own DW_TAG?
-  unsigned Tag = (TREE_CODE(type) == POINTER_TYPE) ?
+  unsigned Tag = TREE_CODE(type) == POINTER_TYPE ?
     DW_TAG_pointer_type :
     DW_TAG_reference_type;
   expanded_location Loc = GetNodeLocation(type);
-  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), "", 
+
+  std::string PName;
+  FromTy.getName(PName);
+  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), PName,
                                          getOrCreateCompileUnit(NULL), 
                                          0 /*line no*/, 
                                          NodeSizeInBits(type),
                                          NodeAlignInBits(type),
                                          0 /*offset */, 
-                                         0 /* flags */, 
+                                         0, 
                                          FromTy);
 }
 
@@ -590,13 +594,22 @@ DIType DebugInfo::createStructType(tree type) {
   // recursive) and replace all  uses of the forward declaration with the 
   // final definition. 
   expanded_location Loc = GetNodeLocation(TREE_CHAIN(type), false);
+  // FIXME: findRegion() is not able to find context all the time. This
+  // means when type names in different context match then FwdDecl is
+  // reused because MDNodes are uniqued. To avoid this, use type context
+  /// also while creating FwdDecl for now.
+  std::string FwdName;
+  if (TYPE_CONTEXT(type))
+    FwdName = GetNodeName(TYPE_CONTEXT(type));
+  FwdName = FwdName + GetNodeName(type);
+  unsigned Flags = llvm::DIType::FlagFwdDecl;
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
                                      findRegion(type),
-                                     GetNodeName(type),
+                                     FwdName,
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 
-                                     0, 0, 0, llvm::DIType::FlagFwdDecl,
+                                     0, 0, 0, Flags,
                                      llvm::DIType(), llvm::DIArray(),
                                      RunTimeLang);
   
@@ -605,7 +618,7 @@ DIType DebugInfo::createStructType(tree type) {
     return FwdDecl;
   
   // Insert into the TypeCache so that recursive uses will find it.
-  TypeCache[type] =  FwdDecl;
+  TypeCache[type] =  FwdDecl.getNode();
   
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -616,7 +629,6 @@ DIType DebugInfo::createStructType(tree type) {
       tree BInfoType = BINFO_TYPE (BInfo);
       DIType BaseClass = getOrCreateType(BInfoType);
       
-      expanded_location loc = GetNodeLocation(type);
       // FIXME : name, size, align etc...
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 
@@ -696,14 +708,14 @@ DIType DebugInfo::createStructType(tree type) {
   
   llvm::DIArray Elements =
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
-  
+
   llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, findRegion(type),
                                      GetNodeName(type),
                                      getOrCreateCompileUnit(Loc.file),
                                      Loc.line, 
                                      NodeSizeInBits(type), NodeAlignInBits(type),
-                                     0, 0, llvm::DIType(), Elements,
+                                     0, Flags, llvm::DIType(), Elements,
                                      RunTimeLang);
   
   // Now that we have a real decl for the struct, replace anything using the
@@ -716,11 +728,14 @@ DIType DebugInfo::createStructType(tree type) {
 DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
   
   DIType Ty;
-  if (tree Name = TYPE_NAME(type)) {
-    if (TREE_CODE(Name) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(Name)) {
-      expanded_location TypeDefLoc = GetNodeLocation(Name);
-      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(type),
-                                          GetNodeName(Name), 
+  if (tree TyDef = TYPE_NAME(type)) {
+      std::map<tree_node *, MDNode *>::iterator I = TypeCache.find(TyDef);
+      if (I != TypeCache.end())
+        return DIType(I->second);
+    if (TREE_CODE(TyDef) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(TyDef)) {
+      expanded_location TypeDefLoc = GetNodeLocation(TyDef);
+      Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, findRegion(TyDef),
+                                          GetNodeName(TyDef), 
                                           getOrCreateCompileUnit(TypeDefLoc.file),
                                           TypeDefLoc.line,
                                           0 /*size*/,
@@ -728,8 +743,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                           0 /*offset */, 
                                           0 /*flags*/, 
                                           MainTy);
-      // Set the slot early to prevent recursion difficulties.
-      TypeCache[type] = Ty;
+      TypeCache[TyDef] = Ty.getNode();
       return Ty;
     }
   }
@@ -759,7 +773,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                          MainTy);
   
   if (TYPE_VOLATILE(type) || TYPE_READONLY(type)) {
-    TypeCache[type] = Ty;
+    TypeCache[type] = Ty.getNode();
     return Ty;
   }
 
@@ -779,17 +793,13 @@ DIType DebugInfo::getOrCreateType(tree type) {
   if (TREE_CODE(type) == VOID_TYPE) return DIType();
   
   // Check to see if the compile unit already has created this type.
-  DIType &Slot = TypeCache[type];
-  if (!Slot.isNull())
-    return Slot;
-  
+  std::map<tree_node *, MDNode *>::iterator I = TypeCache.find(type);
+  if (I != TypeCache.end())
+    return DIType(I->second);
+
   DIType MainTy;
-  if (type != TYPE_MAIN_VARIANT(type)) {
-    if (TYPE_NEXT_VARIANT(type) && type != TYPE_NEXT_VARIANT(type))
-      MainTy = getOrCreateType(TYPE_NEXT_VARIANT(type));
-    else if (TYPE_MAIN_VARIANT(type))
-      MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
-  }
+  if (type != TYPE_MAIN_VARIANT(type) && TYPE_MAIN_VARIANT(type))
+    MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
 
   DIType Ty = createVariantType(type, MainTy);
   if (!Ty.isNull())
@@ -809,7 +819,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
     case REFERENCE_TYPE:
       Ty = createPointerType(type);
       break;
-    
+
     case OFFSET_TYPE: {
       // gen_type_die(TYPE_OFFSET_BASETYPE(type), context_die);
       // gen_type_die(TREE_TYPE(type), context_die);
@@ -844,7 +854,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
       Ty = createBasicType(type);
       break;
   }
-  TypeCache[type] = Ty;
+  TypeCache[type] = Ty.getNode();
   return Ty;
 }
 
@@ -870,7 +880,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                 bool isMain) {
   if (!FullPath)
     FullPath = main_input_filename;
-  GlobalVariable *&CU = CUCache[FullPath];
+  MDNode *&CU = CUCache[FullPath];
   if (CU)
     return DICompileUnit(CU);
 
@@ -911,6 +921,6 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                         version_string, isMain,
                                                         optimize, "",
                                                         ObjcRunTimeVer);
-  CU = NewCU.getGV();
+  CU = NewCU.getNode();
   return NewCU;
 }

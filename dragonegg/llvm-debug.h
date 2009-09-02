@@ -56,8 +56,8 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  std::map<std::string, GlobalVariable *> CUCache;
-  std::map<tree_node *, DIType> TypeCache;
+  std::map<std::string, MDNode *> CUCache;
+  std::map<tree_node *, MDNode *> TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
   std::vector<DIDescriptor> RegionStack;

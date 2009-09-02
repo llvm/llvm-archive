@@ -355,28 +355,13 @@ void handleVisibility(tree decl, GlobalValue *GV) {
 }
 
 //TODO// GuessAtInliningThreshold - Figure out a reasonable threshold to pass llvm's
-//TODO// inliner.  There are 12 user-settable gcc params that affect inlining.  llvm
-//TODO// (so far) only has one knob; the param that corresponds most closely, and
-//TODO// which we use, is max-inline-insns-auto (set by -finline-limit, which is
-//TODO// what most users actually use).  This maps only very approximately to what
-//TODO// llvm's inliner is doing, but it's the best we've got.
+//TODO// inliner.  gcc has many options that control inlining, but we have decided
+//TODO// not to support anything like that for llvm-gcc.
 //TODOstatic unsigned GuessAtInliningThreshold() {
 //TODO  unsigned threshold = 200;
-//TODO  // Get the default value for gcc's max-inline-insns-auto.  This is the value
-//TODO  // after all language and target dependent changes to the global default are
-//TODO  // applied, but before parsing the command line.
-//TODO  unsigned default_miia = default_max_inline_insns_auto;
-//TODO  // See if the actual value is the same as the default.
-//TODO  unsigned miia = MAX_INLINE_INSNS_AUTO;
-//TODO  if (miia == default_miia) {
-//TODO    if (optimize_size || optimize < 3)
-//TODO      // Reduce inline limit.
-//TODO      threshold = 50;
-//TODO  } else {
-//TODO    // We have an overriding user-specified value.  Multiply by 20/9, which is
-//TODO    // the Magic Number converting 90 to 200.
-//TODO    threshold = miia * 20 / 9;
-//TODO  }
+//TODO  if (optimize_size || optimize < 3)
+//TODO    // Reduce inline limit.
+//TODO    threshold = 50;
 //TODO  return threshold;
 //TODO}
 

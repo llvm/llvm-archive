@@ -16688,7 +16688,6 @@ arm_init_neon_builtins (void)
 #define pv4hi_TN V4HI2_type_node
 #define pv2si_TN V2SI2_type_node
 #define pv2sf_TN V2SF2_type_node
-#define pdi_TN DI1_type_node
 
 #define pv16qi_TN V16QI2_type_node
 #define pv8hi_TN V8HI2_type_node
@@ -16701,7 +16700,7 @@ arm_init_neon_builtins (void)
 #define pv4hi_TN V4HI_pointer_node
 #define pv2si_TN V2SI_pointer_node
 #define pv2sf_TN V2SF_pointer_node
-#define pdi_TN intDI_pointer_node
+#define pv1di_TN V1DI_pointer_node
 
 #define pv16qi_TN V16QI_pointer_node
 #define pv8hi_TN V8HI_pointer_node
@@ -16816,12 +16815,8 @@ arm_init_neon_builtins (void)
                                               "__builtin_neon_v4hi2");
   tree V2SI2_type_node = build_multivec_type (V2SI_type_node, 2,
                                               "__builtin_neon_v2si2");
-  tree V1DI2_type_node = build_multivec_type (V1DI_type_node, 1,
+  tree V1DI2_type_node = build_multivec_type (V1DI_type_node, 2,
                                               "__builtin_neon_v1di2");
-  tree DI1_type_node   = build_multivec_type (neon_intDI_type_node, 1,
-                                              "__builtin_neon_di1");
-  tree DI2_type_node   = build_multivec_type (neon_intDI_type_node, 2,
-                                              "__builtin_neon_di2");
   tree V2SF2_type_node = build_multivec_type (V2SF_type_node, 2,
                                               "__builtin_neon_v2sf2");
   tree V8QI3_type_node = build_multivec_type (V8QI_type_node, 3,
@@ -16830,8 +16825,8 @@ arm_init_neon_builtins (void)
                                               "__builtin_neon_v4hi3");
   tree V2SI3_type_node = build_multivec_type (V2SI_type_node, 3,
                                               "__builtin_neon_v2si3");
-  tree DI3_type_node   = build_multivec_type (neon_intDI_type_node, 3,
-                                              "__builtin_neon_di3");
+  tree V1DI3_type_node = build_multivec_type (V1DI_type_node, 3,
+                                              "__builtin_neon_v1di2");
   tree V2SF3_type_node = build_multivec_type (V2SF_type_node, 3,
                                               "__builtin_neon_v2sf3");
   tree V8QI4_type_node = build_multivec_type (V8QI_type_node, 4,
@@ -16840,8 +16835,8 @@ arm_init_neon_builtins (void)
                                               "__builtin_neon_v4hi4");
   tree V2SI4_type_node = build_multivec_type (V2SI_type_node, 4,
                                               "__builtin_neon_v2si4");
-  tree DI4_type_node   = build_multivec_type (neon_intDI_type_node, 4,
-                                              "__builtin_neon_di4");
+  tree V1DI4_type_node = build_multivec_type (V1DI_type_node, 4,
+                                              "__builtin_neon_v1di2");
   tree V2SF4_type_node = build_multivec_type (V2SF_type_node, 4,
                                               "__builtin_neon_v2sf4");
   tree V16QI2_type_node = build_multivec_type (V16QI_type_node, 2,
@@ -16880,17 +16875,17 @@ arm_init_neon_builtins (void)
   tree V8QI2_type_node = intTI_type_node;
   tree V4HI2_type_node = intTI_type_node;
   tree V2SI2_type_node = intTI_type_node;
-  tree DI2_type_node   = intTI_type_node;
+  tree V1DI2_type_node = intTI_type_node;
   tree V2SF2_type_node = intTI_type_node;
   tree V8QI3_type_node = intEI_type_node;
   tree V4HI3_type_node = intEI_type_node;
   tree V2SI3_type_node = intEI_type_node;
-  tree DI3_type_node   = intEI_type_node;
+  tree V1DI3_type_node = intEI_type_node;
   tree V2SF3_type_node = intEI_type_node;
   tree V8QI4_type_node = intOI_type_node;
   tree V4HI4_type_node = intOI_type_node;
   tree V2SI4_type_node = intOI_type_node;
-  tree DI4_type_node   = intOI_type_node;
+  tree V1DI4_type_node = intOI_type_node;
   tree V2SF4_type_node = intOI_type_node;
   tree V16QI2_type_node = intOI_type_node;
   tree V8HI2_type_node = intOI_type_node;
@@ -17359,7 +17354,7 @@ arm_init_neon_builtins (void)
   tree ti_ftype_const_si_pointer =
     build_function_type_list (V2SI2_type_node, const_intSI_pointer_node, NULL);
   tree ti_ftype_const_di_pointer =
-    build_function_type_list (DI2_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (V1DI2_type_node, const_intDI_pointer_node, NULL);
   tree ti_ftype_const_sf_pointer =
     build_function_type_list (V2SF2_type_node, const_float_pointer_node, NULL);
 
@@ -17431,7 +17426,7 @@ arm_init_neon_builtins (void)
 			      V2SI2_type_node, NULL);
   tree void_ftype_di_pointer_ti =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      DI2_type_node, NULL);
+			      V1DI2_type_node, NULL);
   tree void_ftype_sf_pointer_ti =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF2_type_node, NULL);
@@ -17508,7 +17503,7 @@ arm_init_neon_builtins (void)
   tree ei_ftype_const_si_pointer =
     build_function_type_list (V2SI3_type_node, const_intSI_pointer_node, NULL);
   tree ei_ftype_const_di_pointer =
-    build_function_type_list (DI3_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (V1DI3_type_node, const_intDI_pointer_node, NULL);
   tree ei_ftype_const_sf_pointer =
     build_function_type_list (V2SF3_type_node, const_float_pointer_node, NULL);
 
@@ -17559,7 +17554,7 @@ arm_init_neon_builtins (void)
 			      V2SI3_type_node, NULL);
   tree void_ftype_di_pointer_ei =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      DI3_type_node, NULL);
+			      V1DI3_type_node, NULL);
   tree void_ftype_sf_pointer_ei =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF3_type_node, NULL);
@@ -17605,7 +17600,7 @@ arm_init_neon_builtins (void)
 
   /* Load size-4 structure operations, double-word.  */
   tree oi_ftype_const_di_pointer =
-    build_function_type_list (DI4_type_node, const_intDI_pointer_node, NULL);
+    build_function_type_list (V1DI4_type_node, const_intDI_pointer_node, NULL);
 
   /* Load size-4 structure operations, quad-word.  */
   tree xi_ftype_const_qi_pointer =
@@ -17636,7 +17631,7 @@ arm_init_neon_builtins (void)
   /* Store size-4 structure operations, double-word.  */
   tree void_ftype_di_pointer_oi =
     build_function_type_list (void_type_node, intDI_pointer_node,
-			      DI4_type_node, NULL);
+			      V1DI4_type_node, NULL);
 
   /* Store size-4 structure operations, quad-word.  */
   tree void_ftype_qi_pointer_xi =
@@ -17709,32 +17704,30 @@ arm_init_neon_builtins (void)
 					     "__builtin_neon_v4hi2");
   (*lang_hooks.types.register_builtin_type) (V2SI2_type_node,
 					     "__builtin_neon_v2si2");
-  (*lang_hooks.types.register_builtin_type) (DI1_type_node,
-					     "__builtin_neon_di1");
-  (*lang_hooks.types.register_builtin_type) (DI2_type_node,
-					     "__builtin_neon_di2");
   (*lang_hooks.types.register_builtin_type) (V2SF2_type_node,
 					     "__builtin_neon_v2sf2");
+  (*lang_hooks.types.register_builtin_type) (V1DI2_type_node,
+					     "__builtin_neon_v1di2");
   (*lang_hooks.types.register_builtin_type) (V8QI3_type_node,
 					     "__builtin_neon_v8qi3");
   (*lang_hooks.types.register_builtin_type) (V4HI3_type_node,
 					     "__builtin_neon_v4hi3");
   (*lang_hooks.types.register_builtin_type) (V2SI3_type_node,
 					     "__builtin_neon_v2si3");
-  (*lang_hooks.types.register_builtin_type) (DI3_type_node,
-					     "__builtin_neon_di3");
   (*lang_hooks.types.register_builtin_type) (V2SF3_type_node,
 					     "__builtin_neon_v2sf3");
+  (*lang_hooks.types.register_builtin_type) (V1DI3_type_node,
+					     "__builtin_neon_v1di3");
   (*lang_hooks.types.register_builtin_type) (V8QI4_type_node,
 					     "__builtin_neon_v8qi4");
   (*lang_hooks.types.register_builtin_type) (V4HI4_type_node,
 					     "__builtin_neon_v4hi4");
   (*lang_hooks.types.register_builtin_type) (V2SI4_type_node,
 					     "__builtin_neon_v2si4");
-  (*lang_hooks.types.register_builtin_type) (DI4_type_node,
-					     "__builtin_neon_di4");
   (*lang_hooks.types.register_builtin_type) (V2SF4_type_node,
 					     "__builtin_neon_v2sf4");
+  (*lang_hooks.types.register_builtin_type) (V1DI4_type_node,
+					     "__builtin_neon_v1di4");
   (*lang_hooks.types.register_builtin_type) (V16QI2_type_node,
 					     "__builtin_neon_v16qi2");
   (*lang_hooks.types.register_builtin_type) (V8HI2_type_node,

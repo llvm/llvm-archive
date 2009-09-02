@@ -4717,14 +4717,14 @@ typedef struct poly16x8x4_t
 
 #define vld2_s64(__a) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
+     union { int64x1x2_t __i; __builtin_neon_v1di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v1di (__a); \
      __rv.__i; \
    })
 
 #define vld2_u64(__a) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
+     union { uint64x1x2_t __i; __builtin_neon_v1di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2v1di (__a); \
      __rv.__i; \
    })
@@ -4977,14 +4977,14 @@ typedef struct poly16x8x4_t
 
 #define vld2_dup_s64(__a) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
+     union { int64x1x2_t __i; __builtin_neon_v1di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld2_dup_u64(__a) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __rv; \
+     union { uint64x1x2_t __i; __builtin_neon_v1di2 __o; } __rv; \
      __rv.__o = __builtin_neon_vld2_dupv1di (__a); \
      __rv.__i; \
    })
@@ -5045,13 +5045,13 @@ typedef struct poly16x8x4_t
 
 #define vst2_s64(__a, __b) \
   ({ \
-     union { int64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
+     union { int64x1x2_t __i; __builtin_neon_v1di2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v1di (__a, __bu.__o); \
    })
 
 #define vst2_u64(__a, __b) \
   ({ \
-     union { uint64x1x2_t __i; __builtin_neon_di2 __o; } __bu = { __b }; \
+     union { uint64x1x2_t __i; __builtin_neon_v1di2 __o; } __bu = { __b }; \
      __builtin_neon_vst2v1di (__a, __bu.__o); \
    })
 
@@ -5264,14 +5264,14 @@ typedef struct poly16x8x4_t
 
 #define vld3_s64(__a) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
+     union { int64x1x3_t __i; __builtin_neon_v1di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v1di (__a); \
      __rv.__i; \
    })
 
 #define vld3_u64(__a) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
+     union { uint64x1x3_t __i; __builtin_neon_v1di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3v1di (__a); \
      __rv.__i; \
    })
@@ -5524,14 +5524,14 @@ typedef struct poly16x8x4_t
 
 #define vld3_dup_s64(__a) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
+     union { int64x1x3_t __i; __builtin_neon_v1di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld3_dup_u64(__a) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __rv; \
+     union { uint64x1x3_t __i; __builtin_neon_v1di3 __o; } __rv; \
      __rv.__o = __builtin_neon_vld3_dupv1di (__a); \
      __rv.__i; \
    })
@@ -5592,13 +5592,13 @@ typedef struct poly16x8x4_t
 
 #define vst3_s64(__a, __b) \
   ({ \
-     union { int64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
+     union { int64x1x3_t __i; __builtin_neon_v1di3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v1di (__a, __bu.__o); \
    })
 
 #define vst3_u64(__a, __b) \
   ({ \
-     union { uint64x1x3_t __i; __builtin_neon_di3 __o; } __bu = { __b }; \
+     union { uint64x1x3_t __i; __builtin_neon_v1di3 __o; } __bu = { __b }; \
      __builtin_neon_vst3v1di (__a, __bu.__o); \
    })
 
@@ -5811,14 +5811,14 @@ typedef struct poly16x8x4_t
 
 #define vld4_s64(__a) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
+     union { int64x1x4_t __i; __builtin_neon_v1di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v1di (__a); \
      __rv.__i; \
    })
 
 #define vld4_u64(__a) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
+     union { uint64x1x4_t __i; __builtin_neon_v1di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4v1di (__a); \
      __rv.__i; \
    })
@@ -6071,14 +6071,14 @@ typedef struct poly16x8x4_t
 
 #define vld4_dup_s64(__a) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
+     union { int64x1x4_t __i; __builtin_neon_v1di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv1di (__a); \
      __rv.__i; \
    })
 
 #define vld4_dup_u64(__a) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __rv; \
+     union { uint64x1x4_t __i; __builtin_neon_v1di4 __o; } __rv; \
      __rv.__o = __builtin_neon_vld4_dupv1di (__a); \
      __rv.__i; \
    })
@@ -6139,13 +6139,13 @@ typedef struct poly16x8x4_t
 
 #define vst4_s64(__a, __b) \
   ({ \
-     union { int64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
+     union { int64x1x4_t __i; __builtin_neon_v1di4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v1di (__a, __bu.__o); \
    })
 
 #define vst4_u64(__a, __b) \
   ({ \
-     union { uint64x1x4_t __i; __builtin_neon_di4 __o; } __bu = { __b }; \
+     union { uint64x1x4_t __i; __builtin_neon_v1di4 __o; } __bu = { __b }; \
      __builtin_neon_vst4v1di (__a, __bu.__o); \
    })
 

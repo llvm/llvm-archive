@@ -140,5 +140,5 @@ public:
 
 } // end namespace llvm
 
-#endif
+#endif /* LLVM_DEBUG_H */
 /* LLVM LOCAL end (ENTIRE FILE!)  */

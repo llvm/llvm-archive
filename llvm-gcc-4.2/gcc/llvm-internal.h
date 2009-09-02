@@ -645,5 +645,5 @@ public:
   
 };
 
-#endif
+#endif /* LLVM_INTERNAL_H */
 /* LLVM LOCAL end (ENTIRE FILE!)  */

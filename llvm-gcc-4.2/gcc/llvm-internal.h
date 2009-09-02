@@ -47,10 +47,6 @@ extern "C" {
 #include "llvm.h"
 }
 
-/// Internal gcc structure describing an exception handling region.  Declared
-/// here to avoid including all of except.h.
-struct eh_region;
-
 namespace llvm {
   class Module;
   class GlobalVariable;

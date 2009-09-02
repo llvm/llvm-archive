@@ -14,7 +14,8 @@ void test_vextp16 (void)
   poly16x4_t arg0_poly16x4_t;
   poly16x4_t arg1_poly16x4_t;
 
-  out_poly16x4_t = vext_p16 (arg0_poly16x4_t, arg1_poly16x4_t, 0);
+ /* LLVM LOCAL */
+  out_poly16x4_t = vext_p16 (arg0_poly16x4_t, arg1_poly16x4_t, 1);
 }
 
 /* { dg-final { scan-assembler "vext\.16\[ 	\]+\[dD\]\[0-9\]+, \[dD\]\[0-9\]+, \[dD\]\[0-9\]+, #\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */

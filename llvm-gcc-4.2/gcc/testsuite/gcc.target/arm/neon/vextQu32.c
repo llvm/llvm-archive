@@ -14,7 +14,8 @@ void test_vextQu32 (void)
   uint32x4_t arg0_uint32x4_t;
   uint32x4_t arg1_uint32x4_t;
 
-  out_uint32x4_t = vextq_u32 (arg0_uint32x4_t, arg1_uint32x4_t, 0);
+ /* LLVM LOCAL */
+  out_uint32x4_t = vextq_u32 (arg0_uint32x4_t, arg1_uint32x4_t, 1);
 }
 
 /* { dg-final { scan-assembler "vext\.32\[ 	\]+\[qQ\]\[0-9\]+, \[qQ\]\[0-9\]+, \[qQ\]\[0-9\]+, #\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */

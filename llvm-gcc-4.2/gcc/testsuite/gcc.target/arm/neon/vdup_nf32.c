@@ -8,10 +8,10 @@
 
 #include "arm_neon.h"
 
-void test_vdup_nf32 (void)
+ /* LLVM LOCAL */
+void test_vdup_nf32 (float32_t arg0_float32_t)
 {
   float32x2_t out_float32x2_t;
-  float32_t arg0_float32_t;
 
   out_float32x2_t = vdup_n_f32 (arg0_float32_t);
 }

@@ -14,7 +14,8 @@ void test_vextp8 (void)
   poly8x8_t arg0_poly8x8_t;
   poly8x8_t arg1_poly8x8_t;
 
-  out_poly8x8_t = vext_p8 (arg0_poly8x8_t, arg1_poly8x8_t, 0);
+ /* LLVM LOCAL */
+  out_poly8x8_t = vext_p8 (arg0_poly8x8_t, arg1_poly8x8_t, 1);
 }
 
 /* { dg-final { scan-assembler "vext\.8\[ 	\]+\[dD\]\[0-9\]+, \[dD\]\[0-9\]+, \[dD\]\[0-9\]+, #\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */

@@ -14,7 +14,8 @@ void test_vextQp16 (void)
   poly16x8_t arg0_poly16x8_t;
   poly16x8_t arg1_poly16x8_t;
 
-  out_poly16x8_t = vextq_p16 (arg0_poly16x8_t, arg1_poly16x8_t, 0);
+ /* LLVM LOCAL */
+  out_poly16x8_t = vextq_p16 (arg0_poly16x8_t, arg1_poly16x8_t, 1);
 }
 
 /* { dg-final { scan-assembler "vext\.16\[ 	\]+\[qQ\]\[0-9\]+, \[qQ\]\[0-9\]+, \[qQ\]\[0-9\]+, #\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */

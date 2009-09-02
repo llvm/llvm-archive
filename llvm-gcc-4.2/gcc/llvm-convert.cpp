@@ -34,7 +34,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
@@ -793,11 +792,9 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   switch (TREE_CODE(exp)) {
   default:
-    DEBUG({
-        llvm::errs() << "Unhandled expression!\n"
-                     << "TREE_CODE: " << TREE_CODE(exp) << "\n";
-        debug_tree(exp);
-      });
+    errs() << "Unhandled expression!\n"
+           << "TREE_CODE: " << TREE_CODE(exp) << "\n";
+    debug_tree(exp);
     abort();
 
   // Control flow
@@ -991,10 +988,8 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 
   switch (TREE_CODE(exp)) {
   default:
-    DEBUG({
-        errs() << "Unhandled lvalue expression!\n";
-        debug_tree(exp);
-      });
+    errs() << "Unhandled lvalue expression!\n";
+    debug_tree(exp);
     abort();
 
   case PARM_DECL:
@@ -1076,7 +1071,7 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 //===----------------------------------------------------------------------===//
 
 void TreeToLLVM::TODO(tree exp) {
-  DEBUG(errs() << "Unhandled tree node\n");
+  errs() << "Unhandled tree node\n";
   if (exp) debug_tree(exp);
   abort();
 }

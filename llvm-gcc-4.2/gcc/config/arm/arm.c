@@ -275,6 +275,11 @@ static tree arm_md_asm_clobbers (tree, tree, tree);
 #undef  TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE arm_attribute_table
 
+/* LLVM LOCAL begin fix warning on non-Darwin */
+#undef TARGET_ASM_FILE_START
+#define TARGET_ASM_FILE_START arm_file_start
+/* LLVM LOCAL end fix warning on non-Darwin */
+
 #undef TARGET_ASM_FILE_END
 #define TARGET_ASM_FILE_END arm_file_end
 

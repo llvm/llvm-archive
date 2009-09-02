@@ -1864,7 +1864,7 @@ static unsigned int emit_function (void) {
   // Finally, we have written out this function!
   TREE_ASM_WRITTEN(current_function_decl) = 1;
 
-  execute_free_datastructures ();
+  execute_free_datastructures();
 
   // When debugging, append the LLVM IR to the dump file.
   if (dump_file) {
@@ -2079,6 +2079,10 @@ static struct rtl_opt_pass pass_rtl_null =
 };
 
 
+// Garbage collector roots.
+extern const struct ggc_root_tab gt_pch_rc__gt_llvm_cache_h[];
+
+
 /// llvm_plugin_info - Information about this plugin.  Users can access this
 /// using "gcc --help -v".
 static struct plugin_info llvm_plugin_info = {
@@ -2131,6 +2135,10 @@ int plugin_init (struct plugin_name_args *plugin_info,
   // Obtain exclusive use of the assembly code output file.  This stops GCC from
   // writing anything at all to the assembly file - only we get to write to it.
   TakeoverAsmOutput();
+
+  // Register our garbage collector roots.
+  register_callback (plugin_name, PLUGIN_REGISTER_GGC_ROOTS, NULL,
+                     (void *)gt_pch_rc__gt_llvm_cache_h);
 
   // Perform late initialization just before processing the compilation unit.
   register_callback (plugin_name, PLUGIN_START_UNIT, llvm_start_unit, NULL);

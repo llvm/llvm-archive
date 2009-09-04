@@ -8291,10 +8291,6 @@ objc_init_exceptions (void)
 #ifdef ENABLE_LLVM
       llvm_eh_personality_libfunc
         = llvm_init_one_libfunc ("__objc_personality_v0");
-      llvm_unwind_sjlj_register_libfunc 
-        = llvm_init_one_libfunc ("_Unwind_SjLj_Register");
-      llvm_unwind_sjlj_unregister_libfunc
-        = llvm_init_one_libfunc ("_Unwind_SjLj_Unregister");
 #else
       eh_personality_libfunc
         = init_one_libfunc ("__objc_personality_v0");

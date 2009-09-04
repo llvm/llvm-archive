@@ -57,7 +57,6 @@ extern unsigned int set_nothrow_function_flags (void);
 /* After initial rtl generation, call back to finish generating
    exception support code.  */
 extern void finish_eh_generation (void);
-extern void assign_filter_values (void);
 
 extern void init_eh (void);
 extern void init_eh_for_function (void);
@@ -125,13 +124,6 @@ extern struct eh_region *get_eh_next_catch (struct eh_region *);
 extern struct eh_region *get_eh_region (unsigned);
 extern tree get_eh_type_list (struct eh_region *);
 extern tree lookup_type_for_runtime (tree);
-
-extern GTY(()) tree sjlj_fc_type_node;
-extern int sjlj_fc_call_site_ofs;
-extern int sjlj_fc_data_ofs;
-extern int sjlj_fc_personality_ofs;
-extern int sjlj_fc_lsda_ofs;
-extern int sjlj_fc_jbuf_ofs;
 #endif
 /* LLVM local end */
 

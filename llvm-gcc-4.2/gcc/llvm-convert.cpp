@@ -7130,7 +7130,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   } else if (ElTy == Type::getInt32Ty(Context)) {
     assert((Len&3) == 0 &&
            "Length in bytes should be a multiple of element size");
-    const uint32_t *InStr = (const unsigned *)TREE_STRING_POINTER(exp);
+    const uint32_t *InStr = (const uint32_t *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len/4; ++i) {
       // gcc has constructed the initializer elements in the target endianness,
       // but we're going to treat them as ordinary ints from here, with

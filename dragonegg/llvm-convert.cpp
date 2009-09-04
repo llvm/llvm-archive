@@ -63,7 +63,6 @@ extern "C" {
 #include "output.h"
 #include "diagnostic.h"
 #include "real.h"
-#include "langhooks.h"
 #include "function.h"
 #include "toplev.h"
 #include "flags.h"
@@ -4412,7 +4411,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     // Output constraints must be addressable if they aren't simple register
     // constraints (this emits "address of register var" errors, etc).
     if (!AllowsReg && (AllowsMem || IsInOut))
-      lang_hooks.mark_addressable(Operand);
+      mark_addressable(Operand);
 
     // Count the number of "+" constraints.
     if (IsInOut)
@@ -4570,7 +4569,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       CallOps.push_back(Op);
       CallArgTypes.push_back(OpTy);
     } else {                          // Memory operand.
-      lang_hooks.mark_addressable(TREE_VALUE(Input));
+      mark_addressable(TREE_VALUE(Input));
       isIndirect = true;
       LValue Src = EmitLV(Val);
       assert(!Src.isBitfield() && "Cannot read from a bitfield!");

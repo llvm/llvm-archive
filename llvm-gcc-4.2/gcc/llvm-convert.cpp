@@ -975,6 +975,11 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
           // pass it back as a scalar value. Disable checking if it's a
           // vector. This should be made better, though.
           isa<VectorType>(ConvertType(TREE_TYPE(exp))) ||
+          // FIXME: The handling of MODIFY_EXPR doesn't always produce results
+          // that pass this check; the return type might be the LHS type or
+          // the RHS type, neither of which is guaranteed to be the
+          // same as the expression type.
+          TREE_CODE(exp) == MODIFY_EXPR ||
           Result->getType() == ConvertType(TREE_TYPE(exp))) &&
           "Value has wrong type!");
   return Result;

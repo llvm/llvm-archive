@@ -1467,7 +1467,9 @@ arm_override_options (void)
   /* APPLE LOCAL begin 6150882 use thumb2 by default for v7 */
   /* If we're compiling for v7, we should default to using thumb2
      codegen. */
+  /* LLVM LOCAL only default to thumb2 on Darwin to match FSF GCC */
   if ((insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A 
+      && TARGET_MACHO
       && thumb_option < 0)
     thumb_option = 1;
   /* APPLE LOCAL end 6150882 use thumb2 by default for v7 */

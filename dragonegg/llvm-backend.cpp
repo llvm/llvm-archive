@@ -2080,7 +2080,7 @@ static struct rtl_opt_pass pass_rtl_null =
 
 
 // Garbage collector roots.
-extern const struct ggc_root_tab gt_pch_rc__gt_llvm_cache_h[];
+extern const struct ggc_cache_tab gt_ggc_rc__gt_llvm_cache_h[];
 
 
 /// llvm_plugin_info - Information about this plugin.  Users can access this
@@ -2137,8 +2137,8 @@ int plugin_init (struct plugin_name_args *plugin_info,
   TakeoverAsmOutput();
 
   // Register our garbage collector roots.
-  register_callback (plugin_name, PLUGIN_REGISTER_GGC_ROOTS, NULL,
-                     (void *)gt_pch_rc__gt_llvm_cache_h);
+  register_callback (plugin_name, PLUGIN_REGISTER_GGC_CACHES, NULL,
+                     (void *)gt_ggc_rc__gt_llvm_cache_h);
 
   // Perform late initialization just before processing the compilation unit.
   register_callback (plugin_name, PLUGIN_START_UNIT, llvm_start_unit, NULL);

@@ -31,8 +31,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // GCC headers
 #include "ggc.h"
 
-#include "stdio.h" //QQ
-
 struct GTY(()) tree_llvm_map {
   struct tree_map_base base;
   const void * GTY((skip)) val;
@@ -42,12 +40,7 @@ struct GTY(()) tree_llvm_map {
 #define tree_llvm_map_hash tree_map_base_hash
 #define tree_llvm_map_marked_p tree_map_base_marked_p
 
-__attribute__((used)) static int debug_tree_llvm_map_marked_p (const void *p) {//QQ
-  printf("debug_ggc call for %p\n", p);
-  return tree_map_base_marked_p(p);
-}
-
-static GTY ((if_marked ("debug_tree_llvm_map_marked_p"),
+static GTY ((if_marked ("tree_llvm_map_marked_p"),
              param_is (struct tree_llvm_map)))
   htab_t llvm_cache;
 

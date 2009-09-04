@@ -439,7 +439,7 @@ void TreeToLLVM::StartFunctionBody() {
   if (DECL_LLVM_SET_P(FnDecl) &&
       cast<PointerType>(DECL_LLVM(FnDecl)->getType())->getElementType() == FTy){
     Fn = cast<Function>(DECL_LLVM(FnDecl));
-    assert(Fn->getCallingConv() == static_cast<unsigned>(CallingConv) &&
+    assert(Fn->getCallingConv() == CallingConv &&
            "Calling convention disagreement between prototype and impl!");
     // The visibility can be changed from the last time we've seen this
     // function. Set to current.
@@ -451,7 +451,7 @@ void TreeToLLVM::StartFunctionBody() {
       assert(FnEntry->isDeclaration() &&
              "Multiple fns with same name and neither are external!");
       FnEntry->setName("");  // Clear name to avoid conflicts.
-      assert(FnEntry->getCallingConv() == static_cast<unsigned>(CallingConv) &&
+      assert(FnEntry->getCallingConv() == CallingConv &&
              "Calling convention disagreement between prototype and impl!");
     }
 

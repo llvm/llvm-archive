@@ -134,85 +134,22 @@ static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 //TODOstatic void destroyOptimizationPasses();
 
-//TODO//===----------------------------------------------------------------------===//
-//TODO//                   Matching LLVM Values with GCC DECL trees
-//TODO//===----------------------------------------------------------------------===//
-//TODO//
-//TODO// LLVMValues is a vector of LLVM Values. GCC tree nodes keep track of LLVM
-//TODO// Values using this vector's index. It is easier to save and restore the index
-//TODO// than the LLVM Value pointer while using PCH.
-//TODO
-//TODO// Collection of LLVM Values
-//TODOstatic std::vector<Value *> LLVMValues;
-//TODOtypedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
-//TODOstatic LLVMValuesMapTy LLVMValuesMap;
-//TODO
-//TODO/// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
-//TODO/// this allows us to efficiently identify and remove them.  Local IDs are IDs
-//TODO/// for values that are local to the current function being processed.  These do
-//TODO/// not need to go into the PCH file, but DECL_LLVM still needs a valid index
-//TODO/// while converting the function.  Using "Local IDs" allows the IDs for
-//TODO/// function-local decls to be recycled after the function is done.
-//TODOstatic std::vector<unsigned> LocalLLVMValueIDs;
-//TODO
-//TODO/// llvm_set_decl - Remember the LLVM value for GCC tree node.
-//TODOvoid llvm_set_decl(tree Tr, Value *V) {
-//TODO
-//TODO  // If there is not any value then do not add new LLVMValues entry.
-//TODO  // However clear Tr index if it is non zero.
-//TODO  if (!V) {
-//TODO    if (GET_DECL_LLVM_INDEX(Tr))
-//TODO      SET_DECL_LLVM_INDEX(Tr, 0);
-//TODO    return;
-//TODO  }
-//TODO
-//TODO  unsigned &ValueSlot = LLVMValuesMap[V];
-//TODO  if (ValueSlot) {
-//TODO    // Already in map
-//TODO    SET_DECL_LLVM_INDEX(Tr, ValueSlot);
-//TODO    return;
-//TODO  }
-//TODO
-//TODO  LLVMValues.push_back(V);
-//TODO  unsigned Index = LLVMValues.size();
-//TODO  SET_DECL_LLVM_INDEX(Tr, Index);
-//TODO  LLVMValuesMap[V] = Index;
-//TODO
-//TODO  // Remember local values.
-//TODO  if (!isa<Constant>(V))
-//TODO    LocalLLVMValueIDs.push_back(Index);
-//TODO}
-//TODO
-//TODO/// llvm_set_decl_p - Return TRUE if there is a LLVM Value associate with GCC
-//TODO/// tree node.
-//TODObool llvm_set_decl_p(tree Tr) {
-//TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
-//TODO  if (Index == 0)
-//TODO    return false;
-//TODO
-//TODO  return LLVMValues[Index - 1] != 0;
-//TODO}
-//TODO
-//TODO/// llvm_get_decl - Get LLVM Value for the GCC tree node based on LLVMValues
-//TODO/// vector index.  If there is not any value associated then use
-//TODO/// make_decl_llvm() to make LLVM value. When GCC tree node is initialized, it
-//TODO/// has 0 as the index value. This is why all recorded indices are offset by 1.
-//TODOValue *llvm_get_decl(tree Tr) {
-//TODO
-//TODO  unsigned Index = GET_DECL_LLVM_INDEX(Tr);
-//TODO  if (Index == 0) {
-//TODO    make_decl_llvm(Tr);
-//TODO    Index = GET_DECL_LLVM_INDEX(Tr);
-//TODO
-//TODO    // If there was an error, we may have disabled creating LLVM values.
-//TODO    if (Index == 0) return 0;
-//TODO  }
-//TODO  assert((Index - 1) < LLVMValues.size() && "Invalid LLVM value index");
-//TODO  assert(LLVMValues[Index - 1] && "Trying to use deleted LLVM value!");
-//TODO
-//TODO  return LLVMValues[Index - 1];
-//TODO}
-//TODO
+//===----------------------------------------------------------------------===//
+//                   Matching LLVM Values with GCC DECL trees
+//===----------------------------------------------------------------------===//
+
+/// set_decl_llvm - Remember the LLVM value for a GCC declaration.
+Value *set_decl_llvm (tree t, Value *V) {
+  assert(HAS_RTL_P(t) && "Expected a declaration with RTL!");
+  return (Value *)llvm_set_cached(t, V);
+}
+
+/// get_decl_llvm - Retrieve the LLVM value for a GCC declaration, or NULL.
+Value *get_decl_llvm(tree t) {
+  assert(HAS_RTL_P(t) && "Expected a declaration with RTL!");
+  return (Value *)llvm_get_cached(t);
+}
+
 //TODO/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
 //TODO/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
 //TODO/// At this point we know that New is not in any of these maps.
@@ -1428,6 +1365,10 @@ bool ValidateRegisterVariable(tree decl) {
 /// This function corresponds to make_decl_rtl in varasm.c, and is implicitly
 /// called by DECL_LLVM if a decl doesn't have an LLVM set.
 Value *make_decl_llvm(tree decl) {
+  // If we already made the LLVM, then return it.
+  if (Value *V = get_decl_llvm(decl))
+    return V;
+
 #ifdef ENABLE_CHECKING
   // Check that we are not being given an automatic variable.
   // A weak alias has TREE_PUBLIC set but not the other bits.
@@ -1442,14 +1383,8 @@ Value *make_decl_llvm(tree decl) {
 
   LLVMContext &Context = getGlobalContext();
   
-  // For a duplicate declaration, we can be called twice on the
-  // same DECL node.  Don't discard the LLVM already made.
-  if (Value *V = (Value *)llvm_get_cached(decl))
-    return V;
-
   if (errorcount || sorrycount)
     return NULL;  // Do not process broken code.
-  
   
   // Global register variable with asm name, e.g.:
   // register unsigned long esp __asm__("ebp");

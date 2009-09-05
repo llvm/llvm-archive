@@ -67,6 +67,8 @@ using namespace llvm;
 
 typedef IRBuilder<true, TargetFolder> LLVMBuilder;
 
+// Global state.
+
 /// TheModule - This is the current global module that we are compiling into.
 ///
 extern llvm::Module *TheModule;
@@ -93,6 +95,27 @@ extern Constant* ConvertMetadataStringToGV(const char* str);
 /// AddAnnotateAttrsToGlobal - Adds decls that have a
 /// annotate attribute to a vector to be emitted later.
 extern void AddAnnotateAttrsToGlobal(GlobalValue *GV, union tree_node* decl);
+
+// Mapping between GCC declarations and LLVM values.
+
+/// DECL_LLVM - Holds the LLVM expression for the value of a variable or
+/// function.  This value can be evaluated lazily for functions and variables
+/// with static storage duration.
+extern Value *make_decl_llvm(union tree_node *);
+#define DECL_LLVM(NODE) make_decl_llvm(NODE)
+
+/// SET_DECL_LLVM - Set the DECL_LLVM for NODE to LLVM. 
+extern Value *set_decl_llvm(union tree_node *, Value *);
+#define SET_DECL_LLVM(NODE, LLVM) set_decl_llvm(NODE, LLVM)
+
+/// DECL_LLVM_IF_SET - The DECL_LLVM for NODE, if it is set, or NULL, if it is
+/// not set.
+extern Value *get_decl_llvm(union tree_node *);
+#define DECL_LLVM_IF_SET(NODE) (HAS_RTL_P(NODE) ? get_decl_llvm(NODE) : NULL)
+
+/// DECL_LLVM_SET_P - Returns nonzero if the DECL_LLVM for NODE has already
+/// been set.
+#define DECL_LLVM_SET_P(NODE) (DECL_LLVM_IF_SET(NODE) != NULL)
 
 void changeLLVMConstant(Constant *Old, Constant *New);
 void readLLVMTypesStringTable();

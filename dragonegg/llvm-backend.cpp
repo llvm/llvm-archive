@@ -115,8 +115,9 @@ TypeConverter *TheTypeConverter = 0;
 raw_ostream *OutStream = 0; // Stream to write assembly code to.
 formatted_raw_ostream FormattedOutStream;
 
-static bool DisableLLVMOptimizations = false;//TODO
-static bool emit_llvm = false;
+static bool DisableLLVMOptimizations;
+static bool EnableGCCOptimizations;
+static bool EmitIR;
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
@@ -658,7 +659,7 @@ static void createPerFunctionOptimizationPasses() {
   // functions.
   // FIXME: This is disabled right now until bugs can be worked out.  Reenable
   // this for fast -O0 compiles!
-  if (!emit_llvm && 0) {
+  if (!EmitIR && 0) {
     FunctionPassManager *PM = PerFunctionPasses;    
     HasPerFunctionPasses = true;
 
@@ -721,13 +722,13 @@ static void createPerModuleOptimizationPasses() {
                                InliningPass);
   }
 
-  if (emit_llvm && 0) {
+  if (EmitIR && 0) {
     // Emit an LLVM .bc file to the output.  This is used when passed
     // -emit-llvm -c to the GCC driver.
     InitializeOutputStreams(true);
     PerModulePasses->add(createBitcodeWriterPass(*OutStream));
     HasPerModulePasses = true;
-  } else if (emit_llvm) {
+  } else if (EmitIR) {
     // Emit an LLVM .ll file to the output.  This is used when passed 
     // -emit-llvm -S to the GCC driver.
     InitializeOutputStreams(false);
@@ -792,7 +793,7 @@ static void createPerModuleOptimizationPasses() {
 //TODO
 //TODO  flag_llvm_pch_read = 0;
 //TODO
-//TODO  if (emit_llvm)
+//TODO  if (EmitIR)
 //TODO    // Disable emission of .ident into the output file... which is completely
 //TODO    // wrong for llvm/.bc emission cases.
 //TODO    flag_no_ident = 1;
@@ -1714,7 +1715,7 @@ static void llvm_start_unit(void *gcc_data, void *user_data) {
 
 #ifdef ENABLE_LTO
   // Output LLVM IR if the user requested generation of lto data.
-  emit_llvm = flag_generate_lto != 0;
+  EmitIR |= flag_generate_lto != 0;
   flag_generate_lto = 0;
 #endif
 }
@@ -1927,9 +1928,9 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
 //TODO    AsmIntermediateOutStream = new oFILEstream(asm_intermediate_out_file);
 //TODO    raw_ostream *AsmIntermediateRawOutStream = 
 //TODO      new raw_os_ostream(*AsmIntermediateOutStream);
-//TODO    if (emit_llvm && 0)
+//TODO    if (EmitIR && 0)
 //TODO      IntermediatePM->add(createBitcodeWriterPass(*AsmIntermediateOutStream));
-//TODO    if (emit_llvm)
+//TODO    if (EmitIR)
 //TODO      IntermediatePM->add(createPrintModulePass(AsmIntermediateRawOutStream));
 //TODO    IntermediatePM->run(*TheModule);
 //TODO    AsmIntermediateRawOutStream->flush();
@@ -2018,6 +2019,21 @@ static struct rtl_opt_pass pass_rtl_null =
 extern const struct ggc_cache_tab gt_ggc_rc__gt_llvm_cache_h[];
 
 
+/// PluginFlags - Flag arguments for the plugin.
+
+struct FlagDescriptor {
+  const char *Key; // The plugin argument is -fplugin-arg-llvm-KEY.
+  bool *Flag;      // Set to true if the flag is seen.
+};
+
+static FlagDescriptor PluginFlags[] = {
+    { "disable-llvm-optzns", &DisableLLVMOptimizations },
+    { "enable-gcc-optzns", &EnableGCCOptimizations },
+    { "emit-ir", &EmitIR },
+    { NULL, NULL } // Terminator.
+};
+
+
 /// llvm_plugin_info - Information about this plugin.  Users can access this
 /// using "gcc --help -v".
 static struct plugin_info llvm_plugin_info = {
@@ -2033,7 +2049,6 @@ static struct plugin_info llvm_plugin_info = {
 int plugin_init (struct plugin_name_args *plugin_info,
                  struct plugin_gcc_version *version) {
   const char *plugin_name = plugin_info->base_name;
-  bool disable_gcc_optimizations = true;
   struct plugin_pass pass_info;
 
   // Check that the running gcc is the same as the gcc we were built against.
@@ -2049,21 +2064,31 @@ int plugin_init (struct plugin_name_args *plugin_info,
 
   // Process any plugin arguments.
   {
-    int argc = plugin_info->argc;
     struct plugin_argument *argv = plugin_info->argv;
+    int argc = plugin_info->argc;
 
     for (int i = 0; i < argc; ++i) {
-      if (!strcmp (argv[i].key, "enable-gcc-optzns")) {
+      bool Found = false;
+
+      // Look for a matching flag.
+      for (FlagDescriptor *F = PluginFlags; F->Key; ++F) {
+        if (strcmp (argv[i].key, F->Key))
+          continue;
+
         if (argv[i].value)
           warning (0, G_("option '-fplugin-arg-%s-%s=%s' ignored"
                          " (superfluous '=%s')"),
                    plugin_name, argv[i].key, argv[i].value, argv[i].value);
         else
-          disable_gcc_optimizations = false;
-      } else {
+          *F->Flag = true;
+
+        Found = true;
+        break;
+      }
+
+      if (!Found)
         warning (0, G_("plugin %qs: unrecognized argument %qs ignored"),
                  plugin_name, argv[i].key);
-      }
     }
   }
 
@@ -2087,7 +2112,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
   register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
   // Turn off all gcc optimization passes.
-  if (disable_gcc_optimizations) {
+  if (!EnableGCCOptimizations) {
     // TODO: figure out a good way of turning off ipa optimization passes.
     // Could just set optimize to zero (after taking a copy), but this would
     // also impact front-end optimizations.

@@ -1,9 +1,3 @@
-2009-08-31  Caroline Tice  <ctice@apple.com>
-
-	Radar 6419781
-	* tree.c (type_is_block_byref_struct):  New function.
-	* tree.h (type_is_block_byref_struct):  New extern function decl.
-
 2009-07-31  Bob Wilson  <bob.wilson@apple.com>
 	
 	Radar 7105099

@@ -55,3 +55,12 @@ After outputting global variables, maybe they can be deleted or marked somehow
 (eg: TREE_ASM_WRITTEN) so that GCC does not output them (such output gets sent
 to /dev/null, but it would be more efficient to teach GCC to not produce any in
 the first place).  Investigate.
+
+Consider having DECL_LLVM and friends store values for trees local to a
+function in a separate map that can be cleared once the function has been
+emitted.  Determining which trees are local (LABEL_DECL, VAR_DECL but not
+static etc) should be pretty quick, so the cost of routing to the right map
+should be insignificant, while having a much smaller map for globals could
+be a win.
+
+Consider using separate caches for types and globals.

@@ -72,6 +72,7 @@ extern "C" {
 #include "tree-flow.h"
 #include "tree-pass.h"
 #include "rtl.h"
+#include "domwalk.h"
 
 extern int get_pointer_alignment (tree exp, unsigned int max_align);
 extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
@@ -91,17 +92,6 @@ static LLVMContext &Context = getGlobalContext();
   (DECL_INITIAL(exp) &&                                                \
    TREE_CODE(DECL_INITIAL(exp)) == CONSTRUCTOR &&                      \
    !TREE_TYPE(DECL_INITIAL(exp)))
-
-/// isGimpleTemporary - Return true if this is a gimple temporary that we can
-/// directly compile into an LLVM temporary.  This saves us from creating an
-/// alloca and creating loads/stores of that alloca (a compile-time win).  We
-/// can only do this if the value is a first class llvm value and if it's a
-/// "gimple_formal_tmp_reg".
-static bool isGimpleTemporary(tree decl) {
-  return false;
-//FIXME  return is_gimple_formal_tmp_reg(decl) &&
-//FIXME        !isAggregateTreeType(TREE_TYPE(decl));
-}
 
 /// getINTEGER_CSTVal - Return the specified INTEGER_CST value as a uint64_t.
 ///
@@ -735,79 +725,82 @@ Function *TreeToLLVM::FinishFunctionBody() {
 //TODO  // may be deleted when the optimizers run, so would be dangerous to keep.
 //TODO  eraseLocalLLVMValues();
 
-  // Simplify any values that were uniqued using a no-op bitcast.
-  for (std::vector<BitCastInst *>::iterator I = UniquedValues.begin(),
-       E = UniquedValues.end(); I != E; ++I) {
-    BitCastInst *BI = *I;
-    assert(BI->getSrcTy() == BI->getDestTy() && "Not a no-op bitcast!");
-    BI->replaceAllUsesWith(BI->getOperand(0));
-    // Safe to erase because after the call to eraseLocalLLVMValues.
-    BI->eraseFromParent();
-  }
-  UniquedValues.clear();
-
   return Fn;
 }
 
 extern "C" tree gimple_to_tree(gimple);
 extern "C" void release_stmt_tree (gimple, tree);
 
+void TreeToLLVM::EmitBasicBlock(basic_block bb) {
+  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
+       gsi_next (&gsi)) {
+    gimple gimple_stmt = gsi_stmt (gsi);
+
+    switch (gimple_code(gimple_stmt)) {
+    case GIMPLE_ASSIGN:
+    case GIMPLE_COND:
+    case GIMPLE_GOTO:
+    case GIMPLE_LABEL:
+    case GIMPLE_RETURN:
+    case GIMPLE_ASM:
+    case GIMPLE_CALL:
+    case GIMPLE_SWITCH:
+    case GIMPLE_NOP:
+    case GIMPLE_PREDICT:
+    case GIMPLE_RESX: {
+      // TODO Handle gimple directly, rather than converting to a tree.
+      tree stmt = gimple_to_tree(gimple_stmt);
+
+      // If this stmt returns an aggregate value (e.g. a call whose result is
+      // ignored), create a temporary to receive the value.  Note that we don't
+      // do this for MODIFY_EXPRs as an efficiency hack.
+      MemRef DestLoc;
+      if (isAggregateTreeType(TREE_TYPE(stmt)) &&
+          TREE_CODE(stmt)!= MODIFY_EXPR && TREE_CODE(stmt)!=INIT_EXPR)
+        DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
+
+      Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);
+
+      release_stmt_tree(gimple_stmt, stmt);
+      break;
+    }
+
+    default:
+      print_gimple_stmt(stderr, gimple_stmt, 0, TDF_RAW);
+      llvm_unreachable("Unhandled GIMPLE statement during LLVM emission!");
+    }
+  }
+
+  edge e;
+  edge_iterator ei;
+  FOR_EACH_EDGE (e, ei, bb->succs)
+    if (e->flags & EDGE_FALLTHRU)
+      break;
+  if (e && e->dest != bb->next_bb) {
+    Builder.CreateBr(getLabelDeclBlock(gimple_block_label (e->dest)));
+    EmitBlock(BasicBlock::Create(Context, ""));
+  }
+}
+
+static void emit_basic_block(struct dom_walk_data *walk_data, basic_block bb) {
+  ((TreeToLLVM *)walk_data->global_data)->EmitBasicBlock(bb);
+}
+
 Function *TreeToLLVM::EmitFunction() {
   // Set up parameters and prepare for return, for the function.
   StartFunctionBody();
 
-  // Emit the body of the function iterating over all BBs
-  basic_block bb;
-  edge e;
-  edge_iterator ei;
-  FOR_EACH_BB (bb) {
-    for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
-         gsi_next (&gsi)) {
-      gimple gimple_stmt = gsi_stmt (gsi);
-
-      switch (gimple_code(gimple_stmt)) {
-      case GIMPLE_ASSIGN:
-      case GIMPLE_COND:
-      case GIMPLE_GOTO:
-      case GIMPLE_LABEL:
-      case GIMPLE_RETURN:
-      case GIMPLE_ASM:
-      case GIMPLE_CALL:
-      case GIMPLE_SWITCH:
-      case GIMPLE_NOP:
-      case GIMPLE_PREDICT:
-      case GIMPLE_RESX: {
-        // TODO Handle gimple directly, rather than converting to a tree.
-        tree stmt = gimple_to_tree(gimple_stmt);
-
-        // If this stmt returns an aggregate value (e.g. a call whose result is
-        // ignored), create a temporary to receive the value.  Note that we don't
-        // do this for MODIFY_EXPRs as an efficiency hack.
-        MemRef DestLoc;
-        if (isAggregateTreeType(TREE_TYPE(stmt)) &&
-            TREE_CODE(stmt)!= MODIFY_EXPR && TREE_CODE(stmt)!=INIT_EXPR)
-          DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
-
-        Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);
-
-        release_stmt_tree(gimple_stmt, stmt);
-        break;
-      }
-
-      default:
-        print_gimple_stmt(stderr, gimple_stmt, 0, TDF_RAW);
-        llvm_report_error("Unhandled GIMPLE statement during LLVM emission!");
-      }
-    }
-
-    FOR_EACH_EDGE (e, ei, bb->succs)
-      if (e->flags & EDGE_FALLTHRU)
-        break;
-    if (e && e->dest != bb->next_bb) {
-      Builder.CreateBr(getLabelDeclBlock(gimple_block_label (e->dest)));
-      EmitBlock(BasicBlock::Create(Context, ""));
-    }
-  }
+  // Emit the body of the function by iterating over all BBs.  To ensure that
+  // definitions of ssa names are seen before any uses, the iteration is done
+  // in dominator order.
+  struct dom_walk_data walk_data;
+  memset(&walk_data, 0, sizeof(struct dom_walk_data));
+  walk_data.dom_direction = CDI_DOMINATORS;
+  walk_data.before_dom_children = emit_basic_block;
+  walk_data.global_data = this;
+  init_walk_dominator_tree(&walk_data);
+  walk_dominator_tree(&walk_data, ENTRY_BLOCK_PTR);
+  fini_walk_dominator_tree(&walk_data);
 
   // Wrap things up.
   return FinishFunctionBody();
@@ -832,12 +825,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   switch (TREE_CODE(exp)) {
   default:
-    DEBUG({
-        llvm::errs() << "Unhandled expression!\n"
-                     << "TREE_CODE: " << TREE_CODE(exp) << "\n";
-        debug_tree(exp);
-      });
-    abort();
+    debug_tree(exp);
+    llvm_unreachable("Unhandled expression!");
 
   // Control flow
   case LABEL_EXPR:     Result = EmitLABEL_EXPR(exp); break;
@@ -852,6 +841,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case RESX_EXPR:      Result = EmitRESX_EXPR(exp); break;
 
   // Expressions
+  case SSA_NAME:
+    Result = EmitSSA_NAME(exp); break;
   case VAR_DECL:
   case PARM_DECL:
   case RESULT_DECL:
@@ -1030,11 +1021,8 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 
   switch (TREE_CODE(exp)) {
   default:
-    DEBUG({
-        errs() << "Unhandled lvalue expression!\n";
-        debug_tree(exp);
-      });
-    abort();
+    debug_tree(exp);
+    llvm_unreachable("Unhandled lvalue expression!");
 
   case PARM_DECL:
   case VAR_DECL:
@@ -1115,9 +1103,8 @@ LValue TreeToLLVM::EmitLV(tree exp) {
 //===----------------------------------------------------------------------===//
 
 void TreeToLLVM::TODO(tree exp) {
-  DEBUG(errs() << "Unhandled tree node\n");
   if (exp) debug_tree(exp);
-  abort();
+  llvm_unreachable("Unhandled tree node");
 }
 
 /// CastToType - Cast the specified value to the specified type if it is
@@ -1580,11 +1567,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   // PARM_DECLs are handled in `llvm_expand_function_start'.
   if ((TREE_CODE(decl) != VAR_DECL && TREE_CODE(decl) != RESULT_DECL) ||
       TREE_STATIC(decl) || DECL_EXTERNAL(decl) || type == error_mark_node)
-    return;
-
-  // Gimple temporaries are handled specially: their DECL_LLVM is set when the
-  // definition is encountered.
-  if (isGimpleTemporary(decl))
     return;
 
   // If this is just the rotten husk of a variable that the gimplifier
@@ -2248,30 +2230,22 @@ static bool canEmitRegisterVariable(tree exp) {
   return false;
 }
 
+/// EmitSSA_NAME - Return the defining value of the given SSA_NAME.
+Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
+  if (SSA_NAME_IS_DEFAULT_DEF(exp))
+    return Emit(SSA_NAME_VAR(exp), 0);
+  return SSANames[exp];
+}
 
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
 /// requires an r-value, this method emits the lvalue computation, then loads
 /// the result.
 Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
-  // If this is a gimple temporary, don't emit a load, just use the result.
-  if (isGimpleTemporary(exp)) {
-    if (DECL_LLVM_SET_P(exp))
-      return DECL_LLVM(exp);
-    // Since basic blocks are output in no particular order, it is perfectly
-    // possible to encounter a use of a gimple temporary before encountering
-    // its definition, which is what has happened here.  This happens rarely
-    // in practice, so there's no point in trying to do anything clever: just
-    // demote to an ordinary variable and create an alloca to hold its value.
-abort(); //FIXME
-//FIXME    DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
-    EmitAutomaticVariableDecl(exp);
-    // Fall through.
-  } else if (canEmitRegisterVariable(exp)) {
+  if (canEmitRegisterVariable(exp))
     // If this is a register variable, EmitLV can't handle it (there is no
     // l-value of a register variable).  Emit an inline asm node that copies the
     // value out of the specified register.
     return EmitReadOfRegisterVariable(exp, DestLoc);
-  }
 
   LValue LV = EmitLV(exp);
   bool isVolatile = TREE_THIS_VOLATILE(exp);
@@ -2868,70 +2842,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   return 0;
 }
 
-/// HandleMultiplyDefinedGimpleTemporary - Gimple temporaries *mostly* have a
-/// single definition, in which case all uses are dominated by the definition.
-/// This routine exists to handle the rare case of a gimple temporary with
-/// multiple definitions.  It turns the temporary into an ordinary automatic
-/// variable by creating an alloca for it, initializing the alloca with the
-/// first definition that was seen, and fixing up any existing uses to load
-/// the alloca instead.
-///
-void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
-  Value *UniqVal = DECL_LLVM(Var);
-  assert(isa<CastInst>(UniqVal) && "Invalid value for gimple temporary!");
-  Value *FirstVal = cast<CastInst>(UniqVal)->getOperand(0);
-
-  // Create a new temporary and set the VAR_DECL to use it as the llvm location.
-  Value *NewTmp = CreateTemporary(FirstVal->getType());
-  SET_DECL_LLVM(Var, NewTmp);
-
-  // Store the already existing initial value into the alloca.  If the value
-  // being stored is an instruction, emit the store right after the instruction,
-  // otherwise, emit it into the entry block.
-  StoreInst *SI = new StoreInst(FirstVal, NewTmp);
-
-  BasicBlock::iterator InsertPt;
-  if (Instruction *I = dyn_cast<Instruction>(FirstVal)) {
-    InsertPt = I;                      // Insert after the init instruction.
-
-    // If the instruction is an alloca in the entry block, the insert point
-    // will be before the alloca.  Advance to the AllocaInsertionPoint if we are
-    // before it.
-    if (I->getParent() == &Fn->front()) {
-      for (BasicBlock::iterator CI = InsertPt, E = Fn->begin()->end();
-           CI != E; ++CI) {
-        if (&*CI == AllocaInsertionPoint) {
-          InsertPt = AllocaInsertionPoint;
-          ++InsertPt;
-          break;
-        }
-      }
-    }
-
-    // If the instruction is an invoke, the init is inserted on the normal edge.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
-      InsertPt = II->getNormalDest()->begin();
-      while (isa<PHINode>(InsertPt))
-        ++InsertPt;
-    } else
-      ++InsertPt; // Insert after the init instruction.
-  } else {
-    InsertPt = AllocaInsertionPoint;   // Insert after the allocas.
-    ++InsertPt;
-  }
-  BasicBlock *BB = InsertPt->getParent();
-  BB->getInstList().insert(InsertPt, SI);
-
-  // Replace any uses of the original value with a load of the alloca.
-  for (Value::use_iterator U = UniqVal->use_begin(), E = UniqVal->use_end();
-       U != E; ++U)
-    U.getUse().set(new LoadInst(NewTmp, "mtmp", cast<Instruction>(*U)));
-
-  // Finally, This is no longer a GCC temporary.
-abort(); //FIXME
-//FIXME  DECL_GIMPLE_FORMAL_TEMP_P(Var) = 0;
-}
-
 /// EmitMODIFY_EXPR - Note that MODIFY_EXPRs are rvalues only!
 /// We also handle INIT_EXPRs here; these are built by the C++ FE on rare
 /// occasions, and have slightly different semantics that don't affect us here.
@@ -2940,29 +2850,15 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   tree lhs = TREE_OPERAND (exp, 0);
   tree rhs = TREE_OPERAND (exp, 1);
 
-  // If this is the definition of a gimple temporary, set its DECL_LLVM to the
-  // RHS.
   bool LHSSigned = !TYPE_UNSIGNED(TREE_TYPE(lhs));
   bool RHSSigned = !TYPE_UNSIGNED(TREE_TYPE(rhs));
-  if (isGimpleTemporary(lhs)) {
-    // If DECL_LLVM is already set, this is a multiply defined gimple temporary.
-    if (DECL_LLVM_SET_P(lhs)) {
-      HandleMultiplyDefinedGimpleTemporary(lhs);
-      return EmitMODIFY_EXPR(exp, DestLoc);
-    }
+
+  // If this is the definition of an ssa name, record it in the SSANames map.
+  if (TREE_CODE(lhs) == SSA_NAME) {
+    assert(SSANames.find(lhs) == SSANames.end() && "Multiply defined ssa name!");
     Value *RHS = Emit(rhs, 0);
-    const Type *LHSTy = ConvertType(TREE_TYPE(lhs));
-    // The value may need to be replaced later if this temporary is multiply
-    // defined - ensure it can be uniquely identified by not folding the cast.
-    Instruction::CastOps opc = CastInst::getCastOpcode(RHS, RHSSigned,
-                                                       LHSTy, LHSSigned);
-    CastInst *Cast = CastInst::Create(opc, RHS, LHSTy, RHS->getName());
-    if (opc == Instruction::BitCast && RHS->getType() == LHSTy)
-      // Simplify this no-op bitcast once the function is emitted.
-      UniquedValues.push_back(cast<BitCastInst>(Cast));
-    Builder.Insert(Cast);
-    SET_DECL_LLVM(lhs, Cast);
-    return Cast;
+    SSANames[lhs] = RHS;
+    return RHS;
   } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node
@@ -6800,9 +6696,6 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
 #endif
     }
   }
-
-  assert(!isGimpleTemporary(exp) &&
-         "Cannot use a gimple temporary as an l-value");
 
   Value *Decl = DECL_LLVM(exp);
   if (Decl == 0) {

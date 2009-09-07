@@ -30,6 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 // LLVM headers
 #include "llvm/CallingConv.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SetVector.h"
@@ -322,10 +323,9 @@ class TreeToLLVM {
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
-  
-  /// UniquedValues - Values defined using a no-op bitcast in order to make them
-  /// unique.  These can be simplified once the function has been emitted.
-  std::vector<BitCastInst *> UniquedValues;
+
+  // SSANames - Map from GCC ssa names to the defining LLVM value.
+  DenseMap<tree, Value*> SSANames;
 
   //===---------------------- Exception Handling --------------------------===//
 
@@ -377,7 +377,10 @@ public:
   
   /// EmitFunction - Convert 'fndecl' to LLVM code.
   Function *EmitFunction();
-  
+
+  /// EmitBasicBlock - Convert the given basic block.
+  void EmitBasicBlock(basic_block bb);
+
   /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
   /// the address of the result.
   LValue EmitLV(tree_node *exp);
@@ -511,6 +514,7 @@ private:
   Value *EmitSWITCH_EXPR(tree_node *exp);
 
   // Expressions.
+  Value *EmitSSA_NAME(tree_node *exp);
   Value *EmitLoadOfLValue(tree_node *exp, const MemRef *DestLoc);
   Value *EmitOBJ_TYPE_REF(tree_node *exp, const MemRef *DestLoc);
   Value *EmitADDR_EXPR(tree_node *exp);

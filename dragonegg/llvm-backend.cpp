@@ -1784,9 +1784,15 @@ static unsigned int emit_function (void) {
   // know we want to output it.
   DECL_DEFER_OUTPUT(current_function_decl) = 0;
 
+  // Provide the function convertor with dominators.
+  calculate_dominance_info(CDI_DOMINATORS);
+
   // Convert the AST to raw/ugly LLVM code.
   TreeToLLVM Emitter(current_function_decl);
   Function *Fn = Emitter.EmitFunction();
+
+  // Free dominator and other ssa data structures.
+  execute_free_datastructures();
 
 //TODO  performLateBackendInitialization();
   createPerFunctionOptimizationPasses();
@@ -1799,8 +1805,6 @@ static unsigned int emit_function (void) {
 
   // Finally, we have written out this function!
   TREE_ASM_WRITTEN(current_function_decl) = 1;
-
-  execute_free_datastructures();
 
   // When debugging, append the LLVM IR to the dump file.
   if (dump_file) {

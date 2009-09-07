@@ -324,6 +324,10 @@ class TreeToLLVM {
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
 
+  // SSAInsertionPoint - Place to insert reads corresponding to SSA default
+  // definitions.
+  Instruction *SSAInsertionPoint;
+
   // SSANames - Map from GCC ssa names to the defining LLVM value.
   DenseMap<tree, Value*> SSANames;
 

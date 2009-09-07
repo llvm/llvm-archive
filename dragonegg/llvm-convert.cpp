@@ -618,6 +618,13 @@ void TreeToLLVM::StartFunctionBody() {
     Args = Args == static_chain ? DECL_ARGUMENTS(FnDecl) : TREE_CHAIN(Args);
   }
 
+  // Loading the value of a PARM_DECL at this point yields its initial value.
+  // Remember this for use when materializing the reads implied by SSA default
+  // definitions.
+  SSAInsertionPoint = Builder.Insert(CastInst::Create(Instruction::BitCast,
+                              Constant::getNullValue(Type::getInt32Ty(Context)),
+                              Type::getInt32Ty(Context)), "ssa point");
+
   // If this is not a void-returning function, initialize the RESULT_DECL.
   if (DECL_RESULT(FnDecl) && !VOID_TYPE_P(TREE_TYPE(DECL_RESULT(FnDecl))) &&
       !DECL_LLVM_SET_P(DECL_RESULT(FnDecl)))
@@ -2232,9 +2239,42 @@ static bool canEmitRegisterVariable(tree exp) {
 
 /// EmitSSA_NAME - Return the defining value of the given SSA_NAME.
 Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
-  if (SSA_NAME_IS_DEFAULT_DEF(exp))
-    return Emit(SSA_NAME_VAR(exp), 0);
-  return SSANames[exp];
+  DenseMap<tree, Value*>::iterator I = SSANames.find(exp);
+  if (I != SSANames.end())
+    return I->second;
+
+  // This SSA name is the default definition for the underlying symbol.
+  assert(SSA_NAME_IS_DEFAULT_DEF(exp) && "SSA name used before being defined!");
+
+  // The underlying symbol is an SSA variable.
+  tree var = SSA_NAME_VAR(exp);
+  assert(SSA_VAR_P(var) && "Not an SSA variable!");
+
+  // If the variable is itself an ssa name, use its LLVM value.
+  if (TREE_CODE (var) == SSA_NAME)
+    return SSANames[exp] = EmitSSA_NAME(var);
+
+  // Otherwise the symbol is a VAR_DECL, PARM_DECL or RESULT_DECL.  Since a
+  // default definition is only created if the very first reference to the
+  // variable in the function is a read operation, and refers to the value
+  // read, it has an undefined value except for PARM_DECLs.
+  if (TREE_CODE(var) != PARM_DECL)
+    return UndefValue::get(ConvertType(TREE_TYPE(exp)));
+
+  // Read the initial value of the parameter and associate it with the ssa name.
+  assert(DECL_LLVM_IF_SET(var) && "Parameter not laid out?");
+
+  unsigned Alignment = DECL_ALIGN(var);
+  assert(Alignment != 0 && "Parameter with unknown alignment!");
+
+  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  Value *Ptr = BitCastToType(DECL_LLVM_IF_SET(var), PointerType::getUnqual(Ty));
+
+  // Perform the load in the entry block, after all parameters have been set up
+  // with their initial values, and before any modifications to their values.
+  LoadInst *LI = new LoadInst(Ptr, "defaultdef", SSAInsertionPoint);
+  LI->setAlignment(Alignment);
+  return SSANames[exp] = LI;
 }
 
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
@@ -2855,10 +2895,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
 
   // If this is the definition of an ssa name, record it in the SSANames map.
   if (TREE_CODE(lhs) == SSA_NAME) {
-    assert(SSANames.find(lhs) == SSANames.end() && "Multiply defined ssa name!");
-    Value *RHS = Emit(rhs, 0);
-    SSANames[lhs] = RHS;
-    return RHS;
+    assert(SSANames.find(lhs) == SSANames.end() && "Multiply defined SSA name!");
+    return SSANames[lhs] = Emit(rhs, 0);
   } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node

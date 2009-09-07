@@ -2267,12 +2267,15 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
   unsigned Alignment = DECL_ALIGN(var);
   assert(Alignment != 0 && "Parameter with unknown alignment!");
 
+  const char *ParameterName =
+    DECL_NAME(var) ? IDENTIFIER_POINTER(DECL_NAME(var)) : "anon";
+
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   Value *Ptr = BitCastToType(DECL_LLVM_IF_SET(var), PointerType::getUnqual(Ty));
 
   // Perform the load in the entry block, after all parameters have been set up
   // with their initial values, and before any modifications to their values.
-  LoadInst *LI = new LoadInst(Ptr, "defaultdef", SSAInsertionPoint);
+  LoadInst *LI = new LoadInst(Ptr, ParameterName, SSAInsertionPoint);
   LI->setAlignment(Alignment);
   return SSANames[exp] = LI;
 }

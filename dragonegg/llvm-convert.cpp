@@ -8114,5 +8114,4 @@ void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
 
   // Branch based on the condition.
   Builder.CreateCondBr(Cond, IfTrue, IfFalse);
-  EmitBlock(BasicBlock::Create(Context));
 }

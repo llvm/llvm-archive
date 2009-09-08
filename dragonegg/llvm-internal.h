@@ -562,10 +562,7 @@ private:
   Value *EmitBIT_NOT_EXPR(tree_node *exp);
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
   Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCompare(tree_node *lhs, tree_node *rhs,
-                     unsigned UIPred, unsigned SIPred, unsigned FPPred);
-  Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
-                     unsigned FPPred, const Type *DestTy = 0);
+  Value *EmitCompare(tree_node *lhs, tree_node *rhs, tree_code code);
   Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
   Value *EmitPtrBinOp(tree_node *exp, unsigned Opc);
   Value *EmitTruthOp(tree_node *exp, unsigned Opc);

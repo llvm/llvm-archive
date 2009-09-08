@@ -959,41 +959,24 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   // Binary Operators
   case LT_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_ULT, ICmpInst::ICMP_SLT,
-                         FCmpInst::FCMP_OLT);
-    break;
   case LE_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_ULE, ICmpInst::ICMP_SLE,
-                         FCmpInst::FCMP_OLE);
-    break;
   case GT_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_UGT, ICmpInst::ICMP_SGT,
-                         FCmpInst::FCMP_OGT);
-    break;
   case GE_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE,
-                         FCmpInst::FCMP_OGE);
-    break;
   case EQ_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_EQ, ICmpInst::ICMP_EQ,
-                         FCmpInst::FCMP_OEQ);
-    break;
   case NE_EXPR:
-    Result = EmitCompare(exp, ICmpInst::ICMP_NE, ICmpInst::ICMP_NE,
-                         FCmpInst::FCMP_UNE);
-    break;
   case UNORDERED_EXPR:
-    Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UNO);
-    break;
   case ORDERED_EXPR:
-    Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ORD);
+  case UNLT_EXPR:
+  case UNLE_EXPR:
+  case UNGT_EXPR:
+  case UNGE_EXPR:
+  case UNEQ_EXPR:
+  case LTGT_EXPR:
+    Result = EmitCompare(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                         TREE_CODE(exp));
+    // The GCC result may be of any integer type.
+    Result = Builder.CreateZExt(Result, ConvertType(TREE_TYPE(exp)));
     break;
-  case UNLT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ULT); break;
-  case UNLE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ULE); break;
-  case UNGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGT); break;
-  case UNGE_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UGE); break;
-  case UNEQ_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_UEQ); break;
-  case LTGT_EXPR: Result = EmitCompare(exp, 0, 0, FCmpInst::FCMP_ONE); break;
   case PLUS_EXPR:
     Result = EmitBinOp(exp, DestLoc,
                        FLOAT_TYPE_P(TREE_TYPE(exp)) ?
@@ -3287,17 +3270,63 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
 
 /// EmitCompare - Compare LHS with RHS using the appropriate comparison code.
 /// The result is an i1 boolean.
-Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs,
-                               unsigned UIOpc, unsigned SIOpc, unsigned FPPred) {
-  tree lhs_ty = TREE_TYPE(lhs);
-  tree rhs_ty = TREE_TYPE(rhs);
+Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
+  const Type *LHSTy = ConvertType(TREE_TYPE(lhs));
+  const Type *RHSTy = ConvertType(TREE_TYPE(rhs));
 
-  if (TREE_CODE(lhs_ty) == COMPLEX_TYPE) {
-    // TODO: Reduce duplication with EmitComplexBinOp.
-    const Type *ComplexTy = ConvertType(lhs_ty);
+  assert((LHSTy == RHSTy ||
+          (isa<PointerType>(LHSTy) && isa<PointerType>(RHSTy))) && 
+         "Unexpected types for comparison");
 
-    MemRef LHSTmp = CreateTempLoc(ComplexTy);
-    MemRef RHSTmp = CreateTempLoc(ComplexTy);
+  // Compute the LLVM opcodes corresponding to the GCC comparison.
+  CmpInst::Predicate UIPred = CmpInst::BAD_ICMP_PREDICATE;
+  CmpInst::Predicate SIPred = CmpInst::BAD_ICMP_PREDICATE;
+  CmpInst::Predicate FPPred = CmpInst::BAD_FCMP_PREDICATE;
+
+  switch (code) {
+  default:
+    assert(false && "Unhandled condition code!");
+  case LT_EXPR:
+    UIPred = CmpInst::ICMP_ULT;
+    SIPred = CmpInst::ICMP_SLT;
+    FPPred = CmpInst::FCMP_OLT;
+    break;
+  case LE_EXPR:
+    UIPred = CmpInst::ICMP_ULE;
+    SIPred = CmpInst::ICMP_SLE;
+    FPPred = CmpInst::FCMP_OLE;
+    break;
+  case GT_EXPR:
+    UIPred = CmpInst::ICMP_UGT;
+    SIPred = CmpInst::ICMP_SGT;
+    FPPred = CmpInst::FCMP_OGT;
+    break;
+  case GE_EXPR:
+    UIPred = CmpInst::ICMP_UGE;
+    SIPred = CmpInst::ICMP_SGE;
+    FPPred = CmpInst::FCMP_OGE;
+    break;
+  case EQ_EXPR:
+    UIPred = SIPred = CmpInst::ICMP_EQ;
+    FPPred = CmpInst::FCMP_OEQ;
+    break;
+  case NE_EXPR:
+    UIPred = SIPred = CmpInst::ICMP_NE;
+    FPPred = CmpInst::FCMP_UNE;
+    break;
+  case UNORDERED_EXPR: FPPred = CmpInst::FCMP_UNO; break;
+  case ORDERED_EXPR:   FPPred = CmpInst::FCMP_ORD; break;
+  case UNLT_EXPR:      FPPred = CmpInst::FCMP_ULT; break;
+  case UNLE_EXPR:      FPPred = CmpInst::FCMP_ULE; break;
+  case UNGT_EXPR:      FPPred = CmpInst::FCMP_UGT; break;
+  case UNGE_EXPR:      FPPred = CmpInst::FCMP_UGE; break;
+  case UNEQ_EXPR:      FPPred = CmpInst::FCMP_UEQ; break;
+  case LTGT_EXPR:      FPPred = CmpInst::FCMP_ONE; break;
+  }
+
+  if (TREE_CODE(TREE_TYPE(lhs)) == COMPLEX_TYPE) {
+    MemRef LHSTmp = CreateTempLoc(LHSTy);
+    MemRef RHSTmp = CreateTempLoc(RHSTy);
     Emit(lhs, &LHSTmp);
     Emit(rhs, &RHSTmp);
 
@@ -3308,62 +3337,34 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs,
 
     Value *DSTr, *DSTi;
     if (LHSr->getType()->isFloatingPoint()) {
-      DSTr = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHSr, RHSr);
-      DSTi = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHSi, RHSi);
-      if (FPPred == FCmpInst::FCMP_OEQ)
+      DSTr = Builder.CreateFCmp(FPPred, LHSr, RHSr);
+      DSTi = Builder.CreateFCmp(FPPred, LHSi, RHSi);
+      if (FPPred == CmpInst::FCMP_OEQ)
         return Builder.CreateAnd(DSTr, DSTi);
-      assert(FPPred == FCmpInst::FCMP_UNE && "Unhandled complex comparison!");
+      assert(FPPred == CmpInst::FCMP_UNE && "Unhandled complex comparison!");
       return Builder.CreateOr(DSTr, DSTi);
     }
 
-    assert(SIOpc == UIOpc && "(In)equality comparison depends on sign!");
-    DSTr = Builder.CreateICmp(ICmpInst::Predicate(UIOpc), LHSr, RHSr);
-    DSTi = Builder.CreateICmp(ICmpInst::Predicate(UIOpc), LHSi, RHSi);
-    if (UIOpc == ICmpInst::ICMP_EQ)
+    assert(SIPred == UIPred && "(In)equality comparison depends on sign!");
+    DSTr = Builder.CreateICmp(UIPred, LHSr, RHSr);
+    DSTi = Builder.CreateICmp(UIPred, LHSi, RHSi);
+    if (UIPred == CmpInst::ICMP_EQ)
       return Builder.CreateAnd(DSTr, DSTi);
-    assert(UIOpc == ICmpInst::ICMP_NE && "Unhandled complex comparison!");
+    assert(UIPred == CmpInst::ICMP_NE && "Unhandled complex comparison!");
     return Builder.CreateOr(DSTr, DSTi);
   }
 
   // Get the compare operands in the right type. Comparison of struct is not
   // allowed, so this is safe as we already handled complex (struct) type.
   Value *LHS = Emit(lhs, 0);
-  Value *RHS = Emit(rhs, 0);
-  bool LHSIsSigned = !TYPE_UNSIGNED(lhs_ty);
-  bool RHSIsSigned = !TYPE_UNSIGNED(rhs_ty);
+  Value *RHS = Builder.CreateBitCast(Emit(rhs, 0), LHSTy);
 
-  // If one of the type conversions is useless, perform the other conversion.
-  if (useless_type_conversion_p(lhs_ty, rhs_ty))
-    RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
-  else
-    LHS = CastToAnyType(LHS, LHSIsSigned, RHS->getType(), RHSIsSigned);
-
-  if (FLOAT_TYPE_P(lhs_ty))
-    return Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
+  if (LHSTy->isFloatingPoint())
+    return Builder.CreateFCmp(FPPred, LHS, RHS);
 
   // Determine which predicate to use based on signedness.
-  ICmpInst::Predicate pred = ICmpInst::Predicate(LHSIsSigned ? SIOpc : UIOpc);
+  CmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(lhs)) ? UIPred : SIPred;
   return Builder.CreateICmp(pred, LHS, RHS);
-}
-
-/// EmitCompare - 'exp' is a comparison of two values.  Opc is the base LLVM
-/// comparison to use.  isUnord is true if this is a floating point comparison
-/// that should also be true if either operand is a NaN.  Note that Opc can be
-/// set to zero for special cases.
-///
-/// If DestTy is specified, make sure to return the result with the specified
-/// integer type.  Otherwise, return the expression as whatever TREE_TYPE(exp)
-/// corresponds to.
-Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
-                               unsigned FPPred, const Type *DestTy) {
-  Value *Result = EmitCompare(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
-                              UIOpc, SIOpc, FPPred);
-
-  if (DestTy == 0)
-    DestTy = ConvertType(TREE_TYPE(exp));
-
-  // The GCC type is probably an int, not a bool.  ZExt to the right size.
-  return Builder.CreateZExt(Result, DestTy);
 }
 
 /// EmitBinOp - 'exp' is a binary operator.
@@ -6315,24 +6316,6 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     DSTi = Builder.CreateFDiv(Tmp9, Tmp6);
     break;
   }
-  case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)
-    if (LHSr->getType()->isFloatingPoint()) {
-      DSTr = Builder.CreateFCmpOEQ(LHSr, RHSr, "tmpr");
-      DSTi = Builder.CreateFCmpOEQ(LHSi, RHSi, "tmpi");
-    } else {
-      DSTr = Builder.CreateICmpEQ(LHSr, RHSr, "tmpr");
-      DSTi = Builder.CreateICmpEQ(LHSi, RHSi, "tmpi");
-    }
-    return Builder.CreateAnd(DSTr, DSTi);
-  case NE_EXPR:   // (a+ib) != (c+id) = (a != c) | (b != d)
-    if (LHSr->getType()->isFloatingPoint()) {
-      DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
-      DSTi = Builder.CreateFCmpUNE(LHSi, RHSi, "tmpi");
-    } else {
-      DSTr = Builder.CreateICmpNE(LHSr, RHSr, "tmpr");
-      DSTi = Builder.CreateICmpNE(LHSi, RHSi, "tmpi");
-    }
-    return Builder.CreateOr(DSTr, DSTi);
   }
 
   EmitStoreToComplex(*DestLoc, DSTr, DSTi);
@@ -8086,54 +8069,9 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 //===----------------------------------------------------------------------===//
 
 void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
-  // Compute the LLVM opcodes corresponding to the GCC comparison.
-  unsigned UIPred = 0, SIPred = 0, FPPred = 0;
-  switch (gimple_cond_code(stmt)) {
-  case LT_EXPR:
-    UIPred = ICmpInst::ICMP_ULT;
-    SIPred = ICmpInst::ICMP_SLT;
-    FPPred = FCmpInst::FCMP_OLT;
-    break;
-  case LE_EXPR:
-    UIPred = ICmpInst::ICMP_ULE;
-    SIPred = ICmpInst::ICMP_SLE;
-    FPPred = FCmpInst::FCMP_OLE;
-    break;
-  case GT_EXPR:
-    UIPred = ICmpInst::ICMP_UGT;
-    SIPred = ICmpInst::ICMP_SGT;
-    FPPred = FCmpInst::FCMP_OGT;
-    break;
-  case GE_EXPR:
-    UIPred = ICmpInst::ICMP_UGE;
-    SIPred = ICmpInst::ICMP_SGE;
-    FPPred = FCmpInst::FCMP_OGE;
-    break;
-  case EQ_EXPR:
-    UIPred = SIPred = ICmpInst::ICMP_EQ;
-    FPPred = FCmpInst::FCMP_OEQ;
-    break;
-  case NE_EXPR:
-    UIPred = SIPred = ICmpInst::ICMP_NE;
-    FPPred = FCmpInst::FCMP_UNE;
-    break;
-  case UNORDERED_EXPR: FPPred = FCmpInst::FCMP_UNO; break;
-  case ORDERED_EXPR:   FPPred = FCmpInst::FCMP_ORD; break;
-  case UNLT_EXPR:      FPPred = FCmpInst::FCMP_ULT; break;
-  case UNLE_EXPR:      FPPred = FCmpInst::FCMP_ULE; break;
-  case UNGT_EXPR:      FPPred = FCmpInst::FCMP_UGT; break;
-  case UNGE_EXPR:      FPPred = FCmpInst::FCMP_UGE; break;
-  case UNEQ_EXPR:      FPPred = FCmpInst::FCMP_UEQ; break;
-  case LTGT_EXPR:      FPPred = FCmpInst::FCMP_ONE; break;
-
-  default:
-    dump(stmt);
-    llvm_unreachable("Unhandled condition code!");
-  }
-
   // Emit the comparison.
   Value *Cond = EmitCompare(gimple_cond_lhs(stmt), gimple_cond_rhs(stmt),
-                            UIPred, SIPred, FPPred);
+                            gimple_cond_code(stmt));
 
   // Extract the target basic blocks.
   edge true_edge, false_edge;

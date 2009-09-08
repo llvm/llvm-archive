@@ -3228,10 +3228,6 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs,
   tree lhs_ty = TREE_TYPE(lhs);
   tree rhs_ty = TREE_TYPE(rhs);
 
-  if (FLOAT_TYPE_P(lhs_ty))
-    return Builder.CreateFCmp(FCmpInst::Predicate(FPPred),
-                              Emit(lhs, 0), Emit(rhs, 0));
-
   if (TREE_CODE(lhs_ty) == COMPLEX_TYPE) {
     // TODO: Reduce duplication with EmitComplexBinOp.
     const Type *ComplexTy = ConvertType(lhs_ty);
@@ -3265,15 +3261,21 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs,
     return Builder.CreateOr(DSTr, DSTi);
   }
 
-  // Handle the integer/pointer cases.
-
-  // Get the compare operands, in the right type. Comparison of struct is not
+  // Get the compare operands in the right type. Comparison of struct is not
   // allowed, so this is safe as we already handled complex (struct) type.
   Value *LHS = Emit(lhs, 0);
   Value *RHS = Emit(rhs, 0);
   bool LHSIsSigned = !TYPE_UNSIGNED(lhs_ty);
   bool RHSIsSigned = !TYPE_UNSIGNED(rhs_ty);
-  RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
+
+  // If one of the type conversions is useless, perform the other conversion.
+  if (useless_type_conversion_p(lhs_ty, rhs_ty))
+    RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
+  else
+    LHS = CastToAnyType(LHS, LHSIsSigned, RHS->getType(), RHSIsSigned);
+
+  if (FLOAT_TYPE_P(lhs_ty))
+    return Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
 
   // Determine which predicate to use based on signedness.
   ICmpInst::Predicate pred = ICmpInst::Predicate(LHSIsSigned ? SIOpc : UIOpc);

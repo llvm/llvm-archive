@@ -492,6 +492,12 @@ private: // Helpers for exception handling.
   BasicBlock *getPostPad(unsigned RegionNo);
 
 private:
+
+  // Render* - Convert GIMPLE to LLVM.
+
+  Value *RenderGIMPLE_COND(gimple_statement_d *);
+
+private:
   void EmitAutomaticVariableDecl(tree_node *decl);
 
   /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
@@ -509,12 +515,11 @@ private:
 
   // Emit* - These are delegates from Emit, and have the same parameter
   // characteristics.
-    
+
   // Control flow.
   Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);
   Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCOND_EXPR(tree_node *exp);
   Value *EmitSWITCH_EXPR(tree_node *exp);
 
   // Expressions.
@@ -536,6 +541,8 @@ private:
   Value *EmitBIT_NOT_EXPR(tree_node *exp);
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
   Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitCompare(tree_node *lhs, tree_node *rhs,
+                     unsigned UIPred, unsigned SIPred, unsigned FPPred);
   Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
                      unsigned FPPred, const Type *DestTy = 0);
   Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);

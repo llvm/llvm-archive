@@ -2370,20 +2370,22 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
       return Res;
   }
 
-  Value *Callee = Emit(TREE_OPERAND(exp, 0), 0);
-
-  assert(TREE_TYPE (TREE_OPERAND (exp, 0)) &&
-         (TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == POINTER_TYPE ||
-          TREE_CODE(TREE_TYPE (TREE_OPERAND (exp, 0))) == REFERENCE_TYPE)
+  tree call_expr = CALL_EXPR_FN(exp);
+  assert(TREE_TYPE (call_expr) &&
+         (TREE_CODE(TREE_TYPE (call_expr)) == POINTER_TYPE ||
+          TREE_CODE(TREE_TYPE (call_expr)) == REFERENCE_TYPE)
          && "Not calling a function pointer?");
-  tree function_type = TREE_TYPE(TREE_TYPE (TREE_OPERAND (exp, 0)));
+
+  tree function_type = TREE_TYPE(TREE_TYPE (call_expr));
+  Value *Callee = Emit(call_expr, 0);
   CallingConv::ID CallingConv;
   AttrListPtr PAL;
 
-  const Type *Ty = TheTypeConverter->ConvertFunctionType(function_type,
-                                                         fndecl,
-                                                         TREE_OPERAND(exp, 2),
-                                                         CallingConv, PAL);
+  const Type *Ty =
+    TheTypeConverter->ConvertFunctionType(function_type,
+                                          fndecl,
+                                          CALL_EXPR_STATIC_CHAIN(exp),
+                                          CallingConv, PAL);
 
   // If this is a direct call to a function using a static chain then we need
   // to ensure the function type is the one just calculated: it has an extra
@@ -2706,7 +2708,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
   tree fndecl = get_callee_fndecl(exp);
   tree fntype = fndecl ?
-    TREE_TYPE(fndecl) : TREE_TYPE (TREE_TYPE(TREE_OPERAND (exp, 0)));
+    TREE_TYPE(fndecl) : TREE_TYPE (TREE_TYPE(CALL_EXPR_FN(exp)));
 
   // Determine the calling convention.
   CallingConv::ID CallingConvention = CallingConv::C;
@@ -2728,12 +2730,12 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
                                 fndecl ? DECL_BUILT_IN(fndecl) : false);
 
   // Pass the static chain, if any, as the first parameter.
-  if (TREE_OPERAND(exp, 2))
-    CallOperands.push_back(Emit(TREE_OPERAND(exp, 2), 0));
+  if (CALL_EXPR_STATIC_CHAIN(exp))
+    CallOperands.push_back(Emit(CALL_EXPR_STATIC_CHAIN(exp), 0));
 
   // Loop over the arguments, expanding them and adding them to the op list.
   std::vector<const Type*> ScalarArgs;
-  for (tree arg = TREE_OPERAND(exp, 1); arg; arg = TREE_CHAIN(arg)) {
+  for (tree arg = CALL_EXPR_ARGS(exp); arg; arg = TREE_CHAIN(arg)) {
     tree type = TREE_TYPE(TREE_VALUE(arg));
     const Type *ArgTy = ConvertType(type);
 
@@ -4702,7 +4704,7 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(tree exp, tree fndecl,
   // Get the result type and operand line in an easy to consume format.
   const Type *ResultType = ConvertType(TREE_TYPE(TREE_TYPE(fndecl)));
   std::vector<Value*> Operands;
-  for (tree Op = TREE_OPERAND(exp, 1); Op; Op = TREE_CHAIN(Op)) {
+  for (tree Op = CALL_EXPR_ARGS(exp); Op; Op = TREE_CHAIN(Op)) {
     tree OpVal = TREE_VALUE(Op);
     if (isAggregateTreeType(TREE_TYPE(OpVal))) {
       MemRef OpLoc = CreateTempLoc(ConvertType(TREE_TYPE(OpVal)));
@@ -4745,7 +4747,7 @@ void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss) {
 Value *
 TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   Value* C[2] = {
     Emit(TREE_VALUE(arglist), 0),
     Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -4769,7 +4771,7 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
 Value *
 TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   const Type *ResultTy = ConvertType(type);
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   Value* C[3] = {
     Emit(TREE_VALUE(arglist), 0),
     Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
@@ -4900,7 +4902,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return EmitBuiltinUnwindInit(exp, Result);
 
   case BUILT_IN_OBJECT_SIZE: {
-    tree ArgList = TREE_OPERAND (exp, 1);
+    tree ArgList = CALL_EXPR_ARGS(exp);
     if (!validate_arglist(ArgList, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
       error("Invalid builtin_object_size argument types");
       return false;
@@ -4928,7 +4930,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZ:       // These GCC builtins always return int.
   case BUILT_IN_CLZL:
   case BUILT_IN_CLZLL: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctlz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
@@ -4937,7 +4939,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
@@ -4946,7 +4948,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_PARITYLL:
   case BUILT_IN_PARITYL:
   case BUILT_IN_PARITY: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop);
     Result = Builder.CreateBinOp(Instruction::And, Result,
                                  ConstantInt::get(Result->getType(), 1));
@@ -4955,7 +4957,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_POPCOUNT:  // These GCC builtins always return int.
   case BUILT_IN_POPCOUNTL:
   case BUILT_IN_POPCOUNTLL: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
@@ -4963,7 +4965,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   }
   case BUILT_IN_BSWAP32:
   case BUILT_IN_BSWAP64: {
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::bswap);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, "cast");
@@ -4999,7 +5001,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOGL:
     // If errno math has been disabled, expand these to llvm.log calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
       EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true;
@@ -5010,7 +5012,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOG2L:
     // If errno math has been disabled, expand these to llvm.log2 calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
       EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log2);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true;
@@ -5021,7 +5023,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOG10L:
     // If errno math has been disabled, expand these to llvm.log10 calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
       EmitBuiltinUnaryOp(Amt, Result, Intrinsic::log10);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true;
@@ -5032,7 +5034,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_EXPL:
     // If errno math has been disabled, expand these to llvm.exp calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
       EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true;
@@ -5043,7 +5045,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_EXP2L:
     // If errno math has been disabled, expand these to llvm.exp2 calls.
     if (!flag_errno_math) {
-      Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+      Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
       EmitBuiltinUnaryOp(Amt, Result, Intrinsic::exp2);
       Result = CastToFPType(Result, ConvertType(TREE_TYPE(exp)));
       return true;
@@ -5054,7 +5056,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FFSLL: {      // FFS(X) -> (x == 0 ? 0 : CTTZ(x)+1)
     // The argument and return type of cttz should match the argument type of
     // the ffs, but should ignore the return type of ffs.
-    Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+    Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
     Result = Builder.CreateAdd(Result,
       ConstantInt::get(Result->getType(), 1));
@@ -5092,7 +5094,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 //TODO    file = Builder.getFolder().CreateBitCast(file, SBP);
 //TODO
 //TODO    // Get arguments.
-//TODO    tree arglist = TREE_OPERAND(exp, 1);
+//TODO    tree arglist = CALL_EXPR_ARGS(exp);
 //TODO    Value *ExprVal = Emit(TREE_VALUE(arglist), 0);
 //TODO    const Type *Ty = ExprVal->getType();
 //TODO    Value *StrVal = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
@@ -5254,7 +5256,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_ADD_AND_FETCH_2:
   case BUILT_IN_ADD_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5292,7 +5294,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_SUB_AND_FETCH_2:
   case BUILT_IN_SUB_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5330,7 +5332,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_OR_AND_FETCH_2:
   case BUILT_IN_OR_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5368,7 +5370,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_AND_AND_FETCH_2:
   case BUILT_IN_AND_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5406,7 +5408,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_XOR_AND_FETCH_2:
   case BUILT_IN_XOR_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5444,7 +5446,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_NAND_AND_FETCH_2:
   case BUILT_IN_NAND_AND_FETCH_4: {
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
@@ -5497,7 +5499,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       default:
         abort();
     }
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
     tree t1 = build1 (INDIRECT_REF, type, TREE_VALUE (arglist));
     TREE_THIS_VOLATILE(t1) = 1;
     tree t = build2 (MODIFY_EXPR, type, t1,
@@ -5512,7 +5514,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
 #if 1  // FIXME: Should handle these GCC extensions eventually.
   case BUILT_IN_LONGJMP: {
-    tree arglist = TREE_OPERAND(exp, 1);
+    tree arglist = CALL_EXPR_ARGS(exp);
 
     if (validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
       tree value = TREE_VALUE(TREE_CHAIN(arglist));
@@ -5562,7 +5564,7 @@ bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
 }
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
-  Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+  Value *Amt = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
   const Type* Ty = Amt->getType();
 
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5571,7 +5573,7 @@ Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
 }
 
 Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
-  tree ArgList = TREE_OPERAND (exp, 1);
+  tree ArgList = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(ArgList, REAL_TYPE, INTEGER_TYPE, VOID_TYPE))
     return 0;
 
@@ -5589,7 +5591,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
 }
 
 Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
-  tree ArgList = TREE_OPERAND (exp, 1);
+  tree ArgList = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(ArgList, REAL_TYPE, REAL_TYPE, VOID_TYPE))
     return 0;
 
@@ -5611,7 +5613,7 @@ bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinExtendPointer(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
   bool AmtIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_VALUE(arglist)));
   bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
@@ -5652,7 +5654,7 @@ static bool OptimizeIntoPlainBuiltIn(tree exp, Value *Len, Value *Size) {
 /// depending on the value of isMemMove.
 bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
                                     bool SizeCheck) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (SizeCheck) {
     if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE,
                           INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
@@ -5685,7 +5687,7 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
 }
 
 bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (SizeCheck) {
     if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE,
                           INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
@@ -5713,7 +5715,7 @@ bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
 }
 
 bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
     return false;
 
@@ -5728,7 +5730,7 @@ bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, POINTER_TYPE, 0))
     return false;
 
@@ -5782,7 +5784,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
 /// EmitBuiltinReturnAddr - Emit an llvm.returnaddress or llvm.frameaddress
 /// instruction, depending on whether isFrame is true or not.
 bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
 
@@ -5803,7 +5805,7 @@ bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
 }
 
 bool TreeToLLVM::EmitBuiltinExtractReturnAddr(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
 
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
 
@@ -5820,7 +5822,7 @@ bool TreeToLLVM::EmitBuiltinExtractReturnAddr(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinFrobReturnAddr(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
 
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
 
@@ -5836,7 +5838,7 @@ bool TreeToLLVM::EmitBuiltinFrobReturnAddr(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, VOID_TYPE))
     return false;
 
@@ -5873,7 +5875,7 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
 #endif
 
 bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
-  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
     return false;
 
   int cfa_offset = ARG_POINTER_CFA_OFFSET(exp);
@@ -5887,7 +5889,7 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinDwarfSPColumn(tree exp, Value *&Result) {
-  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
     return false;
 
   unsigned int dwarf_regnum = DWARF_FRAME_REGNUM(STACK_POINTER_REGNUM);
@@ -5898,7 +5900,7 @@ bool TreeToLLVM::EmitBuiltinDwarfSPColumn(tree exp, Value *&Result) {
 
 bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
 #ifdef EH_RETURN_DATA_REGNO
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
 
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
@@ -5925,7 +5927,7 @@ bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
 
   if (!validate_arglist(arglist, INTEGER_TYPE, POINTER_TYPE, VOID_TYPE))
     return false;
@@ -5957,7 +5959,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
   bool wrote_return_column = false;
   static bool reg_modes_initialized = false;
 
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
     return false;
 
@@ -6014,7 +6016,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinUnwindInit(tree exp, Value *&Result) {
-  if (!validate_arglist(TREE_OPERAND(exp, 1), VOID_TYPE))
+  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
     return false;
 
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -6024,7 +6026,7 @@ bool TreeToLLVM::EmitBuiltinUnwindInit(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
     return false;
 
@@ -6038,7 +6040,7 @@ bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
 
 
 bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
@@ -6051,7 +6053,7 @@ bool TreeToLLVM::EmitBuiltinExpect(tree exp, const MemRef *DestLoc,
                                    Value *&Result) {
   // Ignore the hint for now, just expand the expr.  This is safe, but not
   // optimal.
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (arglist == NULL_TREE || TREE_CHAIN(arglist) == NULL_TREE)
     return true;
   Result = Emit(TREE_VALUE(arglist), DestLoc);
@@ -6059,7 +6061,7 @@ bool TreeToLLVM::EmitBuiltinExpect(tree exp, const MemRef *DestLoc,
 }
 
 bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   tree fntype = TREE_TYPE(current_function_decl);
 
   if (TYPE_ARG_TYPES(fntype) == 0 ||
@@ -6084,7 +6086,7 @@ bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
 }
 
 bool TreeToLLVM::EmitBuiltinVAEnd(tree exp) {
-  Value *Arg = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
+  Value *Arg = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
   Arg = BitCastToType(Arg, PointerType::getUnqual(Type::getInt8Ty(Context)));
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::vaend),
                      Arg);
@@ -6092,8 +6094,8 @@ bool TreeToLLVM::EmitBuiltinVAEnd(tree exp) {
 }
 
 bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
-  tree Arg1T = TREE_VALUE(TREE_OPERAND(exp, 1));
-  tree Arg2T = TREE_VALUE(TREE_CHAIN(TREE_OPERAND(exp, 1)));
+  tree Arg1T = TREE_VALUE(CALL_EXPR_ARGS(exp));
+  tree Arg2T = TREE_VALUE(TREE_CHAIN(CALL_EXPR_ARGS(exp)));
 
   Value *Arg1 = Emit(Arg1T, 0);   // Emit the address of the destination.
   // The second arg of llvm.va_copy is a pointer to a valist.
@@ -6123,7 +6125,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
 }
 
 bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp, Value *&Result) {
-  tree arglist = TREE_OPERAND(exp, 1);
+  tree arglist = CALL_EXPR_ARGS(exp);
   if (!validate_arglist (arglist, POINTER_TYPE, POINTER_TYPE, POINTER_TYPE,
                          VOID_TYPE))
     return false;

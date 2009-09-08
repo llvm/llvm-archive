@@ -637,6 +637,40 @@ void TreeToLLVM::StartFunctionBody() {
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
+  // Populate phi nodes with their operands now that all ssa names have been
+  // defined.
+  for (unsigned i = 0, e = PendingPhis.size(); i < e; ++i) {
+    PhiRecord &P = PendingPhis[i];
+
+    P.PHI->reserveOperandSpace(gimple_phi_num_args(P.gcc_phi));
+    for (size_t i = 0; i < gimple_phi_num_args(P.gcc_phi); ++i) {
+      // Find the incoming basic block.
+      basic_block bb = gimple_phi_arg_edge(P.gcc_phi, i)->src;
+      DenseMap<basic_block, BasicBlock*>::iterator BI = BasicBlocks.find(bb);
+      // If it does not exist then it was unreachable - skip this phi argument.
+      if (BI == BasicBlocks.end())
+        continue;
+
+      // Obtain the incoming value.  It is important not to add new instructions
+      // to the function, which is why this is done by hand.
+      tree def = gimple_phi_arg(P.gcc_phi, i)->def;
+      Value *Val;
+
+      // The incoming value is either an ssa name or a constant.
+      // FIXME: Not clear what is allowed here exactly.
+      if (TREE_CODE(def) == SSA_NAME) {
+        DenseMap<tree, Value*>::iterator NI = SSANames.find(def);
+        assert(NI != SSANames.end() && "PHI operand never defined!");
+        Val = NI->second;
+      } else {
+        Val = TreeConstantToLLVM::Convert(def);
+      }
+
+      P.PHI->addIncoming(Val, BI->second);
+    }
+  }
+  PendingPhis.clear();
+
   // Insert the return block at the end of the function.
   EmitBlock(ReturnBB);
 
@@ -753,14 +787,29 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
   if (bb != ENTRY_BLOCK_PTR)
     EmitBlock(getBasicBlock(bb));
 
-  // Render phi nodes.
+  // Create an LLVM phi node for each GCC phi and define the associated ssa name
+  // using it.  Do not populate with operands at this point since some ssa names
+  // the phi uses may not have been defined yet - phis are special this way.
   for (gimple_stmt_iterator gsi = gsi_start_phis(bb); !gsi_end_p(gsi);
        gsi_next(&gsi)) {
-      gimple phi = gsi_stmt(gsi);
-      // Skip virtual operands.
-      if (!is_gimple_reg(gimple_phi_result(phi)))
-        continue;
-      RenderGIMPLE_PHI(phi);
+    gimple gcc_phi = gsi_stmt(gsi);
+    // Skip virtual operands.
+    if (!is_gimple_reg(gimple_phi_result(gcc_phi)))
+      continue;
+
+    // Create the LLVM phi node.
+    const Type *Ty = ConvertType(TREE_TYPE(gimple_phi_result(gcc_phi)));
+    PHINode *PHI = Builder.CreatePHI(Ty);
+
+    // The phi defines the associated ssa name.
+    tree name = gimple_phi_result(gcc_phi);
+    assert(TREE_CODE(name) == SSA_NAME && "PHI result not an SSA name!");
+    assert(SSANames.find(name) == SSANames.end() && "Multiply defined SSA name!");
+    SSANames[name] = PHI;
+
+    // The phi operands will be populated later - remember the phi node.
+    PhiRecord P = { gcc_phi, PHI };
+    PendingPhis.push_back(P);
   }
 
   // Render statements.
@@ -8037,26 +8086,6 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 //===----------------------------------------------------------------------===//
 //                      ... Convert GIMPLE to LLVM ...
 //===----------------------------------------------------------------------===//
-
-void TreeToLLVM::RenderGIMPLE_PHI(gimple stmt) {
-  // Create the corresponding LLVM phi node.
-  const Type *Ty = ConvertType(TREE_TYPE(gimple_phi_result(stmt)));
-  PHINode *Phi = Builder.CreatePHI(Ty);
-
-  // Populate the phi operands.
-  Phi->reserveOperandSpace(gimple_phi_num_args(stmt));
-  for (size_t i = 0; i < gimple_phi_num_args(stmt); ++i) {
-    BasicBlock *BB = getBasicBlock(gimple_phi_arg_edge(stmt, i)->src);
-    Value *Val = Emit(gimple_phi_arg(stmt, i)->def, 0);
-    Phi->addIncoming(Val, BB);
-  }
-
-  // The phi defines the associated ssa name.
-  tree name = gimple_phi_result(stmt);
-  assert(TREE_CODE(name) == SSA_NAME && "PHI result not an SSA name!");
-  assert(SSANames.find(name) == SSANames.end() && "Multiply defined SSA name!");
-  SSANames[name] = Phi;
-}
 
 void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
   // Compute the LLVM opcodes corresponding to the GCC comparison.

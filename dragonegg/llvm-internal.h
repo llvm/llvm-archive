@@ -302,6 +302,12 @@ public:
   bool isBitfield() const { return BitStart != 255; }
 };
 
+/// PhiRecord - This struct holds the LLVM PHI node associated with a GCC phi.
+struct PhiRecord {
+  gimple gcc_phi;
+  PHINode *PHI;
+};
+
 /// TreeToLLVM - An instance of this class is created and used to convert the
 /// body of each function to LLVM.
 ///
@@ -320,9 +326,6 @@ class TreeToLLVM {
   /// same as &Fn->back().
   LLVMBuilder Builder;
 
-  /// BasicBlocks - Map from GCC to LLVM basic blocks.
-  DenseMap<basic_block, BasicBlock*> BasicBlocks;
-
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
@@ -330,6 +333,12 @@ class TreeToLLVM {
   // SSAInsertionPoint - Place to insert reads corresponding to SSA default
   // definitions.
   Instruction *SSAInsertionPoint;
+
+  /// BasicBlocks - Map from GCC to LLVM basic blocks.
+  DenseMap<basic_block, BasicBlock*> BasicBlocks;
+
+  /// PendingPhis - Phi nodes which have not yet been populated with operands.
+  SmallVector<PhiRecord, 16> PendingPhis;
 
   // SSANames - Map from GCC ssa names to the defining LLVM value.
   DenseMap<tree, Value*> SSANames;
@@ -507,7 +516,6 @@ private:
 
   // Render* - Convert GIMPLE to LLVM.
 
-  void RenderGIMPLE_PHI(gimple_statement_d *);
   void RenderGIMPLE_COND(gimple_statement_d *);
 
 private:

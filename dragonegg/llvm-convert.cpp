@@ -625,12 +625,14 @@ void TreeToLLVM::StartFunctionBody() {
     // Not supported yet.
   }
 
-//TODO  // As it turns out, not all temporaries are associated with blocks.  For those
-//TODO  // that aren't, emit them now.
-//TODO  for (tree t = cfun->unexpanded_var_list; t; t = TREE_CHAIN(t)) {
-//TODO    if (!DECL_LLVM_SET_P(TREE_VALUE(t)))
-//TODO      EmitAutomaticVariableDecl(TREE_VALUE(t));
-//TODO  }
+  // Emit all local variables.
+  for (tree vars = DECL_STRUCT_FUNCTION(FnDecl)->local_decls; vars;
+       vars = TREE_CHAIN(vars)) {
+    tree var = TREE_VALUE (vars);
+    // Static variables may already have been declared.
+    if (!DECL_LLVM_SET_P(var))
+      EmitAutomaticVariableDecl(var);
+  }
 
   // Create a new block for the return node, but don't insert it yet.
   ReturnBB = BasicBlock::Create(Context, "return");

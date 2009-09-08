@@ -507,7 +507,8 @@ private:
 
   // Render* - Convert GIMPLE to LLVM.
 
-  Value *RenderGIMPLE_COND(gimple_statement_d *);
+  void RenderGIMPLE_PHI(gimple_statement_d *);
+  void RenderGIMPLE_COND(gimple_statement_d *);
 
 private:
   void EmitAutomaticVariableDecl(tree_node *decl);

@@ -749,9 +749,23 @@ extern "C" tree gimple_to_tree(gimple);
 extern "C" void release_stmt_tree (gimple, tree);
 
 void TreeToLLVM::EmitBasicBlock(basic_block bb) {
-  for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
-       gsi_next (&gsi)) {
-    gimple gimple_stmt = gsi_stmt (gsi);
+  if (bb != ENTRY_BLOCK_PTR)
+    EmitBlock(getBasicBlock(bb));
+
+  // Render phi nodes.
+  for (gimple_stmt_iterator gsi = gsi_start_phis(bb); !gsi_end_p(gsi);
+       gsi_next(&gsi)) {
+      gimple phi = gsi_stmt(gsi);
+      // Skip virtual operands.
+      if (!is_gimple_reg(gimple_phi_result(phi)))
+        continue;
+      RenderGIMPLE_PHI(phi);
+  }
+
+  // Render statements.
+  for (gimple_stmt_iterator gsi = gsi_start_bb(bb); !gsi_end_p(gsi);
+       gsi_next(&gsi)) {
+    gimple gimple_stmt = gsi_stmt(gsi);
 
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
@@ -791,15 +805,15 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     }
   }
 
+  // Add a branch to the fallthru block.
   edge e;
   edge_iterator ei;
   FOR_EACH_EDGE (e, ei, bb->succs)
-    if (e->flags & EDGE_FALLTHRU)
+    if (e->flags & EDGE_FALLTHRU) {
+      Builder.CreateBr(getBasicBlock(e->dest));
+      EmitBlock(BasicBlock::Create(Context));
       break;
-  if (e && e->dest != bb->next_bb) {
-    Builder.CreateBr(getBasicBlock(e->dest));
-    EmitBlock(BasicBlock::Create(Context, ""));
-  }
+    }
 }
 
 static void emit_basic_block(struct dom_walk_data *walk_data, basic_block bb) {
@@ -1756,7 +1770,7 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
     //
     Builder.CreateBr(DestBB);
   }
-  EmitBlock(BasicBlock::Create(Context, ""));
+  EmitBlock(BasicBlock::Create(Context));
   return 0;
 }
 
@@ -1777,7 +1791,7 @@ Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
 
   // Emit a branch to the exit label.
   Builder.CreateBr(ReturnBB);
-  EmitBlock(BasicBlock::Create(Context, ""));
+  EmitBlock(BasicBlock::Create(Context));
   return 0;
 }
 
@@ -1791,7 +1805,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   // Emit the switch instruction.
   SwitchInst *SI = Builder.CreateSwitch(SwitchExp, Builder.GetInsertBlock(),
                                         TREE_VEC_LENGTH(Cases));
-  EmitBlock(BasicBlock::Create(Context, ""));
+  EmitBlock(BasicBlock::Create(Context));
   // Default location starts out as fall-through
   SI->setSuccessor(0, Builder.GetInsertBlock());
 
@@ -1853,7 +1867,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
     else {
       Builder.CreateBr(DefaultDest);
       // Emit a "fallthrough" block, which is almost certainly dead.
-      EmitBlock(BasicBlock::Create(Context, ""));
+      EmitBlock(BasicBlock::Create(Context));
     }
   }
 
@@ -2384,7 +2398,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   //
   if (fndecl && TREE_THIS_VOLATILE(fndecl)) {
     Builder.CreateUnreachable();
-    EmitBlock(BasicBlock::Create(Context, ""));
+    EmitBlock(BasicBlock::Create(Context));
   }
   return Result;
 }
@@ -3781,7 +3795,7 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
     Builder.CreateBr(UnwindBB);
   }
 
-  EmitBlock(BasicBlock::Create(Context, ""));
+  EmitBlock(BasicBlock::Create(Context));
   return 0;
 }
 
@@ -5063,7 +5077,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::trap));
     // Emit an explicit unreachable instruction.
     Builder.CreateUnreachable();
-    EmitBlock(BasicBlock::Create(Context, ""));
+    EmitBlock(BasicBlock::Create(Context));
     return true;
 
 //TODO  // Convert annotation built-in to llvm.annotation intrinsic.
@@ -5931,7 +5945,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
 		     Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
-  EmitBlock(BasicBlock::Create(Context, ""));
+  EmitBlock(BasicBlock::Create(Context));
 
   return true;
 }
@@ -8021,7 +8035,27 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 //                      ... Convert GIMPLE to LLVM ...
 //===----------------------------------------------------------------------===//
 
-Value *TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
+void TreeToLLVM::RenderGIMPLE_PHI(gimple stmt) {
+  // Create the corresponding LLVM phi node.
+  const Type *Ty = ConvertType(TREE_TYPE(gimple_phi_result(stmt)));
+  PHINode *Phi = Builder.CreatePHI(Ty);
+
+  // Populate the phi operands.
+  Phi->reserveOperandSpace(gimple_phi_num_args(stmt));
+  for (size_t i = 0; i < gimple_phi_num_args(stmt); ++i) {
+    BasicBlock *BB = getBasicBlock(gimple_phi_arg_edge(stmt, i)->src);
+    Value *Val = Emit(gimple_phi_arg(stmt, i)->def, 0);
+    Phi->addIncoming(Val, BB);
+  }
+
+  // The phi defines the associated ssa name.
+  tree name = gimple_phi_result(stmt);
+  assert(TREE_CODE(name) == SSA_NAME && "PHI result not an SSA name!");
+  assert(SSANames.find(name) == SSANames.end() && "Multiply defined SSA name!");
+  SSANames[name] = Phi;
+}
+
+void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
   // Compute the LLVM opcodes corresponding to the GCC comparison.
   unsigned UIPred = 0, SIPred = 0, FPPred = 0;
   switch (gimple_cond_code(stmt)) {
@@ -8080,5 +8114,4 @@ Value *TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
   // Branch based on the condition.
   Builder.CreateCondBr(Cond, IfTrue, IfFalse);
   EmitBlock(BasicBlock::Create(Context));
-  return 0;
 }

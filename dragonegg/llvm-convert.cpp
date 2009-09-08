@@ -749,6 +749,7 @@ extern "C" tree gimple_to_tree(gimple);
 extern "C" void release_stmt_tree (gimple, tree);
 
 void TreeToLLVM::EmitBasicBlock(basic_block bb) {
+  // Avoid outputting a pointless branch at the end of the entry block.
   if (bb != ENTRY_BLOCK_PTR)
     EmitBlock(getBasicBlock(bb));
 

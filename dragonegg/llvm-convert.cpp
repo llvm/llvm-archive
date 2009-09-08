@@ -651,20 +651,18 @@ Function *TreeToLLVM::FinishFunctionBody() {
       if (BI == BasicBlocks.end())
         continue;
 
-      // Obtain the incoming value.  It is important not to add new instructions
-      // to the function, which is why this is done by hand.
+      // Obtain the incoming value.  Any new instructions added to the function
+      // must be carefully placed, so analyze each case by hand rather than just
+      // calling Emit.
       tree def = gimple_phi_arg(P.gcc_phi, i)->def;
       Value *Val;
 
       // The incoming value is either an ssa name or a constant.
       // FIXME: Not clear what is allowed here exactly.
-      if (TREE_CODE(def) == SSA_NAME) {
-        DenseMap<tree, Value*>::iterator NI = SSANames.find(def);
-        assert(NI != SSANames.end() && "PHI operand never defined!");
-        Val = NI->second;
-      } else {
+      if (TREE_CODE(def) == SSA_NAME)
+        Val = EmitSSA_NAME(def);
+      else
         Val = TreeConstantToLLVM::Convert(def);
-      }
 
       P.PHI->addIncoming(Val, BI->second);
     }

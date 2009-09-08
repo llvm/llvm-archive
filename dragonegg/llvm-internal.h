@@ -320,6 +320,9 @@ class TreeToLLVM {
   /// same as &Fn->back().
   LLVMBuilder Builder;
 
+  /// BasicBlocks - Map from GCC to LLVM basic blocks.
+  DenseMap<basic_block, BasicBlock*> BasicBlocks;
+
   // AllocaInsertionPoint - Place to insert alloca instructions.  Lazily created
   // and managed by CreateTemporary.
   Instruction *AllocaInsertionPoint;
@@ -450,7 +453,16 @@ private: // Helper functions.
   /// FinishFunctionBody - Once the body of the function has been emitted, this
   /// cleans up and returns the result function.
   Function *FinishFunctionBody();
-  
+
+  /// getBasicBlock - Find or create the LLVM basic block corresponding to BB.
+  BasicBlock *getBasicBlock(basic_block bb);
+
+public:
+  /// getLabelDeclBlock - Lazily get and create a basic block for the specified
+  /// label.
+  BasicBlock *getLabelDeclBlock(tree_node *LabelDecl);
+
+private:
   /// Emit - Convert the specified tree node to LLVM code.  If the node is an
   /// expression that fits into an LLVM scalar value, the result is returned. If
   /// the result is an aggregate, it is stored into the location specified by

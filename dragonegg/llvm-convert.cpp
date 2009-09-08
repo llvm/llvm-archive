@@ -198,24 +198,6 @@ TreeToLLVM::~TreeToLLVM() {
   TheTreeToLLVM = 0;
 }
 
-/// getLabelDeclBlock - Lazily get and create a basic block for the specified
-/// label.
-/// TODO: remove uses of gimple_block_label, keep a map of GCC basic blocks to
-/// LLVM basic blocks rather than going via labels and DECL_LLVM.
-static BasicBlock *getLabelDeclBlock(tree LabelDecl) {
-  assert(TREE_CODE(LabelDecl) == LABEL_DECL && "Isn't a label!?");
-  if (DECL_LLVM_SET_P(LabelDecl))
-    return cast<BasicBlock>(DECL_LLVM(LabelDecl));
-
-  const char *Name = "bb";
-  if (DECL_NAME(LabelDecl))
-    Name = IDENTIFIER_POINTER(DECL_NAME(LabelDecl));
-
-  BasicBlock *NewBB = BasicBlock::Create(Context, Name);
-  SET_DECL_LLVM(LabelDecl, NewBB);
-  return NewBB;
-}
-
 /// llvm_store_scalar_argument - Store scalar argument ARGVAL of type
 /// LLVMTY at location LOC.
 static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
@@ -742,6 +724,27 @@ Function *TreeToLLVM::FinishFunctionBody() {
   return Fn;
 }
 
+/// getBasicBlock - Find or create the LLVM basic block corresponding to BB.
+BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
+  DenseMap<basic_block, BasicBlock*>::iterator I = BasicBlocks.find(bb);
+  if (I != BasicBlocks.end())
+    return I->second;
+  Twine Name(bb->index);
+  return BasicBlocks[bb] = BasicBlock::Create(Context, "bb " + Name);
+}
+
+/// getLabelDeclBlock - Lazily get and create a basic block for the specified
+/// label.
+BasicBlock *TreeToLLVM::getLabelDeclBlock(tree LabelDecl) {
+  assert(TREE_CODE(LabelDecl) == LABEL_DECL && "Isn't a label!?");
+  if (DECL_LLVM_SET_P(LabelDecl))
+    return cast<BasicBlock>(DECL_LLVM(LabelDecl));
+
+  BasicBlock *BB = getBasicBlock(label_to_block(LabelDecl));
+  SET_DECL_LLVM(LabelDecl, BB);
+  return BB;
+}
+
 extern "C" tree gimple_to_tree(gimple);
 extern "C" void release_stmt_tree (gimple, tree);
 
@@ -794,7 +797,7 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     if (e->flags & EDGE_FALLTHRU)
       break;
   if (e && e->dest != bb->next_bb) {
-    Builder.CreateBr(getLabelDeclBlock(gimple_block_label (e->dest)));
+    Builder.CreateBr(getBasicBlock(e->dest));
     EmitBlock(BasicBlock::Create(Context, ""));
   }
 }
@@ -7866,7 +7869,7 @@ Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
            "Taking the address of a label that isn't in the current fn!?");
   }
 
-  BasicBlock *BB = getLabelDeclBlock(exp);
+  BasicBlock *BB = TheTreeToLLVM->getLabelDeclBlock(exp);
   Constant *C = TheTreeToLLVM->getIndirectGotoBlockNumber(BB);
   return
        TheFolder->CreateIntToPtr(C, PointerType::getUnqual(Type::getInt8Ty(Context)));
@@ -8069,8 +8072,8 @@ Value *TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
   // Extract the target basic blocks.
   edge true_edge, false_edge;
   extract_true_false_edges_from_block(gimple_bb(stmt), &true_edge, &false_edge);
-  BasicBlock *IfTrue = getLabelDeclBlock(gimple_block_label(true_edge->dest));
-  BasicBlock *IfFalse = getLabelDeclBlock(gimple_block_label(false_edge->dest));
+  BasicBlock *IfTrue = getBasicBlock(true_edge->dest);
+  BasicBlock *IfFalse = getBasicBlock(false_edge->dest);
 
   // Branch based on the condition.
   Builder.CreateCondBr(Cond, IfTrue, IfFalse);

@@ -2075,6 +2075,24 @@ void TreeToLLVM::EmitUnwindBlock() {
 //                           ... Expressions ...
 //===----------------------------------------------------------------------===//
 
+static bool canEmitRegisterVariable(tree exp) {
+  // Only variables can be marked as 'register'.
+  if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
+    return false;
+
+  // We can emit inline assembler for access to global register variables.
+  if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
+    return true;
+
+  // Emit inline asm if this is local variable with assembler name on it.
+  if (DECL_ASSEMBLER_NAME_SET_P(exp))
+    return true;
+
+  // Otherwise - it's normal automatic variable.
+  return false;
+}
+
+
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
 /// requires an r-value, this method emits the lvalue computation, then loads
 /// the result.
@@ -2091,8 +2109,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
     EmitAutomaticVariableDecl(exp);
     // Fall through.
-  } else if (TREE_CODE(exp) == VAR_DECL && DECL_REGISTER(exp) &&
-             TREE_STATIC(exp)) {
+  } else if (canEmitRegisterVariable(exp)) {
     // If this is a register variable, EmitLV can't handle it (there is no
     // l-value of a register variable).  Emit an inline asm node that copies the
     // value out of the specified register.
@@ -2762,8 +2779,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     Builder.Insert(Cast);
     SET_DECL_LLVM(lhs, Cast);
     return Cast;
-  } else if (TREE_CODE(lhs) == VAR_DECL && DECL_REGISTER(lhs) &&
-             TREE_STATIC(lhs)) {
+  } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node
     // that copies the value into the specified register.
@@ -3685,18 +3701,19 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
                                               const MemRef *DestLoc) {
   const Type *Ty = ConvertType(TREE_TYPE(decl));
-  
+
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(decl)) {
     if (Ty->isSingleValueType())
       return UndefValue::get(Ty);
     return 0;   // Just don't copy something into DestLoc.
   }
-  
+
   // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
   FunctionType *FTy = FunctionType::get(Ty, std::vector<const Type*>(),false);
-  
-  const char *Name = extractRegisterName(decl);
+
+  const char *Name = reg_names[decode_reg_name(extractRegisterName(decl))];
+
   InlineAsm *IA = InlineAsm::get(FTy, "", "={"+std::string(Name)+"}", false);
   CallInst *Call = Builder.CreateCall(IA);
   Call->setDoesNotThrow();
@@ -3709,13 +3726,14 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   // If there was an error, bail out.
   if (ValidateRegisterVariable(decl))
     return;
-  
+
   // Turn this into a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
   std::vector<const Type*> ArgTys;
   ArgTys.push_back(ConvertType(TREE_TYPE(decl)));
   FunctionType *FTy = FunctionType::get(Type::VoidTy, ArgTys, false);
-  
-  const char *Name = extractRegisterName(decl);
+
+  const char *Name = reg_names[decode_reg_name(extractRegisterName(decl))];
+
   InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", true);
   CallInst *Call = Builder.CreateCall(IA, RHS);
   Call->setDoesNotThrow();

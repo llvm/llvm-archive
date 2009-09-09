@@ -34,12 +34,17 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "target.h"
 #include "tree.h"
 
-extern bool llvm_has_cached (union tree_node *);
+/// llvm_has_cached - Returns whether a value has been associated with the tree.
+extern bool llvm_has_cached(union tree_node *tree);
 
-extern const void *llvm_get_cached (union tree_node *);
+/// llvm_get_cached - Returns the value associated with the tree, or NULL.
+extern const void *llvm_get_cached(union tree_node *tree);
 
-extern const void *llvm_set_cached (union tree_node *, const void *);
+/// llvm_set_cached - Associates the given value with the tree (and returns it).
+/// To delete an association, pass NULL for the value.
+extern const void *llvm_set_cached(union tree_node *tree, const void *val);
 
-extern void llvm_init_cache (void);
+/// llvm_replace_cached - Replaces all occurrences of old_val with new_val.
+extern void llvm_replace_cached(const void *old_val, const void *new_val);
 
 #endif /* LLVM_CACHE_H */

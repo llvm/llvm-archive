@@ -80,32 +80,6 @@ const Type *llvm_get_type(tree Tr) {
 
 #define GET_TYPE_LLVM(NODE) llvm_get_type(NODE)
 
-//
-//TODO// LTypes is a vector of LLVM types. GCC tree nodes keep track of LLVM types 
-//TODO// using this vector's index. It is easier to save and restore the index than 
-//TODO// the LLVM type pointer while usig PCH. STL vector does not provide fast 
-//TODO// searching mechanism which is required to remove LLVM Type entry when type is 
-//TODO// refined and replaced by another LLVM Type. This is achieved by maintaining 
-//TODO// a map.
-//TODO
-//TODO// Collection of LLVM Types
-//TODOstatic std::vector<const Type *> LTypes;
-//TODOtypedef DenseMap<const Type *, unsigned> LTypesMapTy;
-//TODOstatic LTypesMapTy LTypesMap;
-//TODO
-//TODO// Erase type from LTypes vector
-//TODOstatic void llvmEraseLType(const Type *Ty) {
-//TODO
-//TODO  LTypesMapTy::iterator I = LTypesMap.find(Ty);
-//TODO
-//TODO  if (I != LTypesMap.end()) {
-//TODO    // It is OK to clear this entry instead of removing this entry
-//TODO    // to avoid re-indexing of other entries.
-//TODO    LTypes[ LTypesMap[Ty] - 1] = NULL;
-//TODO    LTypesMap.erase(I);
-//TODO  }
-//TODO}
-//TODO
 //TODO// Read LLVM Types string table
 //TODOvoid readLLVMTypesStringTable() {
 //TODO
@@ -438,8 +412,7 @@ void TypeRefinementDatabase::refineAbstractType(const DerivedType *OldTy,
       SET_TYPE_LLVM(I->second[i], NewTy);
     }
   }
-  
-  llvmEraseLType(OldTy);
+
   TypeUsers.erase(I);
   
   // Next, remove OldTy's entry in the TargetData object if it has one.

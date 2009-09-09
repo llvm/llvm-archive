@@ -2929,7 +2929,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   // If this is the definition of an ssa name, record it in the SSANames map.
   if (TREE_CODE(lhs) == SSA_NAME) {
     assert(SSANames.find(lhs) == SSANames.end() && "Multiply defined SSA name!");
-    return SSANames[lhs] = Emit(rhs, 0);
+    return SSANames[lhs] = Builder.CreateBitCast(Emit(rhs, 0),
+                                                 ConvertType(TREE_TYPE(exp)));
   } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node

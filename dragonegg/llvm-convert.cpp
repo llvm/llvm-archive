@@ -4979,7 +4979,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
   case BUILT_IN_OBJECT_SIZE: {
     tree ArgList = CALL_EXPR_ARGS(exp);
-    if (!validate_arglist(ArgList, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
+    if (!validate_arglist(exp, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
       error("Invalid builtin_object_size argument types");
       return false;
     }
@@ -5592,7 +5592,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LONGJMP: {
     tree arglist = CALL_EXPR_ARGS(exp);
 
-    if (validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
+    if (validate_arglist(exp, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
       tree value = TREE_VALUE(TREE_CHAIN(arglist));
 
       if (TREE_CODE(value) != INTEGER_CST ||
@@ -5650,7 +5650,7 @@ Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
 
 Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   tree ArgList = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(ArgList, REAL_TYPE, INTEGER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, REAL_TYPE, INTEGER_TYPE, VOID_TYPE))
     return 0;
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
@@ -5668,7 +5668,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
 
 Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
   tree ArgList = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(ArgList, REAL_TYPE, REAL_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, REAL_TYPE, REAL_TYPE, VOID_TYPE))
     return 0;
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
@@ -5732,11 +5732,11 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
                                     bool SizeCheck) {
   tree arglist = CALL_EXPR_ARGS(exp);
   if (SizeCheck) {
-    if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE,
+    if (!validate_arglist(exp, POINTER_TYPE, POINTER_TYPE,
                           INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
       return false;
   } else {
-    if (!validate_arglist(arglist, POINTER_TYPE, POINTER_TYPE,
+    if (!validate_arglist(exp, POINTER_TYPE, POINTER_TYPE,
                           INTEGER_TYPE, VOID_TYPE))
       return false;
   }
@@ -5765,11 +5765,11 @@ bool TreeToLLVM::EmitBuiltinMemCopy(tree exp, Value *&Result, bool isMemMove,
 bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
   tree arglist = CALL_EXPR_ARGS(exp);
   if (SizeCheck) {
-    if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE,
+    if (!validate_arglist(exp, POINTER_TYPE, INTEGER_TYPE,
                           INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
       return false;
   } else {
-    if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE,
+    if (!validate_arglist(exp, POINTER_TYPE, INTEGER_TYPE,
                           INTEGER_TYPE, VOID_TYPE))
       return false;
   }
@@ -5792,7 +5792,7 @@ bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
 
 bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
     return false;
 
   tree Dst = TREE_VALUE(arglist);
@@ -5807,7 +5807,7 @@ bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
 
 bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, POINTER_TYPE, 0))
+  if (!validate_arglist(exp, POINTER_TYPE, 0))
     return false;
 
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
@@ -5861,7 +5861,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
 /// instruction, depending on whether isFrame is true or not.
 bool TreeToLLVM::EmitBuiltinReturnAddr(tree exp, Value *&Result, bool isFrame) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, INTEGER_TYPE, VOID_TYPE))
     return false;
 
   ConstantInt *Level = dyn_cast<ConstantInt>(Emit(TREE_VALUE(arglist), 0));
@@ -5914,8 +5914,7 @@ bool TreeToLLVM::EmitBuiltinFrobReturnAddr(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
-  tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, VOID_TYPE))
+  if (!validate_arglist(exp, VOID_TYPE))
     return false;
 
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5951,7 +5950,7 @@ bool TreeToLLVM::EmitBuiltinStackSave(tree exp, Value *&Result) {
 #endif
 
 bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
-  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
+  if (!validate_arglist(exp, VOID_TYPE))
     return false;
 
   int cfa_offset = ARG_POINTER_CFA_OFFSET(exp);
@@ -5965,7 +5964,7 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinDwarfSPColumn(tree exp, Value *&Result) {
-  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
+  if (!validate_arglist(exp, VOID_TYPE))
     return false;
 
   unsigned int dwarf_regnum = DWARF_FRAME_REGNUM(STACK_POINTER_REGNUM);
@@ -5978,7 +5977,7 @@ bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
 #ifdef EH_RETURN_DATA_REGNO
   tree arglist = CALL_EXPR_ARGS(exp);
 
-  if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, INTEGER_TYPE, VOID_TYPE))
     return false;
 
   tree which = TREE_VALUE (arglist);
@@ -6005,7 +6004,7 @@ bool TreeToLLVM::EmitBuiltinEHReturnDataRegno(tree exp, Value *&Result) {
 bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   tree arglist = CALL_EXPR_ARGS(exp);
 
-  if (!validate_arglist(arglist, INTEGER_TYPE, POINTER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, INTEGER_TYPE, POINTER_TYPE, VOID_TYPE))
     return false;
 
   const Type *IntPtr = TD.getIntPtrType(Context);
@@ -6036,7 +6035,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
   static bool reg_modes_initialized = false;
 
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, POINTER_TYPE, VOID_TYPE))
     return false;
 
   if (!reg_modes_initialized) {
@@ -6092,7 +6091,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
 }
 
 bool TreeToLLVM::EmitBuiltinUnwindInit(tree exp, Value *&Result) {
-  if (!validate_arglist(CALL_EXPR_ARGS(exp), VOID_TYPE))
+  if (!validate_arglist(exp, VOID_TYPE))
     return false;
 
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -6103,7 +6102,7 @@ bool TreeToLLVM::EmitBuiltinUnwindInit(tree exp, Value *&Result) {
 
 bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, POINTER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, POINTER_TYPE, VOID_TYPE))
     return false;
 
   Value *Ptr = Emit(TREE_VALUE(arglist), 0);
@@ -6117,7 +6116,7 @@ bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
 
 bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+  if (!validate_arglist(exp, INTEGER_TYPE, VOID_TYPE))
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
   Amt = CastToSIntType(Amt, Type::getInt32Ty(Context));
@@ -6201,7 +6200,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
 
 bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp, Value *&Result) {
   tree arglist = CALL_EXPR_ARGS(exp);
-  if (!validate_arglist (arglist, POINTER_TYPE, POINTER_TYPE, POINTER_TYPE,
+  if (!validate_arglist (exp, POINTER_TYPE, POINTER_TYPE, POINTER_TYPE,
                          VOID_TYPE))
     return false;
 

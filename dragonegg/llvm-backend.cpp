@@ -151,53 +151,35 @@ Value *get_decl_llvm(tree t) {
   return (Value *)llvm_get_cached(t);
 }
 
-//TODO/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
-//TODO/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
-//TODO/// At this point we know that New is not in any of these maps.
-//TODOvoid changeLLVMConstant(Constant *Old, Constant *New) {
-//TODO  assert(Old->use_empty() && "Old value has uses!");
-//TODO
-//TODO  if (AttributeUsedGlobals.count(Old)) {
-//TODO    AttributeUsedGlobals.remove(Old);
-//TODO    AttributeUsedGlobals.insert(New);
-//TODO  }
-//TODO
-//TODO  if (AttributeCompilerUsedGlobals.count(Old)) {
-//TODO    AttributeCompilerUsedGlobals.remove(Old);
-//TODO    AttributeCompilerUsedGlobals.insert(New);
-//TODO  }
-//TODO
-//TODO  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
-//TODO    if (StaticCtors[i].first == Old)
-//TODO      StaticCtors[i].first = New;
-//TODO  }
-//TODO
-//TODO  for (unsigned i = 0, e = StaticDtors.size(); i != e; ++i) {
-//TODO    if (StaticDtors[i].first == Old)
-//TODO      StaticDtors[i].first = New;
-//TODO  }
-//TODO
-//TODO  assert(!LLVMValuesMap.count(New) && "New cannot be in the LLVMValues map!");
-//TODO
-//TODO  // Find Old in the table.
-//TODO  LLVMValuesMapTy::iterator I = LLVMValuesMap.find(Old);
-//TODO  if (I == LLVMValuesMap.end()) return;
-//TODO
-//TODO  unsigned Idx = I->second-1;
-//TODO  assert(Idx < LLVMValues.size() && "Out of range index!");
-//TODO  assert(LLVMValues[Idx] == Old && "Inconsistent LLVMValues mapping!");
-//TODO
-//TODO  LLVMValues[Idx] = New;
-//TODO
-//TODO  // Remove the old value from the value map.
-//TODO  LLVMValuesMap.erase(I);
-//TODO
-//TODO  // Insert the new value into the value map.  We know that it can't already
-//TODO  // exist in the mapping.
-//TODO  if (New)
-//TODO    LLVMValuesMap[New] = Idx+1;
-//TODO}
-//TODO
+/// changeLLVMConstant - Replace Old with New everywhere, updating all maps
+/// (except for AttributeAnnotateGlobals, which is a different kind of animal).
+/// At this point we know that New is not in any of these maps.
+void changeLLVMConstant(Constant *Old, Constant *New) {
+  assert(Old->use_empty() && "Old value has uses!");
+
+  if (AttributeUsedGlobals.count(Old)) {
+    AttributeUsedGlobals.remove(Old);
+    AttributeUsedGlobals.insert(New);
+  }
+
+  if (AttributeCompilerUsedGlobals.count(Old)) {
+    AttributeCompilerUsedGlobals.remove(Old);
+    AttributeCompilerUsedGlobals.insert(New);
+  }
+
+  for (unsigned i = 0, e = StaticCtors.size(); i != e; ++i) {
+    if (StaticCtors[i].first == Old)
+      StaticCtors[i].first = New;
+  }
+
+  for (unsigned i = 0, e = StaticDtors.size(); i != e; ++i) {
+    if (StaticDtors[i].first == Old)
+      StaticDtors[i].first = New;
+  }
+
+  llvm_replace_cached(Old, New);
+}
+
 //TODO/// readLLVMValues - Read LLVM Types string table
 //TODOvoid readLLVMValues() {
 //TODO  GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.values");

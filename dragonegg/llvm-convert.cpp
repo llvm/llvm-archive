@@ -2279,8 +2279,10 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
   assert(SSA_VAR_P(var) && "Not an SSA variable!");
 
   // If the variable is itself an ssa name, use its LLVM value.
-  if (TREE_CODE (var) == SSA_NAME)
-    return SSANames[exp] = EmitSSA_NAME(var);
+  if (TREE_CODE (var) == SSA_NAME) {
+    Value *Val = EmitSSA_NAME(var);
+    return SSANames[exp] = Val;
+  }
 
   // Otherwise the symbol is a VAR_DECL, PARM_DECL or RESULT_DECL.  Since a
   // default definition is only created if the very first reference to the
@@ -2929,8 +2931,9 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   // If this is the definition of an ssa name, record it in the SSANames map.
   if (TREE_CODE(lhs) == SSA_NAME) {
     assert(SSANames.find(lhs) == SSANames.end() && "Multiply defined SSA name!");
-    return SSANames[lhs] = Builder.CreateBitCast(Emit(rhs, 0),
-                                                 ConvertType(TREE_TYPE(exp)));
+    Value *Val = Builder.CreateBitCast(Emit(rhs, 0),
+                                       ConvertType(TREE_TYPE(exp)));
+    return SSANames[lhs] = Val;
   } else if (canEmitRegisterVariable(lhs)) {
     // If this is a store to a register variable, EmitLV can't handle the dest
     // (there is no l-value of a register variable).  Emit an inline asm node

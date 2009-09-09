@@ -24,14 +24,6 @@ void eraseLocalLLVMValues() {
 abort();
 }
 
-void changeLLVMConstant(Constant *Old, Constant *New) {
-abort();
-}
-
-void llvmEraseLType(const Type *Ty) {
-abort();
-}
-
 int ix86_regparm;
 
 extern "C" bool contains_aligned_value_p (tree type) {

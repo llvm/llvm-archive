@@ -11,6 +11,4 @@ void emit_global_to_llvm(union tree_node*);
 
 extern bool flag_odr;
 
-void llvmEraseLType(const Type *);
-
 #endif

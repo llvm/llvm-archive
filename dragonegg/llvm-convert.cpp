@@ -34,6 +34,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Module.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/System/Host.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -640,12 +641,14 @@ void TreeToLLVM::StartFunctionBody() {
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
+  DenseMap<BasicBlock*, Value*> IncomingValues;
+
   // Populate phi nodes with their operands now that all ssa names have been
   // defined.
   for (unsigned i = 0, e = PendingPhis.size(); i < e; ++i) {
     PhiRecord &P = PendingPhis[i];
 
-    P.PHI->reserveOperandSpace(gimple_phi_num_args(P.gcc_phi));
+    // Extract the incoming value for each predecessor from the GCC phi node.
     for (size_t i = 0; i < gimple_phi_num_args(P.gcc_phi); ++i) {
       // Find the incoming basic block.
       basic_block bb = gimple_phi_arg_edge(P.gcc_phi, i)->src;
@@ -667,8 +670,26 @@ Function *TreeToLLVM::FinishFunctionBody() {
       else
         Val = TreeConstantToLLVM::Convert(def);
 
-      P.PHI->addIncoming(Val, BI->second);
+      // Predecessors can occur more times in LLVM than in GCC, where they only
+      // occur once, so it is not enough to push one phi operand per GCC edge.
+      // Instead, remember the incoming value for each predecessor in a map.
+      assert(IncomingValues.find(BI->second) == IncomingValues.end() &&
+             "Multiple edges between basic blocks!");
+      IncomingValues[BI->second] = Val;
     }
+
+    // Now iterate over all LLVM predecessors, adding phi operands as we go.
+    BasicBlock *CurBB = P.PHI->getParent();
+    P.PHI->reserveOperandSpace(gimple_phi_num_args(P.gcc_phi));
+    for (pred_iterator PI = pred_begin(CurBB), PE = pred_end(CurBB); PI != PE;
+         ++PI) {
+      BasicBlock *IncomingBB = *PI;
+      assert(IncomingValues.find(IncomingBB) != IncomingValues.end() &&
+             "No incoming value for predecessor!");
+      P.PHI->addIncoming(IncomingValues[IncomingBB], IncomingBB);
+    }
+
+    IncomingValues.clear();
   }
   PendingPhis.clear();
 

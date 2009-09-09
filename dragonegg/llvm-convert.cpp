@@ -531,7 +531,9 @@ void TreeToLLVM::StartFunctionBody() {
     Fn->setDoesNotThrow();
 
   // Create a new basic block for the function.
-  Builder.SetInsertPoint(BasicBlock::Create(Context, "entry", Fn));
+  BasicBlock *EntryBlock = BasicBlock::Create(Context, "entry", Fn);
+  BasicBlocks[ENTRY_BLOCK_PTR] = EntryBlock;
+  Builder.SetInsertPoint(EntryBlock);
 
   if (TheDebugInfo)
     TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());

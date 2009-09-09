@@ -925,8 +925,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case RESX_EXPR:      Result = EmitRESX_EXPR(exp); break;
 
   // Expressions
-  case SSA_NAME:
-    Result = EmitSSA_NAME(exp); break;
   case VAR_DECL:
   case PARM_DECL:
   case RESULT_DECL:
@@ -940,12 +938,13 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case IMAGPART_EXPR:
     Result = EmitLoadOfLValue(exp, DestLoc);
     break;
-  case OBJ_TYPE_REF:   Result = EmitOBJ_TYPE_REF(exp); break;
-  case ADDR_EXPR:      Result = EmitADDR_EXPR(exp); break;
-  case CALL_EXPR:      Result = EmitCALL_EXPR(exp, DestLoc); break;
+  case SSA_NAME:        Result = EmitSSA_NAME(exp); break;
+  case OBJ_TYPE_REF:    Result = EmitOBJ_TYPE_REF(exp); break;
+  case ADDR_EXPR:       Result = EmitADDR_EXPR(exp); break;
+  case CALL_EXPR:       Result = EmitCALL_EXPR(exp, DestLoc); break;
   case INIT_EXPR:
-  case MODIFY_EXPR:    Result = EmitMODIFY_EXPR(exp, DestLoc); break;
-  case ASM_EXPR:       Result = EmitASM_EXPR(exp); break;
+  case MODIFY_EXPR:     Result = EmitMODIFY_EXPR(exp, DestLoc); break;
+  case ASM_EXPR:        Result = EmitASM_EXPR(exp); break;
   case NON_LVALUE_EXPR: Result = Emit(TREE_OPERAND(exp, 0), DestLoc); break;
 
     // Unary Operators
@@ -1041,7 +1040,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     Result = EmitMinMaxExpr(exp, ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE,
                             FCmpInst::FCMP_OGE);
     break;
-  case CONSTRUCTOR:    Result = EmitCONSTRUCTOR(exp, DestLoc); break;
+  case CONSTRUCTOR:       Result = EmitCONSTRUCTOR(exp, DestLoc); break;
+  case POINTER_PLUS_EXPR: Result = EmitPOINTER_PLUS_EXPR(exp); break;
 
   // Complex Math Expressions.
   case COMPLEX_CST:    EmitCOMPLEX_CST (exp, DestLoc); break;
@@ -3803,6 +3803,24 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
 
   // Return Quotient unless we overflowed, in which case return Quotient + 1.
   return Builder.CreateAdd(Quotient, CastToUIntType(Overflowed, Ty), "rdiv");
+}
+
+Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree exp) {
+  tree ptr_type = TREE_TYPE(TREE_OPERAND(exp, 0));
+  Value *Ptr = Emit(TREE_OPERAND(exp, 0), 0);
+  Value *Idx = Emit(TREE_OPERAND(exp, 1), 0);
+
+  // If we are indexing over a fixed-size type, just use a GEP.
+  if (VOID_TYPE_P(TREE_TYPE(ptr_type)) || isSequentialCompatible(ptr_type))
+    return Builder.CreateInBoundsGEP(Ptr, Idx);
+
+  // Otherwise, compute the offset in bytes.
+  Value *Size = Emit(TYPE_SIZE(TREE_TYPE(ptr_type)), 0);
+  Idx = Builder.CreateMul(Idx, CastToUIntType(Size, Idx->getType()));
+
+  // Convert the pointer into an i8* and add the offset to it.
+  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
+  return Builder.CreateInBoundsGEP(Ptr, Idx);
 }
 
 //===----------------------------------------------------------------------===//

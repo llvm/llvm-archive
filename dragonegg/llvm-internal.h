@@ -575,6 +575,7 @@ private:
   Value *EmitFLOOR_DIV_EXPR(tree_node *exp);
   Value *EmitROUND_DIV_EXPR(tree_node *exp);
   Value *EmitFieldAnnotation(Value *FieldPtr, tree_node *FieldDecl);
+  Value *EmitPOINTER_PLUS_EXPR(tree_node *exp);
 
   // Exception Handling.
   Value *EmitEXC_PTR_EXPR(tree_node *exp);

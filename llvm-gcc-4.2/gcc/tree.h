@@ -2751,10 +2751,6 @@ struct tree_decl_with_rtl GTY(())
 /* In a FIELD_DECL, marks that the type is temporarily replaced in ConvertType
    because it is used as a base class of another type. */
 #define DECL_FIELD_BASE_REPLACED(NODE) (FIELD_DECL_CHECK (NODE)->decl_common.decl_flag_0)
-/* In a FIELD_DECL, marks that the type is temporarily replaced in ConvertType
-   because it is used as the type of a field with less alignment than the
-   type, which means the type may not get tail padding in this case. */
-#define DECL_FIELD_ALIGN_REPLACED(NODE) (FIELD_DECL_CHECK (NODE)->decl_common.gimple_reg_flag)
 #endif
 /* LLVM LOCAL end */
 

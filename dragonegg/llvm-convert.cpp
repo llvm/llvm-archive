@@ -820,9 +820,6 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
   for (gimple_stmt_iterator gsi = gsi_start_phis(bb); !gsi_end_p(gsi);
        gsi_next(&gsi)) {
     gimple gcc_phi = gsi_stmt(gsi);
-    // Skip virtual operands.
-    if (!is_gimple_reg(gimple_phi_result(gcc_phi)))
-      continue;
 
     // Create the LLVM phi node.
     const Type *Ty = ConvertType(TREE_TYPE(gimple_phi_result(gcc_phi)));

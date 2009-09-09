@@ -761,11 +761,25 @@ Function *TreeToLLVM::FinishFunctionBody() {
 
 /// getBasicBlock - Find or create the LLVM basic block corresponding to BB.
 BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
+  // If we already associated an LLVM basic block with BB, then return it.
   DenseMap<basic_block, BasicBlock*>::iterator I = BasicBlocks.find(bb);
   if (I != BasicBlocks.end())
     return I->second;
-  Twine Name(bb->index);
-  return BasicBlocks[bb] = BasicBlock::Create(Context, "bb " + Name);
+
+  // Otherwise, create a new LLVM basic block.
+  BasicBlock *BB = BasicBlock::Create(Context);
+
+  // If BB contains labels, name the LLVM basic block after the first one.
+  gimple stmt = first_stmt (bb);
+  if (stmt && gimple_code (stmt) == GIMPLE_LABEL) {
+    BB->setName(IDENTIFIER_POINTER(DECL_NAME(gimple_label_label(stmt))));
+  } else {
+    // Use the same basic block naming scheme as the GCC tree dumps.
+    Twine Name(bb->index);
+    BB->setName("<bb " + Name + ">");
+  }
+
+  return BasicBlocks[bb] = BB;
 }
 
 /// getLabelDeclBlock - Lazily get and create a basic block for the specified
@@ -914,7 +928,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     llvm_unreachable("Unhandled expression!");
 
   // Control flow
-  case LABEL_EXPR:     Result = EmitLABEL_EXPR(exp); break;
+  case LABEL_EXPR:     break;
   case GOTO_EXPR:      Result = EmitGOTO_EXPR(exp); break;
   case RETURN_EXPR:    Result = EmitRETURN_EXPR(exp, DestLoc); break;
   case SWITCH_EXPR:    Result = EmitSWITCH_EXPR(exp); break;
@@ -1776,13 +1790,6 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 //===----------------------------------------------------------------------===//
 //                           ... Control Flow ...
 //===----------------------------------------------------------------------===//
-
-/// EmitLABEL_EXPR - Emit the basic block corresponding to the specified label.
-///
-Value *TreeToLLVM::EmitLABEL_EXPR(tree exp) {
-  EmitBlock(getLabelDeclBlock(TREE_OPERAND(exp, 0)));
-  return 0;
-}
 
 Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
   if (TREE_CODE(TREE_OPERAND(exp, 0)) == LABEL_DECL) {

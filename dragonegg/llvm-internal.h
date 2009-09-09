@@ -538,7 +538,6 @@ private:
   // characteristics.
 
   // Control flow.
-  Value *EmitLABEL_EXPR(tree_node *exp);
   Value *EmitGOTO_EXPR(tree_node *exp);
   Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitSWITCH_EXPR(tree_node *exp);

@@ -6112,27 +6112,26 @@ bool TreeToLLVM::EmitBuiltinExpect(tree exp, const MemRef *DestLoc,
 }
 
 bool TreeToLLVM::EmitBuiltinVAStart(tree exp) {
-  tree arglist = CALL_EXPR_ARGS(exp);
-  tree fntype = TREE_TYPE(current_function_decl);
-
-  if (TYPE_ARG_TYPES(fntype) == 0 ||
-      (TREE_VALUE(tree_last(TYPE_ARG_TYPES(fntype))) == void_type_node)) {
-    error("`va_start' used in function with fixed args");
+  if (call_expr_nargs(exp) < 2) {
+    error_at (EXPR_LOCATION(exp), "too few arguments to function %<va_start%>");
     return true;
   }
 
-  tree chain = TREE_CHAIN(arglist);
+  tree fntype = TREE_TYPE(current_function_decl);
+  if (TYPE_ARG_TYPES(fntype) == 0 ||
+      (TREE_VALUE(tree_last(TYPE_ARG_TYPES(fntype))) == void_type_node)) {
+    error("%<va_start%> used in function with fixed args");
+    return true;
+  }
 
   // Check for errors.
-  if (fold_builtin_next_arg (chain, true))
+  if (fold_builtin_next_arg (exp, true))
     return true;
 
-  Value *ArgVal = Emit(TREE_VALUE(arglist), 0);
-
-  Constant *llvm_va_start_fn = Intrinsic::getDeclaration(TheModule,
-                                                         Intrinsic::vastart);
+  Constant *va_start = Intrinsic::getDeclaration(TheModule, Intrinsic::vastart);
+  Value *ArgVal = Emit(TREE_VALUE(CALL_EXPR_ARGS(exp)), 0);
   ArgVal = BitCastToType(ArgVal, PointerType::getUnqual(Type::getInt8Ty(Context)));
-  Builder.CreateCall(llvm_va_start_fn, ArgVal);
+  Builder.CreateCall(va_start, ArgVal);
   return true;
 }
 

@@ -64,3 +64,14 @@ should be insignificant, while having a much smaller map for globals could
 be a win.
 
 Consider using separate caches for types and globals.
+
+
+Correctness
+-----------
+
+One GCC basic block can be output as multiple LLVM basic blocks.  This may
+cause the phi node logic to blow up, since the LLVM predecessors of the phi
+node block may not directly correspond to a GCC basic block.
+
+If an ssa name refers to a global (can this happen), the SSANames map might
+need to be updated if the target is altered by changeLLVMConstant.

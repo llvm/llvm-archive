@@ -767,20 +767,31 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
     return I->second;
 
   // Otherwise, create a new LLVM basic block.
-  BasicBlock *BB = BasicBlocks[bb] = BasicBlock::Create(Context);
+  BasicBlock *BB = BasicBlock::Create(Context);
 
   // If BB contains labels, name the LLVM basic block after the first one.
-  gimple stmt = first_stmt (bb);
-  if (stmt && gimple_code (stmt) == GIMPLE_LABEL)
-    if (tree name = DECL_NAME(gimple_label_label(stmt))) {
+  gimple stmt = first_stmt(bb);
+  if (stmt && gimple_code(stmt) == GIMPLE_LABEL) {
+    tree label = gimple_label_label(stmt);
+    if (tree name = DECL_NAME(label)) {
+      // If the label has a name then use it.
       BB->setName(IDENTIFIER_POINTER(name));
-      return BB;
+    } else if (LABEL_DECL_UID(label) != -1) {
+      // If the label has a UID then use it.
+      Twine UID(LABEL_DECL_UID(label));
+      BB->setName("<L" + UID + ">");
+    } else {
+      // Otherwise use the generic UID.
+      Twine UID(DECL_UID(label));
+      BB->setName("<D." + UID + ">");
     }
+  } else {
+    // When there is no label, use the same naming scheme as the GCC tree dumps.
+    Twine Index(bb->index);
+    BB->setName("<bb " + Index + ">");
+  }
 
-  // Use the same basic block naming scheme as the GCC tree dumps.
-  Twine Name(bb->index);
-  BB->setName("<bb " + Name + ">");
-  return BB;
+  return BasicBlocks[bb] = BB;
 }
 
 /// getLabelDeclBlock - Lazily get and create a basic block for the specified

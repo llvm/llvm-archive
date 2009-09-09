@@ -630,13 +630,10 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Emit all automatic variables.
   for (tree vars = DECL_STRUCT_FUNCTION(FnDecl)->local_decls; vars;
-       vars = TREE_CHAIN(vars)) {
-    tree var = TREE_VALUE (vars);
-    // Static variables are treated as global variables.
-    if (TREE_STATIC(var))
-      continue;
-    EmitAutomaticVariableDecl(var);
-  }
+       vars = TREE_CHAIN(vars))
+    // Skip static variables and local variables listed multiple times.
+    if (!DECL_LLVM_SET_P(TREE_VALUE(vars)))
+      EmitAutomaticVariableDecl(TREE_VALUE(vars));
 
   // Create a new block for the return node, but don't insert it yet.
   ReturnBB = BasicBlock::Create(Context, "return");

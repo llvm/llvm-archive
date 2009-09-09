@@ -3851,17 +3851,18 @@ Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree exp) {
   Value *Ptr = Emit(TREE_OPERAND(exp, 0), 0);
   Value *Idx = Emit(TREE_OPERAND(exp, 1), 0);
 
-  // If we are indexing over a fixed-size type, just use a GEP.
-  if (VOID_TYPE_P(TREE_TYPE(ptr_type)) || isSequentialCompatible(ptr_type))
-    return Builder.CreateInBoundsGEP(Ptr, Idx);
+  // If we are indexing over a variable sized type, do raw pointer arithmetic.
+  if (!isSequentialCompatible(ptr_type) && !VOID_TYPE_P(TREE_TYPE(ptr_type))) {
+    // Compute the offset in bytes.
+    Value *Size = Emit(TYPE_SIZE(TREE_TYPE(ptr_type)), 0);
+    Idx = Builder.CreateMul(Idx, CastToUIntType(Size, Idx->getType()));
 
-  // Otherwise, compute the offset in bytes.
-  Value *Size = Emit(TYPE_SIZE(TREE_TYPE(ptr_type)), 0);
-  Idx = Builder.CreateMul(Idx, CastToUIntType(Size, Idx->getType()));
+    // Convert the pointer into an i8* and add the offset to it.
+    Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
+  }
 
-  // Convert the pointer into an i8* and add the offset to it.
-  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
-  return Builder.CreateInBoundsGEP(Ptr, Idx);
+  return Builder.CreateBitCast(Builder.CreateInBoundsGEP(Ptr, Idx),
+                               ConvertType(TREE_TYPE(exp)));
 }
 
 //===----------------------------------------------------------------------===//

@@ -1905,30 +1905,10 @@ void TreeToLLVM::EmitLandingPads() {
             Args.push_back(Emit(TType, 0));
           }
         }
-      }
-    }
-
-    if (can_throw_external_1(i, false)) {
-      // Some exceptions from this region may not be caught by any handler.
-      // Since invokes are required to branch to the unwind label no matter
-      // what exception is being unwound, append a catch-all.
-
-      // The representation of a catch-all is language specific.
-      Value *Catch_All;
-      if (!lang_eh_catch_all) {
-        // Use a "cleanup" - this should be good enough for most languages.
-        Catch_All = ConstantInt::get(Type::Int32Ty, 0);
       } else {
-        tree catch_all_type = lang_eh_catch_all();
-        if (catch_all_type == NULL_TREE)
-          // Use a C++ style null catch-all object.
-          Catch_All =
-            Constant::getNullValue(PointerType::getUnqual(Type::Int8Ty));
-        else
-          // This language has a type that catches all others.
-          Catch_All = Emit(catch_all_type, 0);
+	// Cleanup region.
+	Args.push_back(ConstantInt::get(Type::Int32Ty, 0));
       }
-      Args.push_back(Catch_All);
     }
 
     // Emit the selector call.
@@ -2063,11 +2043,7 @@ void TreeToLLVM::EmitUnwindBlock() {
   if (UnwindBB) {
     CreateExceptionValues();
     EmitBlock(UnwindBB);
-    // Fetch and store exception handler.
-    Value *Arg = Builder.CreateLoad(ExceptionValue, "eh_ptr");
-    assert(llvm_unwind_resume_libfunc && "no unwind resume function!");
-    Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
-    Builder.CreateUnreachable();
+    Builder.CreateUnwind();
   }
 }
 

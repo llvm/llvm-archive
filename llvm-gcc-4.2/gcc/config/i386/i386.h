@@ -3931,6 +3931,9 @@ enum ix86_builtins
 /* Propagate code model setting to backend */
 #define LLVM_SET_MACHINE_OPTIONS(argvec)	   \
   switch (ix86_cmodel) {			   \
+  default:                                         \
+    sorry ("code model %<%s%> not supported yet", ix86_cmodel_string);  \
+    break;                                         \
   case CM_SMALL:				   \
   case CM_SMALL_PIC:				   \
     argvec.push_back("--code-model=small");	   \
@@ -3945,8 +3948,6 @@ enum ix86_builtins
   case CM_32:					   \
     argvec.push_back("--code-model=default");	   \
     break;					   \
-  default:					   \
-    sorry ("code model %<%s%> not supported yet", ix86_cmodel_string);	\
   }
 
 #endif /* ENABLE_LLVM */

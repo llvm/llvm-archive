@@ -430,7 +430,7 @@ case ${target} in
   tm_p_file="${tm_p_file} darwin-protos.h"
   # APPLE LOCAL 5681645
   tmake_file="t-darwin ${cpu_type}/t-darwin"
-  target_gtfiles="\$(srcdir)/config/darwin.c"
+  target_gtfiles="\$(srcdir)/config/darwin.c \$(srcdir)/config/darwin-c.c"
   extra_options="${extra_options} darwin.opt"
   c_target_objs="darwin-c.o"
   cxx_target_objs="darwin-c.o"

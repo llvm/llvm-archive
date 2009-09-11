@@ -3576,9 +3576,9 @@ Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
         if (Opc == Instruction::Sub)
           EltOffset = -EltOffset;
         Constant *C = ConstantInt::get(Type::getInt64Ty(Context), EltOffset);
-        Value *V = flag_wrapv ?
-                   Builder.CreateGEP(LHS, C) :
-                   Builder.CreateInBoundsGEP(LHS, C);
+        Value *V = POINTER_TYPE_OVERFLOW_UNDEFINED ?
+                   Builder.CreateInBoundsGEP(LHS, C) :
+                   Builder.CreateGEP(LHS, C);
         return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
       }
     }
@@ -3944,8 +3944,9 @@ Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree exp) {
     Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
   }
 
-  return Builder.CreateBitCast(Builder.CreateInBoundsGEP(Ptr, Idx),
-                               ConvertType(TREE_TYPE(exp)));
+  Value *GEP = POINTER_TYPE_OVERFLOW_UNDEFINED ?
+    Builder.CreateInBoundsGEP(Ptr, Idx) : Builder.CreateGEP(Ptr, Idx);
+  return Builder.CreateBitCast(GEP, ConvertType(TREE_TYPE(exp)));
 }
 
 //===----------------------------------------------------------------------===//
@@ -6611,9 +6612,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
     if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE)
       Idx.push_back(ConstantInt::get(IntPtrTy, 0));
     Idx.push_back(IndexVal);
-    Value *Ptr = flag_wrapv ?
-      Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end()) :
-      Builder.CreateInBoundsGEP(ArrayAddr, Idx.begin(), Idx.end());
+    Value *Ptr = POINTER_TYPE_OVERFLOW_UNDEFINED ?
+      Builder.CreateInBoundsGEP(ArrayAddr, Idx.begin(), Idx.end()) :
+      Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end());
 
     const Type *ElementTy = ConvertType(ElementType);
     unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));
@@ -6638,9 +6639,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (isa<ConstantInt>(IndexVal))
     Alignment = MinAlign(ArrayAlign,
                          cast<ConstantInt>(IndexVal)->getZExtValue());
-  Value *Ptr = flag_wrapv ?
-    Builder.CreateGEP(ArrayAddr, IndexVal) :
-    Builder.CreateInBoundsGEP(ArrayAddr, IndexVal);
+  Value *Ptr = POINTER_TYPE_OVERFLOW_UNDEFINED ?
+    Builder.CreateInBoundsGEP(ArrayAddr, IndexVal) :
+    Builder.CreateGEP(ArrayAddr, IndexVal);
   return LValue(BitCastToType(Ptr,
                 PointerType::getUnqual(ConvertType(TREE_TYPE(exp)))),
                 Alignment);

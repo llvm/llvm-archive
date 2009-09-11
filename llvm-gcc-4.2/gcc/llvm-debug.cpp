@@ -356,7 +356,7 @@ bool isPartOfAppleBlockPrologue (unsigned lineno) {
   
   if (BLOCK_SYNTHESIZED_FUNC(cfun->decl)) {
     int fn_decl_line = DECL_SOURCE_LINE(cfun->decl);
-    if (lineno == (fn_decl_line - 1))
+    if (lineno == (unsigned)(fn_decl_line - 1))
       return true;
     else
       return false;

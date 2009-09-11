@@ -65,6 +65,10 @@ be a win.
 
 Consider using separate caches for types and globals.
 
+Thanks to gimple being in SSA form, many local variables are not used.
+However they are still in the local_decls list, so we output them all,
+pointlessly, wasting time and memory.  Consider emitting local variables
+on demand instead.
 
 Correctness
 -----------

@@ -334,7 +334,7 @@ static void LazilyConfigureLLVM(void) {
 //TODO  LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
 //TODO#endif
 
-  if (time_report)
+  if (time_report || !quiet_flag  || flag_detailed_statistics)
     Args.push_back("--time-passes");
   if (fast_math_flags_set_p())
     Args.push_back("--enable-unsafe-fp-math");
@@ -819,11 +819,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                      Array, Name);
 }
 
-//TODO// llvm_call_llvm_shutdown - Release LLVM global state.
-//TODOvoid llvm_call_llvm_shutdown(void) {
-//TODO  llvm_shutdown();
-//TODO}
-//TODO
 //TODO/// llvm_emit_code_for_current_function - Top level interface for emitting a
 //TODO/// function to the .s file.
 //TODOvoid llvm_emit_code_for_current_function(tree fndecl) {
@@ -1652,6 +1647,17 @@ const char* extractRegisterName(tree decl) {
   return (*Name == 1) ? Name + 1 : Name;
 }
 
+/// FinalizePlugin - Shutdown the plugin.
+static void FinalizePlugin(void) {
+  static bool Finalized = false;
+  if (Finalized)
+    return;
+
+  llvm_shutdown();
+
+  Finalized = true;
+}
+
 /// TakeoverAsmOutput - Obtain exclusive use of the assembly code output file.
 /// Any GCC output will be thrown away.
 static void TakeoverAsmOutput(void) {
@@ -1817,6 +1823,11 @@ static struct rtl_opt_pass pass_emit_functions =
 };
 
 
+/// llvm_finish - Run shutdown code when GCC exits.
+static void llvm_finish(void *gcc_data, void *user_data) {
+  FinalizePlugin();
+}
+
 /// llvm_finish_unit - Finish the .s file.  This is called by GCC once the
 /// compilation unit has been completely processed.
 static void llvm_finish_unit(void *gcc_data, void *user_data) {
@@ -1947,6 +1958,10 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
 //TODO  delete AsmOutStream;
 //TODO  AsmOutStream = 0;
 //TODO  timevar_pop(TV_LLVM_PERFILE);
+
+  // We have finished - shutdown the plugin.  Doing this here ensures that timer
+  // info and other statistics are not intermingled with those produced by GCC.
+  FinalizePlugin();
 }
 
 
@@ -2129,6 +2144,9 @@ int plugin_init (struct plugin_name_args *plugin_info,
 
   // Finish the .s file once the compilation unit has been completely processed.
   register_callback (plugin_name, PLUGIN_FINISH_UNIT, llvm_finish_unit, NULL);
+
+  // Run shutdown code when GCC exits.
+  register_callback (plugin_name, PLUGIN_FINISH, llvm_finish, NULL);
 
   return 0;
 }

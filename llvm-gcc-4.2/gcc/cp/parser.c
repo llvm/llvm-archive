@@ -21587,6 +21587,12 @@ cp_parser_block_literal_expr (cp_parser* parser)
     build_helper_func_decl (get_identifier (name), s_ftype);
     DECL_CONTEXT (cur_block->copy_helper_func_decl) = current_function_decl;
     synth_copy_helper_block_func (cur_block);
+    /* LLVM LOCAL begin Copy helper function should not have source
+       location.  */
+    DECL_SOURCE_FILE (cur_block->copy_helper_func_decl) = NULL;
+    DECL_SOURCE_LINE (cur_block->copy_helper_func_decl) = 0;
+    /* LLVM LOCAL end Copy helper function should not have source
+       location.  */
 
     /* void destroy_helper_block (struct block*); */
     s_ftype = build_function_type (void_type_node,
@@ -21597,6 +21603,12 @@ cp_parser_block_literal_expr (cp_parser* parser)
     build_helper_func_decl (get_identifier (name), s_ftype);
     DECL_CONTEXT (cur_block->destroy_helper_func_decl) = current_function_decl;
     synth_destroy_helper_block_func (cur_block);
+    /* LLVM LOCAL begin Destroy helper function should not have source
+       location.  */
+    DECL_SOURCE_FILE (cur_block->destroy_helper_func_decl) = NULL;
+    DECL_SOURCE_LINE (cur_block->destroy_helper_func_decl) = 0;
+    /* LLVM LOCAL end Destroy helper function should not have source
+       location.  */
     pop_lang_context ();
   }
 

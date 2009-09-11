@@ -43,6 +43,7 @@ extern "C" {
 #include "toplev.h"
 #include "tree.h"
 #include "version.h"
+#include "function.h"
 }
 
 using namespace llvm;
@@ -210,6 +211,23 @@ DebugInfo::DebugInfo(Module *m)
 , RegionStack()
 {}
 
+/// isCopyOrDestroyHelper - Returns boolean indicating if FnDecl is for
+/// one of the compiler-generated "helper" functions for Apple Blocks
+/// (a copy helper or a destroy helper).  Such functions should not have
+/// debug line table entries.
+bool isCopyOrDestroyHelper (tree FnDecl) {
+  const char *name = IDENTIFIER_POINTER(DECL_NAME(FnDecl));
+
+  if (!BLOCK_SYNTHESIZED_FUNC(FnDecl))
+    return false;
+
+  if (strstr(name, "_copy_helper_block_")
+      || strstr(name, "_destroy_helper_block_"))
+    return true;
+  else
+    return false;
+}
+
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start."
 void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
@@ -218,12 +236,16 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   expanded_location Loc = GetNodeLocation(FnDecl, false);
   const char *LinkageName = getLinkageName(FnDecl);
 
+  unsigned lineno = CurLineNo;
+  if (isCopyOrDestroyHelper(FnDecl))
+    lineno = 0;
+    
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(findRegion(FnDecl),
                                   lang_hooks.dwarf_name(FnDecl, 0),
                                   lang_hooks.dwarf_name(FnDecl, 0),
                                   LinkageName,
-                                  getOrCreateCompileUnit(Loc.file), CurLineNo,
+                                  getOrCreateCompileUnit(Loc.file), lineno,
                                   getOrCreateType(TREE_TYPE(FnDecl)),
                                   Fn->hasInternalLinkage(),
                                   true /*definition*/);
@@ -319,6 +341,30 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   DebugFactory.InsertDeclare(AI, D, CurBB);
 }
 
+
+/// isPartOfAppleBlockPrologue - Return boolean indicating if the line number
+/// passed in is part of the prologue of an Apple Block function.  This assumes
+/// the line number passed in belongs to the "current" function.
+bool isPartOfAppleBlockPrologue (unsigned lineno) {
+  if (!cfun  || !cfun->decl)
+    return false;
+  
+  // In an earlier part of gcc, code that sets up Apple Block by-reference
+  // variables at the beginning of the function (which should be part of the
+  // prologue but isn't), is assigned a source location line of one before the
+  // function decl.  So we check for that here:
+  
+  if (BLOCK_SYNTHESIZED_FUNC(cfun->decl)) {
+    int fn_decl_line = DECL_SOURCE_LINE(cfun->decl);
+    if (lineno == (fn_decl_line - 1))
+      return true;
+    else
+      return false;
+  }
+  
+  return false;
+}
+
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
 /// source line - "llvm.dbg.stoppoint."  Now enabled at -O.
 void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
@@ -334,10 +380,14 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
   PrevFullPath = CurFullPath;
   PrevLineNo = CurLineNo;
   PrevBB = CurBB;
-  
-  DebugFactory.InsertStopPoint(getOrCreateCompileUnit(CurFullPath), 
-                               CurLineNo, 0 /*column no. */,
-                               CurBB);
+
+  // Don't set/allow source line breakpoints in Apple Block prologue code
+  // or in Apple Block helper functions.
+  if (!isPartOfAppleBlockPrologue(CurLineNo)
+      && !isCopyOrDestroyHelper(cfun->decl))
+    DebugFactory.InsertStopPoint(getOrCreateCompileUnit(CurFullPath), 
+                                 CurLineNo, 0 /*column no. */,
+                                 CurBB);
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.

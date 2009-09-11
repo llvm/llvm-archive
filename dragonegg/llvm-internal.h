@@ -566,7 +566,6 @@ private:
   Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCompare(tree_node *lhs, tree_node *rhs, tree_code code);
   Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
-  Value *EmitPtrBinOp(tree_node *exp, unsigned Opc);
   Value *EmitTruthOp(tree_node *exp, unsigned Opc);
   Value *EmitShiftOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
   Value *EmitRotateOp(tree_node *exp, unsigned Opc1, unsigned Opc2);

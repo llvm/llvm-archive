@@ -3498,8 +3498,6 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
 ///
 Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  if (isa<PointerType>(Ty))
-    return EmitPtrBinOp(exp, Opc);   // Pointer arithmetic!
   if (isa<StructType>(Ty))
     return EmitComplexBinOp(exp, DestLoc);
   assert(Ty->isSingleValueType() && DestLoc == 0 &&
@@ -3545,57 +3543,6 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     V = BitCastToType(V, ResTy);
   return V;
 }
-
-/// EmitPtrBinOp - Handle binary expressions involving pointers, e.g. "P+4".
-///
-Value *TreeToLLVM::EmitPtrBinOp(tree exp, unsigned Opc) {
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-
-  // If this is an expression like (P+4), try to turn this into
-  // "getelementptr P, 1".
-  if ((Opc == Instruction::Add || Opc == Instruction::Sub) &&
-      TREE_CODE(TREE_OPERAND(exp, 1)) == INTEGER_CST) {
-    int64_t Offset = getINTEGER_CSTVal(TREE_OPERAND(exp, 1));
-
-    // If POINTER_SIZE is 32-bits and the offset is signed, sign extend it.
-    if (POINTER_SIZE == 32 && !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1))))
-      Offset = (Offset << 32) >> 32;
-
-    // Figure out how large the element pointed to is.
-    const Type *ElTy = cast<PointerType>(LHS->getType())->getElementType();
-    // We can't get the type size (and thus convert to using a GEP instr) from
-    // pointers to opaque structs if the type isn't abstract.
-    if (ElTy->isSized()) {
-      int64_t EltSize = TD.getTypeAllocSize(ElTy);
-
-      // If EltSize exactly divides Offset, then we know that we can turn this
-      // into a getelementptr instruction.
-      int64_t EltOffset = EltSize ? Offset/EltSize : 0;
-      if (EltOffset*EltSize == Offset) {
-        // If this is a subtract, we want to step backwards.
-        if (Opc == Instruction::Sub)
-          EltOffset = -EltOffset;
-        Constant *C = ConstantInt::get(Type::getInt64Ty(Context), EltOffset);
-        Value *V = POINTER_TYPE_OVERFLOW_UNDEFINED ?
-                   Builder.CreateInBoundsGEP(LHS, C) :
-                   Builder.CreateGEP(LHS, C);
-        return BitCastToType(V, ConvertType(TREE_TYPE(exp)));
-      }
-    }
-  }
-
-
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-
-  const Type *IntPtrTy = TD.getIntPtrType(Context);
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  LHS = CastToAnyType(LHS, LHSIsSigned, IntPtrTy, false);
-  RHS = CastToAnyType(RHS, RHSIsSigned, IntPtrTy, false);
-  Value *V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
-  return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
-}
-
 
 Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);

@@ -1712,9 +1712,6 @@ static bool gate_emission(void) {
 
 /// emit_variables - Turn GCC variables into LLVM IR.
 static unsigned int emit_variables(void) {
-  if (!quiet_flag)
-    errs() << "Emitting variables\n";
-
   LazilyInitializeModule();
 
   struct varpool_node *vnode;

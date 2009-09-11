@@ -463,6 +463,9 @@ private: // Helper functions.
   /// cleans up and returns the result function.
   Function *FinishFunctionBody();
 
+  /// PopulatePhiNodes - Populate generated phi nodes with their operands.
+  void PopulatePhiNodes();
+
   /// getBasicBlock - Find or create the LLVM basic block corresponding to BB.
   BasicBlock *getBasicBlock(basic_block bb);
 

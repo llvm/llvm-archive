@@ -639,59 +639,131 @@ void TreeToLLVM::StartFunctionBody() {
   ReturnBB = BasicBlock::Create(Context, "return");
 }
 
-Function *TreeToLLVM::FinishFunctionBody() {
-  DenseMap<BasicBlock*, Value*> IncomingValues;
+typedef SmallVector<std::pair<BasicBlock*, unsigned>, 8> PredVector;
+typedef SmallVector<std::pair<BasicBlock*, tree>, 8> TreeVector;
+typedef SmallVector<std::pair<BasicBlock*, Value*>, 8> ValueVector;
 
-  // Populate phi nodes with their operands now that all ssa names have been
-  // defined.
+/// PopulatePhiNodes - Populate generated phi nodes with their operands.
+void TreeToLLVM::PopulatePhiNodes() {
+  PredVector Predecessors;
+  TreeVector IncomingValues;
+  ValueVector PhiArguments;
+
   for (unsigned i = 0, e = PendingPhis.size(); i < e; ++i) {
+    // The phi node to process.
     PhiRecord &P = PendingPhis[i];
 
     // Extract the incoming value for each predecessor from the GCC phi node.
-    for (size_t i = 0; i < gimple_phi_num_args(P.gcc_phi); ++i) {
-      // Find the incoming basic block.
+    for (size_t i = 0, e = gimple_phi_num_args(P.gcc_phi); i != e; ++i) {
+      // The incoming GCC basic block.
       basic_block bb = gimple_phi_arg_edge(P.gcc_phi, i)->src;
+
+      // If there is no corresponding LLVM basic block then the GCC basic block
+      // was unreachable - skip this phi argument.
       DenseMap<basic_block, BasicBlock*>::iterator BI = BasicBlocks.find(bb);
-      // If it does not exist then it was unreachable - skip this phi argument.
       if (BI == BasicBlocks.end())
         continue;
 
-      // Obtain the incoming value.  Any new instructions added to the function
-      // must be carefully placed, so analyze each case by hand rather than just
-      // calling Emit.
-      tree def = gimple_phi_arg(P.gcc_phi, i)->def;
-      Value *Val;
+      // The incoming GCC expression.
+      tree val = gimple_phi_arg(P.gcc_phi, i)->def;
 
-      // The incoming value is either an ssa name or a constant.
-      // FIXME: Not clear what is allowed here exactly.
-      if (TREE_CODE(def) == SSA_NAME)
-        Val = EmitSSA_NAME(def);
-      else
-        Val = TreeConstantToLLVM::Convert(def);
+      // Associate it with the LLVM basic block.
+      IncomingValues.push_back(std::make_pair(BI->second, val));
 
-      // Predecessors can occur more times in LLVM than in GCC, where they only
-      // occur once, so it is not enough to push one phi operand per GCC edge.
-      // Instead, remember the incoming value for each predecessor in a map.
-      assert(IncomingValues.find(BI->second) == IncomingValues.end() &&
-             "Multiple edges between basic blocks!");
-      IncomingValues[BI->second] = Val;
+      // Several LLVM basic blocks may be generated when emitting one GCC basic
+      // block.  The additional blocks always occur immediately after the main
+      // basic block, and can be identified by the fact that they are nameless.
+      // Associate the incoming expression with all of them, since any of them
+      // may occur as a predecessor of the LLVM basic block containing the phi.
+      Function::iterator FI(BI->second), FE = Fn->end();
+      for (++FI; FI != FE && !FI->hasName(); ++FI)
+        IncomingValues.push_back(std::make_pair(FI, val));
     }
 
-    // Now iterate over all LLVM predecessors, adding phi operands as we go.
-    BasicBlock *CurBB = P.PHI->getParent();
-    P.PHI->reserveOperandSpace(gimple_phi_num_args(P.gcc_phi));
-    for (pred_iterator PI = pred_begin(CurBB), PE = pred_end(CurBB); PI != PE;
-         ++PI) {
-      BasicBlock *IncomingBB = *PI;
-      assert(IncomingValues.find(IncomingBB) != IncomingValues.end() &&
-             "No incoming value for predecessor!");
-      P.PHI->addIncoming(IncomingValues[IncomingBB], IncomingBB);
+    // Sort the incoming values by basic block to help speed up queries.
+    std::sort(IncomingValues.begin(), IncomingValues.end());
+
+    // Get the LLVM predecessors for the basic block containing the phi node,
+    // and remember their positions in the list of predecessors (this is used
+    // to avoid adding phi operands in a non-deterministic order).
+    Predecessors.reserve(gimple_phi_num_args(P.gcc_phi)); // At least this many.
+    BasicBlock *PhiBB = P.PHI->getParent();
+    unsigned Index = 0;
+    for (pred_iterator PI = pred_begin(PhiBB), PE = pred_end(PhiBB); PI != PE;
+         ++PI, ++Index)
+      Predecessors.push_back(std::make_pair(*PI, Index));
+
+    // Sort the predecessors by basic block.  In GCC, each predecessor occurs
+    // exactly once.  However in LLVM a predecessor can occur several times,
+    // and then every copy of the predecessor must be associated with exactly
+    // the same incoming value in the phi node.  Sorting the predecessors groups
+    // multiple occurrences together, making this easy to handle.
+    std::sort(Predecessors.begin(), Predecessors.end());
+
+    // Now iterate over the predecessors, setting phi operands as we go.
+    TreeVector::iterator VI = IncomingValues.begin(), VE = IncomingValues.end();
+    PredVector::iterator PI = Predecessors.begin(), PE = Predecessors.end();
+    PhiArguments.resize(Predecessors.size());
+    while (PI != PE) {
+      // The predecessor basic block.
+      BasicBlock *BB = PI->first;
+
+      // Find the incoming value for this predecessor.
+      while (VI != VE && VI->first != BB) ++VI;
+      assert(VI != VE && "No value for predecessor!");
+      tree val = VI->second;
+
+      // Emitting the value may produce code, for example a type conversion.
+      // Place any code at the end of the predecessor, before the terminator.
+
+      // Pop the terminator.
+      Instruction *Terminator = BB->getTerminator();
+      assert(Terminator && "Basic block has no terminator!");
+      Terminator->removeFromParent();
+
+      // If the terminator is an invoke instruction and the value makes use of
+      // the invoke result then the code cannot be placed before the terminator.
+      // This case cannot occur because the normal destination of a landing pad
+      // is always an artificial basic block, so never has any phi nodes in it.
+      assert((!isa<InvokeInst>(Terminator) ||
+              PhiBB != cast<InvokeInst>(Terminator)->getNormalDest()) &&
+             "PHI node in invoke normal destination!");
+
+      // Point the builder to the end of the predecessor.
+      Builder.SetInsertPoint(BB);
+
+      // Emit the value.
+      Value *Value = Builder.CreateBitCast(Emit(val, 0), P.PHI->getType());
+      assert(Builder.GetInsertBlock() == BB &&
+             "Expression emission generated control flow!");
+
+      // Push the terminator back.
+      BB->getInstList().push_back(Terminator);
+
+      // Add the phi node arguments for all occurrences of this predecessor.
+      do {
+        // Place the argument at the position given by PI->second, which is the
+        // original position before sorting of the predecessor in the pred list.
+        // Since the predecessors were sorted non-deterministically (by pointer
+        // value), this ensures that the same bitcode is produced on any run.
+        PhiArguments[PI++->second] = std::make_pair(BB, Value);
+      } while (PI != PE && PI->first == BB);
     }
+
+    // Add the operands to the phi node.
+    P.PHI->reserveOperandSpace(PhiArguments.size());
+    for (ValueVector::iterator I = PhiArguments.begin(), E = PhiArguments.end();
+         I != E; ++I)
+      P.PHI->addIncoming(I->second, I->first);
 
     IncomingValues.clear();
+    PhiArguments.clear();
+    Predecessors.clear();
   }
   PendingPhis.clear();
+}
 
+Function *TreeToLLVM::FinishFunctionBody() {
   // Insert the return block at the end of the function.
   EmitBlock(ReturnBB);
 
@@ -770,6 +842,10 @@ Function *TreeToLLVM::FinishFunctionBody() {
       SI->setSuccessor(0, SI->getSuccessor(1));
   }
 
+  // Populate phi nodes with their operands now that all ssa names have been
+  // defined and all basic blocks output.
+  PopulatePhiNodes();
+
 // Local llvm values should probably just be cached in a local map, making this
 // routine unnecessary.
 //TODO  // Remove any cached LLVM values that are local to this function.  Such values
@@ -789,7 +865,13 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
   // Otherwise, create a new LLVM basic block.
   BasicBlock *BB = BasicBlock::Create(Context);
 
-  // If BB contains labels, name the LLVM basic block after the first one.
+  // All basic blocks that directly correspond to GCC basic blocks (those
+  // created here) must have a name.  All artificial basic blocks produced
+  // while generating code must be nameless.  That way, artificial blocks
+  // can be easily identified.
+
+  // Give the basic block a name.  If BB contains labels, name the LLVM basic
+  // block after the first label.
   gimple stmt = first_stmt(bb);
   if (stmt && gimple_code(stmt) == GIMPLE_LABEL) {
     tree label = gimple_label_label(stmt);
@@ -1928,7 +2010,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
       Value *Diff = Builder.CreateSub(SwitchExp, LowC);
       Value *Cond = Builder.CreateICmpULE(Diff,
                                           ConstantInt::get(Context, Range));
-      BasicBlock *False_Block = BasicBlock::Create(Context, "case_false");
+      BasicBlock *False_Block = BasicBlock::Create(Context);
       Builder.CreateCondBr(Cond, Dest, False_Block);
       EmitBlock(False_Block);
     }
@@ -2469,11 +2551,10 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   // EmitCall(exp, DestLoc);
   Value *Result = EmitCallOf(Callee, exp, DestLoc, PAL);
 
-  // If the function has the volatile bit set, then it is a "noreturn" function.
-  // Output an unreachable instruction right after the function to prevent LLVM
-  // from thinking that control flow will fall into the subsequent block.
-  //
-  if (fndecl && TREE_THIS_VOLATILE(fndecl)) {
+  // When calling a "noreturn" function output an unreachable instruction right
+  // after the function to prevent LLVM from thinking that control flow will
+  // fall into the subsequent block.
+  if (call_expr_flags(exp) & ECF_NORETURN) {
     Builder.CreateUnreachable();
     EmitBlock(BasicBlock::Create(Context));
   }
@@ -2874,7 +2955,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
     cast<CallInst>(Call)->setAttributes(PAL);
   } else {
-    BasicBlock *NextBlock = BasicBlock::Create(Context, "invcont");
+    BasicBlock *NextBlock = BasicBlock::Create(Context);
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
                                 CallOperands.begin(), CallOperands.end());
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);

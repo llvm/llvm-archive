@@ -30,6 +30,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ValueHandle.h"
 
 extern "C" {
 #include "llvm.h"
@@ -59,8 +60,8 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  std::map<std::string, MDNode *> CUCache;
-  std::map<tree_node *, MDNode *> TypeCache;
+  std::map<std::string, WeakVH > CUCache;
+  std::map<tree_node *, WeakVH > TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
   std::vector<DIDescriptor> RegionStack;

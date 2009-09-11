@@ -1738,7 +1738,7 @@ static struct simple_ipa_opt_pass pass_emit_variables =
       NULL,		/* sub */
       NULL,		/* next */
       0,		/* static_pass_number */
-      TV_EXPAND,	/* tv_id */
+      TV_NONE,		/* tv_id */
       0,		/* properties_required */
       0,		/* properties_provided */
       0,		/* properties_destroyed */
@@ -1811,7 +1811,7 @@ static struct rtl_opt_pass pass_emit_functions =
       NULL,					/* sub */
       NULL,					/* next */
       0,					/* static_pass_number */
-      TV_EXPAND,				/* tv_id */
+      TV_NONE,					/* tv_id */
       PROP_ssa | PROP_gimple_leh
         | PROP_gimple_lomp | PROP_cfg,		/* properties_required */
       0,					/* properties_provided */

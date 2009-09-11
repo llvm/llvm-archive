@@ -3,7 +3,7 @@
 /* { dg-options "-O2" } */
 /* { dg-require-effective-target ilp32 } */
 /* LLVM LOCAL */
-/* { dg-final { scan-assembler "and.*(0xffffff00|4294967040)" } } */
+/* { dg-final { scan-assembler "and.*(0xffffff00|4294967040|-256)" } } */
 unsigned char lut[256];
 
 /* LLVM LOCAL - make pointers arguments */

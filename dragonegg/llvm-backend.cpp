@@ -475,10 +475,10 @@ static void LazilyInitializeModule(void) {
   TheModule->setDataLayout(TheTarget->getTargetData()->
                            getStringRepresentation());
 
-//TODO  if (optimize)
-//TODO    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
-//TODO  else
-//TODO    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
+  if (optimize)
+    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
+  else
+    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
 
 //TODO  // FIXME - Do not disable debug info while writing pch.
 //TODO  if (!flag_pch_file &&

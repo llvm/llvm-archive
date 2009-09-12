@@ -6515,33 +6515,20 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree IndexType = TREE_TYPE(Index);
   tree ElementType = TREE_TYPE(ArrayTreeType);
 
-  assert((TREE_CODE (ArrayTreeType) == ARRAY_TYPE ||
-          TREE_CODE (ArrayTreeType) == POINTER_TYPE ||
-          TREE_CODE (ArrayTreeType) == REFERENCE_TYPE) &&
-         "Unknown ARRAY_REF!");
+  assert(TREE_CODE (ArrayTreeType) == ARRAY_TYPE && "Unknown ARRAY_REF!");
 
-  // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
-  // operand.  This construct maps directly to a getelementptr instruction.
   Value *ArrayAddr;
   unsigned ArrayAlign;
 
-  if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE) {
-    // First subtract the lower bound, if any, in the type of the index.
-    tree LowerBound = array_ref_low_bound(exp);
-    if (!integer_zerop(LowerBound))
-      Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
+  // First subtract the lower bound, if any, in the type of the index.
+  tree LowerBound = array_ref_low_bound(exp);
+  if (!integer_zerop(LowerBound))
+    Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
 
-    LValue ArrayAddrLV = EmitLV(Array);
-    assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
-    ArrayAddr = ArrayAddrLV.Ptr;
-    ArrayAlign = ArrayAddrLV.getAlignment();
-  } else {
-    ArrayAddr = Emit(Array, 0);
-    if (TREE_CODE (ArrayTreeType) == POINTER_TYPE)
-      ArrayAlign = getPointerAlignment(Array);
-    else
-      ArrayAlign = 1;
-  }
+  LValue ArrayAddrLV = EmitLV(Array);
+  assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
+  ArrayAddr = ArrayAddrLV.Ptr;
+  ArrayAlign = ArrayAddrLV.getAlignment();
 
   Value *IndexVal = Emit(Index, 0);
 
@@ -6555,13 +6542,12 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
 
   // If we are indexing over a fixed-size type, just use a GEP.
   if (isSequentialCompatible(ArrayTreeType)) {
-    SmallVector<Value*, 2> Idx;
-    if (TREE_CODE(ArrayTreeType) == ARRAY_TYPE)
-      Idx.push_back(ConstantInt::get(IntPtrTy, 0));
-    Idx.push_back(IndexVal);
+    Value *Idx[2];
+    Idx[0] = ConstantInt::get(IntPtrTy, 0);
+    Idx[1] = IndexVal;
     Value *Ptr = POINTER_TYPE_OVERFLOW_UNDEFINED ?
-      Builder.CreateInBoundsGEP(ArrayAddr, Idx.begin(), Idx.end()) :
-      Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end());
+      Builder.CreateInBoundsGEP(ArrayAddr, Idx, Idx + 2) :
+      Builder.CreateGEP(ArrayAddr, Idx, Idx + 2);
 
     const Type *ElementTy = ConvertType(ElementType);
     unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));
@@ -8059,27 +8045,18 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
   tree IndexType = TREE_TYPE(Index);
-  assert((TREE_CODE(ArrayType) == ARRAY_TYPE ||
-          TREE_CODE(ArrayType) == POINTER_TYPE ||
-          TREE_CODE(ArrayType) == REFERENCE_TYPE) &&
-         "Unknown ARRAY_REF!");
+  assert(TREE_CODE(ArrayType) == ARRAY_TYPE && "Unknown ARRAY_REF!");
 
   // Check for variable sized reference.
   // FIXME: add support for array types where the size doesn't fit into 64 bits
   assert(isSequentialCompatible(ArrayType) && "Global with variable size?");
 
-  // As an LLVM extension, we allow ARRAY_REF with a pointer as the first
-  // operand.  This construct maps directly to a getelementptr instruction.
   Constant *ArrayAddr;
-  if (TREE_CODE(ArrayType) == ARRAY_TYPE) {
-    // First subtract the lower bound, if any, in the type of the index.
-    tree LowerBound = array_ref_low_bound(exp);
-    if (!integer_zerop(LowerBound))
-      Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
-    ArrayAddr = EmitLV(Array);
-  } else {
-    ArrayAddr = Convert(Array);
-  }
+  // First subtract the lower bound, if any, in the type of the index.
+  tree LowerBound = array_ref_low_bound(exp);
+  if (!integer_zerop(LowerBound))
+    Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
+  ArrayAddr = EmitLV(Array);
 
   Constant *IndexVal = Convert(Index);
 
@@ -8088,12 +8065,11 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
     IndexVal = TheFolder->CreateIntCast(IndexVal, IntPtrTy,
                                         !TYPE_UNSIGNED(IndexType));
 
-  std::vector<Value*> Idx;
-  if (TREE_CODE(ArrayType) == ARRAY_TYPE)
-    Idx.push_back(ConstantInt::get(IntPtrTy, 0));
-  Idx.push_back(IndexVal);
+  Value *Idx[2];
+  Idx[0] = ConstantInt::get(IntPtrTy, 0);
+  Idx[1] = IndexVal;
 
-  return TheFolder->CreateGetElementPtr(ArrayAddr, &Idx[0], Idx.size());
+  return TheFolder->CreateGetElementPtr(ArrayAddr, Idx, 2);
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {

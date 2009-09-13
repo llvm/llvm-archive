@@ -518,8 +518,8 @@ private: // Helpers for exception handling.
 private:
 
   // Render* - Convert GIMPLE to LLVM.
-
   void RenderGIMPLE_COND(gimple_statement_d *);
+  void RenderGIMPLE_GOTO(gimple_statement_d *);
 
 private:
   void EmitAutomaticVariableDecl(tree_node *decl);
@@ -541,7 +541,6 @@ private:
   // characteristics.
 
   // Control flow.
-  Value *EmitGOTO_EXPR(tree_node *exp);
   Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitSWITCH_EXPR(tree_node *exp);
 

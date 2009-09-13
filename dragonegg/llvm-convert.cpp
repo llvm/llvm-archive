@@ -949,7 +949,6 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
-    case GIMPLE_GOTO:
     case GIMPLE_RETURN:
     case GIMPLE_ASM:
     case GIMPLE_CALL:
@@ -974,6 +973,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     case GIMPLE_COND:
       RenderGIMPLE_COND(gimple_stmt);
+      break;
+
+    case GIMPLE_GOTO:
+      RenderGIMPLE_GOTO(gimple_stmt);
       break;
 
     case GIMPLE_LABEL:
@@ -1046,7 +1049,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   // Control flow
   case LABEL_EXPR:     break;
-  case GOTO_EXPR:      Result = EmitGOTO_EXPR(exp); break;
   case RETURN_EXPR:    Result = EmitRETURN_EXPR(exp, DestLoc); break;
   case SWITCH_EXPR:    Result = EmitSWITCH_EXPR(exp); break;
 
@@ -1907,31 +1909,6 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 //===----------------------------------------------------------------------===//
 //                           ... Control Flow ...
 //===----------------------------------------------------------------------===//
-
-Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
-  if (TREE_CODE(TREE_OPERAND(exp, 0)) == LABEL_DECL) {
-    // Direct branch.
-    Builder.CreateBr(getLabelDeclBlock(TREE_OPERAND(exp, 0)));
-  } else {
-
-    // Otherwise we have an indirect goto.
-    BasicBlock *DestBB = getIndirectGotoBlock();
-
-    // Store the destination block to the GotoValue alloca.
-    Value *V = Emit(TREE_OPERAND(exp, 0), 0);
-    V = CastToType(Instruction::PtrToInt, V, TD.getIntPtrType(Context));
-    Builder.CreateStore(V, IndirectGotoValue);
-
-    // NOTE: This is HORRIBLY INCORRECT in the presence of exception handlers.
-    // There should be one collector block per cleanup level!  Note that
-    // standard GCC gets this wrong as well.
-    //
-    Builder.CreateBr(DestBB);
-  }
-  EmitBlock(BasicBlock::Create(Context));
-  return 0;
-}
-
 
 Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
   assert(DestLoc == 0 && "Does not return a value!");
@@ -8152,4 +8129,25 @@ void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
 
   // Branch based on the condition.
   Builder.CreateCondBr(Cond, IfTrue, IfFalse);
+}
+
+void TreeToLLVM::RenderGIMPLE_GOTO(gimple stmt) {
+  tree dest = gimple_goto_dest(stmt);
+
+  if (TREE_CODE(dest) == LABEL_DECL) {
+    // Direct branch.
+    Builder.CreateBr(getLabelDeclBlock(dest));
+    return;
+  }
+
+  // Otherwise we have an indirect goto.
+  BasicBlock *DestBB = getIndirectGotoBlock();
+
+  // Store the destination block to the GotoValue alloca.
+  Value *V = Builder.CreatePtrToInt(Emit(dest, 0), TD.getIntPtrType(Context));
+  Builder.CreateStore(V, IndirectGotoValue);
+
+  // NOTE: This is HORRIBLY INCORRECT in the presence of exception handlers.
+  // There should be one collector block per cleanup level!
+  Builder.CreateBr(DestBB);
 }

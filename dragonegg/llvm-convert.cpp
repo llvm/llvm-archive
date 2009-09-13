@@ -950,13 +950,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
     case GIMPLE_GOTO:
-    case GIMPLE_LABEL:
     case GIMPLE_RETURN:
     case GIMPLE_ASM:
     case GIMPLE_CALL:
     case GIMPLE_SWITCH:
-    case GIMPLE_NOP:
-    case GIMPLE_PREDICT:
     case GIMPLE_RESX: {
       // TODO Handle gimple directly, rather than converting to a tree.
       tree stmt = gimple_to_tree(gimple_stmt);
@@ -977,6 +974,11 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     case GIMPLE_COND:
       RenderGIMPLE_COND(gimple_stmt);
+      break;
+
+    case GIMPLE_LABEL:
+    case GIMPLE_NOP:
+    case GIMPLE_PREDICT:
       break;
 
     default:

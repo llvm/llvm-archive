@@ -520,6 +520,7 @@ private:
   // Render* - Convert GIMPLE to LLVM.
   void RenderGIMPLE_COND(gimple_statement_d *);
   void RenderGIMPLE_GOTO(gimple_statement_d *);
+  void RenderGIMPLE_SWITCH(gimple_statement_d *);
 
 private:
   void EmitAutomaticVariableDecl(tree_node *decl);
@@ -542,7 +543,6 @@ private:
 
   // Control flow.
   Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitSWITCH_EXPR(tree_node *exp);
 
   // Expressions.
   Value *EmitSSA_NAME(tree_node *exp);

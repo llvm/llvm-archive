@@ -520,6 +520,7 @@ private:
   // Render* - Convert GIMPLE to LLVM.
   void RenderGIMPLE_COND(gimple_statement_d *);
   void RenderGIMPLE_GOTO(gimple_statement_d *);
+  void RenderGIMPLE_RETURN(gimple_statement_d *);
   void RenderGIMPLE_SWITCH(gimple_statement_d *);
 
 private:
@@ -540,9 +541,6 @@ private:
 
   // Emit* - These are delegates from Emit, and have the same parameter
   // characteristics.
-
-  // Control flow.
-  Value *EmitRETURN_EXPR(tree_node *exp, const MemRef *DestLoc);
 
   // Expressions.
   Value *EmitSSA_NAME(tree_node *exp);

@@ -949,7 +949,6 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
-    case GIMPLE_RETURN:
     case GIMPLE_ASM:
     case GIMPLE_CALL:
     case GIMPLE_RESX: {
@@ -981,6 +980,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     case GIMPLE_LABEL:
     case GIMPLE_NOP:
     case GIMPLE_PREDICT:
+      break;
+
+    case GIMPLE_RETURN:
+      RenderGIMPLE_RETURN(gimple_stmt);
       break;
 
     case GIMPLE_SWITCH:
@@ -1049,10 +1052,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   default:
     debug_tree(exp);
     llvm_unreachable("Unhandled expression!");
-
-  // Control flow
-  case LABEL_EXPR:  break;
-  case RETURN_EXPR: Result = EmitRETURN_EXPR(exp, DestLoc); break;
 
   // Exception handling.
   case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
@@ -1911,26 +1910,6 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 //===----------------------------------------------------------------------===//
 //                           ... Control Flow ...
 //===----------------------------------------------------------------------===//
-
-Value *TreeToLLVM::EmitRETURN_EXPR(tree exp, const MemRef *DestLoc) {
-  assert(DestLoc == 0 && "Does not return a value!");
-  tree retval = TREE_OPERAND(exp, 0);
-
-  assert((!retval || TREE_CODE(retval) == RESULT_DECL ||
-          ((TREE_CODE(retval) == MODIFY_EXPR
-             || TREE_CODE(retval) == INIT_EXPR) &&
-           TREE_CODE(TREE_OPERAND(retval, 0)) == RESULT_DECL)) &&
-         "RETURN_EXPR not gimple!");
-
-  if (retval && TREE_CODE(retval) != RESULT_DECL)
-    // Emit the assignment to RESULT_DECL.
-    Emit(retval, 0);
-
-  // Emit a branch to the exit label.
-  Builder.CreateBr(ReturnBB);
-  EmitBlock(BasicBlock::Create(Context));
-  return 0;
-}
 
 /// CreateExceptionValues - Create values used internally by exception handling.
 void TreeToLLVM::CreateExceptionValues() {
@@ -8072,6 +8051,26 @@ void TreeToLLVM::RenderGIMPLE_GOTO(gimple stmt) {
   // FIXME: This is HORRIBLY INCORRECT in the presence of exception handlers.
   // There should be one collector block per cleanup level!
   Builder.CreateBr(DestBB);
+}
+
+void TreeToLLVM::RenderGIMPLE_RETURN(gimple stmt) {
+  tree retval = gimple_return_retval(stmt);
+  tree result = DECL_RESULT(current_function_decl);
+
+  if (retval && retval != error_mark_node && retval != result) {
+    // Store the return value to the function's DECL_RESULT.
+    if (isAggregateTreeType(TREE_TYPE(result))) {
+      MemRef DestLoc(DECL_LLVM(result), 1, false); // FIXME: What alignment?
+      Emit(retval, &DestLoc);
+    } else {
+      Value *Val = Builder.CreateBitCast(Emit(retval, 0),
+                                         ConvertType(TREE_TYPE(result)));
+      Builder.CreateStore(Val, DECL_LLVM(result));
+    }
+  }
+
+  // Emit a branch to the exit label.
+  Builder.CreateBr(ReturnBB);
 }
 
 void TreeToLLVM::RenderGIMPLE_SWITCH(gimple stmt) {

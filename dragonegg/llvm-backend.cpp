@@ -1992,6 +1992,32 @@ static struct gimple_opt_pass pass_gimple_null =
     }
 };
 
+/// pass_ipa_null - IPA pass that does nothing.
+static struct ipa_opt_pass_d pass_ipa_null = {
+    {
+      IPA_PASS,
+      NULL,             /* name */
+      gate_null,        /* gate */
+      NULL,             /* execute */
+      NULL,             /* sub */
+      NULL,             /* next */
+      0,                /* static_pass_number */
+      TV_NONE,          /* tv_id */
+      0,                /* properties_required */
+      0,                /* properties_provided */
+      0,                /* properties_destroyed */
+      0,                /* todo_flags_start */
+      0                 /* todo_flags_finish */
+    },
+    NULL,       /* generate_summary */
+    NULL,       /* write_summary */
+    NULL,       /* read_summary */
+    NULL,       /* function_read_summary */
+    0,          /* TODOs */
+    NULL,       /* function_transform */
+    NULL        /* variable_transform */
+};
+
 /// pass_rtl_null - RTL pass that does nothing.
 static struct rtl_opt_pass pass_rtl_null =
 {
@@ -2008,6 +2034,26 @@ static struct rtl_opt_pass pass_rtl_null =
       0,		/* properties_provided */
       0,		/* properties_destroyed */
       0,		/* todo_flags_start */
+      0			/* todo_flags_finish */
+    }
+};
+
+/// pass_simple_ipa_null - Simple IPA pass that does nothing.
+static struct simple_ipa_opt_pass pass_simple_ipa_null =
+{
+    {
+      SIMPLE_IPA_PASS,
+      NULL,		/* name */
+      gate_null,	/* gate */
+      NULL,		/* execute */
+      NULL,		/* sub */
+      NULL,		/* next */
+      0,		/* static_pass_number */
+      TV_NONE,		/* tv_id */
+      0,		/* properties_required */
+      0,		/* properties_provided */
+      0,		/* properties_destroyed */
+      0,            	/* todo_flags_start */
       0			/* todo_flags_finish */
     }
 };
@@ -2114,6 +2160,85 @@ int plugin_init (struct plugin_name_args *plugin_info,
     // TODO: figure out a good way of turning off ipa optimization passes.
     // Could just set optimize to zero (after taking a copy), but this would
     // also impact front-end optimizations.
+
+    // Turn off pass_ipa_early_inline.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "einline_ipa";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_all_early_optimizations.
+    pass_info.pass = &pass_gimple_null.pass;
+    pass_info.reference_pass_name = "early_optimizations";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_increase_alignment.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "increase_alignment";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_matrix_reorg.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "matrix-reorg";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_cp.
+    pass_info.pass = &pass_ipa_null.pass;
+    pass_info.reference_pass_name = "cp";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_inline.
+    pass_info.pass = &pass_ipa_null.pass;
+    pass_info.reference_pass_name = "inline";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_reference.
+    pass_info.pass = &pass_ipa_null.pass;
+    pass_info.reference_pass_name = "static-var";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_pure_const.
+    pass_info.pass = &pass_ipa_null.pass;
+    pass_info.reference_pass_name = "pure-const";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_type_escape.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "type-escape-var";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_pta.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "pta";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_ipa_struct_reorg.
+    pass_info.pass = &pass_simple_ipa_null.pass;
+    pass_info.reference_pass_name = "ipa_struct_reorg";
+    pass_info.ref_pass_instance_number = 0;
+    pass_info.pos_op = PASS_POS_REPLACE;
+    register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+
+    // Turn off pass_all_optimizations.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "*all_optimizations";
     pass_info.ref_pass_instance_number = 0;

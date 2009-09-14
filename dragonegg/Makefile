@@ -30,7 +30,7 @@ LDFLAGS+=$(shell llvm-config --ldflags) $(shell llvm-config --libs analysis core
 llvm.so: $(PLUGIN_OBJECT_FILES)
 	$(CXX) -shared $^ -o $@ $(LDFLAGS)
 
-llvm-cache.c: gt-llvm-cache.h
+llvm-cache.o: gt-llvm-cache.h
 
 gt-llvm-cache.h:
 	cd $(GCCOBJECT_DIR)/gcc && ./build/gengtype \

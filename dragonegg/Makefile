@@ -40,4 +40,4 @@ gt-llvm-cache.h:
 	sed -i "s/ggc_root_tab .*\[\]/ggc_root_tab gt_pch_rc__gt_llvm_cache_h[]/" $(GENGTYPE_OUTPUT)
 
 clean::
-	rm -f *.o *.so $(ARCH_DIR)/*.o $(GENGTYPE_OUTPUT)
+	rm -f *.o *.so $(ARCH_DIR)/*.o

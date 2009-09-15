@@ -4329,6 +4329,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   SmallVector<Value *, 4> StoreCallResultAddrs;
   SmallVector<const Type *, 4> CallResultTypes;
   SmallVector<bool, 4> CallResultIsSigned;
+  SmallVector<tree, 4> CallResultSSANames;
+  SmallVector<Value *, 4> CallResultSSATemps;
 
   // Process outputs.
   ValNum = 0;
@@ -4384,9 +4386,19 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
     }
 
-    LValue Dest = EmitLV(Operand);
-    const Type *DestValTy =
-      cast<PointerType>(Dest.Ptr->getType())->getElementType();
+    LValue Dest;
+    const Type *DestValTy;
+    if (TREE_CODE(Operand) == SSA_NAME) {
+      // The ASM is defining an ssa name.  Store the output to a temporary, then
+      // load it out again later as the ssa name.
+      DestValTy = ConvertType(TREE_TYPE(Operand));
+      Dest.Ptr = CreateTemporary(DestValTy);
+      CallResultSSANames.push_back(Operand);
+      CallResultSSATemps.push_back(Dest.Ptr);
+    } else {
+      Dest = EmitLV(Operand);
+      DestValTy = cast<PointerType>(Dest.Ptr->getType())->getElementType();
+    }
 
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
     if (!AllowsMem && DestValTy->isSingleValueType()) {// Reg dest -> asm return
@@ -4612,6 +4624,10 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
     }
   }
+
+  // If the call defined any ssa names, associate them with their value.
+  for (unsigned i = 0, e = CallResultSSANames.size(); i != e; ++i)
+    SSANames[CallResultSSANames[i]] = Builder.CreateLoad(CallResultSSATemps[i]);
 
   // Give the backend a chance to upgrade the inline asm to LLVM code.  This
   // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->

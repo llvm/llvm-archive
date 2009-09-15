@@ -1375,14 +1375,11 @@ Value *make_decl_llvm(tree decl) {
   
 //TODO  timevar_push(TV_LLVM_GLOBALS);
 
-  const char *Name = "";
-  if (DECL_NAME(decl))
-    if (tree AssemblerName = DECL_ASSEMBLER_NAME(decl))
-      Name = IDENTIFIER_POINTER(AssemblerName);
-  
+  std::string Name = getLLVMAssemblerName(decl).str();
+
   // Now handle ordinary static variables and functions (in memory).
   // Also handle vars declared register invalidly.
-  if (Name[0] == 1) {
+  if (!Name.empty() && Name[0] == 1) {
 #ifdef REGISTER_PREFIX
     if (strlen (REGISTER_PREFIX) != 0) {
       int reg_number = decode_reg_name(Name);
@@ -1407,7 +1404,7 @@ Value *make_decl_llvm(tree decl) {
   // object.  Note that this is quite possibly a forward reference to the
   // object, so its type may change later.
   if (TREE_CODE(decl) == FUNCTION_DECL) {
-    assert(Name[0] && "Function with empty name!");
+    assert(!Name.empty() && "Function with empty name!");
     // If this function has already been created, reuse the decl.  This happens
     // when we have something like __builtin_memset and memset in the same file.
     Function *FnEntry = TheModule->getFunction(Name);
@@ -1464,7 +1461,7 @@ Value *make_decl_llvm(tree decl) {
     if (Ty == Type::getVoidTy(Context))
       Ty = StructType::get(Context);
 
-    if (Name[0] == 0) {   // Global has no name.
+    if (Name.empty()) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 
                               GlobalValue::ExternalLinkage, 0, "");
 
@@ -1553,15 +1550,6 @@ Value *make_decl_llvm(tree decl) {
 //TODO  timevar_pop(TV_LLVM_GLOBALS);
 }
 
-/// llvm_get_decl_name - Used by varasm.c, returns the specified declaration's
-/// name.
-const char *llvm_get_decl_name(void *LLVM) {
-  if (LLVM)
-    if (const ValueName *VN = ((Value*)LLVM)->getValueName())
-      return VN->getKeyData();
-  return "";
-}
-
 /// llvm_mark_decl_weak - Used by varasm.c, called when a decl is found to be
 /// weak, but it already had an llvm object created for it. This marks the LLVM
 /// object weak as well.
@@ -1641,10 +1629,24 @@ void llvm_emit_file_scope_asm(const char *string) {
 
 /// extractRegisterName - Get a register name given its decl. In 4.2 unlike 4.0
 /// these names have been run through set_user_assembler_name which means they
-/// may have a leading \1 at this point; compensate.
+/// may have a leading star at this point; compensate.
 const char* extractRegisterName(tree decl) {
   const char* Name = IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(decl));
-  return (*Name == 1) ? Name + 1 : Name;
+  return (*Name == '*') ? Name + 1 : Name;
+}
+
+/// getLLVMAssemblerName - Get the assembler name (DECL_ASSEMBLER_NAME) for the
+/// declaration, with any leading star replaced by '\1'.
+Twine getLLVMAssemblerName(union tree_node *decl) {
+  tree Ident = DECL_ASSEMBLER_NAME(decl);
+  if (!Ident)
+    return "";
+
+  const char *Name = IDENTIFIER_POINTER(Ident);
+  if (*Name != '*')
+    return Name;
+
+  return "\1" + Twine(Name + 1);
 }
 
 /// FinalizePlugin - Shutdown the plugin.

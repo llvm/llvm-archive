@@ -127,6 +127,7 @@ void eraseLocalLLVMValues();
 void clearTargetBuiltinCache();
 const char* extractRegisterName(union tree_node*);
 void handleVisibility(union tree_node* decl, GlobalValue *GV);
+Twine getLLVMAssemblerName(union tree_node *);
 
 struct StructTypeConversionInfo;
 

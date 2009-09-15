@@ -396,10 +396,10 @@ static bool isPassedByVal(tree type, const Type *Ty,
 }
 
 void TreeToLLVM::StartFunctionBody() {
-  const char *Name = "";
-  // Get the name of the function.
-  if (tree ID = DECL_ASSEMBLER_NAME(FnDecl))
-    Name = IDENTIFIER_POINTER(ID);
+  std::string Name = getLLVMAssemblerName(FnDecl).str();
+  // TODO: Add support for dropping the leading '\1' in order to support
+  //   unsigned bswap(unsigned) __asm__("llvm.bswap");
+  // This would also require adjustments in make_decl_llvm.
 
   // Determine the FunctionType and calling convention for this function.
   tree static_chain = cfun->static_chain_decl;

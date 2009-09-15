@@ -6941,6 +6941,7 @@ Constant *TreeConstantToLLVM::Convert(tree exp) {
   case MINUS_EXPR:    return ConvertBinOp_CST(exp);
   case CONSTRUCTOR:   return ConvertCONSTRUCTOR(exp);
   case VIEW_CONVERT_EXPR: return Convert(TREE_OPERAND(exp, 0));
+  case POINTER_PLUS_EXPR: return ConvertPOINTER_PLUS_EXPR(exp);
   case ADDR_EXPR:
     return TheFolder->CreateBitCast(EmitLV(TREE_OPERAND(exp, 0)),
                                     ConvertType(TREE_TYPE(exp)));
@@ -7150,6 +7151,20 @@ Constant *TreeConstantToLLVM::ConvertCONVERT_EXPR(tree exp) {
   Instruction::CastOps opcode = CastInst::getCastOpcode(Elt, EltIsSigned, Ty,
                                                         TyIsSigned);
   return TheFolder->CreateCast(opcode, Elt, Ty);
+}
+
+Constant *TreeConstantToLLVM::ConvertPOINTER_PLUS_EXPR(tree exp) {
+  Constant *Ptr = Convert(TREE_OPERAND(exp, 0)); // The pointer.
+  Constant *Idx = Convert(TREE_OPERAND(exp, 1)); // The offset in bytes.
+
+  // Convert the pointer into an i8* and add the offset to it.
+  Ptr = TheFolder->CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
+  Constant *GEP = POINTER_TYPE_OVERFLOW_UNDEFINED ?
+    TheFolder->CreateInBoundsGetElementPtr(Ptr, &Idx, 1) :
+    TheFolder->CreateGetElementPtr(Ptr, &Idx, 1);
+
+  // The result may be of a different pointer type.
+  return TheFolder->CreateBitCast(GEP, ConvertType(TREE_TYPE(exp)));
 }
 
 Constant *TreeConstantToLLVM::ConvertBinOp_CST(tree exp) {

@@ -683,7 +683,8 @@ public:
   static Constant *ConvertArrayCONSTRUCTOR(tree_node *exp);
   static Constant *ConvertRecordCONSTRUCTOR(tree_node *exp);
   static Constant *ConvertUnionCONSTRUCTOR(tree_node *exp);
-  
+  static Constant *ConvertPOINTER_PLUS_EXPR(tree_node *exp);
+
   // Constant Expression l-values.
   static Constant *EmitLV(tree_node *exp);
   static Constant *EmitLV_Decl(tree_node *exp);

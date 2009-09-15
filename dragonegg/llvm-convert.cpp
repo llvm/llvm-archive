@@ -1916,22 +1916,22 @@ void TreeToLLVM::CreateExceptionValues() {
   // Check to see if the exception values have been constructed.
   if (ExceptionValue) return;
 
-  const Type *IntPtr = TD.getIntPtrType(Context);
+  const Type *IntTy = ConvertType(integer_type_node);
 
   ExceptionValue = CreateTemporary(PointerType::getUnqual(Type::getInt8Ty(Context)));
   ExceptionValue->setName("eh_exception");
 
-  ExceptionSelectorValue = CreateTemporary(IntPtr);
+  ExceptionSelectorValue = CreateTemporary(IntTy);
   ExceptionSelectorValue->setName("eh_selector");
 
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
-                                              (IntPtr == Type::getInt32Ty(Context) ?
+                                              (IntTy == Type::getInt32Ty(Context) ?
                                                Intrinsic::eh_selector_i32 :
                                                Intrinsic::eh_selector_i64));
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
-                                              (IntPtr == Type::getInt32Ty(Context) ?
+                                              (IntTy == Type::getInt32Ty(Context) ?
                                                Intrinsic::eh_typeid_for_i32 :
                                                Intrinsic::eh_typeid_for_i64));
 }

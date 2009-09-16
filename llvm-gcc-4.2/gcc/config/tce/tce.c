@@ -1,4 +1,4 @@
-// LLVM LOCAL begin - TCE target
+/* LLVM LOCAL begin - TCE target */
 
 #include "config.h"
 #include "system.h"
@@ -26,4 +26,4 @@
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
-// LLVM LOCAL end - TCE target
+/* LLVM LOCAL end - TCE target */

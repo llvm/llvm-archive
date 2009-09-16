@@ -843,4 +843,7 @@ do										\
    The compiler will try both labelings, looking for one that is valid, and
    will reload one or both registers only if neither labeling works.  */
 #define REG_OK_FOR_INDEX_P(X) REG_OK_FOR_BASE_P (X)
+
+#define INITIAL_FRAME_POINTER_OFFSET(X) 0
+
 /* LLVM LOCAL end - TCE target */

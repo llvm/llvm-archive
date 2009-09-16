@@ -819,58 +819,6 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
                      Array, Name);
 }
 
-//TODO/// llvm_emit_code_for_current_function - Top level interface for emitting a
-//TODO/// function to the .s file.
-//TODOvoid llvm_emit_code_for_current_function(tree fndecl) {
-//TODO  if (cfun->nonlocal_goto_save_area)
-//TODO    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
-//TODO
-//TODO  if (errorcount || sorrycount) {
-//TODO    TREE_ASM_WRITTEN(fndecl) = 1;
-//TODO    return;  // Do not process broken code.
-//TODO  }
-//TODO  timevar_push(TV_LLVM_FUNCS);
-//TODO
-//TODO  // Convert the AST to raw/ugly LLVM code.
-//TODO  Function *Fn;
-//TODO  {
-//TODO    TreeToLLVM Emitter(fndecl);
-//TODO    enum symbol_visibility vis = DECL_VISIBILITY (fndecl);
-//TODO
-//TODO    if (vis != VISIBILITY_DEFAULT)
-//TODO      // "asm_out.visibility" emits an important warning if we're using a
-//TODO      // visibility that's not supported by the target.
-//TODO      targetm.asm_out.visibility(fndecl, vis);
-//TODO
-//TODO    Fn = Emitter.EmitFunction();
-//TODO  }
-//TODO
-//TODO#if 0
-//TODO  if (dump_file) {
-//TODO    fprintf (dump_file,
-//TODO             "\n\n;;\n;; Full LLVM generated for this function:\n;;\n");
-//TODO    Fn->dump();
-//TODO  }
-//TODO#endif
-//TODO
-//TODO  performLateBackendInitialization();
-//TODO  createPerFunctionOptimizationPasses();
-//TODO
-//TODO  if (PerFunctionPasses)
-//TODO    PerFunctionPasses->run(*Fn);
-//TODO  
-//TODO  // TODO: Nuke the .ll code for the function at -O[01] if we don't want to
-//TODO  // inline it or something else.
-//TODO  
-//TODO  // There's no need to defer outputting this function any more; we
-//TODO  // know we want to output it.
-//TODO  DECL_DEFER_OUTPUT(fndecl) = 0;
-//TODO  
-//TODO  // Finally, we have written out this function!
-//TODO  TREE_ASM_WRITTEN(fndecl) = 1;
-//TODO  timevar_pop(TV_LLVM_FUNCS);
-//TODO}
-
 /// emit_alias_to_llvm - Given decl and target emit alias to target.
 void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
   if (errorcount || sorrycount) {

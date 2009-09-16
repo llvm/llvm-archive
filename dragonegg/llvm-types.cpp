@@ -661,8 +661,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
   case BOOLEAN_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
-    return SET_TYPE_LLVM(type,
-                     IntegerType::get(Context, TREE_INT_CST_LOW(TYPE_SIZE(type))));
+    return SET_TYPE_LLVM(type, IntegerType::get(Context, TYPE_PRECISION(type)));
   }
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?

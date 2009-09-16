@@ -609,7 +609,13 @@ decode_options (unsigned int argc, const char **argv)
     {
       if (!strcmp (argv[i], "-O"))
 	{
+          /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 	  optimize = 1;
+#else
+	  optimize = 2;
+#endif
+          /* LLVM LOCAL end */
 	  optimize_size = 0;
 	}
       else if (argv[i][0] == '-' && argv[i][1] == 'O')

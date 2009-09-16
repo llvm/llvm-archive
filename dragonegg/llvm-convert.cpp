@@ -7419,9 +7419,6 @@ void ConstantLayoutInfo::ConvertToPacked() {
 ///
 void ConstantLayoutInfo::
 AddFieldToRecordConstant(Constant *Val, uint64_t GCCFieldOffsetInBits) {
-  assert((TD.getTypeSizeInBits(Val->getType()) & 7) == 0 &&
-         "Cannot handle non-byte sized values");
-
   // Figure out how to add this non-bitfield value to our constant struct so
   // that it ends up at the right offset.  There are four cases we have to
   // think about:

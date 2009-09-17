@@ -521,6 +521,7 @@ private:
   // Render* - Convert GIMPLE to LLVM.
   void RenderGIMPLE_COND(gimple_statement_d *);
   void RenderGIMPLE_GOTO(gimple_statement_d *);
+  void RenderGIMPLE_RESX(gimple_statement_d *);
   void RenderGIMPLE_RETURN(gimple_statement_d *);
   void RenderGIMPLE_SWITCH(gimple_statement_d *);
 
@@ -579,7 +580,6 @@ private:
   // Exception Handling.
   Value *EmitEXC_PTR_EXPR(tree_node *exp);
   Value *EmitFILTER_EXPR(tree_node *exp);
-  Value *EmitRESX_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.
   Value *EmitASM_EXPR(tree_node *exp);

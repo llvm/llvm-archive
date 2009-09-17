@@ -950,8 +950,7 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
     case GIMPLE_ASM:
-    case GIMPLE_CALL:
-    case GIMPLE_RESX: {
+    case GIMPLE_CALL: {
       // TODO Handle gimple directly, rather than converting to a tree.
       tree stmt = gimple_to_tree(gimple_stmt);
 
@@ -980,6 +979,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     case GIMPLE_LABEL:
     case GIMPLE_NOP:
     case GIMPLE_PREDICT:
+      break;
+
+    case GIMPLE_RESX:
+      RenderGIMPLE_RESX(gimple_stmt);
       break;
 
     case GIMPLE_RETURN:
@@ -1056,7 +1059,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   // Exception handling.
   case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
   case FILTER_EXPR:    Result = EmitFILTER_EXPR(exp); break;
-  case RESX_EXPR:      Result = EmitRESX_EXPR(exp); break;
 
   // Expressions
   case VAR_DECL:
@@ -3789,33 +3791,6 @@ Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
   CreateExceptionValues();
   // Load exception selector.
   return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
-}
-
-/// EmitRESX_EXPR - Handle RESX_EXPR.
-Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
-  unsigned RegionNo = TREE_INT_CST_LOW(TREE_OPERAND (exp, 0));
-  std::vector<eh_region> Handlers;
-
-  foreach_reachable_handler(RegionNo, true, false, AddHandler, &Handlers);
-
-  if (!Handlers.empty()) {
-    for (std::vector<eh_region>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I)
-      // Create a post landing pad for the handler.
-      getPostPad(get_eh_region_number(*I));
-
-    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-  } else {
-    assert(can_throw_external_1(RegionNo, true, false) &&
-           "Must-not-throw region handled by runtime?");
-    // Unwinding continues in the caller.
-    if (!UnwindBB)
-      UnwindBB = BasicBlock::Create(Context, "Unwind");
-    Builder.CreateBr(UnwindBB);
-  }
-
-  EmitBlock(BasicBlock::Create(Context));
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -8072,6 +8047,29 @@ void TreeToLLVM::RenderGIMPLE_GOTO(gimple stmt) {
   // FIXME: This is HORRIBLY INCORRECT in the presence of exception handlers.
   // There should be one collector block per cleanup level!
   Builder.CreateBr(DestBB);
+}
+
+void TreeToLLVM::RenderGIMPLE_RESX(gimple stmt) {
+  int RegionNo = gimple_resx_region(stmt);
+  std::vector<eh_region> Handlers;
+
+  foreach_reachable_handler(RegionNo, true, false, AddHandler, &Handlers);
+
+  if (!Handlers.empty()) {
+    for (std::vector<eh_region>::iterator I = Handlers.begin(),
+         E = Handlers.end(); I != E; ++I)
+      // Create a post landing pad for the handler.
+      getPostPad(get_eh_region_number(*I));
+
+    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
+  } else {
+    assert(can_throw_external_1(RegionNo, true, false) &&
+           "Must-not-throw region handled by runtime?");
+    // Unwinding continues in the caller.
+    if (!UnwindBB)
+      UnwindBB = BasicBlock::Create(Context, "Unwind");
+    Builder.CreateBr(UnwindBB);
+  }
 }
 
 void TreeToLLVM::RenderGIMPLE_RETURN(gimple stmt) {

@@ -949,7 +949,6 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     switch (gimple_code(gimple_stmt)) {
     case GIMPLE_ASSIGN:
-    case GIMPLE_ASM:
     case GIMPLE_CALL: {
       // TODO Handle gimple directly, rather than converting to a tree.
       tree stmt = gimple_to_tree(gimple_stmt);
@@ -967,6 +966,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
       release_stmt_tree(gimple_stmt, stmt);
       break;
     }
+
+    case GIMPLE_ASM:
+      RenderGIMPLE_ASM(gimple_stmt);
+      break;
 
     case GIMPLE_COND:
       RenderGIMPLE_COND(gimple_stmt);
@@ -1080,7 +1083,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case CALL_EXPR:       Result = EmitCALL_EXPR(exp, DestLoc); break;
   case INIT_EXPR:
   case MODIFY_EXPR:     Result = EmitMODIFY_EXPR(exp, DestLoc); break;
-  case ASM_EXPR:        Result = EmitASM_EXPR(exp); break;
   case NON_LVALUE_EXPR: Result = Emit(TREE_OPERAND(exp, 0), DestLoc); break;
 
     // Unary Operators
@@ -3857,15 +3859,15 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
 ///       punctuation.
 /// Other %xN expressions are turned into LLVM ${N:x} operands.
 ///
-static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
+static std::string ConvertInlineAsmStr(gimple stmt, tree outputs, tree inputs,
+                                       unsigned NumOperands) {
+  const char *AsmStr = gimple_asm_string(stmt);
 
-  tree str = ASM_STRING(exp);
-  if (TREE_CODE(str) == ADDR_EXPR) str = TREE_OPERAND(str, 0);
-
-  // ASM_INPUT_P - This flag is set if this is a non-extended ASM, which means
-  // that the asm string should not be interpreted, other than to escape $'s.
-  if (ASM_INPUT_P(exp)) {
-    const char *InStr = TREE_STRING_POINTER(str);
+  // gimple_asm_input_p - This flag is set if this is a non-extended ASM,
+  // which means that the asm string should not be interpreted, other than
+  // to escape $'s.
+  if (gimple_asm_input_p(stmt)) {
+    const char *InStr = AsmStr;
     std::string Result;
     while (1) {
       switch (*InStr++) {
@@ -3877,7 +3879,8 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
   }
 
   // Expand [name] symbolic operand names.
-  str = resolve_asm_operand_names(str, ASM_OUTPUTS(exp), ASM_INPUTS(exp));
+  tree str = resolve_asm_operand_names(build_string (strlen (AsmStr), AsmStr),
+                                       outputs, inputs);
 
   const char *InStr = TREE_STRING_POINTER(str);
 
@@ -3911,10 +3914,11 @@ static std::string ConvertInlineAsmStr(tree exp, unsigned NumOperands) {
         unsigned long OpNum = strtoul(InStr, &EndPtr, 10);
 
         if (InStr == EndPtr) {
-          error_at(EXPR_LOCATION(exp),"operand number missing after %%-letter");
+          error_at(gimple_location(stmt),
+                   "operand number missing after %%-letter");
           return Result;
         } else if (OpNum >= NumOperands) {
-          error_at(EXPR_LOCATION(exp), "operand number out of range");
+          error_at(gimple_location(stmt), "operand number out of range");
           return Result;
         }
         Result += "${" + utostr(OpNum) + ":" + EscapedChar + "}";
@@ -4098,9 +4102,9 @@ int MatchWeight(const char *Constraint, tree Operand, bool isInput) {
 /// is performed after things like SROA, not before.  At the moment we are
 /// just trying to pick one that will work.  This may get refined.
 static void
-ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
-                      unsigned NumOutputs, unsigned NumChoices,
-                      const char **ReplacementStrings)
+ChooseConstraintTuple(const char **Constraints, gimple stmt, tree outputs,
+                      tree inputs, unsigned NumOutputs, unsigned NumInputs,
+                      unsigned NumChoices, const char **ReplacementStrings)
 {
   int MaxWeight = -1;
   unsigned int CommasToSkip = 0;
@@ -4116,7 +4120,7 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
   for (unsigned int i=0; i<NumChoices; i++) {
     Weights[i] = 0;
     unsigned int j = 0;
-    for (tree Output = ASM_OUTPUTS(exp); j<NumOutputs;
+    for (tree Output = outputs; j<NumOutputs;
          j++, Output = TREE_CHAIN(Output)) {
       if (i==0)
         RunningConstraints[j]++;    // skip leading =
@@ -4143,7 +4147,7 @@ ChooseConstraintTuple (const char **Constraints, tree exp, unsigned NumInputs,
       RunningConstraints[j] = p;
     }
     assert(j==NumOutputs);
-    for (tree Input = ASM_INPUTS(exp); j<NumInputs+NumOutputs;
+    for (tree Input = inputs; j<NumInputs+NumOutputs;
          j++, Input = TREE_CHAIN(Input)) {
       const char* p = RunningConstraints[j];
       if (Weights[i] != -1) {
@@ -4221,399 +4225,6 @@ static const char* getConstraintRegNameFromGccTables(const char *RegName,
 #endif
 }
 
-Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
-  unsigned NumInputs = list_length(ASM_INPUTS(exp));
-  unsigned NumOutputs = list_length(ASM_OUTPUTS(exp));
-  unsigned NumInOut = 0;
-
-  // Look for multiple alternative constraints: multiple alternatives separated
-  // by commas.
-  unsigned NumChoices = 0;    // sentinal; real value is always at least 1.
-  const char* p;
-  for (tree t = ASM_INPUTS(exp); t; t = TREE_CHAIN(t)) {
-    unsigned NumInputChoices = 1;
-    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
-      if (*p == ',')
-        NumInputChoices++;
-    }
-    if (NumChoices==0)
-      NumChoices = NumInputChoices;
-    else if (NumChoices != NumInputChoices)
-      abort();      // invalid constraints
-  }
-  for (tree t = ASM_OUTPUTS(exp); t; t = TREE_CHAIN(t)) {
-    unsigned NumOutputChoices = 1;
-    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
-      if (*p == ',')
-        NumOutputChoices++;
-    }
-    if (NumChoices==0)
-      NumChoices = NumOutputChoices;
-    else if (NumChoices != NumOutputChoices)
-      abort();      // invalid constraints
-  }
-
-  /// Constraints - The output/input constraints, concatenated together in array
-  /// form instead of list form.
-  const char **Constraints =
-    (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
-
-  // Process outputs.
-  int ValNum = 0;
-  for (tree Output = ASM_OUTPUTS(exp); Output;
-       Output = TREE_CHAIN(Output), ++ValNum) {
-    tree Operand = TREE_VALUE(Output);
-    tree type = TREE_TYPE(Operand);
-    // If there's an erroneous arg, emit no insn.
-    if (type == error_mark_node) return 0;
-
-    // Parse the output constraint.
-    const char *Constraint =
-      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Output)));
-    Constraints[ValNum] = Constraint;
-  }
-  // Process inputs.
-  for (tree Input = ASM_INPUTS(exp); Input; Input = TREE_CHAIN(Input),++ValNum){
-    tree Val = TREE_VALUE(Input);
-    tree type = TREE_TYPE(Val);
-    // If there's an erroneous arg, emit no insn.
-    if (type == error_mark_node) return 0;
-
-    const char *Constraint =
-      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Input)));
-    Constraints[ValNum] = Constraint;
-  }
-
-  // If there are multiple constraint tuples, pick one.  Constraints is
-  // altered to point to shorter strings (which are malloc'ed), and everything
-  // below Just Works as in the NumChoices==1 case.
-  const char** ReplacementStrings = 0;
-  if (NumChoices>1) {
-    ReplacementStrings =
-      (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
-    ChooseConstraintTuple(Constraints, exp, NumInputs, NumOutputs, NumChoices,
-                          ReplacementStrings);
-  }
-
-  std::vector<Value*> CallOps;
-  std::vector<const Type*> CallArgTypes;
-  std::string NewAsmStr = ConvertInlineAsmStr(exp, NumOutputs+NumInputs);
-  std::string ConstraintStr;
-
-  // StoreCallResultAddr - The pointer to store the result of the call through.
-  SmallVector<Value *, 4> StoreCallResultAddrs;
-  SmallVector<const Type *, 4> CallResultTypes;
-  SmallVector<bool, 4> CallResultIsSigned;
-  SmallVector<tree, 4> CallResultSSANames;
-  SmallVector<Value *, 4> CallResultSSATemps;
-
-  // Process outputs.
-  ValNum = 0;
-  for (tree Output = ASM_OUTPUTS(exp); Output;
-       Output = TREE_CHAIN(Output), ++ValNum) {
-    tree Operand = TREE_VALUE(Output);
-
-    // Parse the output constraint.
-    const char *Constraint = Constraints[ValNum];
-    bool IsInOut, AllowsReg, AllowsMem;
-    if (!parse_output_constraint(&Constraint, ValNum, NumInputs, NumOutputs,
-                                 &AllowsMem, &AllowsReg, &IsInOut)) {
-      if (NumChoices>1)
-        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-      return 0;
-    }
-    assert(Constraint[0] == '=' && "Not an output constraint?");
-
-    // Output constraints must be addressable if they aren't simple register
-    // constraints (this emits "address of register var" errors, etc).
-    if (!AllowsReg && (AllowsMem || IsInOut))
-      mark_addressable(Operand);
-
-    // Count the number of "+" constraints.
-    if (IsInOut)
-      ++NumInOut, ++NumInputs;
-
-    std::string SimplifiedConstraint;
-    // If this output register is pinned to a machine register, use that machine
-    // register instead of the specified constraint.
-    if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
-      const char* RegName = extractRegisterName(Operand);
-      int RegNum = decode_reg_name(RegName);
-      if (RegNum >= 0) {
-        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
-        unsigned RegNameLen = strlen(RegName);
-        char *NewConstraint = (char*)alloca(RegNameLen+4);
-        NewConstraint[0] = '=';
-        NewConstraint[1] = '{';
-        memcpy(NewConstraint+2, RegName, RegNameLen);
-        NewConstraint[RegNameLen+2] = '}';
-        NewConstraint[RegNameLen+3] = 0;
-        SimplifiedConstraint = NewConstraint;
-        // We should no longer consider mem constraints.
-        AllowsMem = false;
-      } else {
-        // If we can simplify the constraint into something else, do so now.
-        // This avoids LLVM having to know about all the (redundant) GCC
-        // constraints.
-        SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
-      }
-    } else {
-      SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
-    }
-
-    LValue Dest;
-    const Type *DestValTy;
-    if (TREE_CODE(Operand) == SSA_NAME) {
-      // The ASM is defining an ssa name.  Store the output to a temporary, then
-      // load it out again later as the ssa name.
-      DestValTy = ConvertType(TREE_TYPE(Operand));
-      Dest.Ptr = CreateTemporary(DestValTy);
-      CallResultSSANames.push_back(Operand);
-      CallResultSSATemps.push_back(Dest.Ptr);
-    } else {
-      Dest = EmitLV(Operand);
-      DestValTy = cast<PointerType>(Dest.Ptr->getType())->getElementType();
-    }
-
-    assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
-    if (!AllowsMem && DestValTy->isSingleValueType()) {// Reg dest -> asm return
-      StoreCallResultAddrs.push_back(Dest.Ptr);
-      ConstraintStr += ",=";
-      ConstraintStr += SimplifiedConstraint;
-      CallResultTypes.push_back(DestValTy);
-      CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
-    } else {
-      ConstraintStr += ",=*";
-      ConstraintStr += SimplifiedConstraint;
-      CallOps.push_back(Dest.Ptr);
-      CallArgTypes.push_back(Dest.Ptr->getType());
-    }
-  }
-
-  // Process inputs.
-  for (tree Input = ASM_INPUTS(exp); Input; Input = TREE_CHAIN(Input),++ValNum){
-    tree Val = TREE_VALUE(Input);
-    tree type = TREE_TYPE(Val);
-
-    const char *Constraint = Constraints[ValNum];
-
-    bool AllowsReg, AllowsMem;
-    if (!parse_input_constraint(Constraints+ValNum, ValNum-NumOutputs,
-                                NumInputs, NumOutputs, NumInOut,
-                                Constraints, &AllowsMem, &AllowsReg)) {
-      if (NumChoices>1)
-        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-      return 0;
-    }
-    bool isIndirect = false;
-    if (AllowsReg || !AllowsMem) {    // Register operand.
-      const Type *LLVMTy = ConvertType(type);
-
-      Value *Op = 0;
-      if (LLVMTy->isSingleValueType()) {
-        if (TREE_CODE(Val)==ADDR_EXPR &&
-            TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
-          // Emit the label, but do not assume it is going to be the target
-          // of an indirect branch.  Having this logic here is a hack; there
-          // should be a bit in the label identifying it as in an asm.
-          Op = getLabelDeclBlock(TREE_OPERAND(Val, 0));
-        } else
-          Op = Emit(Val, 0);
-      } else {
-        LValue LV = EmitLV(Val);
-        assert(!LV.isBitfield() && "Inline asm can't have bitfield operand");
-
-        // Structs and unions are permitted here, as long as they're the
-        // same size as a register.
-        uint64_t TySize = TD.getTypeSizeInBits(LLVMTy);
-        if (TySize == 1 || TySize == 8 || TySize == 16 ||
-            TySize == 32 || TySize == 64) {
-          LLVMTy = IntegerType::get(Context, TySize);
-          Op = Builder.CreateLoad(BitCastToType(LV.Ptr,
-                                 PointerType::getUnqual(LLVMTy)));
-        } else {
-          // Otherwise, emit our value as a lvalue and let the codegen deal with
-          // it.
-          isIndirect = true;
-          Op = LV.Ptr;
-        }
-      }
-
-      const Type *OpTy = Op->getType();
-      // If this input operand is matching an output operand, e.g. '0', check if
-      // this is something that llvm supports. If the operand types are
-      // different, then emit an error if 1) one of the types is not integer or
-      // pointer, 2) if size of input type is larger than the output type. If
-      // the size of the integer input size is smaller than the integer output
-      // type, then cast it to the larger type and shift the value if the target
-      // is big endian.
-      if (ISDIGIT(Constraint[0])) {
-        unsigned Match = atoi(Constraint);
-        const Type *OTy = (Match < CallResultTypes.size())
-          ? CallResultTypes[Match] : 0;
-        if (OTy && OTy != OpTy) {
-          if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
-              !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
-            error_at(EXPR_LOCATION(exp),
-                     "unsupported inline asm: input constraint with a matching "
-                     "output constraint of incompatible type!");
-            if (NumChoices>1)
-              FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-            return 0;
-          }
-          unsigned OTyBits = TD.getTypeSizeInBits(OTy);
-          unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
-          if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
-            // It's tempting to implement the OTyBits < OpTyBits case by truncating
-            // Op down to OTy, however that breaks in the case of an inline asm
-            // constraint that corresponds to a single register, because the
-            // user can write code that assumes the whole register is defined,
-            // despite the output operand being only a subset of the register. For
-            // example:
-            //
-            //   asm ("sarl $10, %%eax" : "=a"(c) : "0"(1000000));
-            //
-            // The expected behavior is for %eax to be fully defined with the value
-            // 1000000 immediately before the asm.
-            error_at(EXPR_LOCATION(exp),
-                     "unsupported inline asm: input constraint with a matching "
-                     "output constraint of incompatible type!");
-            return 0;
-          } else if (OTyBits > OpTyBits) {
-            Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
-                               OTy, CallResultIsSigned[Match]);
-            if (BYTES_BIG_ENDIAN) {
-              Constant *ShAmt = ConstantInt::get(Op->getType(),
-                                                 OTyBits-OpTyBits);
-              Op = Builder.CreateLShr(Op, ShAmt);
-            }
-            OpTy = Op->getType();
-          }
-        }
-      }
-
-      CallOps.push_back(Op);
-      CallArgTypes.push_back(OpTy);
-    } else {                          // Memory operand.
-      mark_addressable(TREE_VALUE(Input));
-      isIndirect = true;
-      LValue Src = EmitLV(Val);
-      assert(!Src.isBitfield() && "Cannot read from a bitfield!");
-      CallOps.push_back(Src.Ptr);
-      CallArgTypes.push_back(Src.Ptr->getType());
-    }
-
-    ConstraintStr += ',';
-    if (isIndirect)
-      ConstraintStr += '*';
-
-    // If this output register is pinned to a machine register, use that machine
-    // register instead of the specified constraint.
-    if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val)) {
-      const char *RegName = extractRegisterName(Val);
-      int RegNum = decode_reg_name(RegName);
-      if (RegNum >= 0) {
-        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
-        ConstraintStr += '{';
-        ConstraintStr += RegName;
-        ConstraintStr += '}';
-        continue;
-      }
-    }
-
-    // If there is a simpler form for the register constraint, use it.
-    std::string Simplified = CanonicalizeConstraint(Constraint);
-    ConstraintStr += Simplified;
-  }
-
-  // Process clobbers.
-
-  // Some targets automatically clobber registers across an asm.
-  tree Clobbers = targetm.md_asm_clobbers(ASM_OUTPUTS(exp), ASM_INPUTS(exp),
-                                          ASM_CLOBBERS(exp));
-  for (; Clobbers; Clobbers = TREE_CHAIN(Clobbers)) {
-    const char *RegName = TREE_STRING_POINTER(TREE_VALUE(Clobbers));
-    int RegCode = decode_reg_name(RegName);
-
-    switch (RegCode) {
-    case -1:     // Nothing specified?
-    case -2:     // Invalid.
-      error_at(EXPR_LOCATION(exp), "unknown register name %qs in %<asm%>",
-               RegName);
-      if (NumChoices>1)
-        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-      return 0;
-    case -3:     // cc
-      ConstraintStr += ",~{cc}";
-      break;
-    case -4:     // memory
-      ConstraintStr += ",~{memory}";
-      break;
-    default:     // Normal register name.
-      RegName = getConstraintRegNameFromGccTables(RegName, RegCode);
-      ConstraintStr += ",~{";
-      ConstraintStr += RegName;
-      ConstraintStr += "}";
-      break;
-    }
-  }
-
-  const Type *CallResultType;
-  switch (CallResultTypes.size()) {
-  case 0: CallResultType = Type::getVoidTy(Context); break;
-  case 1: CallResultType = CallResultTypes[0]; break;
-  default:
-    std::vector<const Type*> TmpVec(CallResultTypes.begin(),
-                                    CallResultTypes.end());
-    CallResultType = StructType::get(Context, TmpVec);
-    break;
-  }
-
-  const FunctionType *FTy =
-    FunctionType::get(CallResultType, CallArgTypes, false);
-
-  // Remove the leading comma if we have operands.
-  if (!ConstraintStr.empty())
-    ConstraintStr.erase(ConstraintStr.begin());
-
-  // Make sure we're created a valid inline asm expression.
-  if (!InlineAsm::Verify(FTy, ConstraintStr)) {
-    error_at(EXPR_LOCATION(exp), "Invalid or unsupported inline assembly!");
-    if (NumChoices>1)
-      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-    return 0;
-  }
-
-  Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
-                              ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));
-  CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
-                                    CallResultTypes.empty() ? "" : "asmtmp");
-  CV->setDoesNotThrow();
-
-  // If the call produces a value, store it into the destination.
-  if (StoreCallResultAddrs.size() == 1)
-    Builder.CreateStore(CV, StoreCallResultAddrs[0]);
-  else if (unsigned NumResults = StoreCallResultAddrs.size()) {
-    for (unsigned i = 0; i != NumResults; ++i) {
-      Value *ValI = Builder.CreateExtractValue(CV, i, "asmresult");
-      Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
-    }
-  }
-
-  // If the call defined any ssa names, associate them with their value.
-  for (unsigned i = 0, e = CallResultSSANames.size(); i != e; ++i)
-    SSANames[CallResultSSANames[i]] = Builder.CreateLoad(CallResultSSATemps[i]);
-
-  // Give the backend a chance to upgrade the inline asm to LLVM code.  This
-  // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->
-  // llvm.bswap.
-  if (const TargetLowering *TLI = TheTarget->getTargetLowering())
-    TLI->ExpandInlineAsm(CV);
-
-  if (NumChoices>1)
-    FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
-  return 0;
-}
 
 //===----------------------------------------------------------------------===//
 //               ... Helpers for Builtin Function Expansion ...
@@ -8012,6 +7623,427 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 //===----------------------------------------------------------------------===//
 //                      ... Convert GIMPLE to LLVM ...
 //===----------------------------------------------------------------------===//
+
+void TreeToLLVM::RenderGIMPLE_ASM(gimple stmt) {
+  // Some of the GCC utilities we use still want lists and not gimple, so create
+  // input, output and clobber lists for their benefit.
+  unsigned NumOutputs = gimple_asm_noutputs (stmt);
+  tree outputs = NULL_TREE;
+  if (NumOutputs) {
+    tree t = outputs = gimple_asm_output_op (stmt, 0);
+    for (unsigned i = 1; i < NumOutputs; i++) {
+      TREE_CHAIN (t) = gimple_asm_output_op (stmt, i);
+      t = gimple_asm_output_op (stmt, i);
+    }
+  }
+
+  unsigned NumInputs = gimple_asm_ninputs(stmt);
+  tree inputs = NULL_TREE;
+  if (NumInputs) {
+    tree t = inputs = gimple_asm_input_op (stmt, 0);
+    for (unsigned i = 1; i < NumInputs; i++) {
+      TREE_CHAIN (t) = gimple_asm_input_op (stmt, i);
+      t = gimple_asm_input_op (stmt, i);
+    }
+  }
+
+  unsigned NumClobbers = gimple_asm_nclobbers (stmt);
+  tree clobbers = NULL_TREE;
+  if (NumClobbers) {
+    tree t = clobbers = gimple_asm_clobber_op (stmt, 0);
+    for (unsigned i = 1; i < NumClobbers; i++) {
+      TREE_CHAIN (t) = gimple_asm_clobber_op (stmt, i);
+      t = gimple_asm_clobber_op (stmt, i);
+    }
+  }
+
+  unsigned NumInOut = 0;
+
+  // Look for multiple alternative constraints: multiple alternatives separated
+  // by commas.
+  unsigned NumChoices = 0;    // sentinal; real value is always at least 1.
+  const char* p;
+  for (tree t = inputs; t; t = TREE_CHAIN(t)) {
+    unsigned NumInputChoices = 1;
+    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
+      if (*p == ',')
+        NumInputChoices++;
+    }
+    if (NumChoices==0)
+      NumChoices = NumInputChoices;
+    else if (NumChoices != NumInputChoices)
+      abort();      // invalid constraints
+  }
+  for (tree t = outputs; t; t = TREE_CHAIN(t)) {
+    unsigned NumOutputChoices = 1;
+    for (p = TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(t))); *p; p++) {
+      if (*p == ',')
+        NumOutputChoices++;
+    }
+    if (NumChoices==0)
+      NumChoices = NumOutputChoices;
+    else if (NumChoices != NumOutputChoices)
+      abort();      // invalid constraints
+  }
+
+  /// Constraints - The output/input constraints, concatenated together in array
+  /// form instead of list form.
+  const char **Constraints =
+    (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
+
+  // Process outputs.
+  int ValNum = 0;
+  for (tree Output = outputs; Output; Output = TREE_CHAIN(Output), ++ValNum) {
+    tree Operand = TREE_VALUE(Output);
+    tree type = TREE_TYPE(Operand);
+    // If there's an erroneous arg, emit no insn.
+    if (type == error_mark_node) return;
+
+    // Parse the output constraint.
+    const char *Constraint =
+      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Output)));
+    Constraints[ValNum] = Constraint;
+  }
+  // Process inputs.
+  for (tree Input = inputs; Input; Input = TREE_CHAIN(Input),++ValNum) {
+    tree Val = TREE_VALUE(Input);
+    tree type = TREE_TYPE(Val);
+    // If there's an erroneous arg, emit no insn.
+    if (type == error_mark_node) return;
+
+    const char *Constraint =
+      TREE_STRING_POINTER(TREE_VALUE(TREE_PURPOSE(Input)));
+    Constraints[ValNum] = Constraint;
+  }
+
+  // If there are multiple constraint tuples, pick one.  Constraints is
+  // altered to point to shorter strings (which are malloc'ed), and everything
+  // below Just Works as in the NumChoices==1 case.
+  const char** ReplacementStrings = 0;
+  if (NumChoices>1) {
+    ReplacementStrings =
+      (const char **)alloca((NumOutputs + NumInputs) * sizeof(const char *));
+    ChooseConstraintTuple(Constraints, stmt, outputs, inputs, NumOutputs,
+                          NumInputs, NumChoices, ReplacementStrings);
+  }
+
+  std::vector<Value*> CallOps;
+  std::vector<const Type*> CallArgTypes;
+  std::string NewAsmStr = ConvertInlineAsmStr(stmt, outputs, inputs,
+                                              NumOutputs+NumInputs);
+  std::string ConstraintStr;
+
+  // StoreCallResultAddr - The pointer to store the result of the call through.
+  SmallVector<Value *, 4> StoreCallResultAddrs;
+  SmallVector<const Type *, 4> CallResultTypes;
+  SmallVector<bool, 4> CallResultIsSigned;
+  SmallVector<tree, 4> CallResultSSANames;
+  SmallVector<Value *, 4> CallResultSSATemps;
+
+  // Process outputs.
+  ValNum = 0;
+  for (tree Output = outputs; Output; Output = TREE_CHAIN(Output), ++ValNum) {
+    tree Operand = TREE_VALUE(Output);
+
+    // Parse the output constraint.
+    const char *Constraint = Constraints[ValNum];
+    bool IsInOut, AllowsReg, AllowsMem;
+    if (!parse_output_constraint(&Constraint, ValNum, NumInputs, NumOutputs,
+                                 &AllowsMem, &AllowsReg, &IsInOut)) {
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+      return;
+    }
+    assert(Constraint[0] == '=' && "Not an output constraint?");
+
+    // Output constraints must be addressable if they aren't simple register
+    // constraints (this emits "address of register var" errors, etc).
+    if (!AllowsReg && (AllowsMem || IsInOut))
+      mark_addressable(Operand);
+
+    // Count the number of "+" constraints.
+    if (IsInOut)
+      ++NumInOut, ++NumInputs;
+
+    std::string SimplifiedConstraint;
+    // If this output register is pinned to a machine register, use that machine
+    // register instead of the specified constraint.
+    if (TREE_CODE(Operand) == VAR_DECL && DECL_HARD_REGISTER(Operand)) {
+      const char* RegName = extractRegisterName(Operand);
+      int RegNum = decode_reg_name(RegName);
+      if (RegNum >= 0) {
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
+        unsigned RegNameLen = strlen(RegName);
+        char *NewConstraint = (char*)alloca(RegNameLen+4);
+        NewConstraint[0] = '=';
+        NewConstraint[1] = '{';
+        memcpy(NewConstraint+2, RegName, RegNameLen);
+        NewConstraint[RegNameLen+2] = '}';
+        NewConstraint[RegNameLen+3] = 0;
+        SimplifiedConstraint = NewConstraint;
+        // We should no longer consider mem constraints.
+        AllowsMem = false;
+      } else {
+        // If we can simplify the constraint into something else, do so now.
+        // This avoids LLVM having to know about all the (redundant) GCC
+        // constraints.
+        SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
+      }
+    } else {
+      SimplifiedConstraint = CanonicalizeConstraint(Constraint+1);
+    }
+
+    LValue Dest;
+    const Type *DestValTy;
+    if (TREE_CODE(Operand) == SSA_NAME) {
+      // The ASM is defining an ssa name.  Store the output to a temporary, then
+      // load it out again later as the ssa name.
+      DestValTy = ConvertType(TREE_TYPE(Operand));
+      Dest.Ptr = CreateTemporary(DestValTy);
+      CallResultSSANames.push_back(Operand);
+      CallResultSSATemps.push_back(Dest.Ptr);
+    } else {
+      Dest = EmitLV(Operand);
+      DestValTy = cast<PointerType>(Dest.Ptr->getType())->getElementType();
+    }
+
+    assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
+    if (!AllowsMem && DestValTy->isSingleValueType()) {// Reg dest -> asm return
+      StoreCallResultAddrs.push_back(Dest.Ptr);
+      ConstraintStr += ",=";
+      ConstraintStr += SimplifiedConstraint;
+      CallResultTypes.push_back(DestValTy);
+      CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
+    } else {
+      ConstraintStr += ",=*";
+      ConstraintStr += SimplifiedConstraint;
+      CallOps.push_back(Dest.Ptr);
+      CallArgTypes.push_back(Dest.Ptr->getType());
+    }
+  }
+
+  // Process inputs.
+  for (tree Input = inputs; Input; Input = TREE_CHAIN(Input),++ValNum) {
+    tree Val = TREE_VALUE(Input);
+    tree type = TREE_TYPE(Val);
+
+    const char *Constraint = Constraints[ValNum];
+
+    bool AllowsReg, AllowsMem;
+    if (!parse_input_constraint(Constraints+ValNum, ValNum-NumOutputs,
+                                NumInputs, NumOutputs, NumInOut,
+                                Constraints, &AllowsMem, &AllowsReg)) {
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+      return;
+    }
+    bool isIndirect = false;
+    if (AllowsReg || !AllowsMem) {    // Register operand.
+      const Type *LLVMTy = ConvertType(type);
+
+      Value *Op = 0;
+      if (LLVMTy->isSingleValueType()) {
+        if (TREE_CODE(Val)==ADDR_EXPR &&
+            TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
+          // Emit the label, but do not assume it is going to be the target
+          // of an indirect branch.  Having this logic here is a hack; there
+          // should be a bit in the label identifying it as in an asm.
+          Op = getLabelDeclBlock(TREE_OPERAND(Val, 0));
+        } else
+          Op = Emit(Val, 0);
+      } else {
+        LValue LV = EmitLV(Val);
+        assert(!LV.isBitfield() && "Inline asm can't have bitfield operand");
+
+        // Structs and unions are permitted here, as long as they're the
+        // same size as a register.
+        uint64_t TySize = TD.getTypeSizeInBits(LLVMTy);
+        if (TySize == 1 || TySize == 8 || TySize == 16 ||
+            TySize == 32 || TySize == 64) {
+          LLVMTy = IntegerType::get(Context, TySize);
+          Op = Builder.CreateLoad(BitCastToType(LV.Ptr,
+                                 PointerType::getUnqual(LLVMTy)));
+        } else {
+          // Otherwise, emit our value as a lvalue and let the codegen deal with
+          // it.
+          isIndirect = true;
+          Op = LV.Ptr;
+        }
+      }
+
+      const Type *OpTy = Op->getType();
+      // If this input operand is matching an output operand, e.g. '0', check if
+      // this is something that llvm supports. If the operand types are
+      // different, then emit an error if 1) one of the types is not integer or
+      // pointer, 2) if size of input type is larger than the output type. If
+      // the size of the integer input size is smaller than the integer output
+      // type, then cast it to the larger type and shift the value if the target
+      // is big endian.
+      if (ISDIGIT(Constraint[0])) {
+        unsigned Match = atoi(Constraint);
+        const Type *OTy = (Match < CallResultTypes.size())
+          ? CallResultTypes[Match] : 0;
+        if (OTy && OTy != OpTy) {
+          if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
+              !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
+            error_at(gimple_location(stmt),
+                     "unsupported inline asm: input constraint with a matching "
+                     "output constraint of incompatible type!");
+            if (NumChoices>1)
+              FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+            return;
+          }
+          unsigned OTyBits = TD.getTypeSizeInBits(OTy);
+          unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
+          if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
+            // It's tempting to implement the OTyBits < OpTyBits case by truncating
+            // Op down to OTy, however that breaks in the case of an inline asm
+            // constraint that corresponds to a single register, because the
+            // user can write code that assumes the whole register is defined,
+            // despite the output operand being only a subset of the register. For
+            // example:
+            //
+            //   asm ("sarl $10, %%eax" : "=a"(c) : "0"(1000000));
+            //
+            // The expected behavior is for %eax to be fully defined with the value
+            // 1000000 immediately before the asm.
+            error_at(gimple_location(stmt),
+                     "unsupported inline asm: input constraint with a matching "
+                     "output constraint of incompatible type!");
+            return;
+          } else if (OTyBits > OpTyBits) {
+            Op = CastToAnyType(Op, !TYPE_UNSIGNED(type),
+                               OTy, CallResultIsSigned[Match]);
+            if (BYTES_BIG_ENDIAN) {
+              Constant *ShAmt = ConstantInt::get(Op->getType(),
+                                                 OTyBits-OpTyBits);
+              Op = Builder.CreateLShr(Op, ShAmt);
+            }
+            OpTy = Op->getType();
+          }
+        }
+      }
+
+      CallOps.push_back(Op);
+      CallArgTypes.push_back(OpTy);
+    } else {                          // Memory operand.
+      mark_addressable(TREE_VALUE(Input));
+      isIndirect = true;
+      LValue Src = EmitLV(Val);
+      assert(!Src.isBitfield() && "Cannot read from a bitfield!");
+      CallOps.push_back(Src.Ptr);
+      CallArgTypes.push_back(Src.Ptr->getType());
+    }
+
+    ConstraintStr += ',';
+    if (isIndirect)
+      ConstraintStr += '*';
+
+    // If this output register is pinned to a machine register, use that machine
+    // register instead of the specified constraint.
+    if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val)) {
+      const char *RegName = extractRegisterName(Val);
+      int RegNum = decode_reg_name(RegName);
+      if (RegNum >= 0) {
+        RegName = getConstraintRegNameFromGccTables(RegName, RegNum);
+        ConstraintStr += '{';
+        ConstraintStr += RegName;
+        ConstraintStr += '}';
+        continue;
+      }
+    }
+
+    // If there is a simpler form for the register constraint, use it.
+    std::string Simplified = CanonicalizeConstraint(Constraint);
+    ConstraintStr += Simplified;
+  }
+
+  // Process clobbers.
+
+  // Some targets automatically clobber registers across an asm.
+  tree Clobbers = targetm.md_asm_clobbers(outputs, inputs, clobbers);
+  for (; Clobbers; Clobbers = TREE_CHAIN(Clobbers)) {
+    const char *RegName = TREE_STRING_POINTER(TREE_VALUE(Clobbers));
+    int RegCode = decode_reg_name(RegName);
+
+    switch (RegCode) {
+    case -1:     // Nothing specified?
+    case -2:     // Invalid.
+      error_at(gimple_location(stmt), "unknown register name %qs in %<asm%>",
+               RegName);
+      if (NumChoices>1)
+        FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+      return;
+    case -3:     // cc
+      ConstraintStr += ",~{cc}";
+      break;
+    case -4:     // memory
+      ConstraintStr += ",~{memory}";
+      break;
+    default:     // Normal register name.
+      RegName = getConstraintRegNameFromGccTables(RegName, RegCode);
+      ConstraintStr += ",~{";
+      ConstraintStr += RegName;
+      ConstraintStr += "}";
+      break;
+    }
+  }
+
+  const Type *CallResultType;
+  switch (CallResultTypes.size()) {
+  case 0: CallResultType = Type::getVoidTy(Context); break;
+  case 1: CallResultType = CallResultTypes[0]; break;
+  default:
+    std::vector<const Type*> TmpVec(CallResultTypes.begin(),
+                                    CallResultTypes.end());
+    CallResultType = StructType::get(Context, TmpVec);
+    break;
+  }
+
+  const FunctionType *FTy =
+    FunctionType::get(CallResultType, CallArgTypes, false);
+
+  // Remove the leading comma if we have operands.
+  if (!ConstraintStr.empty())
+    ConstraintStr.erase(ConstraintStr.begin());
+
+  // Make sure we're created a valid inline asm expression.
+  if (!InlineAsm::Verify(FTy, ConstraintStr)) {
+    error_at(gimple_location(stmt), "Invalid or unsupported inline assembly!");
+    if (NumChoices>1)
+      FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+    return;
+  }
+
+  Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
+                              gimple_asm_volatile_p(stmt) || !outputs);
+  CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
+                                    CallResultTypes.empty() ? "" : "asmtmp");
+  CV->setDoesNotThrow();
+
+  // If the call produces a value, store it into the destination.
+  if (StoreCallResultAddrs.size() == 1)
+    Builder.CreateStore(CV, StoreCallResultAddrs[0]);
+  else if (unsigned NumResults = StoreCallResultAddrs.size()) {
+    for (unsigned i = 0; i != NumResults; ++i) {
+      Value *ValI = Builder.CreateExtractValue(CV, i, "asmresult");
+      Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
+    }
+  }
+
+  // If the call defined any ssa names, associate them with their value.
+  for (unsigned i = 0, e = CallResultSSANames.size(); i != e; ++i)
+    SSANames[CallResultSSANames[i]] = Builder.CreateLoad(CallResultSSATemps[i]);
+
+  // Give the backend a chance to upgrade the inline asm to LLVM code.  This
+  // handles some common cases that LLVM has intrinsics for, e.g. x86 bswap ->
+  // llvm.bswap.
+  if (const TargetLowering *TLI = TheTarget->getTargetLowering())
+    TLI->ExpandInlineAsm(CV);
+
+  if (NumChoices>1)
+    FreeConstTupleStrings(ReplacementStrings, NumInputs+NumOutputs);
+}
 
 void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
   // Emit the comparison.

@@ -519,6 +519,7 @@ private: // Helpers for exception handling.
 private:
 
   // Render* - Convert GIMPLE to LLVM.
+  void RenderGIMPLE_ASM(gimple_statement_d *);
   void RenderGIMPLE_COND(gimple_statement_d *);
   void RenderGIMPLE_GOTO(gimple_statement_d *);
   void RenderGIMPLE_RESX(gimple_statement_d *);
@@ -582,7 +583,6 @@ private:
   Value *EmitFILTER_EXPR(tree_node *exp);
 
   // Inline Assembly and Register Variables.
-  Value *EmitASM_EXPR(tree_node *exp);
   Value *EmitReadOfRegisterVariable(tree_node *vardecl, const MemRef *DestLoc);
   void EmitModifyOfRegisterVariable(tree_node *vardecl, Value *RHS);
 

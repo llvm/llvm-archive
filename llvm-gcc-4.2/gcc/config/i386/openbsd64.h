@@ -1,3 +1,4 @@
+/* LLVM LOCAL begin (ENTIRE FILE!) */
 /* Configuration for an OpenBSD x86-64 target.
    
    Copyright (C) 2003 Free Software Foundation, Inc.
@@ -119,3 +120,4 @@ Boston, MA 02111-1307, USA.  */
 
 #undef JUMP_TABLES_IN_TEXT_SECTION
 #define JUMP_TABLES_IN_TEXT_SECTION (flag_pic)
+/* LLVM LOCAL end (ENTIRE FILE!)  */

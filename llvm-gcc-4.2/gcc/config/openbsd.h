@@ -73,6 +73,7 @@ Boston, MA 02110-1301, USA.  */
 
 /* Controlling the compilation driver.  */
 /* TARGET_OS_CPP_BUILTINS() common to all OpenBSD targets.  */
+/* LLVM local begin */
 #define OPENBSD_OS_CPP_BUILTINS_COMMON()	\
   do						\
     {						\
@@ -104,6 +105,7 @@ Boston, MA 02110-1301, USA.  */
   while (0)
 
 /* XXX old stuff TARGET_OS_CPP_BUILTINS() common to all OpenBSD targets.  */
+/* LLVM local end */
 #define OPENBSD_OS_CPP_BUILTINS()		\
   do						\
     {						\
@@ -127,8 +129,10 @@ Boston, MA 02110-1301, USA.  */
 #define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #endif
 
+/* LLVM local begin */
 #undef LIB_SPEC
 #define LIB_SPEC OBSD_LIB_SPEC
+/* LLVM local end */
 
 #ifndef OBSD_HAS_CORRECT_SPECS
 
@@ -164,10 +168,12 @@ Boston, MA 02110-1301, USA.  */
   "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
 
+/* LLVM local begin */
 #if defined(HAVE_LD_EH_FRAME_HDR)
 #define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
 
+/* LLVM local end */
 #undef LIB_SPEC
 #define LIB_SPEC OBSD_LIB_SPEC
 #endif
@@ -310,6 +316,8 @@ do {									 \
 /* Storage layout.  */
 
 
+/* LLVM local begin */
+/* LLVM local end */
 /* bug work around: we don't want to support #pragma weak, but the current
    code layout needs HANDLE_PRAGMA_WEAK asserted for __attribute((weak)) to
    work.  On the other hand, we don't define HANDLE_PRAGMA_WEAK directly,
@@ -342,7 +350,7 @@ __enable_execute_stack (void *addr)					\
     argvec.push_back ("--relocation-model=static");
 
 #endif
-/* LLVM LOCAL end */
 
+/* LLVM LOCAL end */
 #include <sys/types.h>
 #include <sys/mman.h>

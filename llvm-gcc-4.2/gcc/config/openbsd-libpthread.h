@@ -1,3 +1,4 @@
+/* LLVM LOCAL begin (ENTIRE FILE!) */
 /* LIB_SPEC appropriate for OpenBSD.  Include -lpthread if -pthread is
    specified on the command line. */
 /*   Copyright (C) 2004 Free Software Foundation, Inc.
@@ -21,3 +22,4 @@ Boston, MA 02111-1307, USA.  */
 
 #define OBSD_LIB_SPEC "%{!shared:%{pthread:-lpthread} -lc}"
 
+/* LLVM LOCAL end (ENTIRE FILE!)  */

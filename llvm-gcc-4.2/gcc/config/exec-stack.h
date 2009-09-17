@@ -1,3 +1,4 @@
+/* LLVM LOCAL begin (ENTIRE FILE!) */
 /* Enable stack execute around trampoline address.  
    Copyright (C) 2002 Free Software Foundation, Inc.
 
@@ -38,3 +39,4 @@ __enable_execute_stack (addr)						\
   if (mprotect (page, end - page, PROT_READ | PROT_WRITE | PROT_EXEC) < 0) \
     perror ("mprotect of trampoline code");				\
 }
+/* LLVM LOCAL end (ENTIRE FILE!)  */

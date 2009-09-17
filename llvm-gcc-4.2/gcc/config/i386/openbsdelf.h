@@ -56,9 +56,11 @@ Boston, MA 02110-1301, USA.  */
 
 /* This must agree with <machine/ansi.h> */
 #undef SIZE_TYPE
+/* LLVM local */
 #define SIZE_TYPE "long unsigned int"
 
 #undef PTRDIFF_TYPE
+/* LLVM local */
 #define PTRDIFF_TYPE "long int"
 
 #undef WCHAR_TYPE
@@ -111,6 +113,8 @@ Boston, MA 02110-1301, USA.  */
 
 /* Assembler format: exception region output.  */
 
+/* LLVM local begin */
+/* LLVM local end */
 /* Assembler format: alignment output.  */
 
 /* Note that we pick up ASM_OUTPUT_MAX_SKIP_ALIGN from i386/gas.h */

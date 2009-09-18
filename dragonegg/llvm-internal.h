@@ -411,13 +411,6 @@ public:
   BasicBlock *getIndirectGotoBlock();
   
   void TODO(tree_node *exp = 0);
-  
-  /// CastToType - Cast the specified value to the specified type if it is
-  /// not already that type.
-  Value *CastToType(unsigned opcode, Value *V, const Type *Ty);
-  Value *CastToType(unsigned opcode, Value *V, tree_node *type) {
-    return CastToType(opcode, V, ConvertType(type));
-  }
 
   /// CastToAnyType - Cast the specified value to the specified type regardless
   /// of the types involved. This is an inferred cast.
@@ -437,10 +430,6 @@ public:
   /// that V's type and Ty are floating point types. This arbitrates between
   /// BitCast, FPTrunc and FPExt.
   Value *CastToFPType(Value *V, const Type* Ty);
-
-  /// NOOPCastToType - Insert a BitCast from V to Ty if needed. This is just a
-  /// convenience function for CastToType(Instruction::BitCast, V, Ty);
-  Value *BitCastToType(Value *V, const Type *Ty);
 
   /// CreateTemporary - Create a new alloca instruction of the specified type,
   /// inserting it into the entry block and returning it.  The resulting

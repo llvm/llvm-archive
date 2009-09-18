@@ -1952,14 +1952,17 @@ proc check_effective_target_sync_int_long { } {
         set et_sync_int_long_saved 0
 # This is intentionally powerpc but not rs6000, rs6000 doesn't have the
 # load-reserved/store-conditional instructions.
+# APPLE LOCAL begin 6258536 atomic builtins
         if { [istarget ia64-*-*]
 	     || [istarget i?86-*-*]
+	     || [istarget arm*-*-darwin*]
 	     || [istarget x86_64-*-*]
 	     || [istarget alpha*-*-*] 
 	     || [istarget s390*-*-*] 
 	     || [istarget powerpc*-*-*]
 	     || [istarget sparc64-*-*]
 	     || [istarget sparcv9-*-*] } {
+# APPLE LOCAL end 6258536 atomic builtins
            set et_sync_int_long_saved 1
         }
     }

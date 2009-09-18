@@ -2365,6 +2365,130 @@ arm_split_constant (enum rtx_code code, enum machine_mode mode, rtx insn,
 			   1);
 }
 
+/* APPLE LOCAL begin 6258536 atomic builtins */
+/* A subroutine of the atomic operation splitter.  Emit a load exclusive
+   instruction in MODE.  */
+static void
+emit_load_locked (enum machine_mode mode, rtx reg, rtx mem)
+{
+  rtx (*fn) (rtx, rtx) = NULL;
+  switch (mode) {
+  case QImode:
+    fn = gen_load_locked_qi;
+    break;
+  case HImode:
+    fn = gen_load_locked_hi;
+    break;
+  case SImode:
+    fn = gen_load_locked_si;
+    break;
+  case DImode:
+    fn = gen_load_locked_di;
+    break;
+  default:
+    abort();
+  }
+  emit_insn (fn (reg, mem));
+}
+
+/* A subroutine of the atomic operation splitter.  Emit a store-conditional
+   instruction in MODE.  */
+static void
+emit_store_conditional (enum machine_mode mode, rtx res, rtx mem, rtx val)
+{
+  rtx (*fn) (rtx, rtx, rtx) = NULL;
+  switch (mode) {
+  case QImode:
+    fn = gen_store_conditional_qi;
+    break;
+  case HImode:
+    fn = gen_store_conditional_hi;
+    break;
+  case SImode:
+    fn = gen_store_conditional_si;
+    break;
+  case DImode:
+    fn = gen_store_conditional_di;
+    break;
+  default:
+    abort();
+  }
+  emit_insn (fn (res, mem, val));
+}
+
+
+void
+arm_split_compare_and_swap(rtx dest, rtx mem, rtx oldval, rtx newval,
+                           rtx scratch)
+{
+  enum machine_mode mode = GET_MODE (mem);
+  rtx label1, label2, x, cond = gen_rtx_REG (CCmode, CC_REGNUM);
+  rtx dest_cmp, oldval_cmp;
+
+  emit_insn (gen_memory_barrier ());
+
+  label1 = gen_rtx_LABEL_REF (VOIDmode, gen_label_rtx ());
+  label2 = gen_rtx_LABEL_REF (VOIDmode, gen_label_rtx ());
+  emit_label (XEXP (label1, 0));
+
+  emit_load_locked (mode, dest, mem);
+  /* If this is for a mode smaller than SI, zext to SI for the comparison. */
+  dest_cmp = dest;
+  oldval_cmp = oldval;
+  switch (mode)
+    {
+    case QImode: case HImode:
+      dest_cmp = gen_rtx_REG (SImode, REGNO(dest));
+      oldval_cmp = gen_rtx_REG (SImode, REGNO(oldval));
+      emit_insn (gen_zero_extendqisi2 (dest_cmp, dest));
+      emit_insn (gen_zero_extendqisi2 (oldval_cmp, oldval));
+      /* fall through */
+    case SImode:
+      x = gen_rtx_COMPARE (CCmode, dest_cmp, oldval_cmp);
+      emit_insn (gen_rtx_SET (VOIDmode, cond, x));
+      x = gen_rtx_NE (VOIDmode, cond, const0_rtx);
+      x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label2, pc_rtx);
+      x = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx, x));
+      break;
+    case DImode:
+      {
+        rtx sub1, sub2;
+        /* compare the high word */
+        sub1 = gen_highpart (SImode, dest);
+        sub2 = gen_highpart (SImode, oldval);
+        x = gen_rtx_COMPARE (CCmode, sub1, sub2);
+        emit_insn (gen_rtx_SET (VOIDmode, cond, x));
+        x = gen_rtx_NE (VOIDmode, cond, const0_rtx);
+        x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label2, pc_rtx);
+        x = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx, x));
+        /* compare the low word */
+        sub1 = gen_lowpart (SImode, dest);
+        sub2 = gen_lowpart (SImode, oldval);
+        x = gen_rtx_COMPARE (CCmode, sub1, sub2);
+        emit_insn (gen_rtx_SET (VOIDmode, cond, x));
+        x = gen_rtx_NE (VOIDmode, cond, const0_rtx);
+        x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label2, pc_rtx);
+        x = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx, x));
+        break;
+      }
+    default:
+      /* nothing else should get here. */
+      abort();
+    }
+
+  emit_store_conditional (mode, scratch, mem, newval);
+  x = gen_rtx_COMPARE (CCmode, scratch, const0_rtx);
+  emit_insn (gen_rtx_SET (VOIDmode, cond, x));
+
+  x = gen_rtx_NE (VOIDmode, cond, const0_rtx);
+  x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label1, pc_rtx);
+  x = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx, x));
+
+  emit_insn (gen_memory_sync ());
+  emit_label (XEXP (label2, 0));
+}
+/* APPLE LOCAL end 6258536 atomic builtins */
+
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 /* Return the number of ARM instructions required to synthesize the given
    constant.  */
@@ -4725,11 +4849,13 @@ thumb2_legitimate_index_p (enum machine_mode mode, rtx index, int strict_p)
   /* ??? Combine arm and thumb2 coprocessor addressing modes.  */
   /* Standard coprocessor addressing modes.  */
   if (TARGET_HARD_FLOAT
-      && (TARGET_FPA || TARGET_MAVERICK)
+      /* APPLE LOCAL 7109945 floating point stores should use vstr */
+      && (TARGET_FPA || TARGET_MAVERICK || TARGET_VFP)
       && (GET_MODE_CLASS (mode) == MODE_FLOAT
 	  || (TARGET_MAVERICK && mode == DImode)))
     return (code == CONST_INT && INTVAL (index) < 1024
-	    && INTVAL (index) > -1024
+            /* APPLE LOCAL 7198870 STR only allows down to -255 offset */
+	    && INTVAL (index) > -256
 	    && (INTVAL (index) & 3) == 0);
 
   if (TARGET_REALLY_IWMMXT && VALID_IWMMXT_REG_MODE (mode))
@@ -8606,6 +8732,13 @@ arm_select_dominance_cc_mode (rtx x, rtx y, HOST_WIDE_INT cond_or)
       cond1 = cond2;
       cond2 = temp;
     }
+
+  /* APPLE LOCAL begin 7174451 */
+  /* Punt for the unordered floating point comparisons */
+  if (cond1 == UNGT || cond1 == UNGE || cond1 == UNLT || cond1 == UNLE
+      || cond1 == UNEQ || cond1 == LTGT)
+    return CCmode;
+  /* APPLE LOCAL end 7174451 */
 
   switch (cond1)
     {
@@ -19653,6 +19786,11 @@ arm_expand_neon_args (rtx target, int icode, int have_retval,
           arg[argc] = TREE_VALUE (arglist);
           op[argc] = expand_expr (arg[argc], NULL_RTX, VOIDmode, 0);
           mode[argc] = insn_data[icode].operand[argc + have_retval].mode;
+          /* APPLE LOCAL 6574544 begin NEON builtin argument types */
+          /* Make sure the modes match. */
+          op[argc] = convert_to_mode (mode[argc], op[argc],
+                                      TYPE_UNSIGNED(TREE_TYPE(arg[argc])));
+          /* APPLE LOCAL 6574544 end NEON builtin argument types */
 
           arglist = TREE_CHAIN (arglist);
 

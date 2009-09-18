@@ -123,13 +123,20 @@ echo DARWIN_VERS = $DARWIN_VERS
 ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
-ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
-ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
-ARM_EXTRA_SDK=/Developer/SDKs/Extra
+# If the build target is iPhone, use the iPhone SDK as the build sysroot
+# and use the tools from the iPhone platform directory.  These paths have to
+# be hardcoded, at least for now, because the build system does not
+# consistently identify separate host and target SDKROOTS.  (The buildit
+# script currently sets SDKROOT to the target iPhone SDK, but XBS sets it
+# to the default host SDK "/".)
+if [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
 
-# If the Phone platform is available, use the ARM tools there, else try /
-if [ -d $ARM_PLATFORM ]; then
+  ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
+  ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
+
+  ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
   ARM_TOOLROOT=$ARM_PLATFORM/Developer
+
   # If it's being built for iPhoneOS, assume the llvmCore bits are under
   # iPhoneOS platform directory.
   if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
@@ -137,25 +144,17 @@ if [ -d $ARM_PLATFORM ]; then
     DEST_ROOT="${ARM_PLATFORM}${DEST_ROOT}"
   fi
 else
-  ARM_TOOLROOT=/
-fi
 
-# Likewise, In order of preference, look for ARM sysroot bits at:
-#   1. $ARM_SDK_EXTRA
-#   2. Phone SDK ($ARM_PLATFORM/Developers/SDKs/$ARM_IPHONE_SDK)
-#   3. /
-if [ -d $ARM_EXTRA_SDK ]; then
-  ARM_SYSROOT=$ARM_EXTRA_SDK
-  ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
-else
-  if [ -d $ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK ]; then
-    ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
-    ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-sysroot=\"$ARM_SYSROOT\""
+  # Use bootstrap SDK if it is available.
+  if [ -d /Developer/SDKs/Extra ]; then
+    ARM_SYSROOT=/Developer/SDKs/Extra
   else
     ARM_SYSROOT=/
-    ARM_CONFIG_FLAGS=
   fi
+  ARM_TOOLROOT=/
+
 fi
+ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-build-sysroot=\"$ARM_SYSROOT\""
 
 # If building an ARM target, check that the required directories exist
 # and query the libSystem arm slices to determine which multilibs we should
@@ -269,9 +268,9 @@ fi
 mkdir -p $DIR/obj-$BUILD-$BUILD $DIR/dst-$BUILD-$BUILD || exit 1
 cd $DIR/obj-$BUILD-$BUILD || exit 1
 if [ \! -f Makefile ]; then
- $SRC_DIR/configure $bootstrap $CONFIGFLAGS \
-   $NON_ARM_CONFIGFLAGS \
-   --host=$BUILD-apple-darwin$DARWIN_VERS --target=$BUILD-apple-darwin$DARWIN_VERS || exit 1
+ $SRC_DIR/configure $bootstrap $CONFIGFLAGS $NON_ARM_CONFIGFLAGS \
+   --host=$BUILD-apple-darwin$DARWIN_VERS \
+   --target=$BUILD-apple-darwin$DARWIN_VERS || exit 1
 fi
 # Unset RC_DEBUG_OPTIONS because it causes the bootstrap to fail.
 # Also keep unset for cross compilers so that the cross built libraries are
@@ -347,10 +346,19 @@ for t in $CROSS_TARGETS ; do
    cd $DIR/obj-$BUILD-$t || exit 1
    if [ \! -f Makefile ]; then
     # APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-    $SRC_DIR/configure $CONFIGFLAGS --enable-werror-always \
-      `if [ $t = 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
+    T_CONFIGFLAGS="$CONFIGFLAGS --enable-werror-always \
       --program-prefix=$t-apple-darwin$DARWIN_VERS- \
-      --host=$BUILD-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
+      --host=$BUILD-apple-darwin$DARWIN_VERS \
+      --target=$t-apple-darwin$DARWIN_VERS"
+    if [ $t = 'arm' ] ; then
+      # Explicitly set AS_FOR_TARGET and LD_FOR_TARGET to avoid picking up
+      # older versions from the gcc installed in /usr.  Radar 7230843.
+      AS_FOR_TARGET=$DIR/bin/${t}-apple-darwin$DARWIN_VERS-as \
+      LD_FOR_TARGET=$DIR/bin/${t}-apple-darwin$DARWIN_VERS-ld \
+      $SRC_DIR/configure $T_CONFIGFLAGS $ARM_CONFIGFLAGS || exit 1
+    else
+      $SRC_DIR/configure $T_CONFIGFLAGS $NON_ARM_CONFIGFLAGS || exit 1
+    fi
     # APPLE LOCAL end ARM ARM_CONFIGFLAGS
    fi
    make $MAKEFLAGS all CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
@@ -393,10 +401,15 @@ for h in $HOSTS ; do
 
       if [ \! -f Makefile ]; then
 	# APPLE LOCAL begin ARM ARM_CONFIGFLAGS
-        $SRC_DIR/configure $CONFIGFLAGS \
-	  `if [ $t = 'arm' ] && [ $h != 'arm' ] ; then echo $ARM_CONFIGFLAGS ; else echo $NON_ARM_CONFIGFLAGS ; fi` \
-          --program-prefix=$pp \
-          --host=$h-apple-darwin$DARWIN_VERS --target=$t-apple-darwin$DARWIN_VERS || exit 1
+        T_CONFIGFLAGS="$CONFIGFLAGS --program-prefix=$pp \
+          --host=$h-apple-darwin$DARWIN_VERS \
+          --target=$t-apple-darwin$DARWIN_VERS"
+	if [ $t = 'arm' ] && [ $h != 'arm' ] ; then
+          T_CONFIGFLAGS="$T_CONFIGFLAGS $ARM_CONFIGFLAGS"
+        else
+          T_CONFIGFLAGS="$T_CONFIGFLAGS $NON_ARM_CONFIGFLAGS"
+        fi
+        $SRC_DIR/configure $T_CONFIGFLAGS || exit 1
 	# APPLE LOCAL end ARM ARM_CONFIGFLAGS
       fi
 

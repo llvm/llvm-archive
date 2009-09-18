@@ -103,6 +103,11 @@
 ;; APPLE LOCAL end v7 support. Merge from Codesourcery
    ; APPLE LOCAL ARM UXTB support
    (UNSPEC_UXTB16   27) ; The UXTB16 instruction (ARM only)
+;; APPLE LOCAL begin 6258536 atomic builtins
+   (UNSPEC_CMPXCHG  28) ; Atomic compare and swap operations
+   (UNSPEC_BARRIER  29) ; memory barrier
+   (UNSPEC_SYNC     30) ; memory sync
+;; APPLE LOCAL end 6258536 atomic builtins
   ]
 )
 
@@ -143,6 +148,10 @@
    (VUNSPEC_POOL_STRING 21) ; `pool-entry(string)'.  An entry in the constant
 			    ;   pool for a string.
 			    ; APPLE LOCAL end ARM strings in code
+;; APPLE LOCAL begin 6258536 atomic builtins
+   (VUNSPEC_LL 22)          ; Load locked (ldrex)
+   (VUNSPEC_SC 22)          ; Store conditional (strex)
+;; APPLE LOCAL end 6258536 atomic builtins
   ]
 )
 
@@ -11957,4 +11966,6 @@
 ;; Neon patterns
 (include "neon.md")
 ;; APPLE LOCAL end v7 support. Merge from Codesourcery
+;; APPLE LOCAL 6258536 atomic builtins
+(include "sync.md")
 

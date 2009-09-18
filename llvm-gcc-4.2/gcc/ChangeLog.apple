@@ -7,6 +7,51 @@
 	destroy helper functions a NULL/0 source location.
 	* c-parser.c (c_parser_block_literal_expr):  Ditto.
 
+2009-09-08  Jim Grosbach <grosbach@apple.com>
+
+       Radar 7174451
+       * config/arm/arm.c (arm_select_dominance_cc_mode): Unordered floats.
+
+2009-09-08  Jim Grosbach <grosbach@apple.com>
+
+	Radar 6258536
+	* gcc/testsuite/lib/target-supports.exp
+	(check_effective_target_sync_int_long): Enable __sync* tests for ARM.
+	* gcc/config/arm/arm.c (emit_load_locked, emit_store_conditional,
+	arm_split_compare_and_swap): New.
+	* gcc/config/arm/arm.h (ARM_PRINT_OPERAND_ADDRESS): Omit the ", #0"
+	for no-offset register addresses to make LDREX* and STREX* happy.
+	(arm_arch7a): Make extern for use in .md files.
+	* gcc/config/arm/arm-protos.h (arm_split_compare_and_swap): New.
+	* gcc/config/arm/sync.md: New file.
+	* gcc/config/arm/arm.md: Include "sync.md".
+	(UNSPEC_CMPXCHG, UNSPEC_BARRIER, UNSPEC_SYNC, VUNSPEC_LL,
+	VUNSPEC_SC): New.
+
+2009-09-04  Jim Grosbach <grosbach@apple.com>
+
+	Radar 6574544
+	* config/arm/arm.c (arm_expand_neon_args): Convert builtin arguments
+	to the expected mode.
+
+2009-09-04  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7198870
+	* config/arm/arm.c (thumb2_legitimate_index_p): Restrict negative
+	range to -255 since that's the min for STR.
+
+2009-09-01  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7191061
+	* config/arm/arm.h (ARM_DECLARE_FUNCTION_NAME): Force 32-bit
+	alignment for MI thunk functions.
+
+2009-09-01  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7109945
+	* config/arm (thumb2_legitimate_index_p): VFP register addresses
+	should be restricted to constants in range for VSTR.
+
 2009-08-31  Caroline Tice  <ctice@apple.com>
 
 	Radar 6419781
@@ -14,7 +59,7 @@
 	* tree.h (type_is_block_byref_struct):  New extern function decl.
 
 2009-07-31  Bob Wilson  <bob.wilson@apple.com>
-	
+
 	Radar 7105099
 	Backport from mainline (the ARM portions were already partly there):
 	2007-07-16  Julian Brown  <julian@codesourcery.com>

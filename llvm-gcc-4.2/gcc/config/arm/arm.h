@@ -425,6 +425,11 @@ extern int arm_arch6;
 /* LLVM LOCAL Declare arm_arch7a for use when setting the target triple.  */
 extern int arm_arch7a;
 
+/* APPLE LOCAL begin 6258536 Atomic builtins */
+/* Nonzero if this chip supports the ARM Architecture 7a extensions.  */
+extern int arm_arch7a;
+/* APPLE LOCAL end 6258536 Atomic builtins */
+
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 /* Nonzero if instructions not present in the 'M' profile can be used.  */
 extern int arm_arch_notm;
@@ -2733,7 +2738,10 @@ extern int making_const_table;
           if (is_called_in_ARM_mode (DECL)		\
 	      || (TARGET_THUMB1 && !TARGET_THUMB1_ONLY	\
 		  && current_function_is_thunk))	\
-            fprintf (STREAM, "\t.code 32\n") ;		\
+            {						\
+              fprintf (STREAM, "\t.align 2\n") ;	\
+              fprintf (STREAM, "\t.code 32\n") ;	\
+            }						\
           else						\
 /* APPLE LOCAL begin ARM thumb_func <symbol_name> */	\
 	    {						\
@@ -2828,7 +2836,8 @@ extern int making_const_table;
     int is_minus = GET_CODE (X) == MINUS;				\
 									\
     if (GET_CODE (X) == REG)						\
-      asm_fprintf (STREAM, "[%r, #0]", REGNO (X));			\
+      /* APPLE LOCAL 6258536 Atomic builtins */				\
+      asm_fprintf (STREAM, "[%r]", REGNO (X));				\
     else if (GET_CODE (X) == PLUS || is_minus)				\
       {									\
 	rtx base = XEXP (X, 0);						\

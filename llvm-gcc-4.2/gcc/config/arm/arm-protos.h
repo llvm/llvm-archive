@@ -71,6 +71,8 @@ extern bool const64_ok_for_arm_add (rtx);
 /* APPLE LOCAL end 5831562 long long constants */
 extern int arm_split_constant (RTX_CODE, enum machine_mode, rtx,
 			       HOST_WIDE_INT, rtx, rtx, int);
+/* APPLE LOCAL 6258536 atomic builtins */
+extern void arm_split_compare_and_swap(rtx, rtx, rtx, rtx, rtx);
 extern RTX_CODE arm_canonicalize_comparison (RTX_CODE, enum machine_mode,
 					     rtx *);
 extern int legitimate_pic_operand_p (rtx);

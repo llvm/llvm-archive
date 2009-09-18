@@ -90,6 +90,8 @@ extensions, accepted by GCC in C89 mode and in C++.
 * Pragmas::             Pragmas accepted by GCC.
 * Unnamed Fields::      Unnamed struct/union fields within structs/unions.
 * Thread-Local::        Per-thread variables.
+@c APPLE LOCAL blocks 7205047 5811887
+* Blocks::              Anonymous functions (closures).
 @end menu
 
 @node Statement Exprs
@@ -10906,6 +10908,18 @@ Add after paragraph 6
 Non-@code{static} members shall not be @code{__thread}.
 @end quotation
 @end itemize
+
+@c APPLE LOCAL begin blocks 7205047 5811887
+@node Blocks
+@section Blocks
+@cindex Blocks
+@cindex __block
+
+Blocks is a language feature that allows one to create anonymous
+functions.  The feature is also known as lambdas or closures in other
+languages.  The feature is controlled by @option{-fblocks}.
+See @uref{http://developer.apple.com/mac/library/documentation/Cocoa/Conceptual/Blocks/Articles/00_Introduction.html} for additional details.
+@c APPLE LOCAL end blocks 7205047 5811887
 
 @node C++ Extensions
 @chapter Extensions to the C++ Language

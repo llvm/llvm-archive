@@ -948,7 +948,6 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     gimple gimple_stmt = gsi_stmt(gsi);
 
     switch (gimple_code(gimple_stmt)) {
-    case GIMPLE_ASSIGN:
     case GIMPLE_CALL: {
       // TODO Handle gimple directly, rather than converting to a tree.
       tree stmt = gimple_to_tree(gimple_stmt);
@@ -969,6 +968,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
 
     case GIMPLE_ASM:
       RenderGIMPLE_ASM(gimple_stmt);
+      break;
+
+    case GIMPLE_ASSIGN:
+      RenderGIMPLE_ASSIGN(gimple_stmt);
       break;
 
     case GIMPLE_COND:
@@ -1086,16 +1089,26 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case NON_LVALUE_EXPR: Result = Emit(TREE_OPERAND(exp, 0), DestLoc); break;
 
     // Unary Operators
-  case NOP_EXPR:       Result = EmitNOP_EXPR(exp, DestLoc); break;
+  case NOP_EXPR:
+    Result = EmitNOP_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0), DestLoc);
+    break;
   case FIX_TRUNC_EXPR:
   case FLOAT_EXPR:
-  case CONVERT_EXPR:   Result = EmitCONVERT_EXPR(exp, DestLoc); break;
+  case CONVERT_EXPR:
+    Result = EmitCONVERT_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0));
+    break;
   case VIEW_CONVERT_EXPR: Result = EmitVIEW_CONVERT_EXPR(exp, DestLoc); break;
-  case NEGATE_EXPR:    Result = EmitNEGATE_EXPR(exp, DestLoc); break;
-  case CONJ_EXPR:      Result = EmitCONJ_EXPR(exp, DestLoc); break;
-  case ABS_EXPR:       Result = EmitABS_EXPR(exp); break;
-  case BIT_NOT_EXPR:   Result = EmitBIT_NOT_EXPR(exp); break;
-  case TRUTH_NOT_EXPR: Result = EmitTRUTH_NOT_EXPR(exp); break;
+  case NEGATE_EXPR:
+    Result = EmitNEGATE_EXPR(TREE_OPERAND(exp, 0), DestLoc);
+    break;
+  case CONJ_EXPR:
+    Result = EmitCONJ_EXPR(TREE_OPERAND(exp, 0), DestLoc);
+    break;
+  case ABS_EXPR:       Result = EmitABS_EXPR(TREE_OPERAND(exp, 0)); break;
+  case BIT_NOT_EXPR:   Result = EmitBIT_NOT_EXPR(TREE_OPERAND(exp, 0)); break;
+  case TRUTH_NOT_EXPR:
+    Result = EmitTRUTH_NOT_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0));
+    break;
 
   // Binary Operators
   case LT_EXPR:
@@ -1118,72 +1131,139 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     Result = Builder.CreateZExt(Result, ConvertType(TREE_TYPE(exp)));
     break;
   case PLUS_EXPR:
-    Result = EmitBinOp(exp, DestLoc,
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
                        FLOAT_TYPE_P(TREE_TYPE(exp)) ?
                          Instruction::FAdd :
                          Instruction::Add);
     break;
   case MINUS_EXPR:
-    Result = EmitBinOp(exp, DestLoc,
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
                        FLOAT_TYPE_P(TREE_TYPE(exp)) ?
                          Instruction::FSub :
                          Instruction::Sub);
     break;
   case MULT_EXPR:
-    Result = EmitBinOp(exp, DestLoc,
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
                        FLOAT_TYPE_P(TREE_TYPE(exp)) ?
                          Instruction::FMul :
                          Instruction::Mul);
     break;
-  case EXACT_DIV_EXPR: Result = EmitEXACT_DIV_EXPR(exp, DestLoc); break;
+  case EXACT_DIV_EXPR:
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                       TYPE_UNSIGNED(TREE_TYPE(exp)) ?
+                       Instruction::UDiv : Instruction::SDiv);
   case TRUNC_DIV_EXPR:
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
-      Result = EmitBinOp(exp, DestLoc, Instruction::UDiv);
+      Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                         TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                         Instruction::UDiv);
     else
-      Result = EmitBinOp(exp, DestLoc, Instruction::SDiv);
+      Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                         TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                         Instruction::SDiv);
     break;
-  case RDIV_EXPR: Result = EmitBinOp(exp, DestLoc, Instruction::FDiv); break;
-  case CEIL_DIV_EXPR: Result = EmitCEIL_DIV_EXPR(exp); break;
-  case FLOOR_DIV_EXPR: Result = EmitFLOOR_DIV_EXPR(exp); break;
-  case ROUND_DIV_EXPR: Result = EmitROUND_DIV_EXPR(exp); break;
+  case RDIV_EXPR: Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                                     TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                                     DestLoc, Instruction::FDiv); break;
+  case CEIL_DIV_EXPR:
+    Result = EmitCEIL_DIV_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                               TREE_OPERAND(exp, 1));
+    break;
+  case FLOOR_DIV_EXPR:
+    Result = EmitFLOOR_DIV_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                                TREE_OPERAND(exp, 1));
+    break;
+  case ROUND_DIV_EXPR:
+    Result = EmitROUND_DIV_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                                TREE_OPERAND(exp, 1));
+    break;
   case TRUNC_MOD_EXPR:
     if (TYPE_UNSIGNED(TREE_TYPE(exp)))
-      Result = EmitBinOp(exp, DestLoc, Instruction::URem);
+      Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                         TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                         Instruction::URem);
     else
-      Result = EmitBinOp(exp, DestLoc, Instruction::SRem);
+      Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                         TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                         Instruction::SRem);
     break;
-  case FLOOR_MOD_EXPR: Result = EmitFLOOR_MOD_EXPR(exp, DestLoc); break;
-  case BIT_AND_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::And);break;
-  case BIT_IOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Or );break;
-  case BIT_XOR_EXPR:   Result = EmitBinOp(exp, DestLoc, Instruction::Xor);break;
-  case TRUTH_AND_EXPR: Result = EmitTruthOp(exp, Instruction::And); break;
-  case TRUTH_OR_EXPR:  Result = EmitTruthOp(exp, Instruction::Or); break;
-  case TRUTH_XOR_EXPR: Result = EmitTruthOp(exp, Instruction::Xor); break;
+  case FLOOR_MOD_EXPR:
+    Result = EmitFLOOR_MOD_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                                TREE_OPERAND(exp, 1));
+    break;
+  case BIT_AND_EXPR:
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                       Instruction::And);
+    break;
+  case BIT_IOR_EXPR:
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                       Instruction::Or);
+    break;
+  case BIT_XOR_EXPR:
+    Result = EmitBinOp(TREE_TYPE(exp), TREE_CODE(exp),
+                       TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc,
+                       Instruction::Xor);
+    break;
+  case TRUTH_AND_EXPR:
+    Result = EmitTruthOp(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                         TREE_OPERAND(exp, 1), Instruction::And);
+    break;
+  case TRUTH_OR_EXPR:
+    Result = EmitTruthOp(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                         TREE_OPERAND(exp, 1), Instruction::Or);
+    break;
+  case TRUTH_XOR_EXPR:
+    Result = EmitTruthOp(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                         TREE_OPERAND(exp, 1), Instruction::Xor);
+    break;
   case RSHIFT_EXPR:
-    Result = EmitShiftOp(exp,DestLoc,
-       TYPE_UNSIGNED(TREE_TYPE(exp)) ? Instruction::LShr : Instruction::AShr);
+    Result = EmitShiftOp(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                         TYPE_UNSIGNED(TREE_TYPE(exp)) ?
+                         Instruction::LShr : Instruction::AShr);
     break;
-  case LSHIFT_EXPR:    Result = EmitShiftOp(exp,DestLoc,Instruction::Shl);break;
+  case LSHIFT_EXPR:
+    Result = EmitShiftOp(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                         Instruction::Shl);
+    break;
   case RROTATE_EXPR:
-    Result = EmitRotateOp(exp, Instruction::LShr, Instruction::Shl);
+    Result = EmitRotateOp(TREE_TYPE(exp),
+                          TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                          Instruction::LShr, Instruction::Shl);
     break;
   case LROTATE_EXPR:
-    Result = EmitRotateOp(exp, Instruction::Shl, Instruction::LShr);
+    Result = EmitRotateOp(TREE_TYPE(exp),
+                          TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                          Instruction::Shl, Instruction::LShr);
     break;
   case MIN_EXPR:
-    Result = EmitMinMaxExpr(exp, ICmpInst::ICMP_ULE, ICmpInst::ICMP_SLE,
-                            FCmpInst::FCMP_OLE);
+    Result = EmitMinMaxExpr(TREE_TYPE(exp),
+                            TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                            ICmpInst::ICMP_ULE, ICmpInst::ICMP_SLE,
+                            FCmpInst::FCMP_OLE, false);
     break;
   case MAX_EXPR:
-    Result = EmitMinMaxExpr(exp, ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE,
-                            FCmpInst::FCMP_OGE);
+    Result = EmitMinMaxExpr(TREE_TYPE(exp),
+                            TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1),
+                            ICmpInst::ICMP_UGE, ICmpInst::ICMP_SGE,
+                            FCmpInst::FCMP_OGE, true);
     break;
   case CONSTRUCTOR:       Result = EmitCONSTRUCTOR(exp, DestLoc); break;
-  case POINTER_PLUS_EXPR: Result = EmitPOINTER_PLUS_EXPR(exp); break;
+  case POINTER_PLUS_EXPR:
+    Result = EmitPOINTER_PLUS_EXPR(TREE_TYPE(exp), TREE_OPERAND(exp, 0),
+                                   TREE_OPERAND(exp, 1));
+    break;
 
   // Complex Math Expressions.
   case COMPLEX_CST:    EmitCOMPLEX_CST (exp, DestLoc); break;
-  case COMPLEX_EXPR:   EmitCOMPLEX_EXPR(exp, DestLoc); break;
+  case COMPLEX_EXPR:
+    EmitCOMPLEX_EXPR(TREE_OPERAND(exp, 0), TREE_OPERAND(exp, 1), DestLoc);
+    break;
 
   // Constant Expressions
   case INTEGER_CST:
@@ -2276,6 +2356,122 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
   return SSANames[exp] = LI;
 }
 
+Value *TreeToLLVM::EmitGimpleAssignRHS(gimple stmt, const MemRef *DestLoc) {
+  if (get_gimple_rhs_class(gimple_expr_code(stmt)) == GIMPLE_SINGLE_RHS)
+    return Emit(gimple_assign_rhs1 (stmt), DestLoc);
+
+  tree type = TREE_TYPE(gimple_assign_lhs(stmt));
+  tree_code code = gimple_assign_rhs_code(stmt);
+  tree rhs1 = gimple_assign_rhs1(stmt);
+  tree rhs2 = gimple_assign_rhs2(stmt);
+
+  switch (code) {
+  default:
+    dump(stmt);
+    llvm_unreachable("Unhandled GIMPLE assignment!");
+
+  // Unary expressions.
+  case ABS_EXPR:
+    return EmitABS_EXPR(rhs1);
+  case BIT_NOT_EXPR:
+    return EmitBIT_NOT_EXPR(rhs1);
+  case CONJ_EXPR:
+    return EmitCONJ_EXPR(rhs1, DestLoc);
+  case CONVERT_EXPR:
+  case FIX_TRUNC_EXPR:
+  case FLOAT_EXPR:
+    return EmitCONVERT_EXPR(type, rhs1);
+  case NEGATE_EXPR:
+    return EmitNEGATE_EXPR(rhs1, DestLoc);
+  case NON_LVALUE_EXPR:
+    return Emit(rhs1, DestLoc);
+  case NOP_EXPR:
+    return EmitNOP_EXPR(type, rhs1, DestLoc);
+  case TRUTH_NOT_EXPR:
+    return EmitTRUTH_NOT_EXPR(type, rhs1);
+
+  // Comparisons.
+  case EQ_EXPR:
+  case GE_EXPR:
+  case GT_EXPR:
+  case LE_EXPR:
+  case LT_EXPR:
+  case LTGT_EXPR:
+  case NE_EXPR:
+  case ORDERED_EXPR:
+  case UNEQ_EXPR:
+  case UNGE_EXPR:
+  case UNGT_EXPR:
+  case UNLE_EXPR:
+  case UNLT_EXPR:
+  case UNORDERED_EXPR:
+    // The GCC result may be of any integer type.
+    return Builder.CreateZExt(EmitCompare(rhs1, rhs2, code), ConvertType(type));
+
+  // Binary expressions.
+  case BIT_AND_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, Instruction::And);
+  case BIT_IOR_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, Instruction::Or);
+  case BIT_XOR_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, Instruction::Xor);
+  case CEIL_DIV_EXPR:
+    return EmitCEIL_DIV_EXPR(type, rhs1, rhs2);
+  case COMPLEX_EXPR:
+    EmitCOMPLEX_EXPR(rhs1, rhs2, DestLoc);
+    return 0;
+  case EXACT_DIV_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, TYPE_UNSIGNED(type) ?
+                     Instruction::UDiv : Instruction::SDiv);
+  case FLOOR_DIV_EXPR:
+    return EmitFLOOR_DIV_EXPR(type, rhs1, rhs2);
+  case FLOOR_MOD_EXPR:
+    return EmitFLOOR_MOD_EXPR(type, rhs1, rhs2);
+  case LROTATE_EXPR:
+    return EmitRotateOp(type, rhs1, rhs2, Instruction::Shl, Instruction::LShr);
+  case LSHIFT_EXPR:
+    return EmitShiftOp(rhs1, rhs2, Instruction::Shl);
+  case MAX_EXPR:
+    return EmitMinMaxExpr(type, rhs1, rhs2, ICmpInst::ICMP_UGE,
+                          ICmpInst::ICMP_SGE, FCmpInst::FCMP_OGE, true);
+  case MIN_EXPR:
+    return EmitMinMaxExpr(type, rhs1, rhs2, ICmpInst::ICMP_ULE,
+                          ICmpInst::ICMP_SLE, FCmpInst::FCMP_OLE, false);
+  case MINUS_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, FLOAT_TYPE_P(type) ?
+                     Instruction::FSub : Instruction::Sub);
+  case MULT_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, FLOAT_TYPE_P(type) ?
+                     Instruction::FMul : Instruction::Mul);
+  case PLUS_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, FLOAT_TYPE_P(type) ?
+                     Instruction::FAdd : Instruction::Add);
+  case POINTER_PLUS_EXPR:
+    return EmitPOINTER_PLUS_EXPR(type, rhs1, rhs2);
+  case RDIV_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, Instruction::FDiv);
+  case ROUND_DIV_EXPR:
+    return EmitROUND_DIV_EXPR(type, rhs1, rhs2);
+  case RROTATE_EXPR:
+    return EmitRotateOp(type, rhs1, rhs2, Instruction::LShr, Instruction::Shl);
+  case RSHIFT_EXPR:
+    return EmitShiftOp(rhs1, rhs2, TYPE_UNSIGNED(type) ?
+                       Instruction::LShr : Instruction::AShr);
+  case TRUNC_DIV_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, TYPE_UNSIGNED(type) ?
+                     Instruction::UDiv : Instruction::SDiv);
+  case TRUNC_MOD_EXPR:
+    return EmitBinOp(type, code, rhs1, rhs2, DestLoc, TYPE_UNSIGNED(type) ?
+                     Instruction::URem : Instruction::SRem);
+  case TRUTH_AND_EXPR:
+    return EmitTruthOp(type, rhs1, rhs2, Instruction::And);
+  case TRUTH_OR_EXPR:
+    return EmitTruthOp(type, rhs1, rhs2, Instruction::Or);
+  case TRUTH_XOR_EXPR:
+    return EmitTruthOp(type, rhs1, rhs2, Instruction::Xor);
+  }
+}
+
 /// EmitLoadOfLValue - When an l-value expression is used in a context that
 /// requires an r-value, this method emits the lvalue computation, then loads
 /// the result.
@@ -3024,32 +3220,26 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   return RHS;
 }
 
-Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
-  if (TREE_CODE(TREE_TYPE(exp)) == VOID_TYPE &&    // deleted statement.
-      TREE_CODE(TREE_OPERAND(exp, 0)) == INTEGER_CST)
-    return 0;
-  tree Op = TREE_OPERAND(exp, 0);
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-  bool OpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(Op));
-  bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
+Value *TreeToLLVM::EmitNOP_EXPR(tree type, tree op, const MemRef *DestLoc) {
+  const Type *Ty = ConvertType(type);
+  bool OpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op));
+  bool ExpIsSigned = !TYPE_UNSIGNED(type);
   if (DestLoc == 0) {
     // Scalar to scalar copy.
-    assert(!isAggregateTreeType(TREE_TYPE(Op))
+    assert(!isAggregateTreeType(TREE_TYPE(op))
 	   && "Aggregate to scalar nop_expr!");
-    Value *OpVal = Emit(Op, DestLoc);
-    if (Ty == Type::getVoidTy(Context)) return 0;
-    return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
-  } else if (isAggregateTreeType(TREE_TYPE(Op))) {
+    return CastToAnyType(Emit(op, 0), OpIsSigned, Ty, ExpIsSigned);
+  } else if (isAggregateTreeType(TREE_TYPE(op))) {
     // Aggregate to aggregate copy.
     MemRef NewLoc = *DestLoc;
     NewLoc.Ptr = BitCastToType(DestLoc->Ptr, PointerType::getUnqual(Ty));
-    Value *OpVal = Emit(Op, &NewLoc);
+    Value *OpVal = Emit(op, &NewLoc);
     assert(OpVal == 0 && "Shouldn't cast scalar to aggregate!");
     return 0;
   }
 
   // Scalar to aggregate copy.
-  Value *OpVal = Emit(Op, 0);
+  Value *OpVal = Emit(op, 0);
   Value *Ptr = BitCastToType(DestLoc->Ptr,
                              PointerType::getUnqual(OpVal->getType()));
   StoreInst *St = Builder.CreateStore(OpVal, Ptr, DestLoc->Volatile);
@@ -3057,12 +3247,10 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   return 0;
 }
 
-Value *TreeToLLVM::EmitCONVERT_EXPR(tree exp, const MemRef *DestLoc) {
-  assert(!DestLoc && "Cannot handle aggregate casts!");
-  Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-  bool OpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
-  return CastToAnyType(Op, OpIsSigned, ConvertType(TREE_TYPE(exp)),ExpIsSigned);
+Value *TreeToLLVM::EmitCONVERT_EXPR(tree type, tree op) {
+  bool OpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op));
+  bool ExpIsSigned = !TYPE_UNSIGNED(type);
+  return CastToAnyType(Emit(op, 0), OpIsSigned, ConvertType(type), ExpIsSigned);
 }
 
 Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
@@ -3156,26 +3344,19 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
   return Builder.CreateBitCast(OpVal, DestTy);
 }
 
-Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
+Value *TreeToLLVM::EmitNEGATE_EXPR(tree op, const MemRef *DestLoc) {
   if (!DestLoc) {
-    Value *V = Emit(TREE_OPERAND(exp, 0), 0);
+    Value *V = Emit(op, 0);
     if (V->getType()->isFPOrFPVector())
       return Builder.CreateFNeg(V);
-    if (!isa<PointerType>(V->getType()))
-      return Builder.CreateNeg(V);
-
-    // GCC allows NEGATE_EXPR on pointers as well.  Cast to int, negate, cast
-    // back.
-    V = CastToAnyType(V, false, TD.getIntPtrType(Context), false);
-    V = Builder.CreateNeg(V);
-    return CastToType(Instruction::IntToPtr, V, ConvertType(TREE_TYPE(exp)));
+    return Builder.CreateNeg(V);
   }
 
   // Emit the operand to a temporary.
   const Type *ComplexTy =
     cast<PointerType>(DestLoc->Ptr->getType())->getElementType();
   MemRef Tmp = CreateTempLoc(ComplexTy);
-  Emit(TREE_OPERAND(exp, 0), &Tmp);
+  Emit(op, &Tmp);
 
   // Handle complex numbers: -(a+ib) = -a + i*-b
   Value *R, *I;
@@ -3191,13 +3372,13 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   return 0;
 }
 
-Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
+Value *TreeToLLVM::EmitCONJ_EXPR(tree op, const MemRef *DestLoc) {
   assert(DestLoc && "CONJ_EXPR only applies to complex numbers.");
   // Emit the operand to a temporary.
   const Type *ComplexTy =
     cast<PointerType>(DestLoc->Ptr->getType())->getElementType();
   MemRef Tmp = CreateTempLoc(ComplexTy);
-  Emit(TREE_OPERAND(exp, 0), &Tmp);
+  Emit(op, &Tmp);
 
   // Handle complex numbers: ~(a+ib) = a + i*-b
   Value *R, *I;
@@ -3210,11 +3391,11 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
   return 0;
 }
 
-Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
-  Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
+Value *TreeToLLVM::EmitABS_EXPR(tree op) {
+  Value *Op = Emit(op, 0);
   if (!Op->getType()->isFloatingPoint()) {
     Value *OpN = Builder.CreateNeg(Op, (Op->getNameStr()+"neg").c_str());
-    ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
+    ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(op)) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
     Value *Cmp = Builder.CreateICmp(pred, Op,
                     Constant::getNullValue(Op->getType()), "abscond");
@@ -3254,30 +3435,18 @@ static const Type *getSuitableBitCastIntType(const Type *Ty) {
   return IntegerType::get(Context, Ty->getPrimitiveSizeInBits());
 }
 
-Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
-  Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-  const Type *Ty = Op->getType();
-  if (isa<PointerType>(Ty)) {
-    assert (TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE &&
-            "Expected integer type here");
-    Ty = ConvertType(TREE_TYPE(exp));
-    Op = CastToType(Instruction::PtrToInt, Op, Ty);
-  } else if (Ty->isFloatingPoint() ||
-             (isa<VectorType>(Ty) &&
-              cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
-    Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
-  }
-  return BitCastToType(Builder.CreateNot(Op,
-                                         (Op->getNameStr()+"not").c_str()),Ty);
+Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree op) {
+  Value *Op = Emit(op, 0);
+  return Builder.CreateNot(Op, (Op->getNameStr()+"not").c_str());
 }
 
-Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
-  Value *V = Emit(TREE_OPERAND(exp, 0), 0);
+Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree type, tree op) {
+  Value *V = Emit(op, 0);
   if (V->getType() != Type::getInt1Ty(Context))
     V = Builder.CreateICmpNE(V,
           Constant::getNullValue(V->getType()), "toBool");
   V = Builder.CreateNot(V, (V->getNameStr()+"not").c_str());
-  return CastToUIntType(V, ConvertType(TREE_TYPE(exp)));
+  return CastToUIntType(V, ConvertType(type));
 }
 
 /// EmitCompare - Compare LHS with RHS using the appropriate comparison code.
@@ -3381,24 +3550,25 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
 
 /// EmitBinOp - 'exp' is a binary operator.
 ///
-Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+Value *TreeToLLVM::EmitBinOp(tree type, tree_code code, tree op0, tree op1,
+                             const MemRef *DestLoc, unsigned Opc) {
+  const Type *Ty = ConvertType(type);
   if (isa<StructType>(Ty))
-    return EmitComplexBinOp(exp, DestLoc);
+    return EmitComplexBinOp(type, code, op0, op1, DestLoc);
   assert(Ty->isSingleValueType() && DestLoc == 0 &&
          "Bad binary operation!");
 
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
   // GCC has no problem with things like "xor uint X, int 17", and X-Y, where
   // X and Y are pointer types, but the result is an integer.  As such, convert
   // everything to the result type.
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
-  bool IsExactDiv  = TREE_CODE(exp) == EXACT_DIV_EXPR;
-  bool IsPlus      = TREE_CODE(exp) == PLUS_EXPR;
+  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op0));
+  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op1));
+  bool TyIsSigned  = !TYPE_UNSIGNED(type);
+  bool IsExactDiv  = code == EXACT_DIV_EXPR;
+  bool IsPlus      = code == PLUS_EXPR;
 
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
   RHS = CastToAnyType(RHS, RHSIsSigned, Ty, TyIsSigned);
@@ -3429,9 +3599,9 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   return V;
 }
 
-Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+Value *TreeToLLVM::EmitTruthOp(tree type, tree op0, tree op1, unsigned Opc) {
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
@@ -3443,17 +3613,13 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
                              "toBool");
 
   Value *Res = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
-  return CastToType(Instruction::ZExt, Res, ConvertType(TREE_TYPE(exp)));
+  return CastToType(Instruction::ZExt, Res, ConvertType(type));
 }
 
 
-Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
-  assert(DestLoc == 0 && "aggregate shift?");
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-  assert(!isa<PointerType>(Ty) && "Pointer arithmetic!?");
-
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+Value *TreeToLLVM::EmitShiftOp(tree op0, tree op1, unsigned Opc) {
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
   if (RHS->getType() != LHS->getType())
     RHS = Builder.CreateIntCast(RHS, LHS->getType(), false,
                                 (RHS->getNameStr()+".cast").c_str());
@@ -3461,17 +3627,10 @@ Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   return Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
 }
 
-Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
-  Value *In  = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *Amt = Emit(TREE_OPERAND(exp, 1), 0);
-
-  if (isa<PointerType>(In->getType())) {
-    const Type *Ty =
-      IntegerType::get(Context,
-                       TYPE_PRECISION(TREE_TYPE (TREE_OPERAND (exp, 0))));
-    In = Builder.CreatePtrToInt(In, Ty,
-                                (In->getNameStr()+".cast").c_str());
-  }
+Value *TreeToLLVM::EmitRotateOp(tree type, tree op0, tree op1,
+                                unsigned Opc1, unsigned Opc2) {
+  Value *In  = Emit(op0, 0);
+  Value *Amt = Emit(op1, 0);
 
   if (Amt->getType() != In->getType())
     Amt = Builder.CreateIntCast(Amt, In->getType(), false,
@@ -3488,22 +3647,23 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
 
   // Or the two together to return them.
   Value *Merge = Builder.CreateOr(V1, V2);
-  return CastToUIntType(Merge, ConvertType(TREE_TYPE(exp)));
+  return CastToUIntType(Merge, ConvertType(type));
 }
 
-Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
-                                  unsigned FPPred) {
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+Value *TreeToLLVM::EmitMinMaxExpr(tree type, tree op0, tree op1,
+                                  unsigned UIPred, unsigned SIPred,
+                                  unsigned FPPred, bool isMax) {
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  const Type *Ty = ConvertType(type);
 
   // The LHS, RHS and Ty could be integer, floating or pointer typed. We need
   // to convert the LHS and RHS into the destination type before doing the
   // comparison. Use CastInst::getCastOpcode to get this right.
-  bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
+  bool TyIsSigned  = !TYPE_UNSIGNED(type);
+  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op0));
+  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(op1));
   Instruction::CastOps opcode =
     CastInst::getCastOpcode(LHS, LHSIsSigned, Ty, TyIsSigned);
   LHS = CastToType(opcode, LHS, Ty);
@@ -3513,40 +3673,30 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
   Value *Compare;
   if (LHS->getType()->isFloatingPoint())
     Compare = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
-  else if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+  else if (TYPE_UNSIGNED(type))
     Compare = Builder.CreateICmp(ICmpInst::Predicate(UIPred), LHS, RHS);
   else
     Compare = Builder.CreateICmp(ICmpInst::Predicate(SIPred), LHS, RHS);
 
-  return Builder.CreateSelect(Compare, LHS, RHS,
-                              TREE_CODE(exp) == MAX_EXPR ? "max" : "min");
+  return Builder.CreateSelect(Compare, LHS, RHS, isMax ? "max" : "min");
 }
 
-Value *TreeToLLVM::EmitEXACT_DIV_EXPR(tree exp, const MemRef *DestLoc) {
-  // Unsigned EXACT_DIV_EXPR -> normal udiv.
-  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
-    return EmitBinOp(exp, DestLoc, Instruction::UDiv);
-
-  // Otherwise, emit this as a normal signed divide.
-  return EmitBinOp(exp, DestLoc, Instruction::SDiv);
-}
-
-Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, const MemRef *DestLoc) {
+Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree type, tree op0, tree op1) {
   // Notation: FLOOR_MOD_EXPR <-> Mod, TRUNC_MOD_EXPR <-> Rem.
 
   // We express Mod in terms of Rem as follows: if RHS exactly divides LHS,
   // or the values of LHS and RHS have the same sign, then Mod equals Rem.
   // Otherwise Mod equals Rem + RHS.  This means that LHS Mod RHS traps iff
   // LHS Rem RHS traps.
-  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+  if (TYPE_UNSIGNED(type))
     // LHS and RHS values must have the same sign if their type is unsigned.
-    return EmitBinOp(exp, DestLoc, Instruction::URem);
+    return EmitBinOp(type, FLOOR_MOD_EXPR, op0, op1, 0, Instruction::URem);
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  const Type *Ty = ConvertType(type);
   Constant *Zero = ConstantInt::get(Ty, 0);
 
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
   // The two possible values for Mod.
   Value *Rem = Builder.CreateSRem(LHS, RHS, "rem");
@@ -3564,7 +3714,7 @@ Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree exp, const MemRef *DestLoc) {
   return Builder.CreateSelect(SameAsRem, Rem, RemPlusRHS, "mod");
 }
 
-Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
+Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree type, tree op0, tree op1) {
   // Notation: CEIL_DIV_EXPR <-> CDiv, TRUNC_DIV_EXPR <-> Div.
 
   // CDiv calculates LHS/RHS by rounding up to the nearest integer.  In terms
@@ -3573,15 +3723,15 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   //   LHS CDiv RHS = (LHS - Sign(RHS)) Div RHS + 1
   // otherwise.
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  const Type *Ty = ConvertType(type);
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
   Constant *MinusOne = Constant::getAllOnesValue(Ty);
 
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
-  if (!TYPE_UNSIGNED(TREE_TYPE(exp))) {
+  if (!TYPE_UNSIGNED(type)) {
     // In the case of signed arithmetic, we calculate CDiv as follows:
     //   LHS CDiv RHS = (LHS - Sign(RHS) * Offset) Div RHS + Offset,
     // where Offset is 1 if LHS and RHS have the same sign and LHS is
@@ -3629,10 +3779,10 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree exp) {
   return Builder.CreateAdd(CDiv, Offset, "cdiv");
 }
 
-Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
+Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree type, tree op0, tree op1) {
   // Notation: FLOOR_DIV_EXPR <-> FDiv, TRUNC_DIV_EXPR <-> Div.
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
   // FDiv calculates LHS/RHS by rounding down to the nearest integer.  In terms
   // of Div this means if the values of LHS and RHS have the same sign or if LHS
@@ -3640,12 +3790,12 @@ Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
   //   LHS FDiv RHS = (LHS + Sign(RHS)) Div RHS - 1
   // otherwise.
 
-  if (TYPE_UNSIGNED(TREE_TYPE(exp)))
+  if (TYPE_UNSIGNED(type))
     // In the case of unsigned arithmetic, LHS and RHS necessarily have the
     // same sign, so FDiv is the same as Div.
     return Builder.CreateUDiv(LHS, RHS, "fdiv");
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  const Type *Ty = ConvertType(type);
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *One = ConstantInt::get(Ty, 1);
   Constant *MinusOne = Constant::getAllOnesValue(Ty);
@@ -3678,7 +3828,7 @@ Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree exp) {
   return Builder.CreateSub(FDiv, Offset, "fdiv");
 }
 
-Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
+Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree type, tree op0, tree op1) {
   // Notation: ROUND_DIV_EXPR <-> RDiv, TRUNC_DIV_EXPR <-> Div.
 
   // RDiv calculates LHS/RHS by rounding to the nearest integer.  Ties
@@ -3691,14 +3841,14 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
   // required to ensure correct results.  The details depend on whether
   // we are doing signed or unsigned arithmetic.
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  const Type *Ty = ConvertType(type);
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *Two = ConstantInt::get(Ty, 2);
 
-  Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
+  Value *LHS = Emit(op0, 0);
+  Value *RHS = Emit(op1, 0);
 
-  if (!TYPE_UNSIGNED(TREE_TYPE(exp))) {
+  if (!TYPE_UNSIGNED(type)) {
     // In the case of signed arithmetic, we calculate RDiv as follows:
     //   LHS RDiv RHS = (sign) ( (|LHS| + (|RHS| UDiv 2)) UDiv |RHS| ),
     // where sign is +1 if LHS and RHS have the same sign, -1 if their
@@ -3761,9 +3911,9 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree exp) {
   return Builder.CreateAdd(Quotient, CastToUIntType(Overflowed, Ty), "rdiv");
 }
 
-Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree exp) {
-  Value *Ptr = Emit(TREE_OPERAND(exp, 0), 0); // The pointer.
-  Value *Idx = Emit(TREE_OPERAND(exp, 1), 0); // The offset in bytes.
+Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree type, tree op0, tree op1) {
+  Value *Ptr = Emit(op0, 0); // The pointer.
+  Value *Idx = Emit(op1, 0); // The offset in bytes.
 
   // Convert the pointer into an i8* and add the offset to it.
   Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
@@ -3771,7 +3921,7 @@ Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree exp) {
     Builder.CreateInBoundsGEP(Ptr, Idx) : Builder.CreateGEP(Ptr, Idx);
 
   // The result may be of a different pointer type.
-  return Builder.CreateBitCast(GEP, ConvertType(TREE_TYPE(exp)));
+  return Builder.CreateBitCast(GEP, ConvertType(type));
 }
 
 //===----------------------------------------------------------------------===//
@@ -5798,9 +5948,9 @@ void TreeToLLVM::EmitStoreToComplex(MemRef DestComplex, Value *Real,
 }
 
 
-void TreeToLLVM::EmitCOMPLEX_EXPR(tree exp, const MemRef *DestLoc) {
-  Value *Real = Emit(TREE_OPERAND(exp, 0), 0);
-  Value *Imag = Emit(TREE_OPERAND(exp, 1), 0);
+void TreeToLLVM::EmitCOMPLEX_EXPR(tree op0, tree op1, const MemRef *DestLoc) {
+  Value *Real = Emit(op0, 0);
+  Value *Imag = Emit(op1, 0);
   EmitStoreToComplex(*DestLoc, Real, Imag);
 }
 
@@ -5812,13 +5962,14 @@ void TreeToLLVM::EmitCOMPLEX_CST(tree exp, const MemRef *DestLoc) {
 
 // EmitComplexBinOp - Note that this operates on binops like ==/!=, which return
 // a bool, not a complex value.
-Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
-  const Type *ComplexTy = ConvertType(TREE_TYPE(TREE_OPERAND(exp, 0)));
+Value *TreeToLLVM::EmitComplexBinOp(tree type, tree_code code,
+                                    tree op0, tree op1, const MemRef *DestLoc) {
+  const Type *ComplexTy = ConvertType(TREE_TYPE(op0));
 
   MemRef LHSTmp = CreateTempLoc(ComplexTy);
   MemRef RHSTmp = CreateTempLoc(ComplexTy);
-  Emit(TREE_OPERAND(exp, 0), &LHSTmp);
-  Emit(TREE_OPERAND(exp, 1), &RHSTmp);
+  Emit(op0, &LHSTmp);
+  Emit(op1, &RHSTmp);
 
   Value *LHSr, *LHSi;
   EmitLoadFromComplex(LHSr, LHSi, LHSTmp);
@@ -5826,8 +5977,8 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   EmitLoadFromComplex(RHSr, RHSi, RHSTmp);
 
   Value *DSTr, *DSTi;
-  switch (TREE_CODE(exp)) {
-  default: TODO(exp);
+  switch (code) {
+  default: llvm_unreachable("Unhandled complex binop!");
   case PLUS_EXPR: // (a+ib) + (c+id) = (a+c) + i(b+d)
     if (LHSr->getType()->isFloatingPoint()) {
       DSTr = Builder.CreateFAdd(LHSr, RHSr, "tmpr");
@@ -8058,6 +8209,134 @@ void TreeToLLVM::RenderGIMPLE_COND(gimple stmt) {
 
   // Branch based on the condition.
   Builder.CreateCondBr(Cond, IfTrue, IfFalse);
+}
+
+void TreeToLLVM::RenderGIMPLE_ASSIGN(gimple stmt) {
+  tree lhs = gimple_assign_lhs(stmt);
+
+  Value *RHS = 0;
+
+  if (!isAggregateTreeType(TREE_TYPE(lhs)))
+    RHS = Builder.CreateBitCast(EmitGimpleAssignRHS(stmt, 0),
+                                ConvertType(TREE_TYPE(lhs)));
+
+  // If this is the definition of an ssa name, record it in the SSANames map.
+  if (TREE_CODE(lhs) == SSA_NAME) {
+    assert(SSANames.find(lhs) == SSANames.end() &&"Multiply defined SSA name!");
+    assert(RHS && "SSA name has aggregate type!");
+    SSANames[lhs] = RHS;
+    return;
+  }
+
+  if (canEmitRegisterVariable(lhs)) {
+    // If this is a store to a register variable, EmitLV can't handle the dest
+    // (there is no l-value of a register variable).  Emit an inline asm node
+    // that copies the value into the specified register.
+    assert(RHS && "Register has aggregate type!");
+    EmitModifyOfRegisterVariable(lhs, RHS);
+    return;
+  }
+
+  LValue LV = EmitLV(lhs);
+  bool isVolatile = TREE_THIS_VOLATILE(lhs);
+  unsigned Alignment = LV.getAlignment();
+  if (TREE_CODE(lhs) == COMPONENT_REF)
+    if (const StructType *STy =
+        dyn_cast<StructType>(ConvertType(TREE_TYPE(TREE_OPERAND(lhs, 0)))))
+      if (STy->isPacked())
+        // Packed struct members use 1 byte alignment
+        Alignment = 1;
+
+  if (!LV.isBitfield()) {
+    if (RHS) {
+      // Non-bitfield, scalar value.  Just emit a store.
+      StoreInst *SI = Builder.CreateStore(RHS, LV.Ptr, isVolatile);
+      SI->setAlignment(Alignment);
+      return;
+    }
+
+    // Non-bitfield aggregate value.
+    MemRef NewLoc(LV.Ptr, Alignment, isVolatile);
+    // TODO: This case can presumably only happen with special gimple
+    // assign right-hand-sides.  Try to simplify by exploiting this.
+    EmitGimpleAssignRHS(stmt, &NewLoc);
+    return;
+  }
+
+  // Last case, this is a store to a bitfield, so we have to emit a
+  // read/modify/write sequence.
+  assert(RHS && "Bitfield has aggregate type!");
+
+  if (!LV.BitSize)
+    return;
+
+  const Type *ValTy = cast<PointerType>(LV.Ptr->getType())->getElementType();
+  unsigned ValSizeInBits = ValTy->getPrimitiveSizeInBits();
+
+  // The number of stores needed to write the entire bitfield.
+  unsigned Strides = 1 + (LV.BitStart + LV.BitSize - 1) / ValSizeInBits;
+
+  assert(ValTy->isInteger() && "Invalid bitfield lvalue!");
+  assert(ValSizeInBits > LV.BitStart && "Bad bitfield lvalue!");
+  assert(ValSizeInBits >= LV.BitSize && "Bad bitfield lvalue!");
+  assert(2*ValSizeInBits > LV.BitSize+LV.BitStart && "Bad bitfield lvalue!");
+
+  bool Signed = !TYPE_UNSIGNED(TREE_TYPE(lhs));
+  RHS = CastToAnyType(RHS, Signed, ValTy, Signed);
+
+  for (unsigned I = 0; I < Strides; I++) {
+    unsigned Index = BYTES_BIG_ENDIAN ? Strides - I - 1 : I; // LSB first
+    unsigned ThisFirstBit = Index * ValSizeInBits;
+    unsigned ThisLastBitPlusOne = ThisFirstBit + ValSizeInBits;
+    if (ThisFirstBit < LV.BitStart)
+      ThisFirstBit = LV.BitStart;
+    if (ThisLastBitPlusOne > LV.BitStart+LV.BitSize)
+      ThisLastBitPlusOne = LV.BitStart+LV.BitSize;
+
+    Value *Ptr = Index ?
+      Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::getInt32Ty(Context), Index)) :
+      LV.Ptr;
+    LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
+    LI->setAlignment(Alignment);
+    Value *OldVal = LI;
+    Value *NewVal = RHS;
+
+    unsigned BitsInVal = ThisLastBitPlusOne - ThisFirstBit;
+    unsigned FirstBitInVal = ThisFirstBit % ValSizeInBits;
+
+    if (BYTES_BIG_ENDIAN)
+      FirstBitInVal = ValSizeInBits-FirstBitInVal-BitsInVal;
+
+    // If not storing into the zero'th bit, shift the Src value to the left.
+    if (FirstBitInVal) {
+      Value *ShAmt = ConstantInt::get(ValTy, FirstBitInVal);
+      NewVal = Builder.CreateShl(NewVal, ShAmt);
+    }
+
+    // Next, if this doesn't touch the top bit, mask out any bits that shouldn't
+    // be set in the result.
+    uint64_t MaskVal = ((1ULL << BitsInVal)-1) << FirstBitInVal;
+    Constant *Mask = ConstantInt::get(Type::getInt64Ty(Context), MaskVal);
+    Mask = Builder.getFolder().CreateTruncOrBitCast(Mask, ValTy);
+
+    if (FirstBitInVal+BitsInVal != ValSizeInBits)
+      NewVal = Builder.CreateAnd(NewVal, Mask);
+
+    // Next, mask out the bits this bit-field should include from the old value.
+    Mask = Builder.getFolder().CreateNot(Mask);
+    OldVal = Builder.CreateAnd(OldVal, Mask);
+
+    // Finally, merge the two together and store it.
+    NewVal = Builder.CreateOr(OldVal, NewVal);
+
+    StoreInst *SI = Builder.CreateStore(NewVal, Ptr, isVolatile);
+    SI->setAlignment(Alignment);
+
+    if (I + 1 < Strides) {
+      Value *ShAmt = ConstantInt::get(ValTy, BitsInVal);
+      RHS = Builder.CreateLShr(RHS, ShAmt);
+    }
+  }
 }
 
 void TreeToLLVM::RenderGIMPLE_GOTO(gimple stmt) {

@@ -520,6 +520,7 @@ private:
 
   // Render* - Convert GIMPLE to LLVM.
   void RenderGIMPLE_ASM(gimple_statement_d *);
+  void RenderGIMPLE_ASSIGN(gimple_statement_d *);
   void RenderGIMPLE_COND(gimple_statement_d *);
   void RenderGIMPLE_GOTO(gimple_statement_d *);
   void RenderGIMPLE_RESX(gimple_statement_d *);
@@ -547,6 +548,7 @@ private:
 
   // Expressions.
   Value *EmitSSA_NAME(tree_node *exp);
+  Value *EmitGimpleAssignRHS(gimple stmt, const MemRef *DestLoc);
   Value *EmitLoadOfLValue(tree_node *exp, const MemRef *DestLoc);
   Value *EmitOBJ_TYPE_REF(tree_node *exp, const MemRef *DestLoc);
   Value *EmitADDR_EXPR(tree_node *exp);
@@ -555,28 +557,31 @@ private:
   Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc,
                     const AttrListPtr &PAL);
   Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitNOP_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitNOP_EXPR(tree_node *type, tree_node *op, const MemRef *DestLoc);
+  Value *EmitCONVERT_EXPR(tree_node *type, tree_node *op);
   Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitNEGATE_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCONJ_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitABS_EXPR(tree_node *exp);
-  Value *EmitBIT_NOT_EXPR(tree_node *exp);
-  Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
-  Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitNEGATE_EXPR(tree_node *op, const MemRef *DestLoc);
+  Value *EmitCONJ_EXPR(tree_node *op, const MemRef *DestLoc);
+  Value *EmitABS_EXPR(tree_node *op);
+  Value *EmitBIT_NOT_EXPR(tree_node *op);
+  Value *EmitTRUTH_NOT_EXPR(tree_node *type, tree_node *op);
   Value *EmitCompare(tree_node *lhs, tree_node *rhs, tree_code code);
-  Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
-  Value *EmitTruthOp(tree_node *exp, unsigned Opc);
-  Value *EmitShiftOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
-  Value *EmitRotateOp(tree_node *exp, unsigned Opc1, unsigned Opc2);
-  Value *EmitMinMaxExpr(tree_node *exp, unsigned UIPred, unsigned SIPred, 
-                        unsigned Opc);
-  Value *EmitFLOOR_MOD_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCEIL_DIV_EXPR(tree_node *exp);
-  Value *EmitFLOOR_DIV_EXPR(tree_node *exp);
-  Value *EmitROUND_DIV_EXPR(tree_node *exp);
+  Value *EmitBinOp(tree_node *type, tree_code code, tree_node *op0,
+                   tree_node *op1, const MemRef *DestLoc, unsigned Opc);
+  Value *EmitTruthOp(tree_node *type, tree_node *op0, tree_node *op1,
+                     unsigned Opc);
+  Value *EmitShiftOp(tree_node *op0, tree_node* op1, unsigned Opc);
+  Value *EmitRotateOp(tree_node *type, tree_node *op0, tree_node *op1,
+                      unsigned Opc1, unsigned Opc2);
+  Value *EmitMinMaxExpr(tree_node *type, tree_node *op0, tree_node* op1,
+                        unsigned UIPred, unsigned SIPred, unsigned Opc,
+                        bool isMax);
+  Value *EmitFLOOR_MOD_EXPR(tree_node *type, tree_node *op0, tree_node *op1);
+  Value *EmitCEIL_DIV_EXPR(tree_node *type, tree_node *op0, tree_node *op1);
+  Value *EmitFLOOR_DIV_EXPR(tree_node *type, tree_node *op0, tree_node *op1);
+  Value *EmitROUND_DIV_EXPR(tree_node *type, tree_node *op0, tree_node *op1);
   Value *EmitFieldAnnotation(Value *FieldPtr, tree_node *FieldDecl);
-  Value *EmitPOINTER_PLUS_EXPR(tree_node *exp);
+  Value *EmitPOINTER_PLUS_EXPR(tree_node *type, tree_node *op0, tree_node *op1);
 
   // Exception Handling.
   Value *EmitEXC_PTR_EXPR(tree_node *exp);
@@ -634,8 +639,9 @@ private:
   void EmitLoadFromComplex(Value *&Real, Value *&Imag, MemRef SrcComplex);
   void EmitStoreToComplex(MemRef DestComplex, Value *Real, Value *Imag);
   void EmitCOMPLEX_CST(tree_node *exp, const MemRef *DestLoc);
-  void EmitCOMPLEX_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitComplexBinOp(tree_node *exp, const MemRef *DestLoc);
+  void EmitCOMPLEX_EXPR(tree_node *op0, tree_node *op1, const MemRef *DestLoc);
+  Value *EmitComplexBinOp(tree_node *type, tree_code code, tree_node *op0,
+                          tree_node *op1, const MemRef *DestLoc);
 
   // L-Value Expressions.
   LValue EmitLV_ARRAY_REF(tree_node *exp);

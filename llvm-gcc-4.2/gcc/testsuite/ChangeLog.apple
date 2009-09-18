@@ -1,3 +1,8 @@
+2009-06-15  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 6936421
+	* obj-c++.dg/property-as-initializer.mm: New
+
 2009-05-06  Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 6083666

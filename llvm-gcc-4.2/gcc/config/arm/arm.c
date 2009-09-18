@@ -1468,8 +1468,7 @@ arm_override_options (void)
   /* If we're compiling for v7, we should default to using thumb2
      codegen. */
   /* LLVM LOCAL only default to thumb2 on Darwin to match FSF GCC */
-  if ((insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A 
-      && TARGET_MACHO
+  if ((insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A && TARGET_MACHO
       && thumb_option < 0)
     thumb_option = 1;
   /* APPLE LOCAL end 6150882 use thumb2 by default for v7 */
@@ -16251,9 +16250,8 @@ typedef enum {
   T_V4HI  = 0x0002,
   T_V2SI  = 0x0004,
   T_V2SF  = 0x0008,
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL use v1di instead of di mode */
   T_V1DI  = 0x0010,
-  /* LLVM LOCAL end */
   T_V16QI = 0x0020,
   T_V8HI  = 0x0040,
   T_V4SI  = 0x0080,
@@ -16268,9 +16266,8 @@ typedef enum {
 #define v4hi_UP  T_V4HI
 #define v2si_UP  T_V2SI
 #define v2sf_UP  T_V2SF
-/* LLVM LOCAL begin */
+/* LLVM LOCAL use v1di instead of di mode */
 #define v1di_UP  T_V1DI
-/* LLVM LOCAL end */
 #define v16qi_UP T_V16QI
 #define v8hi_UP  T_V8HI
 #define v4si_UP  T_V4SI
@@ -16400,7 +16397,7 @@ typedef struct {
    WARNING: Variants should be listed in the same increasing order as
    neon_builtin_type_bits.  */
 
-/* LLVM LOCAL begin */
+/* LLVM LOCAL begin use v1di instead of di mode */
 static neon_builtin_datum neon_builtin_data[] =
 {
   { VAR10 (BINOP, vadd,
@@ -16584,7 +16581,7 @@ static neon_builtin_datum neon_builtin_data[] =
   { VAR10 (LOGICBINOP, vorn,
 	   v8qi, v4hi, v2si, v2sf, v1di, v16qi, v8hi, v4si, v4sf, v2di) }
 };
-/* LLVM LOCAL end */
+/* LLVM LOCAL end use v1di instead of di mode */
 
 #undef CF
 #undef VAR1
@@ -16660,11 +16657,7 @@ arm_init_neon_builtins (void)
 #define si_TN neon_intSI_type_node
 #define di_TN neon_intDI_type_node
 /* LLVM LOCAL begin multi-vector types */
-#ifdef ENABLE_LLVM
-#define ti_TN V8QI2_type_node
-#define ei_TN V8QI3_type_node
-#define oi_TN V8QI4_type_node
-#else
+#ifndef ENABLE_LLVM
 #define ti_TN intTI_type_node
 #define ei_TN intEI_type_node
 #define oi_TN intOI_type_node
@@ -16684,29 +16677,38 @@ arm_init_neon_builtins (void)
 #define v8hi_TN V8HI_type_node
 #define v4si_TN V4SI_type_node
 #define v4sf_TN V4SF_type_node
-/* LLVM LOCAL begin */
+/* LLVM LOCAL use v1di instead of di mode */
 #define v1di_TN V1DI_type_node
-/* LLVM LOCAL end */
 #define v2di_TN V2DI_type_node
 
 /* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
-#define pv8qi_TN V8QI2_type_node
-#define pv4hi_TN V4HI2_type_node
-#define pv2si_TN V2SI2_type_node
-#define pv2sf_TN V2SF2_type_node
+#define v8qi2_TN V8QI2_type_node
+#define v8qi3_TN V8QI3_type_node
+#define v8qi4_TN V8QI4_type_node
 
-#define pv16qi_TN V16QI2_type_node
-#define pv8hi_TN V8HI2_type_node
-#define pv4si_TN V4SI2_type_node
-#define pv4sf_TN V4SF2_type_node
-#define pv2di_TN V2DI2_type_node
-#define pv1di_TN V1DI2_type_node
+#define v4hi2_TN V4HI2_type_node
+#define v2si2_TN V2SI2_type_node
+#define v2sf2_TN V2SF2_type_node
+#define v1di2_TN V1DI2_type_node
+
+#define v16qi2_TN V16QI2_type_node
+#define v8hi2_TN V8HI2_type_node
+#define v4si2_TN V4SI2_type_node
+#define v4sf2_TN V4SF2_type_node
+#define v2di2_TN V2DI2_type_node
+
 #else /* !ENABLE_LLVM */
+
+#define v8qi2_TN ti_TN
+#define v8qi3_TN ei_TN
+#define v8qi4_TN oi_TN
+
 #define pv8qi_TN V8QI_pointer_node
 #define pv4hi_TN V4HI_pointer_node
 #define pv2si_TN V2SI_pointer_node
 #define pv2sf_TN V2SF_pointer_node
+/* LLVM LOCAL use v1di instead of di mode */
 #define pv1di_TN V1DI_pointer_node
 
 #define pv16qi_TN V16QI_pointer_node
@@ -16727,15 +16729,6 @@ arm_init_neon_builtins (void)
 #define TYPE4(A,B,C,D) \
   tree A##_##ftype##_##B##_##C##_##D = build_function_type_list (A##_TN, \
     B##_TN, C##_TN, D##_TN, NULL)
-/* LLVM LOCAL begin multi-vector types */
-#ifdef ENABLE_LLVM
-#define TYPE4_RESULTPAIR(A,B,C,D) \
-  tree A##_##ftype##_##B##_##C##_##D = build_function_type_list (B##_TN, \
-    C##_TN, D##_TN, NULL)
-#else
-#define TYPE4_RESULTPAIR(A,B,C,D) TYPE4(A,B,C,D)
-#endif
-/* LLVM LOCAL end multi-vector types */
 #define TYPE5(A,B,C,D,E) \
   tree A##_##ftype##_##B##_##C##_##D##_##E = build_function_type_list (A##_TN, \
     B##_TN, C##_TN, D##_TN, E##_TN, NULL)
@@ -16791,10 +16784,10 @@ arm_init_neon_builtins (void)
     build_vector_type_for_mode (neon_intSI_type_node, V2SImode);
   tree V2SF_type_node =
     build_vector_type_for_mode (neon_float_type_node, V2SFmode);
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL begin use v1di instead of di mode */
   tree V1DI_type_node =
     build_vector_type_for_mode (neon_intDI_type_node, V1DImode);
-  /* LLVM LOCAL end */
+  /* LLVM LOCAL end use v1di instead of di mode */
 
   /* 128-bit vectors.  */
   tree V16QI_type_node =
@@ -16920,12 +16913,12 @@ arm_init_neon_builtins (void)
 #endif /* ENABLE_LLVM */
   /* LLVM LOCAL end multi-vector types */
 
-  /* LLVM LOCAL begin */
   /* Binops, all-doubleword arithmetic.  */
   TYPE4 (v8qi, v8qi, v8qi, si);
   TYPE4 (v4hi, v4hi, v4hi, si);
   TYPE4 (v2si, v2si, v2si, si);
   TYPE4 (v2sf, v2sf, v2sf, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (v1di, v1di, v1di, si);
 
   /* Binops, all-quadword arithmetic.  */
@@ -16958,6 +16951,7 @@ arm_init_neon_builtins (void)
   /* Binops, dest and first operand elements wider (vpadal).  */
   TYPE4 (v4hi, v4hi, v8qi, si);
   TYPE4 (v2si, v2si, v4hi, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (v1di, v1di, v2si, si);
   TYPE4 (v8hi, v8hi, v16qi, si);
   TYPE4 (v4si, v4si, v8hi, si);
@@ -16986,6 +16980,7 @@ arm_init_neon_builtins (void)
   TYPE3 (v4hi, v4hi, si);
   TYPE3 (v2si, v2si, si);
   TYPE3 (v2sf, v2sf, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE3 (v1di, v1di, si);
 
   /* Unops, all-quadword arithmetic.  */
@@ -17008,6 +17003,7 @@ arm_init_neon_builtins (void)
   /* Unops, dest elements wider (vpaddl).  */
   TYPE3 (v4hi, v8qi, si);
   TYPE3 (v2si, v4hi, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE3 (v1di, v2si, si);
   TYPE3 (v8hi, v16qi, si);
   TYPE3 (v4si, v8hi, si);
@@ -17018,6 +17014,7 @@ arm_init_neon_builtins (void)
   TYPE4 (hi, v4hi, si, si);
   TYPE4 (si, v2si, si, si);
   TYPE4 (sf, v2sf, si, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (di, v1di, si, si);
 
   /* Get-lane from quadword insns.  */
@@ -17032,6 +17029,7 @@ arm_init_neon_builtins (void)
   TYPE4 (v4hi, hi, v4hi, si);
   TYPE4 (v2si, si, v2si, si);
   TYPE4 (v2sf, sf, v2sf, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (v1di, di, v1di, si);
 
   /* Set lane in quadword insns.  */
@@ -17046,6 +17044,7 @@ arm_init_neon_builtins (void)
   TYPE2 (v4hi, di);
   TYPE2 (v2si, di);
   TYPE2 (v2sf, di);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE2 (v1di, di);
 
   /* Duplicate an ARM register into lanes of a vector.  */
@@ -17065,6 +17064,7 @@ arm_init_neon_builtins (void)
   TYPE3 (v8hi, v4hi, si);
   TYPE3 (v4si, v2si, si);
   TYPE3 (v4sf, v2sf, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE3 (v2di, v1di, si);
 
   /* Combine doubleword vectors into quadword vectors.  */
@@ -17072,6 +17072,7 @@ arm_init_neon_builtins (void)
   TYPE3 (v8hi, v4hi, v4hi);
   TYPE3 (v4si, v2si, v2si);
   TYPE3 (v4sf, v2sf, v2sf);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE3 (v2di, v1di, v1di);
 
   /* Split quadword vectors into high or low parts.  */
@@ -17079,6 +17080,7 @@ arm_init_neon_builtins (void)
   TYPE2 (v4hi, v8hi);
   TYPE2 (v2si, v4si);
   TYPE2 (v2sf, v4sf);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE2 (v1di, v2di);
 
   /* Conversions, int<->float.  */
@@ -17146,6 +17148,7 @@ arm_init_neon_builtins (void)
   TYPE4 (v4hi, v4hi, v4hi, v4hi);
   TYPE4 (v2si, v2si, v2si, v2si);
   TYPE4 (v2sf, v2si, v2sf, v2sf);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (v1di, v1di, v1di, v1di);
 
   TYPE4 (v16qi, v16qi, v16qi, v16qi);
@@ -17157,6 +17160,7 @@ arm_init_neon_builtins (void)
   /* Shift immediate operations.  */
   TYPE4 (v8qi, v8qi, si, si);
   TYPE4 (v4hi, v4hi, si, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE4 (v1di, v1di, si, si);
 
   TYPE4 (v16qi, v16qi, si, si);
@@ -17175,40 +17179,59 @@ arm_init_neon_builtins (void)
 
   /* Shift + accumulate operations.  */
   TYPE5 (v8qi, v8qi, v8qi, si, si);
+  /* LLVM LOCAL use v1di instead of di mode */
   TYPE5 (v1di, v1di, v1di, si, si);
 
   TYPE5 (v16qi, v16qi, v16qi, si, si);
   TYPE5 (v8hi, v8hi, v8hi, si, si);
   TYPE5 (v4sf, v4sf, v4sf, si, si);
   TYPE5 (v2di, v2di, v2di, si, si);
-  /* LLVM LOCAL end */
 
   /* Operations which return results as pairs.  */
   /* LLVM LOCAL begin multi-vector types */
-  TYPE4_RESULTPAIR (void, pv8qi, v8qi, v8qi);
-  TYPE4_RESULTPAIR (void, pv4hi, v4hi, v4hi);
-  TYPE4_RESULTPAIR (void, pv2si, v2si, v2si);
-  TYPE4_RESULTPAIR (void, pv2sf, v2sf, v2sf);
-  TYPE4_RESULTPAIR (void, pv1di, v1di, v1di);
+#ifdef ENABLE_LLVM
+  TYPE3 (v8qi2, v8qi, v8qi);
+  TYPE3 (v4hi2, v4hi, v4hi);
+  TYPE3 (v2si2, v2si, v2si);
+  TYPE3 (v2sf2, v2sf, v2sf);
+  TYPE3 (v1di2, v1di, v1di);
 
-  TYPE4_RESULTPAIR (void, pv16qi, v16qi, v16qi);
-  TYPE4_RESULTPAIR (void, pv8hi, v8hi, v8hi);
-  TYPE4_RESULTPAIR (void, pv4si, v4si, v4si);
-  TYPE4_RESULTPAIR (void, pv4sf, v4sf, v4sf);
-  TYPE4_RESULTPAIR (void, pv2di, v2di, v2di);
+  TYPE3 (v16qi2, v16qi, v16qi);
+  TYPE3 (v8hi2, v8hi, v8hi);
+  TYPE3 (v4si2, v4si, v4si);
+  TYPE3 (v4sf2, v4sf, v4sf);
+  TYPE3 (v2di2, v2di, v2di);
+#else /* !ENABLE_LLVM */
+  TYPE4 (void, pv8qi, v8qi, v8qi);
+  TYPE4 (void, pv4hi, v4hi, v4hi);
+  TYPE4 (void, pv2si, v2si, v2si);
+  TYPE4 (void, pv2sf, v2sf, v2sf);
+  /* LLVM LOCAL use v1di instead of di mode */
+  TYPE4 (void, pv1di, v1di, v1di);
+
+  TYPE4 (void, pv16qi, v16qi, v16qi);
+  TYPE4 (void, pv8hi, v8hi, v8hi);
+  TYPE4 (void, pv4si, v4si, v4si);
+  TYPE4 (void, pv4sf, v4sf, v4sf);
+  TYPE4 (void, pv2di, v2di, v2di);
+#endif /* !ENABLE_LLVM */
   /* LLVM LOCAL end multi-vector types */
 
   /* Table look-up.  */
   TYPE3 (v8qi, v8qi, v8qi);
-  TYPE3 (v8qi, ti, v8qi);
-  TYPE3 (v8qi, ei, v8qi);
-  TYPE3 (v8qi, oi, v8qi);
+  /* LLVM LOCAL begin multi-vector types */
+  TYPE3 (v8qi, v8qi2, v8qi);
+  TYPE3 (v8qi, v8qi3, v8qi);
+  TYPE3 (v8qi, v8qi4, v8qi);
+  /* LLVM LOCAL end multi-vector types */
   
   /* Extended table look-up.  */
   /*TYPE4 (v8qi, v8qi, v8qi, v8qi);*/
-  TYPE4 (v8qi, v8qi, ti, v8qi);
-  TYPE4 (v8qi, v8qi, ei, v8qi);
-  TYPE4 (v8qi, v8qi, oi, v8qi);
+  /* LLVM LOCAL begin multi-vector types */
+  TYPE4 (v8qi, v8qi, v8qi2, v8qi);
+  TYPE4 (v8qi, v8qi, v8qi3, v8qi);
+  TYPE4 (v8qi, v8qi, v8qi4, v8qi);
+  /* LLVM LOCAL end multi-vector types */
 
   /* Load operations, double-word.  */
   tree v8qi_ftype_const_qi_pointer =
@@ -17217,10 +17240,10 @@ arm_init_neon_builtins (void)
     build_function_type_list (V4HI_type_node, const_intHI_pointer_node, NULL);
   tree v2si_ftype_const_si_pointer =
     build_function_type_list (V2SI_type_node, const_intSI_pointer_node, NULL);
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL begin use v1di instead of di mode */
   tree v1di_ftype_const_di_pointer =
     build_function_type_list (V1DI_type_node, const_intDI_pointer_node, NULL);
-  /* LLVM LOCAL end */
+  /* LLVM LOCAL end use v1di instead of di mode */
   tree v2sf_ftype_const_sf_pointer =
     build_function_type_list (V2SF_type_node, const_float_pointer_node, NULL);
 
@@ -17246,11 +17269,11 @@ arm_init_neon_builtins (void)
   tree v2si_ftype_const_si_pointer_v2si_si =
     build_function_type_list (V2SI_type_node, const_intSI_pointer_node,
 			      V2SI_type_node, intSI_type_node, NULL);
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL begin use v1di instead of di mode */
   tree v1di_ftype_const_di_pointer_v1di_si =
     build_function_type_list (V1DI_type_node, const_intDI_pointer_node,
 			      V1DI_type_node, intSI_type_node, NULL);
-  /* LLVM LOCAL end */
+  /* LLVM LOCAL end use v1di instead of di mode */
   tree v2sf_ftype_const_sf_pointer_v2sf_si =
     build_function_type_list (V2SF_type_node, const_float_pointer_node,
 			      V2SF_type_node, intSI_type_node, NULL);
@@ -17282,11 +17305,11 @@ arm_init_neon_builtins (void)
   tree void_ftype_si_pointer_v2si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI_type_node, NULL);
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL begin use v1di instead of di mode */
   tree void_ftype_di_pointer_v1di =
     build_function_type_list (void_type_node, intDI_pointer_node,
 			      V1DI_type_node, NULL);
-  /* LLVM LOCAL end */
+  /* LLVM LOCAL end use v1di instead of di mode */
   tree void_ftype_sf_pointer_v2sf =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF_type_node, NULL);
@@ -17318,11 +17341,11 @@ arm_init_neon_builtins (void)
   tree void_ftype_si_pointer_v2si_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI_type_node, intSI_type_node, NULL);
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL begin use v1di instead of di mode */
   tree void_ftype_di_pointer_v1di_si =
     build_function_type_list (void_type_node, intDI_pointer_node,
 			      V1DI_type_node, intSI_type_node, NULL);
-  /* LLVM LOCAL end */
+  /* LLVM LOCAL end use v1di instead of di mode */
   tree void_ftype_sf_pointer_v2sf_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF_type_node, intSI_type_node, NULL);
@@ -17346,327 +17369,319 @@ arm_init_neon_builtins (void)
 
   /* Load size-2 structure operations, double-word.  */
   /* LLVM LOCAL begin multi-vector types */
-  /* LLVM: To minimize changes to the GCC source, the original wide-integer
-     mode abbrevations (ti, ei, oi, ci, and xi) have not been replaced by
-     vector-type-specific names (e.g., v8qi2, etc.) in the following
-     types.  OI-mode values, however, are type-ambiguous: they can be
-     structs of 4 double-register vectors or 2 quad-register vectors.  In
-     places where this ambiguity exists, "d" and "q" suffixes are added to
-     the "oi" name, i.e., "oid" and "oiq", to distinguish the double- and
-     quad-register types.  */
-  tree ti_ftype_const_qi_pointer =
+  tree v8qi2_ftype_const_qi_pointer =
     build_function_type_list (V8QI2_type_node, const_intQI_pointer_node, NULL);
-  tree ti_ftype_const_hi_pointer =
+  tree v4hi2_ftype_const_hi_pointer =
     build_function_type_list (V4HI2_type_node, const_intHI_pointer_node, NULL);
-  tree ti_ftype_const_si_pointer =
+  tree v2si2_ftype_const_si_pointer =
     build_function_type_list (V2SI2_type_node, const_intSI_pointer_node, NULL);
-  tree ti_ftype_const_di_pointer =
+  tree v1di2_ftype_const_di_pointer =
     build_function_type_list (V1DI2_type_node, const_intDI_pointer_node, NULL);
-  tree ti_ftype_const_sf_pointer =
+  tree v2sf2_ftype_const_sf_pointer =
     build_function_type_list (V2SF2_type_node, const_float_pointer_node, NULL);
 
   /* Load size-2 structure operations, quad-word; also load size-4,
      double-word.  */
-  tree oiq_ftype_const_qi_pointer =
+  tree v16qi2_ftype_const_qi_pointer =
     build_function_type_list (V16QI2_type_node, const_intQI_pointer_node, NULL);
-  tree oiq_ftype_const_hi_pointer =
+  tree v8hi2_ftype_const_hi_pointer =
     build_function_type_list (V8HI2_type_node, const_intHI_pointer_node, NULL);
-  tree oiq_ftype_const_si_pointer =
+  tree v4si2_ftype_const_si_pointer =
     build_function_type_list (V4SI2_type_node, const_intSI_pointer_node, NULL);
-  tree oiq_ftype_const_sf_pointer =
+  tree v4sf2_ftype_const_sf_pointer =
     build_function_type_list (V4SF2_type_node, const_float_pointer_node, NULL);
 
-  tree oid_ftype_const_qi_pointer =
+  tree v8qi4_ftype_const_qi_pointer =
     build_function_type_list (V8QI4_type_node, const_intQI_pointer_node, NULL);
-  tree oid_ftype_const_hi_pointer =
+  tree v4hi4_ftype_const_hi_pointer =
     build_function_type_list (V4HI4_type_node, const_intHI_pointer_node, NULL);
-  tree oid_ftype_const_si_pointer =
+  tree v2si4_ftype_const_si_pointer =
     build_function_type_list (V2SI4_type_node, const_intSI_pointer_node, NULL);
-  tree oid_ftype_const_sf_pointer =
+  tree v2sf4_ftype_const_sf_pointer =
     build_function_type_list (V2SF4_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-2 structure operations, double-word.  */
-  tree ti_ftype_const_qi_pointer_ti_si =
+  tree v8qi2_ftype_const_qi_pointer_v8qi2_si =
     build_function_type_list (V8QI2_type_node, const_intQI_pointer_node,
 			      V8QI2_type_node, intSI_type_node, NULL);
-  tree ti_ftype_const_hi_pointer_ti_si =
+  tree v4hi2_ftype_const_hi_pointer_v4hi2_si =
     build_function_type_list (V4HI2_type_node, const_intHI_pointer_node,
 			      V4HI2_type_node, intSI_type_node, NULL);
-  tree ti_ftype_const_si_pointer_ti_si =
+  tree v2si2_ftype_const_si_pointer_v2si2_si =
     build_function_type_list (V2SI2_type_node, const_intSI_pointer_node,
 			      V2SI2_type_node, intSI_type_node, NULL);
-  tree ti_ftype_const_sf_pointer_ti_si =
+  tree v2sf2_ftype_const_sf_pointer_v2sf2_si =
     build_function_type_list (V2SF2_type_node, const_float_pointer_node,
 			      V2SF2_type_node, intSI_type_node, NULL);
 
   /* Load lane size-2 structure operations, quad-word; also load lane size-4,
      double-word.  */
-  tree oiq_ftype_const_hi_pointer_oiq_si =
+  tree v8hi2_ftype_const_hi_pointer_v8hi2_si =
     build_function_type_list (V8HI2_type_node, const_intHI_pointer_node,
 			      V8HI2_type_node, intSI_type_node, NULL);
-  tree oiq_ftype_const_si_pointer_oiq_si =
+  tree v4si2_ftype_const_si_pointer_v4si2_si =
     build_function_type_list (V4SI2_type_node, const_intSI_pointer_node,
 			      V4SI2_type_node, intSI_type_node, NULL);
-  tree oiq_ftype_const_sf_pointer_oiq_si =
+  tree v4sf2_ftype_const_sf_pointer_v4sf2_si =
     build_function_type_list (V4SF2_type_node, const_float_pointer_node,
 			      V4SF2_type_node, intSI_type_node, NULL);
 
-  tree oid_ftype_const_hi_pointer_oid_si =
+  tree v4hi4_ftype_const_hi_pointer_v4hi4_si =
     build_function_type_list (V4HI4_type_node, const_intHI_pointer_node,
 			      V4HI4_type_node, intSI_type_node, NULL);
-  tree oid_ftype_const_si_pointer_oid_si =
+  tree v2si4_ftype_const_si_pointer_v2si4_si =
     build_function_type_list (V2SI4_type_node, const_intSI_pointer_node,
 			      V2SI4_type_node, intSI_type_node, NULL);
-  tree oid_ftype_const_sf_pointer_oid_si =
+  tree v2sf4_ftype_const_sf_pointer_v2sf4_si =
     build_function_type_list (V2SF4_type_node, const_float_pointer_node,
 			      V2SF4_type_node, intSI_type_node, NULL);
 
   /* Store size-2 structure operations, double-word.  */
-  tree void_ftype_qi_pointer_ti =
+  tree void_ftype_qi_pointer_v8qi2 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI2_type_node, NULL);
-  tree void_ftype_hi_pointer_ti =
+  tree void_ftype_hi_pointer_v4hi2 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI2_type_node, NULL);
-  tree void_ftype_si_pointer_ti =
+  tree void_ftype_si_pointer_v2si2 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI2_type_node, NULL);
-  tree void_ftype_di_pointer_ti =
+  tree void_ftype_di_pointer_v1di2 =
     build_function_type_list (void_type_node, intDI_pointer_node,
 			      V1DI2_type_node, NULL);
-  tree void_ftype_sf_pointer_ti =
+  tree void_ftype_sf_pointer_v2sf2 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF2_type_node, NULL);
 
   /* Store size-2 structure operations, quad-word; also store size-4,
      double-word.  */
-  tree void_ftype_qi_pointer_oiq =
+  tree void_ftype_qi_pointer_v16qi2 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V16QI2_type_node, NULL);
-  tree void_ftype_hi_pointer_oiq =
+  tree void_ftype_hi_pointer_v8hi2 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI2_type_node, NULL);
-  tree void_ftype_si_pointer_oiq =
+  tree void_ftype_si_pointer_v4si2 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI2_type_node, NULL);
-  tree void_ftype_sf_pointer_oiq =
+  tree void_ftype_sf_pointer_v4sf2 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF2_type_node, NULL);
 
-  tree void_ftype_qi_pointer_oid =
+  tree void_ftype_qi_pointer_v8qi4 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI4_type_node, NULL);
-  tree void_ftype_hi_pointer_oid =
+  tree void_ftype_hi_pointer_v4hi4 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI4_type_node, NULL);
-  tree void_ftype_si_pointer_oid =
+  tree void_ftype_si_pointer_v2si4 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI4_type_node, NULL);
-  tree void_ftype_sf_pointer_oid =
+  tree void_ftype_sf_pointer_v2sf4 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF4_type_node, NULL);
 
   /* Store lane size-2 structure operations, double-word.  */
-  tree void_ftype_qi_pointer_ti_si =
+  tree void_ftype_qi_pointer_v8qi2_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI2_type_node, intSI_type_node, NULL);
-  tree void_ftype_hi_pointer_ti_si =
+  tree void_ftype_hi_pointer_v4hi2_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI2_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_ti_si =
+  tree void_ftype_si_pointer_v2si2_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI2_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_ti_si =
+  tree void_ftype_sf_pointer_v2sf2_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF2_type_node, intSI_type_node, NULL);
 
   /* Store lane size-2 structure operations, quad-word; also store
      lane size-4, double-word.  */
-  tree void_ftype_hi_pointer_oiq_si =
+  tree void_ftype_hi_pointer_v8hi2_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI2_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_oiq_si =
+  tree void_ftype_si_pointer_v4si2_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI2_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_oiq_si =
+  tree void_ftype_sf_pointer_v4sf2_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF2_type_node, intSI_type_node, NULL);
 
-  tree void_ftype_hi_pointer_oid_si =
+  tree void_ftype_hi_pointer_v4hi4_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI4_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_oid_si =
+  tree void_ftype_si_pointer_v2si4_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI4_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_oid_si =
+  tree void_ftype_sf_pointer_v2sf4_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF4_type_node, intSI_type_node, NULL);
 
   /* Load size-3 structure operations, double-word.  */
-  tree ei_ftype_const_qi_pointer =
+  tree v8qi3_ftype_const_qi_pointer =
     build_function_type_list (V8QI3_type_node, const_intQI_pointer_node, NULL);
-  tree ei_ftype_const_hi_pointer =
+  tree v4hi3_ftype_const_hi_pointer =
     build_function_type_list (V4HI3_type_node, const_intHI_pointer_node, NULL);
-  tree ei_ftype_const_si_pointer =
+  tree v2si3_ftype_const_si_pointer =
     build_function_type_list (V2SI3_type_node, const_intSI_pointer_node, NULL);
-  tree ei_ftype_const_di_pointer =
+  tree v1di3_ftype_const_di_pointer =
     build_function_type_list (V1DI3_type_node, const_intDI_pointer_node, NULL);
-  tree ei_ftype_const_sf_pointer =
+  tree v2sf3_ftype_const_sf_pointer =
     build_function_type_list (V2SF3_type_node, const_float_pointer_node, NULL);
 
   /* Load size-3 structure operations, quad-word.  */
-  tree ci_ftype_const_qi_pointer =
+  tree v16qi3_ftype_const_qi_pointer =
     build_function_type_list (V16QI3_type_node, const_intQI_pointer_node, NULL);
-  tree ci_ftype_const_hi_pointer =
+  tree v8hi3_ftype_const_hi_pointer =
     build_function_type_list (V8HI3_type_node, const_intHI_pointer_node, NULL);
-  tree ci_ftype_const_si_pointer =
+  tree v4si3_ftype_const_si_pointer =
     build_function_type_list (V4SI3_type_node, const_intSI_pointer_node, NULL);
-  tree ci_ftype_const_sf_pointer =
+  tree v4sf3_ftype_const_sf_pointer =
     build_function_type_list (V4SF3_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-3 structure operations, double-word.  */
-  tree ei_ftype_const_qi_pointer_ei_si =
+  tree v8qi3_ftype_const_qi_pointer_v8qi3_si =
     build_function_type_list (V8QI3_type_node, const_intQI_pointer_node,
 			      V8QI3_type_node, intSI_type_node, NULL);
-  tree ei_ftype_const_hi_pointer_ei_si =
+  tree v4hi3_ftype_const_hi_pointer_v4hi3_si =
     build_function_type_list (V4HI3_type_node, const_intHI_pointer_node,
 			      V4HI3_type_node, intSI_type_node, NULL);
-  tree ei_ftype_const_si_pointer_ei_si =
+  tree v2si3_ftype_const_si_pointer_v2si3_si =
     build_function_type_list (V2SI3_type_node, const_intSI_pointer_node,
 			      V2SI3_type_node, intSI_type_node, NULL);
-  tree ei_ftype_const_sf_pointer_ei_si =
+  tree v2sf3_ftype_const_sf_pointer_v2sf3_si =
     build_function_type_list (V2SF3_type_node, const_float_pointer_node,
 			      V2SF3_type_node, intSI_type_node, NULL);
 
   /* Load lane size-3 structure operations, quad-word.  */
-  tree ci_ftype_const_hi_pointer_ci_si =
+  tree v8hi3_ftype_const_hi_pointer_v8hi3_si =
     build_function_type_list (V8HI3_type_node, const_intHI_pointer_node,
 			      V8HI3_type_node, intSI_type_node, NULL);
-  tree ci_ftype_const_si_pointer_ci_si =
+  tree v4si3_ftype_const_si_pointer_v4si3_si =
     build_function_type_list (V4SI3_type_node, const_intSI_pointer_node,
 			      V4SI3_type_node, intSI_type_node, NULL);
-  tree ci_ftype_const_sf_pointer_ci_si =
+  tree v4sf3_ftype_const_sf_pointer_v4sf3_si =
     build_function_type_list (V4SF3_type_node, const_float_pointer_node,
 			      V4SF3_type_node, intSI_type_node, NULL);
 
   /* Store size-3 structure operations, double-word.  */
-  tree void_ftype_qi_pointer_ei =
+  tree void_ftype_qi_pointer_v8qi3 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI3_type_node, NULL);
-  tree void_ftype_hi_pointer_ei =
+  tree void_ftype_hi_pointer_v4hi3 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI3_type_node, NULL);
-  tree void_ftype_si_pointer_ei =
+  tree void_ftype_si_pointer_v2si3 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI3_type_node, NULL);
-  tree void_ftype_di_pointer_ei =
+  tree void_ftype_di_pointer_v1di3 =
     build_function_type_list (void_type_node, intDI_pointer_node,
 			      V1DI3_type_node, NULL);
-  tree void_ftype_sf_pointer_ei =
+  tree void_ftype_sf_pointer_v2sf3 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF3_type_node, NULL);
 
   /* Store size-3 structure operations, quad-word.  */
-  tree void_ftype_qi_pointer_ci =
+  tree void_ftype_qi_pointer_v16qi3 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V16QI3_type_node, NULL);
-  tree void_ftype_hi_pointer_ci =
+  tree void_ftype_hi_pointer_v8hi3 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI3_type_node, NULL);
-  tree void_ftype_si_pointer_ci =
+  tree void_ftype_si_pointer_v4si3 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI3_type_node, NULL);
-  tree void_ftype_sf_pointer_ci =
+  tree void_ftype_sf_pointer_v4sf3 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF3_type_node, NULL);
 
   /* Store lane size-3 structure operations, double-word.  */
-  tree void_ftype_qi_pointer_ei_si =
+  tree void_ftype_qi_pointer_v8qi3_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI3_type_node, intSI_type_node, NULL);
-  tree void_ftype_hi_pointer_ei_si =
+  tree void_ftype_hi_pointer_v4hi3_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V4HI3_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_ei_si =
+  tree void_ftype_si_pointer_v2si3_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V2SI3_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_ei_si =
+  tree void_ftype_sf_pointer_v2sf3_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V2SF3_type_node, intSI_type_node, NULL);
 
   /* Store lane size-3 structure operations, quad-word.  */
-  tree void_ftype_hi_pointer_ci_si =
+  tree void_ftype_hi_pointer_v8hi3_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI3_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_ci_si =
+  tree void_ftype_si_pointer_v4si3_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI3_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_ci_si =
+  tree void_ftype_sf_pointer_v4sf3_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF3_type_node, intSI_type_node, NULL);
 
   /* Load size-4 structure operations, double-word.  */
-  tree oi_ftype_const_di_pointer =
+  tree v1di4_ftype_const_di_pointer =
     build_function_type_list (V1DI4_type_node, const_intDI_pointer_node, NULL);
 
   /* Load size-4 structure operations, quad-word.  */
-  tree xi_ftype_const_qi_pointer =
+  tree v16qi4_ftype_const_qi_pointer =
     build_function_type_list (V16QI4_type_node, const_intQI_pointer_node, NULL);
-  tree xi_ftype_const_hi_pointer =
+  tree v8hi4_ftype_const_hi_pointer =
     build_function_type_list (V8HI4_type_node, const_intHI_pointer_node, NULL);
-  tree xi_ftype_const_si_pointer =
+  tree v4si4_ftype_const_si_pointer =
     build_function_type_list (V4SI4_type_node, const_intSI_pointer_node, NULL);
-  tree xi_ftype_const_sf_pointer =
+  tree v4sf4_ftype_const_sf_pointer =
     build_function_type_list (V4SF4_type_node, const_float_pointer_node, NULL);
 
   /* Load lane size-4 structure operations, double-word.  */
-  tree oi_ftype_const_qi_pointer_oi_si =
+  tree v8qi4_ftype_const_qi_pointer_v8qi4_si =
     build_function_type_list (V8QI4_type_node, const_intQI_pointer_node,
 			      V8QI4_type_node, intSI_type_node, NULL);
 
   /* Load lane size-4 structure operations, quad-word.  */
-  tree xi_ftype_const_hi_pointer_xi_si =
+  tree v8hi4_ftype_const_hi_pointer_v8hi4_si =
     build_function_type_list (V8HI4_type_node, const_intHI_pointer_node,
 			      V8HI4_type_node, intSI_type_node, NULL);
-  tree xi_ftype_const_si_pointer_xi_si =
+  tree v4si4_ftype_const_si_pointer_v4si4_si =
     build_function_type_list (V4SI4_type_node, const_intSI_pointer_node,
 			      V4SI4_type_node, intSI_type_node, NULL);
-  tree xi_ftype_const_sf_pointer_xi_si =
+  tree v4sf4_ftype_const_sf_pointer_v4sf4_si =
     build_function_type_list (V4SF4_type_node, const_float_pointer_node,
 			      V4SF4_type_node, intSI_type_node, NULL);
 
   /* Store size-4 structure operations, double-word.  */
-  tree void_ftype_di_pointer_oi =
+  tree void_ftype_di_pointer_v1di4 =
     build_function_type_list (void_type_node, intDI_pointer_node,
 			      V1DI4_type_node, NULL);
 
   /* Store size-4 structure operations, quad-word.  */
-  tree void_ftype_qi_pointer_xi =
+  tree void_ftype_qi_pointer_v16qi4 =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V16QI4_type_node, NULL);
-  tree void_ftype_hi_pointer_xi =
+  tree void_ftype_hi_pointer_v8hi4 =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI4_type_node, NULL);
-  tree void_ftype_si_pointer_xi =
+  tree void_ftype_si_pointer_v4si4 =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI4_type_node, NULL);
-  tree void_ftype_sf_pointer_xi =
+  tree void_ftype_sf_pointer_v4sf4 =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF4_type_node, NULL);
 
   /* Store lane size-4 structure operations, double-word.  */
-  tree void_ftype_qi_pointer_oi_si =
+  tree void_ftype_qi_pointer_v8qi4_si =
     build_function_type_list (void_type_node, intQI_pointer_node,
 			      V8QI4_type_node, intSI_type_node, NULL);
 
   /* Store lane size-4 structure operations, quad-word.  */
-  tree void_ftype_hi_pointer_xi_si =
+  tree void_ftype_hi_pointer_v8hi4_si =
     build_function_type_list (void_type_node, intHI_pointer_node,
 			      V8HI4_type_node, intSI_type_node, NULL);
-  tree void_ftype_si_pointer_xi_si =
+  tree void_ftype_si_pointer_v4si4_si =
     build_function_type_list (void_type_node, intSI_pointer_node,
 			      V4SI4_type_node, intSI_type_node, NULL);
-  tree void_ftype_sf_pointer_xi_si =
+  tree void_ftype_sf_pointer_v4sf4_si =
     build_function_type_list (void_type_node, float_pointer_node,
 			      V4SF4_type_node, intSI_type_node, NULL);
   /* LLVM LOCAL end multi-vector types */
@@ -17766,9 +17781,8 @@ arm_init_neon_builtins (void)
   dreg_types[1] = V4HI_type_node;
   dreg_types[2] = V2SI_type_node;
   dreg_types[3] = V2SF_type_node;
-  /* LLVM LOCAL begin */
+  /* LLVM LOCAL use v1di instead of di mode */
   dreg_types[4] = V1DI_type_node;
-  /* LLVM LOCAL end */
 
   qreg_types[0] = V16QI_type_node;
   qreg_types[1] = V8HI_type_node;
@@ -17797,12 +17811,11 @@ arm_init_neon_builtins (void)
 
       for (j = 0; j < T_MAX; j++)
         {
-	  /* LLVM LOCAL begin */
           const char* const modenames[] = {
+            /* LLVM LOCAL use v1di instead of di mode */
             "v8qi", "v4hi", "v2si", "v2sf", "v1di",
             "v16qi", "v8hi", "v4si", "v4sf", "v2di"
           };
-	  /* LLVM LOCAL end */
           char namebuf[60];
           tree ftype = NULL;
           enum insn_code icode;
@@ -17858,14 +17871,14 @@ arm_init_neon_builtins (void)
                     ftype = v2sf_ftype_v2sf_si;
                   break;
 
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V1DImode:
                   if (mode0 == V1DImode)
                     ftype = v1di_ftype_v1di_si;
 		  else if (mode0 == V2SImode)
 		    ftype = v1di_ftype_v2si_si;
                   break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
 
                 case V16QImode:
                   if (mode0 == V16QImode)
@@ -17950,14 +17963,14 @@ arm_init_neon_builtins (void)
                     ftype = v2sf_ftype_v2sf_v2sf_si;
                   break;
 
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V1DImode:
                   if (mode0 == V1DImode && mode1 == V1DImode)
                     ftype = v1di_ftype_v1di_v1di_si;
 		  else if (mode0 == V1DImode && mode1 == V2SImode)
 		    ftype = v1di_ftype_v1di_v2si_si;
                   break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
 
                 case V16QImode:
                   if (mode0 == V16QImode && mode1 == V16QImode)
@@ -18086,7 +18099,7 @@ arm_init_neon_builtins (void)
 
 	    case NEON_GETLANE:
               /* Vector lane extraction.  */
-	      gcc_assert (valid_neon_mode (mode0) && mode1 == SImode
+              gcc_assert (valid_neon_mode (mode0) && mode1 == SImode
 			  && mode2 == SImode);
               switch (tmode)
 		{
@@ -18118,14 +18131,14 @@ arm_init_neon_builtins (void)
                     ftype = sf_ftype_v4sf_si_si;
                   break;
 
-		/* LLVM LOCAL begin */
                 case DImode:
+                  /* LLVM LOCAL begin use v1di instead of di mode */
                   if (mode0 == V1DImode)
                     ftype = di_ftype_v1di_si_si;
+                  /* LLVM LOCAL end use v1di instead of di mode */
                   else if (mode0 == V2DImode)
                     ftype = di_ftype_v2di_si_si;
                   break;
-		/* LLVM LOCAL end */
 
                 default:
                   gcc_unreachable ();
@@ -18158,12 +18171,12 @@ arm_init_neon_builtins (void)
                       ftype = v2sf_ftype_sf_v2sf_si;
                     break;
 
-		  /* LLVM LOCAL begin */
+                  /* LLVM LOCAL begin use v1di instead of di mode */
                   case V1DImode:
                     if (mode0 == DImode && mode1 == V1DImode)
                       ftype = v1di_ftype_di_v1di_si;
                     break;
-		  /* LLVM LOCAL end */
+                  /* LLVM LOCAL end use v1di instead of di mode */
 
                   case V16QImode:
                     if (mode0 == QImode && mode1 == V16QImode)
@@ -18205,14 +18218,14 @@ arm_init_neon_builtins (void)
                 case V4HImode: ftype = v4hi_ftype_di; break;
                 case V2SImode: ftype = v2si_ftype_di; break;
                 case V2SFmode: ftype = v2sf_ftype_di; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode: ftype = v1di_ftype_di; break;
-		/* LLVM LOCAL end */
                 default: gcc_unreachable ();
                 }
               break;
 
 	    case NEON_DUP:
+              /* LLVM LOCAL use v1di instead of di mode */
               gcc_assert ((mode0 == DImode && tmode == V1DImode)
                           || mode0 == GET_MODE_INNER (tmode));
               switch (tmode)
@@ -18221,9 +18234,8 @@ arm_init_neon_builtins (void)
                 case V4HImode:  ftype = v4hi_ftype_hi; break;
                 case V2SImode:  ftype = v2si_ftype_si; break;
                 case V2SFmode:  ftype = v2sf_ftype_sf; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode:  ftype = v1di_ftype_di; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = v16qi_ftype_qi; break;
                 case V8HImode:  ftype = v8hi_ftype_hi; break;
                 case V4SImode:  ftype = v4si_ftype_si; break;
@@ -18241,16 +18253,14 @@ arm_init_neon_builtins (void)
                 case V4HImode:  ftype = v4hi_ftype_v4hi_si; break;
                 case V2SImode:  ftype = v2si_ftype_v2si_si; break;
                 case V2SFmode:  ftype = v2sf_ftype_v2sf_si; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode:  ftype = v1di_ftype_v1di_si; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = v16qi_ftype_v8qi_si; break;
                 case V8HImode:  ftype = v8hi_ftype_v4hi_si; break;
                 case V4SImode:  ftype = v4si_ftype_v2si_si; break;
                 case V4SFmode:  ftype = v4sf_ftype_v2sf_si; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V2DImode:  ftype = v2di_ftype_v1di_si; break;
-		/* LLVM LOCAL end */
                 default: gcc_unreachable ();
                 }
               break;
@@ -18280,12 +18290,12 @@ arm_init_neon_builtins (void)
                     ftype = v2si_ftype_v2di_si_si;
                   break;
 
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V1DImode:
                   if (mode0 == V1DImode)
 		    ftype = v1di_ftype_v1di_si_si;
                   break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
 
                 case V16QImode:
                   if (mode0 == V16QImode)
@@ -18326,9 +18336,8 @@ arm_init_neon_builtins (void)
                 case V4HImode:  ftype = v4hi_ftype_v4hi_v4hi_si_si; break;
                 case V2SImode:  ftype = v2si_ftype_v2si_v2si_si_si; break;
                 case V2SFmode:  ftype = v2sf_ftype_v2sf_v2sf_si_si; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode:  ftype = v1di_ftype_v1di_v1di_si_si; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = v16qi_ftype_v16qi_v16qi_si_si; break;
                 case V8HImode:  ftype = v8hi_ftype_v8hi_v8hi_si_si; break;
                 case V4SImode:  ftype = v4si_ftype_v4si_v4si_si_si; break;
@@ -18362,12 +18371,12 @@ arm_init_neon_builtins (void)
                     ftype = v4sf_ftype_v2sf_v2sf;
                   break;
 
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V2DImode:
                   if (mode0 == V1DImode && mode1 == V1DImode)
                     ftype = v2di_ftype_v1di_v1di;
                   break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
 
                 default:
                   gcc_unreachable ();
@@ -18398,12 +18407,12 @@ arm_init_neon_builtins (void)
                     ftype = v2sf_ftype_v4sf;
                   break;
 
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V1DImode:
                   if (mode0 == V2DImode)
                     ftype = v1di_ftype_v2di;
                   break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
 
                 default:
                   gcc_unreachable ();
@@ -18772,9 +18781,8 @@ arm_init_neon_builtins (void)
                 case V4HImode: ftype = v4hi_ftype_v4hi_v4hi_v4hi; break;
                 case V2SImode: ftype = v2si_ftype_v2si_v2si_v2si; break;
                 case V2SFmode: ftype = v2sf_ftype_v2si_v2sf_v2sf; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode: ftype = v1di_ftype_v1di_v1di_v1di; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = v16qi_ftype_v16qi_v16qi_v16qi; break;
                 case V8HImode: ftype = v8hi_ftype_v8hi_v8hi_v8hi; break;
                 case V4SImode: ftype = v4si_ftype_v4si_v4si_v4si; break;
@@ -18790,9 +18798,11 @@ arm_init_neon_builtins (void)
                 switch (mode0)
                   {
                   case V8QImode: ftype = v8qi_ftype_v8qi_v8qi; break;
-                  case TImode: ftype = v8qi_ftype_ti_v8qi; break;
-                  case EImode: ftype = v8qi_ftype_ei_v8qi; break;
-                  case OImode: ftype = v8qi_ftype_oi_v8qi; break;
+                    /* LLVM LOCAL begin multi-vector types */
+                  case TImode: ftype = v8qi_ftype_v8qi2_v8qi; break;
+                  case EImode: ftype = v8qi_ftype_v8qi3_v8qi; break;
+                  case OImode: ftype = v8qi_ftype_v8qi4_v8qi; break;
+                    /* LLVM LOCAL end multi-vector types */
                   default: gcc_unreachable ();
                   }
               }
@@ -18805,9 +18815,11 @@ arm_init_neon_builtins (void)
                 switch (mode1)
                   {
                   case V8QImode: ftype = v8qi_ftype_v8qi_v8qi_v8qi; break;
-                  case TImode: ftype = v8qi_ftype_v8qi_ti_v8qi; break;
-                  case EImode: ftype = v8qi_ftype_v8qi_ei_v8qi; break;
-                  case OImode: ftype = v8qi_ftype_v8qi_oi_v8qi; break;
+                    /* LLVM LOCAL begin multi-vector types */
+                  case TImode: ftype = v8qi_ftype_v8qi_v8qi2_v8qi; break;
+                  case EImode: ftype = v8qi_ftype_v8qi_v8qi3_v8qi; break;
+                  case OImode: ftype = v8qi_ftype_v8qi_v8qi4_v8qi; break;
+                    /* LLVM LOCAL end multi-vector types */
                   default: gcc_unreachable ();
                   }
               }
@@ -18817,18 +18829,32 @@ arm_init_neon_builtins (void)
               {
                 switch (mode0)
                   {
+                  /* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+		  case V8QImode: ftype = v8qi2_ftype_v8qi_v8qi; break;
+                  case V4HImode: ftype = v4hi2_ftype_v4hi_v4hi; break;
+                  case V2SImode: ftype = v2si2_ftype_v2si_v2si; break;
+                  case V2SFmode: ftype = v2sf2_ftype_v2sf_v2sf; break;
+                  case V1DImode: ftype = v1di2_ftype_v1di_v1di; break;
+                  case V16QImode: ftype = v16qi2_ftype_v16qi_v16qi; break;
+                  case V8HImode: ftype = v8hi2_ftype_v8hi_v8hi; break;
+                  case V4SImode: ftype = v4si2_ftype_v4si_v4si; break;
+                  case V4SFmode: ftype = v4sf2_ftype_v4sf_v4sf; break;
+                  case V2DImode: ftype = v2di2_ftype_v2di_v2di; break;
+#else /* !ENABLE_LLVM */
 		  case V8QImode: ftype = void_ftype_pv8qi_v8qi_v8qi; break;
                   case V4HImode: ftype = void_ftype_pv4hi_v4hi_v4hi; break;
                   case V2SImode: ftype = void_ftype_pv2si_v2si_v2si; break;
                   case V2SFmode: ftype = void_ftype_pv2sf_v2sf_v2sf; break;
-		  /* LLVM LOCAL begin */
+                  /* LLVM LOCAL use v1di instead of di mode */
                   case V1DImode: ftype = void_ftype_pv1di_v1di_v1di; break;
-		  /* LLVM LOCAL end */
                   case V16QImode: ftype = void_ftype_pv16qi_v16qi_v16qi; break;
                   case V8HImode: ftype = void_ftype_pv8hi_v8hi_v8hi; break;
                   case V4SImode: ftype = void_ftype_pv4si_v4si_v4si; break;
                   case V4SFmode: ftype = void_ftype_pv4sf_v4sf_v4sf; break;
                   case V2DImode: ftype = void_ftype_pv2di_v2di_v2di; break;
+#endif /* !ENABLE_LLVM */
+                  /* LLVM LOCAL end multi-vector types */
                   default: gcc_unreachable ();
                   }
               }
@@ -18845,9 +18871,8 @@ arm_init_neon_builtins (void)
                   case V4HImode: ftype = reinterp_ftype_dreg[1][rhs]; break;
                   case V2SImode: ftype = reinterp_ftype_dreg[2][rhs]; break;
                   case V2SFmode: ftype = reinterp_ftype_dreg[3][rhs]; break;
-		  /* LLVM LOCAL begin */
+                  /* LLVM LOCAL use v1di instead of di mode */
                   case V1DImode: ftype = reinterp_ftype_dreg[4][rhs]; break;
-		  /* LLVM LOCAL end */
                   case V16QImode: ftype = reinterp_ftype_qreg[0][rhs]; break;
                   case V8HImode: ftype = reinterp_ftype_qreg[1][rhs]; break;
                   case V4SImode: ftype = reinterp_ftype_qreg[2][rhs]; break;
@@ -18865,9 +18890,8 @@ arm_init_neon_builtins (void)
                 case V4HImode: ftype = v4hi_ftype_const_hi_pointer; break;
                 case V2SImode: ftype = v2si_ftype_const_si_pointer; break;
                 case V2SFmode: ftype = v2sf_ftype_const_sf_pointer; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode: ftype = v1di_ftype_const_di_pointer; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = v16qi_ftype_const_qi_pointer; break;
                 case V8HImode: ftype = v8hi_ftype_const_hi_pointer; break;
                 case V4SImode: ftype = v4si_ftype_const_si_pointer; break;
@@ -18892,11 +18916,11 @@ arm_init_neon_builtins (void)
                 case V2SFmode:
 		  ftype = v2sf_ftype_const_sf_pointer_v2sf_si;
 		  break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL begin use v1di instead of di mode */
                 case V1DImode:
 		  ftype = v1di_ftype_const_di_pointer_v1di_si;
 		  break;
-		/* LLVM LOCAL end */
+                /* LLVM LOCAL end use v1di instead of di mode */
                 case V16QImode:
 		  ftype = v16qi_ftype_const_qi_pointer_v16qi_si;
 		  break;
@@ -18924,9 +18948,8 @@ arm_init_neon_builtins (void)
                 case V4HImode: ftype = void_ftype_hi_pointer_v4hi; break;
                 case V2SImode: ftype = void_ftype_si_pointer_v2si; break;
                 case V2SFmode: ftype = void_ftype_sf_pointer_v2sf; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode: ftype = void_ftype_di_pointer_v1di; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = void_ftype_qi_pointer_v16qi; break;
                 case V8HImode: ftype = void_ftype_hi_pointer_v8hi; break;
                 case V4SImode: ftype = void_ftype_si_pointer_v4si; break;
@@ -18943,9 +18966,8 @@ arm_init_neon_builtins (void)
                 case V4HImode: ftype = void_ftype_hi_pointer_v4hi_si; break;
                 case V2SImode: ftype = void_ftype_si_pointer_v2si_si; break;
                 case V2SFmode: ftype = void_ftype_sf_pointer_v2sf_si; break;
-		/* LLVM LOCAL begin */
+                /* LLVM LOCAL use v1di instead of di mode */
                 case V1DImode: ftype = void_ftype_di_pointer_v1di_si; break;
-		/* LLVM LOCAL end */
                 case V16QImode: ftype = void_ftype_qi_pointer_v16qi_si; break;
                 case V8HImode: ftype = void_ftype_hi_pointer_v8hi_si; break;
                 case V4SImode: ftype = void_ftype_si_pointer_v4si_si; break;
@@ -18955,6 +18977,7 @@ arm_init_neon_builtins (void)
                 }
               break;
 
+              /* LLVM LOCAL begin multi-vector types */
 	    case NEON_LOADSTRUCT:
 	      switch (tmode)
 		{
@@ -18962,13 +18985,12 @@ arm_init_neon_builtins (void)
 		  /* vld2 cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V8QI: ftype = ti_ftype_const_qi_pointer; break;
-		    case T_V4HI: ftype = ti_ftype_const_hi_pointer; break;
-		    case T_V2SI: ftype = ti_ftype_const_si_pointer; break;
-		    case T_V2SF: ftype = ti_ftype_const_sf_pointer; break;
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = ti_ftype_const_di_pointer; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = v8qi2_ftype_const_qi_pointer; break;
+		    case T_V4HI: ftype = v4hi2_ftype_const_hi_pointer; break;
+		    case T_V2SI: ftype = v2si2_ftype_const_si_pointer; break;
+		    case T_V2SF: ftype = v2sf2_ftype_const_sf_pointer; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = v1di2_ftype_const_di_pointer; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -18977,13 +18999,12 @@ arm_init_neon_builtins (void)
 		  /* vld3 cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V8QI: ftype = ei_ftype_const_qi_pointer; break;
-		    case T_V4HI: ftype = ei_ftype_const_hi_pointer; break;
-		    case T_V2SI: ftype = ei_ftype_const_si_pointer; break;
-		    case T_V2SF: ftype = ei_ftype_const_sf_pointer; break;
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = ei_ftype_const_di_pointer; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = v8qi3_ftype_const_qi_pointer; break;
+		    case T_V4HI: ftype = v4hi3_ftype_const_hi_pointer; break;
+		    case T_V2SI: ftype = v2si3_ftype_const_si_pointer; break;
+		    case T_V2SF: ftype = v2sf3_ftype_const_sf_pointer; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = v1di3_ftype_const_di_pointer; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -18993,20 +19014,17 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vld2q cases.  */
-                      /* LLVM LOCAL begin multi-vector types */
-		    case T_V16QI: ftype = oiq_ftype_const_qi_pointer; break;
-		    case T_V8HI: ftype = oiq_ftype_const_hi_pointer; break;
-		    case T_V4SI: ftype = oiq_ftype_const_si_pointer; break;
-		    case T_V4SF: ftype = oiq_ftype_const_sf_pointer; break;
+		    case T_V16QI: ftype = v16qi2_ftype_const_qi_pointer; break;
+		    case T_V8HI: ftype = v8hi2_ftype_const_hi_pointer; break;
+		    case T_V4SI: ftype = v4si2_ftype_const_si_pointer; break;
+		    case T_V4SF: ftype = v4sf2_ftype_const_sf_pointer; break;
 		      /* vld4 cases.  */
-		    case T_V8QI: ftype = oid_ftype_const_qi_pointer; break;
-		    case T_V4HI: ftype = oid_ftype_const_hi_pointer; break;
-		    case T_V2SI: ftype = oid_ftype_const_si_pointer; break;
-		    case T_V2SF: ftype = oid_ftype_const_sf_pointer; break;
-                      /* LLVM LOCAL end multi-vector types */
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = oi_ftype_const_di_pointer; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = v8qi4_ftype_const_qi_pointer; break;
+		    case T_V4HI: ftype = v4hi4_ftype_const_hi_pointer; break;
+		    case T_V2SI: ftype = v2si4_ftype_const_si_pointer; break;
+		    case T_V2SF: ftype = v2sf4_ftype_const_sf_pointer; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = v1di4_ftype_const_di_pointer; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19015,10 +19033,10 @@ arm_init_neon_builtins (void)
 		  /* vld3q cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V16QI: ftype = ci_ftype_const_qi_pointer; break;
-		    case T_V8HI: ftype = ci_ftype_const_hi_pointer; break;
-		    case T_V4SI: ftype = ci_ftype_const_si_pointer; break;
-		    case T_V4SF: ftype = ci_ftype_const_sf_pointer; break;
+		    case T_V16QI: ftype = v16qi3_ftype_const_qi_pointer; break;
+		    case T_V8HI: ftype = v8hi3_ftype_const_hi_pointer; break;
+		    case T_V4SI: ftype = v4si3_ftype_const_si_pointer; break;
+		    case T_V4SF: ftype = v4sf3_ftype_const_sf_pointer; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19027,10 +19045,10 @@ arm_init_neon_builtins (void)
 		  /* vld4q cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V16QI: ftype = xi_ftype_const_qi_pointer; break;
-		    case T_V8HI: ftype = xi_ftype_const_hi_pointer; break;
-		    case T_V4SI: ftype = xi_ftype_const_si_pointer; break;
-		    case T_V4SF: ftype = xi_ftype_const_sf_pointer; break;
+		    case T_V16QI: ftype = v16qi4_ftype_const_qi_pointer; break;
+		    case T_V8HI: ftype = v8hi4_ftype_const_hi_pointer; break;
+		    case T_V4SI: ftype = v4si4_ftype_const_si_pointer; break;
+		    case T_V4SF: ftype = v4sf4_ftype_const_sf_pointer; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19048,16 +19066,16 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8QI:
-		      ftype = ti_ftype_const_qi_pointer_ti_si;
+		      ftype = v8qi2_ftype_const_qi_pointer_v8qi2_si;
 		      break;
 		    case T_V4HI:
-		      ftype = ti_ftype_const_hi_pointer_ti_si;
+		      ftype = v4hi2_ftype_const_hi_pointer_v4hi2_si;
 		      break;
 		    case T_V2SI:
-		      ftype = ti_ftype_const_si_pointer_ti_si;
+		      ftype = v2si2_ftype_const_si_pointer_v2si2_si;
 		      break;
 		    case T_V2SF:
-		      ftype = ti_ftype_const_sf_pointer_ti_si;
+		      ftype = v2sf2_ftype_const_sf_pointer_v2sf2_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19069,16 +19087,16 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8QI:
-		      ftype = ei_ftype_const_qi_pointer_ei_si;
+		      ftype = v8qi3_ftype_const_qi_pointer_v8qi3_si;
 		      break;
 		    case T_V4HI:
-		      ftype = ei_ftype_const_hi_pointer_ei_si;
+		      ftype = v4hi3_ftype_const_hi_pointer_v4hi3_si;
 		      break;
 		    case T_V2SI:
-		      ftype = ei_ftype_const_si_pointer_ei_si;
+		      ftype = v2si3_ftype_const_si_pointer_v2si3_si;
 		      break;
 		    case T_V2SF:
-		      ftype = ei_ftype_const_sf_pointer_ei_si;
+		      ftype = v2sf3_ftype_const_sf_pointer_v2sf3_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19090,30 +19108,28 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vld2q_lane cases.  */
-                      /* LLVM LOCAL begin multi-vector types */
 		    case T_V8HI:
-		      ftype = oiq_ftype_const_hi_pointer_oiq_si;
+		      ftype = v8hi2_ftype_const_hi_pointer_v8hi2_si;
 		      break;
 		    case T_V4SI:
-		      ftype = oiq_ftype_const_si_pointer_oiq_si;
+		      ftype = v4si2_ftype_const_si_pointer_v4si2_si;
 		      break;
 		    case T_V4SF:
-		      ftype = oiq_ftype_const_sf_pointer_oiq_si;
+		      ftype = v4sf2_ftype_const_sf_pointer_v4sf2_si;
 		      break;
 		      /* vld4_lane cases.  */
 		    case T_V8QI:
-		      ftype = oi_ftype_const_qi_pointer_oi_si;
+		      ftype = v8qi4_ftype_const_qi_pointer_v8qi4_si;
 		      break;
 		    case T_V4HI:
-		      ftype = oid_ftype_const_hi_pointer_oid_si;
+		      ftype = v4hi4_ftype_const_hi_pointer_v4hi4_si;
 		      break;
 		    case T_V2SI:
-		      ftype = oid_ftype_const_si_pointer_oid_si;
+		      ftype = v2si4_ftype_const_si_pointer_v2si4_si;
 		      break;
 		    case T_V2SF:
-		      ftype = oid_ftype_const_sf_pointer_oid_si;
+		      ftype = v2sf4_ftype_const_sf_pointer_v2sf4_si;
 		      break;
-                      /* LLVM LOCAL end multi-vector types */
 		    default:
 		      gcc_unreachable ();
 		    }
@@ -19124,13 +19140,13 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8HI:
-		      ftype = ci_ftype_const_hi_pointer_ci_si;
+		      ftype = v8hi3_ftype_const_hi_pointer_v8hi3_si;
 		      break;
 		    case T_V4SI:
-		      ftype = ci_ftype_const_si_pointer_ci_si;
+		      ftype = v4si3_ftype_const_si_pointer_v4si3_si;
 		      break;
 		    case T_V4SF:
-		      ftype = ci_ftype_const_sf_pointer_ci_si;
+		      ftype = v4sf3_ftype_const_sf_pointer_v4sf3_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19142,13 +19158,13 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8HI:
-		      ftype = xi_ftype_const_hi_pointer_xi_si;
+		      ftype = v8hi4_ftype_const_hi_pointer_v8hi4_si;
 		      break;
 		    case T_V4SI:
-		      ftype = xi_ftype_const_si_pointer_xi_si;
+		      ftype = v4si4_ftype_const_si_pointer_v4si4_si;
 		      break;
 		    case T_V4SF:
-		      ftype = xi_ftype_const_sf_pointer_xi_si;
+		      ftype = v4sf4_ftype_const_sf_pointer_v4sf4_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19168,13 +19184,12 @@ arm_init_neon_builtins (void)
 		  /* vst2 cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V8QI: ftype = void_ftype_qi_pointer_ti; break;
-		    case T_V4HI: ftype = void_ftype_hi_pointer_ti; break;
-		    case T_V2SI: ftype = void_ftype_si_pointer_ti; break;
-		    case T_V2SF: ftype = void_ftype_sf_pointer_ti; break;
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = void_ftype_di_pointer_ti; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = void_ftype_qi_pointer_v8qi2; break;
+		    case T_V4HI: ftype = void_ftype_hi_pointer_v4hi2; break;
+		    case T_V2SI: ftype = void_ftype_si_pointer_v2si2; break;
+		    case T_V2SF: ftype = void_ftype_sf_pointer_v2sf2; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = void_ftype_di_pointer_v1di2; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19183,13 +19198,12 @@ arm_init_neon_builtins (void)
 		  /* vst3 cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V8QI: ftype = void_ftype_qi_pointer_ei; break;
-		    case T_V4HI: ftype = void_ftype_hi_pointer_ei; break;
-		    case T_V2SI: ftype = void_ftype_si_pointer_ei; break;
-		    case T_V2SF: ftype = void_ftype_sf_pointer_ei; break;
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = void_ftype_di_pointer_ei; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = void_ftype_qi_pointer_v8qi3; break;
+		    case T_V4HI: ftype = void_ftype_hi_pointer_v4hi3; break;
+		    case T_V2SI: ftype = void_ftype_si_pointer_v2si3; break;
+		    case T_V2SF: ftype = void_ftype_sf_pointer_v2sf3; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = void_ftype_di_pointer_v1di3; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19199,20 +19213,17 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vst2q cases.  */
-                      /* LLVM LOCAL begin multi-vector types */
-		    case T_V16QI: ftype = void_ftype_qi_pointer_oiq; break;
-		    case T_V8HI: ftype = void_ftype_hi_pointer_oiq; break;
-		    case T_V4SI: ftype = void_ftype_si_pointer_oiq; break;
-		    case T_V4SF: ftype = void_ftype_sf_pointer_oiq; break;
+		    case T_V16QI: ftype = void_ftype_qi_pointer_v16qi2; break;
+		    case T_V8HI: ftype = void_ftype_hi_pointer_v8hi2; break;
+		    case T_V4SI: ftype = void_ftype_si_pointer_v4si2; break;
+		    case T_V4SF: ftype = void_ftype_sf_pointer_v4sf2; break;
 		      /* vst4 cases.  */
-		    case T_V8QI: ftype = void_ftype_qi_pointer_oid; break;
-		    case T_V4HI: ftype = void_ftype_hi_pointer_oid; break;
-		    case T_V2SI: ftype = void_ftype_si_pointer_oid; break;
-		    case T_V2SF: ftype = void_ftype_sf_pointer_oid; break;
-                      /* LLVM LOCAL end multi-vector types */
-		    /* LLVM LOCAL begin */
-		    case T_V1DI: ftype = void_ftype_di_pointer_oi; break;
-		    /* LLVM LOCAL end */
+		    case T_V8QI: ftype = void_ftype_qi_pointer_v8qi4; break;
+		    case T_V4HI: ftype = void_ftype_hi_pointer_v4hi4; break;
+		    case T_V2SI: ftype = void_ftype_si_pointer_v2si4; break;
+		    case T_V2SF: ftype = void_ftype_sf_pointer_v2sf4; break;
+                    /* LLVM LOCAL use v1di instead of di mode */
+		    case T_V1DI: ftype = void_ftype_di_pointer_v1di4; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19221,10 +19232,10 @@ arm_init_neon_builtins (void)
 		  /* vst3q cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V16QI: ftype = void_ftype_qi_pointer_ci; break;
-		    case T_V8HI: ftype = void_ftype_hi_pointer_ci; break;
-		    case T_V4SI: ftype = void_ftype_si_pointer_ci; break;
-		    case T_V4SF: ftype = void_ftype_sf_pointer_ci; break;
+		    case T_V16QI: ftype = void_ftype_qi_pointer_v16qi3; break;
+		    case T_V8HI: ftype = void_ftype_hi_pointer_v8hi3; break;
+		    case T_V4SI: ftype = void_ftype_si_pointer_v4si3; break;
+		    case T_V4SF: ftype = void_ftype_sf_pointer_v4sf3; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19233,10 +19244,10 @@ arm_init_neon_builtins (void)
 		  /* vst4q cases.  */
 		  switch (1 << j)
 		    {
-		    case T_V16QI: ftype = void_ftype_qi_pointer_xi; break;
-		    case T_V8HI: ftype = void_ftype_hi_pointer_xi; break;
-		    case T_V4SI: ftype = void_ftype_si_pointer_xi; break;
-		    case T_V4SF: ftype = void_ftype_sf_pointer_xi; break;
+		    case T_V16QI: ftype = void_ftype_qi_pointer_v16qi4; break;
+		    case T_V8HI: ftype = void_ftype_hi_pointer_v8hi4; break;
+		    case T_V4SI: ftype = void_ftype_si_pointer_v4si4; break;
+		    case T_V4SF: ftype = void_ftype_sf_pointer_v4sf4; break;
 		    default: gcc_unreachable ();
 		    }
 		  break;
@@ -19254,16 +19265,16 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8QI:
-		      ftype = void_ftype_qi_pointer_ti_si;
+		      ftype = void_ftype_qi_pointer_v8qi2_si;
 		      break;
 		    case T_V4HI:
-		      ftype = void_ftype_hi_pointer_ti_si;
+		      ftype = void_ftype_hi_pointer_v4hi2_si;
 		      break;
 		    case T_V2SI:
-		      ftype = void_ftype_si_pointer_ti_si;
+		      ftype = void_ftype_si_pointer_v2si2_si;
 		      break;
 		    case T_V2SF:
-		      ftype = void_ftype_sf_pointer_ti_si;
+		      ftype = void_ftype_sf_pointer_v2sf2_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19275,16 +19286,16 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8QI:
-		      ftype = void_ftype_qi_pointer_ei_si;
+		      ftype = void_ftype_qi_pointer_v8qi3_si;
 		      break;
 		    case T_V4HI:
-		      ftype = void_ftype_hi_pointer_ei_si;
+		      ftype = void_ftype_hi_pointer_v4hi3_si;
 		      break;
 		    case T_V2SI:
-		      ftype = void_ftype_si_pointer_ei_si;
+		      ftype = void_ftype_si_pointer_v2si3_si;
 		      break;
 		    case T_V2SF:
-		      ftype = void_ftype_sf_pointer_ei_si;
+		      ftype = void_ftype_sf_pointer_v2sf3_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19296,30 +19307,28 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		      /* vst2q_lane cases.  */
-                      /* LLVM LOCAL begin multi-vector types */
 		    case T_V8HI:
-		      ftype = void_ftype_hi_pointer_oiq_si;
+		      ftype = void_ftype_hi_pointer_v8hi2_si;
 		      break;
 		    case T_V4SI:
-		      ftype = void_ftype_si_pointer_oiq_si;
+		      ftype = void_ftype_si_pointer_v4si2_si;
 		      break;
 		    case T_V4SF:
-		      ftype = void_ftype_sf_pointer_oiq_si;
+		      ftype = void_ftype_sf_pointer_v4sf2_si;
 		      break;
 		      /* vst4_lane cases.  */
 		    case T_V8QI:
-		      ftype = void_ftype_qi_pointer_oi_si;
+		      ftype = void_ftype_qi_pointer_v8qi4_si;
 		      break;
 		    case T_V4HI:
-		      ftype = void_ftype_hi_pointer_oid_si;
+		      ftype = void_ftype_hi_pointer_v4hi4_si;
 		      break;
 		    case T_V2SI:
-		      ftype = void_ftype_si_pointer_oid_si;
+		      ftype = void_ftype_si_pointer_v2si4_si;
 		      break;
 		    case T_V2SF:
-		      ftype = void_ftype_sf_pointer_oid_si;
+		      ftype = void_ftype_sf_pointer_v2sf4_si;
 		      break;
-                      /* LLVM LOCAL end multi-vector types */
 		    default:
 		      gcc_unreachable ();
 		    }
@@ -19330,13 +19339,13 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8HI:
-		      ftype = void_ftype_hi_pointer_ci_si;
+		      ftype = void_ftype_hi_pointer_v8hi3_si;
 		      break;
 		    case T_V4SI:
-		      ftype = void_ftype_si_pointer_ci_si;
+		      ftype = void_ftype_si_pointer_v4si3_si;
 		      break;
 		    case T_V4SF:
-		      ftype = void_ftype_sf_pointer_ci_si;
+		      ftype = void_ftype_sf_pointer_v4sf3_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19348,13 +19357,13 @@ arm_init_neon_builtins (void)
 		  switch (1 << j)
 		    {
 		    case T_V8HI:
-		      ftype = void_ftype_hi_pointer_xi_si;
+		      ftype = void_ftype_hi_pointer_v8hi4_si;
 		      break;
 		    case T_V4SI:
-		      ftype = void_ftype_si_pointer_xi_si;
+		      ftype = void_ftype_si_pointer_v4si4_si;
 		      break;
 		    case T_V4SF:
-		      ftype = void_ftype_sf_pointer_xi_si;
+		      ftype = void_ftype_sf_pointer_v4sf4_si;
 		      break;
 		    default:
 		      gcc_unreachable ();
@@ -19365,6 +19374,7 @@ arm_init_neon_builtins (void)
 		  gcc_unreachable ();
 		}
               break;
+              /* LLVM LOCAL end multi-vector types */
 
             default:
               gcc_unreachable ();
@@ -19401,6 +19411,29 @@ arm_init_neon_builtins (void)
 #undef v4sf_TN
 #undef v2di_TN
 
+/* LLVM LOCAL begin multi-vector types */
+#ifdef ENABLE_LLVM
+#undef v8qi2_TN
+#undef v8qi3_TN
+#undef v8qi4_TN
+
+#undef v4hi2_TN
+#undef v2si2_TN
+#undef v2sf2_TN
+#undef v1di2_TN
+
+#undef v16qi2_TN
+#undef v8hi2_TN
+#undef v4si2_TN
+#undef v4sf2_TN
+#undef v2di2_TN
+
+#else /* !ENABLE_LLVM */
+
+#undef v8qi2_TN
+#undef v8qi3_TN
+#undef v8qi4_TN
+
 #undef pv8qi_TN
 #undef pv4hi_TN
 #undef pv2si_TN
@@ -19412,6 +19445,8 @@ arm_init_neon_builtins (void)
 #undef pv4si_TN
 #undef pv4sf_TN
 #undef pv2di_TN
+#endif /* !ENABLE_LLVM */
+/* LLVM LOCAL end multi-vector types */
 
 #undef void_TN
 

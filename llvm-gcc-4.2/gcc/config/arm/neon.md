@@ -168,7 +168,7 @@
 (define_mode_macro VD [V8QI V4HI V2SI V2SF])
 
 ;; Double-width vector modes plus 64-bit elements.
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro VDX [V8QI V4HI V2SI V2SF V1DI])
 
 ;; Same, without floating-point elements.
@@ -205,7 +205,7 @@
 (define_mode_macro VN [V8HI V4SI V2DI])
 
 ;; All supported vector modes.
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro VDQ [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF V2DI V1DI])
 
 ;; All supported vector modes (except those with 64-bit integer elements).
@@ -215,15 +215,15 @@
 (define_mode_macro VDQIW [V8QI V16QI V4HI V8HI V2SI V4SI])
 
 ;; Supported integer vector modes
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro VDQI [V8QI V16QI V4HI V8HI V2SI V4SI V2DI V1DI])
 
 ;; Vector modes, including 64-bit integer elements.
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro VDQX [V8QI V16QI V4HI V8HI V2SI V4SI V2SF V4SF V1DI V2DI])
 
 ;; Vector modes including 64-bit integer elements, but no floats.
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro VDQIX [V8QI V16QI V4HI V8HI V2SI V4SI V1DI V2DI])
 
 ;; Vector modes for float->int conversions.
@@ -257,7 +257,7 @@
 (define_mode_macro VE [V8QI V16QI])
 
 ;; Modes with 64-bit elements only.
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 (define_mode_macro V64 [V1DI V2DI])
 
 ;; Modes with 32-bit elements only.
@@ -272,7 +272,7 @@
 			  (V4HI "HI") (V8HI "HI")
                           (V2SI "SI") (V4SI "SI")
                           (V2SF "SF") (V4SF "SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                           (V1DI "DI") (V2DI "DI")])
 
 ;; Mode of pair of elements for each vector mode, to define transfer
@@ -281,7 +281,7 @@
 			      (V4HI "SI") (V8HI "SI")
                               (V2SI "V2SI") (V4SI "V2SI")
                               (V2SF "V2SF") (V4SF "V2SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                               (V1DI "V2DI") (V2DI "V2DI")])
 
 ;; Similar, for three elements.
@@ -291,7 +291,7 @@
 			        (V4HI "V4HI") (V8HI "V4HI")
                                 (V2SI "V4SI") (V4SI "V4SI")
                                 (V2SF "V4SF") (V4SF "V4SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                                 (V1DI "EI")   (V2DI "EI")])
 
 ;; Similar, for four elements.
@@ -299,7 +299,7 @@
 			       (V4HI "V4HI") (V8HI "V4HI")
                                (V2SI "V4SI") (V4SI "V4SI")
                                (V2SF "V4SF") (V4SF "V4SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                                (V1DI "OI")   (V2DI "OI")])
 
 ;; Register width from element mode
@@ -307,7 +307,7 @@
                          (V4HI "P") (V8HI  "q")
                          (V2SI "P") (V4SI  "q")
                          (V2SF "P") (V4SF  "q")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                          (V1DI "P") (V2DI  "q")])
 
 ;; Wider modes with the same number of elements.
@@ -319,31 +319,31 @@
 ;; Modes with half the number of equal-sized elements.
 (define_mode_attr V_HALF [(V16QI "V8QI") (V8HI "V4HI")
 			  (V4SI  "V2SI") (V4SF "V2SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                           (V2DI  "V1DI")])
 
 ;; Same, but lower-case.
 (define_mode_attr V_half [(V16QI "v8qi") (V8HI "v4hi")
 			  (V4SI  "v2si") (V4SF "v2sf")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                           (V2DI "v1di")])
 
 ;; Modes with twice the number of equal-sized elements.
 (define_mode_attr V_DOUBLE [(V8QI "V16QI") (V4HI "V8HI")
 			    (V2SI "V4SI") (V2SF "V4SF")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                             (V1DI "V2DI")])
 
 ;; Same, but lower-case.
 (define_mode_attr V_double [(V8QI "v16qi") (V4HI "v8hi")
 			    (V2SI "v4si") (V2SF "v4sf")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                             (V1DI "v2di")])
 
 ;; Modes with double-width elements.
 (define_mode_attr V_double_width [(V8QI "V4HI") (V16QI "V8HI")
 				  (V4HI "V2SI") (V8HI "V4SI")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 				  (V2SI "V1DI") (V4SI "V2DI")])
 
 ;; Mode of result of comparison operations (and bit-select operand 1).
@@ -351,7 +351,7 @@
 			        (V4HI "V4HI") (V8HI  "V8HI")
                                 (V2SI "V2SI") (V4SI  "V4SI")
                                 (V2SF "V2SI") (V4SF  "V4SI")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                                 (V1DI "V1DI") (V2DI  "V2DI")])
 
 ;; Get element type from double-width mode, for operations where we don't care
@@ -359,7 +359,7 @@
 (define_mode_attr V_if_elem [(V8QI "i8")  (V16QI "i8")
 			     (V4HI "i16") (V8HI  "i16")
                              (V2SI "i32") (V4SI  "i32")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                              (V1DI "i64") (V2DI  "i64")
 			     (V2SF "f32") (V4SF  "f32")])
 
@@ -367,7 +367,7 @@
 (define_mode_attr V_s_elem [(V8QI "s8")  (V16QI "s8")
 			    (V4HI "s16") (V8HI  "s16")
                             (V2SI "s32") (V4SI  "s32")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                             (V1DI "s64") (V2DI  "s64")
 			    (V2SF "f32") (V4SF  "f32")])
 
@@ -375,7 +375,7 @@
 (define_mode_attr V_u_elem [(V8QI "u8")  (V16QI "u8")
 			    (V4HI "u16") (V8HI  "u16")
                             (V2SI "u32") (V4SI  "u32")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                             (V1DI "u64") (V2DI  "u64")
                             (V2SF "f32") (V4SF  "f32")])
 
@@ -388,7 +388,7 @@
 (define_mode_attr V_sz_elem [(V8QI "8")  (V16QI "8")
 			     (V4HI "16") (V8HI  "16")
                              (V2SI "32") (V4SI  "32")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                              (V1DI "64") (V2DI  "64")
 			     (V2SF "32") (V4SF  "32")])
 
@@ -400,7 +400,7 @@
 			  (V4HI "TI") (V8HI  "OI")
                           (V2SI "TI") (V4SI  "OI")
                           (V2SF "TI") (V4SF  "OI")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                           (V1DI "TI") (V2DI  "OI")])
 
 ;; Same, but lower-case.
@@ -408,7 +408,7 @@
 			  (V4HI "ti") (V8HI  "oi")
                           (V2SI "ti") (V4SI  "oi")
                           (V2SF "ti") (V4SF  "oi")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                           (V1DI "ti") (V2DI  "oi")])
 
 ;; Operations on two halves of a quadword vector.
@@ -431,7 +431,7 @@
 			   (V4HI "") (V8HI "")
                            (V2SI "") (V4SI "")
                            (V2SF "") (V4SF "")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                            (V1DI "") (V2DI "")])
 
 ;; Scalars to be presented to scalar multiplication instructions
@@ -521,14 +521,14 @@
 				 (V4HI "false") (V8HI "false")
 				 (V2SI "false") (V4SI "false")
 				 (V2SF "true")  (V4SF "true")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 				 (V1DI "false") (V2DI "false")])
 
 (define_mode_attr Scalar_mul_8_16 [(V8QI "true")  (V16QI "true")
 				   (V4HI "true")  (V8HI "true")
 				   (V2SI "false") (V4SI "false")
 				   (V2SF "false") (V4SF "false")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 				   (V1DI "false") (V2DI "false")])
 
 
@@ -536,14 +536,14 @@
                             (V4HI "true") (V8HI  "false")
                             (V2SI "true") (V4SI  "false")
                             (V2SF "true") (V4SF  "false")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                             (V1DI "true") (V2DI  "false")])
 
 (define_mode_attr V_mode_nunits [(V8QI "8") (V16QI "16")
                                  (V4HI "4") (V8HI "8")
                                  (V2SI "2") (V4SI "4")
                                  (V2SF "2") (V4SF "4")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
                                  (V1DI "1") (V2DI "2")])
 
 ;; FIXME: Attributes are probably borked.
@@ -1452,7 +1452,7 @@
   DONE;
 })
 
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_insn "reduc_splus_v1di"
   [(set (match_operand:V1DI 0 "s_register_operand" "=w")
 	(unspec:V1DI [(match_operand:V1DI 1 "s_register_operand" "w")]
@@ -1461,7 +1461,7 @@
   "vadd.i64\t%P0, %e1, %f1"
   [(set_attr "neon_type" "neon_int_1")]
 )
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 (define_insn "reduc_splus_v2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
@@ -2437,7 +2437,7 @@
 ; with this insn. Operand 3 (info word) is ignored because it does nothing
 ; useful with 64-bit elements.
 
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_insn "neon_vget_lanev1di"
   [(set (match_operand:DI 0 "s_register_operand" "=r")
        (unspec:DI [(match_operand:V1DI 1 "s_register_operand" "w")
@@ -2449,7 +2449,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 (define_insn "neon_vget_lane<mode>"
   [(set (match_operand:<V_elem> 0 "s_register_operand" "=r")
@@ -2512,7 +2512,7 @@
 
 ; See neon_vget_lanedi comment for reasons operands 2 & 3 are ignored.
 
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_insn "neon_vset_lanev1di"
   [(set (match_operand:V1DI 0 "s_register_operand" "=w")
 	(unspec:V1DI [(match_operand:DI 1 "s_register_operand" "r")
@@ -2524,7 +2524,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 (define_insn "neon_vset_lane<mode>"
   [(set (match_operand:VQ 0 "s_register_operand" "=w")
@@ -2593,7 +2593,7 @@
    (set_attr "neon_type" "neon_bp_simple")]
 )
 
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_insn "neon_vdup_nv1di"
   [(set (match_operand:V1DI 0 "s_register_operand" "=w")
 	(unspec:V1DI [(match_operand:DI 1 "s_register_operand" "r")]
@@ -2603,7 +2603,7 @@
   [(set_attr "predicable" "yes")
    (set_attr "neon_type" "neon_bp_simple")]
 )
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 (define_insn "neon_vdup_nv2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
@@ -2639,7 +2639,7 @@
 )
 
 ; Scalar index is ignored, since only zero is valid here.
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_expand "neon_vdup_lanev1di"
   [(set (match_operand:V1DI 0 "s_register_operand" "=w")
 	(unspec:V1DI [(match_operand:V1DI 1 "s_register_operand" "w")
@@ -2650,12 +2650,12 @@
   emit_move_insn (operands[0], operands[1]);
   DONE;
 })
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 ; Likewise.
 (define_insn "neon_vdup_lanev2di"
   [(set (match_operand:V2DI 0 "s_register_operand" "=w")
-;; LLVM LOCAL
+;; LLVM LOCAL use v1di instead of di mode
 	(unspec:V2DI [(match_operand:V1DI 1 "s_register_operand" "w")
 		      (match_operand:SI 2 "immediate_operand" "i")]
                      UNSPEC_VDUP_LANE))]
@@ -3803,7 +3803,7 @@
   DONE;
 })
 
-;; LLVM LOCAL begin
+;; LLVM LOCAL begin use v1di instead of di mode
 (define_expand "neon_vreinterpretv1di<mode>"
   [(match_operand:V1DI 0 "s_register_operand" "")
    (match_operand:VDX 1 "s_register_operand" "")]
@@ -3812,7 +3812,7 @@
   neon_reinterpret (operands[0], operands[1]);
   DONE;
 })
-;; LLVM LOCAL end
+;; LLVM LOCAL end use v1di instead of di mode
 
 (define_expand "neon_vreinterpretv16qi<mode>"
   [(match_operand:V16QI 0 "s_register_operand" "")

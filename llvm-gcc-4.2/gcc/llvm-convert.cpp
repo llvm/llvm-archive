@@ -1905,9 +1905,6 @@ void TreeToLLVM::EmitLandingPads() {
             Args.push_back(Emit(TType, 0));
           }
         }
-      } else {
-	// Cleanup region.
-	Args.push_back(ConstantInt::get(Type::Int32Ty, 0));
       }
     }
 

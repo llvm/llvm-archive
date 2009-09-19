@@ -1046,8 +1046,8 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     llvm_unreachable("Unhandled expression!");
 
   // Exception handling.
-  case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
-  case FILTER_EXPR:    Result = EmitFILTER_EXPR(exp); break;
+//FIXME  case EXC_PTR_EXPR:   Result = EmitEXC_PTR_EXPR(exp); break;
+//FIXME  case FILTER_EXPR:    Result = EmitFILTER_EXPR(exp); break;
 
   // Expressions
   case VAR_DECL:
@@ -1165,12 +1165,12 @@ LValue TreeToLLVM::EmitLV(tree exp) {
     break;
 
   // Exception Handling.
-  case EXC_PTR_EXPR:
-    LV = EmitLV_EXC_PTR_EXPR(exp);
-    break;
-  case FILTER_EXPR:
-    LV = EmitLV_FILTER_EXPR(exp);
-    break;
+//FIXME  case EXC_PTR_EXPR:
+//FIXME    LV = EmitLV_EXC_PTR_EXPR(exp);
+//FIXME    break;
+//FIXME  case FILTER_EXPR:
+//FIXME    LV = EmitLV_FILTER_EXPR(exp);
+//FIXME    break;
 
   // Trivial Cases.
   case WITH_SIZE_EXPR:
@@ -1824,9 +1824,9 @@ BasicBlock *TreeToLLVM::getPostPad(unsigned RegionNo) {
 
 /// AddHandler - Append the given region to a vector of exception handlers.
 /// A callback passed to foreach_reachable_handler.
-static void AddHandler (eh_region region, void *data) {
-  ((std::vector<eh_region> *)data)->push_back(region);
-}
+//FIXMEstatic void AddHandler (eh_region region, void *data) {
+//FIXME  ((std::vector<eh_region> *)data)->push_back(region);
+//FIXME}
 
 /// EmitLandingPads - Emit EH landing pads.
 void TreeToLLVM::EmitLandingPads() {
@@ -1856,18 +1856,17 @@ abort();//FIXME
 //FIXME           && "no exception handling personality function!");
 //FIXME    Args.push_back(Builder.CreateBitCast(DECL_LLVM(llvm_eh_personality_libfunc),
 //FIXME                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
-
-    // Add selections for each handler.
-    foreach_reachable_handler(i, false, false, AddHandler, &Handlers);
-
-    for (std::vector<eh_region>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I) {
-      eh_region region = *I;
-
-      // Create a post landing pad for the handler.
-      getPostPad(get_eh_region_number(region));
-
-abort();//FIXME
+//FIXME
+//FIXME    // Add selections for each handler.
+//FIXME    foreach_reachable_handler(i, false, false, AddHandler, &Handlers);
+//FIXME
+//FIXME    for (std::vector<eh_region>::iterator I = Handlers.begin(),
+//FIXME         E = Handlers.end(); I != E; ++I) {
+//FIXME      eh_region region = *I;
+//FIXME
+//FIXME      // Create a post landing pad for the handler.
+//FIXME      getPostPad(get_eh_region_number(region));
+//FIXME
 //FIXME      int RegionKind = classify_eh_handler(region);
 //FIXME      if (RegionKind < 0) {
 //FIXME        // Filter - note the length.
@@ -1898,16 +1897,15 @@ abort();//FIXME
 //FIXME          }
 //FIXME        }
 //FIXME      }
-    }
-
-    if (can_throw_external_1(i, false, false)) {
-      // Some exceptions from this region may not be caught by any handler.
-      // Since invokes are required to branch to the unwind label no matter
-      // what exception is being unwound, append a catch-all.
-
-      // The representation of a catch-all is language specific.
-      Value *CatchAll;
-abort();//FIXME
+//FIXME    }
+//FIXME
+//FIXME    if (can_throw_external_1(i, false, false)) {
+//FIXME      // Some exceptions from this region may not be caught by any handler.
+//FIXME      // Since invokes are required to branch to the unwind label no matter
+//FIXME      // what exception is being unwound, append a catch-all.
+//FIXME
+//FIXME      // The representation of a catch-all is language specific.
+//FIXME      Value *CatchAll;
 //FIXME      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
 //FIXME        // Use a "cleanup" - this should be good enough for most languages.
 //FIXME        CatchAll = ConstantInt::get(Type::getInt32Ty, 0);
@@ -1921,19 +1919,19 @@ abort();//FIXME
 //FIXME          // This language has a type that catches all others.
 //FIXME          CatchAll = Emit(catch_all_type, 0);
 //FIXME      }
-      Args.push_back(CatchAll);
-    }
-
-    // Emit the selector call.
-    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
-                                       "eh_select");
-    Builder.CreateStore(Select, ExceptionSelectorValue);
-    // Branch to the post landing pad for the first reachable handler.
-    assert(!Handlers.empty() && "Landing pad but no handler?");
-    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-
-    Handlers.clear();
-    Args.clear();
+//FIXME      Args.push_back(CatchAll);
+//FIXME    }
+//FIXME
+//FIXME    // Emit the selector call.
+//FIXME    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
+//FIXME                                       "eh_select");
+//FIXME    Builder.CreateStore(Select, ExceptionSelectorValue);
+//FIXME    // Branch to the post landing pad for the first reachable handler.
+//FIXME    assert(!Handlers.empty() && "Landing pad but no handler?");
+//FIXME    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
+//FIXME
+//FIXME    Handlers.clear();
+//FIXME    Args.clear();
   }
 }
 
@@ -2020,33 +2018,33 @@ abort();//FIXME
 //FIXME      Builder.CreateCondBr(Cond, Dest, NoCatchBB);
 //FIXME      EmitBlock(NoCatchBB);
 //FIXME    }
-
-    // Emit a RESX_EXPR which skips handlers with no post landing pad.
-    foreach_reachable_handler(i, true, false, AddHandler, &Handlers);
-
-    BasicBlock *TargetBB = NULL;
-
-    for (std::vector<eh_region>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I) {
-      unsigned UnwindNo = get_eh_region_number(*I);
-
-      if (UnwindNo < PostPads.size())
-        TargetBB = PostPads[UnwindNo];
-
-      if (TargetBB)
-        break;
-    }
-
-    if (TargetBB) {
-      Builder.CreateBr(TargetBB);
-    } else {
-      assert(can_throw_external_1(i, true, false) &&
-             "Must-not-throw region handled by runtime?");
-      // Unwinding continues in the caller.
-      if (!UnwindBB)
-        UnwindBB = BasicBlock::Create(Context, "Unwind");
-      Builder.CreateBr(UnwindBB);
-    }
+//FIXME
+//FIXME    // Emit a RESX_EXPR which skips handlers with no post landing pad.
+//FIXME    foreach_reachable_handler(i, true, false, AddHandler, &Handlers);
+//FIXME
+//FIXME    BasicBlock *TargetBB = NULL;
+//FIXME
+//FIXME    for (std::vector<eh_region>::iterator I = Handlers.begin(),
+//FIXME         E = Handlers.end(); I != E; ++I) {
+//FIXME      unsigned UnwindNo = get_eh_region_number(*I);
+//FIXME
+//FIXME      if (UnwindNo < PostPads.size())
+//FIXME        TargetBB = PostPads[UnwindNo];
+//FIXME
+//FIXME      if (TargetBB)
+//FIXME        break;
+//FIXME    }
+//FIXME
+//FIXME    if (TargetBB) {
+//FIXME      Builder.CreateBr(TargetBB);
+//FIXME    } else {
+//FIXME      assert(can_throw_external_1(i, true, false) &&
+//FIXME             "Must-not-throw region handled by runtime?");
+//FIXME      // Unwinding continues in the caller.
+//FIXME      if (!UnwindBB)
+//FIXME        UnwindBB = BasicBlock::Create(Context, "Unwind");
+//FIXME      Builder.CreateBr(UnwindBB);
+//FIXME    }
 
     Handlers.clear();
   }
@@ -2710,26 +2708,26 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, gimple stmt, const MemRef *DestLoc,
   if (!PAL.paramHasAttr(~0, Attribute::NoUnwind)) {
     // This call may throw.  Determine if we need to generate
     // an invoke rather than a simple call.
-    int RegionNo = lookup_stmt_eh_region(stmt);
-
-    // Is the call contained in an exception handling region?
-    if (RegionNo > 0) {
-      // Are there any exception handlers for this region?
-      if (can_throw_internal_1(RegionNo, false, false)) {
-        // There are - turn the call into an invoke.
-        LandingPads.grow(RegionNo);
-        BasicBlock *&ThisPad = LandingPads[RegionNo];
-
-        // Create a landing pad if one didn't exist already.
-        if (!ThisPad)
-          ThisPad = BasicBlock::Create(Context, "lpad");
-
-        LandingPad = ThisPad;
-      } else {
-        assert(can_throw_external_1(RegionNo, false, false) &&
-               "Must-not-throw region handled by runtime?");
-      }
-    }
+//FIXME    int RegionNo = lookup_stmt_eh_region(stmt);
+//FIXME
+//FIXME    // Is the call contained in an exception handling region?
+//FIXME    if (RegionNo > 0) {
+//FIXME      // Are there any exception handlers for this region?
+//FIXME      if (can_throw_internal_1(RegionNo, false, false)) {
+//FIXME        // There are - turn the call into an invoke.
+//FIXME        LandingPads.grow(RegionNo);
+//FIXME        BasicBlock *&ThisPad = LandingPads[RegionNo];
+//FIXME
+//FIXME        // Create a landing pad if one didn't exist already.
+//FIXME        if (!ThisPad)
+//FIXME          ThisPad = BasicBlock::Create(Context, "lpad");
+//FIXME
+//FIXME        LandingPad = ThisPad;
+//FIXME      } else {
+//FIXME        assert(can_throw_external_1(RegionNo, false, false) &&
+//FIXME               "Must-not-throw region handled by runtime?");
+//FIXME      }
+//FIXME    }
   }
 
   tree fndecl = gimple_call_fndecl(stmt);
@@ -3581,18 +3579,20 @@ Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree type, tree op0, tree op1) {
 
 /// EmitEXC_PTR_EXPR - Handle EXC_PTR_EXPR.
 Value *TreeToLLVM::EmitEXC_PTR_EXPR(tree exp) {
-  CreateExceptionValues();
-  // Load exception address.
-  Value *V = Builder.CreateLoad(ExceptionValue, "eh_value");
-  // Cast the address to the right pointer type.
-  return Builder.CreateBitCast(V, ConvertType(TREE_TYPE(exp)));
+abort();
+//TODO  CreateExceptionValues();
+//TODO  // Load exception address.
+//TODO  Value *V = Builder.CreateLoad(ExceptionValue, "eh_value");
+//TODO  // Cast the address to the right pointer type.
+//TODO  return Builder.CreateBitCast(V, ConvertType(TREE_TYPE(exp)));
 }
 
 /// EmitFILTER_EXPR - Handle FILTER_EXPR.
 Value *TreeToLLVM::EmitFILTER_EXPR(tree exp) {
-  CreateExceptionValues();
-  // Load exception selector.
-  return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
+abort();
+//FIXME  CreateExceptionValues();
+//FIXME  // Load exception selector.
+//FIXME  return Builder.CreateLoad(ExceptionSelectorValue, "eh_select");
 }
 
 //===----------------------------------------------------------------------===//
@@ -3661,7 +3661,7 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
 /// Other %xN expressions are turned into LLVM ${N:x} operands.
 ///
 static std::string ConvertInlineAsmStr(gimple stmt, tree outputs, tree inputs,
-                                       unsigned NumOperands) {
+                                       tree labels, unsigned NumOperands) {
   const char *AsmStr = gimple_asm_string(stmt);
 
   // gimple_asm_input_p - This flag is set if this is a non-extended ASM,
@@ -3681,7 +3681,7 @@ static std::string ConvertInlineAsmStr(gimple stmt, tree outputs, tree inputs,
 
   // Expand [name] symbolic operand names.
   tree str = resolve_asm_operand_names(build_string (strlen (AsmStr), AsmStr),
-                                       outputs, inputs);
+                                       outputs, inputs, labels);
 
   const char *InStr = TREE_STRING_POINTER(str);
 
@@ -7550,6 +7550,17 @@ void TreeToLLVM::RenderGIMPLE_ASM(gimple stmt) {
     }
   }
 
+  // TODO: Understand what these labels are about, and handle them properly.
+  unsigned NumLabels = gimple_asm_nlabels (stmt);
+  tree labels = NULL_TREE;
+  if (NumLabels) {
+    tree t = labels = gimple_asm_label_op (stmt, 0);
+    for (unsigned i = 1; i < NumLabels; i++) {
+      TREE_CHAIN (t) = gimple_asm_label_op (stmt, i);
+      t = gimple_asm_label_op (stmt, i);
+    }
+  }
+
   unsigned NumInOut = 0;
 
   // Look for multiple alternative constraints: multiple alternatives separated
@@ -7622,7 +7633,7 @@ void TreeToLLVM::RenderGIMPLE_ASM(gimple stmt) {
 
   std::vector<Value*> CallOps;
   std::vector<const Type*> CallArgTypes;
-  std::string NewAsmStr = ConvertInlineAsmStr(stmt, outputs, inputs,
+  std::string NewAsmStr = ConvertInlineAsmStr(stmt, outputs, inputs, labels,
                                               NumOutputs+NumInputs);
   std::string ConstraintStr;
 
@@ -8004,26 +8015,27 @@ void TreeToLLVM::RenderGIMPLE_GOTO(gimple stmt) {
 }
 
 void TreeToLLVM::RenderGIMPLE_RESX(gimple stmt) {
-  int RegionNo = gimple_resx_region(stmt);
-  std::vector<eh_region> Handlers;
-
-  foreach_reachable_handler(RegionNo, true, false, AddHandler, &Handlers);
-
-  if (!Handlers.empty()) {
-    for (std::vector<eh_region>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I)
-      // Create a post landing pad for the handler.
-      getPostPad(get_eh_region_number(*I));
-
-    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-  } else {
-    assert(can_throw_external_1(RegionNo, true, false) &&
-           "Must-not-throw region handled by runtime?");
-    // Unwinding continues in the caller.
-    if (!UnwindBB)
-      UnwindBB = BasicBlock::Create(Context, "Unwind");
-    Builder.CreateBr(UnwindBB);
-  }
+abort();
+//FIXME  int RegionNo = gimple_resx_region(stmt);
+//FIXME  std::vector<eh_region> Handlers;
+//FIXME
+//FIXME  foreach_reachable_handler(RegionNo, true, false, AddHandler, &Handlers);
+//FIXME
+//FIXME  if (!Handlers.empty()) {
+//FIXME    for (std::vector<eh_region>::iterator I = Handlers.begin(),
+//FIXME         E = Handlers.end(); I != E; ++I)
+//FIXME      // Create a post landing pad for the handler.
+//FIXME      getPostPad(get_eh_region_number(*I));
+//FIXME
+//FIXME    Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
+//FIXME  } else {
+//FIXME    assert(can_throw_external_1(RegionNo, true, false) &&
+//FIXME           "Must-not-throw region handled by runtime?");
+//FIXME    // Unwinding continues in the caller.
+//FIXME    if (!UnwindBB)
+//FIXME      UnwindBB = BasicBlock::Create(Context, "Unwind");
+//FIXME    Builder.CreateBr(UnwindBB);
+//FIXME  }
 }
 
 void TreeToLLVM::RenderGIMPLE_RETURN(gimple stmt) {

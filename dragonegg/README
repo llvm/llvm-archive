@@ -2,15 +2,17 @@
 - BUILD INSTRUCTIONS -
 ----------------------
 
+Step 0: Build and install llvm
+------------------------------
+
+I'm assuming anyone reading this knows how to build and install llvm.
+You need the latest llvm from the subversion repository.
+
 Step 1: Build gcc
 -----------------
 
-Check out the gcc lto branch from the gcc subversion repository:
-  svn checkout svn://gcc.gnu.org/svn/gcc/branches/lto SomeLocalDir
-It should be possible to check out gcc mainline instead:
+Check out gcc from the gcc subversion repository:
   svn checkout svn://gcc.gnu.org/svn/gcc/trunk SomeLocalDir
-However I only test with mainline from time to time (plugin development
-is currently against the lto branch), so it's safer to use the lto branch.
 Apply the patches in the gcc-patches subdirectory, if any.  Hopefully one day
 the plugin will work with an unpatched gcc, but for the moment a few small
 patches need to be applied.  Configure gcc with your favorite options.

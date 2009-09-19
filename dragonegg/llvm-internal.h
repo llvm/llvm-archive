@@ -508,13 +508,17 @@ private: // Helpers for exception handling.
 private:
 
   // Render* - Convert GIMPLE to LLVM.
-  void RenderGIMPLE_ASM(gimple_statement_d *);
-  void RenderGIMPLE_ASSIGN(gimple_statement_d *);
-  void RenderGIMPLE_COND(gimple_statement_d *);
-  void RenderGIMPLE_GOTO(gimple_statement_d *);
-  void RenderGIMPLE_RESX(gimple_statement_d *);
-  void RenderGIMPLE_RETURN(gimple_statement_d *);
-  void RenderGIMPLE_SWITCH(gimple_statement_d *);
+  void RenderGIMPLE_ASM(gimple stmt);
+  void RenderGIMPLE_ASSIGN(gimple stmt);
+  void RenderGIMPLE_CALL(gimple stmt);
+  void RenderGIMPLE_COND(gimple stmt);
+  void RenderGIMPLE_GOTO(gimple stmt);
+  void RenderGIMPLE_RESX(gimple stmt);
+  void RenderGIMPLE_RETURN(gimple stmt);
+  void RenderGIMPLE_SWITCH(gimple stmt);
+
+  // Render helpers.
+  void WriteScalarToLHS(tree lhs, Value *Scalar);
 
 private:
   void EmitAutomaticVariableDecl(tree_node *decl);
@@ -538,14 +542,13 @@ private:
   // Expressions.
   Value *EmitSSA_NAME(tree_node *exp);
   Value *EmitGimpleAssignRHS(gimple stmt, const MemRef *DestLoc);
+  Value *EmitGimpleCallRHS(gimple stmt, const MemRef *DestLoc);
   Value *EmitLoadOfLValue(tree_node *exp, const MemRef *DestLoc);
   Value *EmitOBJ_TYPE_REF(tree_node *exp, const MemRef *DestLoc);
   Value *EmitADDR_EXPR(tree_node *exp);
   Value *EmitOBJ_TYPE_REF(tree_node *exp);
-  Value *EmitCALL_EXPR(tree_node *exp, const MemRef *DestLoc);
-  Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc,
+  Value *EmitCallOf(Value *Callee, gimple stmt, const MemRef *DestLoc,
                     const AttrListPtr &PAL);
-  Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitNOP_EXPR(tree_node *type, tree_node *op, const MemRef *DestLoc);
   Value *EmitCONVERT_EXPR(tree_node *type, tree_node *op);
   Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
@@ -585,44 +588,44 @@ private:
   Value *BuildVector(const std::vector<Value*> &Elts);
   Value *BuildVector(Value *Elt, ...);
   Value *BuildVectorShuffle(Value *InVec1, Value *InVec2, ...);
-  Value *BuildBinaryAtomicBuiltin(tree_node *exp, Intrinsic::ID id);
-  Value *BuildCmpAndSwapAtomicBuiltin(tree_node *exp, tree_node *type, 
+  Value *BuildBinaryAtomicBuiltin(gimple stmt, Intrinsic::ID id);
+  Value *BuildCmpAndSwapAtomicBuiltin(gimple stmt, tree_node *type, 
                                       bool isBool);
 
   // Builtin Function Expansion.
-  bool EmitBuiltinCall(tree_node *exp, tree_node *fndecl, 
+  bool EmitBuiltinCall(gimple stmt, tree_node *fndecl, 
                        const MemRef *DestLoc, Value *&Result);
-  bool EmitFrontendExpandedBuiltinCall(tree_node *exp, tree_node *fndecl,
+  bool EmitFrontendExpandedBuiltinCall(gimple stmt, tree_node *fndecl,
                                        const MemRef *DestLoc, Value *&Result);
   bool EmitBuiltinUnaryOp(Value *InVal, Value *&Result, Intrinsic::ID Id);
-  Value *EmitBuiltinSQRT(tree_node *exp);
-  Value *EmitBuiltinPOWI(tree_node *exp);
-  Value *EmitBuiltinPOW(tree_node *exp);
+  Value *EmitBuiltinSQRT(gimple stmt);
+  Value *EmitBuiltinPOWI(gimple stmt);
+  Value *EmitBuiltinPOW(gimple stmt);
 
-  bool EmitBuiltinConstantP(tree_node *exp, Value *&Result);
-  bool EmitBuiltinAlloca(tree_node *exp, Value *&Result);
-  bool EmitBuiltinExpect(tree_node *exp, const MemRef *DestLoc, Value *&Result);
-  bool EmitBuiltinExtendPointer(tree_node *exp, Value *&Result);
-  bool EmitBuiltinVAStart(tree_node *exp);
-  bool EmitBuiltinVAEnd(tree_node *exp);
-  bool EmitBuiltinVACopy(tree_node *exp);
-  bool EmitBuiltinMemCopy(tree_node *exp, Value *&Result,
+  bool EmitBuiltinConstantP(gimple stmt, Value *&Result);
+  bool EmitBuiltinAlloca(gimple stmt, Value *&Result);
+  bool EmitBuiltinExpect(gimple stmt, const MemRef *DestLoc, Value *&Result);
+  bool EmitBuiltinExtendPointer(gimple stmt, Value *&Result);
+  bool EmitBuiltinVAStart(gimple stmt);
+  bool EmitBuiltinVAEnd(gimple stmt);
+  bool EmitBuiltinVACopy(gimple stmt);
+  bool EmitBuiltinMemCopy(gimple stmt, Value *&Result,
                           bool isMemMove, bool SizeCheck);
-  bool EmitBuiltinMemSet(tree_node *exp, Value *&Result, bool SizeCheck);
-  bool EmitBuiltinBZero(tree_node *exp, Value *&Result);
-  bool EmitBuiltinPrefetch(tree_node *exp);
-  bool EmitBuiltinReturnAddr(tree_node *exp, Value *&Result, bool isFrame);
-  bool EmitBuiltinExtractReturnAddr(tree_node *exp, Value *&Result);
-  bool EmitBuiltinFrobReturnAddr(tree_node *exp, Value *&Result);
-  bool EmitBuiltinStackSave(tree_node *exp, Value *&Result);
-  bool EmitBuiltinStackRestore(tree_node *exp);
-  bool EmitBuiltinDwarfCFA(tree_node *exp, Value *&Result);
-  bool EmitBuiltinDwarfSPColumn(tree_node *exp, Value *&Result);
-  bool EmitBuiltinEHReturnDataRegno(tree_node *exp, Value *&Result);
-  bool EmitBuiltinEHReturn(tree_node *exp, Value *&Result);
-  bool EmitBuiltinInitDwarfRegSizes(tree_node *exp, Value *&Result);
-  bool EmitBuiltinUnwindInit(tree_node *exp, Value *&Result);
-  bool EmitBuiltinInitTrampoline(tree_node *exp, Value *&Result);
+  bool EmitBuiltinMemSet(gimple stmt, Value *&Result, bool SizeCheck);
+  bool EmitBuiltinBZero(gimple stmt, Value *&Result);
+  bool EmitBuiltinPrefetch(gimple stmt);
+  bool EmitBuiltinReturnAddr(gimple stmt, Value *&Result, bool isFrame);
+  bool EmitBuiltinExtractReturnAddr(gimple stmt, Value *&Result);
+  bool EmitBuiltinFrobReturnAddr(gimple stmt, Value *&Result);
+  bool EmitBuiltinStackSave(gimple stmt, Value *&Result);
+  bool EmitBuiltinStackRestore(gimple stmt);
+  bool EmitBuiltinDwarfCFA(gimple stmt, Value *&Result);
+  bool EmitBuiltinDwarfSPColumn(gimple stmt, Value *&Result);
+  bool EmitBuiltinEHReturnDataRegno(gimple stmt, Value *&Result);
+  bool EmitBuiltinEHReturn(gimple stmt, Value *&Result);
+  bool EmitBuiltinInitDwarfRegSizes(gimple stmt, Value *&Result);
+  bool EmitBuiltinUnwindInit(gimple stmt, Value *&Result);
+  bool EmitBuiltinInitTrampoline(gimple stmt, Value *&Result);
 
   // Complex Math Expressions.
   void EmitLoadFromComplex(Value *&Real, Value *&Imag, MemRef SrcComplex);
@@ -650,7 +653,7 @@ private:
   Value *EmitCONSTRUCTOR(tree_node *exp, const MemRef *DestLoc);
 
   // Optional target defined builtin intrinsic expanding function.
-  bool TargetIntrinsicLower(tree_node *exp,
+  bool TargetIntrinsicLower(gimple stmt,
                             unsigned FnCode,
                             const MemRef *DestLoc,
                             Value *&Result,

@@ -43,6 +43,7 @@ extern "C" {
 #include "target.h"
 #include "toplev.h"
 #include "tree.h"
+#include "gimple.h"
 }
 
 // Plugin headers
@@ -56,7 +57,7 @@ static LLVMContext &Context = getGlobalContext();
  * code, emit the code now.  If we can handle the code, this macro should emit
  * the code, return true.
  */
-bool TreeToLLVM::TargetIntrinsicLower(tree exp,
+bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
                                       unsigned FnCode,
                                       const MemRef *DestLoc,
                                       Value *&Result,
@@ -161,7 +162,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4)+4, ((EV & 0xc0) >> 6)+4);
     } else {
-      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
+      error_at(gimple_location(stmt), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -171,7 +172,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = BuildVectorShuffle(Ops[0], Ops[1],
                                   ((EV & 0x01) >> 0),   ((EV & 0x02) >> 1)+2);
     } else {
-      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
+      error_at(gimple_location(stmt), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -183,7 +184,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x03) >> 0),   ((EV & 0x0c) >> 2),
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6));
     } else {
-      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
+      error_at(gimple_location(stmt), "mask must be an immediate");
       Result = Ops[0];
     }
     return true;
@@ -205,7 +206,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                   ((EV & 0x30) >> 4),   ((EV & 0xc0) >> 6),
                                   4, 5, 6, 7);
     } else {
-      error_at(EXPR_LOCATION(exp), "mask must be an immediate");
+      error_at(gimple_location(stmt), "mask must be an immediate");
       Result = Ops[0];
     }
     

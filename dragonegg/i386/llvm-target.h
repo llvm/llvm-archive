@@ -885,9 +885,9 @@ enum ix86_builtins
  * macro should call the target TreeToLLVM::TargetIntrinsicLower method and
  *  return true.This macro is invoked from a method in the TreeToLLVM class.
  */
-#define LLVM_TARGET_INTRINSIC_LOWER(EXP, BUILTIN_CODE, DESTLOC, RESULT,       \
+#define LLVM_TARGET_INTRINSIC_LOWER(STMT, BUILTIN_CODE, DESTLOC, RESULT,      \
                                     DESTTY, OPS)                              \
-        TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
+        TargetIntrinsicLower(STMT, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
 /* When extracting a register name for a constraint, use the string extracted
    from the magic symbol built for that register, rather than reg_names.

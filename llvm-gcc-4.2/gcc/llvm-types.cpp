@@ -2392,7 +2392,7 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
     const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
 
   // Finally, set the name for the type.
-  TheModule->addTypeName(GetTypeName("struct.", orig_type),
+  TheModule->addTypeName(GetTypeName("union.", orig_type),
                          GET_TYPE_LLVM(type));
 
   // We have finished converting this union.  See if the is the outer-most

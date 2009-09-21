@@ -86,6 +86,7 @@ extern "C" {
 #include "llvm-internal.h"
 #include "llvm-debug.h"
 #include "llvm-target.h"
+#include "llvm-os.h"
 #include "bits_and_bobs.h"
 extern "C" {
 #include "llvm-cache.h"
@@ -324,9 +325,9 @@ static void LazilyConfigureLLVM(void) {
 //TODO#ifdef LLVM_SET_RED_ZONE_FLAG
 //TODO  LLVM_SET_RED_ZONE_FLAG(flag_disable_red_zone)
 //TODO#endif
-//TODO#ifdef LLVM_SET_TARGET_OPTIONS
-//TODO  LLVM_SET_TARGET_OPTIONS(Args);
-//TODO#endif
+#ifdef LLVM_SET_TARGET_OPTIONS
+  LLVM_SET_TARGET_OPTIONS(Args);
+#endif
 //TODO#ifdef LLVM_SET_MACHINE_OPTIONS
 //TODO  LLVM_SET_MACHINE_OPTIONS(Args);
 //TODO#endif

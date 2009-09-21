@@ -35,7 +35,8 @@ LDFLAGS+=$(shell $(LLVM_CONFIG) --libs analysis core ipo scalaropts target) \
 PLUGIN_CFLAGS+=-I$(GCCOBJECT_DIR)/gcc -I$(GCCOBJECT_DIR)/gcc/include \
 	       -I$(GCCSOURCE_DIR)/gcc -I$(GCCSOURCE_DIR)/include \
 	       -I$(GCCSOURCE_DIR)/libcpp/include -I$(GCCSOURCE_DIR)/libdecnumber \
-	       -I$(GCCOBJECT_DIR)/libdecnumber -I$(shell $(TARGET_UTIL) -p)
+	       -I$(GCCOBJECT_DIR)/libdecnumber -I$(shell $(TARGET_UTIL) -p) \
+	       -I$(shell $(TARGET_UTIL) -o)
 PLUGIN_CXXFLAGS+=$(PLUGIN_CFLAGS)
 
 default: $(PLUGIN)

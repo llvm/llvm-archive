@@ -286,7 +286,7 @@ void handleVisibility(tree decl, GlobalValue *GV) {
 //TODO}
 
 #ifndef LLVM_TARGET_NAME
-#error LLVM_TARGET_NAME macro not specified by GCC backend
+#error LLVM_TARGET_NAME macro not specified
 #endif
 
 namespace llvm {

@@ -2750,7 +2750,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, gimple stmt, const MemRef *DestLoc,
 
   // Handle the result, including struct returns.
   ABIConverter.HandleReturnType(gimple_call_return_type(stmt),
-                                fndecl ? fndecl : gimple_call_return_type(stmt),
+                                fndecl ? fndecl : fntype,
                                 fndecl ? DECL_BUILT_IN(fndecl) : false);
 
   // Pass the static chain, if any, as the first parameter.

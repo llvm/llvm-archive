@@ -962,6 +962,10 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
       RenderGIMPLE_COND(gimple_stmt);
       break;
 
+    case GIMPLE_DEBUG:
+      // TODO: Output debug info rather than just discarding it.
+      break;
+
     case GIMPLE_GOTO:
       RenderGIMPLE_GOTO(gimple_stmt);
       break;

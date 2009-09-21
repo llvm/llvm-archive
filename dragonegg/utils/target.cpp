@@ -14,8 +14,8 @@ static void PrintArchName(Triple &T) {
 static void PrintVendorName(Triple &T) {
   std::cout << T.getVendorName().str() << "\n";
 }
-static void PrintOSName(Triple &T) {
-  std::cout << T.getOSName().str() << "\n";
+static void PrintOSTypeName(Triple &T) {
+  std::cout << T.getOSTypeName(T.getOS()) << "\n";
 }
 static void PrintEnvironmentName(Triple &T) {
   std::cout << T.getEnvironmentName().str() << "\n";
@@ -36,7 +36,7 @@ static Option Options[] = {
   { "-t", PrintTriple },
   { "-a", PrintArchName },
   { "-v", PrintVendorName },
-  { "-o", PrintOSName },
+  { "-o", PrintOSTypeName },
   { "-e", PrintEnvironmentName },
   { "-oe", PrintOSAndEnvironmentName },
   { "-p", PrintArchTypePrefix },

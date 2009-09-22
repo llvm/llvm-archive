@@ -20,6 +20,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 02111-1307, USA.  */
 
 // LLVM headers
+#define DEBUG_TYPE "plugin"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
@@ -41,6 +42,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -92,6 +94,12 @@ extern "C" {
 #include "llvm-cache.h"
 }
 
+// TODO: Space aliens beamed these numbers into my head.  Replace with something
+// more down-to-earth.
+#define ESTIMATED_MEMORY_PER_BASIC_BLOCK	1500
+#define ESTIMATED_MEMORY_PER_GIMPLE_STATEMENT	128
+#define MIN_BYTES_WORTH_GARBAGE_COLLECTING	(1024*1024)
+
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;
 
@@ -135,6 +143,49 @@ static FunctionPassManager *CodeGenPasses = 0;
 static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 //TODOstatic void destroyOptimizationPasses();
+
+
+//===----------------------------------------------------------------------===//
+//                                Statistics
+//===----------------------------------------------------------------------===//
+
+STATISTIC(NumBasicBlocks, "Number of basic blocks converted");
+STATISTIC(NumStatements,  "Number of gimple statements converted");
+
+/// NoteBasicBlock - Called once for each GCC basic block converted.
+void NoteBasicBlock(basic_block bb) {
+  ++NumBasicBlocks;
+}
+
+/// NoteStatement - Called once for each GCC gimple statement converted.
+void NoteStatement(gimple stmt) {
+  ++NumStatements;
+}
+
+static size_t LastNumBasicBlocks;
+static size_t LastNumStatements;
+
+/// EstimatedCollectableGCCMemory - Return an estimate of the amount of memory
+/// we think the GCC garbage collector would free if we ran it.
+static size_t EstimatedCollectableGCCMemory() {
+  return
+    (NumBasicBlocks - LastNumBasicBlocks) * ESTIMATED_MEMORY_PER_BASIC_BLOCK +
+    (NumStatements - LastNumStatements) * ESTIMATED_MEMORY_PER_GIMPLE_STATEMENT;
+}
+
+/// isWorthGarbageCollecting - Returns whether running the GCC garbage collector
+/// would free up enough memory to make it worthwhile.
+static bool isWorthGarbageCollecting() {
+  return EstimatedCollectableGCCMemory() > MIN_BYTES_WORTH_GARBAGE_COLLECTING;
+}
+
+/// ResetGarbageCollectionStatistics - The memory estimated by the previous
+/// statistics will be garbage collected.  Reset the statistics.
+static void ResetGarbageCollectionStatistics() {
+  LastNumBasicBlocks = NumBasicBlocks;
+  LastNumStatements = NumStatements;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees
@@ -337,6 +388,8 @@ static void LazilyConfigureLLVM(void) {
 
   if (time_report || !quiet_flag  || flag_detailed_statistics)
     Args.push_back("--time-passes");
+  if (!quiet_flag  || flag_detailed_statistics)
+    Args.push_back("--stats");
   if (fast_math_flags_set_p())
     Args.push_back("--enable-unsafe-fp-math");
   if (!flag_omit_frame_pointer)
@@ -1704,6 +1757,13 @@ static struct simple_ipa_opt_pass pass_emit_variables =
 static unsigned int emit_function (void) {
   LazilyInitializeModule();
 
+  // The previously converted function is now garbage collectable.  If it seems
+  // worthwhile, run the garbage collector after converting this function (the
+  // current function will not itself be collected though).
+  ggc_force_collect = isWorthGarbageCollecting();
+  if (ggc_force_collect)
+    ResetGarbageCollectionStatistics();
+
 //TODO Don't want to use sorry at this stage...
 //TODO  if (cfun->nonlocal_goto_save_area)
 //TODO    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
@@ -1786,6 +1846,15 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
     errs() << "Finishing compilation unit\n";
 
   LazilyInitializeModule();
+
+  // If it seems worthwhile, garbage collect any functions we converted before
+  // running the optimizers or generating code.
+  if (isWorthGarbageCollecting()) {
+    ResetGarbageCollectionStatistics();
+    ggc_force_collect = 1;
+    ggc_collect();
+    ggc_force_collect = 0;
+  }
 
 //TODO  timevar_push(TV_LLVM_PERFILE);
   LLVMContext &Context = getGlobalContext();

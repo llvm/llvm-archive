@@ -910,6 +910,8 @@ BasicBlock *TreeToLLVM::getLabelDeclBlock(tree LabelDecl) {
 }
 
 void TreeToLLVM::EmitBasicBlock(basic_block bb) {
+  NoteBasicBlock(bb);
+
   // Avoid outputting a pointless branch at the end of the entry block.
   if (bb != ENTRY_BLOCK_PTR)
     EmitBlock(getBasicBlock(bb));
@@ -943,23 +945,24 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
   // Render statements.
   for (gimple_stmt_iterator gsi = gsi_start_bb(bb); !gsi_end_p(gsi);
        gsi_next(&gsi)) {
-    gimple gimple_stmt = gsi_stmt(gsi);
+    gimple stmt = gsi_stmt(gsi);
+    NoteStatement(stmt);
 
-    switch (gimple_code(gimple_stmt)) {
+    switch (gimple_code(stmt)) {
     case GIMPLE_ASM:
-      RenderGIMPLE_ASM(gimple_stmt);
+      RenderGIMPLE_ASM(stmt);
       break;
 
     case GIMPLE_ASSIGN:
-      RenderGIMPLE_ASSIGN(gimple_stmt);
+      RenderGIMPLE_ASSIGN(stmt);
       break;
 
     case GIMPLE_CALL:
-       RenderGIMPLE_CALL(gimple_stmt);
+       RenderGIMPLE_CALL(stmt);
        break;
 
     case GIMPLE_COND:
-      RenderGIMPLE_COND(gimple_stmt);
+      RenderGIMPLE_COND(stmt);
       break;
 
     case GIMPLE_DEBUG:
@@ -967,7 +970,7 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
       break;
 
     case GIMPLE_GOTO:
-      RenderGIMPLE_GOTO(gimple_stmt);
+      RenderGIMPLE_GOTO(stmt);
       break;
 
     case GIMPLE_LABEL:
@@ -976,19 +979,19 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
       break;
 
     case GIMPLE_RESX:
-      RenderGIMPLE_RESX(gimple_stmt);
+      RenderGIMPLE_RESX(stmt);
       break;
 
     case GIMPLE_RETURN:
-      RenderGIMPLE_RETURN(gimple_stmt);
+      RenderGIMPLE_RETURN(stmt);
       break;
 
     case GIMPLE_SWITCH:
-      RenderGIMPLE_SWITCH(gimple_stmt);
+      RenderGIMPLE_SWITCH(stmt);
       break;
 
     default:
-      dump(gimple_stmt);
+      dump(stmt);
       llvm_unreachable("Unhandled GIMPLE statement during LLVM emission!");
     }
   }

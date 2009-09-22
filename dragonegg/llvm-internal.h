@@ -97,6 +97,14 @@ extern Constant* ConvertMetadataStringToGV(const char* str);
 /// annotate attribute to a vector to be emitted later.
 extern void AddAnnotateAttrsToGlobal(GlobalValue *GV, union tree_node* decl);
 
+// Statistics.
+
+/// NoteBasicBlock - Called once for each GCC basic block converted.
+extern void NoteBasicBlock(basic_block bb);
+
+/// NoteStatement - Called once for each GCC gimple statement converted.
+extern void NoteStatement(gimple stmt);
+
 // Mapping between GCC declarations and LLVM values.
 
 /// DECL_LLVM - Holds the LLVM expression for the value of a variable or

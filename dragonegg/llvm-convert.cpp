@@ -7969,7 +7969,16 @@ void TreeToLLVM::RenderGIMPLE_ASSIGN(gimple stmt) {
 void TreeToLLVM::RenderGIMPLE_CALL(gimple stmt) {
   tree lhs = gimple_call_lhs(stmt);
   if (!lhs) {
-    EmitGimpleCallRHS(stmt, 0);
+    // The returned value is not used.
+    if (!isAggregateTreeType(gimple_call_return_type(stmt))) {
+      EmitGimpleCallRHS(stmt, 0);
+      return;
+    }
+    // Create a temporary to hold the returned value.
+    // TODO: Figure out how to avoid creating this temporary and the
+    // associated useless code that stores the returned value into it.
+    MemRef Loc = CreateTempLoc(ConvertType(gimple_call_return_type(stmt)));
+    EmitGimpleCallRHS(stmt, &Loc);
     return;
   }
 

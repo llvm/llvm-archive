@@ -32,22 +32,6 @@ Teach the build system that the plugin needs to be rebuilt if any of the bits of
 LLVM/gcc it depends on changes.
 
 
-Memory management
------------------
-
-After we codegen them, GCC functions will be garbage collected if the garbage
-collector runs.  However the garbage collector is only run if lots of memory
-was allocated since the last run.  GCC doesn't know how much memory LLVM is
-allocating, so we may be allocating vast amounts of LLVM memory converting
-gimple into LLVM IR, but nonetheless the garbage collector won't free up GCC
-memory for us, even though there might be lots of memory to free.  Work out
-some way of teaching the garbage collector about the amount of memory allocated
-by LLVM.
-
-After recent changes to the lto tree, it looks like functions are no longer
-being garbage collected after they are codegened.  Investigate.
-
-
 Optimizations
 -------------
 

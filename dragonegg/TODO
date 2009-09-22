@@ -70,8 +70,24 @@ However they are still in the local_decls list, so we output them all,
 pointlessly, wasting time and memory.  Consider emitting local variables
 on demand instead.
 
+
 Correctness
 -----------
 
 If an ssa name refers to a global (can this happen), the SSANames map might
 need to be updated if the target is altered by changeLLVMConstant.
+
+An ssa name can be a complex number, causing the plugin to crash.  Maybe should
+consider complex numbers to be scalars rather than aggregates.  Would this get
+in the way of sroa?
+
+If the initializer for a static variable contains the address of a label then
+we crash.
+
+
+Features
+--------
+
+Output proper debug info rather than throwing most of it away.
+
+Add support for exception handling.

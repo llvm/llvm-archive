@@ -5146,7 +5146,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(gimple stmt) {
   Value *ReadWrite = 0;
   Value *Locality = 0;
 
-  if (gimple_call_num_args(stmt) >= 1) { // Args 1/2 are optional
+  if (gimple_call_num_args(stmt) > 1) { // Args 1/2 are optional
     ReadWrite = Emit(gimple_call_arg(stmt, 1), 0);
     if (!isa<ConstantInt>(ReadWrite)) {
       error("second argument to %<__builtin_prefetch%> must be a constant");
@@ -5160,7 +5160,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(gimple stmt) {
                                               Type::getInt32Ty(Context), false);
     }
 
-    if (gimple_call_num_args(stmt) >= 2) {
+    if (gimple_call_num_args(stmt) > 2) {
       Locality = Emit(gimple_call_arg(stmt, 2), 0);
       if (!isa<ConstantInt>(Locality)) {
         error("third argument to %<__builtin_prefetch%> must be a constant");

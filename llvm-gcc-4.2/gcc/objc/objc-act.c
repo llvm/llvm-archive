@@ -3507,6 +3507,15 @@ objc_build_volatilized_type (tree type)
 	  && (TREE_TYPE (t) != TREE_TYPE (type)))
 	continue;
 
+      /* LLVM LOCAL begin 7176678 */
+      /* If this is a POINTER_TYPE, the name field should match too;
+	 if one is set and another is cleared, encode_type will treat
+	 them differently.  */
+      if (TREE_CODE (type) == POINTER_TYPE
+	  && TYPE_NAME (type) != TYPE_NAME (t))
+	continue;
+      /* LLVM LOCAL end 7176678 */
+
       /* APPLE LOCAL begin radar 4204796 */
       /* Only match up the types which were previously volatilized in similar fashion and not
 	 because they were declared as such. */

@@ -628,11 +628,9 @@ void TreeToLLVM::StartFunctionBody() {
     // Not supported yet.
   }
 
-  // Emit all automatic variables.
+  // Emit any automatic or static variables.
   for (tree vars = DECL_STRUCT_FUNCTION(FnDecl)->local_decls; vars;
        vars = TREE_CHAIN(vars))
-    // Skip static variables and local variables listed multiple times.
-//    if (!TREE_STATIC(TREE_VALUE(vars))) // GCC PR41339
     if (!DECL_LLVM_SET_P(TREE_VALUE(vars)))
       EmitAutomaticVariableDecl(TREE_VALUE(vars));
 

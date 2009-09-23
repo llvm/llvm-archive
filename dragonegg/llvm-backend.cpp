@@ -1720,13 +1720,17 @@ static bool gate_emission(void) {
 }
 
 
-/// emit_variables - Turn GCC variables into LLVM IR.
+/// emit_variables - Output GCC global variables to the LLVM IR.
 static unsigned int emit_variables(void) {
   LazilyInitializeModule();
 
+  // Output all externally visible global variables, whether they are used in
+  // this compilation unit or not.  Global variables that are not externally
+  // visible will be output when their user is, or discarded if unused.
   struct varpool_node *vnode;
   FOR_EACH_STATIC_VARIABLE (vnode)
-    emit_global_to_llvm(vnode->decl);
+    if (TREE_PUBLIC(vnode->decl))
+      emit_global_to_llvm(vnode->decl);
 
   return 0;
 }

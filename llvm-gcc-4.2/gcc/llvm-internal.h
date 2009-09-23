@@ -168,6 +168,7 @@ private:
   void SetFieldIndex(tree_node *field_decl, unsigned int Index);
   bool DecodeStructFields(tree_node *Field, StructTypeConversionInfo &Info);
   void DecodeStructBitField(tree_node *Field, StructTypeConversionInfo &Info);
+  void SelectUnionMember(tree_node *type, StructTypeConversionInfo &Info);
 };
 
 extern TypeConverter *TheTypeConverter;

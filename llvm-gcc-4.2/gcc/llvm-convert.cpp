@@ -2878,7 +2878,7 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
     }
 
     // If the instruction is an invoke, the init is inserted on the normal edge.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt)) {
       InsertPt = II->getNormalDest()->begin();
       while (isa<PHINode>(InsertPt))
         ++InsertPt;

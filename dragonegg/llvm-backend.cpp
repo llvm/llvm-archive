@@ -1788,8 +1788,11 @@ static unsigned int emit_function (void) {
   calculate_dominance_info(CDI_DOMINATORS);
 
   // Convert the AST to raw/ugly LLVM code.
-  TreeToLLVM Emitter(current_function_decl);
-  Function *Fn = Emitter.EmitFunction();
+  Function *Fn;
+  {
+    TreeToLLVM Emitter(current_function_decl);
+    Fn = Emitter.EmitFunction();
+  }
 
   // Free dominator and other ssa data structures.
   execute_free_datastructures();

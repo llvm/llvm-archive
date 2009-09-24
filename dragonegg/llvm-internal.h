@@ -63,6 +63,7 @@ namespace llvm {
   class TargetMachine;
   class TargetData;
   class DebugInfo;
+  template<typename> class AssertingVH;
 }
 using namespace llvm;
 
@@ -350,7 +351,7 @@ class TreeToLLVM {
   SmallVector<PhiRecord, 16> PendingPhis;
 
   // SSANames - Map from GCC ssa names to the defining LLVM value.
-  DenseMap<tree, Value*> SSANames;
+  DenseMap<tree, AssertingVH<> > SSANames;
 
   //===---------------------- Exception Handling --------------------------===//
 

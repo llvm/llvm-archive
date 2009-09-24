@@ -38,6 +38,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -2106,7 +2107,7 @@ static bool canEmitRegisterVariable(tree exp) {
 
 /// EmitSSA_NAME - Return the defining value of the given SSA_NAME.
 Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
-  DenseMap<tree, Value*>::iterator I = SSANames.find(exp);
+  DenseMap<tree, AssertingVH<> >::iterator I = SSANames.find(exp);
   if (I != SSANames.end())
     return I->second;
 

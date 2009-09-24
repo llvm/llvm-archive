@@ -1386,7 +1386,7 @@ void emit_global_to_llvm(tree decl) {
 #endif
   }
 
-  // No debug info for globals when optimization is on. While this is
+  // No debug info for globals when optimization is on.  While this is
   // something that would be accurate and useful to a user, it currently
   // affects some optimizations that, e.g., count uses.
   if (TheDebugInfo && !optimize) {

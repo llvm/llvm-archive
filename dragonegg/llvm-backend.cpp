@@ -2174,7 +2174,7 @@ int plugin_init (struct plugin_name_args *plugin_info,
   // Add an ipa pass that emits global variables, calling emit_global_to_llvm
   // for each GCC static variable.
   pass_info.pass = &pass_emit_variables.pass;
-  pass_info.reference_pass_name = "matrix-reorg";
+  pass_info.reference_pass_name = "ipa_struct_reorg";
   pass_info.ref_pass_instance_number = 0;
   pass_info.pos_op = PASS_POS_INSERT_AFTER;
   register_callback (plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);

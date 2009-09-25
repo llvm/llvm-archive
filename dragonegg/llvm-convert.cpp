@@ -200,6 +200,61 @@ TreeToLLVM::~TreeToLLVM() {
   TheTreeToLLVM = 0;
 }
 
+//===----------------------------------------------------------------------===//
+//                         ... Local declarations ...
+//===----------------------------------------------------------------------===//
+
+/// isLocalDecl - Whether this declaration is local to the current function.
+static bool isLocalDecl(tree decl) {
+  assert(HAS_RTL_P(decl) && "Expected a declaration with RTL!");
+  return DECL_CONTEXT(decl) == current_function_decl &&
+    !TREE_STATIC(decl) && // Static variables not considered local.
+    TREE_CODE(decl) != FUNCTION_DECL; // Nested functions not considered local.
+}
+
+/// set_decl_local - Remember the LLVM value for a GCC declaration.
+Value *TreeToLLVM::set_decl_local(tree decl, Value *V) {
+  if (!isLocalDecl(decl))
+    return set_decl_llvm(decl, V);
+  if (V != NULL)
+    return LocalDecls[decl] = V;
+  LocalDecls.erase(decl);
+  return NULL;
+}
+
+/// get_decl_local - Retrieve the LLVM value for a GCC declaration, or NULL.
+Value *TreeToLLVM::get_decl_local(tree decl) {
+  if (!isLocalDecl(decl))
+    return get_decl_llvm(decl);
+  DenseMap<tree, AssertingVH<> >::iterator I = LocalDecls.find(decl);
+  if (I != LocalDecls.end())
+    return I->second;
+  return NULL;
+}
+
+/// make_decl_local - Return the LLVM value for a GCC declaration if it exists.
+/// Otherwise creates and returns an appropriate value.
+Value *TreeToLLVM::make_decl_local(tree decl) {
+  if (!isLocalDecl(decl))
+    return make_decl_llvm(decl);
+
+  DenseMap<tree, AssertingVH<> >::iterator I = LocalDecls.find(decl);
+  if (I != LocalDecls.end())
+    return I->second;
+
+  switch (TREE_CODE(decl)) {
+  default:
+    llvm_unreachable("Unhandled local declaration!");
+
+  case RESULT_DECL:
+  case VAR_DECL:
+    EmitAutomaticVariableDecl(decl);
+    I = LocalDecls.find(decl);
+    assert(I != LocalDecls.end() && "Not a local variable?");
+    return I->second;
+  }
+}
+
 /// llvm_store_scalar_argument - Store scalar argument ARGVAL of type
 /// LLVMTY at location LOC.
 static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
@@ -282,7 +337,7 @@ namespace {
       tree ResultDecl = DECL_RESULT(FunctionDecl);
       tree RetTy = TREE_TYPE(TREE_TYPE(FunctionDecl));
       if (TREE_CODE(RetTy) == TREE_CODE(TREE_TYPE(ResultDecl))) {
-        SET_DECL_LLVM(ResultDecl, AI);
+        TheTreeToLLVM->set_decl_local(ResultDecl, AI);
         ++AI;
         return;
       }
@@ -294,7 +349,7 @@ namespace {
       Value *Tmp = TheTreeToLLVM->CreateTemporary(AI->getType());
       Builder.CreateStore(AI, Tmp);
 
-      SET_DECL_LLVM(ResultDecl, Tmp);
+      TheTreeToLLVM->set_decl_local(ResultDecl, Tmp);
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(ResultDecl,
                                   dwarf::DW_TAG_return_variable,
@@ -309,7 +364,7 @@ namespace {
              "No explicit return value?");
       AI->setName("scalar.result");
       isShadowRet = true;
-      SET_DECL_LLVM(DECL_RESULT(FunctionDecl), AI);
+      TheTreeToLLVM->set_decl_local(DECL_RESULT(FunctionDecl), AI);
       ++AI;
     }
 
@@ -428,9 +483,9 @@ void TreeToLLVM::StartFunctionBody() {
 
   // If we've already seen this function and created a prototype, and if the
   // proto has the right LLVM type, just use it.
-  if (DECL_LLVM_SET_P(FnDecl) &&
-      cast<PointerType>(DECL_LLVM(FnDecl)->getType())->getElementType() == FTy){
-    Fn = cast<Function>(DECL_LLVM(FnDecl));
+  if (DECL_LOCAL_SET_P(FnDecl) &&
+      cast<PointerType>(DECL_LOCAL(FnDecl)->getType())->getElementType()==FTy) {
+    Fn = cast<Function>(DECL_LOCAL(FnDecl));
     assert(Fn->getCallingConv() == CallingConv &&
            "Calling convention disagreement between prototype and impl!");
     // The visibility can be changed from the last time we've seen this
@@ -463,7 +518,7 @@ void TreeToLLVM::StartFunctionBody() {
       changeLLVMConstant(FnEntry, Fn);
       FnEntry->eraseFromParent();
     }
-    SET_DECL_LLVM(FnDecl, Fn);
+    SET_DECL_LOCAL(FnDecl, Fn);
   }
 
   // The function should not already have a body.
@@ -574,7 +629,7 @@ void TreeToLLVM::StartFunctionBody() {
       // If the value is passed by 'invisible reference' or 'byval reference',
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);
-      SET_DECL_LLVM(Args, AI);
+      SET_DECL_LOCAL(Args, AI);
       if (!isInvRef && TheDebugInfo)
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args),
@@ -586,7 +641,7 @@ void TreeToLLVM::StartFunctionBody() {
       // into the alloca.
       Value *Tmp = CreateTemporary(ArgTy);
       Tmp->setName(std::string(Name)+"_addr");
-      SET_DECL_LLVM(Args, Tmp);
+      SET_DECL_LOCAL(Args, Tmp);
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args), Tmp,
@@ -618,22 +673,11 @@ void TreeToLLVM::StartFunctionBody() {
                               Constant::getNullValue(Type::getInt32Ty(Context)),
                               Type::getInt32Ty(Context)), "ssa point");
 
-  // If this is not a void-returning function, initialize the RESULT_DECL.
-  if (DECL_RESULT(FnDecl) && !VOID_TYPE_P(TREE_TYPE(DECL_RESULT(FnDecl))) &&
-      !DECL_LLVM_SET_P(DECL_RESULT(FnDecl)))
-    EmitAutomaticVariableDecl(DECL_RESULT(FnDecl));
-
   // If this function has nested functions, we should handle a potential
   // nonlocal_goto_save_area.
   if (cfun->nonlocal_goto_save_area) {
     // Not supported yet.
   }
-
-  // Emit any automatic or static variables.
-  for (tree vars = DECL_STRUCT_FUNCTION(FnDecl)->local_decls; vars;
-       vars = TREE_CHAIN(vars))
-    if (!DECL_LLVM_SET_P(TREE_VALUE(vars)))
-      EmitAutomaticVariableDecl(TREE_VALUE(vars));
 
   // Create a new block for the return node, but don't insert it yet.
   ReturnBB = BasicBlock::Create(Context, "return");
@@ -775,14 +819,14 @@ Function *TreeToLLVM::FinishFunctionBody() {
       // If the DECL_RESULT is a scalar type, just load out the return value
       // and return it.
       tree TreeRetVal = DECL_RESULT(FnDecl);
-      Value *RetVal = Builder.CreateLoad(DECL_LLVM(TreeRetVal), "retval");
+      Value *RetVal = Builder.CreateLoad(DECL_LOCAL(TreeRetVal), "retval");
       bool RetValSigned = !TYPE_UNSIGNED(TREE_TYPE(TreeRetVal));
       Instruction::CastOps opcode = CastInst::getCastOpcode(
           RetVal, RetValSigned, Fn->getReturnType(), RetValSigned);
       RetVal = Builder.CreateCast(opcode, RetVal, Fn->getReturnType());
       RetVals.push_back(RetVal);
     } else {
-      Value *RetVal = DECL_LLVM(DECL_RESULT(FnDecl));
+      Value *RetVal = DECL_LOCAL(DECL_RESULT(FnDecl));
       if (const StructType *STy = dyn_cast<StructType>(Fn->getReturnType())) {
         Value *R1 = Builder.CreateBitCast(RetVal, PointerType::getUnqual(STy));
 
@@ -900,11 +944,11 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
 /// label.
 BasicBlock *TreeToLLVM::getLabelDeclBlock(tree LabelDecl) {
   assert(TREE_CODE(LabelDecl) == LABEL_DECL && "Isn't a label!?");
-  if (DECL_LLVM_SET_P(LabelDecl))
-    return cast<BasicBlock>(DECL_LLVM(LabelDecl));
+  if (DECL_LOCAL_SET_P(LabelDecl))
+    return cast<BasicBlock>(DECL_LOCAL(LabelDecl));
 
   BasicBlock *BB = getBasicBlock(label_to_block(LabelDecl));
-  SET_DECL_LLVM(LabelDecl, BB);
+  SET_DECL_LOCAL(LabelDecl, BB);
   return BB;
 }
 
@@ -1623,38 +1667,14 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
 //===----------------------------------------------------------------------===//
 
 /// EmitAutomaticVariableDecl - Emit the function-local decl to the current
-/// function and set DECL_LLVM for the decl to the right pointer.
+/// function and set DECL_LOCAL for the decl to the right pointer.
 void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
-  tree type = TREE_TYPE(decl);
-
-  // An LLVM value pointer for this decl may already be set, for example, if the
-  // named return value optimization is being applied to this function, and
-  // this variable is the one being returned.
-  assert(!DECL_LLVM_SET_P(decl) && "Shouldn't call this on an emitted var!");
-
-  // For a CONST_DECL, set mode, alignment, and sizes from those of the
-  // type in case this node is used in a reference.
-  if (TREE_CODE(decl) == CONST_DECL) {
-    DECL_MODE(decl)      = TYPE_MODE(type);
-    DECL_ALIGN(decl)     = TYPE_ALIGN(type);
-    DECL_SIZE(decl)      = TYPE_SIZE(type);
-    DECL_SIZE_UNIT(decl) = TYPE_SIZE_UNIT(type);
-    return;
-  }
-
-  // Otherwise, only automatic (and result) variables need any expansion done.
-  // Static and external variables, and external functions, will be handled by
-  // `assemble_variable' (called from finish_decl).  TYPE_DECL requires nothing.
-  // PARM_DECLs are handled in `llvm_expand_function_start'.
-  if ((TREE_CODE(decl) != VAR_DECL && TREE_CODE(decl) != RESULT_DECL) ||
-      TREE_STATIC(decl) || DECL_EXTERNAL(decl) || type == error_mark_node)
-    return;
-
   // If this is just the rotten husk of a variable that the gimplifier
   // eliminated all uses of, but is preserving for debug info, ignore it.
   if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
     return;
 
+  tree type = TREE_TYPE(decl);
   const Type *Ty;  // Type to allocate
   Value *Size = 0; // Amount to alloca (null for 1)
 
@@ -1719,7 +1739,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
 
   AI->setAlignment(Alignment);
 
-  SET_DECL_LLVM(decl, AI);
+  SET_DECL_LOCAL(decl, AI);
 
   // Handle annotate attributes
   if (DECL_ATTRIBUTES(decl))
@@ -1860,7 +1880,7 @@ void TreeToLLVM::EmitLandingPads() {
 abort();//FIXME
 //FIXME    assert(llvm_eh_personality_libfunc
 //FIXME           && "no exception handling personality function!");
-//FIXME    Args.push_back(Builder.CreateBitCast(DECL_LLVM(llvm_eh_personality_libfunc),
+//FIXME    Args.push_back(Builder.CreateBitCast(DECL_LOCAL(llvm_eh_personality_libfunc),
 //FIXME                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
 //FIXME
 //FIXME    // Add selections for each handler.
@@ -2074,11 +2094,11 @@ abort();//FIXME
 //FIXME    CallingConv::ID CallingConvention = CallingConv::C;
 //FIXME
 //FIXME    TARGET_ADJUST_LLVM_CC(CallingConvention, fntype);
-//FIXME    CallInst *Call = Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc),
+//FIXME    CallInst *Call = Builder.CreateCall(DECL_LOCAL(llvm_unwind_resume_libfunc),
 //FIXME                                       Arg);
 //FIXME    Call->setCallingConv(CallingConvention);
 //FIXME#else
-//FIXME    Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
+//FIXME    Builder.CreateCall(DECL_LOCAL(llvm_unwind_resume_libfunc), Arg);
 //FIXME#endif
     Builder.CreateUnreachable();
   }
@@ -2132,7 +2152,7 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
     return UndefValue::get(ConvertType(TREE_TYPE(exp)));
 
   // Read the initial value of the parameter and associate it with the ssa name.
-  assert(DECL_LLVM_IF_SET(var) && "Parameter not laid out?");
+  assert(DECL_LOCAL_IF_SET(var) && "Parameter not laid out?");
 
   unsigned Alignment = DECL_ALIGN(var);
   assert(Alignment != 0 && "Parameter with unknown alignment!");
@@ -2141,7 +2161,7 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
     DECL_NAME(var) ? IDENTIFIER_POINTER(DECL_NAME(var)) : "anon";
 
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  Value *Ptr = Builder.CreateBitCast(DECL_LLVM_IF_SET(var),
+  Value *Ptr = Builder.CreateBitCast(DECL_LOCAL_IF_SET(var),
                                      PointerType::getUnqual(Ty));
 
   // Perform the load in the entry block, after all parameters have been set up
@@ -6083,19 +6103,19 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
       // emit a NEW declaration for the global variable, now that it has been
       // laid out.  We then tell the compiler to "forward" any uses of the old
       // global to this new one.
-      if (Value *Val = DECL_LLVM_IF_SET(exp)) {
+      if (Value *Val = DECL_LOCAL_IF_SET(exp)) {
         //fprintf(stderr, "***\n*** SHOULD HANDLE GLOBAL VARIABLES!\n***\n");
         //assert(0 && "Reimplement this with replace all uses!");
-        SET_DECL_LLVM(exp, 0);
+        SET_DECL_LOCAL(exp, 0);
         // Create a new global variable declaration
         llvm_assemble_external(exp);
-        V2GV(Val)->ForwardedGlobal = V2GV(DECL_LLVM(exp));
+        V2GV(Val)->ForwardedGlobal = V2GV(DECL_LOCAL(exp));
       }
 #endif
     }
   }
 
-  Value *Decl = DECL_LLVM(exp);
+  Value *Decl = DECL_LOCAL(exp);
   if (Decl == 0) {
     if (errorcount || sorrycount) {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
@@ -6112,7 +6132,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   if (!TREE_USED(exp)) {
     assemble_external(exp);
     TREE_USED(exp) = 1;
-    Decl = DECL_LLVM(exp);
+    Decl = DECL_LOCAL(exp);
   }
 
   if (GlobalValue *GV = dyn_cast<GlobalValue>(Decl)) {
@@ -6123,7 +6143,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
           GV->isDeclaration() &&
           !BOGUS_CTOR(exp)) {
         emit_global_to_llvm(exp);
-        Decl = DECL_LLVM(exp);     // Decl could have change if it changed type.
+        Decl = DECL_LOCAL(exp);     // Decl could have change if it changed type.
       }
     } else {
       // Otherwise, inform cgraph that we used the global.
@@ -8060,12 +8080,12 @@ void TreeToLLVM::RenderGIMPLE_RETURN(gimple stmt) {
   if (retval && retval != error_mark_node && retval != result) {
     // Store the return value to the function's DECL_RESULT.
     if (isAggregateTreeType(TREE_TYPE(result))) {
-      MemRef DestLoc(DECL_LLVM(result), 1, false); // FIXME: What alignment?
+      MemRef DestLoc(DECL_LOCAL(result), 1, false); // FIXME: What alignment?
       Emit(retval, &DestLoc);
     } else {
       Value *Val = Builder.CreateBitCast(Emit(retval, 0),
                                          ConvertType(TREE_TYPE(result)));
-      Builder.CreateStore(Val, DECL_LLVM(result));
+      Builder.CreateStore(Val, DECL_LOCAL(result));
     }
   }
 

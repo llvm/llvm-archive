@@ -108,7 +108,7 @@ extern void NoteStatement(gimple stmt);
 
 // Mapping between GCC declarations and LLVM values.
 
-/// DECL_LLVM - Holds the LLVM expression for the value of a variable or
+/// DECL_LLVM - Holds the LLVM expression for the value of a global variable or
 /// function.  This value can be evaluated lazily for functions and variables
 /// with static storage duration.
 extern Value *make_decl_llvm(union tree_node *);
@@ -347,11 +347,40 @@ class TreeToLLVM {
   /// BasicBlocks - Map from GCC to LLVM basic blocks.
   DenseMap<basic_block, BasicBlock*> BasicBlocks;
 
+  /// LocalDecls - Map from local declarations to their associated LLVM values.
+  DenseMap<tree, AssertingVH<> > LocalDecls;
+
   /// PendingPhis - Phi nodes which have not yet been populated with operands.
   SmallVector<PhiRecord, 16> PendingPhis;
 
   // SSANames - Map from GCC ssa names to the defining LLVM value.
   DenseMap<tree, AssertingVH<> > SSANames;
+
+public:
+
+  //===---------------------- Local Declarations --------------------------===//
+
+  /// DECL_LOCAL - Like DECL_LLVM, returns the LLVM expression for the value of
+  /// a variable or function.  However DECL_LOCAL can be used with declarations
+  /// local to the current function as well as with global declarations.
+  Value *make_decl_local(union tree_node *);
+  #define DECL_LOCAL(NODE) make_decl_local(NODE)
+
+  /// SET_DECL_LOCAL - Set the DECL_LOCAL for NODE to LLVM. 
+  Value *set_decl_local(union tree_node *, Value *);
+  #define SET_DECL_LOCAL(NODE, LLVM) set_decl_local(NODE, LLVM)
+
+  /// DECL_LOCAL_IF_SET - The DECL_LOCAL for NODE, if it is set, or NULL, if it
+  /// is not set.
+  Value *get_decl_local(union tree_node *);
+  #define DECL_LOCAL_IF_SET(NODE) (HAS_RTL_P(NODE) ? get_decl_local(NODE) : NULL)
+
+  /// DECL_LOCAL_SET_P - Returns nonzero if the DECL_LOCAL for NODE has already
+  /// been set.
+  #define DECL_LOCAL_SET_P(NODE) (DECL_LOCAL_IF_SET(NODE) != NULL)
+
+
+private:
 
   //===---------------------- Exception Handling --------------------------===//
 

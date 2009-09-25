@@ -16734,17 +16734,6 @@ valid_neon_mode (enum machine_mode mode)
   return VALID_NEON_DREG_MODE (mode) || VALID_NEON_QREG_MODE (mode);
 }
 
-/* APPLE LOCAL begin 7083296 Build without warnings.  */
-static tree
-make_neon_float_type (void)
-{
-  tree neon_float_type_node = make_node (REAL_TYPE);
-  TYPE_PRECISION (neon_float_type_node) = FLOAT_TYPE_SIZE;
-  layout_type (neon_float_type_node);
-  return neon_float_type_node;
-}
-/* APPLE LOCAL end 7083296 Build without warnings.  */
-
 /* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
 /* Create a new builtin struct type containing NUMVECS fields (where NUMVECS
@@ -16880,7 +16869,8 @@ arm_init_neon_builtins (void)
   tree neon_intSI_type_node = make_signed_type (GET_MODE_PRECISION (SImode));
   tree neon_intDI_type_node = make_signed_type (GET_MODE_PRECISION (DImode));
   /* APPLE LOCAL begin 7083296 Build without warnings.  */
-  tree neon_float_type_node = make_neon_float_type ();
+  /* LLVM LOCAL pr5037 */
+  tree neon_float_type_node = build_variant_type_copy (float_type_node);
   
   /* APPLE LOCAL end 7083296 Build without warnings.  */
   tree intQI_pointer_node = build_pointer_type (neon_intQI_type_node);

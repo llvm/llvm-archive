@@ -15,18 +15,12 @@ Target subdirectories should have their own Makefiles, instead of assuming
 that there's only one source file and that it's called llvm-target.cpp.
 
 Currently the target directory (eg: i386) is calculated from the target triple
-(eg: x86_64-unknown-linux-gnu) using gcc's config.gcc script.  This should be
-done from a configure script, rather from the Makefile using the get_arch_dir
-wrapper.
+(eg: x86_64-unknown-linux-gnu) using the "target" tool.  This should be done
+from a configure script, rather from the Makefile.
 
-The Makefile needs to know the LLVM target name (eg: x86) in order to pass it
-to llvm-config so as to get the libraries to link with for target codegen.
-This should be calculated in a configure script (presumably by a small program
-that uses the LLVM triple facilities to calculate it).  If we know this, then
-we might as well rename target directories like i386/ to x86/ instead, and
-eliminate use of gcc's config.gcc script.  This also means that LLVM_TARGET_NAME
-could be defined from the Makefile rather than being specified in llvm-target.h.
-Maybe LLVM_TARGET_INTRINSIC_PREFIX could go too.
+Define LLVM_TARGET_NAME from the Makefile rather than being specified in
+llvm-target.h.  Maybe LLVM_TARGET_INTRINSIC_PREFIX could go too.  An annoyance
+is that the target tool returns "x86" while what is needed is "X86".
 
 Teach the build system that the plugin needs to be rebuilt if any of the bits of
 LLVM/gcc it depends on changes.
@@ -40,33 +34,18 @@ After outputting global variables, maybe they can be deleted or marked somehow
 to /dev/null, but it would be more efficient to teach GCC to not produce any in
 the first place).  Investigate.
 
-Consider having DECL_LLVM and friends store values for trees local to a
-function in a separate map that can be cleared once the function has been
-emitted.  Determining which trees are local (LABEL_DECL, VAR_DECL but not
-static etc) should be pretty quick, so the cost of routing to the right map
-should be insignificant, while having a much smaller map for globals could
-be a win.
-
 Consider using separate caches for types and globals.
-
-Thanks to gimple being in SSA form, many local variables are not used.
-However they are still in the local_decls list, so we output them all,
-pointlessly, wasting time and memory.  Consider emitting local variables
-on demand instead.
 
 
 Correctness
 -----------
 
-If an ssa name refers to a global (can this happen), the SSANames map might
+If an ssa name refers to a global (can this happen?), the SSANames map might
 need to be updated if the target is altered by changeLLVMConstant.
 
 An ssa name can be a complex number, causing the plugin to crash.  Maybe should
 consider complex numbers to be scalars rather than aggregates.  Would this get
 in the way of sroa?
-
-If the initializer for a static variable contains the address of a label then
-we crash.
 
 
 Features

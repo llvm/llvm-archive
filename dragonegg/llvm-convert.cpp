@@ -2908,6 +2908,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree type, tree op, const MemRef *DestLoc) {
     MemRef NewLoc = *DestLoc;
     NewLoc.Ptr = Builder.CreateBitCast(DestLoc->Ptr,PointerType::getUnqual(Ty));
     Value *OpVal = Emit(op, &NewLoc);
+    (void)OpVal;
     assert(OpVal == 0 && "Shouldn't cast scalar to aggregate!");
     return 0;
   }
@@ -2947,6 +2948,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
     switch (TREE_CODE(Op)) {
     default: {
       Value *OpVal = Emit(Op, &Target);
+      (void)OpVal;
       assert(OpVal == 0 && "Expected an aggregate operand!");
       break;
     }
@@ -6301,6 +6303,7 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
 
     if (!ConvertType(TREE_TYPE(tree_purpose))->isSingleValueType()) {
       Value *V = Emit(tree_value, DestLoc);
+      (void)V;
       assert(V == 0 && "Aggregate value returned in a register?");
     } else {
       // Scalar value.  Evaluate to a register, then do the store.
@@ -7338,14 +7341,14 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   tree Array = TREE_OPERAND(exp, 0);
-  tree ArrayType = TREE_TYPE(Array);
   tree Index = TREE_OPERAND(exp, 1);
   tree IndexType = TREE_TYPE(Index);
-  assert(TREE_CODE(ArrayType) == ARRAY_TYPE && "Unknown ARRAY_REF!");
+  assert(TREE_CODE(TREE_TYPE(Array)) == ARRAY_TYPE && "Unknown ARRAY_REF!");
 
   // Check for variable sized reference.
   // FIXME: add support for array types where the size doesn't fit into 64 bits
-  assert(isSequentialCompatible(ArrayType) && "Global with variable size?");
+  assert(isSequentialCompatible(TREE_TYPE(Array)) &&
+         "Global with variable size?");
 
   Constant *ArrayAddr;
   // First subtract the lower bound, if any, in the type of the index.

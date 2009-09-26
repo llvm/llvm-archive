@@ -5788,7 +5788,9 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   Value *IndexVal = Emit(Index, 0);
   tree LowerBound = array_ref_low_bound(exp);
   if (!integer_zerop(LowerBound))
-    IndexVal = Builder.CreateSub(IndexVal, Emit(array_ref_low_bound(exp), 0));
+    IndexVal = TYPE_UNSIGNED(TREE_TYPE(Index)) ?
+      Builder.CreateSub(IndexVal, Emit(LowerBound, 0)) :
+      Builder.CreateNSWSub(IndexVal, Emit(LowerBound, 0));
 
   LValue ArrayAddrLV = EmitLV(Array);
   assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
@@ -7333,7 +7335,10 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
   Constant *IndexVal = Convert(Index);
   tree LowerBound = array_ref_low_bound(exp);
   if (!integer_zerop(LowerBound))
-    IndexVal = TheFolder->CreateSub(IndexVal, Convert(LowerBound));
+    IndexVal = TYPE_UNSIGNED(TREE_TYPE(Index)) ?
+      TheFolder->CreateSub(IndexVal, Convert(LowerBound)) :
+      TheFolder->CreateNSWSub(IndexVal, Convert(LowerBound));
+
   ArrayAddr = EmitLV(Array);
 
   const Type *IntPtrTy = getTargetData().getIntPtrType(Context);

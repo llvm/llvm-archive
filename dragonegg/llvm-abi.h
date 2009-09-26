@@ -116,14 +116,6 @@ struct DefaultABIClient {
   void ExitField() {}
 };
 
-/// isAggregateTreeType - Return true if the specified GCC type is an aggregate
-/// that cannot live in an LLVM register.
-static inline bool isAggregateTreeType(tree type) {
-  return TREE_CODE(type) == RECORD_TYPE || TREE_CODE(type) == ARRAY_TYPE ||
-         TREE_CODE(type) == UNION_TYPE  || TREE_CODE(type) == QUAL_UNION_TYPE ||
-         TREE_CODE(type) == COMPLEX_TYPE;
-}
-
 // LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY - A hook to allow
 // special _Complex handling. Return true if X should be returned using
 // multiple value return instruction.
@@ -158,8 +150,8 @@ static inline
 tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
                                   bool rejectFatBitfield) {
   // Scalars are good.
-  if (!isAggregateTreeType(type)) return type;
-  
+  if (!AGGREGATE_TYPE_P(type)) return type;
+
   tree FoundField = 0;
   switch (TREE_CODE(type)) {
   case QUAL_UNION_TYPE:

@@ -711,7 +711,9 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
-    return SET_TYPE_LLVM(type, StructType::get(Context, Ty, Ty, NULL));
+    Ty = StructType::get(Context, Ty, Ty, NULL);
+    TheModule->addTypeName(GetTypeName("cpx.", orig_type), Ty);
+    return SET_TYPE_LLVM(type, Ty);
   }
   case VECTOR_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;

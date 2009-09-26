@@ -43,9 +43,12 @@ Correctness
 If an ssa name refers to a global (can this happen?), the SSANames map might
 need to be updated if the target is altered by changeLLVMConstant.
 
-An ssa name can be a complex number, causing the plugin to crash.  Maybe should
-consider complex numbers to be scalars rather than aggregates.  Would this get
-in the way of sroa?
+
+Code quality
+------------
+
+Check the effect on code speed of having complex numbers be first class
+structures, i.e. values rather than in-memory aggregates.
 
 
 Features

@@ -5785,16 +5785,15 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   unsigned ArrayAlign;
 
   // First subtract the lower bound, if any, in the type of the index.
+  Value *IndexVal = Emit(Index, 0);
   tree LowerBound = array_ref_low_bound(exp);
   if (!integer_zerop(LowerBound))
-    Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
+    IndexVal = Builder.CreateSub(IndexVal, Emit(array_ref_low_bound(exp), 0));
 
   LValue ArrayAddrLV = EmitLV(Array);
   assert(!ArrayAddrLV.isBitfield() && "Arrays cannot be bitfields!");
   ArrayAddr = ArrayAddrLV.Ptr;
   ArrayAlign = ArrayAddrLV.getAlignment();
-
-  Value *IndexVal = Emit(Index, 0);
 
   const Type *IntPtrTy = getTargetData().getIntPtrType(Context);
   if (TYPE_UNSIGNED(IndexType)) // if the index is unsigned
@@ -7329,13 +7328,13 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
          "Global with variable size?");
 
   Constant *ArrayAddr;
+
   // First subtract the lower bound, if any, in the type of the index.
+  Constant *IndexVal = Convert(Index);
   tree LowerBound = array_ref_low_bound(exp);
   if (!integer_zerop(LowerBound))
-    Index = fold(build2(MINUS_EXPR, IndexType, Index, LowerBound));
+    IndexVal = TheFolder->CreateSub(IndexVal, Convert(LowerBound));
   ArrayAddr = EmitLV(Array);
-
-  Constant *IndexVal = Convert(Index);
 
   const Type *IntPtrTy = getTargetData().getIntPtrType(Context);
   if (IndexVal->getType() != IntPtrTy)

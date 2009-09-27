@@ -514,7 +514,7 @@ static void LazilyInitializeModule(void) {
   // backend.
 #ifdef LLVM_SET_SUBTARGET_FEATURES
   SubtargetFeatures Features;
-//TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
+  LLVM_SET_SUBTARGET_FEATURES(Features);
   FeatureStr = Features.getString();
 #endif
   TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);

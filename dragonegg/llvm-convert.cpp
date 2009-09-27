@@ -820,10 +820,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
       // and return it.
       tree TreeRetVal = DECL_RESULT(FnDecl);
       Value *RetVal = Builder.CreateLoad(DECL_LOCAL(TreeRetVal), "retval");
-      bool RetValSigned = !TYPE_UNSIGNED(TREE_TYPE(TreeRetVal));
-      Instruction::CastOps opcode = CastInst::getCastOpcode(
-          RetVal, RetValSigned, Fn->getReturnType(), RetValSigned);
-      RetVal = Builder.CreateCast(opcode, RetVal, Fn->getReturnType());
+      RetVal = Builder.CreateBitCast(RetVal, Fn->getReturnType());
       RetVals.push_back(RetVal);
     } else {
       Value *RetVal = DECL_LOCAL(DECL_RESULT(FnDecl));

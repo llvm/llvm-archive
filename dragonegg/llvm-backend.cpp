@@ -326,16 +326,16 @@ void handleVisibility(tree decl, GlobalValue *GV) {
   }
 }
 
-//TODO// GuessAtInliningThreshold - Figure out a reasonable threshold to pass llvm's
-//TODO// inliner.  gcc has many options that control inlining, but we have decided
-//TODO// not to support anything like that for llvm-gcc.
-//TODOstatic unsigned GuessAtInliningThreshold() {
-//TODO  unsigned threshold = 200;
-//TODO  if (optimize_size || optimize < 3)
-//TODO    // Reduce inline limit.
-//TODO    threshold = 50;
-//TODO  return threshold;
-//TODO}
+// GuessAtInliningThreshold - Figure out a reasonable threshold to pass llvm's
+// inliner.  gcc has many options that control inlining, but we have decided
+// not to support anything like that for llvm-gcc.
+static unsigned GuessAtInliningThreshold() {
+  unsigned threshold = 200;
+  if (optimize_size || optimize < 3)
+    // Reduce inline limit.
+    threshold = 50;
+  return threshold;
+}
 
 #ifndef LLVM_TARGET_NAME
 #error LLVM_TARGET_NAME macro not specified
@@ -405,31 +405,29 @@ static void LazilyConfigureLLVM(void) {
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
 
-//TODO  // If there are options that should be passed through to the LLVM backend
-//TODO  // directly from the command line, do so now.  This is mainly for debugging
-//TODO  // purposes, and shouldn't really be for general use.
-//TODO  std::vector<std::string> ArgStrings;
-//TODO
-//TODO  if (flag_inline_trees > 1) {
-//TODO    unsigned threshold = GuessAtInliningThreshold();
-//TODO    std::string Arg("--inline-threshold="+utostr(threshold));
-//TODO    ArgStrings.push_back(Arg);
-//TODO  }
-//TODO
+  // If there are options that should be passed through to the LLVM backend
+  // directly from the command line, do so now.  This is mainly for debugging
+  // purposes, and shouldn't really be for general use.
+  std::vector<std::string> ArgStrings;
+
+  unsigned threshold = GuessAtInliningThreshold();
+  std::string Arg("--inline-threshold="+utostr(threshold));
+  ArgStrings.push_back(Arg);
+
 //TODO  if (flag_limited_precision > 0) {
 //TODO    std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
 //TODO    ArgStrings.push_back(Arg);
 //TODO  }
-//TODO
-//TODO  if (flag_stack_protect > 0) {
-//TODO    std::string Arg("--stack-protector-buffer-size=" +
-//TODO                    utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE)));
-//TODO    ArgStrings.push_back(Arg);
-//TODO  }
-//TODO
-//TODO  for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
-//TODO    Args.push_back(ArgStrings[i].c_str());
-//TODO
+
+  if (flag_stack_protect > 0) {
+    std::string Arg("--stack-protector-buffer-size=" +
+                    utostr(PARAM_VALUE(PARAM_SSP_BUFFER_SIZE)));
+    ArgStrings.push_back(Arg);
+  }
+
+  for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
+    Args.push_back(ArgStrings[i].c_str());
+
 //TODO  std::vector<std::string> LLVM_Optns; // Avoid deallocation before opts parsed!
 //TODO  if (llvm_optns) {
 //TODO    SplitString(llvm_optns, LLVM_Optns);
@@ -512,13 +510,13 @@ static void LazilyInitializeModule(void) {
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
-//TODO  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
-//TODO  // backend.
-//TODO#ifdef LLVM_SET_SUBTARGET_FEATURES
-//TODO  SubtargetFeatures Features;
+  // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
+  // backend.
+#ifdef LLVM_SET_SUBTARGET_FEATURES
+  SubtargetFeatures Features;
 //TODO  LLVM_SET_SUBTARGET_FEATURES(Features);
-//TODO  FeatureStr = Features.getString();
-//TODO#endif
+  FeatureStr = Features.getString();
+#endif
   TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 

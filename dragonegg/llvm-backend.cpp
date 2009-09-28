@@ -379,9 +379,9 @@ static void LazilyConfigureLLVM(void) {
 #ifdef LLVM_SET_TARGET_OPTIONS
   LLVM_SET_TARGET_OPTIONS(Args);
 #endif
-//TODO#ifdef LLVM_SET_MACHINE_OPTIONS
-//TODO  LLVM_SET_MACHINE_OPTIONS(Args);
-//TODO#endif
+#ifdef LLVM_SET_MACHINE_OPTIONS
+  LLVM_SET_MACHINE_OPTIONS(Args);
+#endif
 //TODO#ifdef LLVM_SET_IMPLICIT_FLOAT
 //TODO  LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
 //TODO#endif

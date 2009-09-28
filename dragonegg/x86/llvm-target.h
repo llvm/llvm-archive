@@ -946,4 +946,26 @@ enum ix86_builtins
    distinguish them. */
 #define LLVM_DO_NOT_USE_REG_NAMES
 
+/* Propagate code model setting to backend */
+#define LLVM_SET_MACHINE_OPTIONS(argvec)           \
+  switch (ix86_cmodel) {                           \
+  default:                                         \
+    sorry ("code model %<%s%> not supported yet", ix86_cmodel_string);  \
+    break;                                         \
+  case CM_SMALL:                                   \
+  case CM_SMALL_PIC:                               \
+    argvec.push_back("--code-model=small");        \
+    break;                                         \
+  case CM_KERNEL:                                  \
+    argvec.push_back("--code-model=kernel");       \
+    break;                                         \
+  case CM_MEDIUM:                                  \
+  case CM_MEDIUM_PIC:                              \
+    argvec.push_back("--code-model=medium");       \
+    break;                                         \
+  case CM_32:                                      \
+    argvec.push_back("--code-model=default");      \
+    break;                                         \
+  }
+
 #endif /* LLVM_TARGET_H */

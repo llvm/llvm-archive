@@ -43,6 +43,8 @@ Correctness
 If an ssa name refers to a global (can this happen?), the SSANames map might
 need to be updated if the target is altered by changeLLVMConstant.
 
+GCC now has per-function optimization levels.  Add support for this.
+
 
 Code quality
 ------------

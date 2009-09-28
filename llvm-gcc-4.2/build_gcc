@@ -263,6 +263,17 @@ if [ "$ENABLE_LLVM" == true ]; then
 fi
 # LLVM LOCAL end
 
+# If the user has set CC or CXX, respect their wishes.  If not,
+# compile with LLVM-GCC/LLVM-G++ if available; if LLVM is not
+# available, fall back to usual GCC/G++ default.
+savedPATH=$PATH ; PATH="$PATH:/Developer/usr/bin"
+XTMPCC=$(which llvm-gcc)
+if [ x$CC  = x -a x$XTMPCC != x ] ; then export CC=$XTMPCC  forcedCC=1  ; fi
+XTMPCC=$(which llvm-g++)
+if [ x$CXX = x -a x$XTMPCC != x ] ; then export CXX=$XTMPCC forcedCXX=1 ; fi
+PATH=$savedPATH
+unset XTMPCC savedPATH
+
 # Build the native GCC.  Do this even if the user didn't ask for it
 # because it'll be needed for the bootstrap.
 mkdir -p $DIR/obj-$BUILD-$BUILD $DIR/dst-$BUILD-$BUILD || exit 1
@@ -272,6 +283,7 @@ if [ \! -f Makefile ]; then
    --host=$BUILD-apple-darwin$DARWIN_VERS \
    --target=$BUILD-apple-darwin$DARWIN_VERS || exit 1
 fi
+
 # Unset RC_DEBUG_OPTIONS because it causes the bootstrap to fail.
 # Also keep unset for cross compilers so that the cross built libraries are
 # comparable to the native built libraries.
@@ -280,6 +292,11 @@ make $MAKEFLAGS CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS html CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
 make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$BUILD install-gcc install-target \
   CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+
+# Now that we've built a native compiler, un-kludge these so that
+# subsequent cross-hosted compilers can be found normally.
+if [ x$forcedCC  != x ] ; then unset CC  forcedCC  ; fi
+if [ x$forcedCXX != x ] ; then unset CXX forcedCXX ; fi
 
 # Add the compiler we just built to the path, giving it appropriate names.
 # LLVM LOCAL begin Support for non /usr $DEST_ROOT

@@ -1968,90 +1968,19 @@ void TreeToLLVM::EmitLandingPads() {
     Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
     Builder.CreateStore(Ex, ExceptionValue);
 
-    // Fetch and store the exception selector.
+    // Grab the type of the exception - eh selector for now...
+    //    Value *EHType = Builder.CreateCall(FuncEHSelector, "eh_select");
+    //Builder.CreateStore(EHType, ExceptionSelectorValue);
 
-    // The exception and the personality function.
-    Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
-    assert(llvm_eh_personality_libfunc
-           && "no exception handling personality function!");
-    Args.push_back(BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
-                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
-
-    // Add selections for each handler.
+    // Make sure the post pads exist
     foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
-         E = Handlers.end(); I != E; ++I) {
-      struct eh_region *region = *I;
+	   E = Handlers.end(); I != E; ++I)
+      getPostPad(get_eh_region_number(*I));
 
-      // Create a post landing pad for the handler.
-      getPostPad(get_eh_region_number(region));
-
-      int RegionKind = classify_eh_handler(region);
-      if (RegionKind < 0) {
-        // Filter - note the length.
-        tree TypeList = get_eh_type_list(region);
-        unsigned Length = list_length(TypeList);
-        Args.reserve(Args.size() + Length + 1);
-        Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), Length + 1));
-
-        // Add the type infos.
-        for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-          tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-          Args.push_back(Emit(TType, 0));
-        }
-      } else if (RegionKind > 0) {
-        // Catch.
-        tree TypeList = get_eh_type_list(region);
-
-        if (!TypeList) {
-          // Catch-all - push a null pointer.
-          Args.push_back(
-            Constant::getNullValue(PointerType::getUnqual(Type::getInt8Ty(Context)))
-          );
-        } else {
-          // Add the type infos.
-          for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
-            tree TType = lookup_type_for_runtime(TREE_VALUE(TypeList));
-            Args.push_back(Emit(TType, 0));
-          }
-        }
-      }
-    }
-
-    if (can_throw_external_1(i, false)) {
-      // Some exceptions from this region may not be caught by any handler.
-      // Since invokes are required to branch to the unwind label no matter
-      // what exception is being unwound, append a catch-all.
-
-      // The representation of a catch-all is language specific.
-      Value *CatchAll;
-      if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
-        // Use a "cleanup" - this should be good enough for most languages.
-        CatchAll = ConstantInt::get(Type::getInt32Ty(Context), 0);
-      } else {
-        tree catch_all_type = lang_eh_catch_all();
-        if (catch_all_type == NULL_TREE)
-          // Use a C++ style null catch-all object.
-          CatchAll = Constant::getNullValue(
-                                    PointerType::getUnqual(Type::getInt8Ty(Context)));
-        else
-          // This language has a type that catches all others.
-          CatchAll = Emit(catch_all_type, 0);
-      }
-      Args.push_back(CatchAll);
-    }
-
-    // Emit the selector call.
-    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
-                                       "eh_select");
-    Builder.CreateStore(Select, ExceptionSelectorValue);
-    // Branch to the post landing pad for the first reachable handler.
-    assert(!Handlers.empty() && "Landing pad but no handler?");
+    // Branch to the first handler...
     Builder.CreateBr(getPostPad(get_eh_region_number(*Handlers.begin())));
-
-    Handlers.clear();
-    Args.clear();
   }
 }
 
@@ -2101,6 +2030,8 @@ void TreeToLLVM::EmitPostPads() {
                               PointerType::getUnqual(Type::getInt8Ty(Context)));
 
         // Call get eh type id.
+	// TODO: For now let's assume that this is a language specific
+	// way of grabbing a type...
         Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
         Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
 

@@ -177,6 +177,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
 
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
+  FuncEHPersonality = 0;
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
@@ -1919,6 +1920,11 @@ void TreeToLLVM::CreateExceptionValues() {
   ExceptionSelectorValue = CreateTemporary(IntPtr);
   ExceptionSelectorValue->setName("eh_selector");
 
+  FuncEHPersonality = Intrinsic::getDeclaration(TheModule,
+					      (IntPtr == Type::getInt32Ty(Context) ?
+					       Intrinsic::eh_personality_i32 :
+					       Intrinsic::eh_personality_i64));
+
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
@@ -1969,8 +1975,11 @@ void TreeToLLVM::EmitLandingPads() {
     Builder.CreateStore(Ex, ExceptionValue);
 
     // Grab the type of the exception - eh selector for now...
-    //    Value *EHType = Builder.CreateCall(FuncEHSelector, "eh_select");
-    //Builder.CreateStore(EHType, ExceptionSelectorValue);
+    Value *EHType = Builder.CreateCall(FuncEHPersonality,
+		    BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
+				  PointerType::getUnqual(Type::getInt8Ty(Context))),
+				  "eh_select");
+    Builder.CreateStore(EHType, ExceptionSelectorValue);
 
     // Make sure the post pads exist
     foreach_reachable_handler(i, false, AddHandler, &Handlers);

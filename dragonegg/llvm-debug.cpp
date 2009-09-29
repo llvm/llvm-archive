@@ -461,8 +461,7 @@ DIType DebugInfo::createPointerType(tree type) {
     DW_TAG_reference_type;
   expanded_location Loc = GetNodeLocation(type);
 
-  std::string PName;
-  FromTy.getName(PName);
+  const char *PName = FromTy.getName();
   return  DebugFactory.CreateDerivedType(Tag, findRegion(type), PName,
                                          getOrCreateCompileUnit(NULL), 
                                          0 /*line no*/, 

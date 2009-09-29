@@ -509,6 +509,10 @@ private:
   /// DestLoc.
   Value *Emit(tree_node *exp, const MemRef *DestLoc);
 
+  /// EmitGimpleReg - Convert the specified gimple register or constant of
+  /// register type to an LLVM value.
+  Value *EmitGimpleReg(tree_node *reg);
+
   /// EmitBlock - Add the specified basic block to the end of the function.  If
   /// the previous block falls through into it, add an explicit branch.
   void EmitBlock(BasicBlock *BB);

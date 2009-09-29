@@ -1155,6 +1155,15 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   return Result;
 }
 
+/// EmitGimpleReg - Convert the specified gimple register or constant of
+/// register type to an LLVM value.
+Value *TreeToLLVM::EmitGimpleReg(tree_node *reg) {
+  assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
+  assert((is_gimple_reg(reg) || is_gimple_min_invariant(reg)) &&
+         "Expected a register or a constant!");
+  return Emit(reg, 0);
+}
+
 /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
 /// the address of the result.
 LValue TreeToLLVM::EmitLV(tree exp) {
@@ -3126,12 +3135,8 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree type, tree op) {
 /// EmitCompare - Compare LHS with RHS using the appropriate comparison code.
 /// The result is an i1 boolean.
 Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
-  const Type *LHSTy = ConvertType(TREE_TYPE(lhs));
-
-  assert((LHSTy == ConvertType(TREE_TYPE(rhs)) ||
-          (isa<PointerType>(LHSTy) &&
-           isa<PointerType>(ConvertType(TREE_TYPE(rhs))))) &&
-         "Unexpected types for comparison");
+  Value *LHS = EmitGimpleReg(lhs);
+  Value *RHS = Builder.CreateBitCast(EmitGimpleReg(rhs), LHS->getType());
 
   // Compute the LLVM opcodes corresponding to the GCC comparison.
   CmpInst::Predicate UIPred = CmpInst::BAD_ICMP_PREDICATE;
@@ -3181,9 +3186,9 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
 
   if (TREE_CODE(TREE_TYPE(lhs)) == COMPLEX_TYPE) {
     Value *LHSr, *LHSi;
-    SplitComplex(Emit(lhs, 0), LHSr, LHSi);
+    SplitComplex(LHS, LHSr, LHSi);
     Value *RHSr, *RHSi;
-    SplitComplex(Emit(rhs, 0), RHSr, RHSi);
+    SplitComplex(RHS, RHSr, RHSi);
 
     Value *DSTr, *DSTi;
     if (LHSr->getType()->isFloatingPoint()) {
@@ -3204,12 +3209,7 @@ Value *TreeToLLVM::EmitCompare(tree lhs, tree rhs, tree_code code) {
     return Builder.CreateOr(DSTr, DSTi);
   }
 
-  // Get the compare operands in the right type. Comparison of struct is not
-  // allowed, so this is safe as we already handled complex (struct) type.
-  Value *LHS = Emit(lhs, 0);
-  Value *RHS = Builder.CreateBitCast(Emit(rhs, 0), LHSTy);
-
-  if (LHSTy->isFloatingPoint())
+  if (LHS->getType()->isFPOrFPVector())
     return Builder.CreateFCmp(FPPred, LHS, RHS);
 
   // Determine which predicate to use based on signedness.

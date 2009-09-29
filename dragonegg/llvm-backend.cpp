@@ -1375,7 +1375,9 @@ Value *make_decl_llvm(tree decl) {
   
 //TODO  timevar_push(TV_LLVM_GLOBALS);
 
-  std::string Name = getLLVMAssemblerName(decl).str();
+  std::string Name;
+  if (TREE_CODE(decl) != CONST_DECL) // CONST_DECLs do not have assembler names.
+    Name = getLLVMAssemblerName(decl).str();
 
   // Now handle ordinary static variables and functions (in memory).
   // Also handle vars declared register invalidly.

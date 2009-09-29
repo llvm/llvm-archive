@@ -18,6 +18,10 @@ the plugin will work with an unpatched gcc, but for the moment a few small
 patches need to be applied.  Configure gcc with your favorite options.
 Build gcc, and install it somewhere.
 
+Darwin special: the gcc configure script thinks darwin doesn't support dynamic
+libraries and concludes that plugins won't work.  Delete or improve the check.
+If you improve it, please send your patch to the gcc developers!
+
 Step 2: Build the plugin
 ------------------------
 
@@ -29,6 +33,9 @@ it properly.
 
 Build the plugin using "make".  The end result of the build is a shared
 library, llvm.so.
+
+Darwin special: "-shared" doesn't result in a correct dynamic library on darwin,
+use "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -dynamiclib" instead.
 
 ----------------------
 - USAGE INSTRUCTIONS -

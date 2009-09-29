@@ -2118,7 +2118,7 @@ static struct plugin_info llvm_plugin_info = {
 int plugin_init (struct plugin_name_args *plugin_info,
                  struct plugin_gcc_version *version) {
   const char *plugin_name = plugin_info->base_name;
-  struct plugin_pass pass_info;
+  struct register_pass_info pass_info;
 
   // Check that the running gcc is the same as the gcc we were built against.
   // If not, refuse to load.  This seems wise when developing against a fast

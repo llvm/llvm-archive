@@ -1974,12 +1974,40 @@ void TreeToLLVM::EmitLandingPads() {
     Value *Ex = Builder.CreateCall(FuncEHException, "eh_ptr");
     Builder.CreateStore(Ex, ExceptionValue);
 
-    // Grab the type of the exception - eh selector for now...
-    Value *EHType = Builder.CreateCall(FuncEHPersonality,
-		    BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
-				  PointerType::getUnqual(Type::getInt8Ty(Context))),
-				  "eh_select");
+    // Emit the eh.personality function to pass some information through.
+    // The exception and the personality function.
+    Args.push_back(Builder.CreateLoad(ExceptionValue, "eh_ptr"));
+    assert(llvm_eh_personality_libfunc
+           && "no exception handling personality function!");
+    Args.push_back(BitCastToType(DECL_LLVM(llvm_eh_personality_libfunc),
+                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
+
+
+    // We also need to append the language specific catch-all so that the
+    // backend can generate the correct code to stop.
+    Value *CatchAll;
+    if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
+      // Use a "cleanup" - this should be good enough for most languages.
+      CatchAll = ConstantInt::get(Type::getInt32Ty(Context), 0);
+    } else {
+      tree catch_all_type = lang_eh_catch_all();
+      if (catch_all_type == NULL_TREE)
+	// Use a C++ style null catch-all object.
+	CatchAll = Constant::getNullValue(
+			   PointerType::getUnqual(Type::getInt8Ty(Context)));
+      else
+	// This language has a type that catches all others.
+	CatchAll = Emit(catch_all_type, 0);
+    }
+    Args.push_back(CatchAll);
+
+
+    Value *EHType = Builder.CreateCall(FuncEHPersonality, Args.begin(),
+				       Args.end(), "eh_personality");
     Builder.CreateStore(EHType, ExceptionSelectorValue);
+
+    // We'll use Args again.
+    Args.clear();
 
     // Make sure the post pads exist
     foreach_reachable_handler(i, false, AddHandler, &Handlers);

@@ -860,11 +860,12 @@ Function *TreeToLLVM::FinishFunctionBody() {
   }
   if (RetVals.empty())
     Builder.CreateRetVoid();
-  else if (!Fn->getReturnType()->isAggregateType()) {
-    assert(RetVals.size() == 1 && "Non-aggregate return has multiple values!");
+  else if (RetVals.size() == 1 && RetVals[0]->getType() == Fn->getReturnType()){
     Builder.CreateRet(RetVals[0]);
-  } else
+  } else {
+    assert(Fn->getReturnType()->isAggregateType() && "Return type mismatch!");
     Builder.CreateAggregateRet(RetVals.data(), RetVals.size());
+  }
 
   // Emit pending exception handling code.
   EmitLandingPads();

@@ -2006,6 +2006,8 @@ void TreeToLLVM::EmitLandingPads() {
                                        Args.end(), "eh_landingpad");
     Builder.CreateStore(EHType, ExceptionSelectorValue);
 
+    Handlers.clear();
+
     // We'll use Args again.
     Args.clear();
 

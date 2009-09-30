@@ -177,7 +177,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
 
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
-  FuncEHPersonality = 0;
+  FuncEHLandingPad = 0;
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
@@ -607,8 +607,8 @@ void TreeToLLVM::StartFunctionBody() {
 
       // Emit gcroot intrinsic if arg has attribute
       if (POINTER_TYPE_P(TREE_TYPE(Args))
-	  && lookup_attribute ("gcroot", TYPE_ATTRIBUTES(TREE_TYPE(Args))))
-      	EmitTypeGcroot(Tmp, Args);
+          && lookup_attribute ("gcroot", TYPE_ATTRIBUTES(TREE_TYPE(Args))))
+        EmitTypeGcroot(Tmp, Args);
 
       Client.setName(Name);
       Client.setLocation(Tmp);
@@ -1455,7 +1455,7 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
   Fn->setGC("shadow-stack");
 
   Function *gcrootFun = Intrinsic::getDeclaration(TheModule,
-						  Intrinsic::gcroot);
+                                                  Intrinsic::gcroot);
 
   // The idea is that it's a pointer to type "Value"
   // which is opaque* but the routine expects i8** and i8*.
@@ -1920,10 +1920,10 @@ void TreeToLLVM::CreateExceptionValues() {
   ExceptionSelectorValue = CreateTemporary(IntPtr);
   ExceptionSelectorValue->setName("eh_selector");
 
-  FuncEHPersonality = Intrinsic::getDeclaration(TheModule,
-					      (IntPtr == Type::getInt32Ty(Context) ?
-					       Intrinsic::eh_personality_i32 :
-					       Intrinsic::eh_personality_i64));
+  FuncEHLandingPad = Intrinsic::getDeclaration(TheModule,
+                                               (IntPtr == Type::getInt32Ty(Context) ?
+                                                Intrinsic::eh_landingpad_i32 :
+                                                Intrinsic::eh_landingpad_i64));
 
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
@@ -1992,18 +1992,18 @@ void TreeToLLVM::EmitLandingPads() {
     } else {
       tree catch_all_type = lang_eh_catch_all();
       if (catch_all_type == NULL_TREE)
-	// Use a C++ style null catch-all object.
-	CatchAll = Constant::getNullValue(
-			   PointerType::getUnqual(Type::getInt8Ty(Context)));
+        // Use a C++ style null catch-all object.
+        CatchAll =
+          Constant::getNullValue(PointerType::getUnqual(Type::getInt8Ty(Context)));
       else
-	// This language has a type that catches all others.
-	CatchAll = Emit(catch_all_type, 0);
+        // This language has a type that catches all others.
+        CatchAll = Emit(catch_all_type, 0);
     }
     Args.push_back(CatchAll);
 
 
-    Value *EHType = Builder.CreateCall(FuncEHPersonality, Args.begin(),
-				       Args.end(), "eh_personality");
+    Value *EHType = Builder.CreateCall(FuncEHLandingPad, Args.begin(),
+                                       Args.end(), "eh_landingpad");
     Builder.CreateStore(EHType, ExceptionSelectorValue);
 
     // We'll use Args again.
@@ -2013,7 +2013,7 @@ void TreeToLLVM::EmitLandingPads() {
     foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
-	   E = Handlers.end(); I != E; ++I)
+           E = Handlers.end(); I != E; ++I)
       getPostPad(get_eh_region_number(*I));
 
     // Branch to the first handler...
@@ -2067,8 +2067,8 @@ void TreeToLLVM::EmitPostPads() {
                               PointerType::getUnqual(Type::getInt8Ty(Context)));
 
         // Call get eh type id.
-	// TODO: For now let's assume that this is a language specific
-	// way of grabbing a type...
+        // TODO: For now let's assume that this is a language specific
+        // way of grabbing a type...
         Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
         Value *Select = Builder.CreateLoad(ExceptionSelectorValue);
 
@@ -2155,7 +2155,7 @@ void TreeToLLVM::EmitUnwindBlock() {
 
     TARGET_ADJUST_LLVM_CC(CallingConvention, fntype);
     CallInst *Call = Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc),
-					Arg);
+                                        Arg);
     Call->setCallingConv(CallingConvention);
 #else
     Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
@@ -3035,7 +3035,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   if (DestLoc == 0) {
     // Scalar to scalar copy.
     assert(!isAggregateTreeType(TREE_TYPE(Op))
-	   && "Aggregate to scalar nop_expr!");
+           && "Aggregate to scalar nop_expr!");
     Value *OpVal = Emit(Op, DestLoc);
     if (Ty == Type::getVoidTy(Context)) return 0;
     return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
@@ -5762,7 +5762,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
       ReadWrite = 0;
     } else if (cast<ConstantInt>(ReadWrite)->getZExtValue() > 1) {
       warning (0, "invalid second argument to %<__builtin_prefetch%>;"
-	       " using zero");
+               " using zero");
       ReadWrite = 0;
     } else {
       ReadWrite = Builder.getFolder().CreateIntCast(cast<Constant>(ReadWrite),
@@ -5899,8 +5899,8 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
 
   // FIXME: is i32 always enough here?
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-							Intrinsic::eh_dwarf_cfa),
-			      ConstantInt::get(Type::getInt32Ty(Context), cfa_offset));
+                                                        Intrinsic::eh_dwarf_cfa),
+                              ConstantInt::get(Type::getInt32Ty(Context), cfa_offset));
 
   return true;
 }
@@ -5954,7 +5954,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Value *Handler = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
 
   Intrinsic::ID IID = (IntPtr == Type::getInt32Ty(Context) ?
-		       Intrinsic::eh_return_i32 : Intrinsic::eh_return_i64);
+                       Intrinsic::eh_return_i32 : Intrinsic::eh_return_i64);
 
   Offset = Builder.CreateIntCast(Offset, IntPtr, true);
   Handler = BitCastToType(Handler, PointerType::getUnqual(Type::getInt8Ty(Context)));
@@ -5963,7 +5963,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Args.push_back(Offset);
   Args.push_back(Handler);
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
-		     Args.begin(), Args.end());
+                     Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
   EmitBlock(BasicBlock::Create(Context, ""));
 

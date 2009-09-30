@@ -322,8 +322,8 @@ class TreeToLLVM {
   /// selector.
   Value *ExceptionSelectorValue;
 
-  /// FuncEHPersonality - Function used to mark catch all blocks
-  Function *FuncEHPersonality;
+  /// FuncEHLandingPad - Function used to mark catch all blocks.
+  Function *FuncEHLandingPad;
 
   /// FuncEHException - Function used to receive the exception.
   Function *FuncEHException;

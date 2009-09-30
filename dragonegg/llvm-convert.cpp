@@ -755,34 +755,12 @@ void TreeToLLVM::PopulatePhiNodes() {
       // Find the incoming value for this predecessor.
       while (VI != VE && VI->first != BB) ++VI;
       assert(VI != VE && "No value for predecessor!");
-      tree val = VI->second;
+      Value *Val = EmitGimpleReg(VI->second);
 
-      // Emitting the value may produce code, for example a type conversion.
-      // Place any code at the end of the predecessor, before the terminator.
-
-      // Pop the terminator.
-      Instruction *Terminator = BB->getTerminator();
-      assert(Terminator && "Basic block has no terminator!");
-      Terminator->removeFromParent();
-
-      // If the terminator is an invoke instruction and the value makes use of
-      // the invoke result then the code cannot be placed before the terminator.
-      // This case cannot occur because the normal destination of a landing pad
-      // is always an artificial basic block, so never has any phi nodes in it.
-      assert((!isa<InvokeInst>(Terminator) ||
-              PhiBB != cast<InvokeInst>(Terminator)->getNormalDest()) &&
-             "PHI node in invoke normal destination!");
-
-      // Point the builder to the end of the predecessor.
-      Builder.SetInsertPoint(BB);
-
-      // Emit the value.
-      Value *Value = Builder.CreateBitCast(Emit(val, 0), P.PHI->getType());
-      assert(Builder.GetInsertBlock() == BB &&
-             "Expression emission generated control flow!");
-
-      // Push the terminator back.
-      BB->getInstList().push_back(Terminator);
+      // Need to bitcast to the right type (useless_type_conversion_p).  Place
+      // the bitcast at the end of the predecessor, before the terminator.
+      if (Val->getType() != P.PHI->getType())
+        Val = new BitCastInst(Val, P.PHI->getType(), "", BB->getTerminator());
 
       // Add the phi node arguments for all occurrences of this predecessor.
       do {
@@ -790,7 +768,7 @@ void TreeToLLVM::PopulatePhiNodes() {
         // original position before sorting of the predecessor in the pred list.
         // Since the predecessors were sorted non-deterministically (by pointer
         // value), this ensures that the same bitcode is produced on any run.
-        PhiArguments[PI++->second] = std::make_pair(BB, Value);
+        PhiArguments[PI++->second] = std::make_pair(BB, Val);
       } while (PI != PE && PI->first == BB);
     }
 
@@ -1120,7 +1098,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   case CONSTRUCTOR:       Result = EmitCONSTRUCTOR(exp, DestLoc); break;
 
   // Complex Math Expressions.
-  case COMPLEX_CST: Result = EmitCOMPLEX_CST(exp); break;
+  case COMPLEX_CST: Result = TreeConstantToLLVM::ConvertCOMPLEX_CST(exp); break;
 
   // Constant Expressions
   case INTEGER_CST:
@@ -1153,15 +1131,6 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
           Result->getType() == ConvertType(TREE_TYPE(exp))) &&
           "Value has wrong type!");
   return Result;
-}
-
-/// EmitGimpleReg - Convert the specified gimple register or constant of
-/// register type to an LLVM value.
-Value *TreeToLLVM::EmitGimpleReg(tree_node *reg) {
-  assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
-  assert((is_gimple_reg(reg) || is_gimple_min_invariant(reg)) &&
-         "Expected a register or a constant!");
-  return Emit(reg, 0);
 }
 
 /// EmitLV - Convert the specified l-value tree node to LLVM code, returning
@@ -2133,22 +2102,26 @@ static bool canEmitRegisterVariable(tree exp) {
 }
 
 /// EmitSSA_NAME - Return the defining value of the given SSA_NAME.
-Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
-  DenseMap<tree, AssertingVH<> >::iterator I = SSANames.find(exp);
+/// Only creates code in the entry block.
+Value *TreeToLLVM::EmitSSA_NAME(tree reg) {
+  assert(TREE_CODE(reg) == SSA_NAME && "Expected an SSA name!");
+  assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
+
+  DenseMap<tree, AssertingVH<> >::iterator I = SSANames.find(reg);
   if (I != SSANames.end())
     return I->second;
 
   // This SSA name is the default definition for the underlying symbol.
-  assert(SSA_NAME_IS_DEFAULT_DEF(exp) && "SSA name used before being defined!");
+  assert(SSA_NAME_IS_DEFAULT_DEF(reg) && "SSA name used before being defined!");
 
   // The underlying symbol is an SSA variable.
-  tree var = SSA_NAME_VAR(exp);
+  tree var = SSA_NAME_VAR(reg);
   assert(SSA_VAR_P(var) && "Not an SSA variable!");
 
   // If the variable is itself an ssa name, use its LLVM value.
   if (TREE_CODE (var) == SSA_NAME) {
     Value *Val = EmitSSA_NAME(var);
-    return SSANames[exp] = Val;
+    return SSANames[reg] = Val;
   }
 
   // Otherwise the symbol is a VAR_DECL, PARM_DECL or RESULT_DECL.  Since a
@@ -2156,7 +2129,7 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
   // variable in the function is a read operation, and refers to the value
   // read, it has an undefined value except for PARM_DECLs.
   if (TREE_CODE(var) != PARM_DECL)
-    return UndefValue::get(ConvertType(TREE_TYPE(exp)));
+    return UndefValue::get(ConvertType(TREE_TYPE(reg)));
 
   // Read the initial value of the parameter and associate it with the ssa name.
   assert(DECL_LOCAL_IF_SET(var) && "Parameter not laid out?");
@@ -2167,15 +2140,85 @@ Value *TreeToLLVM::EmitSSA_NAME(tree exp) {
   const char *ParameterName =
     DECL_NAME(var) ? IDENTIFIER_POINTER(DECL_NAME(var)) : "anon";
 
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
-  Value *Ptr = Builder.CreateBitCast(DECL_LOCAL_IF_SET(var),
-                                     PointerType::getUnqual(Ty));
+  const Type *Ty = ConvertType(TREE_TYPE(reg));
 
   // Perform the load in the entry block, after all parameters have been set up
   // with their initial values, and before any modifications to their values.
-  LoadInst *LI = new LoadInst(Ptr, ParameterName, SSAInsertionPoint);
+  LoadInst *LI = new LoadInst(DECL_LOCAL_IF_SET(var), ParameterName,
+                              SSAInsertionPoint);
   LI->setAlignment(Alignment);
-  return SSANames[exp] = LI;
+
+  // Potentially perform a useless type conversion (useless_type_conversion_p).
+  Value *Def = LI;
+  if (LI->getType() != Ty)
+    Def = new BitCastInst(Def, Ty, "", SSAInsertionPoint);
+  return SSANames[reg] = Def;
+}
+
+/// EmitGimpleInvariantAddress - The given address is constant in this function.
+/// Return the corresponding LLVM value.  Only creates code in the entry block.
+Value *TreeToLLVM::EmitGimpleInvariantAddress(tree reg) {
+  assert(is_gimple_invariant_address(reg) &&
+         "Expected a locally constant address!");
+  assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
+
+  DenseMap<tree, AssertingVH<> >::iterator I = MinInvariants.find(reg);
+  if (I != MinInvariants.end())
+    return I->second;
+
+  // Any generated code goes in the entry block.
+  BasicBlock *EntryBlock = SSAInsertionPoint->getParent();
+
+  // Note the current builder position.
+  BasicBlock *SavedInsertBB = Builder.GetInsertBlock();
+  BasicBlock::iterator SavedInsertPoint = Builder.GetInsertPoint();
+
+  // Pop the entry block terminator.  There may not be a terminator if we are
+  // recursing or if the entry block was not yet finished.
+  Instruction *Terminator = EntryBlock->getTerminator();
+  assert(((SavedInsertBB != EntryBlock && Terminator) ||
+          (SavedInsertPoint == EntryBlock->end() && !Terminator)) &&
+         "Insertion point doesn't make sense!");
+  if (Terminator)
+    Terminator->removeFromParent();
+
+  // Point the builder at the end of the entry block.
+  Builder.SetInsertPoint(EntryBlock);
+
+  // Calculate the address.
+  Value *Address = Emit(reg, 0);
+
+  // Restore the entry block terminator.
+  if (Terminator)
+    EntryBlock->getInstList().push_back(Terminator);
+
+  // Restore the builder insertion point.
+  if (SavedInsertBB != EntryBlock)
+    Builder.SetInsertPoint(SavedInsertBB, SavedInsertPoint);
+
+  return MinInvariants[reg] = Address;
+}
+
+/// EmitGimpleConstant - Return the LLVM constant for this global constant.
+Constant *TreeToLLVM::EmitGimpleConstant(tree reg) {
+  assert(is_gimple_constant(reg) && "Not a gimple constant!");
+  assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
+  switch (TREE_CODE(reg)) {
+  default:
+    debug_tree(reg);
+    llvm_unreachable("Unhandled GIMPLE constant!");
+
+  case INTEGER_CST:
+    return TreeConstantToLLVM::ConvertINTEGER_CST(reg);
+  case REAL_CST:
+    return TreeConstantToLLVM::ConvertREAL_CST(reg);
+  case COMPLEX_CST:
+    return TreeConstantToLLVM::ConvertCOMPLEX_CST(reg);
+  case VECTOR_CST:
+    return TreeConstantToLLVM::ConvertVECTOR_CST(reg);
+  case CONSTRUCTOR:
+    return TreeConstantToLLVM::ConvertCONSTRUCTOR(reg);
+  }
 }
 
 Value *TreeToLLVM::EmitGimpleAssignRHS(gimple stmt, const MemRef *DestLoc) {
@@ -3075,7 +3118,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree op) {
 }
 
 Value *TreeToLLVM::EmitABS_EXPR(tree op) {
-  Value *Op = Emit(op, 0);
+  Value *Op = EmitGimpleReg(op);
   if (!Op->getType()->isFloatingPoint()) {
     Value *OpN = Builder.CreateNeg(Op, (Op->getNameStr()+"neg").c_str());
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(op)) ?
@@ -3119,12 +3162,12 @@ static const Type *getSuitableBitCastIntType(const Type *Ty) {
 }
 
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree op) {
-  Value *Op = Emit(op, 0);
+  Value *Op = EmitGimpleReg(op);
   return Builder.CreateNot(Op, (Op->getNameStr()+"not").c_str());
 }
 
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree type, tree op) {
-  Value *V = Emit(op, 0);
+  Value *V = EmitGimpleReg(op);
   if (V->getType() != Type::getInt1Ty(Context))
     V = Builder.CreateICmpNE(V,
           Constant::getNullValue(V->getType()), "toBool");
@@ -3224,8 +3267,8 @@ Value *TreeToLLVM::EmitBinOp(tree type, tree_code code, tree op0, tree op1,
   if (TREE_CODE(type) == COMPLEX_TYPE)
     return EmitComplexBinOp(type, code, op0, op1);
 
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   // GCC has no problem with things like "xor uint X, int 17", and X-Y, where
   // X and Y are pointer types, but the result is an integer.  As such, convert
@@ -3267,8 +3310,8 @@ Value *TreeToLLVM::EmitBinOp(tree type, tree_code code, tree op0, tree op1,
 }
 
 Value *TreeToLLVM::EmitTruthOp(tree type, tree op0, tree op1, unsigned Opc) {
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   // This is a truth operation like the strict &&,||,^^.  Convert to bool as
   // a test against zero
@@ -3285,8 +3328,8 @@ Value *TreeToLLVM::EmitTruthOp(tree type, tree op0, tree op1, unsigned Opc) {
 
 
 Value *TreeToLLVM::EmitShiftOp(tree op0, tree op1, unsigned Opc) {
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
   if (RHS->getType() != LHS->getType())
     RHS = Builder.CreateIntCast(RHS, LHS->getType(), false,
                                 (RHS->getNameStr()+".cast").c_str());
@@ -3296,8 +3339,8 @@ Value *TreeToLLVM::EmitShiftOp(tree op0, tree op1, unsigned Opc) {
 
 Value *TreeToLLVM::EmitRotateOp(tree type, tree op0, tree op1,
                                 unsigned Opc1, unsigned Opc2) {
-  Value *In  = Emit(op0, 0);
-  Value *Amt = Emit(op1, 0);
+  Value *In  = EmitGimpleReg(op0);
+  Value *Amt = EmitGimpleReg(op1);
 
   if (Amt->getType() != In->getType())
     Amt = Builder.CreateIntCast(Amt, In->getType(), false,
@@ -3320,8 +3363,8 @@ Value *TreeToLLVM::EmitRotateOp(tree type, tree op0, tree op1,
 Value *TreeToLLVM::EmitMinMaxExpr(tree type, tree op0, tree op1,
                                   unsigned UIPred, unsigned SIPred,
                                   unsigned FPPred, bool isMax) {
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   const Type *Ty = ConvertType(type);
 
@@ -3362,8 +3405,8 @@ Value *TreeToLLVM::EmitFLOOR_MOD_EXPR(tree type, tree op0, tree op1) {
   const Type *Ty = ConvertType(type);
   Constant *Zero = ConstantInt::get(Ty, 0);
 
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   // The two possible values for Mod.
   Value *Rem = Builder.CreateSRem(LHS, RHS, "rem");
@@ -3395,8 +3438,8 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree type, tree op0, tree op1) {
   Constant *One = ConstantInt::get(Ty, 1);
   Constant *MinusOne = Constant::getAllOnesValue(Ty);
 
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   if (!TYPE_UNSIGNED(type)) {
     // In the case of signed arithmetic, we calculate CDiv as follows:
@@ -3448,8 +3491,8 @@ Value *TreeToLLVM::EmitCEIL_DIV_EXPR(tree type, tree op0, tree op1) {
 
 Value *TreeToLLVM::EmitFLOOR_DIV_EXPR(tree type, tree op0, tree op1) {
   // Notation: FLOOR_DIV_EXPR <-> FDiv, TRUNC_DIV_EXPR <-> Div.
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   // FDiv calculates LHS/RHS by rounding down to the nearest integer.  In terms
   // of Div this means if the values of LHS and RHS have the same sign or if LHS
@@ -3512,8 +3555,8 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree type, tree op0, tree op1) {
   Constant *Zero = ConstantInt::get(Ty, 0);
   Constant *Two = ConstantInt::get(Ty, 2);
 
-  Value *LHS = Emit(op0, 0);
-  Value *RHS = Emit(op1, 0);
+  Value *LHS = EmitGimpleReg(op0);
+  Value *RHS = EmitGimpleReg(op1);
 
   if (!TYPE_UNSIGNED(type)) {
     // In the case of signed arithmetic, we calculate RDiv as follows:
@@ -3579,8 +3622,8 @@ Value *TreeToLLVM::EmitROUND_DIV_EXPR(tree type, tree op0, tree op1) {
 }
 
 Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree type, tree op0, tree op1) {
-  Value *Ptr = Emit(op0, 0); // The pointer.
-  Value *Idx = Emit(op1, 0); // The offset in bytes.
+  Value *Ptr = EmitGimpleReg(op0); // The pointer.
+  Value *Idx = EmitGimpleReg(op1); // The offset in bytes.
 
   // Convert the pointer into an i8* and add the offset to it.
   Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
@@ -3597,7 +3640,7 @@ Value *TreeToLLVM::EmitXXXXPART_EXPR(tree exp, unsigned Idx) {
 
 Value *TreeToLLVM::EmitPAREN_EXPR(tree op) {
   // TODO: Understand and correctly deal with this subtle expression.
-  return Emit(op, 0);
+  return EmitGimpleReg(op);
 }
 
 
@@ -4159,7 +4202,7 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(gimple stmt, tree fndecl,
       Emit(OpVal, &OpLoc);
       Operands.push_back(Builder.CreateLoad(OpLoc.Ptr));
     } else {
-      Operands.push_back(Emit(OpVal, NULL));
+      Operands.push_back(Emit(OpVal, 0));
     }
   }
 
@@ -5592,11 +5635,6 @@ Value *TreeToLLVM::CreateComplex(Value *Real, Value *Imag) {
 void TreeToLLVM::SplitComplex(Value *Complex, Value *&Real, Value *&Imag) {
   Real = Builder.CreateExtractValue(Complex, 0);
   Imag = Builder.CreateExtractValue(Complex, 1);
-}
-
-Value *TreeToLLVM::EmitCOMPLEX_CST(tree exp) {
-  return CreateComplex(Emit(TREE_REALPART(exp), 0),
-                       Emit(TREE_IMAGPART(exp), 0));
 }
 
 Value *TreeToLLVM::EmitCOMPLEX_EXPR(tree op0, tree op1) {

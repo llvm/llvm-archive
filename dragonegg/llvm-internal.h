@@ -353,6 +353,10 @@ class TreeToLLVM {
   /// PendingPhis - Phi nodes which have not yet been populated with operands.
   SmallVector<PhiRecord, 16> PendingPhis;
 
+  // MinInvariants - Map from gimple minimal invariants to their corresponding
+  // LLVM values.
+  DenseMap<tree, AssertingVH<> > MinInvariants;
+
   // SSANames - Map from GCC ssa names to the defining LLVM value.
   DenseMap<tree, AssertingVH<> > SSANames;
 
@@ -503,15 +507,40 @@ public:
   BasicBlock *getLabelDeclBlock(tree_node *LabelDecl);
 
 private:
+  /// EmitSSA_NAME - Return the defining value of the given SSA_NAME.
+  /// Only creates code in the entry block.
+  Value *EmitSSA_NAME(tree_node *reg);
+
+  /// EmitGimpleInvariantAddress - The given address is constant in this
+  /// function.  Return the corresponding LLVM value.  Only creates code in
+  /// the entry block.
+  Value *EmitGimpleInvariantAddress(tree_node *reg);
+
+  /// EmitGimpleConstant - Convert the given global constant of register type to
+  /// an LLVM constant.  Creates no code, only constants.
+  Constant *EmitGimpleConstant(tree_node *reg);
+
+  /// EmitGimpleMinInvariant - The given value is constant in this function.
+  /// Return the corresponding LLVM value. Only creates code in the entry block.
+  Value *EmitGimpleMinInvariant(tree_node *reg) {
+    if (TREE_CODE(reg) == ADDR_EXPR)
+      return EmitGimpleInvariantAddress(reg);
+    return EmitGimpleConstant(reg);
+  }
+
+  /// EmitGimpleReg - Convert the specified gimple register or local constant of
+  /// register type to an LLVM value.  Only creates code in the entry block.
+  Value *EmitGimpleReg(tree_node *reg) {
+    if (TREE_CODE(reg) == SSA_NAME)
+      return EmitSSA_NAME(reg);
+    return EmitGimpleMinInvariant(reg);
+  }
+
   /// Emit - Convert the specified tree node to LLVM code.  If the node is an
   /// expression that fits into an LLVM scalar value, the result is returned. If
   /// the result is an aggregate, it is stored into the location specified by
   /// DestLoc.
   Value *Emit(tree_node *exp, const MemRef *DestLoc);
-
-  /// EmitGimpleReg - Convert the specified gimple register or constant of
-  /// register type to an LLVM value.
-  Value *EmitGimpleReg(tree_node *reg);
 
   /// EmitBlock - Add the specified basic block to the end of the function.  If
   /// the previous block falls through into it, add an explicit branch.
@@ -582,7 +611,6 @@ private:
   // characteristics.
 
   // Expressions.
-  Value *EmitSSA_NAME(tree_node *exp);
   Value *EmitGimpleAssignRHS(gimple stmt, const MemRef *DestLoc);
   Value *EmitGimpleCallRHS(gimple stmt, const MemRef *DestLoc);
   Value *EmitLoadOfLValue(tree_node *exp, const MemRef *DestLoc);
@@ -674,7 +702,6 @@ private:
   // Complex Math Expressions.
   Value *CreateComplex(Value *Real, Value *Imag);
   void SplitComplex(Value *Complex, Value *&Real, Value *&Imag);
-  Value *EmitCOMPLEX_CST(tree exp);
   Value *EmitCOMPLEX_EXPR(tree op0, tree op1);
   Value *EmitComplexBinOp(tree_node *type, tree_code code, tree_node *op0,
                           tree_node *op1);

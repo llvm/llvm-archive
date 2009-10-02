@@ -496,10 +496,7 @@ static tree arm_md_asm_clobbers (tree, tree, tree);
 #endif
 /* APPLE LOCAL end ARM darwin local binding */
 
-/* APPLE LOCAL begin v7 support. Merge from Codesourcery */
-#undef TARGET_MANGLE_TYPE
-#define TARGET_MANGLE_TYPE arm_mangle_type
-/* APPLE LOCAL end support. Merge from Codesourcery */
+/* LLVM LOCAL pr5037 removed arm_mangle_type */
 
 /* APPLE LOCAL begin ARM reliable backtraces */
 #undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
@@ -16734,16 +16731,7 @@ valid_neon_mode (enum machine_mode mode)
   return VALID_NEON_DREG_MODE (mode) || VALID_NEON_QREG_MODE (mode);
 }
 
-/* APPLE LOCAL begin 7083296 Build without warnings.  */
-static tree
-make_neon_float_type (void)
-{
-  tree neon_float_type_node = make_node (REAL_TYPE);
-  TYPE_PRECISION (neon_float_type_node) = FLOAT_TYPE_SIZE;
-  layout_type (neon_float_type_node);
-  return neon_float_type_node;
-}
-/* APPLE LOCAL end 7083296 Build without warnings.  */
+/* LLVM LOCAL pr5037 removed make_neon_float_type */
 
 /* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
@@ -16871,18 +16859,14 @@ arm_init_neon_builtins (void)
 
   unsigned int i, fcode = ARM_BUILTIN_NEON_BASE;
 
-  /* Create distinguished type nodes for NEON vector element types,
-     and pointers to values of such types, so we can detect them later.  */
-  tree neon_intQI_type_node = make_signed_type (GET_MODE_PRECISION (QImode));
-  tree neon_intHI_type_node = make_signed_type (GET_MODE_PRECISION (HImode));
-  tree neon_polyQI_type_node = make_signed_type (GET_MODE_PRECISION (QImode));
-  tree neon_polyHI_type_node = make_signed_type (GET_MODE_PRECISION (HImode));
-  tree neon_intSI_type_node = make_signed_type (GET_MODE_PRECISION (SImode));
-  tree neon_intDI_type_node = make_signed_type (GET_MODE_PRECISION (DImode));
-  /* APPLE LOCAL begin 7083296 Build without warnings.  */
-  tree neon_float_type_node = make_neon_float_type ();
-  
-  /* APPLE LOCAL end 7083296 Build without warnings.  */
+  /* LLVM LOCAL begin pr5037 use standard type nodes */
+  tree neon_intQI_type_node = intQI_type_node;
+  tree neon_intHI_type_node = intHI_type_node;
+  tree neon_intSI_type_node = intSI_type_node;
+  tree neon_intDI_type_node = intDI_type_node;
+  tree neon_float_type_node = float_type_node;
+  /* LLVM LOCAL end pr5037 use standard type nodes */
+
   tree intQI_pointer_node = build_pointer_type (neon_intQI_type_node);
   tree intHI_pointer_node = build_pointer_type (neon_intHI_type_node);
   tree intSI_pointer_node = build_pointer_type (neon_intSI_type_node);
@@ -16934,70 +16918,66 @@ arm_init_neon_builtins (void)
   tree V2DI_type_node =
     build_vector_type_for_mode (neon_intDI_type_node, V2DImode);
 
-  /* Unsigned integer types for various mode sizes.  */
-  tree intUQI_type_node = make_unsigned_type (GET_MODE_PRECISION (QImode));
-  tree intUHI_type_node = make_unsigned_type (GET_MODE_PRECISION (HImode));
-  tree intUSI_type_node = make_unsigned_type (GET_MODE_PRECISION (SImode));
-  tree intUDI_type_node = make_unsigned_type (GET_MODE_PRECISION (DImode));
+  /* LLVM LOCAL pr5037 removed unused type nodes */
 
   /* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
   tree V8QI2_type_node = build_multivec_type (V8QI_type_node, 2,
-                                              "__builtin_neon_v8qi2");
+                                              "__neon_int8x8x2_t");
   tree V4HI2_type_node = build_multivec_type (V4HI_type_node, 2,
-                                              "__builtin_neon_v4hi2");
+                                              "__neon_int16x4x2_t");
   tree V2SI2_type_node = build_multivec_type (V2SI_type_node, 2,
-                                              "__builtin_neon_v2si2");
+                                              "__neon_int32x2x2_t");
   tree V1DI2_type_node = build_multivec_type (V1DI_type_node, 2,
-                                              "__builtin_neon_v1di2");
+                                              "__neon_int64x1x2_t");
   tree V2SF2_type_node = build_multivec_type (V2SF_type_node, 2,
-                                              "__builtin_neon_v2sf2");
+                                              "__neon_float32x2x2_t");
   tree V8QI3_type_node = build_multivec_type (V8QI_type_node, 3,
-                                              "__builtin_neon_v8qi3");
+                                              "__neon_int8x8x3_t");
   tree V4HI3_type_node = build_multivec_type (V4HI_type_node, 3,
-                                              "__builtin_neon_v4hi3");
+                                              "__neon_int16x4x3_t");
   tree V2SI3_type_node = build_multivec_type (V2SI_type_node, 3,
-                                              "__builtin_neon_v2si3");
+                                              "__neon_int32x2x3_t");
   tree V1DI3_type_node = build_multivec_type (V1DI_type_node, 3,
-                                              "__builtin_neon_v1di2");
+                                              "__neon_int64x1x3_t");
   tree V2SF3_type_node = build_multivec_type (V2SF_type_node, 3,
-                                              "__builtin_neon_v2sf3");
+                                              "__neon_float32x2x3_t");
   tree V8QI4_type_node = build_multivec_type (V8QI_type_node, 4,
-                                              "__builtin_neon_v8qi4");
+                                              "__neon_int8x8x4_t");
   tree V4HI4_type_node = build_multivec_type (V4HI_type_node, 4,
-                                              "__builtin_neon_v4hi4");
+                                              "__neon_int16x4x4_t");
   tree V2SI4_type_node = build_multivec_type (V2SI_type_node, 4,
-                                              "__builtin_neon_v2si4");
+                                              "__neon_int32x2x4_t");
   tree V1DI4_type_node = build_multivec_type (V1DI_type_node, 4,
-                                              "__builtin_neon_v1di2");
+                                              "__neon_int64x1x4_t");
   tree V2SF4_type_node = build_multivec_type (V2SF_type_node, 4,
-                                              "__builtin_neon_v2sf4");
+                                              "__neon_float32x2x4_t");
   tree V16QI2_type_node = build_multivec_type (V16QI_type_node, 2,
-                                               "__builtin_neon_v16qi2");
+                                               "__neon_int8x16x2_t");
   tree V8HI2_type_node = build_multivec_type (V8HI_type_node, 2,
-                                              "__builtin_neon_v8hi2");
+                                              "__neon_int16x8x2_t");
   tree V4SI2_type_node = build_multivec_type (V4SI_type_node, 2,
-                                              "__builtin_neon_v4si2");
+                                              "__neon_int32x4x2_t");
   tree V4SF2_type_node = build_multivec_type (V4SF_type_node, 2,
-                                              "__builtin_neon_v4sf2");
+                                              "__neon_float32x4x2_t");
   tree V2DI2_type_node = build_multivec_type (V2DI_type_node, 2,
-                                              "__builtin_neon_v2di2");
+                                              "__neon_int64x2x2_t");
   tree V16QI3_type_node = build_multivec_type (V16QI_type_node, 3,
-                                               "__builtin_neon_v16qi3");
+                                               "__neon_int8x16x3_t");
   tree V8HI3_type_node = build_multivec_type (V8HI_type_node, 3,
-                                              "__builtin_neon_v8hi3");
+                                              "__neon_int16x8x3_t");
   tree V4SI3_type_node = build_multivec_type (V4SI_type_node, 3,
-                                              "__builtin_neon_v4si3");
+                                              "__neon_int32x4x3_t");
   tree V4SF3_type_node = build_multivec_type (V4SF_type_node, 3,
-                                              "__builtin_neon_v4sf3");
+                                              "__neon_float32x4x3_t");
   tree V16QI4_type_node = build_multivec_type (V16QI_type_node, 4,
-                                               "__builtin_neon_v16qi4");
+                                               "__neon_int8x16x4_t");
   tree V8HI4_type_node = build_multivec_type (V8HI_type_node, 4,
-                                              "__builtin_neon_v8hi4");
+                                              "__neon_int16x8x4_t");
   tree V4SI4_type_node = build_multivec_type (V4SI_type_node, 4,
-                                              "__builtin_neon_v4si4");
+                                              "__neon_int32x4x4_t");
   tree V4SF4_type_node = build_multivec_type (V4SF_type_node, 4,
-                                              "__builtin_neon_v4sf4");
+                                              "__neon_float32x4x4_t");
 #else /* ENABLE_LLVM */
   /* Opaque integer types for structures of vectors.  */
   tree intEI_type_node = make_signed_type (GET_MODE_PRECISION (EImode));
@@ -17824,89 +17804,63 @@ arm_init_neon_builtins (void)
   tree dreg_types[5], qreg_types[5];
 
   /* APPLE LOCAL begin 7083296 Build without warnings.  */
-  /* Define typedefs which exactly correspond to the modes we are basing vector
-     types on.  If you change these names you'll need to change
-     the table used by arm_mangle_type too.  */
-  (*lang_hooks.types.register_builtin_type) (neon_intQI_type_node,
-					     "__builtin_neon_qi");
-  (*lang_hooks.types.register_builtin_type) (neon_intHI_type_node,
-					     "__builtin_neon_hi");
-  (*lang_hooks.types.register_builtin_type) (neon_intSI_type_node,
-					     "__builtin_neon_si");
-  (*lang_hooks.types.register_builtin_type) (neon_float_type_node,
-					     "__builtin_neon_sf");
-  (*lang_hooks.types.register_builtin_type) (neon_intDI_type_node,
-					     "__builtin_neon_di");
-
-  (*lang_hooks.types.register_builtin_type) (neon_polyQI_type_node,
-					     "__builtin_neon_poly8");
-  (*lang_hooks.types.register_builtin_type) (neon_polyHI_type_node,
-					     "__builtin_neon_poly16");
-
-  (*lang_hooks.types.register_builtin_type) (intUQI_type_node,
-					     "__builtin_neon_uqi");
-  (*lang_hooks.types.register_builtin_type) (intUHI_type_node,
-					     "__builtin_neon_uhi");
-  (*lang_hooks.types.register_builtin_type) (intUSI_type_node,
-					     "__builtin_neon_usi");
-  (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
-					     "__builtin_neon_udi");
+  /* LLVM LOCAL pr5037 removed builtin element types */
 
   /* LLVM LOCAL begin multi-vector types */
   (*lang_hooks.types.register_builtin_type) (V8QI2_type_node,
-					     "__builtin_neon_v8qi2");
+                                             "__neon_int8x8x2_t");
   (*lang_hooks.types.register_builtin_type) (V4HI2_type_node,
-					     "__builtin_neon_v4hi2");
+                                             "__neon_int16x4x2_t");
   (*lang_hooks.types.register_builtin_type) (V2SI2_type_node,
-					     "__builtin_neon_v2si2");
+                                             "__neon_int32x2x2_t");
   (*lang_hooks.types.register_builtin_type) (V2SF2_type_node,
-					     "__builtin_neon_v2sf2");
+                                             "__neon_float32x2x2_t");
   (*lang_hooks.types.register_builtin_type) (V1DI2_type_node,
-					     "__builtin_neon_v1di2");
+                                             "__neon_int64x1x2_t");
   (*lang_hooks.types.register_builtin_type) (V8QI3_type_node,
-					     "__builtin_neon_v8qi3");
+                                             "__neon_int8x8x3_t");
   (*lang_hooks.types.register_builtin_type) (V4HI3_type_node,
-					     "__builtin_neon_v4hi3");
+                                             "__neon_int16x4x3_t");
   (*lang_hooks.types.register_builtin_type) (V2SI3_type_node,
-					     "__builtin_neon_v2si3");
+                                             "__neon_int32x2x3_t");
   (*lang_hooks.types.register_builtin_type) (V2SF3_type_node,
-					     "__builtin_neon_v2sf3");
+                                             "__neon_float32x2x3_t");
   (*lang_hooks.types.register_builtin_type) (V1DI3_type_node,
-					     "__builtin_neon_v1di3");
+                                             "__neon_int64x1x3_t");
   (*lang_hooks.types.register_builtin_type) (V8QI4_type_node,
-					     "__builtin_neon_v8qi4");
+                                             "__neon_int8x8x4_t");
   (*lang_hooks.types.register_builtin_type) (V4HI4_type_node,
-					     "__builtin_neon_v4hi4");
+                                             "__neon_int16x4x4_t");
   (*lang_hooks.types.register_builtin_type) (V2SI4_type_node,
-					     "__builtin_neon_v2si4");
+                                             "__neon_int32x2x4_t");
   (*lang_hooks.types.register_builtin_type) (V2SF4_type_node,
-					     "__builtin_neon_v2sf4");
+                                             "__neon_float32x2x4_t");
   (*lang_hooks.types.register_builtin_type) (V1DI4_type_node,
-					     "__builtin_neon_v1di4");
+                                             "__neon_int64x1x4_t");
   (*lang_hooks.types.register_builtin_type) (V16QI2_type_node,
-					     "__builtin_neon_v16qi2");
+                                             "__neon_int8x16x2_t");
   (*lang_hooks.types.register_builtin_type) (V8HI2_type_node,
-					     "__builtin_neon_v8hi2");
+                                             "__neon_int16x8x2_t");
   (*lang_hooks.types.register_builtin_type) (V4SI2_type_node,
-					     "__builtin_neon_v4si2");
+                                             "__neon_int32x4x2_t");
   (*lang_hooks.types.register_builtin_type) (V4SF2_type_node,
-					     "__builtin_neon_v4sf2");
+                                             "__neon_float32x4x2_t");
   (*lang_hooks.types.register_builtin_type) (V16QI3_type_node,
-					     "__builtin_neon_v16qi3");
+                                             "__neon_int8x16x3_t");
   (*lang_hooks.types.register_builtin_type) (V8HI3_type_node,
-					     "__builtin_neon_v8hi3");
+                                             "__neon_int16x8x3_t");
   (*lang_hooks.types.register_builtin_type) (V4SI3_type_node,
-					     "__builtin_neon_v4si3");
+                                             "__neon_int32x4x3_t");
   (*lang_hooks.types.register_builtin_type) (V4SF3_type_node,
-					     "__builtin_neon_v4sf3");
+                                             "__neon_float32x4x3_t");
   (*lang_hooks.types.register_builtin_type) (V16QI4_type_node,
-					     "__builtin_neon_v16qi4");
+                                             "__neon_int8x16x4_t");
   (*lang_hooks.types.register_builtin_type) (V8HI4_type_node,
-					     "__builtin_neon_v8hi4");
+                                             "__neon_int16x8x4_t");
   (*lang_hooks.types.register_builtin_type) (V4SI4_type_node,
-					     "__builtin_neon_v4si4");
+                                             "__neon_int32x4x4_t");
   (*lang_hooks.types.register_builtin_type) (V4SF4_type_node,
-					     "__builtin_neon_v4sf4");
+                                             "__neon_float32x4x4_t");
   /* LLVM LOCAL end multi-vector types */
   /* APPLE LOCAL end 7083296 Build without warnings.  */
 
@@ -23857,71 +23811,7 @@ thumb2_output_casesi (rtx *operands)
 }
 /* APPLE LOCAL end v7 support. Merge from mainline */
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
- 
-/* A table and a function to perform ARM-specific name mangling for
-   NEON vector types in order to conform to the AAPCS (see "Procedure
-   Call Standard for the ARM Architecture", Appendix A).  To qualify
-   for emission with the mangled names defined in that document, a
-   vector type must not only be of the correct mode but also be
-   composed of NEON vector element types (e.g. __builtin_neon_qi).  */
-typedef struct
-{
-  enum machine_mode mode;
-  const char *element_type_name;
-  const char *aapcs_name;
-} arm_mangle_map_entry;
-
-static arm_mangle_map_entry arm_mangle_map[] = {
-  /* 64-bit containerized types.  */
-  { V8QImode,  "__builtin_neon_qi",     "15__simd64_int8_t" },
-  { V8QImode,  "__builtin_neon_uqi",    "16__simd64_uint8_t" },
-  { V4HImode,  "__builtin_neon_hi",     "16__simd64_int16_t" },
-  { V4HImode,  "__builtin_neon_uhi",    "17__simd64_uint16_t" },
-  { V2SImode,  "__builtin_neon_si",     "16__simd64_int32_t" },
-  { V2SImode,  "__builtin_neon_usi",    "17__simd64_uint32_t" },
-  { V2SFmode,  "__builtin_neon_sf",     "18__simd64_float32_t" },
-  { V8QImode,  "__builtin_neon_poly8",  "16__simd64_poly8_t" },
-  { V4HImode,  "__builtin_neon_poly16", "17__simd64_poly16_t" },
-  /* 128-bit containerized types.  */
-  { V16QImode, "__builtin_neon_qi",     "16__simd128_int8_t" },
-  { V16QImode, "__builtin_neon_uqi",    "17__simd128_uint8_t" },
-  { V8HImode,  "__builtin_neon_hi",     "17__simd128_int16_t" },
-  { V8HImode,  "__builtin_neon_uhi",    "18__simd128_uint16_t" },
-  { V4SImode,  "__builtin_neon_si",     "17__simd128_int32_t" },
-  { V4SImode,  "__builtin_neon_usi",    "18__simd128_uint32_t" },
-  { V4SFmode,  "__builtin_neon_sf",     "19__simd128_float32_t" },
-  { V16QImode, "__builtin_neon_poly8",  "17__simd128_poly8_t" },
-  { V8HImode,  "__builtin_neon_poly16", "18__simd128_poly16_t" },
-  { VOIDmode, NULL, NULL }
-};
-
-const char *
-arm_mangle_type (tree type)
-{
-  arm_mangle_map_entry *pos = arm_mangle_map;
-
-  if (TREE_CODE (type) != VECTOR_TYPE)
-    return NULL;
-
-  /* Check the mode of the vector type, and the name of the vector
-     element type, against the table.  */
-  while (pos->mode != VOIDmode)
-    {
-      tree elt_type = TREE_TYPE (type);
-
-      if (pos->mode == TYPE_MODE (type)
-          && TREE_CODE (TYPE_NAME (elt_type)) == TYPE_DECL
-          && !strcmp (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (elt_type))),
-                      pos->element_type_name))
-	return pos->aapcs_name;
-
-      pos++;
-    }
-
-  /* Use the default mangling for unrecognized (possibly user-defined)
-     vector types.  */
-  return NULL;
-}
+/* LLVM LOCAL pr5037 removed arm_mangle_type */
 
 void
 arm_asm_output_addr_diff_vec (FILE *file, rtx label, rtx body)

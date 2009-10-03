@@ -5712,9 +5712,9 @@ Value *TreeToLLVM::EmitComplexBinOp(tree type, tree_code code,
 /// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
 /// structure.
 static unsigned getFieldOffsetInBits(tree Field) {
-  assert(DECL_FIELD_BIT_OFFSET(Field) != 0 && DECL_FIELD_OFFSET(Field) != 0);
+  assert(DECL_FIELD_BIT_OFFSET(Field) != 0);
   unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
-  if (TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST)
+  if (DECL_FIELD_OFFSET(Field))
     Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
   return Result;
 }

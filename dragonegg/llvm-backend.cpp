@@ -290,25 +290,6 @@ void changeLLVMConstant(Constant *Old, Constant *New) {
 //TODO                     LLVMValuesTable,
 //TODO                     "llvm.pch.values");
 //TODO}
-//TODO
-//TODO/// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
-//TODOvoid eraseLocalLLVMValues() {
-//TODO  // Erase all the local values, these are stored in LocalLLVMValueIDs.
-//TODO  while (!LocalLLVMValueIDs.empty()) {
-//TODO    unsigned Idx = LocalLLVMValueIDs.back()-1;
-//TODO    LocalLLVMValueIDs.pop_back();
-//TODO
-//TODO    if (Value *V = LLVMValues[Idx]) {
-//TODO      assert(!isa<Constant>(V) && "Found global value");
-//TODO      LLVMValuesMap.erase(V);
-//TODO    }
-//TODO
-//TODO    if (Idx == LLVMValues.size()-1)
-//TODO      LLVMValues.pop_back();
-//TODO    else
-//TODO      LLVMValues[Idx] = 0;
-//TODO  }
-//TODO}
 
 /// handleVisibility - Forward decl visibility style to global.
 void handleVisibility(tree decl, GlobalValue *GV) {

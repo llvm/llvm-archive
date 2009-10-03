@@ -20,10 +20,6 @@ using namespace llvm;
 
 bool flag_odr = false;
 
-void eraseLocalLLVMValues() {
-abort();
-}
-
 int ix86_regparm;
 
 extern "C" bool contains_aligned_value_p (tree type) {

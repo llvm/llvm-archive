@@ -866,12 +866,6 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // defined and all basic blocks output.
   PopulatePhiNodes();
 
-// Local llvm values should probably just be cached in a local map, making this
-// routine unnecessary.
-//TODO  // Remove any cached LLVM values that are local to this function.  Such values
-//TODO  // may be deleted when the optimizers run, so would be dangerous to keep.
-//TODO  eraseLocalLLVMValues();
-
   return Fn;
 }
 

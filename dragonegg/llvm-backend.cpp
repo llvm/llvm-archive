@@ -726,8 +726,24 @@ static void createPerModuleOptimizationPasses() {
   bool HasPerModulePasses = false;
 
   if (!DisableLLVMOptimizations) {
-    // Inline small functions.
-    llvm::Pass *InliningPass = createFunctionInliningPass();
+    bool NeedAlwaysInliner = false;
+    llvm::Pass *InliningPass = 0;
+    if (optimize >= 2) {
+      InliningPass = createFunctionInliningPass();    // Inline small functions
+    } else {
+      // If full inliner is not run, check if always-inline is needed to handle
+      // functions that are  marked as always_inline.
+      // TODO: Consider letting the GCC inliner do this.
+      for (Module::iterator I = TheModule->begin(), E = TheModule->end();
+           I != E; ++I)
+        if (I->hasFnAttr(Attribute::AlwaysInline)) {
+          NeedAlwaysInliner = true;
+          break;
+        }
+
+      if (NeedAlwaysInliner)
+        InliningPass = createAlwaysInlinerPass();  // Inline always_inline funcs
+    }
 
     HasPerModulePasses = true;
     createStandardModulePasses(PerModulePasses, optimize,

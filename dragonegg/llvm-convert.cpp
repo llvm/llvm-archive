@@ -2162,10 +2162,6 @@ Value *TreeToLLVM::EmitGimpleInvariantAddress(tree reg) {
          "Expected a locally constant address!");
   assert(is_gimple_reg_type(TREE_TYPE(reg)) && "Not of register type!");
 
-  DenseMap<tree, AssertingVH<> >::iterator I = MinInvariants.find(reg);
-  if (I != MinInvariants.end())
-    return I->second;
-
   // Any generated code goes in the entry block.
   BasicBlock *EntryBlock = SSAInsertionPoint->getParent();
 
@@ -2196,7 +2192,7 @@ Value *TreeToLLVM::EmitGimpleInvariantAddress(tree reg) {
   if (SavedInsertBB != EntryBlock)
     Builder.SetInsertPoint(SavedInsertBB, SavedInsertPoint);
 
-  return MinInvariants[reg] = Address;
+  return Address;
 }
 
 /// EmitGimpleConstant - Return the LLVM constant for this global constant.

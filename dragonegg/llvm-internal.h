@@ -353,10 +353,6 @@ class TreeToLLVM {
   /// PendingPhis - Phi nodes which have not yet been populated with operands.
   SmallVector<PhiRecord, 16> PendingPhis;
 
-  // MinInvariants - Map from gimple minimal invariants to their corresponding
-  // LLVM values.
-  DenseMap<tree, AssertingVH<> > MinInvariants;
-
   // SSANames - Map from GCC ssa names to the defining LLVM value.
   DenseMap<tree, AssertingVH<> > SSANames;
 

@@ -5729,11 +5729,10 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
   assert(TREE_CODE(exp) == COMPONENT_REF && "not a COMPONENT_REF!");
   tree field = TREE_OPERAND(exp, 1);
   assert(TREE_CODE(field) == FIELD_DECL && "not a FIELD_DECL!");
-  tree field_offset = component_ref_field_offset (exp);
-  assert(DECL_FIELD_BIT_OFFSET(field) && field_offset);
+  assert(DECL_FIELD_BIT_OFFSET(field) && "Field's bit offset not defined!");
   unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field));
-  if (TREE_CODE(field_offset) == INTEGER_CST)
-    Result += TREE_INT_CST_LOW(field_offset)*8;
+  if (DECL_FIELD_OFFSET(field))
+    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(field)) * BITS_PER_UNIT;
   return Result;
 }
 
@@ -5941,9 +5940,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   unsigned BitStart = getComponentRefOffsetInBits(exp);
   Value *FieldPtr;
 
-  tree field_offset = component_ref_field_offset (exp);
+  tree field_offset = TREE_OPERAND(exp, 2);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (TREE_CODE(field_offset) == INTEGER_CST) {
+  if (!field_offset || TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
     // If the LLVM struct has zero field, don't try to index into it, just use
@@ -5983,7 +5982,13 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     if (lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl)))
       FieldPtr = EmitFieldAnnotation(FieldPtr, FieldDecl);
   } else {
+    // Offset is the field offset in octets.
     Value *Offset = Emit(field_offset, 0);
+    if (BITS_PER_UNIT != 8) {
+      assert(!(BITS_PER_UNIT & 7) && "Unit size not a multiple of 8 bits!");
+      Offset = Builder.CreateMul(Offset, ConstantInt::get(Offset->getType(),
+                                                          BITS_PER_UNIT / 8));
+    }
 
     // Here BitStart gives the offset of the field in bits from field_offset.
     // Incorporate as much of it as possible into the pointer computation.
@@ -8022,9 +8027,9 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   Constant *FieldPtr;
   const TargetData &TD = getTargetData();
 
-  tree field_offset = component_ref_field_offset (exp);
+  tree field_offset = TREE_OPERAND(exp, 2);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (TREE_CODE(field_offset) == INTEGER_CST) {
+  if (!field_offset || TREE_CODE(field_offset) == INTEGER_CST) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
     Constant *Ops[] = {
@@ -8046,7 +8051,14 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     }
 
   } else {
+    // Offset is the field offset in octets.
     Constant *Offset = Convert(field_offset);
+    if (BITS_PER_UNIT != 8) {
+      assert(!(BITS_PER_UNIT & 7) && "Unit size not a multiple of 8 bits!");
+      Offset = TheFolder->CreateMul(Offset,
+                                    ConstantInt::get(Offset->getType(),
+                                                     BITS_PER_UNIT / 8));
+    }
     Constant *Ptr = TheFolder->CreatePtrToInt(StructAddrLV, Offset->getType());
     Ptr = TheFolder->CreateAdd(Ptr, Offset);
     FieldPtr = TheFolder->CreateIntToPtr(Ptr,

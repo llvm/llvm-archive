@@ -43,6 +43,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -87,6 +88,9 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 #include "bits_and_bobs.h"
 
 static LLVMContext &Context = getGlobalContext();
+
+STATISTIC(NumBasicBlocks, "Number of basic blocks converted");
+STATISTIC(NumStatements,  "Number of gimple statements converted");
 
 /// dump - Print a gimple statement to standard error.
 void dump(gimple stmt) {
@@ -923,7 +927,7 @@ BasicBlock *TreeToLLVM::getLabelDeclBlock(tree LabelDecl) {
 }
 
 void TreeToLLVM::EmitBasicBlock(basic_block bb) {
-  NoteBasicBlock(bb);
+  ++NumBasicBlocks;
 
   // Avoid outputting a pointless branch at the end of the entry block.
   if (bb != ENTRY_BLOCK_PTR)
@@ -959,7 +963,7 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
   for (gimple_stmt_iterator gsi = gsi_start_bb(bb); !gsi_end_p(gsi);
        gsi_next(&gsi)) {
     gimple stmt = gsi_stmt(gsi);
-    NoteStatement(stmt);
+    ++NumStatements;
 
     switch (gimple_code(stmt)) {
     case GIMPLE_ASM:

@@ -42,7 +42,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -137,24 +136,6 @@ static FunctionPassManager *CodeGenPasses = 0;
 static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 //TODOstatic void destroyOptimizationPasses();
-
-
-//===----------------------------------------------------------------------===//
-//                                Statistics
-//===----------------------------------------------------------------------===//
-
-STATISTIC(NumBasicBlocks, "Number of basic blocks converted");
-STATISTIC(NumStatements,  "Number of gimple statements converted");
-
-/// NoteBasicBlock - Called once for each GCC basic block converted.
-void NoteBasicBlock(basic_block bb) {
-  ++NumBasicBlocks;
-}
-
-/// NoteStatement - Called once for each GCC gimple statement converted.
-void NoteStatement(gimple stmt) {
-  ++NumStatements;
-}
 
 
 //===----------------------------------------------------------------------===//

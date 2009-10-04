@@ -94,12 +94,6 @@ extern "C" {
 #include "llvm-cache.h"
 }
 
-// TODO: Space aliens beamed these numbers into my head.  Replace with something
-// more down-to-earth.
-#define ESTIMATED_MEMORY_PER_BASIC_BLOCK	1500
-#define ESTIMATED_MEMORY_PER_GIMPLE_STATEMENT	128
-#define MIN_BYTES_WORTH_GARBAGE_COLLECTING	(1024*1024)
-
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;
 
@@ -160,30 +154,6 @@ void NoteBasicBlock(basic_block bb) {
 /// NoteStatement - Called once for each GCC gimple statement converted.
 void NoteStatement(gimple stmt) {
   ++NumStatements;
-}
-
-static size_t LastNumBasicBlocks;
-static size_t LastNumStatements;
-
-/// EstimatedCollectableGCCMemory - Return an estimate of the amount of memory
-/// we think the GCC garbage collector would free if we ran it.
-static size_t EstimatedCollectableGCCMemory() {
-  return
-    (NumBasicBlocks - LastNumBasicBlocks) * ESTIMATED_MEMORY_PER_BASIC_BLOCK +
-    (NumStatements - LastNumStatements) * ESTIMATED_MEMORY_PER_GIMPLE_STATEMENT;
-}
-
-/// isWorthGarbageCollecting - Returns whether running the GCC garbage collector
-/// would free up enough memory to make it worthwhile.
-static bool isWorthGarbageCollecting() {
-  return EstimatedCollectableGCCMemory() > MIN_BYTES_WORTH_GARBAGE_COLLECTING;
-}
-
-/// ResetGarbageCollectionStatistics - The memory estimated by the previous
-/// statistics will be garbage collected.  Reset the statistics.
-static void ResetGarbageCollectionStatistics() {
-  LastNumBasicBlocks = NumBasicBlocks;
-  LastNumStatements = NumStatements;
 }
 
 
@@ -1758,13 +1728,6 @@ static struct simple_ipa_opt_pass pass_emit_variables =
 static unsigned int emit_function (void) {
   LazilyInitializeModule();
 
-  // The previously converted function is now garbage collectable.  If it seems
-  // worthwhile, run the garbage collector after converting this function (the
-  // current function will not itself be collected though).
-  ggc_force_collect = isWorthGarbageCollecting();
-  if (ggc_force_collect)
-    ResetGarbageCollectionStatistics();
-
 //TODO Don't want to use sorry at this stage...
 //TODO  if (cfun->nonlocal_goto_save_area)
 //TODO    sorry("%Jnon-local gotos not supported by LLVM", fndecl);
@@ -1850,15 +1813,6 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
     errs() << "Finishing compilation unit\n";
 
   LazilyInitializeModule();
-
-  // If it seems worthwhile, garbage collect any functions we converted before
-  // running the optimizers or generating code.
-  if (isWorthGarbageCollecting()) {
-    ResetGarbageCollectionStatistics();
-    ggc_force_collect = 1;
-    ggc_collect();
-    ggc_force_collect = 0;
-  }
 
 //TODO  timevar_push(TV_LLVM_PERFILE);
   LLVMContext &Context = getGlobalContext();

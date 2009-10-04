@@ -5713,29 +5713,6 @@ Value *TreeToLLVM::EmitComplexBinOp(tree type, tree_code code,
 //                         ... L-Value Expressions ...
 //===----------------------------------------------------------------------===//
 
-/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
-/// structure.
-static unsigned getFieldOffsetInBits(tree Field) {
-  assert(DECL_FIELD_BIT_OFFSET(Field) != 0);
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(Field));
-  if (DECL_FIELD_OFFSET(Field))
-    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(Field))*8;
-  return Result;
-}
-
-/// getComponentRefOffsetInBits - Return the offset (in bits) of the field
-/// referenced in a COMPONENT_REF exp.
-static unsigned getComponentRefOffsetInBits(tree exp) {
-  assert(TREE_CODE(exp) == COMPONENT_REF && "not a COMPONENT_REF!");
-  tree field = TREE_OPERAND(exp, 1);
-  assert(TREE_CODE(field) == FIELD_DECL && "not a FIELD_DECL!");
-  assert(DECL_FIELD_BIT_OFFSET(field) && "Field's bit offset not defined!");
-  unsigned Result = TREE_INT_CST_LOW(DECL_FIELD_BIT_OFFSET(field));
-  if (DECL_FIELD_OFFSET(field))
-    Result += TREE_INT_CST_LOW(DECL_FIELD_OFFSET(field)) * BITS_PER_UNIT;
-  return Result;
-}
-
 Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
   tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
 
@@ -5937,12 +5914,11 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
-  unsigned BitStart = getComponentRefOffsetInBits(exp);
+  unsigned BitStart = getFieldOffsetInBits(TREE_OPERAND(exp, 1));
   Value *FieldPtr;
 
-  tree field_offset = TREE_OPERAND(exp, 2);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (!field_offset || TREE_CODE(field_offset) == INTEGER_CST) {
+  if (!TREE_OPERAND(exp, 2)) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
     // If the LLVM struct has zero field, don't try to index into it, just use
@@ -5983,14 +5959,14 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       FieldPtr = EmitFieldAnnotation(FieldPtr, FieldDecl);
   } else {
     // Offset is the field offset in octets.
-    Value *Offset = Emit(field_offset, 0);
+    Value *Offset = Emit(TREE_OPERAND(exp, 2), 0);
     if (BITS_PER_UNIT != 8) {
       assert(!(BITS_PER_UNIT & 7) && "Unit size not a multiple of 8 bits!");
       Offset = Builder.CreateMul(Offset, ConstantInt::get(Offset->getType(),
                                                           BITS_PER_UNIT / 8));
     }
 
-    // Here BitStart gives the offset of the field in bits from field_offset.
+    // Here BitStart gives the offset of the field in bits from Offset.
     // Incorporate as much of it as possible into the pointer computation.
     unsigned ByteOffset = BitStart/8;
     if (ByteOffset > 0) {
@@ -8023,13 +7999,12 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
   // BitStart - This is the actual offset of the field from the start of the
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
-  unsigned BitStart = getComponentRefOffsetInBits(exp);
+  unsigned BitStart = getFieldOffsetInBits(TREE_OPERAND(exp, 1));
   Constant *FieldPtr;
   const TargetData &TD = getTargetData();
 
-  tree field_offset = TREE_OPERAND(exp, 2);
   // If this is a normal field at a fixed offset from the start, handle it.
-  if (!field_offset || TREE_CODE(field_offset) == INTEGER_CST) {
+  if (!TREE_OPERAND(exp, 2)) {
     unsigned int MemberIndex = GetFieldIndex(FieldDecl);
 
     Constant *Ops[] = {
@@ -8052,7 +8027,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
   } else {
     // Offset is the field offset in octets.
-    Constant *Offset = Convert(field_offset);
+    Constant *Offset = Convert(TREE_OPERAND(exp, 2));
     if (BITS_PER_UNIT != 8) {
       assert(!(BITS_PER_UNIT & 7) && "Unit size not a multiple of 8 bits!");
       Offset = TheFolder->CreateMul(Offset,

@@ -442,17 +442,6 @@ void TypeRefinementDatabase::dump() const {
 //                              Helper Routines
 //===----------------------------------------------------------------------===//
 
-
-/// getFieldOffsetInBits - Return the offset (in bits) of a FIELD_DECL in a
-/// structure.
-static uint64_t getFieldOffsetInBits(tree Field) {
-  assert(DECL_FIELD_BIT_OFFSET(Field) != 0);
-  uint64_t Result = getInt64(DECL_FIELD_BIT_OFFSET(Field), true);
-  if (DECL_FIELD_OFFSET(Field))
-    Result += getInt64(DECL_FIELD_OFFSET(Field), true)*8;
-  return Result;
-}
-
 /// FindLLVMTypePadding - If the specified struct has any inter-element padding,
 /// add it to the Padding array.
 static void FindLLVMTypePadding(const Type *Ty, tree type, uint64_t BitOffset,

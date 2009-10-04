@@ -237,6 +237,15 @@ bool isSequentialCompatible(tree_node *type);
 /// isBitfield - Returns whether to treat the specified field as a bitfield.
 bool isBitfield(tree_node *field_decl);
 
+/// getFieldOffsetInBits - Return the bit offset of a FIELD_DECL in a structure.
+inline uint64_t getFieldOffsetInBits(tree_node *field) {
+  assert(DECL_FIELD_BIT_OFFSET(field) != 0);
+  uint64_t Result = getInt64(DECL_FIELD_BIT_OFFSET(field), true);
+  if (DECL_FIELD_OFFSET(field))
+    Result += getInt64(DECL_FIELD_OFFSET(field), true) * BITS_PER_UNIT;
+  return Result;
+}
+
 /// getDeclaredType - Get the declared type for the specified field, and
 /// not the shrunk-to-fit type that GCC gives us in TREE_TYPE.
 tree_node *getDeclaredType(tree_node *field_decl);

@@ -745,7 +745,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       // Restore ConvertingStruct for the caller.
       ConvertingStruct = false;
       
-      if (Actual == Type::getVoidTy(Context)) 
+      if (Actual->isVoidTy())
         Actual = Type::getInt8Ty(Context);  // void* -> sbyte*
       
       // Update the type, potentially updating TYPE_LLVM(type).
@@ -780,7 +780,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
         Ty = ConvertType(TREE_TYPE(type));
       }
     
-      if (Ty == Type::getVoidTy(Context)) 
+      if (Ty->isVoidTy())
         Ty = Type::getInt8Ty(Context);  // void* -> sbyte*
       return TypeDB.setType(type, PointerType::getUnqual(Ty));
     }

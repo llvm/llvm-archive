@@ -120,6 +120,7 @@ formatted_raw_ostream FormattedOutStream;
 static bool DisableLLVMOptimizations;
 static bool EnableGCCOptimizations;
 static bool EmitIR;
+static bool SaveGCCOutput;
 
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
@@ -1620,19 +1621,28 @@ static void TakeoverAsmOutput(void) {
   if (!main_input_filename && !asm_file_name) {
     llvm_asm_file_name = "-";
   } else if (!asm_file_name) {
-    int len = strlen (dump_base_name);
-    char *dumpname = XNEWVEC (char, len + 6);
+    int len = strlen(dump_base_name);
+    char *dumpname = XNEWVEC(char, len + 6);
 
-    memcpy (dumpname, dump_base_name, len + 1);
-    strip_off_ending (dumpname, len);
-    strcat (dumpname, ".s");
+    memcpy(dumpname, dump_base_name, len + 1);
+    strip_off_ending(dumpname, len);
+    strcat(dumpname, ".s");
     llvm_asm_file_name = dumpname;
   } else {
     llvm_asm_file_name = asm_file_name;
   }
 
-  // Redirect any GCC output to /dev/null.
-  asm_file_name = HOST_BIT_BUCKET;
+  if (!SaveGCCOutput) {
+    // Redirect any GCC output to /dev/null.
+    asm_file_name = HOST_BIT_BUCKET;
+  } else {
+    // Save GCC output to a special file.  Good for seeing how much pointless
+    // output gcc is producing.
+    int len = strlen(llvm_asm_file_name);
+    char *name = XNEWVEC(char, len + 5);
+    memcpy(name, llvm_asm_file_name, len + 1);
+    asm_file_name = strcat(name, ".gcc");
+  }
 }
 
 
@@ -1676,9 +1686,14 @@ static unsigned int emit_variables(void) {
   // this compilation unit or not.  Global variables that are not externally
   // visible will be output when their user is, or discarded if unused.
   struct varpool_node *vnode;
-  FOR_EACH_STATIC_VARIABLE (vnode)
+  FOR_EACH_STATIC_VARIABLE (vnode) {
     if (TREE_PUBLIC(vnode->decl))
+      // An externally visible global variable - output it.
       emit_global_to_llvm(vnode->decl);
+
+    // Mark all variables as written so gcc doesn't waste time outputting them.
+    TREE_ASM_WRITTEN(vnode->decl) = 1;
+  }
 
   return 0;
 }
@@ -2033,6 +2048,7 @@ static FlagDescriptor PluginFlags[] = {
     { "disable-llvm-optzns", &DisableLLVMOptimizations },
     { "enable-gcc-optzns", &EnableGCCOptimizations },
     { "emit-ir", &EmitIR },
+    { "save-gcc-output", &SaveGCCOutput },
     { NULL, NULL } // Terminator.
 };
 

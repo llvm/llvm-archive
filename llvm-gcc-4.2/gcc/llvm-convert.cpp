@@ -503,6 +503,10 @@ void TreeToLLVM::StartFunctionBody() {
   // Handle visibility style
   handleVisibility(FnDecl, Fn);
 
+  // Handle attribute "aligned".
+  if (DECL_ALIGN (FnDecl) != 8)
+    Fn->setAlignment(DECL_ALIGN (FnDecl) / 8);
+
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))
     Fn->setSection(TREE_STRING_POINTER(DECL_SECTION_NAME(FnDecl)));

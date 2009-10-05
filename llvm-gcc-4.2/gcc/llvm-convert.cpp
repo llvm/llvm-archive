@@ -505,7 +505,7 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Handle attribute "aligned".
   if (DECL_ALIGN (FnDecl) != FUNCTION_BOUNDARY)
-    Fn->setAlignment(DECL_ALIGN (FnDecl) / BITS_PER_UNIT);
+    Fn->setAlignment(DECL_ALIGN (FnDecl) / 8);
 
   // Handle functions in specified sections.
   if (DECL_SECTION_NAME(FnDecl))
@@ -1614,7 +1614,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   if (DECL_ALIGN(decl)) {
     unsigned TargetAlign = getTargetData().getABITypeAlignment(Ty);
     if (DECL_USER_ALIGN(decl) || 8 * TargetAlign < (unsigned)DECL_ALIGN(decl))
-      Alignment = DECL_ALIGN(decl) / BITS_PER_UNIT;
+      Alignment = DECL_ALIGN(decl) / 8;
   }
 
   const char *Name;      // Name of variable
@@ -6628,8 +6628,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     if (BitStart == 0 && // llvm pointer points to it.
         !isBitfield(FieldDecl) &&  // bitfield computation might offset pointer.
         DECL_ALIGN(FieldDecl))
-      LVAlign = std::max(LVAlign,
-			 unsigned(DECL_ALIGN(FieldDecl)) / BITS_PER_UNIT);
+      LVAlign = std::max(LVAlign, unsigned(DECL_ALIGN(FieldDecl)) / 8);
 #endif
 
     // If the FIELD_DECL has an annotate attribute on it, emit it.
@@ -6839,7 +6838,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
   if (DECL_ALIGN(exp)) {
     if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
-      Alignment = DECL_ALIGN(exp) / BITS_PER_UNIT;
+      Alignment = DECL_ALIGN(exp) / 8;
   }
 
   return LValue(BitCastToType(Decl, PTy), Alignment);

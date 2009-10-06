@@ -75,7 +75,6 @@ void dummy_function() {
   llvm::createAggressiveDCEPass();
   llvm::createConstantMergePass();
   llvm::createIndVarSimplifyPass();
-  llvm::createPredicateSimplifierPass();
   llvm::createCondPropagationPass();
   llvm::createGlobalOptimizerPass();
   llvm::createJumpThreadingPass();

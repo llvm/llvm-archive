@@ -782,7 +782,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     
       if (Ty->isVoidTy())
         Ty = Type::getInt8Ty(Context);  // void* -> sbyte*
-      return TypeDB.setType(type, PointerType::getUnqual(Ty));
+      return TypeDB.setType(type, Ty->getPointerTo());
     }
    
   case METHOD_TYPE:
@@ -955,7 +955,7 @@ namespace {
     /// argument is passed by value. It is lowered to a parameter passed by
     /// reference with an additional parameter attribute "ByVal".
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
-      HandleScalarArgument(PointerType::getUnqual(LLVMTy), type);
+      HandleScalarArgument(LLVMTy->getPointerTo(), type);
     }
 
     /// HandleFCAArgument - This callback is invoked if the aggregate function

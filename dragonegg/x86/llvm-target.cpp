@@ -292,7 +292,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
     return true;
   }
   case IX86_BUILTIN_LOADQ: {
-    PointerType *i64Ptr = PointerType::getUnqual(Type::getInt64Ty(Context));
+    const PointerType *i64Ptr = Type::getInt64PtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], i64Ptr, "tmp");
     Ops[0] = Builder.CreateLoad(Ops[0], "tmp");
     Value *Zero = ConstantInt::get(Type::getInt64Ty(Context), 0);
@@ -304,7 +304,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_LOADUPS: {
     VectorType *v4f32 = VectorType::get(Type::getFloatTy(Context), 4);
-    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    const PointerType *v4f32Ptr = v4f32->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -313,7 +313,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_LOADUPD: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    const PointerType *v2f64Ptr = v2f64->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -322,7 +322,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_LOADDQU: {
     VectorType *v16i8 = VectorType::get(Type::getInt8Ty(Context), 16);
-    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    const PointerType *v16i8Ptr = v16i8->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
     LoadInst *LI = Builder.CreateLoad(BC, "tmp");
     LI->setAlignment(1);
@@ -331,7 +331,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_STOREUPS: {
     VectorType *v4f32 = VectorType::get(Type::getFloatTy(Context), 4);
-    PointerType *v4f32Ptr = PointerType::getUnqual(v4f32);
+    const PointerType *v4f32Ptr = v4f32->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -340,7 +340,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_STOREUPD: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    PointerType *v2f64Ptr = PointerType::getUnqual(v2f64);
+    const PointerType *v2f64Ptr = v2f64->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -349,7 +349,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_STOREDQU: {
     VectorType *v16i8 = VectorType::get(Type::getInt8Ty(Context), 16);
-    PointerType *v16i8Ptr = PointerType::getUnqual(v16i8);
+    const PointerType *v16i8Ptr = v16i8->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr, "tmp");
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -357,7 +357,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
     return true;
   }
   case IX86_BUILTIN_LOADHPS: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::getDoubleTy(Context));
+    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
     Ops[1] = BuildVector(Load, UndefValue::get(Type::getDoubleTy(Context)), NULL);
@@ -367,7 +367,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
     return true;
   }
   case IX86_BUILTIN_LOADLPS: {
-    PointerType *f64Ptr = PointerType::getUnqual(Type::getDoubleTy(Context));
+    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr, "tmp");
     Value *Load = Builder.CreateLoad(Ops[1], "tmp");
     Ops[1] = BuildVector(Load, UndefValue::get(Type::getDoubleTy(Context)), NULL);
@@ -394,7 +394,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_STOREHPS: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    PointerType *f64Ptr = PointerType::getUnqual(Type::getDoubleTy(Context));
+    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
@@ -404,7 +404,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
   }
   case IX86_BUILTIN_STORELPS: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    PointerType *f64Ptr = PointerType::getUnqual(Type::getDoubleTy(Context));
+    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr, "tmp");
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64, "tmp");
@@ -605,8 +605,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_ldmxcsr);
     Value *Ptr = CreateTemporary(Type::getInt32Ty(Context));
     Builder.CreateStore(Ops[0], Ptr);
-    Ptr = Builder.CreateBitCast(Ptr,
-                             PointerType::getUnqual(Type::getInt8Ty(Context)), "tmp");
+    Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context), "tmp");
     Result = Builder.CreateCall(ldmxcsr, Ptr);
     return true;
   }
@@ -614,8 +613,7 @@ bool TreeToLLVM::TargetIntrinsicLower(gimple stmt,
     Function *stmxcsr =
       Intrinsic::getDeclaration(TheModule, Intrinsic::x86_sse_stmxcsr);
     Value *Ptr  = CreateTemporary(Type::getInt32Ty(Context));
-    Value *BPtr = Builder.CreateBitCast(Ptr,
-                             PointerType::getUnqual(Type::getInt8Ty(Context)), "tmp");
+    Value *BPtr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context), "tmp");
     Builder.CreateCall(stmxcsr, BPtr);
     
     Result = Builder.CreateLoad(Ptr, "tmp");

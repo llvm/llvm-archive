@@ -803,7 +803,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   const Type *FPTy =
     FunctionType::get(Type::getVoidTy(Context),
                       std::vector<const Type*>(), false);
-  FPTy = PointerType::getUnqual(FPTy);
+  FPTy = FPTy->getPointerTo();
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {
     StructInit[0] = ConstantInt::get(Type::getInt32Ty(Context), Tors[i].second);
@@ -955,7 +955,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   Constant *lineNo = ConstantInt::get(Type::getInt32Ty(Context),
                                       DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1830,7 +1830,7 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
 
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    const Type *SBP = Type::getInt8PtrTy(Context);
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
@@ -1849,7 +1849,7 @@ static void llvm_finish_unit(void *gcc_data, void *user_data) {
 
   if (!AttributeCompilerUsedGlobals.empty()) {
     std::vector<Constant *> ACUGs;
-    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+    const Type *SBP = Type::getInt8PtrTy(Context);
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeCompilerUsedGlobals.begin(),
            AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {

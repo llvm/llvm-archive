@@ -280,7 +280,7 @@ static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
     Builder.CreateStore(ArgVal, Loc);
   } else {
     // This cast only involves pointers, therefore BitCast.
-    Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(LLVMTy));
+    Loc = Builder.CreateBitCast(Loc, LLVMTy->getPointerTo());
     Builder.CreateStore(ArgVal, Loc);
   }
 }
@@ -425,7 +425,7 @@ namespace {
 
       Value *Loc = LocStack.back();
       // This cast only involves pointers, therefore BitCast.
-      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy));
+      Loc = Builder.CreateBitCast(Loc, StructTy->getPointerTo());
 
       Loc = Builder.CreateStructGEP(Loc, FieldNo);
       LocStack.push_back(Loc);
@@ -807,7 +807,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
     } else {
       Value *RetVal = DECL_LOCAL(DECL_RESULT(FnDecl));
       if (const StructType *STy = dyn_cast<StructType>(Fn->getReturnType())) {
-        Value *R1 = Builder.CreateBitCast(RetVal, PointerType::getUnqual(STy));
+        Value *R1 = Builder.CreateBitCast(RetVal, STy->getPointerTo());
 
         llvm::Value *Idxs[2];
         Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
@@ -824,13 +824,12 @@ Function *TreeToLLVM::FinishFunctionBody() {
         // pointer and loading.  The load does not necessarily start at the
         // beginning of the aggregate (x86-64).
         if (ReturnOffset) {
-          RetVal = Builder.CreateBitCast(RetVal,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+          RetVal = Builder.CreateBitCast(RetVal, Type::getInt8PtrTy(Context));
           RetVal = Builder.CreateGEP(RetVal,
                      ConstantInt::get(TD.getIntPtrType(Context), ReturnOffset));
         }
         RetVal = Builder.CreateBitCast(RetVal,
-                                   PointerType::getUnqual(Fn->getReturnType()));
+                                       Fn->getReturnType()->getPointerTo());
         RetVal = Builder.CreateLoad(RetVal, "retval");
         RetVals.push_back(RetVal);
       }
@@ -1450,10 +1449,8 @@ void TreeToLLVM::EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree type) {
         !TheTypeConverter->GCCTypeOverlapsWithLLVMTypePadding(type, LLVMTy) &&
         // Don't copy tons of tiny elements.
         CountAggregateElements(LLVMTy) <= 8) {
-      DestLoc.Ptr = Builder.CreateBitCast(DestLoc.Ptr,
-                                          PointerType::getUnqual(LLVMTy));
-      SrcLoc.Ptr = Builder.CreateBitCast(SrcLoc.Ptr,
-                                         PointerType::getUnqual(LLVMTy));
+      DestLoc.Ptr = Builder.CreateBitCast(DestLoc.Ptr, LLVMTy->getPointerTo());
+      SrcLoc.Ptr = Builder.CreateBitCast(SrcLoc.Ptr, LLVMTy->getPointerTo());
       CopyAggregate(DestLoc, SrcLoc, Builder, type);
       return;
     }
@@ -1505,8 +1502,7 @@ void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
     if (!TheTypeConverter->GCCTypeOverlapsWithLLVMTypePadding(type, LLVMTy) &&
         // Don't zero tons of tiny elements.
         CountAggregateElements(LLVMTy) <= 8) {
-      DestLoc.Ptr = Builder.CreateBitCast(DestLoc.Ptr,
-                                          PointerType::getUnqual(LLVMTy));
+      DestLoc.Ptr = Builder.CreateBitCast(DestLoc.Ptr, LLVMTy->getPointerTo());
       ZeroAggregate(DestLoc, Builder);
       return;
     }
@@ -1518,7 +1514,7 @@ void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
 
 Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
                               unsigned Align) {
-  const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
   const Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[4] = {
     Builder.CreateBitCast(DestPtr, SBP),
@@ -1534,7 +1530,7 @@ Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
 Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
                                unsigned Align) {
-  const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
   const Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[4] = {
     Builder.CreateBitCast(DestPtr, SBP),
@@ -1550,7 +1546,7 @@ Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
 
 Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
                               unsigned Align) {
-  const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
   const Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[4] = {
     Builder.CreateBitCast(DestPtr, SBP),
@@ -1575,8 +1571,8 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
 
   // The idea is that it's a pointer to type "Value"
   // which is opaque* but the routine expects i8** and i8*.
-  const PointerType *Ty = PointerType::getUnqual(Type::getInt8Ty(Context));
-  V = Builder.CreateBitCast(V, PointerType::getUnqual(Ty));
+  const PointerType *Ty = Type::getInt8PtrTy(Context);
+  V = Builder.CreateBitCast(V, Ty->getPointerTo());
 
   Value *Ops[2] = {
     V,
@@ -1602,7 +1598,7 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
   Constant *lineNo =
     ConstantInt::get(Type::getInt32Ty(Context), DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
   file = Builder.getFolder().CreateBitCast(file, SBP);
 
   // There may be multiple annotate attributes. Pass return of lookup_attr
@@ -1622,7 +1618,7 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
       // Assert its a string, and then get that string.
       assert(TREE_CODE(val) == STRING_CST &&
              "Annotate attribute arg should always be a string");
-      const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
+      const Type *SBP = Type::getInt8PtrTy(Context);
       Constant *strGV = TreeConstantToLLVM::EmitLV_STRING_CST(val);
       Value *Ops[4] = {
         Builder.CreateBitCast(V, SBP),
@@ -1797,7 +1793,7 @@ void TreeToLLVM::CreateExceptionValues() {
 
   const Type *IntTy = ConvertType(integer_type_node);
 
-  ExceptionValue = CreateTemporary(Type::getInt8Ty(Context)->getPointerTo());
+  ExceptionValue = CreateTemporary(Type::getInt8PtrTy(Context));
   ExceptionValue->setName("eh_exception");
 
   ExceptionSelectorValue = CreateTemporary(IntTy);
@@ -1860,7 +1856,7 @@ abort();//FIXME
 //FIXME    assert(llvm_eh_personality_libfunc
 //FIXME           && "no exception handling personality function!");
 //FIXME    Args.push_back(Builder.CreateBitCast(DECL_LOCAL(llvm_eh_personality_libfunc),
-//FIXME                                 PointerType::getUnqual(Type::getInt8Ty(Context))));
+//FIXME                                 Type::getInt8PtrTy(Context)));
 //FIXME
 //FIXME    // Add selections for each handler.
 //FIXME    foreach_reachable_handler(i, false, false, AddHandler, &Handlers);
@@ -1892,7 +1888,7 @@ abort();//FIXME
 //FIXME        if (!TypeList) {
 //FIXME          // Catch-all - push a null pointer.
 //FIXME          Args.push_back(
-//FIXME            Constant::getNullValue(PointerType::getUnqual(Type::getInt8Ty(Context)))
+//FIXME            Constant::getNullValue(Type::getInt8PtrTy(Context))
 //FIXME          );
 //FIXME        } else {
 //FIXME          // Add the type infos.
@@ -1919,7 +1915,7 @@ abort();//FIXME
 //FIXME        if (catch_all_type == NULL_TREE)
 //FIXME          // Use a C++ style null catch-all object.
 //FIXME          CatchAll = Constant::getNullValue(
-//FIXME                                    PointerType::getUnqual(Type::getInt8Ty(Context)));
+//FIXME                                    Type::getInt8PtrTy(Context));
 //FIXME        else
 //FIXME          // This language has a type that catches all others.
 //FIXME          CatchAll = Emit(catch_all_type, 0);
@@ -1984,7 +1980,7 @@ abort();//FIXME
 //FIXME      for (; TypeList; TypeList = TREE_CHAIN (TypeList)) {
 //FIXME        Value *TType = Emit(lookup_type_for_runtime(TREE_VALUE(TypeList)), 0);
 //FIXME        TType = Builder.CreateBitCast(TType,
-//FIXME                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+//FIXME                              Type::getInt8PtrTy(Context));
 //FIXME
 //FIXME        // Call get eh type id.
 //FIXME        Value *TypeID = Builder.CreateCall(FuncEHGetTypeID, TType, "eh_typeid");
@@ -2362,7 +2358,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   if (!LV.isBitfield()) {
     if (!DestLoc) {
       // Scalar value: emit a load.
-      Value *Ptr = Builder.CreateBitCast(LV.Ptr, PointerType::getUnqual(Ty));
+      Value *Ptr = Builder.CreateBitCast(LV.Ptr, Ty->getPointerTo());
       LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
       LI->setAlignment(Alignment);
       return LI;
@@ -2492,7 +2488,7 @@ Value *TreeToLLVM::EmitGimpleCallRHS(gimple stmt, const MemRef *DestLoc) {
   // If this is a direct call to a function using a static chain then we need
   // to ensure the function type is the one just calculated: it has an extra
   // parameter for the chain.
-  Callee = Builder.CreateBitCast(Callee, PointerType::getUnqual(Ty));
+  Callee = Builder.CreateBitCast(Callee, Ty->getPointerTo());
 
   Value *Result = EmitCallOf(Callee, stmt, DestLoc, PAL);
 
@@ -2595,7 +2591,7 @@ namespace {
       Value *Loc = LocStack.back();
       if (Loc) {
         // An address.  Convert to the right type and load the value out.
-        Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(Ty));
+        Loc = Builder.CreateBitCast(Loc, Ty->getPointerTo());
         return Builder.CreateLoad(Loc, "val");
       } else {
         // A value - just return it.
@@ -2738,7 +2734,7 @@ namespace {
     /// reference with an additional parameter attribute "ByVal".
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
       Value *Loc = getAddress();
-      assert(PointerType::getUnqual(LLVMTy) == Loc->getType());
+      assert(LLVMTy->getPointerTo() == Loc->getType());
       CallOperands.push_back(Loc);
     }
 
@@ -2746,7 +2742,7 @@ namespace {
     /// argument is passed as a first class aggregate.
     void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
       Value *Loc = getAddress();
-      assert(PointerType::getUnqual(LLVMTy) == Loc->getType());
+      assert(LLVMTy->getPointerTo() == Loc->getType());
       CallOperands.push_back(Builder.CreateLoad(Loc));
     }
 
@@ -2755,7 +2751,7 @@ namespace {
     /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
     void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {
       Value *Loc = getAddress();
-      Loc = Builder.CreateBitCast(Loc, PointerType::getUnqual(StructTy));
+      Loc = Builder.CreateBitCast(Loc, StructTy->getPointerTo());
       pushAddress(Builder.CreateStructGEP(Loc, FieldNo, "elt"));
     }
     void ExitField() {
@@ -2946,8 +2942,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, gimple stmt, const MemRef *DestLoc,
 
   Value *Ptr = DestLoc->Ptr;
   if (Client.Offset) {
-    Ptr = Builder.CreateBitCast(Ptr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+    Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
     Ptr = Builder.CreateGEP(Ptr,
                     ConstantInt::get(TD.getIntPtrType(Context), Client.Offset));
   }
@@ -2969,7 +2964,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree type, tree op, const MemRef *DestLoc) {
   } else if (AGGREGATE_TYPE_P(TREE_TYPE(op))) {
     // Aggregate to aggregate copy.
     MemRef NewLoc = *DestLoc;
-    NewLoc.Ptr = Builder.CreateBitCast(DestLoc->Ptr,PointerType::getUnqual(Ty));
+    NewLoc.Ptr = Builder.CreateBitCast(DestLoc->Ptr,Ty->getPointerTo());
     Value *OpVal = Emit(op, &NewLoc);
     (void)OpVal;
     assert(OpVal == 0 && "Shouldn't cast scalar to aggregate!");
@@ -3005,7 +3000,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
 
     // Make the destination look like the source type.
     const Type *OpTy = ConvertType(TREE_TYPE(Op));
-    Target.Ptr = Builder.CreateBitCast(Target.Ptr,PointerType::getUnqual(OpTy));
+    Target.Ptr = Builder.CreateBitCast(Target.Ptr, OpTy->getPointerTo());
 
     // Needs to be in sync with EmitLV.
     switch (TREE_CODE(Op)) {
@@ -3046,7 +3041,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
     // Target holds the temporary created above.
     const Type *ExpTy = ConvertType(TREE_TYPE(exp));
     return Builder.CreateLoad(Builder.CreateBitCast(Target.Ptr,
-                                                PointerType::getUnqual(ExpTy)));
+                                                    ExpTy->getPointerTo()));
   }
 
   if (DestLoc) {
@@ -3625,7 +3620,7 @@ Value *TreeToLLVM::EmitPOINTER_PLUS_EXPR(tree type, tree op0, tree op1) {
   Value *Idx = EmitGimpleReg(op1); // The offset in bytes.
 
   // Convert the pointer into an i8* and add the offset to it.
-  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
+  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
   Value *GEP = POINTER_TYPE_OVERFLOW_UNDEFINED ?
     Builder.CreateInBoundsGEP(Ptr, Idx) : Builder.CreateGEP(Ptr, Idx);
 
@@ -4243,7 +4238,7 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(gimple stmt, Intrinsic::ID id) {
   };
   const Type* Ty[2];
   Ty[0] = ResultTy;
-  Ty[1] = PointerType::getUnqual(ResultTy);
+  Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
   C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
   // The gcc builtins are also full memory barriers.
@@ -4267,7 +4262,7 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(gimple stmt, tree type, bool isBool) {
   };
   const Type* Ty[2];
   Ty[0] = ResultTy;
-  Ty[1] = PointerType::getUnqual(ResultTy);
+  Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
   C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
   C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
@@ -4578,7 +4573,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
 //TODO    location_t locus = gimple_location(stmt);
 //TODO    Constant *lineNo = ConstantInt::get(Type::getInt32Ty, LOCATION_LINE(locus));
 //TODO    Constant *file = ConvertMetadataStringToGV(LOCATION_FILE(locus));
-//TODO    const Type *SBP= PointerType::getUnqual(Type::getInt8Ty(Context));
+//TODO    const Type *SBP= Type::getInt8PtrTy(Context);
 //TODO    file = Builder.getFolder().CreateBitCast(file, SBP);
 //TODO
 //TODO    // Get arguments.
@@ -4750,7 +4745,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -4787,7 +4782,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -4824,7 +4819,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -4861,7 +4856,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -4898,7 +4893,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -4935,7 +4930,7 @@ bool TreeToLLVM::EmitBuiltinCall(gimple stmt, tree fndecl,
     };
     const Type* Ty[2];
     Ty[0] = ResultTy;
-    Ty[1] = PointerType::getUnqual(ResultTy);
+    Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
     C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
 
@@ -5245,8 +5240,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(gimple stmt) {
   if (Locality == 0)
     Locality = ConstantInt::get(Type::getInt32Ty(Context), 3);
 
-  Ptr = Builder.CreateBitCast(Ptr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
 
   Value *Ops[3] = { Ptr, ReadWrite, Locality };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::prefetch),
@@ -5289,8 +5283,7 @@ bool TreeToLLVM::EmitBuiltinExtractReturnAddr(gimple stmt, Value *&Result) {
   // Unfortunately, these constants are defined as RTL expressions and
   // should be handled separately.
 
-  Result = Builder.CreateBitCast(Ptr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Result = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
 
   return true;
 }
@@ -5304,8 +5297,7 @@ bool TreeToLLVM::EmitBuiltinFrobReturnAddr(gimple stmt, Value *&Result) {
   // needed for: MIPS, Sparc.  Unfortunately, these constants are defined
   // as RTL expressions and should be handled separately.
 
-  Result = Builder.CreateBitCast(Ptr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Result = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
 
   return true;
 }
@@ -5409,8 +5401,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(gimple stmt, Value *&Result) {
 		       Intrinsic::eh_return_i32 : Intrinsic::eh_return_i64);
 
   Offset = Builder.CreateIntCast(Offset, IntPtr, true);
-  Handler = Builder.CreateBitCast(Handler,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Handler = Builder.CreateBitCast(Handler, Type::getInt8PtrTy(Context));
 
   SmallVector<Value *, 2> Args;
   Args.push_back(Offset);
@@ -5439,7 +5430,7 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(gimple stmt, Value *&Result) {
 
   Value *Addr =
     Builder.CreateBitCast(Emit(gimple_call_arg(stmt, 0), 0),
-                          PointerType::getUnqual(Type::getInt8Ty(Context)));
+                          Type::getInt8PtrTy(Context));
   Constant *Size, *Idx;
 
   for (i = 0; i < FIRST_PSEUDO_REGISTER; i++) {
@@ -5504,8 +5495,7 @@ bool TreeToLLVM::EmitBuiltinStackRestore(gimple stmt) {
     return false;
 
   Value *Ptr = Emit(gimple_call_arg(stmt, 0), 0);
-  Ptr = Builder.CreateBitCast(Ptr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::stackrestore), Ptr);
@@ -5548,16 +5538,14 @@ bool TreeToLLVM::EmitBuiltinVAStart(gimple stmt) {
 
   Constant *va_start = Intrinsic::getDeclaration(TheModule, Intrinsic::vastart);
   Value *ArgVal = Emit(gimple_call_arg(stmt, 0), 0);
-  ArgVal = Builder.CreateBitCast(ArgVal,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  ArgVal = Builder.CreateBitCast(ArgVal, Type::getInt8PtrTy(Context));
   Builder.CreateCall(va_start, ArgVal);
   return true;
 }
 
 bool TreeToLLVM::EmitBuiltinVAEnd(gimple stmt) {
   Value *Arg = Emit(gimple_call_arg(stmt, 0), 0);
-  Arg = Builder.CreateBitCast(Arg,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  Arg = Builder.CreateBitCast(Arg, Type::getInt8PtrTy(Context));
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::vaend),
                      Arg);
   return true;
@@ -5582,7 +5570,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(gimple stmt) {
     Arg2 = Emit(Arg2T, 0);
   }
 
-  static const Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+  static const Type *VPTy = Type::getInt8PtrTy(Context);
 
   // FIXME: This ignores alignment and volatility of the arguments.
   SmallVector<Value *, 2> Args;
@@ -5599,7 +5587,7 @@ bool TreeToLLVM::EmitBuiltinInitTrampoline(gimple stmt, Value *&Result) {
                          VOID_TYPE))
     return false;
 
-  static const Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+  static const Type *VPTy = Type::getInt8PtrTy(Context);
 
   Value *Tramp = Emit(gimple_call_arg(stmt, 0), 0);
   Tramp = Builder.CreateBitCast(Tramp, VPTy);
@@ -5721,7 +5709,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree type, tree_code code,
 Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
   tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
 
-  const Type *SBP = PointerType::getUnqual(Type::getInt8Ty(Context));
+  const Type *SBP = Type::getInt8PtrTy(Context);
 
   Function *Fn = Intrinsic::getDeclaration(TheModule,
                                            Intrinsic::ptr_annotation,
@@ -5836,8 +5824,7 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   // much nicer in cases like:
   //   float foo(int w, float A[][w], int g) { return A[g][0]; }
 
-  ArrayAddr = Builder.CreateBitCast(ArrayAddr,
-                              PointerType::getUnqual(Type::getInt8Ty(Context)));
+  ArrayAddr = Builder.CreateBitCast(ArrayAddr, Type::getInt8PtrTy(Context));
   if (VOID_TYPE_P(TREE_TYPE(ArrayTreeType)))
     return LValue(Builder.CreateGEP(ArrayAddr, IndexVal), 1);
 
@@ -5878,7 +5865,7 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
   if (unsigned UnitOffset = BitStart / ValueSizeInBits) {
     // TODO: If Ptr.Ptr is a struct type or something, we can do much better
     // than this.  e.g. check out when compiling unwind-dw2-fde-darwin.c.
-    Ptr.Ptr = Builder.CreateBitCast(Ptr.Ptr, PointerType::getUnqual(ValTy));
+    Ptr.Ptr = Builder.CreateBitCast(Ptr.Ptr, ValTy->getPointerTo());
     Ptr.Ptr = Builder.CreateGEP(Ptr.Ptr,
                                 ConstantInt::get(Type::getInt32Ty(Context),
                                                  UnitOffset));
@@ -5887,11 +5874,11 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
 
   // If this is referring to the whole field, return the whole thing.
   if (BitStart == 0 && BitSize == ValueSizeInBits) {
-    return LValue(Builder.CreateBitCast(Ptr.Ptr, PointerType::getUnqual(ValTy)),
+    return LValue(Builder.CreateBitCast(Ptr.Ptr, ValTy->getPointerTo()),
                   Ptr.getAlignment());
   }
 
-  return LValue(Builder.CreateBitCast(Ptr.Ptr, PointerType::getUnqual(ValTy)),
+  return LValue(Builder.CreateBitCast(Ptr.Ptr, ValTy->getPointerTo()),
                 1, BitStart, BitSize);
 }
 
@@ -5914,7 +5901,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
           StructAddrLV.BitStart == 0) && "structs cannot be bitfields!");
 
   StructAddrLV.Ptr = Builder.CreateBitCast(StructAddrLV.Ptr,
-                                           PointerType::getUnqual(StructTy));
+                                           StructTy->getPointerTo());
   const Type *FieldTy = ConvertType(getDeclaredType(FieldDecl));
 
   // BitStart - This is the actual offset of the field from the start of the
@@ -5985,7 +5972,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
     Value *Ptr = Builder.CreatePtrToInt(StructAddrLV.Ptr, Offset->getType());
     Ptr = Builder.CreateAdd(Ptr, Offset);
-    FieldPtr = Builder.CreateIntToPtr(Ptr, PointerType::getUnqual(FieldTy));
+    FieldPtr = Builder.CreateIntToPtr(Ptr, FieldTy->getPointerTo());
   }
 
   if (isBitfield(FieldDecl)) {
@@ -6025,7 +6012,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
     // If this is a bitfield, the field may span multiple fields in the LLVM
     // type.  As such, cast the pointer to be a pointer to the declared type.
-    FieldPtr = Builder.CreateBitCast(FieldPtr, PointerType::getUnqual(FieldTy));
+    FieldPtr = Builder.CreateBitCast(FieldPtr, FieldTy->getPointerTo());
 
     unsigned LLVMValueBitSize = FieldTy->getPrimitiveSizeInBits();
     // Finally, because bitfields can span LLVM fields, and because the start
@@ -6055,8 +6042,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       Constant *Offset = ConstantInt::get(TD.getIntPtrType(Context), ByteOffset);
       FieldPtr = Builder.CreatePtrToInt(FieldPtr, Offset->getType());
       FieldPtr = Builder.CreateAdd(FieldPtr, Offset);
-      FieldPtr = Builder.CreateIntToPtr(FieldPtr,
-                                        PointerType::getUnqual(FieldTy));
+      FieldPtr = Builder.CreateIntToPtr(FieldPtr, FieldTy->getPointerTo());
 
       // Adjust bitstart to account for the pointer movement.
       BitStart -= ByteOffset*8;
@@ -6077,7 +6063,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   } else {
     // Make sure we return a pointer to the right type.
     const Type *EltTy = ConvertType(TREE_TYPE(exp));
-    FieldPtr = Builder.CreateBitCast(FieldPtr, PointerType::getUnqual(EltTy));
+    FieldPtr = Builder.CreateBitCast(FieldPtr, EltTy->getPointerTo());
   }
 
   assert(BitStart == 0 &&
@@ -6115,7 +6101,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   if (Decl == 0) {
     if (errorcount || sorrycount) {
       const Type *Ty = ConvertType(TREE_TYPE(exp));
-      const PointerType *PTy = PointerType::getUnqual(Ty);
+      const PointerType *PTy = Ty->getPointerTo();
       LValue LV(ConstantPointerNull::get(PTy), 1);
       return LV;
     }
@@ -6153,7 +6139,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   // If we have "extern void foo", make the global have type {} instead of
   // type void.
   if (Ty->isVoidTy()) Ty = StructType::get(Context);
-  const PointerType *PTy = PointerType::getUnqual(Ty);
+  const PointerType *PTy = Ty->getPointerTo();
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
   if (DECL_ALIGN(exp)) {
     if (DECL_USER_ALIGN(exp) || 8 * Alignment < (unsigned)DECL_ALIGN(exp))
@@ -6486,7 +6472,7 @@ void TreeToLLVM::RenderGIMPLE_ASM(gimple stmt) {
             TySize == 32 || TySize == 64) {
           LLVMTy = IntegerType::get(Context, TySize);
           Op = Builder.CreateLoad(Builder.CreateBitCast(LV.Ptr,
-                                               PointerType::getUnqual(LLVMTy)));
+                                                       LLVMTy->getPointerTo()));
         } else {
           // Otherwise, emit our value as a lvalue and let the codegen deal with
           // it.
@@ -7169,7 +7155,7 @@ Constant *TreeConstantToLLVM::ConvertPOINTER_PLUS_EXPR(tree exp) {
   Constant *Idx = Convert(TREE_OPERAND(exp, 1)); // The offset in bytes.
 
   // Convert the pointer into an i8* and add the offset to it.
-  Ptr = TheFolder->CreateBitCast(Ptr, Type::getInt8Ty(Context)->getPointerTo());
+  Ptr = TheFolder->CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
   Constant *GEP = POINTER_TYPE_OVERFLOW_UNDEFINED ?
     TheFolder->CreateInBoundsGetElementPtr(Ptr, &Idx, 1) :
     TheFolder->CreateGetElementPtr(Ptr, &Idx, 1);
@@ -7912,7 +7898,7 @@ Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
   BasicBlock *BB = TheTreeToLLVM->getLabelDeclBlock(exp);
   Constant *C = TheTreeToLLVM->getIndirectGotoBlockNumber(BB);
   return
-       TheFolder->CreateIntToPtr(C, PointerType::getUnqual(Type::getInt8Ty(Context)));
+       TheFolder->CreateIntToPtr(C, Type::getInt8PtrTy(Context));
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
@@ -7998,7 +7984,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree FieldDecl = TREE_OPERAND(exp, 1);
 
   StructAddrLV = TheFolder->CreateBitCast(StructAddrLV,
-                                          PointerType::getUnqual(StructTy));
+                                          StructTy->getPointerTo());
   const Type *FieldTy = ConvertType(getDeclaredType(FieldDecl));
 
   // BitStart - This is the actual offset of the field from the start of the
@@ -8040,14 +8026,12 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     }
     Constant *Ptr = TheFolder->CreatePtrToInt(StructAddrLV, Offset->getType());
     Ptr = TheFolder->CreateAdd(Ptr, Offset);
-    FieldPtr = TheFolder->CreateIntToPtr(Ptr,
-                                         PointerType::getUnqual(FieldTy));
+    FieldPtr = TheFolder->CreateIntToPtr(Ptr, FieldTy->getPointerTo());
   }
 
   // Make sure we return a result of the right type.
-  if (PointerType::getUnqual(FieldTy) != FieldPtr->getType())
-    FieldPtr = TheFolder->CreateBitCast(FieldPtr,
-                                        PointerType::getUnqual(FieldTy));
+  if (FieldTy->getPointerTo() != FieldPtr->getType())
+    FieldPtr = TheFolder->CreateBitCast(FieldPtr, FieldTy->getPointerTo());
 
   assert(BitStart == 0 &&
          "It's a bitfield reference or we didn't get to the field!");

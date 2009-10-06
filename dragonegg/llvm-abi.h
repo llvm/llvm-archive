@@ -388,7 +388,7 @@ public:
       if (ScalarType)
         C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
       else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
-        C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
+        C.HandleScalarShadowResult(Ty->getPointerTo(), false);
       else
         C.HandleScalarResult(Ty);
     } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
@@ -420,7 +420,7 @@ public:
 
       // FIXME: should return the hidden first argument for some targets
       // (e.g. ELF i386).
-      C.HandleAggregateShadowResult(PointerType::getUnqual(Ty), false);
+      C.HandleAggregateShadowResult(Ty->getPointerTo(), false);
     }
   }
   
@@ -443,7 +443,7 @@ public:
       C.HandleScalarArgument(OpTy, type);
       ScalarElts.push_back(OpTy);
     } else if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
-      const Type *PtrTy = PointerType::getUnqual(Ty);
+      const Type *PtrTy = Ty->getPointerTo();
       C.HandleByInvisibleReferenceArgument(PtrTy, type);
       ScalarElts.push_back(PtrTy);
     } else if (isa<VectorType>(Ty)) {
@@ -744,7 +744,7 @@ public:
       if (ScalarType)
         C.HandleAggregateResultAsScalar(ConvertType(ScalarType));
       else if (LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(type, isBuiltin))
-        C.HandleScalarShadowResult(PointerType::getUnqual(Ty), false);
+        C.HandleScalarShadowResult(Ty->getPointerTo(), false);
       else
         C.HandleScalarResult(Ty);
     } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
@@ -776,7 +776,7 @@ public:
 
       // FIXME: should return the hidden first argument for some targets
       // (e.g. ELF i386).
-      C.HandleAggregateShadowResult(PointerType::getUnqual(Ty), false);
+      C.HandleAggregateShadowResult(Ty->getPointerTo(), false);
     }
   }
   
@@ -810,7 +810,7 @@ public:
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
     if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
-      const Type *PtrTy = PointerType::getUnqual(Ty);
+      const Type *PtrTy = Ty->getPointerTo();
       C.HandleByInvisibleReferenceArgument(PtrTy, type);
       ScalarElts.push_back(PtrTy);
 

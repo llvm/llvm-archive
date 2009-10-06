@@ -696,7 +696,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
   }
   if (TheDebugInfo) {
     TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
-    TheDebugInfo->EmitRegionEnd(Builder.GetInsertBlock(), true);
+    TheDebugInfo->EmitFunctionEnd(Builder.GetInsertBlock(), true);
   }
   if (RetVals.empty())
     Builder.CreateRetVoid();

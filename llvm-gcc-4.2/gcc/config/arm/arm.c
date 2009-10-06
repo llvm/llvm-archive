@@ -16862,6 +16862,8 @@ arm_init_neon_builtins (void)
   /* LLVM LOCAL begin pr5037 use standard type nodes */
   tree neon_intQI_type_node = intQI_type_node;
   tree neon_intHI_type_node = intHI_type_node;
+  tree neon_polyQI_type_node = intQI_type_node;
+  tree neon_polyHI_type_node = intHI_type_node;
   tree neon_intSI_type_node = intSI_type_node;
   tree neon_intDI_type_node = intDI_type_node;
   tree neon_float_type_node = float_type_node;
@@ -16918,7 +16920,11 @@ arm_init_neon_builtins (void)
   tree V2DI_type_node =
     build_vector_type_for_mode (neon_intDI_type_node, V2DImode);
 
-  /* LLVM LOCAL pr5037 removed unused type nodes */
+  /* Unsigned integer types for various mode sizes.  */
+  tree intUQI_type_node = make_unsigned_type (GET_MODE_PRECISION (QImode));
+  tree intUHI_type_node = make_unsigned_type (GET_MODE_PRECISION (HImode));
+  tree intUSI_type_node = make_unsigned_type (GET_MODE_PRECISION (SImode));
+  tree intUDI_type_node = make_unsigned_type (GET_MODE_PRECISION (DImode));
 
   /* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
@@ -17804,7 +17810,33 @@ arm_init_neon_builtins (void)
   tree dreg_types[5], qreg_types[5];
 
   /* APPLE LOCAL begin 7083296 Build without warnings.  */
-  /* LLVM LOCAL pr5037 removed builtin element types */
+  /* Define typedefs which exactly correspond to the modes we are basing vector
+     types on.  If you change these names you'll need to change
+     the table used by arm_mangle_type too.  */
+  (*lang_hooks.types.register_builtin_type) (neon_intQI_type_node,
+					     "__builtin_neon_qi");
+  (*lang_hooks.types.register_builtin_type) (neon_intHI_type_node,
+					     "__builtin_neon_hi");
+  (*lang_hooks.types.register_builtin_type) (neon_intSI_type_node,
+					     "__builtin_neon_si");
+  (*lang_hooks.types.register_builtin_type) (neon_float_type_node,
+					     "__builtin_neon_sf");
+  (*lang_hooks.types.register_builtin_type) (neon_intDI_type_node,
+					     "__builtin_neon_di");
+ 
+  (*lang_hooks.types.register_builtin_type) (neon_polyQI_type_node,
+					     "__builtin_neon_poly8");
+  (*lang_hooks.types.register_builtin_type) (neon_polyHI_type_node,
+					     "__builtin_neon_poly16");
+
+  (*lang_hooks.types.register_builtin_type) (intUQI_type_node,
+					     "__builtin_neon_uqi");
+  (*lang_hooks.types.register_builtin_type) (intUHI_type_node,
+					     "__builtin_neon_uhi");
+  (*lang_hooks.types.register_builtin_type) (intUSI_type_node,
+					     "__builtin_neon_usi");
+  (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
+					     "__builtin_neon_udi");
 
   /* LLVM LOCAL begin multi-vector types */
   (*lang_hooks.types.register_builtin_type) (V8QI2_type_node,

@@ -50,3 +50,41 @@ The plugin accepts a few command line arguments, for example
 -fplugin-arg-llvm-enable-gcc-optzns
 Search for the comment "Process any plugin arguments" in llvm-backend.cpp,
 the argument parsing code is just after this.
+
+------------------
+- USEFUL OPTIONS -
+------------------
+
+-fplugin-arg-llvm-emit-ir
+  Output LLVM IR rather than target assembler.  You need to use -S with this,
+  since otherwise GCC will pass the output to the system assembler (these don't
+  usually understand LLVM IR).  It would be nice to fix this and have the option
+  work with -c too but it's not clear how.
+
+-fstats
+  Output both LLVM and GCC statistics.
+
+-ftime-report
+  Output both LLVM and GCC timing information.
+
+-fverbose-asm
+  Annotate the target assembler with helpful comments.  Gives values helpful
+  names in the LLVM IR.
+
+-fno-ident
+  If the ident global asm in the LLVM IR annoys you, use this to turn it off.
+
+-fdump-rtl-all
+  In the dump file, each function is output both as gimple and as LLVM IR.
+
+-fplugin-arg-llvm-disable-llvm-optzns
+  Do not perform any LLVM IR optimizations even if compiling at -O1, -O2 etc.
+
+-fplugin-arg-llvm-enable-gcc-optzns
+  Run the GCC tree optimizers as well as the LLVM IR optimizers.  Normally the
+  GCC optimizers are disabled.
+
+-fplugin-arg-llvm-save-gcc-output
+  GCC assembler output is normally redirected to /dev/null so that it doesn't
+  clash with the LLVM output.  This option causes GCC output to be written to
+  a file instead.  Good for seeing which GCC output we've failed to turn off.

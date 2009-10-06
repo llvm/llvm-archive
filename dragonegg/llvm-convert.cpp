@@ -888,27 +888,32 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
   // while generating code must be nameless.  That way, artificial blocks
   // can be easily identified.
 
-  // Give the basic block a name.  If BB contains labels, name the LLVM basic
-  // block after the first label.
-  gimple stmt = first_stmt(bb);
-  if (stmt && gimple_code(stmt) == GIMPLE_LABEL) {
-    tree label = gimple_label_label(stmt);
-    if (tree name = DECL_NAME(label)) {
-      // If the label has a name then use it.
-      BB->setName(IDENTIFIER_POINTER(name));
-    } else if (LABEL_DECL_UID(label) != -1) {
-      // If the label has a UID then use it.
-      Twine UID(LABEL_DECL_UID(label));
-      BB->setName("<L" + UID + ">");
+  // Give the basic block a name.  If the user specified -fverbose-asm then
+  // use the same naming scheme as GCC.
+  if (flag_verbose_asm) {
+    // If BB contains labels, name the LLVM basic block after the first label.
+    gimple stmt = first_stmt(bb);
+    if (stmt && gimple_code(stmt) == GIMPLE_LABEL) {
+      tree label = gimple_label_label(stmt);
+      if (tree name = DECL_NAME(label)) {
+        // If the label has a name then use it.
+        BB->setName(IDENTIFIER_POINTER(name));
+      } else if (LABEL_DECL_UID(label) != -1) {
+        // If the label has a UID then use it.
+        Twine UID(LABEL_DECL_UID(label));
+        BB->setName("<L" + UID + ">");
+      } else {
+        // Otherwise use the generic UID.
+        Twine UID(DECL_UID(label));
+        BB->setName("<D." + UID + ">");
+      }
     } else {
-      // Otherwise use the generic UID.
-      Twine UID(DECL_UID(label));
-      BB->setName("<D." + UID + ">");
+      // When there is no label, use the same naming scheme as the GCC tree dumps.
+      Twine Index(bb->index);
+      BB->setName("<bb " + Index + ">");
     }
   } else {
-    // When there is no label, use the same naming scheme as the GCC tree dumps.
-    Twine Index(bb->index);
-    BB->setName("<bb " + Index + ">");
+    BB->setName("bb");
   }
 
   return BasicBlocks[bb] = BB;

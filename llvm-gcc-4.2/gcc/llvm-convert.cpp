@@ -695,7 +695,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
     }
   }
   if (TheDebugInfo) {
-    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
     TheDebugInfo->EmitFunctionEnd(Builder.GetInsertBlock(), true);
   }
   if (RetVals.empty())
@@ -792,7 +792,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
       TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
     }
 
-    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock());
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
   }
 
   switch (TREE_CODE(exp)) {

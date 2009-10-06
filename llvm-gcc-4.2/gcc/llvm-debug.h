@@ -28,6 +28,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_DEBUG_H
 #define LLVM_DEBUG_H
 
+#include "llvm-internal.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
@@ -96,7 +97,7 @@ public:
 
   /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
   /// source line.
-  void EmitStopPoint(Function *Fn, BasicBlock *CurBB);
+  void EmitStopPoint(Function *Fn, BasicBlock *CurBB, LLVMBuilder &Builder);
                      
   /// EmitGlobalVariable - Emit information about a global variable.
   ///

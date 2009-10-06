@@ -250,8 +250,9 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                   Fn->hasInternalLinkage(),
                                   true /*definition*/);
 
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
   DebugFactory.InsertSubprogramStart(SP, CurBB);
-
+#endif
   // Push function on region stack.
   RegionStack.push_back(SP);
   RegionMap[FnDecl] = SP;
@@ -292,7 +293,9 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
 /// region - "llvm.dbg.region.end."
 void DebugInfo::EmitFunctionEnd(BasicBlock *CurBB, bool EndFunction) {
   assert(!RegionStack.empty() && "Region stack mismatch, stack empty!");
+#ifndef ATTACH_DEBUG_INFO_TO_AN_INSN
   DebugFactory.InsertRegionEnd(RegionStack.back(), CurBB);
+#endif
   RegionStack.pop_back();
   // Blocks get erased; clearing these is needed for determinism, and also
   // a good idea if the next function gets inlined.
@@ -356,8 +359,8 @@ bool isPartOfAppleBlockPrologue (unsigned lineno) {
 
 /// EmitStopPoint - Emit a call to llvm.dbg.stoppoint to indicate a change of 
 /// source line - "llvm.dbg.stoppoint."  Now enabled at -O.
-void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
-
+void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB,
+                              LLVMBuilder &Builder) {
   // Don't bother if things are the same as last time.
   if (PrevLineNo == CurLineNo &&
       PrevBB == CurBB &&
@@ -373,10 +376,20 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB) {
   // Don't set/allow source line breakpoints in Apple Block prologue code
   // or in Apple Block helper functions.
   if (!isPartOfAppleBlockPrologue(CurLineNo)
-      && !isCopyOrDestroyHelper(cfun->decl))
+      && !isCopyOrDestroyHelper(cfun->decl)) {
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+    llvm::DIDescriptor DR = RegionStack.back();
+    llvm::DIScope DS = llvm::DIScope(DR.getNode());
+    llvm::DILocation DO(NULL);
+    llvm::DILocation DL = 
+      DebugFactory.CreateLocation(CurLineNo, 0 /* column */, DS, DO);
+    Builder.SetCurrentDebugLocation(DL.getNode());
+#else
     DebugFactory.InsertStopPoint(getOrCreateCompileUnit(CurFullPath), 
                                  CurLineNo, 0 /*column no. */,
                                  CurBB);
+#endif
+  }
 }
 
 /// EmitGlobalVariable - Emit information about a global variable.

@@ -1630,6 +1630,12 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   if (!Size) {                           // Fixed size alloca -> entry block.
     AI = CreateTemporary(Ty);
     AI->setName(Name);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+    if (TheDebugInfo) {
+      TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+      Builder.SetDebugLocation(AI);
+    }
+#endif
   } else {
     AI = Builder.CreateAlloca(Ty, Size, Name);
   }

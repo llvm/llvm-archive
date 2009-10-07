@@ -199,60 +199,72 @@ bool isPassedByInvisibleReference(tree Type) {
          TREE_CODE(TYPE_SIZE(Type)) != INTEGER_CST;
 }
 
-/// GetTypeName - Return a fully qualified (with namespace prefixes) name for
-/// the specified type.
-static std::string GetTypeName(const char *Prefix, tree type) {
-  const char *Name = "anon";
-  if (TYPE_NAME(type)) {
-    if (TREE_CODE(TYPE_NAME(type)) == IDENTIFIER_NODE)
-      Name = IDENTIFIER_POINTER(TYPE_NAME(type));
-    else if (DECL_NAME(TYPE_NAME(type)))
-      Name = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(type)));
-  }
-  
-  std::string ContextStr;
-  tree Context = TYPE_CONTEXT(type);
-  while (Context) {
-    switch (TREE_CODE(Context)) {
-    case TRANSLATION_UNIT_DECL: Context = 0; break;  // Done.
-    case RECORD_TYPE:
-    case NAMESPACE_DECL:
-      if (TREE_CODE(Context) == RECORD_TYPE) {
-        if (TYPE_NAME(Context)) {
-          std::string NameFrag;
-          if (TREE_CODE(TYPE_NAME(Context)) == IDENTIFIER_NODE) {
-            NameFrag = IDENTIFIER_POINTER(TYPE_NAME(Context));
-          } else {
-            NameFrag = IDENTIFIER_POINTER(DECL_NAME(TYPE_NAME(Context)));
-          }
+/// NameType - Try to name the given type after the given GCC tree node.  If
+/// the GCC tree node has no sensible name then it does nothing.
+static void NameType(const Type *Ty, tree t, Twine Prefix = Twine(),
+                     Twine Postfix = Twine()) {
+  // No sensible name - give up, discarding any pre- and post-fixes.
+  if (!t)
+    return;
 
-          ContextStr = NameFrag + "::" + ContextStr;
-          Context = TYPE_CONTEXT(Context);
-          break;
-        }
-        // Anonymous record, fall through.
-      } else if (DECL_NAME(Context)
-                 /*&& DECL_NAME(Context) != anonymous_namespace_name*/){
-        assert(TREE_CODE(DECL_NAME(Context)) == IDENTIFIER_NODE);
-        std::string NamespaceName = IDENTIFIER_POINTER(DECL_NAME(Context));
-        ContextStr = NamespaceName + "::" + ContextStr;
-        Context = DECL_CONTEXT(Context);
-        break;
+  switch (TREE_CODE(t)) {
+  default:
+    // Unhandled case - give up.
+    return;
+
+    case ARRAY_TYPE:
+      // If the element type is E, name the array E[] (regardless of the number
+      // of dimensions).
+      for (; TREE_CODE(t) == ARRAY_TYPE; t = TREE_TYPE(t)) ;
+      NameType(Ty, t, Prefix, "[]" + Postfix);
+      return;
+
+    case BOOLEAN_TYPE:
+    case COMPLEX_TYPE:
+    case ENUMERAL_TYPE:
+    case FIXED_POINT_TYPE:
+    case FUNCTION_TYPE:
+    case INTEGER_TYPE:
+    case METHOD_TYPE:
+    case QUAL_UNION_TYPE:
+    case REAL_TYPE:
+    case RECORD_TYPE:
+    case UNION_TYPE:
+    case VECTOR_TYPE: {
+      // If the type has a name then use that, otherwise bail out.
+      if (!TYPE_NAME(t))
+        return; // Unnamed type.
+
+      tree identifier = NULL_TREE;
+      if (TREE_CODE(TYPE_NAME(t)) == IDENTIFIER_NODE)
+        identifier = TYPE_NAME(t);
+      else if (TREE_CODE(TYPE_NAME(t)) == TYPE_DECL)
+        identifier = DECL_NAME(TYPE_NAME(t));
+
+      if (identifier) {
+        const char *Class = "";
+        if (TREE_CODE(t) == ENUMERAL_TYPE)
+          Class = "enum ";
+        if (TREE_CODE(t) == RECORD_TYPE)
+          Class = "struct ";
+        else if (TREE_CODE(t) == UNION_TYPE)
+          Class = "union ";
+        StringRef Ident(IDENTIFIER_POINTER(identifier),
+                        IDENTIFIER_LENGTH(identifier));
+        TheModule->addTypeName((Prefix + Class + Ident + Postfix).str(), Ty);
       }
-      // FALL THROUGH for anonymous namespaces and records!
-      
-    default: {
-      // If this is a structure type defined inside of a function or other block
-      // scope, make sure to make the type name unique by putting a unique ID
-      // in it.
-      static unsigned UniqueID = 0;
-      ContextStr = "." + utostr(UniqueID++);
-      Context = 0;   // Stop looking at context
-      break;
+      return;
     }
-    }      
-  }  
-  return Prefix + ContextStr + Name;
+
+    case POINTER_TYPE:
+      // If the element type is E, LLVM already calls this E*.
+      return;
+
+    case REFERENCE_TYPE:
+      // If the element type is E, name the reference E&.
+      NameType(Ty, TREE_TYPE(t), Prefix, "&" + Postfix);
+      return;
+  }
 }
 
 /// isSequentialCompatible - Return true if the specified gcc array or pointer
@@ -634,170 +646,190 @@ bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type,
 
 const Type *TypeConverter::ConvertType(tree orig_type) {
   if (orig_type == error_mark_node) return Type::getInt32Ty(Context);
-  
+
   // LLVM doesn't care about variants such as const, volatile, or restrict.
   tree type = TYPE_MAIN_VARIANT(orig_type);
+  const Type *Ty;
 
   switch (TREE_CODE(type)) {
   default:
-    fprintf(stderr, "Unknown type to convert:\n");
     debug_tree(type);
-    abort();
-  case VOID_TYPE:   return SET_TYPE_LLVM(type, Type::getVoidTy(Context));
-  case RECORD_TYPE: return ConvertRECORD(type, orig_type);
+    llvm_unreachable("Unknown type to convert!");
+
+  case VOID_TYPE:
+    Ty = SET_TYPE_LLVM(type, Type::getVoidTy(Context));
+    break;
+
+  case RECORD_TYPE:
+    Ty = ConvertRECORD(type, orig_type);
+    break;
+
   case QUAL_UNION_TYPE:
-  case UNION_TYPE:  return ConvertUNION(type, orig_type);
+  case UNION_TYPE:
+    Ty = ConvertUNION(type, orig_type);
+    break;
+
   case BOOLEAN_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type))
+    if ((Ty = GET_TYPE_LLVM(type)))
       return Ty;
-    return SET_TYPE_LLVM(type, IntegerType::get(Context, TYPE_PRECISION(type)));
+    Ty = SET_TYPE_LLVM(type, IntegerType::get(Context, TYPE_PRECISION(type)));
+    break;
   }
+
   case ENUMERAL_TYPE:
     // Use of an enum that is implicitly declared?
     if (TYPE_SIZE(orig_type) == 0) {
       // If we already compiled this type, use the old type.
-      if (const Type *Ty = GET_TYPE_LLVM(orig_type))
+      if ((Ty = GET_TYPE_LLVM(orig_type)))
         return Ty;
 
-      const Type *Ty = OpaqueType::get(Context);
-      TheModule->addTypeName(GetTypeName("enum.", orig_type), Ty);
-      return TypeDB.setType(orig_type, Ty);
+      Ty = OpaqueType::get(Context);
+      Ty = TypeDB.setType(orig_type, Ty);
+      break;
     }
     // FALL THROUGH.
     type = orig_type;
   case INTEGER_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    if ((Ty = GET_TYPE_LLVM(type))) return Ty;
     // The ARM port defines __builtin_neon_xi as a 511-bit type because GCC's
     // type precision field has only 9 bits.  Treat this as a special case.
     int precision = TYPE_PRECISION(type) == 511 ? 512 : TYPE_PRECISION(type);
-    return SET_TYPE_LLVM(type, IntegerType::get(Context, precision));
+    Ty = SET_TYPE_LLVM(type, IntegerType::get(Context, precision));
+    break;
   }
+
   case REAL_TYPE:
-    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    if ((Ty = GET_TYPE_LLVM(type))) return Ty;
     switch (TYPE_PRECISION(type)) {
     default:
-      fprintf(stderr, "Unknown FP type!\n");
       debug_tree(type);
-      abort();        
-    case 32: return SET_TYPE_LLVM(type, Type::getFloatTy(Context));
-    case 64: return SET_TYPE_LLVM(type, Type::getDoubleTy(Context));
-    case 80: return SET_TYPE_LLVM(type, Type::getX86_FP80Ty(Context));
+      llvm_unreachable("Unknown FP type!");
+    case 32: Ty = SET_TYPE_LLVM(type, Type::getFloatTy(Context)); break;
+    case 64: Ty = SET_TYPE_LLVM(type, Type::getDoubleTy(Context)); break;
+    case 80: Ty = SET_TYPE_LLVM(type, Type::getX86_FP80Ty(Context)); break;
     case 128:
 #ifdef TARGET_POWERPC
-      return SET_TYPE_LLVM(type, Type::getPPC_FP128Ty(Context));
+      Ty = SET_TYPE_LLVM(type, Type::getPPC_FP128Ty(Context));
 #elif defined(TARGET_ZARCH) || defined(TARGET_CPU_sparc)  // FIXME: Use some generic define.
       // This is for IEEE double extended, e.g. Sparc
-      return SET_TYPE_LLVM(type, Type::getFP128Ty(Context));
+      Ty = SET_TYPE_LLVM(type, Type::getFP128Ty(Context));
 #else
       // 128-bit long doubles map onto { double, double }.
-      return SET_TYPE_LLVM(type,
-                           StructType::get(Context, Type::getDoubleTy(Context),
-                                           Type::getDoubleTy(Context), NULL));
+      Ty = SET_TYPE_LLVM(type,
+                         StructType::get(Context, Type::getDoubleTy(Context),
+                                         Type::getDoubleTy(Context), NULL));
 #endif
+      break;
     }
-    
+    break;
+
   case COMPLEX_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    const Type *Ty = ConvertType(TREE_TYPE(type));
+    if ((Ty = GET_TYPE_LLVM(type))) return Ty;
+    Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
     Ty = StructType::get(Context, Ty, Ty, NULL);
-    TheModule->addTypeName(GetTypeName("cpx.", orig_type), Ty);
-    return SET_TYPE_LLVM(type, Ty);
+    Ty = SET_TYPE_LLVM(type, Ty);
+    break;
   }
+
   case VECTOR_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    const Type *Ty = ConvertType(TREE_TYPE(type));
+    if ((Ty = GET_TYPE_LLVM(type))) return Ty;
+    Ty = ConvertType(TREE_TYPE(type));
     assert(!Ty->isAbstract() && "should use TypeDB.setType()");
     Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
-    return SET_TYPE_LLVM(type, Ty);
+    Ty = SET_TYPE_LLVM(type, Ty);
+    break;
   }
-    
+
   case POINTER_TYPE:
   case REFERENCE_TYPE:
-    if (const PointerType *Ty = cast_or_null<PointerType>(GET_TYPE_LLVM(type))){
+    if (const PointerType *PTy = cast_or_null<PointerType>(GET_TYPE_LLVM(type))){
       // We already converted this type.  If this isn't a case where we have to
       // reparse it, just return it.
       if (PointersToReresolve.empty() || PointersToReresolve.back() != type ||
           ConvertingStruct)
-        return Ty;
-      
+        return PTy;
+
       // Okay, we know that we're !ConvertingStruct and that type is on the end
       // of the vector.  Remove this entry from the PointersToReresolve list and
       // get the pointee type.  Note that this order is important in case the
       // pointee type uses this pointer.
-      assert(isa<OpaqueType>(Ty->getElementType()) && "Not a deferred ref!");
-      
+      assert(isa<OpaqueType>(PTy->getElementType()) && "Not a deferred ref!");
+
       // We are actively resolving this pointer.  We want to pop this value from
       // the stack, as we are no longer resolving it.  However, we don't want to
       // make it look like we are now resolving the previous pointer on the
       // stack, so pop this value and push a null.
       PointersToReresolve.back() = 0;
-      
-      
+
+
       // Do not do any nested resolution.  We know that there is a higher-level
       // loop processing deferred pointers, let it handle anything new.
       ConvertingStruct = true;
-      
-      // Note that we know that Ty cannot be resolved or invalidated here.
+
+      // Note that we know that PTy cannot be resolved or invalidated here.
       const Type *Actual = ConvertType(TREE_TYPE(type));
-      assert(GET_TYPE_LLVM(type) == Ty && "Pointer invalidated!");
+      assert(GET_TYPE_LLVM(type) == PTy && "Pointer invalidated!");
 
       // Restore ConvertingStruct for the caller.
       ConvertingStruct = false;
-      
+
       if (Actual->isVoidTy())
         Actual = Type::getInt8Ty(Context);  // void* -> sbyte*
-      
-      // Update the type, potentially updating TYPE_LLVM(type).
-      const OpaqueType *OT = cast<OpaqueType>(Ty->getElementType());
-      const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(Actual);
-      return GET_TYPE_LLVM(type);
-    } else {
-      const Type *Ty;
 
+      // Update the type, potentially updating TYPE_LLVM(type).
+      const OpaqueType *OT = cast<OpaqueType>(PTy->getElementType());
+      const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(Actual);
+      Ty = GET_TYPE_LLVM(type);
+      break;
+    } else {
       // If we are converting a struct, and if we haven't converted the pointee
       // type, add this pointer to PointersToReresolve and return an opaque*.
       if (ConvertingStruct) {
-        // If the pointee type has not already been converted to LLVM, create 
+        // If the pointee type has not already been converted to LLVM, create
         // a new opaque type and remember it in the database.
         Ty = GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)));
         if (Ty == 0) {
           PointersToReresolve.push_back(type);
-          return TypeDB.setType(type, 
-                         PointerType::getUnqual(OpaqueType::get(Context)));
+          Ty = TypeDB.setType(type,
+                              PointerType::getUnqual(OpaqueType::get(Context)));
+          break;
         }
 
-        // A type has already been computed.  However, this may be some sort of 
-        // recursive struct.  We don't want to call ConvertType on it, because 
-        // this will try to resolve it, and not adding the type to the 
-        // PointerToReresolve collection is just an optimization.  Instead, 
-        // we'll use the type returned by GET_TYPE_LLVM directly, even if this 
+        // A type has already been computed.  However, this may be some sort of
+        // recursive struct.  We don't want to call ConvertType on it, because
+        // this will try to resolve it, and not adding the type to the
+        // PointerToReresolve collection is just an optimization.  Instead,
+        // we'll use the type returned by GET_TYPE_LLVM directly, even if this
         // may be resolved further in the future.
       } else {
-        // If we're not in a struct, just call ConvertType.  If it has already 
-        // been converted, this will return the precomputed value, otherwise 
+        // If we're not in a struct, just call ConvertType.  If it has already
+        // been converted, this will return the precomputed value, otherwise
         // this will compute and return the new type.
         Ty = ConvertType(TREE_TYPE(type));
       }
-    
+
       if (Ty->isVoidTy())
         Ty = Type::getInt8Ty(Context);  // void* -> sbyte*
-      return TypeDB.setType(type, Ty->getPointerTo());
+      Ty = TypeDB.setType(type, Ty->getPointerTo());
+      break;
     }
-   
+
   case METHOD_TYPE:
   case FUNCTION_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type))
+    if ((Ty = GET_TYPE_LLVM(type)))
       return Ty;
-      
+
     // No declaration to pass through, passing NULL.
     CallingConv::ID CallingConv;
     AttrListPtr PAL;
-    return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
-                                                    CallingConv, PAL));
+    Ty = TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
+                                                  CallingConv, PAL));
+    break;
   }
+
   case ARRAY_TYPE: {
-    if (const Type *Ty = GET_TYPE_LLVM(type))
+    if ((Ty = GET_TYPE_LLVM(type)))
       return Ty;
 
     uint64_t ElementSize;
@@ -844,18 +876,23 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       NumElements /= ElementSize;
     }
 
-    return TypeDB.setType(type, ArrayType::get(ElementTy, NumElements));
+    Ty = TypeDB.setType(type, ArrayType::get(ElementTy, NumElements));
+    break;
   }
+
   case OFFSET_TYPE:
     // Handle OFFSET_TYPE specially.  This is used for pointers to members,
     // which are really just integer offsets.  As such, return the appropriate
     // integer directly.
     switch (getTargetData().getPointerSize()) {
     default: assert(0 && "Unknown pointer size!");
-    case 4: return Type::getInt32Ty(Context);
-    case 8: return Type::getInt64Ty(Context);
+    case 4: Ty = Type::getInt32Ty(Context); break;
+    case 8: Ty = Type::getInt64Ty(Context); break;
     }
   }
+
+  NameType(Ty, orig_type);
+  return Ty;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1847,7 +1884,6 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaration?
     const Type *Ty = OpaqueType::get(Context);
-    TheModule->addTypeName(GetTypeName("struct.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
 
@@ -1974,10 +2010,6 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   if (OldTy)
     const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
 
-  // Finally, set the name for the type.
-  TheModule->addTypeName(GetTypeName("struct.", orig_type),
-                         GET_TYPE_LLVM(type));
-
   // We have finished converting this struct.  See if the is the outer-most
   // struct being converted by ConvertType.
   ConvertingStruct = OldConvertingStruct;
@@ -2014,7 +2046,6 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
 
   if (TYPE_SIZE(type) == 0) {   // Forward declaraion?
     const Type *Ty = OpaqueType::get(Context);
-    TheModule->addTypeName(GetTypeName("union.", orig_type), Ty);
     return TypeDB.setType(type, Ty);
   }
 
@@ -2155,10 +2186,6 @@ const Type *TypeConverter::ConvertUNION(tree type, tree orig_type) {
   // refine anything that used it to the new type.
   if (OldTy)
     const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
-
-  // Finally, set the name for the type.
-  TheModule->addTypeName(GetTypeName("struct.", orig_type),
-                         GET_TYPE_LLVM(type));
 
   // We have finished converting this union.  See if the is the outer-most
   // union being converted by ConvertType.

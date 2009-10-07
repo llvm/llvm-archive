@@ -180,7 +180,9 @@ static void NameValue(Value *V, tree t, Twine Prefix = Twine(),
   case PARM_DECL:
   case VAR_DECL: {
     if (DECL_NAME(t)) {
-      V->setName(Prefix + IDENTIFIER_POINTER(DECL_NAME(t)) + Postfix);
+      StringRef Ident(IDENTIFIER_POINTER(DECL_NAME(t)),
+                      IDENTIFIER_LENGTH(DECL_NAME(t)));
+      V->setName(Prefix + Ident + Postfix);
       return;
     }
     const char *Annotation = TREE_CODE(t) == CONST_DECL ? "C." : "D.";
@@ -941,7 +943,8 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
       tree label = gimple_label_label(stmt);
       if (tree name = DECL_NAME(label)) {
         // If the label has a name then use it.
-        BB->setName(IDENTIFIER_POINTER(name));
+        StringRef Ident(IDENTIFIER_POINTER(name), IDENTIFIER_LENGTH(name));
+        BB->setName(Ident);
       } else if (LABEL_DECL_UID(label) != -1) {
         // If the label has a UID then use it.
         Twine UID(LABEL_DECL_UID(label));
@@ -957,7 +960,8 @@ BasicBlock *TreeToLLVM::getBasicBlock(basic_block bb) {
       BB->setName("<bb " + Index + ">");
     }
   } else {
-    BB->setName("bb");
+    Twine Index(bb->index);
+    BB->setName(Index);
   }
 
   return BasicBlocks[bb] = BB;

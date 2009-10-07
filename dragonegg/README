@@ -59,17 +59,18 @@ the argument parsing code is just after this.
   Output LLVM IR rather than target assembler.  You need to use -S with this,
   since otherwise GCC will pass the output to the system assembler (these don't
   usually understand LLVM IR).  It would be nice to fix this and have the option
-  work with -c too but it's not clear how.
+  work with -c too but it's not clear how.  If you plan to read the IR then you
+  probably want to use the -fverbose-asm flag as well (see below).
+
+-fverbose-asm
+  Annotate the target assembler with helpful comments.  Turns on the generation
+  of helpful names (the same as in GCC tree dumps) in the LLVM IR.
 
 -fstats
   Output both LLVM and GCC statistics.
 
 -ftime-report
   Output both LLVM and GCC timing information.
-
--fverbose-asm
-  Annotate the target assembler with helpful comments.  Gives values helpful
-  names in the LLVM IR.
 
 -fno-ident
   If the ident global asm in the LLVM IR annoys you, use this to turn it off.

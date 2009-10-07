@@ -301,6 +301,9 @@ namespace {
       // Create an alloca for the ResultDecl.
       Value *Tmp = TheTreeToLLVM->CreateTemporary(AI->getType());
       Builder.CreateStore(AI, Tmp);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+      Builder.SetDebugLocation(cast<llvm::Instruction>(Tmp));
+#endif
 
       SET_DECL_LLVM(ResultDecl, Tmp);
       if (TheDebugInfo) {
@@ -599,6 +602,9 @@ void TreeToLLVM::StartFunctionBody() {
       Tmp->setName(std::string(Name)+"_addr");
       SET_DECL_LLVM(Args, Tmp);
       if (TheDebugInfo) {
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+        Builder.SetDebugLocation(cast<llvm::Instruction>(Tmp));
+#endif
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args), Tmp,
                                   Builder.GetInsertBlock());
@@ -694,10 +700,6 @@ Function *TreeToLLVM::FinishFunctionBody() {
       }
     }
   }
-  if (TheDebugInfo) {
-    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
-    TheDebugInfo->EmitFunctionEnd(Builder.GetInsertBlock(), true);
-  }
   if (RetVals.empty())
     Builder.CreateRetVoid();
   else if (!Fn->getReturnType()->isAggregateType()) {
@@ -721,6 +723,11 @@ Function *TreeToLLVM::FinishFunctionBody() {
     SwitchInst *SI = cast<SwitchInst>(IndirectGotoBlock->getTerminator());
     if (SI->getNumSuccessors() > 1)
       SI->setSuccessor(0, SI->getSuccessor(1));
+  }
+
+  if (TheDebugInfo) {
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+    TheDebugInfo->EmitFunctionEnd(Builder.GetInsertBlock(), true);
   }
 
   // Remove any cached LLVM values that are local to this function.  Such values
@@ -1200,6 +1207,11 @@ AllocaInst *TreeToLLVM::CreateTemporary(const Type *Ty) {
 /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
 MemRef TreeToLLVM::CreateTempLoc(const Type *Ty) {
   AllocaInst *AI = CreateTemporary(Ty);
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (TheDebugInfo)
+    Builder.SetDebugLocation(AI);
+#endif
+
   // MemRefs do not allow alignment 0.
   if (!AI->getAlignment())
     AI->setAlignment(TD.getPrefTypeAlignment(Ty));
@@ -1699,6 +1711,12 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 
   // Create a temporary for the value to be switched on.
   IndirectGotoValue = CreateTemporary(TD.getIntPtrType(Context));
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (TheDebugInfo) {
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+    Builder.SetDebugLocation(cast<llvm::Instruction>(IndirectGotoValue));
+  }
+#endif
 
   // Create the block, emit a load, and emit the switch in the block.
   IndirectGotoBlock = BasicBlock::Create(Context, "indirectgoto");
@@ -2491,6 +2509,10 @@ namespace {
         // A value.  Store to a temporary, and return the temporary's address.
         // Any future access to this argument will reuse the same address.
         Loc = TheTreeToLLVM->CreateTemporary(TheValue->getType());
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+        if (TheDebugInfo)
+          Builder.SetDebugLocation(cast<llvm::Instruction>(Loc));
+#endif
         Builder.CreateStore(TheValue, Loc);
       }
       return Loc;
@@ -2864,6 +2886,10 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
 
   // Create a new temporary and set the VAR_DECL to use it as the llvm location.
   Value *NewTmp = CreateTemporary(FirstVal->getType());
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (TheDebugInfo)
+    Builder.SetDebugLocation(cast<llvm::Instruction>(NewTmp));
+#endif
   SET_DECL_LLVM(Var, NewTmp);
 
   // Store the already existing initial value into the alloca.  If the value
@@ -6165,6 +6191,12 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
     // Emit it as a value, then store it to a temporary slot.
     Value *V2 = Emit(Arg2T, 0);
     Arg2 = CreateTemporary(V2->getType());
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+  if (TheDebugInfo) {
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+    Builder.SetDebugLocation(cast<llvm::Instruction>(Arg2));
+  }
+#endif
     Builder.CreateStore(V2, Arg2);
   } else {
     // If the target has aggregate valists, then the second argument
@@ -6890,6 +6922,12 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
   } else {
     // If the input is a scalar, emit to a temporary.
     Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
+#ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+    if (TheDebugInfo) {
+      TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+      Builder.SetDebugLocation(cast<llvm::Instruction>(Dest));
+    }
+#endif
     Builder.CreateStore(Emit(Op, 0), Dest);
     // The type is the type of the expression.
     Dest = BitCastToType(Dest,

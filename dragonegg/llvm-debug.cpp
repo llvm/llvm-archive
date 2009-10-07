@@ -309,7 +309,7 @@ void DebugInfo::EmitRegionEnd(BasicBlock *CurBB, bool EndFunction) {
 
 /// EmitDeclare - Constructs the debug code for allocation of a new variable.
 /// region - "llvm.dbg.declare."
-void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
+void DebugInfo::EmitDeclare(tree decl, unsigned Tag, StringRef Name,
                             tree type, Value *AI, BasicBlock *CurBB) {
 
   // Do not emit variable declaration info, for now.

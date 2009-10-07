@@ -90,7 +90,7 @@ public:
 
   /// EmitDeclare - Constructs the debug code for allocation of a new variable.
   /// region - "llvm.dbg.declare."
-  void EmitDeclare(tree_node *decl, unsigned Tag, const char *Name,
+  void EmitDeclare(tree_node *decl, unsigned Tag, StringRef Name,
                    tree_node *type, Value *AI,
                    BasicBlock *CurBB);
 

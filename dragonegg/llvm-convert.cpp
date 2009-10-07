@@ -155,6 +155,51 @@ static unsigned int getPointerAlignment(tree exp) {
   return align ? align : 1;
 }
 
+/// NameValue - Try to name the given value after the given GCC tree node.  If
+/// the GCC tree node has no sensible name then it does nothing.  If the value
+/// already has a name then it is not changed.
+static void NameValue(Value *V, tree t, Twine Prefix = Twine(),
+                      Twine Postfix = Twine()) {
+  // If the value already has a name, do not change it.
+  if (V->hasName())
+    return;
+
+  // No sensible name - give up, discarding any pre- and post-fixes.
+  if (!t)
+    return;
+
+  switch (TREE_CODE(t)) {
+  default:
+    // Unhandled case - give up.
+    return;
+
+  case CONST_DECL:
+  case FIELD_DECL:
+  case FUNCTION_DECL:
+  case NAMESPACE_DECL:
+  case PARM_DECL:
+  case VAR_DECL: {
+    if (DECL_NAME(t)) {
+      V->setName(Prefix + IDENTIFIER_POINTER(DECL_NAME(t)) + Postfix);
+      return;
+    }
+    const char *Annotation = TREE_CODE(t) == CONST_DECL ? "C." : "D.";
+    Twine UID(DECL_UID(t));
+    V->setName(Prefix + Annotation + UID + Postfix);
+    return;
+  }
+
+  case RESULT_DECL:
+    V->setName(Prefix + "<retval>" + Postfix);
+    return;
+
+  case SSA_NAME:
+    Twine NameVersion(SSA_NAME_VERSION(t));
+    NameValue(V, SSA_NAME_VAR(t), Prefix, "_" + NameVersion + Postfix);
+    return;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                         ... High-Level Methods ...
 //===----------------------------------------------------------------------===//
@@ -956,6 +1001,8 @@ void TreeToLLVM::EmitBasicBlock(basic_block bb) {
     assert(TREE_CODE(name) == SSA_NAME && "PHI result not an SSA name!");
     assert(SSANames.find(name) == SSANames.end() &&
            "Multiply defined SSA name!");
+    if (flag_verbose_asm)
+      NameValue(PHI, name);
     SSANames[name] = PHI;
 
     // The phi operands will be populated later - remember the phi node.
@@ -1695,22 +1742,13 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Alignment = DECL_ALIGN(decl) / 8;
   }
 
-  const char *Name;      // Name of variable
-  if (DECL_NAME(decl))
-    Name = IDENTIFIER_POINTER(DECL_NAME(decl));
-  else if (TREE_CODE(decl) == RESULT_DECL)
-    Name = "retval";
-  else
-    Name = "";
-
   // Insert an alloca for this variable.
   AllocaInst *AI;
-  if (!Size) {                           // Fixed size alloca -> entry block.
+  if (!Size)                             // Fixed size alloca -> entry block.
     AI = CreateTemporary(Ty);
-    AI->setName(Name);
-  } else {
-    AI = Builder.CreateAlloca(Ty, Size, Name);
-  }
+  else
+    AI = Builder.CreateAlloca(Ty, Size);
+  NameValue(AI, decl);
 
   AI->setAlignment(Alignment);
 
@@ -1734,11 +1772,11 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   if (TheDebugInfo) {
     if (DECL_NAME(decl)) {
       TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_auto_variable,
-                                Name, TREE_TYPE(decl), AI,
+                                AI->getName(), TREE_TYPE(decl), AI,
                                 Builder.GetInsertBlock());
     } else if (TREE_CODE(decl) == RESULT_DECL) {
       TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_return_variable,
-                                Name, TREE_TYPE(decl), AI,
+                                AI->getName(), TREE_TYPE(decl), AI,
                                 Builder.GetInsertBlock());
     }
   }
@@ -2136,21 +2174,19 @@ Value *TreeToLLVM::EmitSSA_NAME(tree reg) {
   unsigned Alignment = DECL_ALIGN(var);
   assert(Alignment != 0 && "Parameter with unknown alignment!");
 
-  const char *ParameterName =
-    DECL_NAME(var) ? IDENTIFIER_POINTER(DECL_NAME(var)) : "anon";
-
   const Type *Ty = ConvertType(TREE_TYPE(reg));
 
   // Perform the load in the entry block, after all parameters have been set up
   // with their initial values, and before any modifications to their values.
-  LoadInst *LI = new LoadInst(DECL_LOCAL_IF_SET(var), ParameterName,
-                              SSAInsertionPoint);
+  LoadInst *LI = new LoadInst(DECL_LOCAL_IF_SET(var), "", SSAInsertionPoint);
   LI->setAlignment(Alignment);
 
   // Potentially perform a useless type conversion (useless_type_conversion_p).
   Value *Def = LI;
   if (LI->getType() != Ty)
     Def = new BitCastInst(Def, Ty, "", SSAInsertionPoint);
+  if (flag_verbose_asm)
+    NameValue(Def, reg);
   return SSANames[reg] = Def;
 }
 
@@ -8050,6 +8086,8 @@ void TreeToLLVM::WriteScalarToLHS(tree lhs, Value *RHS) {
   // If this is the definition of an ssa name, record it in the SSANames map.
   if (TREE_CODE(lhs) == SSA_NAME) {
     assert(SSANames.find(lhs) == SSANames.end() &&"Multiply defined SSA name!");
+    if (flag_verbose_asm)
+      NameValue(RHS, lhs);
     SSANames[lhs] = RHS;
     return;
   }

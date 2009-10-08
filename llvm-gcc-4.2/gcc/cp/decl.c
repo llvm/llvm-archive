@@ -5623,7 +5623,7 @@ init_byref_decl (tree decl, tree init, int flag)
 				 tree_cons (NULL_TREE, ptr_type_node,
 					    tree_cons (NULL_TREE, ptr_type_node,
 						       void_list_node)));
-	  strcpy (name, "__Block_byref_id_object_copy");
+	  sprintf (name, "__Block_byref_id_object_copy%d", kind);
 	  block_byref_id_object_copy[kind] = build_helper_func_decl (get_identifier (name),
 								     func_type);
 	  DECL_CONTEXT (block_byref_id_object_copy[kind]) = current_function_decl;
@@ -5645,7 +5645,7 @@ init_byref_decl (tree decl, tree init, int flag)
 	  func_type =
 	    build_function_type (void_type_node,
 				 tree_cons (NULL_TREE, ptr_type_node, void_list_node));
-	  strcpy (name, "__Block_byref_id_object_dispose");
+	  sprintf (name, "__Block_byref_id_object_dispose%d", kind);
 	  block_byref_id_object_dispose[kind] = build_helper_func_decl (get_identifier (name),
 									func_type);
 	  DECL_CONTEXT (block_byref_id_object_dispose[kind]) = current_function_decl;

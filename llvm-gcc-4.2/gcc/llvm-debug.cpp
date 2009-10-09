@@ -378,6 +378,8 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB,
   if (!isPartOfAppleBlockPrologue(CurLineNo)
       && !isCopyOrDestroyHelper(cfun->decl)) {
 #ifdef ATTACH_DEBUG_INFO_TO_AN_INSN
+    if (RegionStack.empty())
+      return;
     llvm::DIDescriptor DR = RegionStack.back();
     llvm::DIScope DS = llvm::DIScope(DR.getNode());
     llvm::DILocation DO(NULL);

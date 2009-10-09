@@ -6899,27 +6899,36 @@ void TreeToLLVM::RenderGIMPLE_SWITCH(gimple stmt) {
 Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
   tree type = TREE_TYPE(exp);
   const Type *Ty = ConvertType(type);
-  if (const VectorType *PTy = dyn_cast<VectorType>(Ty)) {
-    assert(DestLoc == 0 && "Dest location for packed value?");
-
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+    assert(DestLoc == 0 && "Dest location for vector value?");
     std::vector<Value *> BuildVecOps;
-
-    // Insert zero initializers for any uninitialized values.
-    Constant *Zero = Constant::getNullValue(PTy->getElementType());
-    BuildVecOps.resize(cast<VectorType>(Ty)->getNumElements(), Zero);
+    BuildVecOps.reserve(VTy->getNumElements());
 
     // Insert all of the elements here.
-    unsigned HOST_WIDE_INT ix;
-    tree purpose, value;
-    FOR_EACH_CONSTRUCTOR_ELT (CONSTRUCTOR_ELTS (exp), ix, purpose, value) {
-      if (!purpose) continue;  // Not actually initialized?
+    unsigned HOST_WIDE_INT idx;
+    tree value;
+    FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (exp), idx, value) {
+      Value *Elt = Emit(value, 0);
 
-      unsigned FieldNo = TREE_INT_CST_LOW(purpose);
-
-      // Update the element.
-      if (FieldNo < BuildVecOps.size())
-        BuildVecOps[FieldNo] = Emit(value, 0);
+      if (const VectorType *EltTy = dyn_cast<VectorType>(Elt->getType())) {
+        // GCC allows vectors to be built up from vectors.  Extract all of the
+        // vector elements and add them to the list of build vector operands.
+        for (unsigned i = 0, e = EltTy->getNumElements(); i != e; ++i) {
+          Value *Index = ConstantInt::get(llvm::Type::getInt32Ty(Context), i);
+          BuildVecOps.push_back(Builder.CreateExtractElement(Elt, Index));
+        }
+      } else {
+        assert(Elt->getType() == VTy->getElementType() &&
+               "Unexpected type for vector constructor!");
+        BuildVecOps.push_back(Elt);
+      }
     }
+
+    // Insert zero for any unspecified values.
+    while (BuildVecOps.size() < VTy->getNumElements())
+      BuildVecOps.push_back(Constant::getNullValue(VTy->getElementType()));
+    assert(BuildVecOps.size() == VTy->getNumElements() &&
+           "Vector constructor specified too many values!");
 
     return BuildVector(BuildVecOps);
   }

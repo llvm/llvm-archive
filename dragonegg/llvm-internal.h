@@ -713,6 +713,7 @@ private:
   LValue EmitLV_VIEW_CONVERT_EXPR(tree_node *exp);
   LValue EmitLV_WITH_SIZE_EXPR(tree_node *exp);
   LValue EmitLV_XXXXPART_EXPR(tree_node *exp, unsigned Idx);
+  LValue EmitLV_SSA_NAME(tree_node *exp);
 
   // Constant Expressions.
   Value *EmitINTEGER_CST(tree_node *exp);

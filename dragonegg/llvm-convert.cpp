@@ -1220,6 +1220,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   case IMAGPART_EXPR:
     LV = EmitLV_XXXXPART_EXPR(exp, 1);
     break;
+  case SSA_NAME:
+    LV = EmitLV_SSA_NAME(exp);
+    break;
 
   // Constants.
   case LABEL_DECL: {
@@ -6228,6 +6231,7 @@ LValue TreeToLLVM::EmitLV_VIEW_CONVERT_EXPR(tree exp) {
                      PointerType::getUnqual(ConvertType(TREE_TYPE(exp))));
     return LV;
   } else {
+    // TODO: Check the VCE is being used as an rvalue, see EmitLoadOfLValue.
     // If the input is a scalar, emit to a temporary.
     Value *Dest = CreateTemporary(ConvertType(TREE_TYPE(Op)));
     Builder.CreateStore(Emit(Op, 0), Dest);
@@ -6256,6 +6260,13 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
     Alignment = MinAlign(Ptr.getAlignment(),
                          TD.getTypeAllocSize(Ptr.Ptr->getType()));
   return LValue(Builder.CreateStructGEP(Ptr.Ptr, Idx), Alignment);
+}
+
+LValue TreeToLLVM::EmitLV_SSA_NAME(tree exp) {
+  // TODO: Check the ssa name is being used as an rvalue, see EmitLoadOfLValue.
+  Value *Temp = CreateTemporary(ConvertType(TREE_TYPE(exp)));
+  Builder.CreateStore(EmitSSA_NAME(exp), Temp);
+  return LValue(Temp, 1);
 }
 
 

@@ -672,8 +672,8 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     // as loads and stores of it get only 10 bytes.
     if (EltTy == Type::getInt32Ty(Context) ||
         EltTy == Type::getInt64Ty(Context) || 
-        EltTy == Type::getFloatTy(Context) ||
-        EltTy == Type::getDoubleTy(Context) ||
+        EltTy->isFloatTy() ||
+        EltTy->isDoubleTy() ||
         isa<PointerType>(EltTy)) {
       Elts.push_back(EltTy);
       continue;
@@ -702,8 +702,8 @@ bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
   // short in 32-bit.
   const Type *EltTy = STy->getElementType(0);
   return !((TARGET_64BIT && (EltTy->isInteger() ||
-                             EltTy == Type::getFloatTy(Context) ||
-                             EltTy == Type::getDoubleTy(Context))) ||
+                             EltTy->isFloatTy() ||
+                             EltTy->isDoubleTy())) ||
            EltTy == Type::getInt16Ty(Context) ||
            EltTy == Type::getInt8Ty(Context));
 }
@@ -746,7 +746,7 @@ static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
         ++NumXMMs;
     } else if (Ty->isInteger() || isa<PointerType>(Ty)) {
       ++NumGPRs;
-    } else if (Ty==Type::getVoidTy(Context)) {
+    } else if (Ty->isVoidTy()) {
       // Padding bytes that are not passed anywhere
       ;
     } else {

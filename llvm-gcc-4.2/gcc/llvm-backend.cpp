@@ -1622,7 +1622,7 @@ void make_decl_llvm(tree decl) {
 
     // If we have "extern void foo", make the global have type {} instead of
     // type void.
-    if (Ty == Type::getVoidTy(Context))
+    if (Ty->isVoidTy())
       Ty = StructType::get(Context);
 
     if (Name[0] == 0) {   // Global has no name.

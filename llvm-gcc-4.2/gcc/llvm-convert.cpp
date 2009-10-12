@@ -329,7 +329,7 @@ namespace {
           // If this is GCC being sloppy about pointer types, insert a bitcast.
           // See PR1083 for an example.
           ArgVal = Builder.CreateBitCast(ArgVal, LLVMTy);
-        } else if (ArgVal->getType() == Type::getDoubleTy(Context)) {
+        } else if (ArgVal->getType()->isDoubleTy()) {
           // If this is a K&R float parameter, it got promoted to double. Insert
           // the truncation to float now.
           ArgVal = Builder.CreateFPTrunc(ArgVal, LLVMTy,
@@ -2811,7 +2811,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (Client.isShadowReturn())
     return Client.EmitShadowResult(TREE_TYPE(exp), DestLoc);
 
-  if (Call->getType() == Type::getVoidTy(Context))
+  if (Call->getType()->isVoidTy())
     return 0;
 
   if (Client.isAggrReturn()) {
@@ -3072,7 +3072,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
     assert(!isAggregateTreeType(TREE_TYPE(Op))
 	   && "Aggregate to scalar nop_expr!");
     Value *OpVal = Emit(Op, DestLoc);
-    if (Ty == Type::getVoidTy(Context)) return 0;
+    if (Ty->isVoidTy()) return 0;
     return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
   } else if (isAggregateTreeType(TREE_TYPE(Op))) {
     // Aggregate to aggregate copy.
@@ -6827,7 +6827,7 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
   // If we have "extern void foo", make the global have type {} instead of
   // type void.
-  if (Ty == Type::getVoidTy(Context)) Ty = StructType::get(Context);
+  if (Ty->isVoidTy()) Ty = StructType::get(Context);
   const PointerType *PTy = Ty->getPointerTo();
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
   if (DECL_ALIGN(exp)) {
@@ -7046,7 +7046,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     int UArr[2];
     double V;
   };
-  if (Ty==Type::getFloatTy(Context) || Ty==Type::getDoubleTy(Context)) {
+  if (Ty->isFloatTy() || Ty->isDoubleTy()) {
     REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(exp), RealArr);
 
     // Here's how this works:
@@ -7072,9 +7072,9 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
       std::swap(UArr[0], UArr[1]);
 
     return
-      ConstantFP::get(Context, Ty==Type::getFloatTy(Context) ?
+      ConstantFP::get(Context, Ty->isFloatTy() ?
                       APFloat((float)V) : APFloat(V));
-  } else if (Ty==Type::getX86_FP80Ty(Context)) {
+  } else if (Ty->isX86_FP80Ty()) {
     long RealArr[4];
     uint64_t UArr[2];
     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
@@ -7082,8 +7082,8 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[1]) << 32);
     UArr[1] = (uint16_t)RealArr[2];
     return ConstantFP::get(Context, APFloat(APInt(80, 2, UArr)));
-  } else if (Ty==Type::getPPC_FP128Ty(Context) ||
-             Ty==Type::getFP128Ty(Context)) {
+  } else if (Ty->isPPC_FP128Ty() ||
+             Ty->isFP128Ty()) {
     long RealArr[4];
     uint64_t UArr[2];
     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
@@ -7094,7 +7094,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[3]));
     return ConstantFP::get(Context,
                            APFloat(APInt(128, 2, UArr),
-                                   /*isIEEE*/ Ty==Type::getFP128Ty(Context)));
+                                   /*isIEEE*/ Ty->isFP128Ty()));
   }
   assert(0 && "Floating point type not handled yet");
   return 0;   // outwit compiler warning
@@ -7960,7 +7960,7 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
   // itself (allowed in GCC but not in LLVM) then the global is changed to have
   // the type of the initializer.  Correct for this now.
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  if (Ty == Type::getVoidTy(Context)) Ty = Type::getInt8Ty(Context);  // void* -> i8*.
+  if (Ty->isVoidTy()) Ty = Type::getInt8Ty(Context);  // void* -> i8*.
 
   return TheFolder->CreateBitCast(Val, Ty->getPointerTo());
 }

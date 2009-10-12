@@ -393,7 +393,7 @@ public:
         C.HandleScalarShadowResult(Ty->getPointerTo(), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
+    } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -439,7 +439,7 @@ public:
     // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
     // not include variable sized fields here.
     std::vector<const Type*> Elts;
-    if (Ty == Type::getVoidTy(getGlobalContext())) {
+    if (Ty->isVoidTy()) {
       // Handle void explicitly as an opaque type.
       const Type *OpTy = OpaqueType::get(getGlobalContext());
       C.HandleScalarArgument(OpTy, type);
@@ -667,7 +667,7 @@ public:
     const Type* wordType = getTargetData().getPointerSize() == 4 ?
         Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
+      if (OrigElts[i]->isVoidTy())
         Elts[i] = wordType;
 
     const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
@@ -749,7 +749,7 @@ public:
         C.HandleScalarShadowResult(Ty->getPointerTo(), false);
       else
         C.HandleScalarResult(Ty);
-    } else if (Ty->isSingleValueType() || Ty == Type::getVoidTy(getGlobalContext())) {
+    } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
     } else if (doNotUseShadowReturn(type, fn)) {
@@ -1112,7 +1112,7 @@ public:
     const Type* wordType = getTargetData().getPointerSize() == 4
       ? Type::getInt32Ty(getGlobalContext()) : Type::getInt64Ty(getGlobalContext());
     for (unsigned i=0, e=Elts.size(); i!=e; ++i)
-      if (OrigElts[i]==Type::getVoidTy(getGlobalContext()))
+      if (OrigElts[i]->isVoidTy())
         Elts[i] = wordType;
 
     const StructType *STy = StructType::get(getGlobalContext(), Elts, false);

@@ -396,7 +396,7 @@ void llvm_initialize_backend(void) {
     Args.push_back("--disable-fp-elim");
   if (!flag_zero_initialized_in_bss)
     Args.push_back("--nozero-initialized-in-bss");
-  if (flag_debug_asm)
+  if (flag_verbose_asm)
     Args.push_back("--asm-verbose");
   if (flag_debug_pass_structure)
     Args.push_back("--debug-pass=Structure");

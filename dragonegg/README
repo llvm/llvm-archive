@@ -32,7 +32,7 @@ Admire the awfulness of the build system, and make a mental note to rewrite
 it properly.
 
 Build the plugin using "make".  The end result of the build is a shared
-library, llvm.so.
+library, dragonegg.so.
 
 Darwin special: "-shared" doesn't result in a correct dynamic library on darwin,
 use "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -dynamiclib" instead.
@@ -41,21 +41,20 @@ use "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress -dynamiclib" instead.
 - USAGE INSTRUCTIONS -
 ----------------------
 
-Run gcc as usual, but pass -fplugin=./llvm.so as an extra command line argument.
-Make sure you use the gcc you installed above, not the system gcc!
+Run gcc as usual, but pass -fplugin=./dragonegg.so as an extra command line
+argument.  Make sure you use the gcc you installed above, not the system gcc!
 
 Currently the plugin isn't capable of compiling much - you have been warned.
 
-The plugin accepts a few command line arguments, for example
--fplugin-arg-llvm-enable-gcc-optzns
-Search for the comment "Process any plugin arguments" in llvm-backend.cpp,
-the argument parsing code is just after this.
 
 ------------------
 - USEFUL OPTIONS -
 ------------------
 
--fplugin-arg-llvm-emit-ir
+If you renamed dragonegg.so to something else, for example llvm.so, replace
+-fplugin-arg-dragonegg with -fplugin-arg-llvm in the options below.
+
+-fplugin-arg-dragonegg-emit-ir
   Output LLVM IR rather than target assembler.  You need to use -S with this,
   since otherwise GCC will pass the output to the system assembler (these don't
   usually understand LLVM IR).  It would be nice to fix this and have the option
@@ -78,14 +77,14 @@ the argument parsing code is just after this.
 -fdump-rtl-all
   In the dump file, each function is output both as gimple and as LLVM IR.
 
--fplugin-arg-llvm-disable-llvm-optzns
+-fplugin-arg-dragonegg-disable-llvm-optzns
   Do not perform any LLVM IR optimizations even if compiling at -O1, -O2 etc.
 
--fplugin-arg-llvm-enable-gcc-optzns
+-fplugin-arg-dragonegg-enable-gcc-optzns
   Run the GCC tree optimizers as well as the LLVM IR optimizers.  Normally the
   GCC optimizers are disabled.
 
--fplugin-arg-llvm-save-gcc-output
+-fplugin-arg-dragonegg-save-gcc-output
   GCC assembler output is normally redirected to /dev/null so that it doesn't
   clash with the LLVM output.  This option causes GCC output to be written to
   a file instead.  Good for seeing which GCC output we've failed to turn off.

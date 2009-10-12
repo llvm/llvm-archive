@@ -8,7 +8,7 @@ LLVM_CONFIG=llvm-config
 REVISION:=$(shell svnversion -n .)
 TARGET_TRIPLE:=$(shell $(GCCOBJECT_DIR)/gcc/xgcc -v 2>&1 | grep "^Target:" | sed -e "s/^Target: *//")
 
-PLUGIN=llvm.so
+PLUGIN=dragonegg.so
 PLUGIN_C=llvm-cache.c
 PLUGIN_CPP=llvm-convert.cpp llvm-backend.cpp llvm-debug.cpp llvm-types.cpp \
 	   bits_and_bobs.cpp

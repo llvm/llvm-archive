@@ -449,6 +449,10 @@ struct tree_common GTY(())
 	   OMP_SECTION
        OMP_PARALLEL_COMBINED in
 	   OMP_PARALLEL
+   LLVM LOCAL begin msasm bit on asm
+       ASM_ASM_BLOCK in
+           ASM_EXPR
+   LLVM LOCAL end
 
    protected_flag:
 
@@ -1548,6 +1552,8 @@ struct tree_constructor GTY(())
    ASM_OPERAND with no operands.  */
 #define ASM_INPUT_P(NODE) (TREE_STATIC (NODE))
 #define ASM_VOLATILE_P(NODE) (TREE_PUBLIC (NODE))
+/* LLVM LOCAL msasm bit in asm */
+#define ASM_ASM_BLOCK(NODE) (TREE_PRIVATE (NODE))
 
 /* COND_EXPR accessors.  */
 #define COND_EXPR_COND(NODE)	(TREE_OPERAND (COND_EXPR_CHECK (NODE), 0))

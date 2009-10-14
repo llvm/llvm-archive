@@ -4634,7 +4634,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   }
 
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
-                              ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp));
+                              ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp),
+                              ASM_ASM_BLOCK(exp));
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     CallResultTypes.empty() ? "" : "asmtmp");
   CV->setDoesNotThrow();

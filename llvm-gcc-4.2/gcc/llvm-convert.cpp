@@ -1916,24 +1916,18 @@ void TreeToLLVM::CreateExceptionValues() {
   // Check to see if the exception values have been constructed.
   if (ExceptionValue) return;
 
-  const Type *IntPtr = TD.getIntPtrType(Context);
-
   ExceptionValue = CreateTemporary(Type::getInt8PtrTy(Context));
   ExceptionValue->setName("eh_exception");
 
-  ExceptionSelectorValue = CreateTemporary(IntPtr);
+  ExceptionSelectorValue = CreateTemporary(Type::getInt32Ty(Context));
   ExceptionSelectorValue->setName("eh_selector");
 
   FuncEHException = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_exception);
   FuncEHSelector  = Intrinsic::getDeclaration(TheModule,
-                                              (IntPtr == Type::getInt32Ty(Context) ?
-                                               Intrinsic::eh_selector_i32 :
-                                               Intrinsic::eh_selector_i64));
+                                              Intrinsic::eh_selector);
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
-                                              (IntPtr == Type::getInt32Ty(Context) ?
-                                               Intrinsic::eh_typeid_for_i32 :
-                                               Intrinsic::eh_typeid_for_i64));
+                                              Intrinsic::eh_typeid_for);
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling

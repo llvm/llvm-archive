@@ -258,11 +258,17 @@ extern GTY(()) rtx aof_pic_label;
    tested when we know we are generating for VFP hardware; we need to
    be more careful with TARGET_NEON as noted below.  */
 
-/* FPU is VFPv3 (with twice the number of D registers).  Setting the FPU to
-   Neon automatically enables VFPv3 too.  */
+/* LLVM LOCAL begin */
+/* FPU is has the full VFPv3/NEON register file of 32 D registers.  */
+#define TARGET_VFP3_REGSET (arm_fp_model == ARM_FP_MODEL_VFP \
+			    && (arm_fpu_arch == FPUTYPE_VFP3 \
+				|| arm_fpu_arch == FPUTYPE_NEON))
+
+/* FPU supports VFPv3 instructions.  */
 #define TARGET_VFP3 (arm_fp_model == ARM_FP_MODEL_VFP \
-		     && (arm_fpu_arch == FPUTYPE_VFP3 \
-			 || arm_fpu_arch == FPUTYPE_NEON))
+		     && (arm_fpu_arch == FPUTYPE_VFP3))
+/* LLVM LOCAL end */
+
 /* FPU supports Neon instructions.  The setting of this macro gets
    revealed via __ARM_NEON__ so we add extra guards upon TARGET_32BIT
    and TARGET_HARD_FLOAT to ensure that NEON instructions are
@@ -1030,8 +1036,10 @@ extern int arm_structure_size_boundary;
 #define FIRST_VFP_REGNUM	63
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 #define D7_VFP_REGNUM		78  /* Registers 77 and 78 == VFP reg D7.  */
-#define LAST_VFP_REGNUM	\
-  (TARGET_VFP3 ? LAST_HI_VFP_REGNUM : LAST_LO_VFP_REGNUM)
+/* LLVM LOCAL begin */
+#define LAST_VFP_REGNUM							\
+  (TARGET_VFP3_REGSET ? LAST_HI_VFP_REGNUM : LAST_LO_VFP_REGNUM)
+/* LLVM LOCAL end */
 
 #define IS_VFP_REGNUM(REGNUM) \
   (((REGNUM) >= FIRST_VFP_REGNUM) && ((REGNUM) <= LAST_VFP_REGNUM))
@@ -3472,8 +3480,10 @@ enum neon_builtins
       F.setCPU("arm7tdmi"); \
       break; \
     } \
-    if (TARGET_NEON) \
-      F.AddFeature("neon"); \
+    if (TARGET_NEON)						\
+      F.AddFeature("neon");					\
+    else							\
+      F.AddFeature("neon", false);				\
   }
 
 /* Encode arm / thumb modes and arm subversion number in the triplet. e.g.

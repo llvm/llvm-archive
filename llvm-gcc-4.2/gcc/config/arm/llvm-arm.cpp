@@ -1690,14 +1690,11 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   case NEON_BUILTIN_vget_high:
   case NEON_BUILTIN_vget_low: {
-    unsigned NUnits = GET_MODE_NUNITS(insn_data[icode].operand[0].mode);
-    std::vector<Constant*> Idxs;
-    unsigned Idx = (neon_code == NEON_BUILTIN_vget_low ? 0 : NUnits);
-    for (unsigned i = 0; i != NUnits; ++i)
-      Idxs.push_back(getInt32Const(Idx++));
-    Result = Builder.CreateShuffleVector(Ops[0],
-                                         UndefValue::get(Ops[0]->getType()),
-                                         ConstantVector::get(Idxs));
+    const Type *v2f64Ty = VectorType::get(Type::getDoubleTy(Context), 2);
+    unsigned Idx = (neon_code == NEON_BUILTIN_vget_low ? 0 : 1);
+    Result = Builder.CreateBitCast(Ops[0], v2f64Ty);
+    Result = Builder.CreateExtractElement(Result, getInt32Const(Idx));
+    Result = Builder.CreateBitCast(Result, ResultType);
     break;
   }
 

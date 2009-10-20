@@ -839,10 +839,12 @@ honor_protect_cleanup_actions (struct leh_state *outer_state,
 
       save_eptr = create_tmp_var (ptr_type_node, "save_eptr");
       save_filt = create_tmp_var (integer_type_node, "save_filt");
+
       i = tsi_start (finally);
       x = build0 (EXC_PTR_EXPR, ptr_type_node);
       x = build2 (MODIFY_EXPR, void_type_node, save_eptr, x);
       tsi_link_before (&i, x, TSI_CONTINUE_LINKING);
+
       x = build0 (FILTER_EXPR, integer_type_node);
       x = build2 (MODIFY_EXPR, void_type_node, save_filt, x);
       tsi_link_before (&i, x, TSI_CONTINUE_LINKING);

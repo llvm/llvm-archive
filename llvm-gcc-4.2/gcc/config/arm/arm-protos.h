@@ -258,7 +258,14 @@ extern void arm_pr_long_calls_off (struct cpp_reader *);
 /* APPLE LOCAL 5946347 ms_struct support */
 extern int arm_field_ms_struct_align (tree);
 
-/* LLVM LOCAL pr5037 removed arm_mangle_type */
+/* LLVM LOCAL begin pr5037 removed arm_mangle_type */
+#ifndef ENABLE_LLVM
+/* APPLE LOCAL begin v7 support. Merge from Codesourcery */
+extern const char *arm_mangle_type (tree);
+
+/* APPLE LOCAL end v7 support. Merge from Codesourcery */
+#endif
+/* LLVM LOCAL end pr5037 removed arm_mangle_type */
 
 /* APPLE LOCAL v7 support. Fix compact switch tables */
 extern void arm_asm_output_addr_diff_vec (FILE *file, rtx LABEL, rtx BODY);

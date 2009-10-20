@@ -412,7 +412,7 @@ darwin_pragma_reverse_bitfields (cpp_reader *pfile ATTRIBUTE_UNUSED)
 /* APPLE LOCAL end pragma reverse_bitfields */
 
 /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
-static GTY(()) varray_type va_opt;
+varray_type va_opt;
 
 static void
 push_opt_level (int level, int size)

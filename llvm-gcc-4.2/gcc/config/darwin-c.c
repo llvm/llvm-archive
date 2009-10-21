@@ -412,7 +412,7 @@ darwin_pragma_reverse_bitfields (cpp_reader *pfile ATTRIBUTE_UNUSED)
 /* APPLE LOCAL end pragma reverse_bitfields */
 
 /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
-varray_type va_opt;
+static GTY(()) varray_type va_opt;
 
 static void
 push_opt_level (int level, int size)
@@ -1245,3 +1245,4 @@ create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUni
   return decl;
 }
 /* APPLE LOCAL end radar 2996215 - 6068877 */
+#include "gt-darwin-c.h"

@@ -1,18 +1,3 @@
-2009-10-15  Jim Grosbach <grosbach@apple.com>
-
-	Radar 7295521
-	* config/arm/arm.c (arm_split_compare_and_swap): Call insns for
-	arm_memory_barrier* and arm_memory_sync* directory rather than using
-	the expander.
-	* config/arm/sync.md (memory_barrier, memory_sync): Allocate a scratch
-	register rather than forcing IP.
-	(arm_memory_barrier_v6): Match the scratch register from the expander
-	rather than forcing IP. Rename to arm_memory_barrier_v6_explicit.
-	(arm_memory_barrier_v6_explicit): New.
-	(arm_memory_sync_v6): Match the scratch register from the expander
-	rather than forcing IP. Rename to arm_memory_sync_v6_explicit.
-	(arm_memory_sync_v6_explicit): New.
-
 2009-09-11  Caroline Tice  <ctice@apple.com>
 
 	Radar 6419781
@@ -24,8 +9,8 @@
 
 2009-09-08  Jim Grosbach <grosbach@apple.com>
 
-	Radar 7174451
-	* config/arm/arm.c (arm_select_dominance_cc_mode): Unordered floats.
+       Radar 7174451
+       * config/arm/arm.c (arm_select_dominance_cc_mode): Unordered floats.
 
 2009-09-08  Jim Grosbach <grosbach@apple.com>
 

@@ -116,7 +116,11 @@ fi
 NON_ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
 # LLVM LOCAL end
 
-DARWIN_VERS=`uname -r | sed 's/\..*//'`
+#DARWIN_VERS=`uname -r | sed 's/\..*//'`
+# KLUDGE: Barolo compatbility hack!
+# Remove when /usr/include/c++/4.2.1/i686-apple-darwin11 is established!
+DARWIN_VERS=`sw_vers -productVersion | sed 's/\..*//'`
+# end KLUDGE
 echo DARWIN_VERS = $DARWIN_VERS
 
 # APPLE LOCAL begin ARM

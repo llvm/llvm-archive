@@ -86,13 +86,15 @@ If building for Darwin/X86 (32- and 64-bit support):
     TARGETOPTIONS='--with-arch=nocona --with-tune=generic'
     TRIPLE=i686-apple-darwin8 (Tiger)
     TRIPLE=i686-apple-darwin9 (Leopard)
-    TRIPLE=x86_64-apple-darwin10 (Snow Leopard)
+    TRIPLE=x86_64-apple-darwin10 (Snow Leopard on a 64-bit machine)
+    TRIPLE=i686-apple-darwin10 (Snow Leopard on a 32-bit machine)
 
 If building for Darwin/X86 (32-bit support only):
     TARGETOPTIONS='--with-arch=pentium-m --with-tune=prescott --disable-multilib'
     TRIPLE=i686-apple-darwin8 (Tiger)
     TRIPLE=i686-apple-darwin9 (Leopard)
-    TRIPLE=x86_64-apple-darwin10 (Snow Leopard)
+    TRIPLE=x86_64-apple-darwin10 (Snow Leopard on a 64-bit machine)
+    TRIPLE=i686-apple-darwin10 (Snow Leopard on a 32-bit machine)
 
 The Triples are very important, otherwise your llvm-gcc/g++ may not be able
 to find the header files below.

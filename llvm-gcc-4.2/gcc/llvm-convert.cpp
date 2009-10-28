@@ -7789,7 +7789,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     uint64_t GCCFieldOffsetInBits = getFieldOffsetInBits(Field);
     NextField = TREE_CHAIN(Field);
 
-    uint64_t FieldSizeInBits;
+    uint64_t FieldSizeInBits = 0;
     if (DECL_SIZE(Field))
       FieldSizeInBits = getInt64(DECL_SIZE(Field), true);
     uint64_t ValueSizeInBits = Val->getType()->getPrimitiveSizeInBits();
@@ -7818,6 +7818,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       // Bitfields can only be initialized with constants (integer constant
       // expressions).
       assert(ValC);
+      assert(DECL_SIZE(Field));
       assert(ValueSizeInBits >= FieldSizeInBits &&
              "disagreement between LLVM and GCC on bitfield size");
       if (ValueSizeInBits != FieldSizeInBits) {

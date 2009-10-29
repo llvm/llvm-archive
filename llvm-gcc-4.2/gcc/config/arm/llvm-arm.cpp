@@ -2407,19 +2407,19 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
     }
 
     // Make sure that one FDT is 4 or less elements in size.
-    if (fdt_counts[ARM_FDT_HALF_FLOAT] > 1 &&
+    if (fdt_counts[ARM_FDT_HALF_FLOAT] >= 1 &&
         fdt_counts[ARM_FDT_HALF_FLOAT] <= 4)
       result = true;
-    else if (fdt_counts[ARM_FDT_FLOAT] > 1 &&
+    else if (fdt_counts[ARM_FDT_FLOAT] >= 1 &&
              fdt_counts[ARM_FDT_FLOAT] <= 4)
       result = true;
-    else if (fdt_counts[ARM_FDT_DOUBLE] > 1 &&
+    else if (fdt_counts[ARM_FDT_DOUBLE] >= 1 &&
              fdt_counts[ARM_FDT_DOUBLE] <= 4)
       result = true;
-    else if (fdt_counts[ARM_FDT_VECTOR_64] > 1 &&
+    else if (fdt_counts[ARM_FDT_VECTOR_64] >= 1 &&
              fdt_counts[ARM_FDT_VECTOR_64] <= 4)
       result = true;
-    else if (fdt_counts[ARM_FDT_VECTOR_128] > 1 &&
+    else if (fdt_counts[ARM_FDT_VECTOR_128] >= 1 &&
              fdt_counts[ARM_FDT_VECTOR_128] <= 4)
       result = true;
     

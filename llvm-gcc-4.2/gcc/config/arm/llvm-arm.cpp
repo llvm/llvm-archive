@@ -2524,24 +2524,14 @@ bool
 llvm_arm_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
                                              CallingConv::ID &CC,
                                              std::vector<const Type*> &Elts) {
-  // Homogeneous aggregates are an AAPCS-VFP feature.
-  if ((CC != CallingConv::ARM_AAPCS_VFP) ||
-      !(TARGET_AAPCS_BASED && TARGET_VFP && TARGET_HARD_FLOAT_ABI))
+  if (!llvm_arm_should_pass_or_return_aggregate_in_regs(TreeType, CC))
     return false;
-
-  // Alas, we can't use LLVM Types to figure this out because we need to
-  // examine unions closely.  We'll have to walk the GCC TreeType.
-  int fdt_counts[ARM_FDT_MAX] = { 0 };
-  bool result = false;
-  result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TreeType), TreeType,
-                                           fdt_counts);
 
   // Walk Ty and push LLVM types corresponding to register types onto
   // Elts.
-  if (result)
-    push_elts(Ty, Elts);
+  push_elts(Ty, Elts);
   
-  return result;
+  return true;
 }  
 
 static bool alloc_next_spr(bool *SPRs)
@@ -2643,6 +2633,126 @@ llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
     return true;
     
   return false;                            // it all fit in registers!
+}
+
+// Return LLVM Type if TYPE can be returned as an aggregate, 
+// otherwise return NULL.
+const Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
+                                                 CallingConv::ID &CC) {
+  if (!llvm_arm_should_pass_or_return_aggregate_in_regs(TreeType, CC))
+    return NULL;
+    
+  // Walk Ty and push LLVM types corresponding to register types onto
+  // Elts.
+  std::vector<const Type*> Elts;
+  const Type *Ty = ConvertType(TreeType);
+  push_elts(Ty, Elts);
+
+  return StructType::get(Context, Elts, false);
+}
+
+// llvm_arm_extract_mrv_array_element - Helper function that helps extract 
+// an array element from multiple return value.
+//
+// Here, SRC is returning multiple values. DEST's DESTFIELDNO field is an array.
+// Extract SRCFIELDNO's ELEMENO value and store it in DEST's FIELDNO field's 
+// ELEMENTNO.
+//
+static void llvm_arm_extract_mrv_array_element(Value *Src, Value *Dest,
+                                               unsigned SrcFieldNo, 
+                                               unsigned SrcElemNo,
+                                               unsigned DestFieldNo, 
+                                               unsigned DestElemNo,
+                                               LLVMBuilder &Builder,
+                                               bool isVolatile) {
+  Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
+  const StructType *STy = cast<StructType>(Src->getType());
+  llvm::Value *Idxs[3];
+  Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
+  Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestFieldNo);
+  Idxs[2] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestElemNo);
+  Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
+  if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
+    Value *ElemIndex = ConstantInt::get(Type::getInt32Ty(Context), SrcElemNo);
+    Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");
+    Builder.CreateStore(EVIElem, GEP, isVolatile);
+  } else {
+    Builder.CreateStore(EVI, GEP, isVolatile);
+  }
+}
+
+// llvm_arm_extract_multiple_return_value - Extract multiple values returned
+// by SRC and store them in DEST. It is expected that SRC and
+// DEST types are StructType, but they may not match.
+void llvm_arm_extract_multiple_return_value(Value *Src, Value *Dest,
+                                            bool isVolatile,
+                                            LLVMBuilder &Builder) {
+  
+  const StructType *STy = cast<StructType>(Src->getType());
+  unsigned NumElements = STy->getNumElements();
+
+  const PointerType *PTy = cast<PointerType>(Dest->getType());
+  const StructType *DestTy = cast<StructType>(PTy->getElementType());
+
+  unsigned SNO = 0;
+  unsigned DNO = 0;
+
+  while (SNO < NumElements) {
+
+    const Type *DestElemType = DestTy->getElementType(DNO);
+
+    // Directly access first class values.
+    if (DestElemType->isSingleValueType()) {
+      Value *GEP = Builder.CreateStructGEP(Dest, DNO, "mrv_gep");
+      Value *EVI = Builder.CreateExtractValue(Src, SNO, "mrv_gr");
+      Builder.CreateStore(EVI, GEP, isVolatile);
+      ++DNO; ++SNO;
+      continue;
+    } 
+
+    // Access array elements individually. Note, Src and Dest type may
+    // not match. For example { <2 x float>, float } and { float[3]; }
+    const ArrayType *ATy = cast<ArrayType>(DestElemType);
+    unsigned ArraySize = ATy->getNumElements();
+    unsigned DElemNo = 0; // DestTy's DNO field's element number
+    while (DElemNo < ArraySize) {
+      unsigned i = 0;
+      unsigned Size = 1;
+      
+      if (const VectorType *SElemTy = 
+          dyn_cast<VectorType>(STy->getElementType(SNO))) {
+        Size = SElemTy->getNumElements();
+      }
+      while (i < Size) {
+        llvm_arm_extract_mrv_array_element(Src, Dest, SNO, i++, 
+                                           DNO, DElemNo++, 
+                                           Builder, isVolatile);
+      }
+      // Consumed this src field. Try next one.
+      ++SNO;
+    }
+    // Finished building current dest field. 
+    ++DNO;
+  }
+}
+
+// Target hook for llvm-abi.h for LLVM_SHOULD_NOT_USE_SHADOW_RETURN and is
+// also a utility function used for other target hooks in this file. Returns
+// true if the aggregate should be passed or returned in registers.
+bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
+                                                      CallingConv::ID &CC) {
+  // Homogeneous aggregates are an AAPCS-VFP feature.
+  if ((CC != CallingConv::ARM_AAPCS_VFP) ||
+      !(TARGET_AAPCS_BASED && TARGET_VFP && TARGET_HARD_FLOAT_ABI))
+    return false;
+
+  // Alas, we can't use LLVM Types to figure this out because we need to
+  // examine unions closely.  We'll have to walk the GCC TreeType.
+  int fdt_counts[ARM_FDT_MAX] = { 0 };
+  bool result = false;
+  result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TreeType), TreeType,
+                                           fdt_counts);
+  return result;
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

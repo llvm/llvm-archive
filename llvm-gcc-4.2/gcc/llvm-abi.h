@@ -126,15 +126,24 @@ static inline bool isAggregateTreeType(tree type) {
  false
 #endif
 
+// LLVM_SHOULD_NOT_USE_SHADOW_RETURN - A hook to allow aggregates to be
+// returned in registers.
+#ifndef LLVM_SHOULD_NOT_USE_SHADOW_RETURN
+#define LLVM_SHOULD_NOT_USE_SHADOW_RETURN(X, CC) \
+ false
+#endif
+
 // doNotUseShadowReturn - Return true if the specified GCC type 
 // should not be returned using a pointer to struct parameter. 
-static inline bool doNotUseShadowReturn(tree type, tree fndecl) {
+static inline bool doNotUseShadowReturn(tree type, tree fndecl,
+                                        CallingConv::ID CC) {
   if (!TYPE_SIZE(type))
     return false;
   if (TREE_CODE(TYPE_SIZE(type)) != INTEGER_CST)
     return false;
   // LLVM says do not use shadow argument.
-  if (LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(type))
+  if (LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(type) ||
+     LLVM_SHOULD_NOT_USE_SHADOW_RETURN(type, CC))
     return true;
   // GCC says use shadow argument.
   if (aggregate_value_p(type, fndecl))
@@ -396,7 +405,7 @@ public:
     } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
-    } else if (doNotUseShadowReturn(type, fn)) {
+    } else if (doNotUseShadowReturn(type, fn, C.getCallingConv())) {
       tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
@@ -406,7 +415,8 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
+        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type,
+                                    C.getCallingConv()))
           C.HandleAggregateResultAsAggregate(AggrTy);
         else if (const Type* ScalarTy = 
                     LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type, &Offset))
@@ -752,7 +762,7 @@ public:
     } else if (Ty->isSingleValueType() || Ty->isVoidTy()) {
       // Return scalar values normally.
       C.HandleScalarResult(Ty);
-    } else if (doNotUseShadowReturn(type, fn)) {
+    } else if (doNotUseShadowReturn(type, fn, C.getCallingConv())) {
       tree SingleElt = LLVM_SHOULD_RETURN_SELT_STRUCT_AS_SCALAR(type);
       if (SingleElt && TYPE_SIZE(SingleElt) && 
           TREE_CODE(TYPE_SIZE(SingleElt)) == INTEGER_CST &&
@@ -762,7 +772,8 @@ public:
       } else {
         // Otherwise return as an integer value large enough to hold the entire
         // aggregate.
-        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type))
+        if (const Type *AggrTy = LLVM_AGGR_TYPE_FOR_STRUCT_RETURN(type,
+                                    C.getCallingConv()))
           C.HandleAggregateResultAsAggregate(AggrTy);
         else if (const Type* ScalarTy = 
                     LLVM_SCALAR_TYPE_FOR_STRUCT_RETURN(type, &Offset))

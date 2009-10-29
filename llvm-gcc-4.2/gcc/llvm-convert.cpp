@@ -181,8 +181,12 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
 
+#ifdef USEINDIRECTBRANCH
+  IndirectBranch = 0;
+#else
   NumAddressTakenBlocks = 0;
   IndirectGotoBlock = 0;
+#endif
 
   assert(TheTreeToLLVM == 0 && "Reentering function creation?");
   TheTreeToLLVM = this;
@@ -726,6 +730,22 @@ Function *TreeToLLVM::FinishFunctionBody() {
   EmitPostPads();
   EmitUnwindBlock();
 
+#ifdef USEINDIRECTBRANCH
+  // If someone did an indirect goto, emit the indirect goto block at the end of
+  // the function.
+  if (IndirectBranch) {
+    EmitBlock(IndirectBranch->getParent());
+    Builder.ClearInsertionPoint();
+
+    // If someone took the address of a label but never did an indirect goto,
+    // we made a zero entry PHI node, which is illegal.  Zap it now.
+    PHINode *PN = cast<PHINode>(IndirectBranch->getAddress());
+    if (PN->getNumIncomingValues() == 0) {
+      PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+      PN->eraseFromParent();
+    }
+  }
+#else
   // If this function takes the address of a label, emit the indirect goto
   // block.
   if (IndirectGotoBlock) {
@@ -737,6 +757,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
     if (SI->getNumSuccessors() > 1)
       SI->setSuccessor(0, SI->getSuccessor(1));
   }
+#endif
 
   // Remove any cached LLVM values that are local to this function.  Such values
   // may be deleted when the optimizers run, so would be dangerous to keep.
@@ -1685,6 +1706,19 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
 //                ... Address Of Labels Extension Support ...
 //===----------------------------------------------------------------------===//
 
+#ifdef USEINDIRECTBRANCH
+/// getBlockAddress - Create a BlockAddress and add it as a possible
+/// destination of the IndirectBranch.
+BlockAddress *TreeToLLVM::getBlockAddress(BasicBlock *BB) {
+  // Make sure that there is a block for the indirect goto.
+  if (IndirectBranch == 0)
+    getIndirectGotoBlock();
+
+  // Make sure the indirect branch includes all of the address-taken blocks.
+  IndirectBranch->addDestination(BB);
+  return BlockAddress::get(Fn, BB);
+}
+#else
 /// getIndirectGotoBlockNumber - Return the unique ID of the specified basic
 /// block for uses that take the address of it.
 Constant *TreeToLLVM::getIndirectGotoBlockNumber(BasicBlock *BB) {
@@ -1700,10 +1734,26 @@ Constant *TreeToLLVM::getIndirectGotoBlockNumber(BasicBlock *BB) {
   cast<SwitchInst>(getIndirectGotoBlock()->getTerminator())->addCase(Val, BB);
   return Val;
 }
+#endif
 
 /// getIndirectGotoBlock - Get (and potentially lazily create) the indirect
 /// goto block.
 BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
+#ifdef USEINDIRECTBRANCH
+  // If we already made the indirect branch for indirect goto, return its block.
+  if (IndirectBranch) return IndirectBranch->getParent();
+
+  BasicBlock *IndirectGotoBlock = BasicBlock::Create(Context, "indirectgoto");
+  LLVMBuilder TmpBuilder(IndirectGotoBlock, *TheFolder);
+  const Type *Int8PtrTy = Type::getInt8PtrTy(Context);
+
+  // Create the PHI node that indirect gotos will add entries to.
+  Value *DestVal = TmpBuilder.CreatePHI(Int8PtrTy, "indirect.goto.dest");
+
+  // Create the indirect branch instruction.
+  IndirectBranch = TmpBuilder.CreateIndirectBr(DestVal);
+  return IndirectBranch->getParent();
+#else
   if (IndirectGotoBlock) return IndirectGotoBlock;
 
   // Create a temporary for the value to be switched on.
@@ -1716,6 +1766,7 @@ BasicBlock *TreeToLLVM::getIndirectGotoBlock() {
 
   // Finally, return it.
   return IndirectGotoBlock;
+#endif
 }
 
 
@@ -1739,10 +1790,18 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
     // Otherwise we have an indirect goto.
     BasicBlock *DestBB = getIndirectGotoBlock();
 
+#ifdef USEINDIRECTBRANCH
+    Value *V = Emit(TREE_OPERAND(exp, 0), 0);
+    V = Builder.CreateBitCast(V, Type::getInt8PtrTy(Context));
+    // The first instruction in the indirect goto block has to be the PHI for
+    // the indirect branch address; add an entry for this branch.
+    cast<PHINode>(DestBB->begin())->addIncoming(V, Builder.GetInsertBlock());
+#else
     // Store the destination block to the GotoValue alloca.
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
     V = CastToType(Instruction::PtrToInt, V, TD.getIntPtrType(Context));
     Builder.CreateStore(V, IndirectGotoValue);
+#endif
 
     // NOTE: This is HORRIBLY INCORRECT in the presence of exception handlers.
     // There should be one collector block per cleanup level!  Note that
@@ -7994,9 +8053,13 @@ Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
   }
 
   BasicBlock *BB = getLabelDeclBlock(exp);
+#ifdef USEINDIRECTBRANCH
+  Constant *Ptr = TheTreeToLLVM->getBlockAddress(BB);
+  return TheFolder->CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
+#else
   Constant *C = TheTreeToLLVM->getIndirectGotoBlockNumber(BB);
-  return
-       TheFolder->CreateIntToPtr(C, Type::getInt8PtrTy(Context));
+  return TheFolder->CreateIntToPtr(C, Type::getInt8PtrTy(Context));
+#endif
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {

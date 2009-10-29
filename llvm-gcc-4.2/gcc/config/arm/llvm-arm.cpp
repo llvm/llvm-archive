@@ -1,5 +1,5 @@
 /* LLVM LOCAL begin (ENTIRE FILE!)  */
-/* High-level LLVM backend interface 
+/* High-level LLVM backend interface
 Copyright (C) 2008, 2009 Apple Inc.
 
 This file is part of GCC.
@@ -2244,14 +2244,14 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 // aggregate."
 enum arm_fdts {
   ARM_FDT_INVALID,
-  
+
   ARM_FDT_HALF_FLOAT,
   ARM_FDT_FLOAT,
   ARM_FDT_DOUBLE,
-  
+
   ARM_FDT_VECTOR_64,
   ARM_FDT_VECTOR_128,
-  
+
   ARM_FDT_MAX
 };
 
@@ -2264,7 +2264,7 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
   bool result = false;
   HOST_WIDE_INT bytes =
     (mode == BLKmode) ? int_size_in_bytes (type) : (int) GET_MODE_SIZE (mode);
-  
+
   if (type && AGGREGATE_TYPE_P (type))
   {
     int i;
@@ -2314,7 +2314,7 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
         // Arrays are handled as small records.
         {
           int array_fdt_counts[ARM_FDT_MAX] = { 0 };
-          
+
           result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TREE_TYPE(type)),
                                                    TREE_TYPE(type),
                                                    array_fdt_counts);
@@ -2322,12 +2322,12 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
           cnt = bytes / int_size_in_bytes(TREE_TYPE(type));
           for (i = 0; i < ARM_FDT_MAX; ++i)
             fdt_counts[i] += array_fdt_counts[i] * cnt;
-            
+
           if (!result)
             return false;
         }
       break;
-      
+
       case UNION_TYPE:
       case QUAL_UNION_TYPE:
         {
@@ -2350,28 +2350,28 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
                           union_field_fdt_counts);
               if (!result)
                 return false;
-            
+
               // track largest union field
               for (i = 0; i < ARM_FDT_MAX; ++i) {
                 if (union_field_fdt_counts[i] > 4)  // bail early if we can
                   return false;
-                
+
                 union_fdt_counts[i] = MAX(union_fdt_counts[i],
                                           union_field_fdt_counts[i]);
                 union_field_fdt_counts[i] = 0;  // clear it out for next iter
               }
             }
           }
-          
+
           // check for only one type across all union fields
           cnt = 0;
           for (i = 0; i < ARM_FDT_MAX; ++i) {
             if (union_fdt_counts[i])
               ++cnt;
-          
+
             if (cnt > 1)
               return false;
-              
+
             fdt_counts[i] += union_fdt_counts[i];
           }
         }
@@ -2380,16 +2380,16 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
       default:
       assert(0 && "What type is this?");
     }
-    
+
     // Walk through fdt_counts and decide if we're a homogeneous aggregate.
     result = false;
-    
+
     // Make sure that only one FDT is used.
     cnt = 0;
     for (i = 0; i < ARM_FDT_MAX; ++i) {
       if (fdt_counts[i])
         ++cnt;
-    
+
       if (cnt > 1)
         return false;
     }
@@ -2410,30 +2410,30 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
     else if (fdt_counts[ARM_FDT_VECTOR_128] >= 1 &&
              fdt_counts[ARM_FDT_VECTOR_128] <= 4)
       result = true;
-    
+
     return result;
   }
-  
+
   if (type)
   {
     int idx = 0;
     int cnt = 0;
-    
+
     switch (TREE_CODE(type))
     {
     case REAL_TYPE:
-      idx = (TYPE_PRECISION(type) == 32) ? 
+      idx = (TYPE_PRECISION(type) == 32) ?
               ARM_FDT_FLOAT :
               ((TYPE_PRECISION(type) == 64) ?
                 ARM_FDT_DOUBLE :
                 ARM_FDT_INVALID);
       cnt = 1;
       break;
-      
+
     case COMPLEX_TYPE:
       {
         tree subtype = TREE_TYPE(type);
-        idx = (TYPE_PRECISION(subtype) == 32) ? 
+        idx = (TYPE_PRECISION(subtype) == 32) ?
                 ARM_FDT_FLOAT :
                 ((TYPE_PRECISION(subtype) == 64) ?
                   ARM_FDT_DOUBLE :
@@ -2441,7 +2441,7 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
         cnt = 2;
       }
       break;
-      
+
     case VECTOR_TYPE:
       idx = (bytes == 8) ?
               ARM_FDT_VECTOR_64 :
@@ -2450,7 +2450,7 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
                 ARM_FDT_INVALID;
       cnt = 1;
       break;
-      
+
     case INTEGER_TYPE:
     case POINTER_TYPE:
     case ENUMERAL_TYPE:
@@ -2461,13 +2461,13 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
     default:
       return false;     // All of these disqualify.
     }
-    
+
     fdt_counts[idx] += cnt;
     return true;
   }
   else
     assert(0 && "what type was this?");
-  
+
   return false;
 }
 
@@ -2493,7 +2493,7 @@ static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
       }
     } else if (const ArrayType *ATy = dyn_cast<ArrayType>(STy)) {
       const Type *ETy = ATy->getElementType();
-      
+
       for (uint64_t i = ATy->getNumElements(); i > 0; --i)
         Elts.push_back(ETy);
     } else if (STy->getNumContainedTypes())
@@ -2518,9 +2518,9 @@ llvm_arm_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   // Walk Ty and push LLVM types corresponding to register types onto
   // Elts.
   push_elts(Ty, Elts);
-  
+
   return true;
-}  
+}
 
 static bool alloc_next_spr(bool *SPRs)
 {
@@ -2619,17 +2619,17 @@ llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
 
   if (!count_num_registers_uses(Elts, SPRs))
     return true;
-    
+
   return false;                            // it all fit in registers!
 }
 
-// Return LLVM Type if TYPE can be returned as an aggregate, 
+// Return LLVM Type if TYPE can be returned as an aggregate,
 // otherwise return NULL.
 const Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
                                                  CallingConv::ID &CC) {
   if (!llvm_arm_should_pass_or_return_aggregate_in_regs(TreeType, CC))
     return NULL;
-    
+
   // Walk Ty and push LLVM types corresponding to register types onto
   // Elts.
   std::vector<const Type*> Elts;
@@ -2639,17 +2639,17 @@ const Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
   return StructType::get(Context, Elts, false);
 }
 
-// llvm_arm_extract_mrv_array_element - Helper function that helps extract 
+// llvm_arm_extract_mrv_array_element - Helper function that helps extract
 // an array element from multiple return value.
 //
 // Here, SRC is returning multiple values. DEST's DESTFIELDNO field is an array.
-// Extract SRCFIELDNO's ELEMENO value and store it in DEST's FIELDNO field's 
+// Extract SRCFIELDNO's ELEMENO value and store it in DEST's FIELDNO field's
 // ELEMENTNO.
 //
 static void llvm_arm_extract_mrv_array_element(Value *Src, Value *Dest,
-                                               unsigned SrcFieldNo, 
+                                               unsigned SrcFieldNo,
                                                unsigned SrcElemNo,
-                                               unsigned DestFieldNo, 
+                                               unsigned DestFieldNo,
                                                unsigned DestElemNo,
                                                LLVMBuilder &Builder,
                                                bool isVolatile) {
@@ -2675,7 +2675,6 @@ static void llvm_arm_extract_mrv_array_element(Value *Src, Value *Dest,
 void llvm_arm_extract_multiple_return_value(Value *Src, Value *Dest,
                                             bool isVolatile,
                                             LLVMBuilder &Builder) {
-  
   const StructType *STy = cast<StructType>(Src->getType());
   unsigned NumElements = STy->getNumElements();
 
@@ -2696,7 +2695,7 @@ void llvm_arm_extract_multiple_return_value(Value *Src, Value *Dest,
       Builder.CreateStore(EVI, GEP, isVolatile);
       ++DNO; ++SNO;
       continue;
-    } 
+    }
 
     // Access array elements individually. Note, Src and Dest type may
     // not match. For example { <2 x float>, float } and { float[3]; }
@@ -2706,20 +2705,20 @@ void llvm_arm_extract_multiple_return_value(Value *Src, Value *Dest,
     while (DElemNo < ArraySize) {
       unsigned i = 0;
       unsigned Size = 1;
-      
-      if (const VectorType *SElemTy = 
+
+      if (const VectorType *SElemTy =
           dyn_cast<VectorType>(STy->getElementType(SNO))) {
         Size = SElemTy->getNumElements();
       }
       while (i < Size) {
-        llvm_arm_extract_mrv_array_element(Src, Dest, SNO, i++, 
-                                           DNO, DElemNo++, 
+        llvm_arm_extract_mrv_array_element(Src, Dest, SNO, i++,
+                                           DNO, DElemNo++,
                                            Builder, isVolatile);
       }
       // Consumed this src field. Try next one.
       ++SNO;
     }
-    // Finished building current dest field. 
+    // Finished building current dest field.
     ++DNO;
   }
 }

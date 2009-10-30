@@ -140,7 +140,7 @@ static const char *GetNodeName(tree Node) {
     }
   }
   
-  return "";
+  return NULL;
 }
 
 /// GetNodeLocation - Returns the location stored in a node  regardless of
@@ -197,7 +197,7 @@ static const char *getLinkageName(tree Node) {
       return IDENTIFIER_POINTER(DECL_ASSEMBLER_NAME(Node));
     } 
   }
-  return "";
+  return NULL;
 }
 
 DebugInfo::DebugInfo(Module *m)
@@ -483,7 +483,7 @@ DIType DebugInfo::createMethodType(tree type) {
     DebugFactory.GetOrCreateArray(EltTys.data(), EltTys.size());
 
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                          findRegion(type), "", 
+                                          findRegion(type), NULL,
                                           getOrCreateCompileUnit(NULL), 
                                           0, 0, 0, 0, 0,
                                           llvm::DIType(), EltTypeArray);
@@ -561,7 +561,7 @@ DIType DebugInfo::createArrayType(tree type) {
     DebugFactory.GetOrCreateArray(Subscripts.data(), Subscripts.size());
   expanded_location Loc = GetNodeLocation(type);
   return DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_array_type,
-                                          findRegion(type), "", 
+                                          findRegion(type), NULL,
                                           getOrCreateCompileUnit(Loc.file), 0, 
                                           NodeSizeInBits(type), 
                                           NodeAlignInBits(type), 0, 0,
@@ -641,9 +641,14 @@ DIType DebugInfo::createStructType(tree type) {
   // reused because MDNodes are uniqued. To avoid this, use type context
   /// also while creating FwdDecl for now.
   std::string FwdName;
-  if (TYPE_CONTEXT(type))
-    FwdName = GetNodeName(TYPE_CONTEXT(type));
-  FwdName = FwdName + GetNodeName(type);
+  if (TYPE_CONTEXT(type)) {
+    const char *TypeContextName = GetNodeName(TYPE_CONTEXT(type));
+    if (TypeContextName)
+      FwdName = TypeContextName;
+  }
+  const char *TypeName = GetNodeName(type);
+  if (TypeName)
+    FwdName = FwdName + TypeName;
   unsigned Flags = llvm::DIType::FlagFwdDecl;
   if (TYPE_BLOCK_IMPL_STRUCT(type))
     Flags |= llvm::DIType::FlagAppleBlock;
@@ -678,7 +683,7 @@ DIType DebugInfo::createStructType(tree type) {
       // FIXME : name, size, align etc...
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 
-                                       findRegion(type), "",
+                                       findRegion(type), NULL,
                                        llvm::DICompileUnit(), 0,0,0, 
                                        getINTEGER_CSTVal(BINFO_OFFSET(BInfo)),
                                        0, BaseClass);
@@ -797,7 +802,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
 
   if (TYPE_VOLATILE(type)) {
     Ty = DebugFactory.CreateDerivedType(DW_TAG_volatile_type, 
-                                        findRegion(type), "", 
+                                        findRegion(type), NULL,
                                         getOrCreateCompileUnit(NULL), 
                                         0 /*line no*/, 
                                         NodeSizeInBits(type),
@@ -810,7 +815,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
 
   if (TYPE_READONLY(type)) 
     Ty =  DebugFactory.CreateDerivedType(DW_TAG_const_type, 
-                                         findRegion(type), "", 
+                                         findRegion(type), NULL,
                                          getOrCreateCompileUnit(NULL), 
                                          0 /*line no*/, 
                                          NodeSizeInBits(type),
@@ -970,7 +975,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   else
     LangTag = DW_LANG_C89;
 
-  const char *Flags = "";
+  const char *Flags = NULL;
   // Do this only when RC_DEBUG_OPTIONS environment variable is set to
   // a nonempty string. This is intended only for internal Apple use.
   char * debugopt = getenv("RC_DEBUG_OPTIONS");

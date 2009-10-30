@@ -2381,37 +2381,22 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
       assert(0 && "What type is this?");
     }
 
-    // Walk through fdt_counts and decide if we're a homogeneous aggregate.
-    result = false;
-
-    // Make sure that only one FDT is used.
+    // Walk through fdt_counts.  This is a homogeneous aggregate if
+    // only one FDT is used.
     cnt = 0;
     for (i = 0; i < ARM_FDT_MAX; ++i) {
-      if (fdt_counts[i])
+      if (fdt_counts[i]) {
+        // Make sure that one FDT is 4 or less elements in size.
+        if (fdt_counts[i] > 4)
+          return false;
         ++cnt;
+      }
 
       if (cnt > 1)
         return false;
     }
 
-    // Make sure that one FDT is 4 or less elements in size.
-    if (fdt_counts[ARM_FDT_HALF_FLOAT] >= 1 &&
-        fdt_counts[ARM_FDT_HALF_FLOAT] <= 4)
-      result = true;
-    else if (fdt_counts[ARM_FDT_FLOAT] >= 1 &&
-             fdt_counts[ARM_FDT_FLOAT] <= 4)
-      result = true;
-    else if (fdt_counts[ARM_FDT_DOUBLE] >= 1 &&
-             fdt_counts[ARM_FDT_DOUBLE] <= 4)
-      result = true;
-    else if (fdt_counts[ARM_FDT_VECTOR_64] >= 1 &&
-             fdt_counts[ARM_FDT_VECTOR_64] <= 4)
-      result = true;
-    else if (fdt_counts[ARM_FDT_VECTOR_128] >= 1 &&
-             fdt_counts[ARM_FDT_VECTOR_128] <= 4)
-      result = true;
-
-    return result;
+    return true;
   }
 
   if (type)

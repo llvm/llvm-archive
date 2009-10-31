@@ -12102,7 +12102,18 @@ finish_function (int flags)
       && !cp_function_chain->can_throw
       && !flag_non_call_exceptions
       && !DECL_REPLACEABLE_P (fndecl))
-    TREE_NOTHROW (fndecl) = 1;
+    /* LLVM LOCAL begin - set nothrow for thunks to what it is for the
+       function that they're thunking.  */
+    {
+#ifdef ENABLE_LLVM
+      if (DECL_THUNK_P (fndecl))
+        TREE_NOTHROW (fndecl) = TREE_NOTHROW (THUNK_TARGET (fndecl));
+      else
+#endif
+        TREE_NOTHROW (fndecl) = 1;
+    }
+    /* LLVM LOCAL end - set nothrow for thunks to what it is for the
+       function that they're thunking.  */
 
   /* This must come after expand_function_end because cleanups might
      have declarations (from inline functions) that need to go into

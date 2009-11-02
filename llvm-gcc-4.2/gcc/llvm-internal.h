@@ -331,13 +331,7 @@ class TreeToLLVM {
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
   Function *FuncEHGetTypeID;
 
-#ifdef USEINDIRECTBRANCH
-  /// IndirectBranch - The first time an indirect goto is seen we create a
-  /// block with an indirect branch.  Every time we see the address of a label
-  /// taken, we add the label to the indirect goto.  Every subsequent indirect
-  /// goto is codegen'd as a jump to the IndirectBranch's basic block.
-  IndirectBrInst *IndirectBranch;
-#else
+#ifndef USEINDIRECTBRANCH
   /// NumAddressTakenBlocks - Count the number of labels whose addresses are
   /// taken.
   uint64_t NumAddressTakenBlocks;
@@ -370,11 +364,7 @@ public:
   /// the address of the result.
   LValue EmitLV(tree_node *exp);
 
-#ifdef USEINDIRECTBRANCH
-  /// getBlockAddress - Create a BlockAddress and add it as a possible
-  /// destination of the IndirectBranch.
-  BlockAddress *getBlockAddress(BasicBlock *BB);
-#else
+#ifndef USEINDIRECTBRANCH
   /// getIndirectGotoBlockNumber - Return the unique ID of the specified basic
   /// block for uses that take the address of it.
   Constant *getIndirectGotoBlockNumber(BasicBlock *BB);
@@ -622,6 +612,12 @@ private:
                             Value *&Result,
                             const Type *ResultType,
                             std::vector<Value*> &Ops);
+
+#ifdef USEINDIRECTBRANCH
+public:
+  // Helper for taking the address of a label.
+  Constant *EmitLV_LABEL_DECL(tree_node *exp);
+#endif
 };
 
 /// TreeConstantToLLVM - An instance of this class is created and used to 

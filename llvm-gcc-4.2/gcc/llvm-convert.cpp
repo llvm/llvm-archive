@@ -1763,7 +1763,7 @@ Value *TreeToLLVM::EmitGOTO_EXPR(tree exp) {
     BasicBlock *DestBB = getIndirectGotoBlock();
 
     // Store the destination block to the GotoValue alloca.
-    Value *V = Emit(dest);
+    Value *V = Emit(dest, 0);
     V = CastToType(Instruction::PtrToInt, V, TD.getIntPtrType(Context));
     Builder.CreateStore(V, IndirectGotoValue);
 

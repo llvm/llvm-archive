@@ -116,7 +116,9 @@ fi
 NON_ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$LIBSTDCXX_VERSION"
 # LLVM LOCAL end
 
-DARWIN_VERS=`uname -r | sed 's/\..*//'`
+if [ "x$DARWIN_VERS" == "x" ]; then
+  DARWIN_VERS=`uname -r | sed 's/\..*//'`
+fi
 echo DARWIN_VERS = $DARWIN_VERS
 
 # APPLE LOCAL begin ARM

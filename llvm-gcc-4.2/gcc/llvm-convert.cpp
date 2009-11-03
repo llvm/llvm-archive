@@ -6941,9 +6941,6 @@ LValue TreeToLLVM::EmitLV_XXXXPART_EXPR(tree exp, unsigned Idx) {
 
 #ifdef USEINDIRECTBRANCH
 Constant *TreeToLLVM::EmitLV_LABEL_DECL(tree exp) {
-  // GCC kindly diverts labels for unreachable basic blocks to reachable blocks,
-  // so we are not obliged to output unreachable blocks even if the original
-  // code took the address of one.
   return BlockAddress::get(Fn, getLabelDeclBlock(exp));
 }
 #endif

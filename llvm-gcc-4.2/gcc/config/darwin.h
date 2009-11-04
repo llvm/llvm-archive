@@ -698,20 +698,9 @@ do {					\
       char *N = (char *)alloca(strlen(fmt) + 37);                       \
       sprintf(N, fmt, i++);                                             \
       GV->setName(N);                                                   \
-      GV->setAlignment(TARGET_64BIT ? 8 : 4);                           \
     }                                                                   \
   } while (0)
 /* LLVM LOCAL - end radar 6389998 */
-
-/* LLVM LOCAL - begin radar 7291825 */
-/* Give a constant string a sufficient alignment for the platform.  */
-#define TARGET_ADJUST_CSTRING_ALIGN(GV)                                 \
-  do {                                                                  \
-    if (GV->hasInternalLinkage()) {                                     \
-      GV->setAlignment(TARGET_64BIT ? 8 : 4);                           \
-    }                                                                   \
-  } while (0)
-/* LLVM LOCAL - end radar 7291825 */
 
 #endif
 /* LLVM LOCAL end */

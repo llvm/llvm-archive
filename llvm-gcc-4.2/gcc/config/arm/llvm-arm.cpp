@@ -2396,6 +2396,9 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
         return false;
     }
 
+    if (cnt == 0)
+      return false;
+
     return true;
   }
 

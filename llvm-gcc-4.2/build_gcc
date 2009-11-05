@@ -266,7 +266,7 @@ fi
 # If the user has set CC or CXX, respect their wishes.  If not,
 # compile with LLVM-GCC/LLVM-G++ if available; if LLVM is not
 # available, fall back to usual GCC/G++ default.
-savedPATH=$PATH ; PATH="$PATH:/Developer/usr/bin"
+savedPATH=$PATH ; PATH="/Developer/usr/bin:$PATH"
 XTMPCC=$(which llvm-gcc)
 if [ x$CC  = x -a x$XTMPCC != x ] ; then export CC=$XTMPCC  forcedCC=1  ; fi
 XTMPCC=$(which llvm-g++)

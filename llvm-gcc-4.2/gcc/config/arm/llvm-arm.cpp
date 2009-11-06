@@ -2727,7 +2727,7 @@ bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
   bool result = false;
   result = vfp_arg_homogeneous_aggregate_p(TYPE_MODE(TreeType), TreeType,
                                            fdt_counts);
-  return result;
+  return result && !TREE_ADDRESSABLE(TreeType);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

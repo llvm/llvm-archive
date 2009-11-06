@@ -358,6 +358,7 @@ static unsigned GuessAtInliningThreshold() {
   
   if (optimize >= 3)
     return 250;
+  return 200;
 }
 
 void llvm_initialize_backend(void) {

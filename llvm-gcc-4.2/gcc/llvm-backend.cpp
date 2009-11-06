@@ -490,7 +490,7 @@ void llvm_initialize_backend(void) {
   TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
-  TheFolder = new TargetFolder(TheTarget->getTargetData(), getGlobalContext());
+  TheFolder = new TargetFolder(TheTarget->getTargetData());
 
   // Install information about target datalayout stuff into the module for
   // optimizer use.

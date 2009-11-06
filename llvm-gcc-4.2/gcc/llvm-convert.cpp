@@ -8149,8 +8149,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     FieldPtr = TheFolder->CreateGetElementPtr(StructAddrLV, Ops+1, 2);
 
     FieldPtr = ConstantFoldInstOperands(Instruction::GetElementPtr,
-                                        FieldPtr->getType(), Ops,
-                                        3, Context, &TD);
+                                        FieldPtr->getType(), Ops, 3, &TD);
 
     // Now that we did an offset from the start of the struct, subtract off
     // the offset from BitStart.

@@ -4909,12 +4909,12 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return EmitBuiltinUnwindInit(exp, Result);
 
   case BUILT_IN_OBJECT_SIZE: {
-    tree ArgList = TREE_OPERAND (exp, 1);
-    if (!validate_arglist(ArgList, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
+    tree arglist = TREE_OPERAND (exp, 1);
+    if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE)) {
       error("Invalid builtin_object_size argument types");
       return false;
     }
-    tree ObjSizeTree = TREE_VALUE (TREE_CHAIN (ArgList));
+    tree ObjSizeTree = TREE_VALUE (TREE_CHAIN (arglist));
     STRIP_NOPS (ObjSizeTree);
     if (TREE_CODE (ObjSizeTree) != INTEGER_CST
         || tree_int_cst_sgn (ObjSizeTree) < 0
@@ -4923,12 +4923,26 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       return false;
     }
 
-    // This treats everything as unknown, and is minimally defensible as
-    // correct, although completely useless.
-    if (tree_low_cst (ObjSizeTree, 0) < 2)
-      Result = Constant::getAllOnesValue(TD.getIntPtrType(Context));
-    else
-      Result = ConstantInt::get(TD.getIntPtrType(Context), 0);
+    tree Object = TREE_VALUE(arglist);
+    tree ObjTy = TREE_VALUE(TREE_CHAIN(arglist));
+
+    Value* Args[] = {
+      Emit(Object, 0),
+      Emit(ObjTy, 0)
+    };
+
+    // Grab the current return type.
+    const Type* Ty;
+    Ty = ConvertType(TREE_TYPE(exp));
+
+    // Manually coerce the arg to the correct pointer type.
+    Args[0] = Builder.CreateBitCast(Args[0], Type::getInt8PtrTy(Context));
+
+    Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+							  Intrinsic::objectsize,
+							  &Ty,
+							  1),
+				Args, Args + 2);
     return true;
   }
   // Unary bit counting intrinsics.

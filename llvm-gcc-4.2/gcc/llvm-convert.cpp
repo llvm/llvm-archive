@@ -4937,6 +4937,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // Manually coerce the arg to the correct pointer type.
     Args[0] = Builder.CreateBitCast(Args[0], Type::getInt8PtrTy(Context));
+    Args[1] = Builder.CreateIntCast(Args[1], Type::getInt32Ty(Context), false);
 
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
 							  Intrinsic::objectsize,

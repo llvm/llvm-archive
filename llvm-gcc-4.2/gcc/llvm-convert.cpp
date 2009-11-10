@@ -304,7 +304,7 @@ namespace {
         TheDebugInfo->EmitDeclare(ResultDecl,
                                   dwarf::DW_TAG_return_variable,
                                   "agg.result", RetTy, Tmp,
-                                  Builder.GetInsertBlock());
+                                  Builder);
       }
       ++AI;
     }
@@ -602,7 +602,7 @@ void TreeToLLVM::StartFunctionBody() {
       if (!isInvRef && TheDebugInfo)
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args),
-                                  AI, Builder.GetInsertBlock());
+                                  AI, Builder);
       ++AI;
     } else {
       // Otherwise, we create an alloca to hold the argument value and provide
@@ -614,7 +614,7 @@ void TreeToLLVM::StartFunctionBody() {
       if (TheDebugInfo) {
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args), Tmp,
-                                  Builder.GetInsertBlock());
+                                  Builder);
       }
 
       // Emit annotate intrinsic if arg has annotate attr
@@ -645,6 +645,9 @@ void TreeToLLVM::StartFunctionBody() {
   if (cfun->nonlocal_goto_save_area) {
     // Not supported yet.
   }
+
+  if (TheDebugInfo)
+    TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
 
   // As it turns out, not all temporaries are associated with blocks.  For those
   // that aren't, emit them now.
@@ -1656,11 +1659,11 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
     if (DECL_NAME(decl)) {
       TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_auto_variable,
                                 Name, TREE_TYPE(decl), AI,
-                                Builder.GetInsertBlock());
+                                Builder);
     } else if (TREE_CODE(decl) == RESULT_DECL) {
       TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_return_variable,
                                 Name, TREE_TYPE(decl), AI,
-                                Builder.GetInsertBlock());
+                                Builder);
     }
   }
 }

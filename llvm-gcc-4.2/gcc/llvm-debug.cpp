@@ -309,7 +309,8 @@ void DebugInfo::EmitFunctionEnd(BasicBlock *CurBB, bool EndFunction) {
 /// EmitDeclare - Constructs the debug code for allocation of a new variable.
 /// region - "llvm.dbg.declare."
 void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
-                            tree type, Value *AI, BasicBlock *CurBB) {
+                            tree type, Value *AI, 
+                              LLVMBuilder &Builder) {
 
   // Do not emit variable declaration info, for now.
   if (optimize)
@@ -330,7 +331,9 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
                                 Loc.line, getOrCreateType(type));
 
   // Insert an llvm.dbg.declare into the current block.
-  DebugFactory.InsertDeclare(AI, D, CurBB);
+  Instruction *Call = DebugFactory.InsertDeclare(AI, D, 
+                                                 Builder.GetInsertBlock());
+  Builder.SetDebugLocation(Call);
 }
 
 

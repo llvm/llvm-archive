@@ -70,12 +70,12 @@ typedef struct MetaPoolTy {
 #endif
  
 
-#ifdef SVA_IO
+#if 1
   /* A splay for I/O objects */
   void * IOObjs;
 #endif
 
-#ifdef SVA_MMU 
+#if 1
   unsigned TK;
 #endif
 

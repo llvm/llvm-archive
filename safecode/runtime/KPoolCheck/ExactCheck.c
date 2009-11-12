@@ -21,7 +21,7 @@
 #define DEBUG(x) 
 
 /* Flag whether to print error messages on bounds violations */
-int ec_do_fail = 0;
+int ec_do_fail = 1;
 
 /* Flags whether we're ready to do run-time checks */
 extern int pchk_ready;

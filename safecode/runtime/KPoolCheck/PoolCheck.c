@@ -32,7 +32,7 @@ static const int do_profile = 0;
 static const int use_oob = 0;
 
 /* Flag whether to print error messages on bounds violations */
-static const int do_fail = 0;
+static const int do_fail = 1;
 
 /* Statistic counters */
 int stat_poolcheck=0;
@@ -316,7 +316,9 @@ pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len, unsigned phys) {
   if (!pchk_ready || !MP) return;
   PCLOCK();
 
+  /* Adjust statistics */
   ++stat_regio;
+
   /*
    * Add the original physical object to the splay tree.
    */
@@ -331,11 +333,42 @@ pchk_reg_io (MetaPoolTy* MP, void* addr, unsigned len, unsigned phys) {
   PCUNLOCK();
 }
 
+/*
+ * Function: pchk_drop_io()
+ *
+ * Description:
+ *  Remove the specified I/O object from the I/O object splay tree.  This
+ *  removes both the primary object (the one returned by ioremap()) as well as
+ *  the secondary object (the address passed into ioremap()).
+ *
+ * Inputs:
+ *  MP   - The metapool in which the object belongs.
+ *  addr - The virtual address of the primary object.
+ */
 void
 pchk_drop_io (MetaPoolTy* MP, void* addr) {
+  /* Return if the metapool is unknown */
   if (!MP) return;
+
+  /* Lock the splay tree */
   PCLOCK();
-  adl_splay_delete(&MP->IOObjs, addr);
+
+  /*
+   * Lookup the I/O object at the primvary virtual address.
+   */
+  void* S = addr;
+  unsigned len = 0;
+  unsigned tag = 0;
+  int fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, &tag);
+  if (fs) {
+    /* Delete the primary object */
+    adl_splay_delete(&MP->IOObjs, addr);
+
+    /* Delete the secondary object (the one that was ioremap'ed) */
+    if (tag) adl_splay_delete(&MP->IOObjs, tag);
+  }
+
+  /* Unlock and return */
   PCUNLOCK();
 }
 #endif
@@ -751,6 +784,11 @@ poolcheckalign (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
   if ((addr == 0) && (offset == 0))
     return;
 
+  /*
+   * Avoid division by zero.
+   */
+  if (size == 0) size = 1;
+
   ++stat_poolcheck;
   PCLOCK();
   void* S = addr;
@@ -825,6 +863,11 @@ poolcheckalign_i (MetaPoolTy* MP, void* addr, unsigned offset, unsigned size) {
    */
   if ((addr == 0) && (offset == 0))
     return;
+
+  /*
+   * Avoid division by zero.
+   */
+  if (size == 0) size = 1;
 
   PCLOCK();
   void* S = addr;
@@ -1161,6 +1204,7 @@ void* getBounds(MetaPoolTy* MP, void* src, void *dest) {
   len = 0;
   fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, &tag);
   if (fs) {
+#if 0
     /*
      * Check the destination to see whether it falls within bounds.  If not,
      * it's possible that the value has been indexed into the physical address
@@ -1177,6 +1221,7 @@ void* getBounds(MetaPoolTy* MP, void* src, void *dest) {
         return &not_found;
       }
     }
+#endif
     PCUNLOCK();
     return (MP->IOObjs);
   }
@@ -1266,6 +1311,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src, void *dest) {
   len = 0;
   fs = adl_splay_retrieve(&MP->IOObjs, &S, &len, &tag);
   if (fs) {
+#if 0
     /*
      * Check the destination to see whether it falls within bounds.  If not,
      * it's possible that the value has been indexed into the physical address
@@ -1286,6 +1332,7 @@ void* getBounds_i(MetaPoolTy* MP, void* src, void *dest) {
         }
       }
     }
+#endif
     PCUNLOCK();
     return (MP->IOObjs);
   }
@@ -1383,6 +1430,11 @@ getBoundsnoio_i(MetaPoolTy* MP, void* src, void *dest) {
     PCUNLOCK();
     return MP->Objs;
   }
+
+#if 1
+  /* Unlock the splay tree */
+  PCUNLOCK();
+#endif
 
   /*
    * If the source pointer is within the first page of memory, return the zero

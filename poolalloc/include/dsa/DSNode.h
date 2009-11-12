@@ -159,8 +159,9 @@ public:
     Array       = 1 << 7,   // This node is treated like an array
     External    = 1 << 8,   // This node comes from an external source
     IONode      = 1 << 9,   // This node comes from an external source
+    CheckAnyway = 1 << 10,  // This node may be type-safe but check it anyway
     //#ifndef NDEBUG
-    DEAD        = 1 << 10,   // This node is dead and should not be pointed to
+    DEAD        = 1 << 11,   // This node is dead and should not be pointed to
     //#endif
 
     Composition = AllocaNode | HeapNode | GlobalNode | IONode | UnknownNode
@@ -421,11 +422,13 @@ public:
   bool isDeadNode() const   { return NodeType & DEAD; }
   bool isExternalNode() const { return NodeType & External; }
   bool isIONode() const       { return NodeType & IONode; }
+  bool isCheckAnyway() const  { return NodeType & CheckAnyway; }
 
   DSNode *setAllocaNodeMarker()  { NodeType |= AllocaNode;  return this; }
   DSNode *setHeapNodeMarker()    { NodeType |= HeapNode;    return this; }
   DSNode *setGlobalNodeMarker()  { NodeType |= GlobalNode;  return this; }
   DSNode *setIONodeMarker()      { NodeType |= IONode;      return this; }
+  DSNode *setCheckAnywayNodeMarker()  { NodeType |= CheckAnyway; return this; }
   DSNode *setUnknownNodeMarker(); // { ++stat_unknown; NodeType |= UnknownNode; return this; }
 
   DSNode *setExternalMarker()   { NodeType |= External;   return this; }

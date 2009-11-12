@@ -163,6 +163,68 @@ bool TDDataStructures::runOnModule(Module &M) {
   // same MetaPool.
   //
   Function* KMA = M.getNamedFunction("kmem_cache_alloc");
+#if 1
+  if (KMA) {
+    // Map from kmem_cache_t's metapool to the type of values returned from the
+    // kmem_cache_t
+    std::map<MetaPool*, DSNodeHandle> types;
+
+    for (Value::use_iterator ii = KMA->use_begin(), ee = KMA->use_end();
+         ii != ee; ++ii) {
+      CallInst* CI = dyn_cast<CallInst>(*ii);
+      if ((CI) && (CI->getCalledFunction() == KMA)) {
+        // Function in which the call statement resides
+        Function * F = CI->getParent()->getParent();
+
+        // The pointer to the kmem_cache_t
+        Value* CacheT = CI->getOperand(1);
+
+        //
+        // Get the metapool for the kmem_cache_t
+        //
+        DSNodeHandle DSCacheT = DSInfo[F]->getNodeForValue(CacheT);
+        MetaPoolHandle MPCacheT (DSCacheT.getNode()->getMP());
+
+        //
+        // Get the DSNode handle of the object being allocated.
+        //
+        DSNodeHandle DSH = DSInfo[F]->getNodeForValue(CI);
+        MetaPoolHandle MPNode (DSH.getNode()->getMP());
+
+        //
+        // Ensure that all objects allocated from this kmem_cache_t have the
+        // same type.
+        //
+        if (types[MPCacheT.getPool()].getNode()) {
+          //
+          // Get the type of the objects allocated from this kernel pool.
+          //
+          const Type * MPType = types[MPCacheT.getPool()].getNode()->getType();
+          const Type * OJType = DSH.getNode()->getType();
+
+          //
+          // If this allocation site does not allocate objects of the same
+          // type, then make both DSNodes type-unknown.
+          //
+          if (MPType != DSH.getNode()->getType()) {
+              DSH.getNode()->setCheckAnywayNodeMarker();
+              types[MPCacheT.getPool()].getNode()->setCheckAnywayNodeMarker();
+            std::cerr << "kmem_cache_alloc: 2: Folded!" << std::endl;
+          }
+        } else {
+          //
+          // Now DSNode has been associated with objects allocated from this
+          // kernel pool.  Record the first one that we have found.
+          //
+          std::cerr << "kmem_cache_alloc: Adding!" << std::endl;
+          types[MPCacheT.getPool()] = DSH;
+        }
+      }
+    }
+  }
+#endif
+
+#if 1
   if (KMA) {
     // Map from kmem_cache_t's metapool to the metapool of its return value
     std::map<MetaPool*, MetaPool*> locs;
@@ -202,6 +264,7 @@ bool TDDataStructures::runOnModule(Module &M) {
       }
     }
   }
+#endif
 #endif
      
   return false;

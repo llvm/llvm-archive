@@ -312,6 +312,16 @@ static bool getSourcePointerValues(Value* V, std::set<Value*>& sources) {
         } else {
           goto fail;
         }
+#ifdef LLVA_KERNEL
+      } else if (CallInst * CI = dyn_cast<CallInst>(V)) {
+        Function * F = CI->getCalledFunction();
+        if (!F) goto fail;
+        if ((F->hasName()) && (F->getName() == "llva_do_index")) {
+          tocheck.push(CI->getOperand(1));
+        } else {
+          goto fail;
+        }
+#endif
       } else {
         goto fail;
       }

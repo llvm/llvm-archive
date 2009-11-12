@@ -63,7 +63,7 @@ cl::opt<bool> InsertPoolChecksForArrays("boundschecks-usepoolchecks",
   
 // Options for Enabling/Disabling the Insertion of Various Checks
 cl::opt<bool> EnableIncompleteFuncChecks ("enable-ifchecks", cl::Hidden,
-                                   cl::init(true),
+                                   cl::init(false),
                                    cl::desc("Enable Indirect Call Checks on Incomplete Nodes"));
 
 cl::opt<bool> EnableNullChecks  ("enable-nullchecks", cl::Hidden,
@@ -503,10 +503,10 @@ makeMetaPool(Module* M, DSNode* N) {
   MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
   MPTV.push_back(ArrayType::get (Type::UIntTy, 4));
   MPTV.push_back(ArrayType::get (VoidPtrType, 4));
-#ifdef SVA_IO
+#if 1
   MPTV.push_back(VoidPtrType);
 #endif
-#ifdef SVA_MMU
+#if 1
   MPTV.push_back(Type::UIntTy);
 #endif
 
@@ -1752,7 +1752,8 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   //
   if (LoadInst * LI = dyn_cast<LoadInst>(FuncPointer)) {
     DSNode * LoadNode = getDSNode (LI->getPointerOperand(), F);
-    if ((LoadNode) && (!(LoadNode->isNodeCompletelyFolded())))
+    if ((LoadNode) && (!(LoadNode->isNodeCompletelyFolded())) &&
+                      (!(LoadNode->isCheckAnyway())))
       return;
   }
 
@@ -1772,7 +1773,7 @@ InsertPoolChecks::insertFunctionCheck (CallInst * CI) {
   // DSNode may be missing valid function targets.  In that case, do not
   // insert a check.
   //
-  if (EnableIncompleteFuncChecks && (Node->isIncomplete())) {
+  if ((!EnableIncompleteFuncChecks) && (Node->isIncomplete())) {
     ++MissedFuncChecks;
     return;
   }
@@ -4255,7 +4256,8 @@ InsertPoolChecks::addLSChecks(Value *V, Instruction *I, Function *F) {
   //
   if (Node->isNodeCompletelyFolded() ||
       Node->isUnknownNode() ||
-      Node->isIncomplete()) {
+      Node->isIncomplete()  ||
+      Node->isCheckAnyway()) {
     needsCheck = true;
   }
 

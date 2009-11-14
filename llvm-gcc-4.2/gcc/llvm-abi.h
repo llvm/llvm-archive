@@ -699,7 +699,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
+      if (!OrigElts[i]->isVoidTy()) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))
@@ -1145,7 +1145,7 @@ public:
       }
     }
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
-      if (OrigElts[i] != Type::getVoidTy(getGlobalContext())) {
+      if (!OrigElts[i]->isVoidTy()) {
         C.EnterField(i, STy);
         unsigned RealSize = 0;
         if (LastEltSizeDiff && i == (e - 1))

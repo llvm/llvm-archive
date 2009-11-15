@@ -27,11 +27,6 @@ extern bool llvm_mips_should_pass_aggregate_in_memory(tree, const Type *);
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
   llvm_mips_should_pass_aggregate_in_memory(X, TY)
 
-/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
- * the llvm::InitializeXXXTarget() function.
- */
-#define LLVM_TARGET_NAME Mips
-
 #endif /* LLVM_ABI_H */
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -27,6 +27,11 @@ Boston, MA 02110-1301, USA.  */
 
 #ifdef ENABLE_LLVM
 
+/* LLVM_TARGET_NAME - This specifies the name of the target, which correlates to
+ * the llvm::InitializeXXXTarget() function.
+ */
+#define LLVM_TARGET_NAME Mips
+
 /* Add general target specific stuff */
 #include "llvm-mips-target.h"
 

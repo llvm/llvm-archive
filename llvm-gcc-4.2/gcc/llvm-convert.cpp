@@ -4765,7 +4765,8 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   Ty[0] = ResultTy;
   Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-  C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+  C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                               "cast");
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
   EmitMemoryBarrier(true, true, true, true);
@@ -4790,8 +4791,10 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   Ty[0] = ResultTy;
   Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-  C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
-  C[2] = Builder.CreateIntCast(C[2], Ty[0], "cast");
+  C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                               "cast");
+  C[2] = Builder.CreateIntCast(C[2], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                               "cast");
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -4940,7 +4943,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // Manually coerce the arg to the correct pointer type.
     Args[0] = Builder.CreateBitCast(Args[0], Type::getInt8PtrTy(Context));
-    Args[1] = Builder.CreateIntCast(Args[1], Type::getInt32Ty(Context), false);
+    Args[1] = Builder.CreateIntCast(Args[1], Type::getInt32Ty(Context),
+                                    false);
 
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
 							  Intrinsic::objectsize,
@@ -4958,7 +4962,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctlz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                   "cast");
     return true;
   }
   case BUILT_IN_CTZ:       // These GCC builtins always return int.
@@ -4967,7 +4972,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                   "cast");
     return true;
   }
   case BUILT_IN_PARITYLL:
@@ -4985,7 +4991,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                   "cast");
     return true;
   }
   case BUILT_IN_BSWAP32:
@@ -4993,7 +5000,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::bswap);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, "cast");
+    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                   "cast");
     return true;
   }
 
@@ -5287,7 +5295,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5325,7 +5334,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5363,7 +5373,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5401,7 +5412,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5439,7 +5451,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5477,7 +5490,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], "cast");
+    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                                 "cast");
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.

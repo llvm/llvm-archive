@@ -667,6 +667,7 @@ DIType DebugInfo::createStructType(tree type) {
     return FwdDecl;
   
   // Insert into the TypeCache so that recursive uses will find it.
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
   TypeCache[type] =  WeakVH(FwdDecl.getNode());
   
   // Convert all the elements.
@@ -769,7 +770,7 @@ DIType DebugInfo::createStructType(tree type) {
   
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  FwdDecl.replaceAllUsesWith(RealDecl);
+  llvm::DIDerivedType(FwdDeclNode).replaceAllUsesWith(RealDecl);
   return RealDecl;
 }
 

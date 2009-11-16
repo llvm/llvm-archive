@@ -276,8 +276,6 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
       context = TYPE_MAIN_VARIANT
         (TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (decl)))));
     
-    if (context && !TYPE_P (context))
-      context = NULL_TREE;
     if (context != NULL_TREE)
       return findRegion(context);
   }
@@ -405,7 +403,7 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
       DispName = IDENTIFIER_POINTER(DECL_NAME(decl));
   }
     
-  DebugFactory.CreateGlobalVariable(getOrCreateCompileUnit(Loc.file), 
+  DebugFactory.CreateGlobalVariable(findRegion(decl),
                                     DispName, DispName,
                                     getLinkageName(decl), 
                                     getOrCreateCompileUnit(Loc.file), Loc.line,

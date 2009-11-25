@@ -1294,13 +1294,15 @@ enum x86_64_reg_class
     X86_64_X87_CLASS,
     X86_64_X87UP_CLASS,
     X86_64_COMPLEX_X87_CLASS,
-    X86_64_MEMORY_CLASS
+    X86_64_MEMORY_CLASS,
+    X86_64_POINTER_CLASS
   };
 #endif /* !ENABLE_LLVM */
 /* LLVM LOCAL end */
 static const char * const x86_64_reg_class_name[] = {
   "no", "integer", "integerSI", "sse", "sseSF", "sseDF",
-  "sseup", "x87", "x87up", "cplx87", "no"
+  /* LLVM LOCAL */
+  "sseup", "x87", "x87up", "cplx87", "no", "ptr"
 };
 
 #define MAX_CLASSES 4
@@ -3303,8 +3305,12 @@ merge_classes (enum x86_64_reg_class class1, enum x86_64_reg_class class2)
   if ((class1 == X86_64_INTEGERSI_CLASS && class2 == X86_64_SSESF_CLASS)
       || (class2 == X86_64_INTEGERSI_CLASS && class1 == X86_64_SSESF_CLASS))
     return X86_64_INTEGERSI_CLASS;
+  /* LLVM LOCAL begin */
   if (class1 == X86_64_INTEGER_CLASS || class1 == X86_64_INTEGERSI_CLASS
-      || class2 == X86_64_INTEGER_CLASS || class2 == X86_64_INTEGERSI_CLASS)
+      || class1 == X86_64_POINTER_CLASS
+      || class2 == X86_64_INTEGER_CLASS || class2 == X86_64_INTEGERSI_CLASS
+      || class2 == X86_64_POINTER_CLASS)
+  /* LLVM LOCAL end */
     return X86_64_INTEGER_CLASS;
 
   /* Rule #5: If one of the classes is X87, X87UP, or COMPLEX_X87 class,
@@ -3551,6 +3557,14 @@ classify_argument (enum machine_mode mode, tree type,
       classes[1] = X86_64_SSEUP_CLASS;
       return 2;
     case DImode:
+      /* LLVM LOCAL begin */
+      if (POINTER_TYPE_P(type))
+        {
+          classes[0] = X86_64_POINTER_CLASS;
+          return 1;
+        }
+      /* fall through */
+      /* LLVM LOCAL end */
     case SImode:
     case HImode:
     case QImode:
@@ -3651,6 +3665,8 @@ examine_argument (enum machine_mode mode, tree type, int in_return,
       {
       case X86_64_INTEGER_CLASS:
       case X86_64_INTEGERSI_CLASS:
+      /* LLVM LOCAL */
+      case X86_64_POINTER_CLASS:
 	(*int_nregs)++;
 	break;
       case X86_64_SSE_CLASS:
@@ -3764,6 +3780,8 @@ construct_container (enum machine_mode mode, enum machine_mode orig_mode,
       {
       case X86_64_INTEGER_CLASS:
       case X86_64_INTEGERSI_CLASS:
+      /* LLVM LOCAL */
+      case X86_64_POINTER_CLASS:
 	return gen_rtx_REG (mode, intreg[0]);
       case X86_64_SSE_CLASS:
       case X86_64_SSESF_CLASS:
@@ -3799,6 +3817,8 @@ construct_container (enum machine_mode mode, enum machine_mode orig_mode,
 	    break;
 	  case X86_64_INTEGER_CLASS:
 	  case X86_64_INTEGERSI_CLASS:
+          /* LLVM LOCAL */
+          case X86_64_POINTER_CLASS:
 	    /* Merge TImodes on aligned occasions here too.  */
 	    if (i * 8 + 8 > bytes)
 	      tmpmode = mode_for_size ((bytes - i * 8) * BITS_PER_UNIT, MODE_INT, 0);

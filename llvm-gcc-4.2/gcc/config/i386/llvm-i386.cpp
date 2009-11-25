@@ -838,6 +838,11 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
       totallyEmpty = false;
       Bytes -= 8;
       break;
+    case X86_64_POINTER_CLASS:
+      Elts.push_back(Type::getInt8PtrTy(Context));
+      totallyEmpty = false;
+      Bytes -= 8;
+      break;
     case X86_64_SSE_CLASS:
       totallyEmpty = false;
       // If it's a SSE class argument, then one of the followings are possible:
@@ -902,6 +907,9 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
           Elts.push_back(VectorType::get(Type::getFloatTy(Context), 2));
           Elts.push_back(Type::getInt64Ty(Context));
+        } else if (Class[i+1] == X86_64_POINTER_CLASS) {
+          Elts.push_back(VectorType::get(Type::getFloatTy(Context), 2));
+          Elts.push_back(Type::getInt8PtrTy(Context));
         } else if (Class[i+1] == X86_64_NO_CLASS) {
           // padding bytes, don't pass
           Elts.push_back(Type::getDoubleTy(Context));
@@ -1069,7 +1077,8 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
     return false;
 
   if (NumClasses == 1 && 
-      (Class[0] == X86_64_INTEGERSI_CLASS || Class[0] == X86_64_INTEGER_CLASS))
+      (Class[0] == X86_64_INTEGERSI_CLASS || Class[0] == X86_64_INTEGER_CLASS ||
+       Class[0] == X86_64_POINTER_CLASS))
     // This will fit in one i64 register.
     return false;
 
@@ -1113,11 +1122,14 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
 
     if (NumClasses == 1) {
       if (Class[0] == X86_64_INTEGERSI_CLASS ||
-          Class[0] == X86_64_INTEGER_CLASS) {
+          Class[0] == X86_64_INTEGER_CLASS ||
+          Class[0] == X86_64_POINTER_CLASS) {
         // one int register
         HOST_WIDE_INT Bytes =
           (Mode == BLKmode) ? int_size_in_bytes(type) : 
                               (int) GET_MODE_SIZE(Mode);
+        if (Bytes==8 && Class[0] == X86_64_POINTER_CLASS)
+          return Type::getInt8PtrTy(Context);
         if (Bytes>4)
           return Type::getInt64Ty(Context);
         else if (Bytes>2)
@@ -1135,6 +1147,8 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
             Class[0] == X86_64_NO_CLASS ||
             Class[0] == X86_64_INTEGERSI_CLASS)
           return Type::getInt64Ty(Context);
+        else if (Class[0] == X86_64_POINTER_CLASS)
+          return Type::getInt8PtrTy(Context);
         else if (Class[0] == X86_64_SSE_CLASS || Class[0] == X86_64_SSEDF_CLASS)
           return Type::getDoubleTy(Context);
         else if (Class[0] == X86_64_SSESF_CLASS)
@@ -1146,6 +1160,8 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
         if (Class[1] == X86_64_INTEGERSI_CLASS ||
             Class[1] == X86_64_INTEGER_CLASS)
           return Type::getInt64Ty(Context);
+        else if (Class[1] == X86_64_POINTER_CLASS)
+          return Type::getInt8PtrTy(Context);
         else if (Class[1] == X86_64_SSE_CLASS || Class[1] == X86_64_SSEDF_CLASS)
           return Type::getDoubleTy(Context);
         else if (Class[1] == X86_64_SSESF_CLASS)
@@ -1189,6 +1205,9 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
   if (NumClasses == 1 && Class[0] == X86_64_INTEGER_CLASS)
      assert(0 && "This type does not need multiple return registers!");
 
+  if (NumClasses == 1 && Class[0] == X86_64_POINTER_CLASS)
+     assert(0 && "This type does not need multiple return registers!");
+
   // classify_argument uses a single X86_64_NO_CLASS as a special case for
   // empty structs. Recognize it and don't add any return values in that
   // case.
@@ -1200,6 +1219,10 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
     case X86_64_INTEGER_CLASS:
     case X86_64_INTEGERSI_CLASS:
       Elts.push_back(Type::getInt64Ty(Context));
+      Bytes -= 8;
+      break;
+    case X86_64_POINTER_CLASS:
+      Elts.push_back(Type::getInt8PtrTy(Context));
       Bytes -= 8;
       break;
     case X86_64_SSE_CLASS:
@@ -1264,6 +1287,9 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
         } else if (Class[i+1] == X86_64_INTEGER_CLASS) {
           Elts.push_back(VectorType::get(Type::getFloatTy(Context), 2));
           Elts.push_back(Type::getInt64Ty(Context));
+        } else if (Class[i+1] == X86_64_POINTER_CLASS) {
+          Elts.push_back(VectorType::get(Type::getFloatTy(Context), 2));
+          Elts.push_back(Type::getInt8PtrTy(Context));
         } else if (Class[i+1] == X86_64_NO_CLASS) {
           Elts.push_back(Type::getDoubleTy(Context));
           Bytes -= 16;
@@ -1467,7 +1493,8 @@ bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
     int NumClasses = ix86_ClassifyArgument(Mode, type, Class, 0);
     *DontCheckAlignment= true;
     if (NumClasses == 1 && (Class[0] == X86_64_INTEGER_CLASS ||
-                            Class[0] == X86_64_INTEGERSI_CLASS)) {
+                            Class[0] == X86_64_INTEGERSI_CLASS ||
+                            Class[0] == X86_64_POINTER_CLASS)) {
       // one int register
       HOST_WIDE_INT Bytes =
         (Mode == BLKmode) ? int_size_in_bytes(type) : (int) GET_MODE_SIZE(Mode);
@@ -1480,8 +1507,10 @@ bool llvm_x86_should_pass_aggregate_in_integer_regs(tree type, unsigned *size,
       return true;
     }
     if (NumClasses == 2 && (Class[0] == X86_64_INTEGERSI_CLASS ||
-                            Class[0] == X86_64_INTEGER_CLASS)) {
-      if (Class[1] == X86_64_INTEGER_CLASS) {
+                            Class[0] == X86_64_INTEGER_CLASS ||
+                            Class[0] == X86_64_POINTER_CLASS)) {
+      if (Class[1] == X86_64_INTEGER_CLASS ||
+          Class[1] == X86_64_POINTER_CLASS) {
         // 16 byte object, 2 int registers
         *size = 16;
         return true;

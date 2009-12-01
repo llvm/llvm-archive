@@ -497,17 +497,36 @@ DIType DebugInfo::createPointerType(tree type) {
   unsigned Flags = 0;
   if (type_is_block_byref_struct(type))
     Flags |= llvm::DIType::FlagBlockByrefStruct;
+
   expanded_location Loc = GetNodeLocation(type);
 
+  // Check if this pointer type has a name.
+  if (tree TyName = TYPE_NAME(type)) 
+    if (TREE_CODE(TyName) == TYPE_DECL && !DECL_ORIGINAL_TYPE(TyName)) {
+      expanded_location TypeNameLoc = GetNodeLocation(TyName);
+      DIType Ty = DebugFactory.CreateDerivedType(Tag, findRegion(TyName),
+                                                 GetNodeName(TyName), 
+                                                 getOrCreateCompileUnit(TypeNameLoc.file),
+                                                 TypeNameLoc.line,
+                                                 0 /*size*/,
+                                                 0 /*align*/,
+                                                 0 /*offset */, 
+                                                 0 /*flags*/, 
+                                                 FromTy);
+      TypeCache[TyName] = WeakVH(Ty.getNode());
+      return Ty;
+    }
+  
   StringRef PName = FromTy.getName();
-  return  DebugFactory.CreateDerivedType(Tag, findRegion(type), PName,
-                                         getOrCreateCompileUnit(NULL), 
-                                         0 /*line no*/, 
-                                         NodeSizeInBits(type),
-                                         NodeAlignInBits(type),
-                                         0 /*offset */, 
-                                         Flags, 
-                                         FromTy);
+  DIType PTy = DebugFactory.CreateDerivedType(Tag, findRegion(type), PName,
+                                              getOrCreateCompileUnit(NULL), 
+                                              0 /*line no*/, 
+                                              NodeSizeInBits(type),
+                                              NodeAlignInBits(type),
+                                              0 /*offset */, 
+                                              Flags, 
+                                              FromTy);
+  return PTy;
 }
 
 /// createArrayType - Create ArrayType.

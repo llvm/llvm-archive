@@ -610,7 +610,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_PALIGNR128: {
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
       Function *palignr =
-	Intrinsic::getDeclaration(TheModule, Intrinsic::x86_ssse3_palign_r_128);
+	Intrinsic::getDeclaration(TheModule, FnCode == IX86_BUILTIN_PALIGNR ?
+				  Intrinsic::x86_ssse3_palign_r :
+				  Intrinsic::x86_ssse3_palign_r_128);
       Value *CallOps[3] = { Ops[0], Ops[1], Ops[2] };
       Result = Builder.CreateCall(palignr, CallOps, CallOps+3);
       return true;

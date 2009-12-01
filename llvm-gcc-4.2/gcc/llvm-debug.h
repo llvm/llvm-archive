@@ -65,6 +65,9 @@ private:
   std::map<tree_node *, WeakVH > TypeCache;
                                         // Cache of previously constructed 
                                         // Types.
+  std::map<tree_node *, WeakVH > SPCache;
+                                        // Cache of previously constructed 
+                                        // Subprograms.
   SmallVector<WeakVH, 4> RegionStack;
                                         // Stack to track declarative scopes.
   

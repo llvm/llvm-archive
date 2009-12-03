@@ -117,7 +117,8 @@
   "/* LLVM LOCAL ignore -g in LTO mode */"\
   "/* On Darwin, debug info is stored in separate .dSYM files. */"\
   "/* This requires special support in LTO mode. */" \
-  %{O4|flto: %<g* } \
+  "/* LLVM LOCAL - FIXME: Ignore -g on PPC until we get debug info fixed. */" \
+  %<g* \
   %{!mkernel:%{!static:%{!fast:%{!fastf:%{!fastcp:%{!mdynamic-no-pic:-fPIC}}}}}}"
 
 #define DARWIN_ARCH_SPEC "%{m64:ppc64;:ppc}"

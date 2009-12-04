@@ -385,7 +385,7 @@ cgraph_assemble_pending_functions (void)
       if (!n->global.inlined_to
 	  && !n->alias
           /* LLVM LOCAL extern inline */
-	  && !OMIT_FUNCTION_BODY (n->decl))
+	  && !IS_EXTERN_INLINE (n->decl))
 	{
 	  cgraph_expand_function (n);
 	  output = true;
@@ -849,7 +849,7 @@ verify_cgraph_node (struct cgraph_node *node)
   if (node->analyzed
       && DECL_SAVED_TREE (node->decl) && !TREE_ASM_WRITTEN (node->decl)
       /* LLVM LOCAL extern inline */ 
-      && (!OMIT_FUNCTION_BODY (node->decl) || node->global.inlined_to))
+      && (!IS_EXTERN_INLINE (node->decl) || node->global.inlined_to))
     {
       if (this_cfun->cfg)
 	{
@@ -942,10 +942,7 @@ cgraph_varpool_assemble_decl (struct cgraph_varpool_node *node)
 
   if (!TREE_ASM_WRITTEN (decl)
       && !node->alias
-      /* LLVM LOCAL begin extern inline */
-      && (!DECL_EXTERNAL (decl) ||
-          (TREE_CODE (decl) == FUNCTION_DECL && !OMIT_FUNCTION_BODY(decl)))
-      /* LLVM LOCAL end extern inline */
+      && !DECL_EXTERNAL (decl)
       && (TREE_CODE (decl) != VAR_DECL || !DECL_HAS_VALUE_EXPR_P (decl)))
     {
       assemble_variable (decl, 0, 1, 0);
@@ -1298,7 +1295,7 @@ cgraph_mark_functions_to_output (void)
 	      || (e && node->reachable))
 	  && !TREE_ASM_WRITTEN (decl)
           /* LLVM LOCAL extern inline */
-	  && !OMIT_FUNCTION_BODY (decl))
+	  && !IS_EXTERN_INLINE (decl))
 	node->output = 1;
       else
 	{
@@ -1306,7 +1303,7 @@ cgraph_mark_functions_to_output (void)
 #ifdef ENABLE_CHECKING
 	  if (!node->global.inlined_to && DECL_SAVED_TREE (decl)
               /* LLVM LOCAL extern inline */
-	      && !OMIT_FUNCTION_BODY (decl))
+	      && !IS_EXTERN_INLINE (decl))
 	    {
 	      dump_cgraph_node (stderr, node);
 	      internal_error ("failed to reclaim unneeded function");
@@ -1314,7 +1311,7 @@ cgraph_mark_functions_to_output (void)
 #endif
           /* LLVM LOCAL extern inline */
 	  gcc_assert (node->global.inlined_to || !DECL_SAVED_TREE (decl)
-		      || OMIT_FUNCTION_BODY (decl));
+		      || IS_EXTERN_INLINE (decl));
 	}
 
     }

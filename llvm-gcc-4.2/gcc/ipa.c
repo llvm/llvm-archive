@@ -113,7 +113,7 @@ cgraph_remove_unreachable_nodes (bool before_inlining_p, FILE *file)
   for (node = cgraph_nodes; node; node = node->next)
     if (node->needed && !node->global.inlined_to
         /* LLVM LOCAL extern inline */
-	&& ((!OMIT_FUNCTION_BODY (node->decl))
+	&& ((!IS_EXTERN_INLINE (node->decl))
             || !node->analyzed
             || before_inlining_p))
       {
@@ -137,7 +137,7 @@ cgraph_remove_unreachable_nodes (bool before_inlining_p, FILE *file)
 	    && node->analyzed
 	    && (!e->inline_failed || !e->callee->analyzed
                 /* LLVM LOCAL extern inline */
-		|| !OMIT_FUNCTION_BODY(e->callee->decl)
+		|| !IS_EXTERN_INLINE(e->callee->decl)
                 || before_inlining_p))
 	  {
 	    e->callee->aux = first;
@@ -169,7 +169,7 @@ cgraph_remove_unreachable_nodes (bool before_inlining_p, FILE *file)
 	  if (file)
 	    fprintf (file, " %s", cgraph_node_name (node));
               /* LLVM LOCAL extern inline */
-	  if (!node->analyzed || !OMIT_FUNCTION_BODY(node->decl)
+	  if (!node->analyzed || !IS_EXTERN_INLINE(node->decl)
 	      || before_inlining_p)
 	    cgraph_remove_node (node);
 	  else

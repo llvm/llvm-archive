@@ -6576,7 +6576,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    unsigned int MemberIndex = GetFieldIndex(FieldDecl);
+    unsigned int MemberIndex = GET_LLVM_FIELD_INDEX(FieldDecl);
 
     // If the LLVM struct has zero field, don't try to index into it, just use
     // the current pointer.
@@ -8082,7 +8082,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
   if (TREE_CODE(field_offset) == INTEGER_CST) {
-    unsigned int MemberIndex = GetFieldIndex(FieldDecl);
+    unsigned int MemberIndex = GET_LLVM_FIELD_INDEX(FieldDecl);
 
     Constant *Ops[] = {
       StructAddrLV,

@@ -510,7 +510,7 @@ public:
         if (TREE_CODE(Field) == FIELD_DECL) {
           const tree Ftype = getDeclaredType(Field);
           const Type *FTy = ConvertType(Ftype);
-          unsigned FNo = GetFieldIndex(Field);
+          unsigned FNo = GET_LLVM_FIELD_INDEX(Field);
           assert(FNo != ~0U && "Case not handled yet!");
 
           // Currently, a bvyal type inside a non-byval struct is a zero-length

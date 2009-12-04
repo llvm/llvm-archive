@@ -651,23 +651,6 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
   }
 }
 
-/// GetFieldIndex - Returns the index of the LLVM field corresponding to
-/// this FIELD_DECL, or ~0U if the type the field belongs to has not yet
-/// been converted.
-unsigned int TypeConverter::GetFieldIndex(tree field_decl) {
-  assert(TREE_CODE(field_decl) == FIELD_DECL && "Not a FIELD_DECL!");
-  std::map<tree, unsigned int>::iterator I = FieldIndexMap.find(field_decl);
-  assert(I != FieldIndexMap.end() && "Type not laid out for LLVM?");
-  return I->second;
-}
-
-/// SetFieldIndex - Set the index of the LLVM field corresponding to
-/// this FIELD_DECL.
-void TypeConverter::SetFieldIndex(tree_node *field_decl, unsigned int Index) {
-  assert(TREE_CODE(field_decl) == FIELD_DECL && "Not a FIELD_DECL!");
-  FieldIndexMap[field_decl] = Index;
-}
-
 bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type, 
                                                        const Type *Ty) {
   
@@ -2242,7 +2225,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
         TREE_CODE(DECL_FIELD_OFFSET(Field)) == INTEGER_CST) {
       if (HasOnlyZeroOffsets) {
         // Set the field idx to zero for all members of a union.
-        SetFieldIndex(Field, 0);
+        SET_LLVM_FIELD_INDEX(Field, 0);
       } else {
         uint64_t FieldOffsetInBits = getFieldOffsetInBits(Field);
         tree FieldType = getDeclaredType(Field);
@@ -2274,7 +2257,7 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
 
         unsigned FieldNo =
           Info->getLLVMFieldFor(FieldOffsetInBits, CurFieldNo, isZeroSizeField);
-        SetFieldIndex(Field, FieldNo);
+        SET_LLVM_FIELD_INDEX(Field, FieldNo);
 
         assert((isBitfield(Field) || FieldNo == ~0U ||
                 FieldOffsetInBits == 8*Info->ElementOffsetInBytes[FieldNo]) &&

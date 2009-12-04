@@ -2782,6 +2782,9 @@ struct tree_field_decl GTY(())
   tree bit_offset;
   tree fcontext;
 
+  /* LLVM LOCAL begin */
+  unsigned llvm_field_index;  /* Field index in llvm struct. */
+  /* LLVM LOCAL end */
 };
 
 /* A numeric unique identifier for a LABEL_DECL.  The UID allocation is
@@ -2864,6 +2867,9 @@ extern void *llvm_get_decl(tree);
 #define SET_DECL_LLVM_INDEX(NODE, INDEX)  \
   (DECL_WRTL_CHECK(NODE)->decl_with_rtl.llvm = INDEX)
 #define GET_DECL_LLVM_INDEX(NODE) (DECL_WRTL_CHECK(NODE)->decl_with_rtl.llvm)
+#define GET_LLVM_FIELD_INDEX(NODE) (FIELD_DECL_CHECK(NODE)->field_decl.llvm_field_index)
+#define SET_LLVM_FIELD_INDEX(NODE, INDEX)                               \
+  (FIELD_DECL_CHECK(NODE)->field_decl.llvm_field_index = INDEX)
 
 /* Returns nonzero if the DECL_LLVM for NODE has already been set.  */
 extern bool llvm_set_decl_p(tree);

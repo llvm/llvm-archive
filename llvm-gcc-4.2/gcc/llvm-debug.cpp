@@ -282,23 +282,7 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   RegionMap[FnDecl] = WeakVH(SP.getNode());
 }
 
-/// getOrCreateNameSpace - Get name space descriptor for the tree node.
-DINameSpace DebugInfo::getOrCreateNameSpace(tree Node, DIDescriptor Context) {
-  std::map<tree_node *, WeakVH >::iterator I = 
-    NameSpaceCache.find(Node);
-  if (I != NameSpaceCache.end())
-    return DINameSpace(cast<MDNode>(I->second));
-  
-  expanded_location Loc = GetNodeLocation(Node, false);
-  DINameSpace DNS =
-    DebugFactory.CreateNameSpace(Context, GetNodeName(Node),
-                                 getOrCreateCompileUnit(Loc.file), Loc.line);
-
-  NameSpaceCache[Node] = WeakVH(DNS.getNode());
-  return DNS;
-}
-
-/// findRegion - Find tree_node N's region.
+  /// findRegion - Find tree_node N's region.
 DIDescriptor DebugInfo::findRegion(tree Node) {
   if (Node == NULL_TREE)
     return getOrCreateCompileUnit(main_input_filename);
@@ -309,9 +293,8 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
       return DIDescriptor(R);
 
   if (TYPE_P (Node)) {
-    if (TYPE_CONTEXT (Node)) {
+    if (TYPE_CONTEXT (Node))
       return findRegion (TYPE_CONTEXT(Node));
-    }
   } else if (DECL_P (Node)) {
     tree decl = Node;
     tree context = NULL_TREE;
@@ -321,19 +304,10 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
       context = TYPE_MAIN_VARIANT
         (TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (decl)))));
     
-    if (context != NULL_TREE) {
-      if (TREE_CODE(Node) == NAMESPACE_DECL) {
-        DIDescriptor Context = findRegion(context);
-        return getOrCreateNameSpace(Node, Context);
-      } else
-        return findRegion(context);
-    }
+    if (context != NULL_TREE)
+      return findRegion(context);
   }
-  
-  if (TREE_CODE(Node) == NAMESPACE_DECL)
-    return getOrCreateNameSpace(Node, 
-                                getOrCreateCompileUnit(main_input_filename));
-  
+
   // Otherwise main compile unit covers everything.
   return getOrCreateCompileUnit(main_input_filename);
 }

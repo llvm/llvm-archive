@@ -3223,18 +3223,14 @@ expand_body (tree fn)
      `-fexternal-templates'; we instantiate the function, even though
      we're not planning on emitting it, in case we get a chance to
      inline it.  */
-  /* LLVM LOCAL extern inline */
-  if (OMIT_FUNCTION_BODY (fn))
+  if (DECL_EXTERNAL (fn))
     return;
 
   /* ??? When is this needed?  */
   saved_function = current_function_decl;
 
   /* Emit any thunks that should be emitted at the same time as FN.  */
-  /* LLVM LOCAL begin extern inline */
-  if (!DECL_EXTERNAL (fn))
-    emit_associated_thunks (fn);
-  /* LLVM LOCAL end extern inline */
+  emit_associated_thunks (fn);
 
   /* This function is only called from cgraph, or recursively from
      emit_associated_thunks.  In neither case should we be currently

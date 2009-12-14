@@ -5178,7 +5178,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                        C, C + 5);
     return true;
   }
-#if defined(TARGET_ALPHA) || defined(TARGET_386) || defined(TARGET_POWERPC)
+#if defined(TARGET_ALPHA) || defined(TARGET_386) || defined(TARGET_POWERPC) \
+    || defined(TARGET_ARM)
     // gcc uses many names for the sync intrinsics
     // The type of the first argument is not reliable for choosing the
     // right llvm function; if the original type is not volatile, gcc has
@@ -5189,18 +5190,33 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // Note that Intrinsic::getDeclaration expects the type list in reversed
     // order, while CreateCall expects the parameter list in normal order.
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_1: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_char_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_2: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildCmpAndSwapAtomicBuiltin(exp, short_unsigned_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_8: {
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5211,6 +5227,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   }
 
   case BUILT_IN_VAL_COMPARE_AND_SWAP_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5218,11 +5237,19 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_VAL_COMPARE_AND_SWAP_1:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     tree type = TREE_TYPE(exp);
     Result = BuildCmpAndSwapAtomicBuiltin(exp, type, false);
     return true;
   }
   case BUILT_IN_FETCH_AND_ADD_8:
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5234,6 +5261,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
   case BUILT_IN_FETCH_AND_SUB_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5241,10 +5271,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_SUB_1:
   case BUILT_IN_FETCH_AND_SUB_2:
   case BUILT_IN_FETCH_AND_SUB_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_sub);
     return true;
   }
   case BUILT_IN_FETCH_AND_OR_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5252,10 +5289,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_OR_1:
   case BUILT_IN_FETCH_AND_OR_2:
   case BUILT_IN_FETCH_AND_OR_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_or);
     return true;
   }
   case BUILT_IN_FETCH_AND_AND_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5263,10 +5307,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_AND_1:
   case BUILT_IN_FETCH_AND_AND_2:
   case BUILT_IN_FETCH_AND_AND_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_and);
     return true;
   }
   case BUILT_IN_FETCH_AND_XOR_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5274,10 +5325,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_XOR_1:
   case BUILT_IN_FETCH_AND_XOR_2:
   case BUILT_IN_FETCH_AND_XOR_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_xor);
     return true;
   }
   case BUILT_IN_FETCH_AND_NAND_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5285,10 +5343,17 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_NAND_1:
   case BUILT_IN_FETCH_AND_NAND_2:
   case BUILT_IN_FETCH_AND_NAND_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_nand);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5296,11 +5361,18 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOCK_TEST_AND_SET_1:
   case BUILT_IN_LOCK_TEST_AND_SET_2:
   case BUILT_IN_LOCK_TEST_AND_SET_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_swap);
     return true;
   }
 
   case BUILT_IN_ADD_AND_FETCH_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5308,6 +5380,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_ADD_AND_FETCH_1:
   case BUILT_IN_ADD_AND_FETCH_2:
   case BUILT_IN_ADD_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
@@ -5340,6 +5416,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
   case BUILT_IN_SUB_AND_FETCH_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5347,6 +5426,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_SUB_AND_FETCH_1:
   case BUILT_IN_SUB_AND_FETCH_2:
   case BUILT_IN_SUB_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
@@ -5379,6 +5462,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
   case BUILT_IN_OR_AND_FETCH_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5386,6 +5472,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_OR_AND_FETCH_1:
   case BUILT_IN_OR_AND_FETCH_2:
   case BUILT_IN_OR_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
@@ -5425,6 +5515,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_AND_AND_FETCH_1:
   case BUILT_IN_AND_AND_FETCH_2:
   case BUILT_IN_AND_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
@@ -5457,6 +5551,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
   case BUILT_IN_XOR_AND_FETCH_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5464,6 +5561,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_XOR_AND_FETCH_1:
   case BUILT_IN_XOR_AND_FETCH_2:
   case BUILT_IN_XOR_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
@@ -5496,6 +5597,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     return true;
   }
   case BUILT_IN_NAND_AND_FETCH_8:
+#if defined(TARGET_ARM)
+    return false;
+#endif
 #if defined(TARGET_POWERPC)
     if (!TARGET_64BIT)
       return false;
@@ -5503,6 +5607,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_NAND_AND_FETCH_1:
   case BUILT_IN_NAND_AND_FETCH_2:
   case BUILT_IN_NAND_AND_FETCH_4: {
+#if defined(TARGET_ARM)
+    if (TARGET_THUMB1 || !arm_arch6)
+      return false;
+#endif
     const Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {

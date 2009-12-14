@@ -4762,14 +4762,14 @@ void clearTargetBuiltinCache() {
   TargetBuiltinCache.clear();
 }
 
-void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss) {
+void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss,
+                                   bool device) {
   Value* C[5];
   C[0] = ConstantInt::get(Type::getInt1Ty(Context), ll);
   C[1] = ConstantInt::get(Type::getInt1Ty(Context), ls);
   C[2] = ConstantInt::get(Type::getInt1Ty(Context), sl);
   C[3] = ConstantInt::get(Type::getInt1Ty(Context), ss);
-  // Be conservatively safe.
-  C[4] = ConstantInt::get(Type::getInt1Ty(Context), true);
+  C[4] = ConstantInt::get(Type::getInt1Ty(Context), device);
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::memory_barrier),
@@ -4792,7 +4792,11 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
                                "cast");
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-  EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+  EmitMemoryBarrier(true, true, true, true, false);
+#else
+  EmitMemoryBarrier(true, true, true, true, true);
+#endif
   Value *Result =
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,  id,
                                                  Ty, 2),
@@ -4821,7 +4825,11 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-  EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+  EmitMemoryBarrier(true, true, true, true, false);
+#else
+  EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
   Value *Result =
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -4831,7 +4839,11 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-  EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+  EmitMemoryBarrier(true, true, true, true, false);
+#else
+  EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
   if (isBool)
     Result = CastToUIntType(Builder.CreateICmpEQ(Result, C[1]),
@@ -5399,7 +5411,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5409,7 +5425,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateAdd(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -5445,7 +5465,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5455,7 +5479,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateSub(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -5491,7 +5519,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5501,7 +5533,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateOr(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -5534,7 +5570,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5544,7 +5584,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateAnd(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -5580,7 +5624,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5590,7 +5638,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateXor(Result, C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -5626,7 +5678,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
@@ -5636,7 +5692,11 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-    EmitMemoryBarrier(true, true, true, true);
+#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
+    EmitMemoryBarrier(true, true, true, true, false);
+#else
+    EmitMemoryBarrier(true, true, true, true, true);
+#endif
 
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);

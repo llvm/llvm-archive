@@ -694,9 +694,18 @@ DIType DebugInfo::createStructType(tree type) {
     SFlags |= llvm::DIType::FlagAppleBlock;
   if (type_is_block_byref_struct(type))
     SFlags |= llvm::DIType::FlagBlockByrefStruct;
+  DIDescriptor TyContext =  findRegion(TYPE_CONTEXT(type));
+
+  // Check if this type is created while creating context information 
+  // descriptor. 
+  std::map<tree_node *, WeakVH >::iterator I = TypeCache.find(type);
+  if (I != TypeCache.end())
+    if (MDNode *TN = dyn_cast_or_null<MDNode>(I->second))
+      return DIType(TN);
+  
   llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, 
-                                     findRegion(TYPE_CONTEXT(type)),
+                                     TyContext,
                                      FwdName.c_str(),
                                      getOrCreateCompileUnit(Loc.file), 
                                      Loc.line, 

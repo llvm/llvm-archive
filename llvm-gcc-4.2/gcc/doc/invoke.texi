@@ -175,8 +175,10 @@ in the following sections.
 @table @emph
 @item Overall Options
 @xref{Overall Options,,Options Controlling the Kind of Output}.
+@c LLVM LOCAL begin no-canonical-prefixes
 @gccoptlist{-c  -S  -E  -o @var{file}  -combine  -no-canonical-prefixes  @gol
 -pipe  -pass-exit-codes  @gol
+@c LLVM LOCAL end no-canonical-prefixes
 @c APPLE LOCAL -ObjC 2001-08-03 --sts **
 -ObjC (APPLE ONLY) -ObjC++ (APPLE ONLY) @gol
 @c APPLE LOCAL begin fat builds
@@ -1239,11 +1241,13 @@ be displayed.
 Print (on the standard output) a description of target specific command
 line options for each tool.
 
+@c LLVM LOCAL begin no-canonical-prefixes
 @item -no-canonical-prefixes
 @opindex no-canonical-prefixes
 Do not expand any symbolic links, resolve references to @samp{/../}
 or @samp{/./}, or make the path absolute when generating a relative
 prefix.
+@c LLVM LOCAL end no-canonical-prefixes
 
 @item --version
 @opindex version

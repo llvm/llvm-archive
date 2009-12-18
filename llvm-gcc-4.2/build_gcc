@@ -123,14 +123,19 @@ echo DARWIN_VERS = $DARWIN_VERS
 ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
-# If the build target is iPhone, use the iPhone SDK as the build sysroot
-# and use the tools from the iPhone platform directory.  These paths have to
-# be hardcoded, at least for now, because the build system does not
-# consistently identify separate host and target SDKROOTS.  (The buildit
-# script currently sets SDKROOT to the target iPhone SDK, but XBS sets it
-# to the default host SDK "/".)
-if [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
+if [ -n "$ARM_SDK" ]; then
 
+  ARM_PLATFORM=`xcodebuild -version -sdk $ARM_SDK PlatformPath`
+  ARM_SYSROOT=`xcodebuild -version -sdk $ARM_SDK Path`
+  ARM_TOOLROOT=$ARM_PLATFORM/Developer
+
+elif [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
+
+  # If the build target is iPhone, use the iPhone SDK as the build sysroot
+  # and use the tools from the iPhone platform directory.  FIXME: This is a
+  # temporary fallback for builds where ARM_SDK is not set.  It can be removed,
+  # along with the following bootstrap SDK fallback, when ARM_SDK is set for
+  # all builds.
   ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
   ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
 

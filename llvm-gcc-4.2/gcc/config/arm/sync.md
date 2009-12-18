@@ -45,8 +45,7 @@
                                      gen_rtvec (1, gen_rtx_MEM (BLKmode,
                                                                 operands[0])),
                                      UNSPEC_BARRIER));
-      XVECEXP (par, 0, 1) = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG(SImode,
-                                                                   IP_REGNUM));
+      XVECEXP (par, 0, 1) = gen_rtx_CLOBBER (VOIDmode, gen_rtx_SCRATCH(SImode));
       emit_insn (par);
       DONE;
     }
@@ -56,16 +55,32 @@
   [(set (match_operand:BLK 0 "" "")
         (unspec:BLK [(match_operand:BLK 1 "" "")] UNSPEC_BARRIER))]
   "TARGET_32BIT && arm_arch7a"
-  "dmb"
+  "dmb\tish"
   [(set_attr "length" "4")]
 )
 
-(define_insn "arm_memory_barrier_v6"
+;; This version matches the define_expand above.
+(define_insn "arm_memory_barrier_v6_scratch"
   [(set (match_operand:BLK 0 "" "")
         (unspec:BLK [(match_operand:BLK 1 "" "")] UNSPEC_BARRIER))
-   (clobber (reg:SI IP_REGNUM))]
+   (clobber (match_scratch:SI 2 "=&r"))]
   "TARGET_32BIT && arm_arch6 && !arm_arch7a"
-  "mov\tip, #0\n\tmcr\tp15, 0, ip, c7, c10, 5"
+  "mov\t%2, #0\n\tmcr\tp15, 0, %2, c7, c10, 5"
+  [(set (attr "length")
+	(if_then_else (eq_attr "is_thumb" "yes")
+		      (const_int 6)
+		      (const_int 8)))]
+)
+
+;; This version is used directly by the compare_and_swap splitter below.
+;; That runs after reload is complete, so we cannot use a new define_scratch.
+;; reload is not available to allocate one for us.
+(define_insn "arm_memory_barrier_v6_explicit"
+  [(set (match_operand:BLK 0 "" "")
+        (unspec:BLK [(match_operand:BLK 1 "" "")] UNSPEC_BARRIER))
+   (clobber (match_operand:SI 2 "register_operand" "=&r"))]
+  "TARGET_32BIT && arm_arch6 && !arm_arch7a"
+  "mov\t%2, #0\n\tmcr\tp15, 0, %2, c7, c10, 5"
   [(set (attr "length")
 	(if_then_else (eq_attr "is_thumb" "yes")
 		      (const_int 6)
@@ -91,8 +106,7 @@
                      gen_rtx_UNSPEC_VOLATILE (BLKmode,
                                               gen_rtvec (1, operands[0]),
                                               UNSPEC_SYNC));
-      XVECEXP (par, 0, 1) = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG(SImode,
-                                                                   IP_REGNUM));
+      XVECEXP (par, 0, 1) = gen_rtx_CLOBBER (VOIDmode, gen_rtx_SCRATCH(SImode));
       emit_insn (par);
       DONE;
     }
@@ -106,12 +120,28 @@
   [(set_attr "length" "4")]
 )
 
-(define_insn "arm_memory_sync_v6"
+;; This version matches the define_expand above.
+(define_insn "arm_memory_sync_v6_scratch"
   [(set (match_operand:BLK 0 "" "")
         (unspec_volatile:BLK [(mem:BLK (match_operand 1))] UNSPEC_SYNC))
-   (clobber (reg:SI IP_REGNUM))]
+   (clobber (match_scratch:SI 2 "=&r"))]
   "TARGET_32BIT && arm_arch6 && !arm_arch7a"
-  "mov\tip, #0\n\tmcr\tp15, 0, ip, c7, c10, 4"
+  "mov\t%2, #0\n\tmcr\tp15, 0, %2, c7, c10, 4"
+  [(set (attr "length")
+	(if_then_else (eq_attr "is_thumb" "yes")
+		      (const_int 6)
+		      (const_int 8)))]
+)
+
+;; This version is used directly by the compare_and_swap splitter below.
+;; That runs after reload is complete, so we cannot use a new define_scratch.
+;; reload is not available to allocate one for us.
+(define_insn "arm_memory_sync_v6_explicit"
+  [(set (match_operand:BLK 0 "" "")
+        (unspec_volatile:BLK [(mem:BLK (match_operand 1))] UNSPEC_SYNC))
+   (clobber (match_operand:SI 2 "register_operand" "=&r"))]
+  "TARGET_32BIT && arm_arch6 && !arm_arch7a"
+  "mov\t%2, #0\n\tmcr\tp15, 0, %2, c7, c10, 4"
   [(set (attr "length")
 	(if_then_else (eq_attr "is_thumb" "yes")
 		      (const_int 6)

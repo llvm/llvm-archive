@@ -2421,8 +2421,22 @@ arm_split_compare_and_swap(rtx dest, rtx mem, rtx oldval, rtx newval,
   enum machine_mode mode = GET_MODE (mem);
   rtx label1, label2, x, cond = gen_rtx_REG (CCmode, CC_REGNUM);
   rtx dest_cmp, oldval_cmp;
+  rtx block_scratch, block_unspec;
 
-  emit_insn (gen_memory_barrier ());
+  block_scratch = gen_rtx_MEM (BLKmode, gen_rtx_SCRATCH (Pmode));
+  block_unspec = gen_rtx_UNSPEC (BLKmode,
+                                 gen_rtvec (1, gen_rtx_MEM (BLKmode,
+                                                            block_scratch)),
+                                 UNSPEC_BARRIER);
+
+  /* Use the insn patterns directly rather than the expander since we're
+   * post-reload here. The v6 pattern needs a scratch register and we
+   * have one here already, so just re-use it. */
+  if (arm_arch7a)
+    emit_insn (gen_arm_memory_barrier_v7 (block_scratch, block_unspec));
+  else
+    emit_insn (gen_arm_memory_barrier_v6_explicit(block_scratch,
+                                                  block_unspec, scratch));
 
   label1 = gen_rtx_LABEL_REF (VOIDmode, gen_label_rtx ());
   label2 = gen_rtx_LABEL_REF (VOIDmode, gen_label_rtx ());
@@ -2481,7 +2495,11 @@ arm_split_compare_and_swap(rtx dest, rtx mem, rtx oldval, rtx newval,
   x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label1, pc_rtx);
   x = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx, x));
 
-  emit_insn (gen_memory_sync ());
+  if (arm_arch7a)
+    emit_insn (gen_arm_memory_barrier_v7 (block_scratch, block_unspec));
+  else
+    emit_insn (gen_arm_memory_barrier_v6_explicit(block_scratch,
+                                                  block_unspec, scratch));
   emit_label (XEXP (label2, 0));
 }
 /* APPLE LOCAL end 6258536 atomic builtins */
@@ -14741,7 +14759,7 @@ arm_print_operand (FILE *stream, rtx x, int code)
       }
       return;
 
-    /* APPLE LOCAL 6150859 begin use NEON instructions for SF math */
+    /* APPLE LOCAL begin 6150859 use NEON instructions for SF math */
     /* This code prints the double precision register name starting at
        register number of the indicated single precision register.  */
     case 'p':
@@ -14766,7 +14784,7 @@ arm_print_operand (FILE *stream, rtx x, int code)
 	fprintf (stream, "d%d", (regno - FIRST_VFP_REGNUM) >> 1);
       }
       return;
-    /* APPLE LOCAL 6150859 end use NEON instructions for SF math */
+    /* APPLE LOCAL end 6150859 use NEON instructions for SF math */
 
     /* These two codes print the low/high doubleword register of a Neon quad
        register, respectively.  For pair-structure types, can also print

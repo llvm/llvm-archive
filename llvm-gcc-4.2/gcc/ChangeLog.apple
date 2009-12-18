@@ -1,3 +1,52 @@
+2009-12-04  Jim Grosbach <grosbach@apple.com>
+
+	Radar 6930582
+	* config/arm/arm1136jfs.md: Adjust load latencies up by one.
+	* config/arm/cortex-a8.md: Adjust load latencies up by one.
+
+2009-12-04  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7393136
+        * config/arm/arm.c (arm_split_compare_and_swap): Just use a data
+	memory barrier after the strex. dsb is overkill.
+	* config/arm/sync.md (arm_memory_barrier_v7): Use "dmb ish" since
+	the compiler usage is for multithreading, not external device sync.
+
+2009-12-04  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7442004
+	* config/arm/t-darwin: Always build libgcc2 functions with -marm.
+
+2009-11-03  Stuart Hastings  <stuart@apple.com>
+
+	Radar 6951876
+	* local-alloc.c (reg_inheritance_1): Check for int->float
+          SUBREG cast, assume it uses the pic-base.  This is the
+          32-bit float analogue to 6050374 (see below).
+
+2009-11-02  Stuart Hastings  <stuart@apple.com>
+
+	Radar 7105615
+	* fold-const.c (fold_binary): When folding an unsigned
+	  comparision into a signed comparision, set TREE_OVERFLOW so
+	  that the loop optimizer in tree-vrp.c understands that the
+	  user did not write this.
+
+2009-10-15  Jim Grosbach <grosbach@apple.com>
+
+	Radar 7295521
+	* config/arm/arm.c (arm_split_compare_and_swap): Call insns for
+	arm_memory_barrier* and arm_memory_sync* directory rather than using
+	the expander.
+	* config/arm/sync.md (memory_barrier, memory_sync): Allocate a scratch
+	register rather than forcing IP.
+	(arm_memory_barrier_v6): Match the scratch register from the expander
+	rather than forcing IP. Rename to arm_memory_barrier_v6_explicit.
+	(arm_memory_barrier_v6_explicit): New.
+	(arm_memory_sync_v6): Match the scratch register from the expander
+	rather than forcing IP. Rename to arm_memory_sync_v6_explicit.
+	(arm_memory_sync_v6_explicit): New.
+
 2009-09-11  Caroline Tice  <ctice@apple.com>
 
 	Radar 6419781
@@ -9,8 +58,8 @@
 
 2009-09-08  Jim Grosbach <grosbach@apple.com>
 
-       Radar 7174451
-       * config/arm/arm.c (arm_select_dominance_cc_mode): Unordered floats.
+	Radar 7174451
+	* config/arm/arm.c (arm_select_dominance_cc_mode): Unordered floats.
 
 2009-09-08  Jim Grosbach <grosbach@apple.com>
 
@@ -1468,8 +1517,8 @@
 2008-07-21  Stuart Hastings  <stuart@apple.com>
 
 	Radar 6050374
-	* local-alloc.c (reg_inheritance_1): Check for int->fp SUBREG
-          cast, assume it uses the pic-base.
+	* local-alloc.c (reg_inheritance_1): Check for int->double
+          SUBREG cast, assume it uses the pic-base.
 
 2008-07-18  Fariborz Jahanian <fjahanian@apple.com>
 

@@ -1792,7 +1792,14 @@ powerpc64-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h"
 	test x$with_cpu != x || cpu_is_64bit=yes
 	test x$cpu_is_64bit != xyes || tm_file="${tm_file} rs6000/default64.h"
+# LLVM LOCAL begin
+        # Disable biarch builds for powerpc64-linux for now. There is no support for biarch
+        # builds in llvm-gcc yet. With this change it is possible to create non-biarch builds
+        # for powerpc64-linux which was not possible before. So this change has two effects:
+        #   1. Disable (broken) biarch builds
+        #   2. Allow non-biarch builds.
 	tm_file="${tm_file} rs6000/linux64.h"
+# LLVM LOCAL end
 	if test x${enable_secureplt} = xyes; then
 		tm_file="rs6000/secureplt.h ${tm_file}"
 	fi

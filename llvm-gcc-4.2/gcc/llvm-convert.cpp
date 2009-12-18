@@ -3173,8 +3173,10 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
     if (V->getType()->isFPOrFPVector())
       return Builder.CreateFNeg(V);
-    if (!isa<PointerType>(V->getType()))
-      return Builder.CreateNeg(V);
+    if (!isa<PointerType>(V->getType())) {
+      bool HasNSW = !TYPE_UNSIGNED(TREE_TYPE(exp)) && !flag_wrapv;
+      return HasNSW ? Builder.CreateNSWNeg(V) : Builder.CreateNeg(V);
+    }
 
     // GCC allows NEGATE_EXPR on pointers as well.  Cast to int, negate, cast
     // back.

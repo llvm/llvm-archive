@@ -14,12 +14,15 @@ darwin.o: $(srcdir)/config/darwin.c $(CONFIG_H) $(SYSTEM_H) coretypes.h     \
   config/darwin-sections.def
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/darwin.c
 
+# LLVM LOCAL begin put va_opt in GC memory 7210265
 darwin-c.o: $(srcdir)/config/darwin-c.c $(CONFIG_H) $(SYSTEM_H) coretypes.h \
   $(TM_H) $(CPPLIB_H) $(TREE_H) c-pragma.h $(C_TREE_H) toplev.h $(TM_P_H) \
   c-incpath.h flags.h $(C_COMMON_H) gt-darwin-c.h
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/config/darwin-c.c $(PREPROCESSOR_DEFINES)
+# LLVM LOCAL end put va_opt in GC memory 7210265
 
 gt-darwin.h : s-gtype ; @true
+# LLVM LOCAL put va_opt in GC memory 7210265
 gt-darwin-c.h : s-gtype ; @true
 
 # APPLE LOCAL begin mainline 2007-06-14 5235474

@@ -21078,12 +21078,11 @@ build_block_literal_tmp (const char *name,
   CONSTRUCTOR_ELTS (constructor) = build_block_struct_initlist (block_struct_type,
                                                                 block_impl);
   /* Temporary representing a global block is made global static.  */
-  /* APPLE LOCAL begin radar 6230297 */
+  /* APPLE LOCAL radar 6230297 */
   if (staticBlockTmp || global_bindings_p ()) {
     TREE_PUBLIC (block_holder_tmp_decl) = 0;
     TREE_STATIC (block_holder_tmp_decl) = 1;
   }
-  /* APPLE LOCAL end radar 6230297 */
   cp_finish_decl (block_holder_tmp_decl, constructor, 0, 0, LOOKUP_ONLYCONVERTING);
   return block_holder_tmp_decl;
 }

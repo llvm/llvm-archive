@@ -3392,6 +3392,8 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     V = Builder.CreateNSWAdd(LHS, RHS);
   else if (Opc == Instruction::Sub && TyIsSigned && !flag_wrapv)
     V = Builder.CreateNSWSub(LHS, RHS);
+  else if (Opc == Instruction::Mul && TyIsSigned && !flag_wrapv)
+    V = Builder.CreateNSWMul(LHS, RHS);
   else
     V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   if (ResTy != Ty)

@@ -2679,19 +2679,24 @@ reg_inheritance_1 (rtx *px, void *data)
 
   dstregno = (int)data;
 #ifdef TARGET_386
-  /* Ugly special case: When moving a DImode constant into an FP
-     register, GCC will use the movdf_nointeger pattern, pushing the
-     DImode constant into memory and loading into the '387.  It looks
-     like this: (set (reg:DF) (subreg:DF (reg:DI))).  We're choosing
-     to match the subreg; hope this is sufficient.
+  /*
+    Ugly special case: When moving a DI/SI/mode constant into an FP
+    register, GCC will use the mov/df/sf/_nointeger pattern, pushing
+    the DI/SI/mode constant into memory and loading therefrom into an
+    FP register ('387 or SSE).  It looks like this: (set (reg:DF)
+    (subreg:DF (reg:DI))).  We're choosing to match the subreg; hope
+    this is sufficient.  See Radars 6050374 and 6951876.
   */
-  if (GET_CODE (x) == SUBREG
-      && GET_MODE (x) == DFmode
-      && GET_MODE (SUBREG_REG (x)) == DImode)
-    {
-      SET_BIT (reg_inheritance_matrix[dstregno], PIC_OFFSET_TABLE_REGNUM);
-      return 0;
-    }
+  if (GET_CODE (x) == SUBREG)
+    if ((GET_MODE (x) == DFmode
+	 && GET_MODE (SUBREG_REG (x)) == DImode)
+	||
+	(GET_MODE (x) == SFmode
+	 && GET_MODE (SUBREG_REG (x)) == SImode))
+      {
+	SET_BIT (reg_inheritance_matrix[dstregno], PIC_OFFSET_TABLE_REGNUM);
+	return 0;
+      }
 #endif
   if (GET_CODE (x) == SUBREG)
     x = SUBREG_REG (x);

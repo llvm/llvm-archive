@@ -70,5 +70,6 @@ MULTILIB_MATCHES += \
 endif
 
 # APPLE LOCAL end 6611402 configurable multilib architectures
-TARGET_LIBGCC2_CFLAGS = -fno-inline
+# APPLE LOCAL 7442004 Always build multilib libgcc functions ARM mode.
+TARGET_LIBGCC2_CFLAGS = -fno-inline -marm
 

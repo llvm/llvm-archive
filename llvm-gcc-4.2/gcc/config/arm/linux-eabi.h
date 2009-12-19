@@ -79,6 +79,7 @@
   register unsigned long _end __asm ("a2") = (unsigned long) (END);	\
   register unsigned long _flg __asm ("a3") = 0;				\
   register unsigned long _scno __asm ("r7") = 0xf0002;			\
+  /* LLVM LOCAL use valid SWI instruction */				\
   __asm __volatile ("swi 0		@ sys_cacheflush"		\
 		    : "=r" (_beg)					\
 		    : "0" (_beg), "r" (_end), "r" (_flg), "r" (_scno));	\

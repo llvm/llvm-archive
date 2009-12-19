@@ -187,22 +187,24 @@
 ;; Load instructions.
 ;; The presence of any register writeback is ignored here.
 
-;; A load result has latency 3 unless the dependent instruction has
-;; no early dep, in which case it is only latency two.
+;; APPLE LOCAL begin 6930582 load latencies
+;; A load result has latency 4 unless the dependent instruction has
+;; no early dep, in which case it is only latency three.
 ;; We assume 64-bit alignment for doubleword loads.
-(define_insn_reservation "cortex_a8_load1_2" 3
+(define_insn_reservation "cortex_a8_load1_2" 4
   (and (eq_attr "tune" "cortexa8")
        (eq_attr "type" "load1,load2,load_byte"))
   "cortex_a8_load_store_1")
 
-(define_bypass 2 "cortex_a8_load1_2"
+(define_bypass 3 "cortex_a8_load1_2"
                "cortex_a8_alu")
-(define_bypass 2 "cortex_a8_load1_2"
+(define_bypass 3 "cortex_a8_load1_2"
                "cortex_a8_alu_shift"
                "arm_no_early_alu_shift_dep")
-(define_bypass 2 "cortex_a8_load1_2"
+(define_bypass 3 "cortex_a8_load1_2"
                "cortex_a8_alu_shift_reg"
                "arm_no_early_alu_shift_value_dep")
+;; APPLE LOCAL end 6930582 load latencies
 
 ;; We do not currently model the fact that loads with scaled register
 ;; offsets that are not LSL #2 have an extra cycle latency (they issue

@@ -4972,9 +4972,21 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     tree Object = TREE_VALUE(arglist);
     tree ObjTy = TREE_VALUE(TREE_CHAIN(arglist));
 
+    // LLVM doesn't handle type 1 or type 3. Deal with that here.
+    Value *Tmp = Emit(ObjTy, 0);
+    
+    ConstantInt *CI = dyn_cast<ConstantInt>(Tmp);
+    assert(CI);
+    
+    // Clear the bottom bit since we only handle whole objects and shift to turn
+    // the second bit into our boolean.
+    uint64_t val = (CI->getZExtValue() & 0x2) >> 1;
+    
+    Value *NewTy = ConstantInt::get(Tmp->getType(), val);
+    
     Value* Args[] = {
       Emit(Object, 0),
-      Emit(ObjTy, 0)
+      NewTy
     };
 
     // Grab the current return type.
@@ -4987,10 +4999,10 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                                     false);
 
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-							  Intrinsic::objectsize,
-							  &Ty,
-							  1),
-				Args, Args + 2);
+                                                          Intrinsic::objectsize,
+                                                          &Ty,
+                                                          1),
+                                Args, Args + 2);
     return true;
   }
   // Unary bit counting intrinsics.

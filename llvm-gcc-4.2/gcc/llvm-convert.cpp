@@ -2939,9 +2939,13 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     if (ValTy->isSingleValueType()) {
       // Non-bitfield, scalar value.  Just emit a store.
       Value *RHS = Emit(rhs, 0);
-      // Convert RHS to the right type if we can, otherwise convert the pointer.
+      // Convert RHS to the right type if we can.  If LHS is bigger than RHS
+      // we must convert; all the bits of LHS must be stored into.  Otherwise
+      // convert the pointer.
       const PointerType *PT = cast<PointerType>(LV.Ptr->getType());
-      if (PT->getElementType()->canLosslesslyBitCastTo(RHS->getType()))
+      if (PT->getElementType()->canLosslesslyBitCastTo(RHS->getType()) ||
+          (PT->getElementType()->getPrimitiveSizeInBits() >
+           RHS->getType()->getPrimitiveSizeInBits()))
         RHS = CastToAnyType(RHS, RHSSigned, PT->getElementType(), LHSSigned);
       else
         LV.Ptr = BitCastToType(LV.Ptr, RHS->getType()->getPointerTo());

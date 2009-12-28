@@ -37,6 +37,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class BasicBlock;

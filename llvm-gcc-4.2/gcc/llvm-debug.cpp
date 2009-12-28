@@ -376,15 +376,11 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Instruction *Call = DebugFactory.InsertDeclare(AI, D, 
                                                  Builder.GetInsertBlock());
 
-//  llvm::DIDescriptor DR = RegionStack.back();
-//  llvm::DIScope DS = llvm::DIScope(DR.getNode());
   llvm::DILocation DO(NULL);
   llvm::DILocation DL = 
     DebugFactory.CreateLocation(CurLineNo, 0 /* column */, VarScope, DO);
   
-  llvm::LLVMContext &Context = Call->getContext();
-  unsigned DbgMDKind = Context.getMetadata().getMDKindID("dbg");
-  Context.getMetadata().addMD(DbgMDKind, DL.getNode(), Call);
+  Call->setMetadata("dbg", DL.getNode());
 }
 
 
@@ -398,8 +394,7 @@ bool isPartOfAppleBlockPrologue (unsigned lineno) {
   // In an earlier part of gcc, code that sets up Apple Block by-reference
   // variables at the beginning of the function (which should be part of the
   // prologue but isn't), is assigned a source location line of one before the
-  // function decl.  So we check for that here:
-  
+  // function decl.  We check for that here.
   if (BLOCK_SYNTHESIZED_FUNC(cfun->decl)) {
     int fn_decl_line = DECL_SOURCE_LINE(cfun->decl);
     if (lineno == (unsigned)(fn_decl_line - 1))

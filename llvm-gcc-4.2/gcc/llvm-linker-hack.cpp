@@ -22,6 +22,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/DebugInfo.h"

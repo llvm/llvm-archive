@@ -2819,7 +2819,11 @@ objc_cp_parser_at_property (cp_parser *parser)
 	/* Consume ')' */
 	cp_lexer_consume_token (parser->lexer);
     }
-    objc_cp_parse_property_decl (parser);
+  /* APPLE LOCAL begin weak_import on property 7496972 */
+  note_objc_property_decl_context ();
+  objc_cp_parse_property_decl (parser);
+  note_end_objc_property_decl_context ();
+  /* APPLE LOCAL end weak_import on property 7496972 */
 }
 /* APPLE LOCAL end C* property (Radar 4436866, 4591909) */
 

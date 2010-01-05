@@ -616,9 +616,9 @@ DIType DebugInfo::createArrayType(tree type) {
       uint64_t Low = 0;
       uint64_t Hi = 0;
       if (MinValue && isInt64(MinValue, 0))
-	Low = getINTEGER_CSTVal(MinValue);
+        Low = getINTEGER_CSTVal(MinValue);
       if (MaxValue && isInt64(MaxValue, 0))
-	Hi = getINTEGER_CSTVal(MaxValue);
+        Hi = getINTEGER_CSTVal(MaxValue);
       Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
     }
     EltTy = TREE_TYPE(atype);
@@ -901,8 +901,8 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
   if (tree TyDef = TYPE_NAME(type)) {
       std::map<tree_node *, WeakVH >::iterator I = TypeCache.find(TyDef);
       if (I != TypeCache.end())
-	if (Value *M = I->second)
-	  return DIType(cast<MDNode>(M));
+        if (Value *M = I->second)
+          return DIType(cast<MDNode>(M));
     if (TREE_CODE(TyDef) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(TyDef)) {
       expanded_location TypeDefLoc = GetNodeLocation(TyDef);
       Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, 
@@ -1116,11 +1116,11 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   unsigned ObjcRunTimeVer = 0;
   if (flag_objc_abi != 0 && flag_objc_abi != -1)
     ObjcRunTimeVer = flag_objc_abi;
-  DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName.c_str(), 
-						       Directory.c_str(), 
-						       version_string, isMain,
-						       optimize, Flags,
-						       ObjcRunTimeVer);
+  DICompileUnit NewCU = DebugFactory.CreateCompileUnit(LangTag, FileName.c_str(),
+                                                       Directory.c_str(),
+                                                       version_string, isMain,
+                                                       optimize, Flags,
+                                                       ObjcRunTimeVer);
   CUCache[FullPath] = WeakVH(NewCU.getNode());
   return NewCU;
 }

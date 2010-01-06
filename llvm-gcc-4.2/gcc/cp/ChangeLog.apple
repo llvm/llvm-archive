@@ -1,5 +1,11 @@
 2010-01-05  Jim Grosbach <grosbach@apple.com>
 
+	Radar 7465602
+	* semantics.c (finish_id_expression): Add check for "unavailable"
+	attribute.
+
+2010-01-05  Jim Grosbach <grosbach@apple.com>
+
 	Radar 7496972
 	* parser.c (objc_cp_parser_at_property): Don't warn on weak_import
 	on properties.

@@ -2776,7 +2776,9 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     return 0;
 
   if (Client.isAggrReturn()) {
-    if (TD.getTypeAllocSize(Call->getType()) <= TD.getTypeAllocSize(DestLoc->Ptr->getType())) {
+    if (TD.getTypeAllocSize(Call->getType()) <= 
+        TD.getTypeAllocSize(cast<PointerType>(DestLoc->Ptr->getType())
+                                             ->getElementType())) {
       Value *Dest = BitCastToType(DestLoc->Ptr, Call->getType()->getPointerTo());
       LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Call,Dest,DestLoc->Volatile,Builder);
     } else {

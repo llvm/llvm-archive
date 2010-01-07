@@ -549,8 +549,6 @@ DIType DebugInfo::createPointerType(tree type) {
   if (type_is_block_byref_struct(type))
     Flags |= llvm::DIType::FlagBlockByrefStruct;
 
-  expanded_location Loc = GetNodeLocation(type);
-
   // Check if this pointer type has a name.
   if (tree TyName = TYPE_NAME(type)) 
     if (TREE_CODE(TyName) == TYPE_DECL && !DECL_ORIGINAL_TYPE(TyName)) {

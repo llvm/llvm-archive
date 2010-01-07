@@ -404,12 +404,11 @@ call to @code{strsignal}.
 
 #ifndef HAVE_STRSIGNAL
 
-const char *
+char *
 strsignal (int signo)
 {
-  const char *msg;
+  char *msg;
   static char buf[32];
-
 #ifndef HAVE_SYS_SIGLIST
 
   if (signal_names == NULL)
@@ -428,12 +427,12 @@ strsignal (int signo)
     {
       /* In range, but no sys_siglist or no entry at this index. */
       sprintf (buf, "Signal %d", signo);
-      msg = (const char *) buf;
+      msg = buf;
     }
   else
     {
       /* In range, and a valid message.  Just return the message. */
-      msg = (const char *) sys_siglist[signo];
+      msg = (char *) sys_siglist[signo];
     }
   
   return (msg);

@@ -553,7 +553,7 @@ Objective-C and Objective-C++ Dialects}.
 -dependency-file  -dylib_file  -dylinker_install_name @gol
 -dynamic  -dynamiclib  -exported_symbols_list @gol
 -filelist  -flat_namespace  -force_cpusubtype_ALL @gol
--force_flat_namespace  -headerpad_max_install_names @gol
+-force_flat_namespace  -force_load  -headerpad_max_install_names @gol
 @c APPLE LOCAL iframework for 4.3 4094959
 -iframework @gol
 -image_base  -init  -install_name  -keep_private_externs @gol
@@ -9134,6 +9134,13 @@ an executable when linking, using the Darwin @file{libtool} command.
 @opindex force_cpusubtype_ALL
 This causes GCC's output file to have the @var{ALL} subtype, instead of
 one controlled by the @option{-mcpu} or @option{-march} option.
+
+@c APPLE LOCAL begin 7519550 force local
+@item -force_load  @var{library_name}
+@opindex force_load
+Loads all members of named static archive library.
+See man ld(1) for more information.
+@c APPLE LOCAL end 7519550 force local
 
 @item -allowable_client  @var{client_name}
 @itemx -client_name

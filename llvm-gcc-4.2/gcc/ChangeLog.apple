@@ -1,6 +1,11 @@
 2010-01-07  Jim Grosbach <grosbach@apple.com>
 
         Radar 7519550
+	* doc/invoke.texi: Document -force_load
+
+2010-01-07  Jim Grosbach <grosbach@apple.com>
+
+        Radar 7519550
 	* config/darwin.h (TARGET_OPTION_TRANSLATE_TABLE,
 	WORD_SWITCH_TAKES_ARG, LINK_SPEC): Add -force_load.
 

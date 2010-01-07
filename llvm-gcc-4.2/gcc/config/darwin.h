@@ -134,6 +134,8 @@ extern GTY(()) int darwin_ms_struct;
 
 #define TARGET_OPTION_TRANSLATE_TABLE \
   { "-all_load", "-Zall_load" },  \
+  /* APPLE LOCAL 7519550 -force_load */ \
+  { "-force_load", "-Zforce_load" },  \
   { "-allowable_client", "-Zallowable_client" },  \
   { "-arch_errors_fatal", "-Zarch_errors_fatal" },  \
   { "-bind_at_load", "-Zbind_at_load" },  \
@@ -257,6 +259,8 @@ do {					\
 #undef  WORD_SWITCH_TAKES_ARG
 #define WORD_SWITCH_TAKES_ARG(STR)              \
   (DEFAULT_WORD_SWITCH_TAKES_ARG (STR) ? 1 :    \
+   /* APPLE LOCAL 7519550 -force_load */ 	\
+   !strcmp (STR, "Zforce_load") ? 1 :     	\
    !strcmp (STR, "Zallowable_client") ? 1 :     \
    !strcmp (STR, "arch") ? 1 :                  \
    !strcmp (STR, "arch_only") ? 1 :             \
@@ -416,6 +420,8 @@ do {					\
      %{private_bundle:%e-private_bundle not allowed with -dynamiclib} \
     } \
    %{Zall_load:-all_load} \
+   "/* APPLE LOCAL 7519550 -force_load */" \
+   %{Zforce_load*:-force_load %*} \
    %{Zallowable_client*:-allowable_client %*} \
    %{Zbind_at_load:-bind_at_load} \
    %{Zarch_errors_fatal:-arch_errors_fatal} \

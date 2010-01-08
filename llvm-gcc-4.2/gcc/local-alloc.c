@@ -228,7 +228,8 @@ static char *reg_offset;
    or is -1 if no hard reg was assigned.
    If N is a hard reg number, element N is N.  */
 
-short *reg_renumber;
+/* LLVM LOCAL avoid common for nm */
+short *reg_renumber = NULL;
 
 /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM

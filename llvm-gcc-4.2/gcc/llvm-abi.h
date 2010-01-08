@@ -462,7 +462,7 @@ public:
       ScalarElts.push_back(PtrTy);
     } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
+        PassInIntegerRegisters(type, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
         C.HandleByValArgument(Ty, type);
         if (Attributes) {
@@ -485,7 +485,7 @@ public:
       if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts,
                                                    C.isShadowReturn(),
                                                    C.getCallingConv()))
-        PassInMixedRegisters(type, Ty, Elts, ScalarElts);
+        PassInMixedRegisters(Ty, Elts, ScalarElts);
       else {
         C.HandleByValArgument(Ty, type);
         if (Attributes) {
@@ -503,7 +503,7 @@ public:
       }
     } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size,
                                                      &DontCheckAlignment)) {
-      PassInIntegerRegisters(type, Ty, ScalarElts, Size, DontCheckAlignment);
+      PassInIntegerRegisters(type, ScalarElts, Size, DontCheckAlignment);
     } else if (isZeroSizedStructOrUnion(type)) {
       // Zero sized struct or union, just drop it!
       ;
@@ -595,8 +595,7 @@ public:
   /// PassInIntegerRegisters - Given an aggregate value that should be passed in
   /// integer registers, convert it to a structure containing ints and pass all
   /// of the struct elements in.  If Size is set we pass only that many bytes.
-  void PassInIntegerRegisters(tree type, const Type *Ty,
-                              std::vector<const Type*> &ScalarElts,
+  void PassInIntegerRegisters(tree type, std::vector<const Type*> &ScalarElts,
                               unsigned origSize, bool DontCheckAlignment) {
     unsigned Size;
     if (origSize)
@@ -669,8 +668,7 @@ public:
   /// PassInMixedRegisters - Given an aggregate value that should be passed in
   /// mixed integer, floating point, and vector registers, convert it to a
   /// structure containing the specified struct elements in.
-  void PassInMixedRegisters(tree type, const Type *Ty,
-                            std::vector<const Type*> &OrigElts,
+  void PassInMixedRegisters(const Type *Ty, std::vector<const Type*> &OrigElts,
                             std::vector<const Type*> &ScalarElts) {
     // We use VoidTy in OrigElts to mean "this is a word in the aggregate
     // that occupies storage but has no useful information, and is not passed
@@ -840,7 +838,7 @@ public:
       }
     } else if (isa<VectorType>(Ty)) {
       if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
-        PassInIntegerRegisters(type, Ty, ScalarElts, 0, false);
+        PassInIntegerRegisters(type, ScalarElts, 0, false);
       } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {
         C.HandleByValArgument(Ty, type);
         if (Attributes) {
@@ -960,7 +958,7 @@ public:
         *Attributes |= Attr;
       }
       
-      PassInMixedRegisters(type, Ty, Elts, ScalarElts);
+      PassInMixedRegisters(Ty, Elts, ScalarElts);
     } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
       C.HandleByValArgument(Ty, type);
       if (Attributes) {
@@ -1037,8 +1035,7 @@ public:
   /// of the struct elements in.  If Size is set we pass only that many bytes.
   ///
   /// This is the default implementation which was copied from DefaultABI.
-  void PassInIntegerRegisters(tree type, const Type *Ty,
-                              std::vector<const Type*> &ScalarElts,
+  void PassInIntegerRegisters(tree type, std::vector<const Type*> &ScalarElts,
                               unsigned origSize, bool DontCheckAlignment) {
     unsigned Size;
     if (origSize)
@@ -1113,8 +1110,7 @@ public:
   /// structure containing the specified struct elements in.
   ///
   /// This is the default implementation which was copied from DefaultABI.
-  void PassInMixedRegisters(tree type, const Type *Ty,
-                            std::vector<const Type*> &OrigElts,
+  void PassInMixedRegisters(const Type *Ty, std::vector<const Type*> &OrigElts,
                             std::vector<const Type*> &ScalarElts) {
     // We use VoidTy in OrigElts to mean "this is a word in the aggregate
     // that occupies storage but has no useful information, and is not passed

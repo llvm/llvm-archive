@@ -80,9 +80,9 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
 // GetAltivecTypeNumFromType - Given an LLVM type, return a unique ID for
 // the type in the range 0-3.
 static int GetAltivecTypeNumFromType(const Type *Ty) {
-  return ((Ty == Type::getInt32Ty(Context)) ? 0 : \
-          ((Ty == Type::getInt16Ty(Context)) ? 1 : \
-           ((Ty == Type::getInt8Ty(Context)) ? 2 : \
+  return (Ty->isInteger(32) ? 0 : \
+          (Ty->isInteger(16) ? 1 : \
+           (Ty->isInteger(8) ? 2 : \
             ((Ty == Type::getFloatTy(Context)) ? 3 : -1))));
 }
 

@@ -687,11 +687,8 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     // 32 and 64-bit integers are fine, as are float and double.  Long double
     // (which can be picked as the type for a union of 16 bytes) is not fine, 
     // as loads and stores of it get only 10 bytes.
-    if (EltTy == Type::getInt32Ty(Context) ||
-        EltTy == Type::getInt64Ty(Context) || 
-        EltTy->isFloatTy() ||
-        EltTy->isDoubleTy() ||
-        isa<PointerType>(EltTy)) {
+    if (EltTy->isInteger(32) || EltTy->isInteger(64) || EltTy->isFloatTy() ||
+        EltTy->isDoubleTy() || isa<PointerType>(EltTy)) {
       Elts.push_back(EltTy);
       continue;
     }
@@ -721,8 +718,7 @@ bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
   return !((TARGET_64BIT && (EltTy->isInteger() ||
                              EltTy->isFloatTy() ||
                              EltTy->isDoubleTy())) ||
-           EltTy == Type::getInt16Ty(Context) ||
-           EltTy == Type::getInt8Ty(Context));
+           EltTy->isInteger(16) || EltTy->isInteger(8));
 }
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the

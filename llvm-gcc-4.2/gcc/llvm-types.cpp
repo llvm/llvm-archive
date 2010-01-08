@@ -975,8 +975,8 @@ namespace {
       if (KNRPromotion) {
         if (type == float_type_node)
           LLVMTy = ConvertType(double_type_node);
-        else if (LLVMTy == Type::getInt16Ty(Context) || LLVMTy == Type::getInt8Ty(Context) ||
-                 LLVMTy == Type::getInt1Ty(Context))
+        else if (LLVMTy->isInteger(16) || LLVMTy->isInteger(8) ||
+                 LLVMTy->isInteger(1))
           LLVMTy = Type::getInt32Ty(Context);
       }
       ArgTypes.push_back(LLVMTy);
@@ -997,7 +997,8 @@ namespace {
 
     /// HandleFCAArgument - This callback is invoked if the aggregate function
     /// argument is a first class aggregate passed by value.
-    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+    void HandleFCAArgument(const llvm::Type *LLVMTy,
+                           tree type ATTRIBUTE_UNUSED) {
       ArgTypes.push_back(LLVMTy);
     }
   };
@@ -1377,13 +1378,13 @@ struct StructTypeConversionInfo {
     const Type *LastType = Elements.back();
     unsigned PadBytes = 0;
 
-    if (LastType == Type::getInt8Ty(Context))
+    if (LastType->isInteger(8))
       PadBytes = 1 - NoOfBytesToRemove;
-    else if (LastType == Type::getInt16Ty(Context))
+    else if (LastType->isInteger(16))
       PadBytes = 2 - NoOfBytesToRemove;
-    else if (LastType == Type::getInt32Ty(Context))
+    else if (LastType->isInteger(32))
       PadBytes = 4 - NoOfBytesToRemove;
-    else if (LastType == Type::getInt64Ty(Context))
+    else if (LastType->isInteger(64))
       PadBytes = 8 - NoOfBytesToRemove;
     else
       return;

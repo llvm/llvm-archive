@@ -73,14 +73,18 @@ static LLVMContext &Context = getGlobalContext();
 
 // Note down LLVM type for GCC tree node.
 static const Type * llvm_set_type(tree Tr, const Type *Ty) {
-
+#ifndef NDEBUG
   // For x86 long double, llvm records the size of the data (80) while
   // gcc's TYPE_SIZE including alignment padding.  getTypeAllocSizeInBits
   // is used to compensate for this.
-  assert((!TYPE_SIZE(Tr) || !Ty->isSized() || !isInt64(TYPE_SIZE(Tr), true) ||
-         getInt64(TYPE_SIZE(Tr), true) == 
-            getTargetData().getTypeAllocSizeInBits(Ty))
-         && "LLVM type size doesn't match GCC type size!");
+  if (TYPE_SIZE(Tr) && Ty->isSized() && isInt64(TYPE_SIZE(Tr), true) &&
+      getInt64(TYPE_SIZE(Tr), true) !=
+      getTargetData().getTypeAllocSizeInBits(Ty)) {
+    errs() << "LLVM type size doesn't match GCC type size!\n";
+    debug_tree(Tr);
+    abort();
+  }
+#endif
 
   unsigned &TypeSlot = LTypesMap[Ty];
   if (TypeSlot) {

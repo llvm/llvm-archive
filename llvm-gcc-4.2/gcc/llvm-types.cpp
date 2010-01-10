@@ -77,12 +77,17 @@ static const Type * llvm_set_type(tree Tr, const Type *Ty) {
   // For x86 long double, llvm records the size of the data (80) while
   // gcc's TYPE_SIZE including alignment padding.  getTypeAllocSizeInBits
   // is used to compensate for this.
-  if (TYPE_SIZE(Tr) && Ty->isSized() && isInt64(TYPE_SIZE(Tr), true) &&
-      getInt64(TYPE_SIZE(Tr), true) !=
-      getTargetData().getTypeAllocSizeInBits(Ty)) {
-    errs() << "LLVM type size doesn't match GCC type size!\n";
-    debug_tree(Tr);
-    abort();
+  if (TYPE_SIZE(Tr) && Ty->isSized() && isInt64(TYPE_SIZE(Tr), true)) {
+    uint64_t LLVMSize = getTargetData().getTypeAllocSizeInBits(Ty);
+    if (getInt64(TYPE_SIZE(Tr), true) != LLVMSize) {
+      errs() << "GCC: ";
+      debug_tree(Tr);
+      errs() << "LLVM: ";
+      Ty->print(errs());
+      errs() << " (" << LLVMSize << " bits)\n";
+      errs() << "LLVM type size doesn't match GCC type size!";
+      abort();
+    }
   }
 #endif
 

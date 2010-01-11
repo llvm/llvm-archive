@@ -434,9 +434,12 @@ void llvm_initialize_backend(void) {
 
   std::vector<std::string> LLVM_Optns; // Avoid deallocation before opts parsed!
   if (llvm_optns) {
-    SplitString(llvm_optns, LLVM_Optns);
-    for(unsigned i = 0, e = LLVM_Optns.size(); i != e; ++i)
-      Args.push_back(LLVM_Optns[i].c_str());
+    llvm::SmallVector<llvm::StringRef, 16> Buf;
+    SplitString(llvm_optns, Buf);
+    for(unsigned i = 0, e = Buf.size(); i != e; ++i) {
+      LLVM_Optns.push_back(Buf[i]);
+      Args.push_back(LLVM_Optns.back().c_str());
+    }
   }
  
   Args.push_back(0);  // Null terminator.

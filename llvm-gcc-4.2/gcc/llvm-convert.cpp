@@ -4985,8 +4985,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // LLVM doesn't handle type 1 or type 3. Deal with that here.
     Value *Tmp = Emit(ObjTy, 0);
     
-    ConstantInt *CI = dyn_cast<ConstantInt>(Tmp);
-    assert(CI);
+    ConstantInt *CI = cast<ConstantInt>(Tmp);
     
     // Clear the bottom bit since we only handle whole objects and shift to turn
     // the second bit into our boolean.

@@ -12,7 +12,7 @@ __stack_chk_fail (void)
 void
 overflow()
 {
-  int i = 0;
+  static int i = 0;	/* Can't allocate this on the stack.  */
   char foo[30];
 
   /* Overflow buffer.  */

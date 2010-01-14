@@ -3458,17 +3458,24 @@ classify_argument (enum machine_mode mode, tree type,
 	    if (!num)
 	      return 0;
 
-	    /* The partial classes are now full classes.  */
-	    if (subclasses[0] == X86_64_SSESF_CLASS && bytes != 4)
-	      subclasses[0] = X86_64_SSE_CLASS;
-	    if (subclasses[0] == X86_64_INTEGERSI_CLASS && bytes != 4)
-	      subclasses[0] = X86_64_INTEGER_CLASS;
-
+	    /* LLVM LOCAL begin 7387470 */
 	    for (i = 0; i < words; i++)
 	      classes[i] = subclasses[i % num];
 
-	    break;
+	    /* If 32-bit class, consider upgrade to 64-bit.  */
+	    if (bytes > 4 &&
+		(subclasses[0] == X86_64_SSESF_CLASS ||
+		 subclasses[0] == X86_64_INTEGERSI_CLASS)) {
+		enum x86_64_reg_class upgrade64 =
+		  (subclasses[0] == X86_64_SSESF_CLASS) ?
+		  X86_64_SSE_CLASS : X86_64_INTEGER_CLASS;
+		classes[0] = upgrade64;
+		if (bytes > 12)
+		  classes[1] = upgrade64;
+	    }
 	  }
+	  break;
+	  /* LLVM LOCAL end 7387470 */
 	case UNION_TYPE:
 	case QUAL_UNION_TYPE:
 	  /* Unions are similar to RECORD_TYPE but offset is always 0.

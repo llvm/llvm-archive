@@ -62,7 +62,7 @@ endif
 
 # Unless assertions are forced on in the GMAKE command line, enable them.
 ifndef ENABLE_ASSERTIONS
-LLVM_ASSERTIONS := yes
+ENABLE_ASSERTIONS := yes
 endif
 
 ifndef LLVMCORE_PATH
@@ -85,7 +85,7 @@ install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
-	    $(LLVM_ASSERTIONS) $(LLVMCORE_PATH) \
+	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 # LLVM LOCAL end

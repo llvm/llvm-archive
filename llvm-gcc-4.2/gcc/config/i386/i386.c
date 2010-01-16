@@ -3474,16 +3474,24 @@ classify_argument (enum machine_mode mode, tree type,
 	    for (i = 0; i < words; i++)
 	      classes[i] = subclasses[i % num];
 
-	    /* If 32-bit class, consider upgrade to 64-bit.  */
-	    if (bytes > 4 &&
-		(subclasses[0] == X86_64_SSESF_CLASS ||
-		 subclasses[0] == X86_64_INTEGERSI_CLASS)) {
-		enum x86_64_reg_class upgrade64 =
-		  (subclasses[0] == X86_64_SSESF_CLASS) ?
+	    /* If the first register has a 32-bit class, but there are
+	       more than 32-bits in the type, upgrade it to the
+	       corresponding 64-bit class.  */
+	    if ((bytes > 4) &&
+		((subclasses[0] == X86_64_SSESF_CLASS) ||
+		 (subclasses[0] == X86_64_INTEGERSI_CLASS))) {
+		classes[0] = (subclasses[0] == X86_64_SSESF_CLASS) ?
 		  X86_64_SSE_CLASS : X86_64_INTEGER_CLASS;
-		classes[0] = upgrade64;
-		if (bytes > 12)
-		  classes[1] = upgrade64;
+		/* subclasses[1] is only valid if num == 2.  If it's
+		   invalid, or it's set to a 32-bit class, AND there
+		   are more than twelve bytes in the type, upgrade the
+		   second register to 64-bits.  (If we got here, the
+		   first register already has a 64-bit class.)  */
+		if (bytes > 12 &&
+		    (num == 1 ||
+		     subclasses[1] == X86_64_SSESF_CLASS ||
+		     subclasses[1] == X86_64_INTEGERSI_CLASS))
+		  classes[1] = classes[0];
 	    }
 	  }
 	  break;

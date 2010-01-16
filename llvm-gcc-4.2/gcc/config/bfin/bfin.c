@@ -2004,7 +2004,11 @@ override_options (void)
   if (flag_pic && !TARGET_FDPIC && !TARGET_ID_SHARED_LIBRARY)
     flag_pic = 0;
 
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   flag_schedule_insns = 0;
+#endif
+  /* LLVM LOCAL end */
 
   init_machine_status = bfin_init_machine_status;
 }

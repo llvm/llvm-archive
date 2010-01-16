@@ -2226,8 +2226,12 @@ override_options (void)
   /* When scheduling description is not available, disable scheduler pass
      so it won't slow down the compilation and make x87 code slower.  */
   /* APPLE LOCAL 5591571 */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if (1 || !TARGET_SCHEDULE)
     flag_schedule_insns_after_reload = flag_schedule_insns = 0;
+#endif
+  /* LLVM LOCAL end */
 
   /* APPLE LOCAL begin dynamic-no-pic */
 #if TARGET_MACHO
@@ -2449,10 +2453,14 @@ optimization_options (int level, int size ATTRIBUTE_UNUSED)
   /* APPLE LOCAL end disable strict aliasing; breaks too much existing code.  */
   /* For -O2 and beyond, turn off -fschedule-insns by default.  It tends to
      make the problem with not enough registers even worse.  */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 #ifdef INSN_SCHEDULING
   if (level > 1)
     flag_schedule_insns = 0;
 #endif
+#endif
+  /* LLVM LOCAL end */
 
   /* APPLE LOCAL begin pragma fenv */
   /* Trapping math is not needed by many users, and is expensive.
@@ -2505,10 +2513,14 @@ reset_optimization_options (int level, int size)
 {
   /* For -O2 and beyond, turn off -fschedule-insns by default.  It tends to
      make the problem with not enough registers even worse.  */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 #ifdef INSN_SCHEDULING
   if (level > 1)
     flag_schedule_insns = 0;
 #endif
+#endif
+  /* LLVM LOCAL end */
 
   /* APPLE LOCAL begin pragma fenv */
   /* Trapping math is not needed by many users, and is expensive.

@@ -1716,11 +1716,15 @@ arm_override_options (void)
 
   /* For arm2/3 there is no need to do any scheduling if there is only
      a floating point emulator, or we are doing software floating-point.  */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if ((TARGET_SOFT_FLOAT
        || arm_fpu_tune == FPUTYPE_FPA_EMU2
        || arm_fpu_tune == FPUTYPE_FPA_EMU3)
       && (tune_flags & FL_MODE32) == 0)
     flag_schedule_insns = flag_schedule_insns_after_reload = 0;
+#endif
+  /* LLVM LOCAL end */
 
   if (target_thread_switch)
     {
@@ -1783,11 +1787,15 @@ arm_override_options (void)
 
   /* APPLE LOCAL v7 support. Merge from mainline */
   /* ??? We might want scheduling for thumb2.  */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
   if (TARGET_THUMB && flag_schedule_insns)
     {
       /* Don't warn since it's on by default in -O2.  */
       flag_schedule_insns = 0;
     }
+#endif
+  /* LLVM LOCAL end */
 
   if (optimize_size)
     {
@@ -23725,10 +23733,14 @@ optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
   
   /* For -O2 and beyond, turn off -fschedule-insns by default.  It tends to
      make the problem with not enough registers even worse.  */
+  /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
 #ifdef INSN_SCHEDULING
   if (level > 1)
     flag_schedule_insns = 0;
 #endif
+#endif
+  /* LLVM LOCAL end */
 
   /* radar 4094534. */
   /* The Darwin libraries never set errno, so we might as well

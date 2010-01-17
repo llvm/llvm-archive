@@ -17,5 +17,6 @@ void test_vuzps32 (void)
   out_int32x2x2_t = vuzp_s32 (arg0_int32x2_t, arg1_int32x2_t);
 }
 
-/* { dg-final { scan-assembler "vuzp\.32\[ 	\]+\[dD\]\[0-9\]+, \[dD\]\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
+/* LLVM LOCAL vuzp.32 is a synonym for vtrn.32 */
+/* { dg-final { scan-assembler "vtrn\.32\[ 	\]+\[dD\]\[0-9\]+, \[dD\]\[0-9\]+!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
 /* { dg-final { cleanup-saved-temps } } */

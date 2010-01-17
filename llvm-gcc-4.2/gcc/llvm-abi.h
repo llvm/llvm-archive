@@ -614,11 +614,6 @@ public:
     bool UseInt64 = (getTargetData().isLegalInteger(64) &&
                      (DontCheckAlignment || Align >= Int64Align));
 
-    // FIXME: In cases where we can, we should use the original struct.
-    // Consider cases like { int, int } and {int, short} for example!  This will
-    // produce far better LLVM code!
-    std::vector<const Type*> Elts;
-
     unsigned ElementSize = UseInt64 ? 8:4;
     unsigned ArraySize = Size / ElementSize;
 
@@ -631,7 +626,6 @@ public:
                           Type::getInt64Ty(getGlobalContext()) :
                           Type::getInt32Ty(getGlobalContext()));
       ATy = ArrayType::get(ArrayElementType, ArraySize);
-      Elts.push_back(ATy);
     }
 
     // Pass any leftover bytes as a separate element following the array.
@@ -647,11 +641,15 @@ public:
       LastEltTy = Type::getInt8Ty(getGlobalContext());
     }
     if (LastEltTy) {
-      Elts.push_back(LastEltTy);
       if (Size != getTargetData().getTypeAllocSize(LastEltTy))
         LastEltRealSize = Size;
     }
 
+    std::vector<const Type*> Elts;
+    if (ATy)
+      Elts.push_back(ATy);
+    if (LastEltTy)
+      Elts.push_back(LastEltTy);
     const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
     unsigned i = 0;

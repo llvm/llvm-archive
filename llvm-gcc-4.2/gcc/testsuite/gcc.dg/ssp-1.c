@@ -11,7 +11,7 @@ __stack_chk_fail (void)
 
 int main ()
 {
-  int i;
+  static int i;		/* Can't allocate this on the stack.  */
   char foo[255];
 
   // smash stack

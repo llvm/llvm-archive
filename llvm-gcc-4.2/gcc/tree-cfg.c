@@ -316,6 +316,19 @@ factor_computed_gotos (void)
 	  /* Copy the original computed goto's destination into VAR.  */
 	  assignment = build2 (MODIFY_EXPR, ptr_type_node,
 			       var, GOTO_DESTINATION (last));
+	  /* LLVM LOCAL begin 7387470 */
+	  if (TREE_CODE_CLASS(TREE_CODE(GOTO_DESTINATION(last))) ==
+			      tcc_declaration)
+	  {
+	    extern tree debug_find_var_in_block_tree (tree, tree);
+	    tree block =
+	      debug_find_var_in_block_tree(GOTO_DESTINATION(last),
+					   DECL_INITIAL(current_function_decl));
+	    /* This could be a compiler-created temporary variable
+	       where block == NULL_TREE.  That's O.K.  */
+	    TREE_BLOCK(assignment) = block;
+	  }
+	  /* LLVM LOCAL end 7387470 */
 	  bsi_insert_before (&bsi, assignment, BSI_SAME_STMT);
 
 	  /* And re-vector the computed goto to the new destination.  */

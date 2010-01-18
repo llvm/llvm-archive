@@ -2870,6 +2870,15 @@ expand_omp_for_static_nochunk (struct omp_region *region,
   t = build2 (MULT_EXPR, type, t, fd->step);
   t = build2 (PLUS_EXPR, type, t, fd->n1);
   t = build2 (MODIFY_EXPR, void_type_node, fd->v, t);
+  /* LLVM LOCAL begin 7387470 */
+  /* Decorate this MODIFY_EXPR with the correct lexical block.  */
+  {
+    extern tree debug_find_var_in_block_tree (tree, tree);
+    TREE_BLOCK(t) = 
+      debug_find_var_in_block_tree(fd->v,
+				   DECL_INITIAL(current_function_decl));
+  }
+  /* LLVM LOCAL end 7387470 */
   gimplify_and_add (t, &list);
 
   t = fold_convert (type, e0);

@@ -21724,7 +21724,17 @@ build_block_byref_decl (tree name, tree decl, tree exp)
 
   /* Current scope must be that of the main function body. */
   /* FIXME gcc_assert (current_scope->function_body);*/
-  pushdecl (byref_decl);
+  /* LLVM LOCAL begin 7387470 */
+  /* Find the scope for function body (outer-most scope) and insert
+     this variable in that scope. This is to avoid duplicate
+     declaration of the save variable. */
+  {
+    struct cp_binding_level *b = current_binding_level;
+    while (b->level_chain->kind != sk_function_parms)
+      b = b->level_chain;
+    pushdecl_with_scope (byref_decl, b, /*is_friend=*/false);
+  }
+  /* LLVM LOCAL end 7387470 */
   mark_used (byref_decl);
   /* APPLE LOCAL begin radar 6083129 -  byref escapes (cp) */
   /* FIXME: finish this off, ensure the decl is scoped appropriately
@@ -22039,7 +22049,7 @@ declare_block_prologue_local_vars (tree self_parm, tree component,
  */
 static void
 declare_block_prologue_local_byref_vars (tree self_parm, tree component,
-				   tree stmt)
+					 tree stmt)
 {
   tree decl, block_component;
   tree_stmt_iterator i;

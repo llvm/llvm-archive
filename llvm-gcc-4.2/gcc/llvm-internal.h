@@ -68,6 +68,7 @@ namespace llvm {
 using namespace llvm;
 
 typedef IRBuilder<true, TargetFolder> LLVMBuilder;
+typedef std::set<union tree_node *> treeset;
 
 /// TheModule - This is the current global module that we are compiling into.
 ///
@@ -278,6 +279,7 @@ class TreeToLLVM {
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
   unsigned ReturnOffset;
+  std::set<tree_node*> seen_blocks;
 
   // State that changes as the function is emitted.
 
@@ -380,7 +382,25 @@ public:
   /// GCC type specified by GCCType to know which elements to copy.
   void EmitAggregateCopy(MemRef DestLoc, MemRef SrcLoc, tree_node *GCCType);
 
+  // 'desired' and 'grand' are GCC BLOCK nodes, representing lexical
+  // blocks.  Assumes we're in the 'grand' context; push contexts
+  // until we reach the 'desired' context.
+  void push_regions(tree_node *desired, tree_node *grand);
+
+  // Given a GCC lexical context (BLOCK or FUNCTION_DECL), make it the
+  // new current BLOCK/context/scope.  Emit any local variables found
+  // in the new context.  Note that the variable emission order must be
+  // consistent with and without debug info; otherwise, the register
+  // allocation would change with -g, and users dislike that.
+  void switchLexicalBlock(tree_node *exp);
+
 private: // Helper functions.
+
+  // Walk over the lexical BLOCK() tree of the given FUNCTION_DECL;
+  // set the BLOCK_NUMBER() fields to the depth of each block, and
+  // add every var or type encountered in the BLOCK_VARS() lists to
+  // the given set.
+  void setLexicalBlockDepths(tree_node *t, treeset &s, unsigned level);
 
   /// StartFunctionBody - Start the emission of 'fndecl', outputing all
   /// declarations for parameters and setting things up.

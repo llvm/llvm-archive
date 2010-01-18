@@ -61,6 +61,7 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
+  tree_node *CurrentGCCLexicalBlock;	// Current GCC lexical block (or enclosing FUNCTION_DECL).
   std::map<std::string, WeakVH > CUCache;
   std::map<tree_node *, WeakVH > TypeCache;
                                         // Cache of previously constructed 
@@ -75,6 +76,9 @@ private:
                                         // Stack to track declarative scopes.
   
   std::map<tree_node *, WeakVH> RegionMap;
+
+  void push_regions(tree_node *desired, tree_node *grand);
+
 public:
   DebugInfo(Module *m);
 
@@ -87,6 +91,11 @@ public:
   void setLocationFile(const char *FullPath) { CurFullPath = FullPath; }
   void setLocationLine(int LineNo)           { CurLineNo = LineNo; }
   
+  tree_node *getCurrentLexicalBlock() { return CurrentGCCLexicalBlock; }
+  void setCurrentLexicalBlock(tree_node *lb) { CurrentGCCLexicalBlock = lb; }
+
+  void change_regions(tree_node *desired, tree_node *grand);
+
   /// EmitFunctionStart - Constructs the debug code for entering a function -
   /// "llvm.dbg.func.start."
   void EmitFunctionStart(tree_node *FnDecl, Function *Fn, BasicBlock *CurBB);

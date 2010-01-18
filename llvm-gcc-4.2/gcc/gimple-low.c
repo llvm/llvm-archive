@@ -246,7 +246,9 @@ lower_stmt (tree_stmt_iterator *tsi, struct lower_data *data)
     case GOTO_EXPR:
     case LABEL_EXPR:
     case SWITCH_EXPR:
-    case OMP_FOR:
+      /* LLVM LOCAL begin 7387470 */
+      /* LLVM LOCAL deletion; OMP_FOR case moved below. */
+      /* LLVM LOCAL end 7387470 */
     case OMP_SECTIONS:
     case OMP_SECTION:
     case OMP_SINGLE:
@@ -256,6 +258,16 @@ lower_stmt (tree_stmt_iterator *tsi, struct lower_data *data)
     case OMP_RETURN:
     case OMP_CONTINUE:
       break;
+
+      /* LLVM LOCAL begin 7387470 */
+    case OMP_FOR:
+      {
+	tree init = OMP_FOR_INIT(stmt);
+	gcc_assert(TREE_CODE(init) == MODIFY_EXPR && "expected simple assignment");
+	TREE_BLOCK(init) = data->block;
+      }
+      break;
+      /* LLVM LOCAL end 7387470 */
 
     case MODIFY_EXPR:
       if (TREE_CODE (TREE_OPERAND (stmt, 1)) == CALL_EXPR)

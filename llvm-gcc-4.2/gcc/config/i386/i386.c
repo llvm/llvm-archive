@@ -2444,7 +2444,7 @@ x86_output_aligned_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
 #endif
 
 void
-optimization_options (int level, int size ATTRIBUTE_UNUSED)
+optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
 {
   /* APPLE LOCAL begin disable strict aliasing; breaks too much existing code.  */
 #if TARGET_MACHO
@@ -2509,7 +2509,7 @@ optimization_options (int level, int size ATTRIBUTE_UNUSED)
    per-function flags are reset.  */
 #if TARGET_MACHO
 void
-reset_optimization_options (int level, int size)
+reset_optimization_options (int level ATTRIBUTE_UNUSED, int size)
 {
   /* For -O2 and beyond, turn off -fschedule-insns by default.  It tends to
      make the problem with not enough registers even worse.  */

@@ -414,6 +414,32 @@ static bool LanguageIsC() {
   return (Val = false);
 }
 
+// Walk the GCC BLOCK() tree.  Set BLOCK_NUMBER() to the depth of each
+// block; this is necessary for lexical block debug info.  Visit all
+// the BLOCK_VARS(), and add them to the set s.  Since the
+// unexpanded_var_list seems to be a superset of all the scoped
+// variables in every lexical BLOCK(), this facilitates allocating the
+// scoped variables in their blocks, and the rest at the outermost
+// scope of the function.
+void TreeToLLVM::setLexicalBlockDepths(tree_node *t, treeset &s, unsigned level) {
+  tree bstep, step;
+  switch (TREE_CODE(t)) {
+  default:
+    abort();
+  case BLOCK:
+    for (bstep = t; bstep; bstep = TREE_CHAIN(bstep)) {
+      BLOCK_NUMBER(bstep) = level;
+      for (step = BLOCK_VARS(t); step; step = TREE_CHAIN(step))
+	s.insert(step);
+    }
+    for (bstep = BLOCK_SUBBLOCKS(t); bstep; bstep = TREE_CHAIN(bstep))
+      setLexicalBlockDepths(bstep, s, level+1);
+    return;
+  case FUNCTION_DECL:
+    return setLexicalBlockDepths(DECL_INITIAL(t), s, level);
+  }
+}
+
 void TreeToLLVM::StartFunctionBody() {
   const char *Name = "";
   // Get the name of the function.
@@ -565,6 +591,11 @@ void TreeToLLVM::StartFunctionBody() {
   // Create a new basic block for the function.
   Builder.SetInsertPoint(BasicBlock::Create(Context, "entry", Fn));
 
+  treeset block_declared_vars;
+  // Set the BLOCK_NUMBER()s to the depth of each lexical block.
+  setLexicalBlockDepths(FnDecl, block_declared_vars, 1);
+  seen_blocks.clear();
+
   if (TheDebugInfo)
     TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
 
@@ -657,9 +688,13 @@ void TreeToLLVM::StartFunctionBody() {
   // As it turns out, not all temporaries are associated with blocks.  For those
   // that aren't, emit them now.
   for (tree t = cfun->unexpanded_var_list; t; t = TREE_CHAIN(t)) {
-    if (!DECL_LLVM_SET_P(TREE_VALUE(t)))
+    if (!DECL_LLVM_SET_P(TREE_VALUE(t)) &&
+	block_declared_vars.find(TREE_VALUE(t)) == block_declared_vars.end())
       EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
+
+  // Push the outermost lexical block onto the RegionStack.
+  switchLexicalBlock(DECL_INITIAL(FnDecl));
 
   // Create a new block for the return node, but don't insert it yet.
   ReturnBB = BasicBlock::Create(Context, "return");
@@ -786,12 +821,106 @@ Function *TreeToLLVM::EmitFunction() {
   return FinishFunctionBody();
 }
 
+// Given a GCC lexical context (BLOCK or FUNCTION_DECL), make it the
+// new current BLOCK/context/scope.  Emit any local variables found
+// in the new context.  Note that the variable emission order must be
+// consistent with and without debug info; otherwise, the register
+// allocation would change with -g, and users dislike that.
+void TreeToLLVM::switchLexicalBlock(tree_node *exp) {
+  if (exp == NULL_TREE || TREE_CODE(exp) == FUNCTION_DECL) {
+    // assert(RegionStack empty);
+    if (TheDebugInfo)
+      TheDebugInfo->setCurrentLexicalBlock(exp);
+    return;
+  }
+
+  // Only EXPR_P nodes have a TREE_BLOCK() field.
+  if (!EXPR_P(exp) && (TREE_CODE(exp) != BLOCK))
+    return;
+
+  tree new_block = EXPR_P(exp) ? TREE_BLOCK(exp) : exp;
+
+  if (!new_block)
+    return;
+
+  // Have we seen this BLOCK before?
+  bool previously_visited = (seen_blocks.find(new_block) != seen_blocks.end());
+
+  // If new_block is nested inside another block, and we haven't
+  // processed either block, insure the outer block(s) get processed
+  // first.
+  if (!previously_visited)
+    switchLexicalBlock(BLOCK_SUPERCONTEXT(new_block));
+
+  if (TheDebugInfo) {
+    tree current_block = TheDebugInfo->getCurrentLexicalBlock();
+    if (new_block && current_block && new_block != current_block) {
+      tree new_climber = new_block, current_climber = current_block;
+      unsigned new_climber_depth, current_climber_depth;
+      // Climb the GCC BLOCK hierarchy, looking for a common parent
+      // BLOCK or FUNCTION_DECL.  Assume BLOCK_NUMBER() fields set to
+      // depth by setLexicalBlockDepths().  If the climber depths are
+      // equal, but the climbers differ, they are siblings: both
+      // climbers rise to the next level.
+      while (new_climber != current_climber) {
+	current_climber_depth = DECL_P(current_climber) ? 0 : BLOCK_NUMBER(current_climber);
+	new_climber_depth = DECL_P(new_climber) ? 0 : BLOCK_NUMBER(new_climber);
+	if (new_climber_depth <= current_climber_depth)
+	  current_climber = BLOCK_SUPERCONTEXT(current_climber);
+	if (new_climber_depth >= current_climber_depth)
+	  new_climber = BLOCK_SUPERCONTEXT(new_climber);
+      }
+      assert(new_climber == current_climber && "missed common TREE_BLOCK parent");
+      // Pop and push lexical blocks to arrive at the new context.
+      TheDebugInfo->change_regions(new_block, new_climber);
+    }
+  }
+
+  // If we've seen this lexical BLOCK before, we're done.
+  if (previously_visited)
+    return;
+
+  // O.K., this lexical BLOCK is new to us; remember it for next time.
+  seen_blocks.insert(new_block);
+
+  // Finally, allocate any BLOCK_VARS we find.
+  tree step;
+  for (step = BLOCK_VARS(new_block); step; step = TREE_CHAIN(step))
+    switch (TREE_CODE_CLASS(TREE_CODE(step))) {
+    default:
+      assert(0 && "non-var, non-type node hanging from a GCC BLOCK?");
+      break;
+    case tcc_type:
+      // GCC has recorded a lexical block scope for this type, but
+      // ConvertType() doesn't currently handle scopes for types.
+      break;
+    case tcc_declaration:
+      if (!DECL_LLVM_SET_P(step))
+	EmitAutomaticVariableDecl(step);
+      break;
+    }
+
+  // Kludge! The Objective-C++ front-end doesn't always point to the
+  // right BLOCK. :-( Test case g++.apple/block-assigncglobal.C has a
+  // block (closure) where the first statement (a MODIFY_EXPR) points
+  // to a lexical BLOCK that has no BLOCK_VARS, but it has a subblock
+  // with the decl for the target of the MODIFY.  Ergo, if we
+  // encounter a BLOCK that allocates no variables, check for a
+  // subblock.  A better fix would be in the front-end.
+  if (!BLOCK_VARS(new_block) && BLOCK_SUBBLOCKS(new_block))
+    switchLexicalBlock(BLOCK_SUBBLOCKS(new_block));
+}
+
 Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   assert((isAggregateTreeType(TREE_TYPE(exp)) == (DestLoc != 0) ||
           TREE_CODE(exp) == MODIFY_EXPR || TREE_CODE(exp) == INIT_EXPR) &&
          "Didn't pass DestLoc to an aggregate expr, or passed it to scalar!");
 
   Value *Result = 0;
+
+  // If we've just changed lexical blocks, emit any local variables
+  // declared in the new block.
+  TreeToLLVM::switchLexicalBlock(exp);
 
   if (TheDebugInfo) {
     if (EXPR_HAS_LOCATION(exp)) {

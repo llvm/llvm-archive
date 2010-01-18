@@ -228,10 +228,46 @@ bool isCopyOrDestroyHelper (tree FnDecl) {
     return false;
 }
 
+// Starting at the 'desired' BLOCK, recursively walk back to the
+// 'grand' context, and return pushing regions to make 'desired' the
+// current context.  Assumes 'grand' is a
+// parent/grandparent/great-grandparent of 'desired'.  'desired'
+// should be a GCC lexical BLOCK, and 'grand' may be a BLOCK or a
+// FUNCTION_DECL.
+void DebugInfo::push_regions(tree desired, tree grand) {
+  assert (grand && "'grand' BLOCK is NULL?");
+  assert (desired &&
+          "'desired' BLOCK is NULL; is grand BLOCK really a parent of desired BLOCK?");
+  assert ((TREE_CODE(desired) == BLOCK || TREE_CODE(desired) == FUNCTION_DECL) &&
+          "expected 'desired' to be a GCC BLOCK or FUNCTION_DECL");
+  assert ((TREE_CODE(grand) == BLOCK || TREE_CODE(grand) == FUNCTION_DECL) &&
+          "expected 'grand' to be a GCC BLOCK or FUNCTION_DECL");
+  if (grand != desired)
+    push_regions(BLOCK_SUPERCONTEXT(desired), grand);
+  llvm::DIDescriptor D = findRegion(desired);
+  RegionStack.push_back(D.getNode());
+}
+
+// Pop the current region/lexical-block back to 'grand', then push
+// regions to arrive at 'desired'.  This was inspired (cribbed from)
+// by GCC's cfglayout.c:change_scope().
+void DebugInfo::change_regions(tree desired, tree grand) {
+  tree current_lexical_block = getCurrentLexicalBlock();
+  while (current_lexical_block != grand) {
+    assert(BLOCK_SUPERCONTEXT(getCurrentLexicalBlock()) &&
+           "lost BLOCK context!");
+    current_lexical_block = BLOCK_SUPERCONTEXT(current_lexical_block);
+    RegionStack.pop_back();
+  }
+  DebugInfo::push_regions(desired, grand);
+  setCurrentLexicalBlock(desired);
+}
+
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start."
 void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                   BasicBlock *CurBB) {
+  setCurrentLexicalBlock(FnDecl);
 
   DIType FNType = getOrCreateType(TREE_TYPE(FnDecl));
 
@@ -329,6 +365,13 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
       return DIDescriptor(NS.getNode());
     }
     return findRegion (DECL_CONTEXT (Node));
+  } else if (TREE_CODE(Node) == BLOCK) {
+    // TREE_BLOCK is GCC's lexical block.
+    // Recursively create all necessary contexts:
+    DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
+    DILexicalBlock lexical_block = DebugFactory.CreateLexicalBlock(context);
+    RegionMap[Node] = WeakVH(lexical_block.getNode());
+    return DIDescriptor(lexical_block);
   }
 
   // Otherwise main compile unit covers everything.
@@ -347,6 +390,7 @@ void DebugInfo::EmitFunctionEnd(BasicBlock *CurBB, bool EndFunction) {
     PrevLineNo = 0;
     PrevFullPath = NULL;
   }
+  setCurrentLexicalBlock(NULL_TREE);
 }
 
 /// EmitDeclare - Constructs the debug code for allocation of a new variable.

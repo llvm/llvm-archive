@@ -2444,6 +2444,7 @@ x86_output_aligned_bss (FILE *file, tree decl ATTRIBUTE_UNUSED,
 #endif
 
 void
+/* LLVM LOCAL */
 optimization_options (int level ATTRIBUTE_UNUSED, int size ATTRIBUTE_UNUSED)
 {
   /* APPLE LOCAL begin disable strict aliasing; breaks too much existing code.  */

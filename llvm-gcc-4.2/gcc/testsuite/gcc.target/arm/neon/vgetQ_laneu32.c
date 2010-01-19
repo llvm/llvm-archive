@@ -16,5 +16,6 @@ void test_vgetQ_laneu32 (void)
   out_uint32_t = vgetq_lane_u32 (arg0_uint32x4_t, 1);
 }
 
-/* { dg-final { scan-assembler "vmov\.u32\[ 	\]+\[rR\]\[0-9\]+, \[dD\]\[0-9\]+\\\[\[0-9\]+\\\]!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
+/* LLVM LOCAL The "u" in the opcode suffix is optional */
+/* { dg-final { scan-assembler "vmov\.u?32\[ 	\]+\[rR\]\[0-9\]+, \[dD\]\[0-9\]+\\\[\[0-9\]+\\\]!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
 /* { dg-final { cleanup-saved-temps } } */

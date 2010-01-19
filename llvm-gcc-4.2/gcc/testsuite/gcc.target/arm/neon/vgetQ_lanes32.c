@@ -16,5 +16,6 @@ void test_vgetQ_lanes32 (void)
   out_int32_t = vgetq_lane_s32 (arg0_int32x4_t, 1);
 }
 
-/* { dg-final { scan-assembler "vmov\.s32\[ 	\]+\[rR\]\[0-9\]+, \[dD\]\[0-9\]+\\\[\[0-9\]+\\\]!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
+/* LLVM LOCAL The "s" in the opcode suffix is optional */
+/* { dg-final { scan-assembler "vmov\.s?32\[ 	\]+\[rR\]\[0-9\]+, \[dD\]\[0-9\]+\\\[\[0-9\]+\\\]!?\(\[ 	\]+@\[a-zA-Z0-9 \]+\)?\n" } } */
 /* { dg-final { cleanup-saved-temps } } */

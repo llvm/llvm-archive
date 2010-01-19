@@ -421,7 +421,7 @@ static bool LanguageIsC() {
 // variables in every lexical BLOCK(), this facilitates allocating the
 // scoped variables in their blocks, and the rest at the outermost
 // scope of the function.
-void TreeToLLVM::setLexicalBlockDepths(tree_node *t, treeset &s, unsigned level) {
+void TreeToLLVM::setLexicalBlockDepths(tree t, treeset &s, unsigned level) {
   tree bstep, step;
   switch (TREE_CODE(t)) {
   default:
@@ -594,7 +594,8 @@ void TreeToLLVM::StartFunctionBody() {
   treeset block_declared_vars;
   // Set the BLOCK_NUMBER()s to the depth of each lexical block.
   setLexicalBlockDepths(FnDecl, block_declared_vars, 1);
-  seen_blocks.clear();
+
+  SeenBlocks.clear();
 
   if (TheDebugInfo)
     TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
@@ -688,8 +689,10 @@ void TreeToLLVM::StartFunctionBody() {
   // As it turns out, not all temporaries are associated with blocks.  For those
   // that aren't, emit them now.
   for (tree t = cfun->unexpanded_var_list; t; t = TREE_CHAIN(t)) {
+    // If this variable hasn't been emitted into LLVM yet, AND it is
+    // not part of any BLOCK, emit it now.
     if (!DECL_LLVM_SET_P(TREE_VALUE(t)) &&
-	block_declared_vars.find(TREE_VALUE(t)) == block_declared_vars.end())
+	block_declared_vars.count(TREE_VALUE(t)) == 0)
       EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
 
@@ -826,7 +829,7 @@ Function *TreeToLLVM::EmitFunction() {
 // in the new context.  Note that the variable emission order must be
 // consistent with and without debug info; otherwise, the register
 // allocation would change with -g, and users dislike that.
-void TreeToLLVM::switchLexicalBlock(tree_node *exp) {
+void TreeToLLVM::switchLexicalBlock(tree exp) {
   if (exp == NULL_TREE || TREE_CODE(exp) == FUNCTION_DECL) {
     // assert(RegionStack empty);
     if (TheDebugInfo)
@@ -844,7 +847,7 @@ void TreeToLLVM::switchLexicalBlock(tree_node *exp) {
     return;
 
   // Have we seen this BLOCK before?
-  bool previously_visited = (seen_blocks.find(new_block) != seen_blocks.end());
+  bool previously_visited = !SeenBlocks.insert(new_block);
 
   // If new_block is nested inside another block, and we haven't
   // processed either block, insure the outer block(s) get processed
@@ -879,9 +882,6 @@ void TreeToLLVM::switchLexicalBlock(tree_node *exp) {
   // If we've seen this lexical BLOCK before, we're done.
   if (previously_visited)
     return;
-
-  // O.K., this lexical BLOCK is new to us; remember it for next time.
-  seen_blocks.insert(new_block);
 
   // Finally, allocate any BLOCK_VARS we find.
   tree step;

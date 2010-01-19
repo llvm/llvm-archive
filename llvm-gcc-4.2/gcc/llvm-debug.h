@@ -77,6 +77,11 @@ private:
   
   std::map<tree_node *, WeakVH> RegionMap;
 
+  // Starting at the 'desired' BLOCK, recursively walk back to the
+  // 'grand' context, and return pushing regions to make 'desired' the
+  // current context.  'desired' should be a GCC lexical BLOCK.
+  // 'grand' may be a BLOCK or a FUNCTION_DECL, and it's presumed to
+  // be an ancestor of 'desired'.
   void push_regions(tree_node *desired, tree_node *grand);
 
 public:
@@ -94,6 +99,9 @@ public:
   tree_node *getCurrentLexicalBlock() { return CurrentGCCLexicalBlock; }
   void setCurrentLexicalBlock(tree_node *lb) { CurrentGCCLexicalBlock = lb; }
 
+  // Pop the current region/lexical-block back to 'grand', then push
+  // regions to arrive at 'desired'.  This was inspired (cribbed from)
+  // by GCC's cfglayout.c:change_scope().
   void change_regions(tree_node *desired, tree_node *grand);
 
   /// EmitFunctionStart - Constructs the debug code for entering a function -

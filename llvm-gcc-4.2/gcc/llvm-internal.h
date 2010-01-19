@@ -68,7 +68,7 @@ namespace llvm {
 using namespace llvm;
 
 typedef IRBuilder<true, TargetFolder> LLVMBuilder;
-typedef std::set<union tree_node *> treeset;
+typedef SmallPtrSet<union tree_node *, 16> treeset;
 
 /// TheModule - This is the current global module that we are compiling into.
 ///
@@ -279,7 +279,8 @@ class TreeToLLVM {
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
   unsigned ReturnOffset;
-  std::set<tree_node*> seen_blocks;
+  // Lexical BLOCKS that we have previously seen and processed.
+  treeset SeenBlocks;
 
   // State that changes as the function is emitted.
 

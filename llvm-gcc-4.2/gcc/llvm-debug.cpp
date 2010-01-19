@@ -230,9 +230,8 @@ bool isCopyOrDestroyHelper (tree FnDecl) {
 
 // Starting at the 'desired' BLOCK, recursively walk back to the
 // 'grand' context, and return pushing regions to make 'desired' the
-// current context.  Assumes 'grand' is a
-// parent/grandparent/great-grandparent of 'desired'.  'desired'
-// should be a GCC lexical BLOCK, and 'grand' may be a BLOCK or a
+// current context.  'desired' should be a GCC lexical BLOCK, and
+// 'grand' should be an ancestor; it may be a BLOCK or a
 // FUNCTION_DECL.
 void DebugInfo::push_regions(tree desired, tree grand) {
   assert (grand && "'grand' BLOCK is NULL?");
@@ -244,6 +243,9 @@ void DebugInfo::push_regions(tree desired, tree grand) {
           "expected 'grand' to be a GCC BLOCK or FUNCTION_DECL");
   if (grand != desired)
     push_regions(BLOCK_SUPERCONTEXT(desired), grand);
+  // FIXME: push_regions is currently never called with desired ==
+  // grand, but it should be fixed so nothing weird happens if they're
+  // equal.
   llvm::DIDescriptor D = findRegion(desired);
   RegionStack.push_back(D.getNode());
 }
@@ -253,6 +255,9 @@ void DebugInfo::push_regions(tree desired, tree grand) {
 // by GCC's cfglayout.c:change_scope().
 void DebugInfo::change_regions(tree desired, tree grand) {
   tree current_lexical_block = getCurrentLexicalBlock();
+  // FIXME: change_regions is currently never called with desired ==
+  // grand, but it should be fixed so nothing weird happens if they're
+  // equal.
   while (current_lexical_block != grand) {
     assert(BLOCK_SUPERCONTEXT(getCurrentLexicalBlock()) &&
            "lost BLOCK context!");

@@ -27,6 +27,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm-abi.h"
 #include "llvm-mips-target.h"
 
+static LLVMContext &Context = getGlobalContext();
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. In mips EABI this is 
    true for aggregates with size > 32-bits. */
@@ -43,6 +45,38 @@ bool llvm_mips_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
     return size == -1 || size > UNITS_PER_WORD;
   }
   return false; // TODO: support o32 ABI
+}
+
+// llvm_mips_should_not_return_complex_in_memory -  Return true if TYPE 
+// should be returned using multiple value return instruction. This 
+// implementation is based on mips_function_value in mips.c
+bool llvm_mips_should_not_return_complex_in_memory(tree type) {
+
+  enum machine_mode mode = TYPE_MODE(type);
+
+  if (GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
+      && GET_MODE_SIZE (mode) <= UNITS_PER_HWFPVALUE * 2)
+    return true;
+
+  return false;
+}
+
+// Return LLVM Type if TYPE can be returned as an aggregate, 
+// otherwise return NULL.
+const Type *llvm_mips_aggr_type_for_struct_return(tree type) {
+  const Type *Ty = ConvertType(type);
+
+  const StructType *STy = cast<StructType>(Ty);
+  std::vector<const Type *> ElementTypes;
+
+  // Special handling for _Complex.
+  if (llvm_mips_should_not_return_complex_in_memory(type)) {
+    ElementTypes.push_back(Type::getDoubleTy(Context));
+    ElementTypes.push_back(Type::getDoubleTy(Context));
+    return StructType::get(Context, ElementTypes, STy->isPacked());
+  } 
+
+  return NULL;
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

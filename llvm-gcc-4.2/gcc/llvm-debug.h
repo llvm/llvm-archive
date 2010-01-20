@@ -32,6 +32,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/Allocator.h"
 
 extern "C" {
 #include "llvm.h"
@@ -72,6 +73,7 @@ private:
   std::map<tree_node *, WeakVH> NameSpaceCache;
                                         // Cache of previously constructed name 
                                         // spaces.
+
   SmallVector<WeakVH, 4> RegionStack;
                                         // Stack to track declarative scopes.
   
@@ -84,7 +86,11 @@ private:
   // be an ancestor of 'desired'.
   void push_regions(tree_node *desired, tree_node *grand);
 
-public:
+  /// FunctionNames - This is a storage for function names that are
+  /// constructed on demand. For example, C++ destructors, C++ operators etc..
+  llvm::BumpPtrAllocator FunctionNames;
+
+ public:
   DebugInfo(Module *m);
 
   /// Initialize - Initialize debug info by creating compile unit for
@@ -159,6 +165,11 @@ public:
   
   /// getOrCreateNameSpace - Get name space descriptor for the tree node.
   DINameSpace getOrCreateNameSpace(tree_node *Node, DIDescriptor Context);
+
+  /// getFunctionName - Get function name for the given FnDecl. If the
+  /// name is constructred on demand (e.g. C++ destructor) then the name
+  /// is stored on the side.
+  StringRef getFunctionName(tree_node *FnDecl);
 };
 
 } // end namespace llvm

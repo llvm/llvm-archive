@@ -228,6 +228,25 @@ bool isCopyOrDestroyHelper (tree FnDecl) {
     return false;
 }
 
+/// getFunctionName - Get function name for the given FnDecl. If the
+/// name is constructred on demand (e.g. C++ destructor) then the name
+/// is stored on the side.
+StringRef DebugInfo::getFunctionName(tree FnDecl) {
+  StringRef FnNodeName = GetNodeName(FnDecl);
+  // Use dwarf_name to construct function names. In C++ this is used to
+  // create human readable destructor names.
+  StringRef FnName = lang_hooks.dwarf_name(FnDecl, 0);
+  if (FnNodeName.equals(FnName))
+    return FnNodeName;
+
+  // Use name returned by dwarf_name. It is in a temp. storage so make a 
+  // copy first.
+  char *StrPtr = FunctionNames.Allocate<char>(FnName.size() + 1);
+  strncpy(StrPtr, FnName.data(), FnName.size());
+  StrPtr[FnName.size()] = NULL;
+  return StringRef(StrPtr);
+}
+
 // Starting at the 'desired' BLOCK, recursively walk back to the
 // 'grand' context, and return pushing regions to make 'desired' the
 // current context.  'desired' should be a GCC lexical BLOCK, and
@@ -313,7 +332,8 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
       && DECL_ABSTRACT_ORIGIN (FnDecl) != FnDecl)
     ArtificialFnWithAbstractOrigin = true;
 
-  StringRef FnName = GetNodeName(FnDecl);
+  StringRef FnName = getFunctionName(FnDecl);
+
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(ArtificialFnWithAbstractOrigin ?
                                   getOrCreateCompileUnit(main_input_filename) :
@@ -921,7 +941,7 @@ DIType DebugInfo::createStructType(tree type) {
     else {
       // Get the location of the member.
       expanded_location MemLoc = GetNodeLocation(Member, false);
-      StringRef MemberName = GetNodeName(Member);        
+      StringRef MemberName = getFunctionName(Member);
       StringRef LinkageName = getLinkageName(Member);
       DIType SPTy = getOrCreateType(TREE_TYPE(Member));
       unsigned Virtuality = 0;

@@ -62,7 +62,15 @@ private:
   const char *PrevFullPath;             // Previous location file encountered.
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
-  tree_node *CurrentGCCLexicalBlock;	// Current GCC lexical block (or enclosing FUNCTION_DECL).
+  
+  // Current GCC lexical block (or enclosing FUNCTION_DECL).
+  tree_node *CurrentGCCLexicalBlock;	
+  
+  // This counter counts debug info for forward referenced subroutine types.
+  // This counter is used to create unique name for such types so that their 
+  // debug info (through MDNodes) is not shared accidently.
+  unsigned FwdTypeCount;
+
   std::map<std::string, WeakVH > CUCache;
   std::map<tree_node *, WeakVH > TypeCache;
                                         // Cache of previously constructed 

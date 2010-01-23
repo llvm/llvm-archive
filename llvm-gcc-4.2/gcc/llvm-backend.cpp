@@ -407,7 +407,7 @@ void llvm_initialize_backend(void) {
   if (flag_unwind_tables)
     Args.push_back("--unwind-tables");
   if (!flag_schedule_insns)
-    Args.push_back("--disable-scheduling");
+    Args.push_back("--pre-RA-sched=source");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging

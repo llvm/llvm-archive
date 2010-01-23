@@ -56,7 +56,7 @@ extern "C" {
 /// DefaultABIClient - This is a simple implementation of the ABI client
 /// interface that can be subclassed.
 struct DefaultABIClient {
-  bool isShadowReturn() { return false; }
+  bool isShadowReturn() const { return false; }
 
   /// HandleScalarResult - This callback is invoked if the function returns a
   /// simple scalar result value, which is of type RetTy.

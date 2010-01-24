@@ -1141,7 +1141,7 @@ OBJS-archive = $(EXTRA_OBJS) $(host_hook_obj) tree-inline.o		   \
 OBJS = $(OBJS-common) $(out_object_file) $(OBJS-archive)
 # LLVM LOCAL begin
 ifneq ($(LLVMOBJDIR),)
-OBJS-common += llvm-backend.o llvm-convert.o llvm-types.o llvm-debug.o llvm-linker-hack.o
+OBJS-common += llvm-backend.o llvm-convert.o llvm-types.o llvm-debug.o llvm-linker-hack.o llvm-abi-default.o llvm-abi-linux-ppc.o
 endif
 
 ifneq ($(LLVMOBJDIR),)
@@ -2956,6 +2956,8 @@ ALL_HEADERS := $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
             llvm.h llvm-internal.h llvm-file-ostream.h llvm-abi.h llvm-debug.h \
             $(LLVM_HEADERS)
 llvm-backend.o : llvm-backend.cpp $(ALL_HEADERS)
+llvm-abi-linux-ppc.o : llvm-abi-linux-ppc.cpp $(ALL_HEADERS)
+llvm-abi-default.o : llvm-abi-default.cpp $(ALL_HEADERS)
 llvm-convert.o : llvm-convert.cpp $(ALL_HEADERS) \
                  $(LLVMOBJDIR)/include/llvm/Intrinsics.gen
 llvm-types.o : llvm-types.cpp $(ALL_HEADERS)

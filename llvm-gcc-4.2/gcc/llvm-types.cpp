@@ -1043,7 +1043,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
   PATypeHolder RetTy(Type::getVoidTy(Context));
 
   FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
-  TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
+  TheLLVMABI ABIConverter(Client);
 
 #ifdef TARGET_ADJUST_LLVM_CC
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
@@ -1106,7 +1106,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   std::vector<PATypeHolder> ArgTypes;
   bool isVarArg = false;
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
-  TheLLVMABI<FunctionTypeConversion> ABIConverter(Client);
+  TheLLVMABI ABIConverter(Client);
 
   // Allow the target to set the CC for things like fastcall etc.
 #ifdef TARGET_ADJUST_LLVM_CC

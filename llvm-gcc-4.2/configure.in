@@ -1013,6 +1013,11 @@ case "${host}" in
   *-*-sysv4*)
     host_makefile_frag="config/mh-sysv4"
     ;;
+  # LLVM LOCAL begin
+  x86_64-*-darwin*)
+    host_makefile_frag="config/mh-x86-darwin"
+    ;;
+  # LLVM LOCAL end
   # This is placed last to prevent interfering with the cases above.
   i[[3456789]]86-*-*)
     # Build the stage2 and stage3 compilers with -fomit-frame-pointer.

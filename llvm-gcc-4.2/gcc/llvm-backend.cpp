@@ -27,7 +27,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -632,7 +631,7 @@ static void createPerFunctionOptimizationPasses() {
   // Create and set up the per-function pass manager.
   // FIXME: Move the code generator to be function-at-a-time.
   PerFunctionPasses =
-    new FunctionPassManager(new ExistingModuleProvider(TheModule));
+    new FunctionPassManager(TheModule);
   PerFunctionPasses->add(new TargetData(*TheTarget->getTargetData()));
 
   // In -O0 if checking is disabled, we don't even have per-function passes.
@@ -755,7 +754,7 @@ static void createPerModuleOptimizationPasses() {
     // this for fast -O0 compiles!
     if (PerModulePasses || 1) {
       FunctionPassManager *PM = CodeGenPasses =
-        new FunctionPassManager(new ExistingModuleProvider(TheModule));
+        new FunctionPassManager(TheModule);
       PM->add(new TargetData(*TheTarget->getTargetData()));
 
       CodeGenOpt::Level OptLevel = CodeGenOpt::Default;

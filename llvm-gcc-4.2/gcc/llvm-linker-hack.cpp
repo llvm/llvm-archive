@@ -23,7 +23,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
-#include "llvm/ModuleProvider.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Assembly/PrintModulePass.h"
@@ -46,7 +45,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /// This function is never dynamically called.
 ///
 void dummy_function() {
-  llvm::ModuleProvider *MP = new llvm::ExistingModuleProvider(0);
   llvm::LLVMContext Ctxt;
   llvm::raw_os_ostream XXStr(*(std::ostream*)0);
   llvm::createVerifierPass();
@@ -96,7 +94,7 @@ void dummy_function() {
   llvm::Type::getInt8Ty(llvm::getGlobalContext());
 
   llvm::PrettyStackTraceProgram::PrettyStackTraceProgram(0, 0);
-  llvm::DIFactory::DIFactory(*MP->getModule());
+  llvm::DIFactory::DIFactory(*static_cast<llvm::Module *>(0));
   std::string Err;
   llvm::TargetRegistry::lookupTarget("", Err);
 }

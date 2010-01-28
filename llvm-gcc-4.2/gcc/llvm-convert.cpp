@@ -2978,6 +2978,7 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
   if (Instruction *I = dyn_cast<Instruction>(FirstVal)) {
     InsertPt = I;                      // Insert after the init instruction.
 
+    bool InsertPtFinal = false;
     // If the instruction is an alloca in the entry block, the insert point
     // will be before the alloca.  Advance to the AllocaInsertionPoint if we are
     // before it.
@@ -2987,18 +2988,22 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
         if (&*CI == AllocaInsertionPoint) {
           InsertPt = AllocaInsertionPoint;
           ++InsertPt;
+	  InsertPtFinal = true;		// This is the spot; stop searching.
           break;
         }
       }
     }
 
-    // If the instruction is an invoke, the init is inserted on the normal edge.
-    if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt)) {
-      InsertPt = II->getNormalDest()->begin();
-      while (isa<PHINode>(InsertPt))
-        ++InsertPt;
-    } else
-      ++InsertPt; // Insert after the init instruction.
+    if (!InsertPtFinal) {
+      // If the instruction is an invoke, the init is inserted on the normal edge.
+      if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt)) {
+	InsertPt = II->getNormalDest()->begin();
+	while (isa<PHINode>(InsertPt))
+	  ++InsertPt;
+      }
+      else
+	++InsertPt; // Insert after the init instruction.
+    }
   } else {
     InsertPt = AllocaInsertionPoint;   // Insert after the allocas.
     ++InsertPt;

@@ -430,7 +430,7 @@ void TreeToLLVM::setLexicalBlockDepths(tree t, treeset &s, unsigned level) {
     for (bstep = t; bstep; bstep = TREE_CHAIN(bstep)) {
       BLOCK_NUMBER(bstep) = level;
       for (step = BLOCK_VARS(t); step; step = TREE_CHAIN(step))
-	s.insert(step);
+        s.insert(step);
     }
     for (bstep = BLOCK_SUBBLOCKS(t); bstep; bstep = TREE_CHAIN(bstep))
       setLexicalBlockDepths(bstep, s, level+1);
@@ -660,8 +660,8 @@ void TreeToLLVM::StartFunctionBody() {
 
       // Emit gcroot intrinsic if arg has attribute
       if (POINTER_TYPE_P(TREE_TYPE(Args))
-	  && lookup_attribute ("gcroot", TYPE_ATTRIBUTES(TREE_TYPE(Args))))
-      	EmitTypeGcroot(Tmp, Args);
+          && lookup_attribute ("gcroot", TYPE_ATTRIBUTES(TREE_TYPE(Args))))
+        EmitTypeGcroot(Tmp, Args);
 
       Client.setName(Name);
       Client.setLocation(Tmp);
@@ -692,7 +692,7 @@ void TreeToLLVM::StartFunctionBody() {
     // If this variable hasn't been emitted into LLVM yet, AND it is
     // not part of any BLOCK, emit it now.
     if (!DECL_LLVM_SET_P(TREE_VALUE(t)) &&
-	block_declared_vars.count(TREE_VALUE(t)) == 0)
+        block_declared_vars.count(TREE_VALUE(t)) == 0)
       EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
 
@@ -866,12 +866,12 @@ void TreeToLLVM::switchLexicalBlock(tree exp) {
       // equal, but the climbers differ, they are siblings: both
       // climbers rise to the next level.
       while (new_climber != current_climber) {
-	current_climber_depth = DECL_P(current_climber) ? 0 : BLOCK_NUMBER(current_climber);
-	new_climber_depth = DECL_P(new_climber) ? 0 : BLOCK_NUMBER(new_climber);
-	if (new_climber_depth <= current_climber_depth)
-	  current_climber = BLOCK_SUPERCONTEXT(current_climber);
-	if (new_climber_depth >= current_climber_depth)
-	  new_climber = BLOCK_SUPERCONTEXT(new_climber);
+        current_climber_depth = DECL_P(current_climber) ? 0 : BLOCK_NUMBER(current_climber);
+        new_climber_depth = DECL_P(new_climber) ? 0 : BLOCK_NUMBER(new_climber);
+        if (new_climber_depth <= current_climber_depth)
+          current_climber = BLOCK_SUPERCONTEXT(current_climber);
+        if (new_climber_depth >= current_climber_depth)
+          new_climber = BLOCK_SUPERCONTEXT(new_climber);
       }
       assert(new_climber == current_climber && "missed common TREE_BLOCK parent");
       // Pop and push lexical blocks to arrive at the new context.
@@ -896,7 +896,7 @@ void TreeToLLVM::switchLexicalBlock(tree exp) {
       break;
     case tcc_declaration:
       if (!DECL_LLVM_SET_P(step))
-	EmitAutomaticVariableDecl(step);
+        EmitAutomaticVariableDecl(step);
       break;
     }
 
@@ -1596,7 +1596,7 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
   Fn->setGC("shadow-stack");
 
   Function *gcrootFun = Intrinsic::getDeclaration(TheModule,
-						  Intrinsic::gcroot);
+                                                  Intrinsic::gcroot);
 
   // The idea is that it's a pointer to type "Value"
   // which is opaque* but the routine expects i8** and i8*.
@@ -2282,7 +2282,7 @@ void TreeToLLVM::EmitUnwindBlock() {
 
     TARGET_ADJUST_LLVM_CC(CallingConvention, fntype);
     CallInst *Call = Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc),
-					Arg);
+                                        Arg);
     Call->setCallingConv(CallingConvention);
 #else
     Builder.CreateCall(DECL_LLVM(llvm_unwind_resume_libfunc), Arg);
@@ -2920,13 +2920,13 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       // optimizer will delete the temporary and clean this up.
       AllocaInst *biggerTmp = CreateTemporary(Call->getType());
       LLVM_EXTRACT_MULTIPLE_RETURN_VALUE(Call,biggerTmp,/*Volatile=*/false,
-					 Builder);
+                                         Builder);
       EmitAggregateCopy(*DestLoc,
-			MemRef(BitCastToType(biggerTmp,Call->getType()->
-					     getPointerTo()),
-			       DestLoc->getAlignment(),
-			       DestLoc->Volatile),
-			TREE_TYPE(exp));
+                        MemRef(BitCastToType(biggerTmp,Call->getType()->
+                                             getPointerTo()),
+                               DestLoc->getAlignment(),
+                               DestLoc->Volatile),
+                        TREE_TYPE(exp));
     }
     return 0;
   }
@@ -2988,7 +2988,7 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
         if (&*CI == AllocaInsertionPoint) {
           InsertPt = AllocaInsertionPoint;
           ++InsertPt;
-	  InsertPtFinal = true;		// This is the spot; stop searching.
+          InsertPtFinal = true;  // This is the spot; stop searching.
           break;
         }
       }
@@ -2997,12 +2997,12 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
     if (!InsertPtFinal) {
       // If the instruction is an invoke, the init is inserted on the normal edge.
       if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt)) {
-	InsertPt = II->getNormalDest()->begin();
-	while (isa<PHINode>(InsertPt))
-	  ++InsertPt;
+        InsertPt = II->getNormalDest()->begin();
+        while (isa<PHINode>(InsertPt))
+          ++InsertPt;
       }
       else
-	++InsertPt; // Insert after the init instruction.
+        ++InsertPt; // Insert after the init instruction.
     }
   } else {
     InsertPt = AllocaInsertionPoint;   // Insert after the allocas.
@@ -3190,7 +3190,7 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   if (DestLoc == 0) {
     // Scalar to scalar copy.
     assert(!isAggregateTreeType(TREE_TYPE(Op))
-	   && "Aggregate to scalar nop_expr!");
+           && "Aggregate to scalar nop_expr!");
     Value *OpVal = Emit(Op, DestLoc);
     if (Ty->isVoidTy()) return 0;
     return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
@@ -6153,7 +6153,7 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
       ReadWrite = 0;
     } else if (cast<ConstantInt>(ReadWrite)->getZExtValue() > 1) {
       warning (0, "invalid second argument to %<__builtin_prefetch%>;"
-	       " using zero");
+               " using zero");
       ReadWrite = 0;
     } else {
       ReadWrite = Builder.getFolder().CreateIntCast(cast<Constant>(ReadWrite),
@@ -6290,8 +6290,8 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
 
   // FIXME: is i32 always enough here?
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-							Intrinsic::eh_dwarf_cfa),
-			      ConstantInt::get(Type::getInt32Ty(Context), cfa_offset));
+                                                        Intrinsic::eh_dwarf_cfa),
+                              ConstantInt::get(Type::getInt32Ty(Context), cfa_offset));
 
   return true;
 }
@@ -6354,7 +6354,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Args.push_back(Offset);
   Args.push_back(Handler);
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
-		     Args.begin(), Args.end());
+                     Args.begin(), Args.end());
   Result = Builder.CreateUnreachable();
   EmitBlock(BasicBlock::Create(Context, ""));
 

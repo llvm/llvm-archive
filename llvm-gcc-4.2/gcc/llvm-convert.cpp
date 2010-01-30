@@ -3315,7 +3315,7 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
     if (V->getType()->isFPOrFPVector())
       return Builder.CreateFNeg(V);
     if (!isa<PointerType>(V->getType())) {
-      bool HasNSW = !TYPE_UNSIGNED(TREE_TYPE(exp)) && !flag_wrapv;
+      bool HasNSW = !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp));
       return HasNSW ? Builder.CreateNSWNeg(V) : Builder.CreateNeg(V);
     }
 
@@ -3529,11 +3529,11 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   Value *V;
   if (Opc == Instruction::SDiv && IsExactDiv)
     V = Builder.CreateExactSDiv(LHS, RHS);
-  else if (Opc == Instruction::Add && TyIsSigned && !flag_wrapv)
+  else if (Opc == Instruction::Add && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
     V = Builder.CreateNSWAdd(LHS, RHS);
-  else if (Opc == Instruction::Sub && TyIsSigned && !flag_wrapv)
+  else if (Opc == Instruction::Sub && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
     V = Builder.CreateNSWSub(LHS, RHS);
-  else if (Opc == Instruction::Mul && TyIsSigned && !flag_wrapv)
+  else if (Opc == Instruction::Mul && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
     V = Builder.CreateNSWMul(LHS, RHS);
   else
     V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);

@@ -77,13 +77,20 @@ void SVR4ABI::HandleReturnType(tree type, tree fn, bool isBuiltin) {
 /// issue, except for calls which involve _Complex types.
 void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 			     Attributes *Attributes) {
+  unsigned Size = 0;
+  bool DontCheckAlignment = false;
   // Eight GPR's are availabe for parameter passing.
   const unsigned NumArgRegs = 8;
   const Type *Ty = ConvertType(type);
   // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
   // not include variable sized fields here.
   std::vector<const Type*> Elts;
-  if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
+  if (Ty->isVoidTy()) {
+    // Handle void explicitly as an opaque type.
+    const Type *OpTy = OpaqueType::get(getGlobalContext());
+    C.HandleScalarArgument(OpTy, type);
+    ScalarElts.push_back(OpTy);
+  } else if (isPassedByInvisibleReference(type)) { // variable size -> by-ref.
     const Type *PtrTy = Ty->getPointerTo();
     C.HandleByInvisibleReferenceArgument(PtrTy, type);
     ScalarElts.push_back(PtrTy);
@@ -153,6 +160,8 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     if (Attributes) {
       *Attributes |= Attr;
     }
+  } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
+    C.HandleFCAArgument(Ty, type);
   } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
 						      C.getCallingConv(),
 						      Elts)) {
@@ -241,9 +250,49 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     if (Attributes) {
       *Attributes |= Attr;
     }
+  } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size,
+							&DontCheckAlignment)) {
+    PassInIntegerRegisters(type, ScalarElts, Size, DontCheckAlignment);
   } else if (isZeroSizedStructOrUnion(type)) {
     // Zero sized struct or union, just drop it!
     ;
+  } else if (TREE_CODE(type) == RECORD_TYPE) {
+    for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field))
+      if (TREE_CODE(Field) == FIELD_DECL) {
+	const tree Ftype = getDeclaredType(Field);
+	const Type *FTy = ConvertType(Ftype);
+	unsigned FNo = GET_LLVM_FIELD_INDEX(Field);
+	assert(FNo != ~0U && "Case not handled yet!");
+
+	// Currently, a bvyal type inside a non-byval struct is a zero-length
+	// object inside a bigger object on x86-64.  This type should be
+	// skipped (but only when it is inside a bigger object).
+	// (We know there currently are no other such cases active because
+	// they would hit the assert in FunctionPrologArgumentConversion::
+	// HandleByValArgument.)
+	if (!LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(Ftype, FTy)) {
+	  C.EnterField(FNo, Ty);
+	  HandleArgument(getDeclaredType(Field), ScalarElts);
+	  C.ExitField();
+	}
+      }
+  } else if (TREE_CODE(type) == COMPLEX_TYPE) {
+    C.EnterField(0, Ty);
+    HandleArgument(TREE_TYPE(type), ScalarElts);
+    C.ExitField();
+    C.EnterField(1, Ty);
+    HandleArgument(TREE_TYPE(type), ScalarElts);
+    C.ExitField();
+  } else if ((TREE_CODE(type) == UNION_TYPE) ||
+	     (TREE_CODE(type) == QUAL_UNION_TYPE)) {
+    HandleUnion(type, ScalarElts);
+  } else if (TREE_CODE(type) == ARRAY_TYPE) {
+    const ArrayType *ATy = cast<ArrayType>(Ty);
+    for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
+      C.EnterField(i, Ty);
+      HandleArgument(TREE_TYPE(type), ScalarElts);
+      C.ExitField();
+    }
   } else {
     assert(0 && "unknown aggregate type!");
     abort();

@@ -672,14 +672,11 @@ static void createPerFunctionOptimizationPasses() {
 
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
-    switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
-                                           TargetMachine::CGFT_AssemblyFile,
-                                           OptLevel)) {
-    default:
+    if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
+                                       TargetMachine::CGFT_AssemblyFile,
+                                       OptLevel)) {
       errs() << "Error interfacing to target machine!\n";
       exit(1);
-    case TargetMachine::CGFT_AssemblyFile:
-      break;
     }
   }
   
@@ -760,14 +757,11 @@ static void createPerModuleOptimizationPasses() {
 
       // Normal mode, emit a .s file by running the code generator.
       // Note, this also adds codegenerator level optimization passes.
-      switch (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
-                                             TargetMachine::CGFT_AssemblyFile,
-                                             OptLevel)) {
-      default:
+      if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
+                                         TargetMachine::CGFT_AssemblyFile,
+                                         OptLevel)) {
         errs() << "Error interfacing to target machine!\n";
         exit(1);
-      case TargetMachine::CGFT_AssemblyFile:
-        break;
       }
     }
   }

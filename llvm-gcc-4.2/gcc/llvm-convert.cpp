@@ -154,6 +154,14 @@ const TargetData &getTargetData() {
   return *TheTarget->getTargetData();
 }
 
+/// EmitDebugInfo - Return true if debug info is to be emitted for current 
+/// function.
+bool TreeToLLVM::EmitDebugInfo() {
+  if (TheDebugInfo && !DECL_IGNORED_P(getFUNCTION_DECL()))
+    return true;
+  return false;
+}
+
 TreeToLLVM::TreeToLLVM(tree fndecl) :
     TD(getTargetData()), Builder(Context, *TheFolder) {
   FnDecl = fndecl;
@@ -161,7 +169,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   ReturnBB = UnwindBB = 0;
   ReturnOffset = 0;
 
-  if (TheDebugInfo) {
+  if (EmitDebugInfo()) {
     expanded_location Location = expand_location(DECL_SOURCE_LOCATION (fndecl));
 
     if (Location.file) {
@@ -300,7 +308,7 @@ namespace {
       Builder.CreateStore(AI, Tmp);
 
       SET_DECL_LLVM(ResultDecl, Tmp);
-      if (TheDebugInfo) {
+      if (TheDebugInfo && !DECL_IGNORED_P(FunctionDecl)) {
         TheDebugInfo->EmitDeclare(ResultDecl,
                                   dwarf::DW_TAG_return_variable,
                                   "agg.result", RetTy, Tmp,
@@ -597,7 +605,7 @@ void TreeToLLVM::StartFunctionBody() {
 
   SeenBlocks.clear();
 
-  if (TheDebugInfo)
+  if (EmitDebugInfo())
     TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
 
   // Loop over all of the arguments to the function, setting Argument names and
@@ -636,7 +644,7 @@ void TreeToLLVM::StartFunctionBody() {
       // the l-value for the argument IS the argument itself.
       AI->setName(Name);
       SET_DECL_LLVM(Args, AI);
-      if (!isInvRef && TheDebugInfo)
+      if (!isInvRef && EmitDebugInfo())
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args),
                                   AI, Builder);
@@ -648,11 +656,10 @@ void TreeToLLVM::StartFunctionBody() {
       Value *Tmp = CreateTemporary(ArgTy);
       Tmp->setName(std::string(Name)+"_addr");
       SET_DECL_LLVM(Args, Tmp);
-      if (TheDebugInfo) {
+      if (EmitDebugInfo())
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args), Tmp,
                                   Builder);
-      }
 
       // Emit annotate intrinsic if arg has annotate attr
       if (DECL_ATTRIBUTES(Args))
@@ -683,7 +690,7 @@ void TreeToLLVM::StartFunctionBody() {
     // Not supported yet.
   }
 
-  if (TheDebugInfo)
+  if (EmitDebugInfo())
     TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
 
   // As it turns out, not all temporaries are associated with blocks.  For those
@@ -752,7 +759,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
       }
     }
   }
-  if (TheDebugInfo) {
+  if (EmitDebugInfo()) {
     TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
     TheDebugInfo->EmitFunctionEnd(Builder.GetInsertBlock(), true);
   }
@@ -832,7 +839,7 @@ Function *TreeToLLVM::EmitFunction() {
 void TreeToLLVM::switchLexicalBlock(tree exp) {
   if (exp == NULL_TREE || TREE_CODE(exp) == FUNCTION_DECL) {
     // assert(RegionStack empty);
-    if (TheDebugInfo)
+    if (EmitDebugInfo())
       TheDebugInfo->setCurrentLexicalBlock(exp);
     return;
   }
@@ -855,7 +862,7 @@ void TreeToLLVM::switchLexicalBlock(tree exp) {
   if (!previously_visited)
     switchLexicalBlock(BLOCK_SUPERCONTEXT(new_block));
 
-  if (TheDebugInfo) {
+  if (EmitDebugInfo()) {
     tree current_block = TheDebugInfo->getCurrentLexicalBlock();
     if (new_block && current_block && new_block != current_block) {
       tree new_climber = new_block, current_climber = current_block;
@@ -922,7 +929,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
   // declared in the new block.
   TreeToLLVM::switchLexicalBlock(exp);
 
-  if (TheDebugInfo) {
+  if (EmitDebugInfo()) {
     if (EXPR_HAS_LOCATION(exp)) {
       // Set new location on the way up the tree.
       TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
@@ -1101,7 +1108,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
     break;
   }
 
-  if (TheDebugInfo && EXPR_HAS_LOCATION(exp)) {
+  if (EmitDebugInfo() && EXPR_HAS_LOCATION(exp)) {
     // Restore location back down the tree.
     TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
     TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
@@ -1789,7 +1796,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Builder.CreateStore(Constant::getNullValue(T), AI);
     }
 
-  if (TheDebugInfo) {
+  if (EmitDebugInfo()) {
     if (DECL_NAME(decl)) {
       TheDebugInfo->EmitDeclare(decl, dwarf::DW_TAG_auto_variable,
                                 Name, TREE_TYPE(decl), AI,

@@ -65,16 +65,7 @@ void SVR4ABI::HandleReturnType(tree type, tree fn, bool isBuiltin) {
 /// _Complex arguments are never split, thus their two scalars are either
 /// passed both in argument registers or both on the stack. Also _Complex
 /// arguments are always passed in general purpose registers, never in
-/// Floating-point registers or vector registers. Arguments which should go
-/// on the stack are marked with the inreg parameter attribute.
-/// Giving inreg this target-dependent (and counter-intuitive) meaning
-/// simplifies things, because functions calls are not always coming from the
-/// frontend but are also created implicitly e.g. for libcalls. If inreg would
-/// actually mean that the argument is passed in a register, then all places
-/// which create function calls/function definitions implicitly would need to
-/// be aware of this fact and would need to mark arguments accordingly. With
-/// inreg meaning that the argument is passed on the stack, this is not an
-/// issue, except for calls which involve _Complex types.
+/// Floating-point registers or vector registers.
 void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 			     Attributes *Attributes) {
   unsigned Size = 0;
@@ -85,6 +76,7 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
   // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
   // not include variable sized fields here.
   std::vector<const Type*> Elts;
+  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
   if (Ty->isVoidTy()) {
     // Handle void explicitly as an opaque type.
     const Type *OpTy = OpaqueType::get(getGlobalContext());
@@ -99,8 +91,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 
     if (NumGPR < NumArgRegs) {
       NumGPR++;
-    } else {
-      Attr |= Attribute::InReg;
     }
 
     if (Attributes) {
@@ -121,9 +111,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       ScalarElts.push_back(Ty);
     }
   } else if (Ty->isSingleValueType()) {
-    C.HandleScalarArgument(Ty, type);
-    ScalarElts.push_back(Ty);
-
     unsigned Attr = Attribute::None;
 
     if (Ty->isInteger()) {
@@ -137,19 +124,19 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       // a register pair which starts with an odd register number.
       if (TypeSize == 64 && (NumGPR % 2) == 1) {
 	NumGPR++;
+	C.HandlePad(Int32Ty);
       }
 
       if (NumGPR <= (NumArgRegs - NumRegs)) {
 	NumGPR += NumRegs;
       } else {
-	Attr |= Attribute::InReg;
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+	  C.HandlePad(Int32Ty);
 	NumGPR = NumArgRegs;
       }
     } else if (isa<PointerType>(Ty)) {
       if (NumGPR < NumArgRegs) {
 	NumGPR++;
-      } else {
-	Attr |= Attribute::InReg;
       }
       // We don't care about arguments passed in Floating-point or vector
       // registers.
@@ -160,6 +147,9 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     if (Attributes) {
       *Attributes |= Attr;
     }
+
+    C.HandleScalarArgument(Ty, type);
+    ScalarElts.push_back(Ty);
   } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
     C.HandleFCAArgument(Ty, type);
   } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
@@ -182,7 +172,8 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       if (NumGPR == 0) {
 	NumGPR += NumArgRegs;
       } else {
-	Attr |= Attribute::InReg;
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+	  C.HandlePad(Int32Ty);
 	NumGPR = NumArgRegs;
       }
       break;
@@ -192,7 +183,8 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       if (NumGPR <= (NumArgRegs - 4)) {
 	NumGPR += 4;
       } else {
-	Attr |= Attribute::InReg;
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+	  C.HandlePad(Int32Ty);
 	NumGPR = NumArgRegs;
       }
       break;
@@ -210,7 +202,8 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       if (NumGPR <= (NumArgRegs - 2)) {
 	NumGPR += 2;
       } else {
-	Attr |= Attribute::InReg;
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+	  C.HandlePad(Int32Ty);
 	NumGPR = NumArgRegs;
       }
       break;
@@ -220,8 +213,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       // _Complex char
       if (NumGPR < NumArgRegs) {
 	NumGPR++;
-      } else {
-	Attr |= Attribute::InReg;
       }
       break;
     }
@@ -243,8 +234,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 
     if (NumGPR < NumArgRegs) {
       NumGPR++;
-    } else {
-      Attr |= Attribute::InReg;
     }
 
     if (Attributes) {

@@ -113,6 +113,7 @@ struct DefaultABIClient {
   /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
   virtual void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {}
   virtual void ExitField() {}
+  virtual void HandlePad(const llvm::Type *LLVMTy) {}
 };
 
 /// isAggregateTreeType - Return true if the specified GCC type is an aggregate

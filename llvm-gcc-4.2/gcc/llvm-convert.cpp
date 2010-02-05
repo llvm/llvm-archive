@@ -267,6 +267,10 @@ namespace {
     /// getCallingConv - This provides the desired CallingConv for the function.
     CallingConv::ID& getCallingConv(void) { return CallingConv; }
 
+    void HandlePad(const llvm::Type *LLVMTy) {
+      ++AI;
+    }
+
     bool isShadowReturn() const {
       return isShadowRet;
     }
@@ -356,8 +360,7 @@ namespace {
     }
 
     void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {
-      // Should not get here.
-      abort();
+      ++AI;
     }
 
     void HandleFCAArgument(const llvm::Type *LLVMTy,
@@ -648,7 +651,7 @@ void TreeToLLVM::StartFunctionBody() {
         TheDebugInfo->EmitDeclare(Args, dwarf::DW_TAG_arg_variable,
                                   Name, TREE_TYPE(Args),
                                   AI, Builder);
-      ++AI;
+      ABIConverter.HandleArgument(TREE_TYPE(Args), ScalarArgs);
     } else {
       // Otherwise, we create an alloca to hold the argument value and provide
       // an l-value.  On entry to the function, we copy formal argument values
@@ -2679,6 +2682,10 @@ namespace {
 
       // Note the use of a shadow argument.
       isShadowRet = true;
+    }
+
+    void HandlePad(const llvm::Type *LLVMTy) {
+      CallOperands.push_back(UndefValue::get(LLVMTy));
     }
 
     /// HandleScalarShadowResult - This callback is invoked if the function

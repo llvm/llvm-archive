@@ -29,11 +29,14 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 
 extern "C" {
 #include "toplev.h"
 }
+
+static LLVMContext &Context = getGlobalContext();
 
 enum alpha_builtin
 {
@@ -105,11 +108,12 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALPHA_BUILTIN_UMULH: {
     Value *Arg0 = Ops[0];
     Value *Arg1 = Ops[1];
-    Arg0 = Builder.CreateZExt(Arg0, IntegerType::get(128));
-    Arg1 = Builder.CreateZExt(Arg1, IntegerType::get(128));
+    Arg0 = Builder.CreateZExt(Arg0, IntegerType::get(Context, 128));
+    Arg1 = Builder.CreateZExt(Arg1, IntegerType::get(Context, 128));
     Result = Builder.CreateMul(Arg0, Arg1);
-    Result = Builder.CreateLShr(Result, ConstantInt::get(Type::Int64Ty, 64));
-    Result = Builder.CreateTrunc(Result, Type::Int64Ty);
+    Result = Builder.CreateLShr(Result, ConstantInt::get(
+                                               Type::getInt64Ty(Context), 64));
+    Result = Builder.CreateTrunc(Result, Type::getInt64Ty(Context));
     return true;
   }
   case ALPHA_BUILTIN_CMPBGE: {
@@ -117,14 +121,17 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Arg1 = Ops[1];
     Value* cmps[8];
     for (unsigned x = 0; x < 8; ++x) {
-      Value* LHS = Builder.CreateLShr(Arg0, ConstantInt::get(Type::Int64Ty, x*8));
-      LHS = Builder.CreateTrunc(LHS, Type::Int8Ty);
-      Value* RHS = Builder.CreateLShr(Arg1, ConstantInt::get(Type::Int64Ty, x*8));
-      RHS = Builder.CreateTrunc(RHS, Type::Int8Ty);
+      Value* LHS = Builder.CreateLShr(Arg0, ConstantInt::get(
+                                              Type::getInt64Ty(Context), x*8));
+      LHS = Builder.CreateTrunc(LHS, Type::getInt8Ty(Context));
+      Value* RHS = Builder.CreateLShr(Arg1, ConstantInt::get(
+                                              Type::getInt64Ty(Context), x*8));
+      RHS = Builder.CreateTrunc(RHS, Type::getInt8Ty(Context));
       Value* cmps = Builder.CreateICmpUGE(LHS, RHS);
       cmps = Builder.CreateIsNotNull(cmps);
-      cmps = Builder.CreateZExt(cmps, Type::Int64Ty);
-      cmps = Builder.CreateShl(cmps, ConstantInt::get(Type::Int64Ty, x));
+      cmps = Builder.CreateZExt(cmps, Type::getInt64Ty(Context));
+      cmps = Builder.CreateShl(cmps, ConstantInt::get(
+                                                Type::getInt64Ty(Context), x));
       if (x == 0)
 	Result = cmps;
       else
@@ -144,9 +151,11 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case ALPHA_BUILTIN_EXTQL: mask = 0xFFFFFFFFFFFFFFFFULL; break;
     };
     Value *Arg0 = Ops[0];
-    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(Type::Int64Ty, 7));
+    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(
+                                                Type::getInt64Ty(Context), 7));
     Arg0 = Builder.CreateLShr(Arg0, Arg1);
-    Result = Builder.CreateAnd(Arg0, ConstantInt::get(Type::Int64Ty, mask));
+    Result = Builder.CreateAnd(Arg0, ConstantInt::get(
+                                             Type::getInt64Ty(Context), mask));
     return true;
   }
   case ALPHA_BUILTIN_EXTWH:
@@ -159,10 +168,13 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case ALPHA_BUILTIN_EXTQH: mask = 0xFFFFFFFFFFFFFFFFULL; break;
     };
     Value *Arg0 = Ops[0];
-    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(Type::Int64Ty, 7));
-    Arg1 = Builder.CreateSub(ConstantInt::get(Type::Int64Ty, 64), Arg1);
+    Value *Arg1 = Builder.CreateAnd(Ops[1], ConstantInt::get(
+                                                Type::getInt64Ty(Context), 7));
+    Arg1 = Builder.CreateSub(ConstantInt::get(
+                                         Type::getInt64Ty(Context), 64), Arg1);
     Arg0 = Builder.CreateShl(Arg0, Arg1);
-    Result = Builder.CreateAnd(Arg0, ConstantInt::get(Type::Int64Ty, mask));
+    Result = Builder.CreateAnd(Arg0, ConstantInt::get(
+                                             Type::getInt64Ty(Context), mask));
     return true;
   }
 

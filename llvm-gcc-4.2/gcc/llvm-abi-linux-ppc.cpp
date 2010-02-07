@@ -1,6 +1,6 @@
 #include "llvm-abi.h"
 
-SVR4ABI::SVR4ABI(DefaultABIClient &c) : NumGPR(0), C(c) {}
+SVR4ABI::SVR4ABI(DefaultABIClient &c) : C(c) {}
 
 bool SVR4ABI::isShadowReturn() const { return C.isShadowReturn(); }
 
@@ -56,6 +56,33 @@ void SVR4ABI::HandleReturnType(tree type, tree fn, bool isBuiltin) {
   }
 }
 
+static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
+  unsigned NumGPRs = 0;
+  for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
+    if (NumGPRs >= 8)
+      break;
+    const Type *Ty = ScalarElts[i];
+    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      abort();
+    } else if (isa<PointerType>(Ty)) {
+      NumGPRs++;
+    } else if (Ty->isInteger()) {
+      unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+      unsigned NumRegs = (TypeSize + 31) / 32;
+
+      NumGPRs += NumRegs;
+    } else if (Ty->isVoidTy()) {
+      // Padding bytes that are not passed anywhere
+      ;
+    } else {
+      // Floating point scalar argument.
+      assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
+             "Expecting a floating point primitive type!");
+    }
+  }
+  return NumGPRs < 8 ? NumGPRs : 8;
+}
+
 /// HandleArgument - This is invoked by the target-independent code for each
 /// argument type passed into the function.  It potentially breaks down the
 /// argument and invokes methods on the client that indicate how its pieces
@@ -72,6 +99,7 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
   bool DontCheckAlignment = false;
   // Eight GPR's are availabe for parameter passing.
   const unsigned NumArgRegs = 8;
+  unsigned NumGPR = count_num_registers_uses(ScalarElts);
   const Type *Ty = ConvertType(type);
   // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
   // not include variable sized fields here.
@@ -86,16 +114,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     const Type *PtrTy = Ty->getPointerTo();
     C.HandleByInvisibleReferenceArgument(PtrTy, type);
     ScalarElts.push_back(PtrTy);
-
-    unsigned Attr = Attribute::None;
-
-    if (NumGPR < NumArgRegs) {
-      NumGPR++;
-    }
-
-    if (Attributes) {
-      *Attributes |= Attr;
-    }
   } else if (isa<VectorType>(Ty)) {
     if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, ScalarElts, 0, false);
@@ -111,8 +129,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       ScalarElts.push_back(Ty);
     }
   } else if (Ty->isSingleValueType()) {
-    unsigned Attr = Attribute::None;
-
     if (Ty->isInteger()) {
       unsigned TypeSize = Ty->getPrimitiveSizeInBits();
 
@@ -124,28 +140,20 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       // a register pair which starts with an odd register number.
       if (TypeSize == 64 && (NumGPR % 2) == 1) {
 	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
 	C.HandlePad(Int32Ty);
       }
 
-      if (NumGPR <= (NumArgRegs - NumRegs)) {
-	NumGPR += NumRegs;
-      } else {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+      if (NumGPR > (NumArgRegs - NumRegs)) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
 	  C.HandlePad(Int32Ty);
-	NumGPR = NumArgRegs;
+	}
       }
-    } else if (isa<PointerType>(Ty)) {
-      if (NumGPR < NumArgRegs) {
-	NumGPR++;
-      }
-      // We don't care about arguments passed in Floating-point or vector
-      // registers.
-    } else if (!(Ty->isFloatingPoint() || isa<VectorType>(Ty))) {
+    } else if (!(Ty->isFloatingPoint() ||
+		 isa<VectorType>(Ty)   ||
+		 isa<PointerType>(Ty))) {
       abort();
-    }
-
-    if (Attributes) {
-      *Attributes |= Attr;
     }
 
     C.HandleScalarArgument(Ty, type);
@@ -161,31 +169,27 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     // are _Complex aggregates.
     assert(TREE_CODE(type) == COMPLEX_TYPE && "Not a _Complex type!");
 
-    unsigned Attr = Attribute::None;
-
     switch (SrcSize) {
     default:
       abort();
       break;
     case 32:
       // _Complex long double
-      if (NumGPR == 0) {
-	NumGPR += NumArgRegs;
-      } else {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+      if (NumGPR != 0) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
 	  C.HandlePad(Int32Ty);
-	NumGPR = NumArgRegs;
+	}
       }
       break;
     case 16:
       // _Complex long long
       // _Complex double
-      if (NumGPR <= (NumArgRegs - 4)) {
-	NumGPR += 4;
-      } else {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+      if (NumGPR > (NumArgRegs - 4)) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
 	  C.HandlePad(Int32Ty);
-	NumGPR = NumArgRegs;
+	}
       }
       break;
     case 8:
@@ -197,28 +201,22 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       // a register pair which starts with an odd register number.
       if (NumGPR % 2 == 1) {
 	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
+	C.HandlePad(Int32Ty);
       }
 
-      if (NumGPR <= (NumArgRegs - 2)) {
-	NumGPR += 2;
-      } else {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i)
+      if (NumGPR > (NumArgRegs - 2)) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
 	  C.HandlePad(Int32Ty);
-	NumGPR = NumArgRegs;
+	}
       }
       break;
     case 4:
     case 2:
       // _Complex short
       // _Complex char
-      if (NumGPR < NumArgRegs) {
-	NumGPR++;
-      }
       break;
-    }
-
-    if (Attributes) {
-      *Attributes |= Attr;
     }
 
     PassInMixedRegisters(Ty, Elts, ScalarElts);
@@ -228,16 +226,6 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       *Attributes |= Attribute::ByVal;
       *Attributes |= 
 	Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
-    }
-
-    unsigned Attr = Attribute::None;
-
-    if (NumGPR < NumArgRegs) {
-      NumGPR++;
-    }
-
-    if (Attributes) {
-      *Attributes |= Attr;
     }
   } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_INTEGER_REGS(type, &Size,
 							&DontCheckAlignment)) {

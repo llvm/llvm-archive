@@ -12047,6 +12047,10 @@ regenerate_decl_from_template (tree decl, tree tmpl)
       if (DECL_DECLARED_INLINE_P (code_pattern)
 	  && !DECL_DECLARED_INLINE_P (decl))
 	DECL_DECLARED_INLINE_P (decl) = 1;
+      /* LLVM LOCAL begin inlinehint attribute */
+      if (DECL_EXPLICIT_INLINE_P (code_pattern))
+	DECL_EXPLICIT_INLINE_P (decl) = 1;
+      /* LLVM LOCAL end inlinehint attribute */
       if (DECL_INLINE (code_pattern) && !DECL_INLINE (decl))
 	DECL_INLINE (decl) = 1;
     }

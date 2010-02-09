@@ -3271,6 +3271,15 @@ struct tree_decl_non_common GTY(())
 #define DECL_DECLARED_INLINE_P(NODE) \
   (FUNCTION_DECL_CHECK (NODE)->function_decl.declared_inline_flag)
 
+/* LLVM LOCAL begin inlinehint attribute */
+/* Nonzero in a FUNCTION_DECL means that this function was explicitly declared
+   inline via the `inline' keyword.  This flag controls the inlinehint attribute
+   passed to the LLVM optimizer.  */
+#define DECL_EXPLICIT_INLINE_P(NODE) \
+  (FUNCTION_DECL_CHECK (NODE)->function_decl.explicit_inline_flag)
+/* LLVM LOCAL end inlinehint attribute */
+
+
 /* For FUNCTION_DECL, this holds a pointer to a structure ("struct function")
    that describes the status of this function.  */
 #define DECL_STRUCT_FUNCTION(NODE) (FUNCTION_DECL_CHECK (NODE)->function_decl.f)
@@ -3318,6 +3327,9 @@ struct tree_function_decl GTY(())
   unsigned no_instrument_function_entry_exit : 1;
   unsigned no_limit_stack : 1;
   ENUM_BITFIELD(built_in_class) built_in_class : 2;
+  /* LLVM LOCAL begin inlinehint attribute */
+  unsigned explicit_inline_flag : 1;
+  /* LLVM LOCAL end inlinehint attribute */
 
   /* APPLE LOCAL DECL_ESTIMATED_INSNS */
   HOST_WIDE_INT estimated_insns;

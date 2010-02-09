@@ -1904,6 +1904,10 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
 
 	  DECL_DECLARED_INLINE_P (newdecl) |= DECL_DECLARED_INLINE_P (olddecl);
 
+	  /* LLVM LOCAL begin inlinehint attribute */
+	  DECL_EXPLICIT_INLINE_P (newdecl) |= DECL_EXPLICIT_INLINE_P (olddecl);
+	  /* LLVM LOCAL end inlinehint attribute */
+
 	  /* If either decl says `inline', this fn is inline, unless
 	     its definition was passed already.  */
 	  if (DECL_INLINE (newdecl) && DECL_INITIAL (olddecl) == NULL_TREE)
@@ -6813,6 +6817,11 @@ grokfndecl (tree ctype,
   /* If the declaration was declared inline, mark it as such.  */
   if (inlinep)
     DECL_DECLARED_INLINE_P (decl) = 1;
+  /* LLVM LOCAL begin inlinehint attribute */
+  if (inlinep)
+    DECL_EXPLICIT_INLINE_P (decl) = 1;
+  /* LLVM LOCAL end inlinehint attribute */
+
   /* We inline functions that are explicitly declared inline, or, when
      the user explicitly asks us to, all functions.  */
   if (DECL_DECLARED_INLINE_P (decl)

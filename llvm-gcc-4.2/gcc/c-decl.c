@@ -1919,6 +1919,11 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
 	      || DECL_DECLARED_INLINE_P (olddecl))
 	    DECL_DECLARED_INLINE_P (newdecl) = 1;
 
+	  /* LLVM LOCAL begin inlinehint attribute */
+	  if (DECL_EXPLICIT_INLINE_P (olddecl))
+	    DECL_EXPLICIT_INLINE_P (newdecl) = 1;
+	  /* LLVM LOCAL end inlinehint attribute */
+
 	  DECL_UNINLINABLE (newdecl) = DECL_UNINLINABLE (olddecl)
 	    = (DECL_UNINLINABLE (newdecl) || DECL_UNINLINABLE (olddecl));
 	}
@@ -5492,6 +5497,9 @@ grokdeclarator (const struct c_declarator *declarator,
 	  {
 	    /* Record that the function is declared `inline'.  */
 	    DECL_DECLARED_INLINE_P (decl) = 1;
+	    /* LLVM LOCAL begin inlinehint attribute */
+	    DECL_EXPLICIT_INLINE_P (decl) = 1;
+	    /* LLVM LOCAL end inlinehint attribute */
 
 	    /* Do not mark bare declarations as DECL_INLINE.  Doing so
 	       in the presence of multiple declarations can result in

@@ -397,6 +397,9 @@ maybe_clone_body (tree fn)
       DECL_SOURCE_LOCATION (clone) = DECL_SOURCE_LOCATION (fn);
       DECL_INLINE (clone) = DECL_INLINE (fn);
       DECL_DECLARED_INLINE_P (clone) = DECL_DECLARED_INLINE_P (fn);
+      /* LLVM LOCAL begin inlinehint attribute */
+      DECL_EXPLICIT_INLINE_P (clone) = DECL_EXPLICIT_INLINE_P (fn);
+      /* LLVM LOCAL end inlinehint attribute */
       DECL_COMDAT (clone) = DECL_COMDAT (fn);
       DECL_WEAK (clone) = DECL_WEAK (fn);
       DECL_ONE_ONLY (clone) = DECL_ONE_ONLY (fn);

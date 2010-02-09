@@ -159,6 +159,9 @@ make_thunk (tree function, bool this_adjusting,
   DECL_PENDING_INLINE_P (thunk) = 0;
   DECL_INLINE (thunk) = 0;
   DECL_DECLARED_INLINE_P (thunk) = 0;
+  /* LLVM LOCAL begin inlinehint attribute */
+  DECL_EXPLICIT_INLINE_P (thunk) = 0;
+  /* LLVM LOCAL end inlinehint attribute */
   /* Nor has it been deferred.  */
   DECL_DEFERRED_FN (thunk) = 0;
   /* Nor is it a template instantiation.  */
@@ -283,6 +286,9 @@ make_alias_for (tree function, tree newid)
   DECL_PENDING_INLINE_P (alias) = 0;
   DECL_INLINE (alias) = 0;
   DECL_DECLARED_INLINE_P (alias) = 0;
+  /* LLVM LOCAL begin inlinehint attribute */
+  DECL_EXPLICIT_INLINE_P (alias) = 0;
+  /* LLVM LOCAL end inlinehint attribute */
   DECL_DEFERRED_FN (alias) = 0;
   DECL_USE_TEMPLATE (alias) = 0;
   DECL_TEMPLATE_INSTANTIATED (alias) = 0;

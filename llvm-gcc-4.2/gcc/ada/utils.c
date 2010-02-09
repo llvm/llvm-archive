@@ -1772,6 +1772,10 @@ create_subprog_decl (tree subprog_name, tree asm_name,
 
   if (inline_flag)
     DECL_DECLARED_INLINE_P (subprog_decl) = 1;
+  /* LLVM LOCAL begin inlinehint attribute */
+  if (inline_flag)
+    DECL_EXPLICIT_INLINE_P (subprog_decl) = 1;
+  /* LLVM LOCAL end inlinehint attribute */
 
   if (asm_name)
     SET_DECL_ASSEMBLER_NAME (subprog_decl, asm_name);

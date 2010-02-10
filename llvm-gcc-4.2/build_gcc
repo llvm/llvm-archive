@@ -142,12 +142,6 @@ elif [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
   ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
   ARM_TOOLROOT=$ARM_PLATFORM/Developer
 
-  # If it's being built for iPhoneOS, assume the llvmCore bits are under
-  # iPhoneOS platform directory.
-  if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
-    LLVMCORE_PATH="${ARM_PLATFORM}${LLVMCORE_PATH}"
-    DEST_ROOT="${ARM_PLATFORM}${DEST_ROOT}"
-  fi
 else
 
   # Use bootstrap SDK if it is available.
@@ -156,10 +150,18 @@ else
   else
     ARM_SYSROOT=/
   fi
+  ARM_PLATFORM=/
   ARM_TOOLROOT=/
 
 fi
 ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-build-sysroot=\"$ARM_SYSROOT\""
+
+# If it's being built for iPhoneOS, assume the llvmCore bits are under
+# iPhoneOS platform directory.
+if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
+  LLVMCORE_PATH="${ARM_PLATFORM}${LLVMCORE_PATH}"
+  DEST_ROOT="${ARM_PLATFORM}${DEST_ROOT}"
+fi
 
 # If building an ARM target, check that the required directories exist
 # and query the libSystem arm slices to determine which multilibs we should

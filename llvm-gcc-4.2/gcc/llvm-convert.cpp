@@ -8383,11 +8383,12 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
 Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   Constant *Init = TreeConstantToLLVM::ConvertSTRING_CST(exp);
 
-  // Support -fwritable-strings.
-  bool StringIsConstant = !flag_writable_strings;
+  // Support -fwritable-strings. However, ignores it if exp is a CFString and
+  // -fconstant-cfstring (default) is set.
+  bool StringIsConstant = !flag_writable_strings ||
+    darwin_constant_cfstring_p(exp);
 
   GlobalVariable **SlotP = 0;
-
   if (StringIsConstant) {
     // Cache the string constants to avoid making obvious duplicate strings that
     // have to be folded by the optimizer.

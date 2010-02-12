@@ -8388,6 +8388,12 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   bool StringIsConstant = !flag_writable_strings ||
     darwin_constant_cfstring_p(exp);
 
+  // Literal cstrings in data section needs a label the linker can
+  // see to prevent it from being merged into its previous label.
+  GlobalValue::LinkageTypes Linkage = StringIsConstant
+    ? GlobalValue::PrivateLinkage
+    : GlobalValue::InternalLinkage;
+
   GlobalVariable **SlotP = 0;
   if (StringIsConstant) {
     // Cache the string constants to avoid making obvious duplicate strings that
@@ -8400,8 +8406,7 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 
   // Create a new string global.
   GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(),
-                                          StringIsConstant,
-                                          GlobalVariable::PrivateLinkage, Init,
+                                          StringIsConstant, Linkage, Init,
                                           ".str");
   GV->setAlignment(get_constant_alignment(exp) / 8);
 

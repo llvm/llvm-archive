@@ -8383,10 +8383,13 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
 Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   Constant *Init = TreeConstantToLLVM::ConvertSTRING_CST(exp);
 
-  // Support -fwritable-strings. However, ignores it if exp is a CFString and
+  // Support -fwritable-strings.
+  bool StringIsConstant = !flag_writable_strings;
+#ifdef CONFIG_DARWIN_H
+  // However, ignores it if exp is a CFString and
   // -fconstant-cfstring (default) is set.
-  bool StringIsConstant = !flag_writable_strings ||
-    darwin_constant_cfstring_p(exp);
+  StringIsConstant |= darwin_constant_cfstring_p(exp);
+#endif
 
   // Literal cstrings in data section needs a label the linker can
   // see to prevent it from being merged into its previous label.

@@ -83,28 +83,112 @@ static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
   return NumGPRs < 8 ? NumGPRs : 8;
 }
 
+static bool isSVR4ABI() {
+#if defined(POWERPC_LINUX) && (TARGET_64BIT == 0)
+  return true;
+#else
+  return false;
+#endif
+}
+
+/// _Complex arguments are never split, thus their two scalars are either
+/// passed both in argument registers or both on the stack. Also _Complex
+/// arguments are always passed in general purpose registers, never in
+/// Floating-point registers or vector registers.
+static bool
+llvm_ppc_try_pass_aggregate_custom(tree type, std::vector<const Type*> &ScalarElts,
+                                   const CallingConv::ID &CC,
+                                   struct DefaultABIClient* C) {
+  if (!isSVR4ABI())
+    return false;
+
+  // Eight GPR's are availabe for parameter passing.
+  const unsigned NumArgRegs = 8;
+  unsigned NumGPR = count_num_registers_uses(ScalarElts);
+  const Type *Ty = ConvertType(type);
+  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
+  if (Ty->isSingleValueType()) {
+    if (Ty->isInteger()) {
+      unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+
+      // Determine how many general purpose registers are needed for the
+      // argument.
+      unsigned NumRegs = (TypeSize + 31) / 32;
+
+      // Make sure argument registers are aligned. 64-bit arguments are put in
+      // a register pair which starts with an odd register number.
+      if (TypeSize == 64 && (NumGPR % 2) == 1) {
+	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
+	C->HandlePad(Int32Ty);
+      }
+
+      if (NumGPR > (NumArgRegs - NumRegs)) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
+	  C->HandlePad(Int32Ty);
+	}
+      }
+    } else if (!(Ty->isFloatingPoint() ||
+		 isa<VectorType>(Ty)   ||
+		 isa<PointerType>(Ty))) {
+      abort();
+    }
+
+    C->HandleScalarArgument(Ty, type);
+    ScalarElts.push_back(Ty);
+    return true;
+  }
+  if (TREE_CODE(type) == COMPLEX_TYPE) {
+    unsigned SrcSize = int_size_in_bytes(type);
+    unsigned NumRegs = (SrcSize + 3) / 4;
+    std::vector<const Type*> Elts;
+
+    // This looks very strange, but matches the old code.
+    if (SrcSize == 8) {
+      // Make sure argument registers are aligned. 64-bit arguments are put in
+      // a register pair which starts with an odd register number.
+      if (NumGPR % 2 == 1) {
+	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
+	C->HandlePad(Int32Ty);
+      }
+    }
+
+    if (NumGPR > (NumArgRegs - NumRegs)) {
+      for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+        ScalarElts.push_back(Int32Ty);
+        C->HandlePad(Int32Ty);
+      }
+    }
+    for (unsigned int i = 0; i < NumRegs; ++i) {
+      Elts.push_back(Int32Ty);
+    }
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
+    for (unsigned int i = 0; i < NumRegs; ++i) {
+      C->EnterField(i, STy);
+      C->HandleScalarArgument(Int32Ty, 0);
+      ScalarElts.push_back(Int32Ty);
+      C->ExitField();
+    }
+    return true;
+  }
+  return false;
+}
+
 /// HandleArgument - This is invoked by the target-independent code for each
 /// argument type passed into the function.  It potentially breaks down the
 /// argument and invokes methods on the client that indicate how its pieces
 /// should be handled.  This handles things like decimating structures into
 /// their fields.
-///
-/// _Complex arguments are never split, thus their two scalars are either
-/// passed both in argument registers or both on the stack. Also _Complex
-/// arguments are always passed in general purpose registers, never in
-/// Floating-point registers or vector registers.
 void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 			     Attributes *Attributes) {
   unsigned Size = 0;
   bool DontCheckAlignment = false;
-  // Eight GPR's are availabe for parameter passing.
-  const unsigned NumArgRegs = 8;
-  unsigned NumGPR = count_num_registers_uses(ScalarElts);
   const Type *Ty = ConvertType(type);
   // Figure out if this field is zero bits wide, e.g. {} or [0 x int].  Do
   // not include variable sized fields here.
   std::vector<const Type*> Elts;
-  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
   if (Ty->isVoidTy()) {
     // Handle void explicitly as an opaque type.
     const Type *OpTy = OpaqueType::get(getGlobalContext());
@@ -128,34 +212,9 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
       C.HandleScalarArgument(Ty, type);
       ScalarElts.push_back(Ty);
     }
+  } else if (llvm_ppc_try_pass_aggregate_custom(type, ScalarElts, C.getCallingConv(), &C)) {
+    // Nothing to do.
   } else if (Ty->isSingleValueType()) {
-    if (Ty->isInteger()) {
-      unsigned TypeSize = Ty->getPrimitiveSizeInBits();
-
-      // Determine how many general purpose registers are needed for the
-      // argument.
-      unsigned NumRegs = (TypeSize + 31) / 32;
-
-      // Make sure argument registers are aligned. 64-bit arguments are put in
-      // a register pair which starts with an odd register number.
-      if (TypeSize == 64 && (NumGPR % 2) == 1) {
-	NumGPR++;
-	ScalarElts.push_back(Int32Ty);
-	C.HandlePad(Int32Ty);
-      }
-
-      if (NumGPR > (NumArgRegs - NumRegs)) {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
-	  ScalarElts.push_back(Int32Ty);
-	  C.HandlePad(Int32Ty);
-	}
-      }
-    } else if (!(Ty->isFloatingPoint() ||
-		 isa<VectorType>(Ty)   ||
-		 isa<PointerType>(Ty))) {
-      abort();
-    }
-
     C.HandleScalarArgument(Ty, type);
     ScalarElts.push_back(Ty);
   } else if (LLVM_SHOULD_PASS_AGGREGATE_AS_FCA(type, Ty)) {
@@ -163,63 +222,18 @@ void SVR4ABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
   } else if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty,
 						      C.getCallingConv(),
 						      Elts)) {
-    HOST_WIDE_INT SrcSize = int_size_in_bytes(type);
-
-    // With the SVR4 ABI, the only aggregates which are passed in registers
-    // are _Complex aggregates.
-    assert(TREE_CODE(type) == COMPLEX_TYPE && "Not a _Complex type!");
-
-    switch (SrcSize) {
-    default:
-      abort();
-      break;
-    case 32:
-      // _Complex long double
-      if (NumGPR != 0) {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
-	  ScalarElts.push_back(Int32Ty);
-	  C.HandlePad(Int32Ty);
-	}
+    if (!LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Elts, ScalarElts,
+						 C.isShadowReturn(),
+						 C.getCallingConv()))
+      PassInMixedRegisters(Ty, Elts, ScalarElts);
+    else {
+      C.HandleByValArgument(Ty, type);
+      if (Attributes) {
+	*Attributes |= Attribute::ByVal;
+	*Attributes |= 
+	  Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
-      break;
-    case 16:
-      // _Complex long long
-      // _Complex double
-      if (NumGPR > (NumArgRegs - 4)) {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
-	  ScalarElts.push_back(Int32Ty);
-	  C.HandlePad(Int32Ty);
-	}
-      }
-      break;
-    case 8:
-      // _Complex int
-      // _Complex long
-      // _Complex float
-
-      // Make sure argument registers are aligned. 64-bit arguments are put in
-      // a register pair which starts with an odd register number.
-      if (NumGPR % 2 == 1) {
-	NumGPR++;
-	ScalarElts.push_back(Int32Ty);
-	C.HandlePad(Int32Ty);
-      }
-
-      if (NumGPR > (NumArgRegs - 2)) {
-	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
-	  ScalarElts.push_back(Int32Ty);
-	  C.HandlePad(Int32Ty);
-	}
-      }
-      break;
-    case 4:
-    case 2:
-      // _Complex short
-      // _Complex char
-      break;
     }
-
-    PassInMixedRegisters(Ty, Elts, ScalarElts);
   } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
     C.HandleByValArgument(Ty, type);
     if (Attributes) {

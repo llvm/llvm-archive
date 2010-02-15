@@ -140,7 +140,7 @@ static Value *BuildDup(const Type *ResultType, Value *Val,
   assert(VTy && "expected a vector type");
   const Type *ElTy = VTy->getElementType();
   if (Val->getType() != ElTy) {
-    assert(!ElTy->isFloatingPoint() &&
+    assert(!ElTy->isFloatingPointTy() &&
            "only integer types expected to be promoted");
     Val = Builder.CreateTrunc(Val, ElTy);
   }
@@ -1652,7 +1652,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     assert(VTy && "expected a vector type for vset_lane vector operand");
     const Type *ElTy = VTy->getElementType();
     if (Ops[0]->getType() != ElTy) {
-      assert(!ElTy->isFloatingPoint() &&
+      assert(!ElTy->isFloatingPointTy() &&
              "only integer types expected to be promoted");
       Ops[0] = Builder.CreateTrunc(Ops[0], ElTy);
     }
@@ -2560,12 +2560,12 @@ static bool count_num_registers_uses(std::vector<const Type*> &ScalarElts,
         default:
           assert(0);
       }
-    } else if (Ty->isInteger() || isa<PointerType>(Ty) ||
+    } else if (Ty->isIntegerTy() || isa<PointerType>(Ty) ||
                Ty==Type::getVoidTy(Context)) {
       ;
     } else {
       // Floating point scalar argument.
-      assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
+      assert(Ty->isFloatingPointTy() && Ty->isPrimitiveType() &&
              "Expecting a floating point primitive type!");
       switch (Ty->getTypeID())
       {

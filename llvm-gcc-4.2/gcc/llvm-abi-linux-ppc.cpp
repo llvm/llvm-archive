@@ -66,7 +66,7 @@ static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
       abort();
     } else if (isa<PointerType>(Ty)) {
       NumGPRs++;
-    } else if (Ty->isInteger()) {
+    } else if (Ty->isIntegerTy()) {
       unsigned TypeSize = Ty->getPrimitiveSizeInBits();
       unsigned NumRegs = (TypeSize + 31) / 32;
 
@@ -76,7 +76,7 @@ static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
       ;
     } else {
       // Floating point scalar argument.
-      assert(Ty->isFloatingPoint() && Ty->isPrimitiveType() &&
+      assert(Ty->isFloatingPointTy() && Ty->isPrimitiveType() &&
              "Expecting a floating point primitive type!");
     }
   }
@@ -108,7 +108,7 @@ llvm_ppc_try_pass_aggregate_custom(tree type, std::vector<const Type*> &ScalarEl
   const Type *Ty = ConvertType(type);
   const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
   if (Ty->isSingleValueType()) {
-    if (Ty->isInteger()) {
+    if (Ty->isIntegerTy()) {
       unsigned TypeSize = Ty->getPrimitiveSizeInBits();
 
       // Determine how many general purpose registers are needed for the
@@ -129,7 +129,7 @@ llvm_ppc_try_pass_aggregate_custom(tree type, std::vector<const Type*> &ScalarEl
 	  C->HandlePad(Int32Ty);
 	}
       }
-    } else if (!(Ty->isFloatingPoint() ||
+    } else if (!(Ty->isFloatingPointTy() ||
 		 isa<VectorType>(Ty)   ||
 		 isa<PointerType>(Ty))) {
       abort();
@@ -440,7 +440,7 @@ void SVR4ABI::PassInMixedRegisters(const Type *Ty,
     if (InSize < Size) {
       unsigned N = STy->getNumElements();
       const llvm::Type *LastEltTy = STy->getElementType(N-1);
-      if (LastEltTy->isInteger())
+      if (LastEltTy->isIntegerTy())
 	LastEltSizeDiff = 
 	  getTargetData().getTypeAllocSize(LastEltTy) - (Size - InSize);
     }

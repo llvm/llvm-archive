@@ -347,7 +347,7 @@ namespace {
           // If this is just a mismatch between integer types, this is due
           // to K&R prototypes, where the forward proto defines the arg as int
           // and the actual impls is a short or char.
-          assert(ArgVal->getType()->isInteger(32) && LLVMTy->isInteger() &&
+          assert(ArgVal->getType()->isIntegerTy(32) && LLVMTy->isIntegerTy() &&
                  "Lowerings don't match?");
           ArgVal = Builder.CreateTrunc(ArgVal, LLVMTy,NameStack.back().c_str());
         }
@@ -1254,7 +1254,7 @@ Value *TreeToLLVM::CastToType(unsigned opcode, Value *V, const Type* Ty) {
   // Handle 'trunc (zext i1 X to T2) to i1' as X, because this occurs all over
   // the place.
   if (ZExtInst *CI = dyn_cast<ZExtInst>(V))
-    if (Ty->isInteger(1) && CI->getOperand(0)->getType()->isInteger(1))
+    if (Ty->isIntegerTy(1) && CI->getOperand(0)->getType()->isIntegerTy(1))
       return CI->getOperand(0);
 
   return Builder.CreateCast(Instruction::CastOps(opcode), V, Ty,
@@ -1438,14 +1438,14 @@ static unsigned CountAggregateElements(const Type *Ty) {
 /// contains any floating point elements.
 
 static bool containsFPField(const Type *LLVMTy) {
-  if (LLVMTy->isFloatingPoint())
+  if (LLVMTy->isFloatingPointTy())
     return true;
   const StructType* STy = dyn_cast<StructType>(LLVMTy);
   if (STy) {
     for (StructType::element_iterator I = STy->element_begin(),
                                       E = STy->element_end(); I != E; I++) {
       const Type *Ty = *I;
-      if (Ty->isFloatingPoint())
+      if (Ty->isFloatingPointTy())
         return true;
       if (isa<StructType>(Ty) && containsFPField(Ty))
         return true;
@@ -1922,7 +1922,7 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
   if (FPPred == ~0U) {
     Cond = Emit(exp_cond, 0);
     // Comparison against zero to convert the result to i1.
-    if (!Cond->getType()->isInteger(1))
+    if (!Cond->getType()->isIntegerTy(1))
       Cond = Builder.CreateIsNotNull(Cond, "toBool");
   } else {
     Cond = EmitCompare(exp_cond, UIPred, SIPred, FPPred, Type::getInt1Ty(Context));
@@ -2385,7 +2385,7 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     // The number of loads needed to read the entire bitfield.
     unsigned Strides = 1 + (LV.BitStart + LV.BitSize - 1) / ValSizeInBits;
 
-    assert(ValTy->isInteger() && "Invalid bitfield lvalue!");
+    assert(ValTy->isIntegerTy() && "Invalid bitfield lvalue!");
     assert(ValSizeInBits > LV.BitStart && "Bad bitfield lvalue!");
     assert(ValSizeInBits >= LV.BitSize && "Bad bitfield lvalue!");
     assert(2*ValSizeInBits > LV.BitSize+LV.BitStart && "Bad bitfield lvalue!");
@@ -3133,7 +3133,7 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   // The number of stores needed to write the entire bitfield.
   unsigned Strides = 1 + (LV.BitStart + LV.BitSize - 1) / ValSizeInBits;
 
-  assert(ValTy->isInteger() && "Invalid bitfield lvalue!");
+  assert(ValTy->isIntegerTy() && "Invalid bitfield lvalue!");
   assert(ValSizeInBits > LV.BitStart && "Bad bitfield lvalue!");
   assert(ValSizeInBits >= LV.BitSize && "Bad bitfield lvalue!");
   assert(2*ValSizeInBits > LV.BitSize+LV.BitStart && "Bad bitfield lvalue!");
@@ -3330,7 +3330,7 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
 Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   if (!DestLoc) {
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
-    if (V->getType()->isFPOrFPVector())
+    if (V->getType()->isFPOrFPVectorTy())
       return Builder.CreateFNeg(V);
     if (!isa<PointerType>(V->getType())) {
       bool HasNSW = !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp));
@@ -3353,7 +3353,7 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: -(a+ib) = -a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  if (R->getType()->isFloatingPoint()) {
+  if (R->getType()->isFloatingPointTy()) {
     R = Builder.CreateFNeg(R);
     I = Builder.CreateFNeg(I);
   } else {
@@ -3375,7 +3375,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
   // Handle complex numbers: ~(a+ib) = a + i*-b
   Value *R, *I;
   EmitLoadFromComplex(R, I, Tmp);
-  if (I->getType()->isFloatingPoint())
+  if (I->getType()->isFloatingPointTy())
     I = Builder.CreateFNeg(I);
   else
     I = Builder.CreateNeg(I);
@@ -3385,7 +3385,7 @@ Value *TreeToLLVM::EmitCONJ_EXPR(tree exp, const MemRef *DestLoc) {
 
 Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-  if (!Op->getType()->isFloatingPoint()) {
+  if (!Op->getType()->isFloatingPointTy()) {
     Value *OpN = Builder.CreateNeg(Op, (Op->getNameStr()+"neg").c_str());
     ICmpInst::Predicate pred = TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0))) ?
       ICmpInst::ICMP_UGE : ICmpInst::ICMP_SGE;
@@ -3435,9 +3435,9 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
             "Expected integer type here");
     Ty = ConvertType(TREE_TYPE(exp));
     Op = CastToType(Instruction::PtrToInt, Op, Ty);
-  } else if (Ty->isFloatingPoint() ||
+  } else if (Ty->isFloatingPointTy() ||
              (isa<VectorType>(Ty) &&
-              cast<VectorType>(Ty)->getElementType()->isFloatingPoint())) {
+              cast<VectorType>(Ty)->getElementType()->isFloatingPointTy())) {
     Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
   }
   return BitCastToType(Builder.CreateNot(Op,
@@ -3536,9 +3536,9 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
     Opc == Instruction::Xor;
   const Type *ResTy = Ty;
   if (isLogicalOp &&
-      (Ty->isFloatingPoint() ||
+      (Ty->isFloatingPointTy() ||
        (isa<VectorType>(Ty) &&
-        cast<VectorType>(Ty)->getElementType()->isFloatingPoint()))) {
+        cast<VectorType>(Ty)->getElementType()->isFloatingPointTy()))) {
     Ty = getSuitableBitCastIntType(Ty);
     LHS = BitCastToType(LHS, Ty);
     RHS = BitCastToType(RHS, Ty);
@@ -3693,7 +3693,7 @@ Value *TreeToLLVM::EmitMinMaxExpr(tree exp, unsigned UIPred, unsigned SIPred,
   RHS = CastToType(opcode, RHS, Ty);
 
   Value *Compare;
-  if (LHS->getType()->isFloatingPoint())
+  if (LHS->getType()->isFloatingPointTy())
     Compare = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
   else if (TYPE_UNSIGNED(TREE_TYPE(exp)))
     Compare = Builder.CreateICmp(ICmpInst::Predicate(UIPred), LHS, RHS);
@@ -6362,7 +6362,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   Value *Offset = Emit(TREE_VALUE(arglist), 0);
   Value *Handler = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
 
-  Intrinsic::ID IID = IntPtr->isInteger(32) ?
+  Intrinsic::ID IID = IntPtr->isIntegerTy(32) ?
     Intrinsic::eh_return_i32 : Intrinsic::eh_return_i64;
 
   Offset = Builder.CreateIntCast(Offset, IntPtr, true);
@@ -6640,7 +6640,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   switch (TREE_CODE(exp)) {
   default: TODO(exp);
   case PLUS_EXPR: // (a+ib) + (c+id) = (a+c) + i(b+d)
-    if (LHSr->getType()->isFloatingPoint()) {
+    if (LHSr->getType()->isFloatingPointTy()) {
       DSTr = Builder.CreateFAdd(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateFAdd(LHSi, RHSi, "tmpi");
     } else {
@@ -6649,7 +6649,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     }
     break;
   case MINUS_EXPR: // (a+ib) - (c+id) = (a-c) + i(b-d)
-    if (LHSr->getType()->isFloatingPoint()) {
+    if (LHSr->getType()->isFloatingPointTy()) {
       DSTr = Builder.CreateFSub(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateFSub(LHSi, RHSi, "tmpi");
     } else {
@@ -6658,7 +6658,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     }
     break;
   case MULT_EXPR: { // (a+ib) * (c+id) = (ac-bd) + i(ad+cb)
-    if (LHSr->getType()->isFloatingPoint()) {
+    if (LHSr->getType()->isFloatingPointTy()) {
       Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
       Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
       DSTr = Builder.CreateFSub(Tmp1, Tmp2);        // ac-bd
@@ -6679,7 +6679,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
   }
   case RDIV_EXPR: { // (a+ib) / (c+id) = ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
     // RDIV_EXPR should always be floating point.
-    assert (LHSr->getType()->isFloatingPoint());
+    assert (LHSr->getType()->isFloatingPointTy());
     Value *Tmp1 = Builder.CreateFMul(LHSr, RHSr); // a*c
     Value *Tmp2 = Builder.CreateFMul(LHSi, RHSi); // b*d
     Value *Tmp3 = Builder.CreateFAdd(Tmp1, Tmp2); // ac+bd
@@ -6696,7 +6696,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     break;
   }
   case EQ_EXPR:   // (a+ib) == (c+id) = (a == c) & (b == d)
-    if (LHSr->getType()->isFloatingPoint()) {
+    if (LHSr->getType()->isFloatingPointTy()) {
       DSTr = Builder.CreateFCmpOEQ(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateFCmpOEQ(LHSi, RHSi, "tmpi");
     } else {
@@ -6705,7 +6705,7 @@ Value *TreeToLLVM::EmitComplexBinOp(tree exp, const MemRef *DestLoc) {
     }
     return Builder.CreateAnd(DSTr, DSTi);
   case NE_EXPR:   // (a+ib) != (c+id) = (a != c) | (b != d)
-    if (LHSr->getType()->isFloatingPoint()) {
+    if (LHSr->getType()->isFloatingPointTy()) {
       DSTr = Builder.CreateFCmpUNE(LHSr, RHSr, "tmpr");
       DSTi = Builder.CreateFCmpUNE(LHSi, RHSi, "tmpi");
     } else {
@@ -7038,7 +7038,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
 
   if (isBitfield(FieldDecl)) {
     // If this is a bitfield, the declared type must be an integral type.
-    assert(FieldTy->isInteger() && "Invalid bitfield");
+    assert(FieldTy->isIntegerTy() && "Invalid bitfield");
 
     assert(DECL_SIZE(FieldDecl) &&
            TREE_CODE(DECL_SIZE(FieldDecl)) == INTEGER_CST &&
@@ -7053,7 +7053,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // things that are difficult to clean up later.  This occurs in cases like
     // "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing y.
     // We want to access the field as a ulong, not as a uint with an offset.
-    if (LLVMFieldTy->isInteger() &&
+    if (LLVMFieldTy->isIntegerTy() &&
         LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize &&
         LLVMFieldTy->getPrimitiveSizeInBits() ==
         TD.getTypeAllocSizeInBits(LLVMFieldTy))
@@ -7420,7 +7420,7 @@ Constant *TreeConstantToLLVM::ConvertINTEGER_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  assert(Ty->isFloatingPoint() && "Integer REAL_CST?");
+  assert(Ty->isFloatingPointTy() && "Integer REAL_CST?");
   long RealArr[2];
   union {
     int UArr[2];
@@ -7506,11 +7506,11 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
   unsigned Len = (unsigned)TREE_STRING_LENGTH(exp);
 
   std::vector<Constant*> Elts;
-  if (ElTy->isInteger(8)) {
+  if (ElTy->isIntegerTy(8)) {
     const unsigned char *InStr =(const unsigned char *)TREE_STRING_POINTER(exp);
     for (unsigned i = 0; i != Len; ++i)
       Elts.push_back(ConstantInt::get(Type::getInt8Ty(Context), InStr[i]));
-  } else if (ElTy->isInteger(16)) {
+  } else if (ElTy->isIntegerTy(16)) {
     assert((Len&1) == 0 &&
            "Length in bytes should be a multiple of element size");
     const uint16_t *InStr =
@@ -7524,7 +7524,7 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       else
         Elts.push_back(ConstantInt::get(Type::getInt16Ty(Context), ByteSwap_16(InStr[i])));
     }
-  } else if (ElTy->isInteger(32)) {
+  } else if (ElTy->isIntegerTy(32)) {
     assert((Len&3) == 0 &&
            "Length in bytes should be a multiple of element size");
     const uint32_t *InStr = (const uint32_t *)TREE_STRING_POINTER(exp);
@@ -7961,7 +7961,7 @@ AddBitFieldToRecordConstant(ConstantInt *ValC, uint64_t GCCFieldOffsetInBits) {
   if (GCCFieldOffsetInBits < NextFieldByteStart*8) {
     unsigned ValBitSize = ValC->getBitWidth();
     assert(!ResultElts.empty() && "Bitfield starts before first element?");
-    assert(ResultElts.back()->getType()->isInteger(8) &&
+    assert(ResultElts.back()->getType()->isIntegerTy(8) &&
            isa<ConstantInt>(ResultElts.back()) &&
            "Merging bitfield with non-bitfield value?");
     assert(NextFieldByteStart*8 - GCCFieldOffsetInBits < 8 &&

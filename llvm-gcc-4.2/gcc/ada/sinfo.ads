@@ -1149,7 +1149,7 @@ package Sinfo is
 
    --  Is_Protected_Subprogram_Body (Flag7-Sem)
    --    A flag set in a Subprogram_Body block to indicate that it is the
-   --    implemenation of a protected subprogram. Such a body needs cleanup
+   --    implementation of a protected subprogram. Such a body needs cleanup
    --    handler to make sure that the associated protected object is unlocked
    --    when the subprogram completes.
 

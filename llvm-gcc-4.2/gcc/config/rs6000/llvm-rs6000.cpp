@@ -395,7 +395,7 @@ static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
     const Type *Ty = ScalarElts[i];
     if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
       abort();
-    } else if (isa<PointerType>(Ty)) {
+    } else if (Ty->isPointerTy()) {
       NumGPRs++;
     } else if (Ty->isIntegerTy()) {
       unsigned TypeSize = Ty->getPrimitiveSizeInBits();
@@ -453,8 +453,8 @@ bool llvm_rs6000_try_pass_aggregate_custom(tree type,
 	}
       }
     } else if (!(Ty->isFloatingPointTy() ||
-		 isa<VectorType>(Ty)   ||
-		 isa<PointerType>(Ty))) {
+		 Ty->isVectorTy()   ||
+		 Ty->isPointerTy())) {
       abort();
     }
 

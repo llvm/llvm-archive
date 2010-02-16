@@ -655,7 +655,7 @@ static bool llvm_x86_is_all_integer_types(const Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
     const Type *STy = I->get();
-    if (!STy->isIntOrIntVectorTy() && !isa<PointerType>(STy))
+    if (!STy->isIntOrIntVectorTy() && !STy->isPointerTy())
       return false;
   }
   return true;
@@ -688,7 +688,7 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
     // (which can be picked as the type for a union of 16 bytes) is not fine, 
     // as loads and stores of it get only 10 bytes.
     if (EltTy->isIntegerTy(32) || EltTy->isIntegerTy(64) ||
-        EltTy->isFloatTy() || EltTy->isDoubleTy() || isa<PointerType>(EltTy)) {
+        EltTy->isFloatTy() || EltTy->isDoubleTy() || EltTy->isPointerTy()) {
       Elts.push_back(EltTy);
       continue;
     }
@@ -757,7 +757,7 @@ static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
       else
         // All other vector scalar values are passed in XMM registers.
         ++NumXMMs;
-    } else if (Ty->isIntegerTy() || isa<PointerType>(Ty)) {
+    } else if (Ty->isIntegerTy() || Ty->isPointerTy()) {
       ++NumGPRs;
     } else if (Ty->isVoidTy()) {
       // Padding bytes that are not passed anywhere
@@ -1374,7 +1374,7 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
   Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestFieldNo);
   Idxs[2] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestElemNo);
   Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
-  if (isa<VectorType>(STy->getElementType(SrcFieldNo))) {
+  if (STy->getElementType(SrcFieldNo)->isVectorTy()) {
     Value *ElemIndex = ConstantInt::get(Type::getInt32Ty(Context), SrcElemNo);
     Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");
     Builder.CreateStore(EVIElem, GEP, isVolatile);
@@ -1438,7 +1438,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     } 
 
     // Special treatement for _Complex.
-    if (isa<StructType>(DestElemType)) {
+    if (DestElemType->isStructTy()) {
       llvm::Value *Idxs[3];
       Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
       Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DNO);

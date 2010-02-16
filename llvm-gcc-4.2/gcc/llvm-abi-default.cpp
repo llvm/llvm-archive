@@ -11,7 +11,7 @@ bool DefaultABI::isShadowReturn() const { return C.isShadowReturn(); }
 void DefaultABI::HandleReturnType(tree type, tree fn, bool isBuiltin) {
   unsigned Offset = 0;
   const Type *Ty = ConvertType(type);
-  if (isa<VectorType>(Ty)) {
+  if (Ty->isVectorTy()) {
     // Vector handling is weird on x86.  In particular builtin and
     // non-builtin function of the same return types can use different
     // calling conventions.
@@ -78,7 +78,7 @@ void DefaultABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
     const Type *PtrTy = Ty->getPointerTo();
     C.HandleByInvisibleReferenceArgument(PtrTy, type);
     ScalarElts.push_back(PtrTy);
-  } else if (isa<VectorType>(Ty)) {
+  } else if (Ty->isVectorTy()) {
     if (LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(type)) {
       PassInIntegerRegisters(type, ScalarElts, 0, false);
     } else if (LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(type)) {

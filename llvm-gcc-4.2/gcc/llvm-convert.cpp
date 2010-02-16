@@ -223,7 +223,7 @@ static void llvm_store_scalar_argument(Value *Loc, Value *ArgVal,
     // Not clear what this is supposed to do on big endian machines...
     assert(!BYTES_BIG_ENDIAN && "Unsupported case - please report");
     // Do byte wise store because actual argument type does not match LLVMTy.
-    assert(isa<IntegerType>(ArgVal->getType()) && "Expected an integer value!");
+    assert(ArgVal->getType()->isIntegerTy() && "Expected an integer value!");
     const Type *StoreType = IntegerType::get(Context, RealSize * 8);
     Loc = Builder.CreateBitCast(Loc, StoreType->getPointerTo());
     if (ArgVal->getType()->getPrimitiveSizeInBits() >=
@@ -334,7 +334,7 @@ namespace {
                               unsigned RealSize = 0) {
       Value *ArgVal = AI;
       if (ArgVal->getType() != LLVMTy) {
-        if (isa<PointerType>(ArgVal->getType()) && isa<PointerType>(LLVMTy)) {
+        if (ArgVal->getType()->isPointerTy() && LLVMTy->isPointerTy()) {
           // If this is GCC being sloppy about pointer types, insert a bitcast.
           // See PR1083 for an example.
           ArgVal = Builder.CreateBitCast(ArgVal, LLVMTy);
@@ -642,7 +642,7 @@ void TreeToLLVM::StartFunctionBody() {
     const Type *ArgTy = ConvertType(TREE_TYPE(Args));
     bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
     if (isInvRef ||
-        (isa<VectorType>(ArgTy) &&
+        (ArgTy->isVectorTy() &&
          LLVM_SHOULD_PASS_VECTOR_USING_BYVAL_ATTR(TREE_TYPE(Args))) ||
         (!ArgTy->isSingleValueType() &&
          isPassedByVal(TREE_TYPE(Args), ArgTy, ScalarArgs,
@@ -1130,7 +1130,7 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
           // FIXME: The vector stuff isn't straight-forward. Sometimes X86 can
           // pass it back as a scalar value. Disable checking if it's a
           // vector. This should be made better, though.
-          isa<VectorType>(ConvertType(TREE_TYPE(exp))) ||
+          ConvertType(TREE_TYPE(exp))->isVectorTy() ||
           // FIXME: The handling of MODIFY_EXPR doesn't always produce results
           // that pass this check; the return type might be the LHS type or
           // the RHS type, neither of which is guaranteed to be the
@@ -1447,7 +1447,7 @@ static bool containsFPField(const Type *LLVMTy) {
       const Type *Ty = *I;
       if (Ty->isFloatingPointTy())
         return true;
-      if (isa<StructType>(Ty) && containsFPField(Ty))
+      if (Ty->isStructTy() && containsFPField(Ty))
         return true;
       const ArrayType *ATy = dyn_cast<ArrayType>(Ty);
       if (ATy && containsFPField(ATy->getElementType()))
@@ -2520,7 +2520,7 @@ static Value *llvm_load_scalar_argument(Value *L,
 
   // Not clear what this is supposed to do on big endian machines...
   assert(!BYTES_BIG_ENDIAN && "Unsupported case - please report");
-  assert(isa<IntegerType>(LLVMTy) && "Expected an integer value!");
+  assert(LLVMTy->isIntegerTy() && "Expected an integer value!");
   const Type *LoadType = IntegerType::get(Context, RealSize * 8);
   L = Builder.CreateBitCast(L, LoadType->getPointerTo());
   Value *Val = Builder.CreateLoad(L);
@@ -2888,7 +2888,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee)) {
     if (CallOperands.empty() && CE->getOpcode() == Instruction::BitCast) {
       Constant *RealCallee = CE->getOperand(0);
-      assert(isa<PointerType>(RealCallee->getType()) &&
+      assert(RealCallee->getType()->isPointerTy() &&
              "Bitcast to ptr not from ptr?");
       const PointerType *RealPT = cast<PointerType>(RealCallee->getType());
       if (const FunctionType *RealFT =
@@ -3312,15 +3312,15 @@ Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
 
   // If the source is a pointer, use ptrtoint to get it to something
   // bitcast'able.  This supports things like v_c_e(foo*, float).
-  if (isa<PointerType>(OpVal->getType())) {
-    if (isa<PointerType>(DestTy))   // ptr->ptr is a simple bitcast.
+  if (OpVal->getType()->isPointerTy()) {
+    if (DestTy->isPointerTy())   // ptr->ptr is a simple bitcast.
       return Builder.CreateBitCast(OpVal, DestTy);
     // Otherwise, ptrtoint to intptr_t first.
     OpVal = Builder.CreatePtrToInt(OpVal, TD.getIntPtrType(Context));
   }
 
   // If the destination type is a pointer, use inttoptr.
-  if (isa<PointerType>(DestTy))
+  if (DestTy->isPointerTy())
     return Builder.CreateIntToPtr(OpVal, DestTy);
 
   // Otherwise, use a bitcast.
@@ -3332,7 +3332,7 @@ Value *TreeToLLVM::EmitNEGATE_EXPR(tree exp, const MemRef *DestLoc) {
     Value *V = Emit(TREE_OPERAND(exp, 0), 0);
     if (V->getType()->isFPOrFPVectorTy())
       return Builder.CreateFNeg(V);
-    if (!isa<PointerType>(V->getType())) {
+    if (!V->getType()->isPointerTy()) {
       bool HasNSW = !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp));
       return HasNSW ? Builder.CreateNSWNeg(V) : Builder.CreateNeg(V);
     }
@@ -3430,13 +3430,13 @@ static const Type *getSuitableBitCastIntType(const Type *Ty) {
 Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
   Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
   const Type *Ty = Op->getType();
-  if (isa<PointerType>(Ty)) {
+  if (Ty->isPointerTy()) {
     assert (TREE_CODE(TREE_TYPE(exp)) == INTEGER_TYPE &&
             "Expected integer type here");
     Ty = ConvertType(TREE_TYPE(exp));
     Op = CastToType(Instruction::PtrToInt, Op, Ty);
   } else if (Ty->isFloatingPointTy() ||
-             (isa<VectorType>(Ty) &&
+             (Ty->isVectorTy() &&
               cast<VectorType>(Ty)->getElementType()->isFloatingPointTy())) {
     Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
   }
@@ -3509,9 +3509,9 @@ Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
 ///
 Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  if (isa<PointerType>(Ty))
+  if (Ty->isPointerTy())
     return EmitPtrBinOp(exp, Opc);   // Pointer arithmetic!
-  if (isa<StructType>(Ty))
+  if (Ty->isStructTy())
     return EmitComplexBinOp(exp, DestLoc);
   assert(Ty->isSingleValueType() && DestLoc == 0 &&
          "Bad binary operation!");
@@ -3537,7 +3537,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   const Type *ResTy = Ty;
   if (isLogicalOp &&
       (Ty->isFloatingPointTy() ||
-       (isa<VectorType>(Ty) &&
+       (Ty->isVectorTy() &&
         cast<VectorType>(Ty)->getElementType()->isFloatingPointTy()))) {
     Ty = getSuitableBitCastIntType(Ty);
     LHS = BitCastToType(LHS, Ty);
@@ -3632,7 +3632,7 @@ Value *TreeToLLVM::EmitTruthOp(tree exp, unsigned Opc) {
 Value *TreeToLLVM::EmitShiftOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   assert(DestLoc == 0 && "aggregate shift?");
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  assert(!isa<PointerType>(Ty) && "Pointer arithmetic!?");
+  assert(!Ty->isPointerTy() && "Pointer arithmetic!?");
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
@@ -3647,7 +3647,7 @@ Value *TreeToLLVM::EmitRotateOp(tree exp, unsigned Opc1, unsigned Opc2) {
   Value *In  = Emit(TREE_OPERAND(exp, 0), 0);
   Value *Amt = Emit(TREE_OPERAND(exp, 1), 0);
 
-  if (isa<PointerType>(In->getType())) {
+  if (In->getType()->isPointerTy()) {
     const Type *Ty =
       IntegerType::get(Context,
                        TYPE_PRECISION(TREE_TYPE (TREE_OPERAND (exp, 0))));
@@ -4641,8 +4641,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         const Type *OTy = (Match < CallResultTypes.size())
           ? CallResultTypes[Match] : 0;
         if (OTy && OTy != OpTy) {
-          if (!(isa<IntegerType>(OTy) || isa<PointerType>(OTy)) ||
-              !(isa<IntegerType>(OpTy) || isa<PointerType>(OpTy))) {
+          if (!(OTy->isIntegerTy() || OTy->isPointerTy()) ||
+              !(OpTy->isIntegerTy() || OpTy->isPointerTy())) {
             error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
@@ -4861,7 +4861,7 @@ Value *TreeToLLVM::BuildVector(Value *Elt, ...) {
 /// Undef values may be specified by passing in -1 as the result value.
 ///
 Value *TreeToLLVM::BuildVectorShuffle(Value *InVec1, Value *InVec2, ...) {
-  assert(isa<VectorType>(InVec1->getType()) &&
+  assert(InVec1->getType()->isVectorTy() &&
          InVec1->getType() == InVec2->getType() && "Invalid shuffle!");
   unsigned NumElements = cast<VectorType>(InVec1->getType())->getNumElements();
 
@@ -7607,7 +7607,7 @@ Constant *TreeConstantToLLVM::ConvertBinOp_CST(tree exp) {
   Constant *RHS = Convert(TREE_OPERAND(exp, 1));
   bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp,1)));
   Instruction::CastOps opcode;
-  if (isa<PointerType>(LHS->getType())) {
+  if (LHS->getType()->isPointerTy()) {
     const Type *IntPtrTy = getTargetData().getIntPtrType(Context);
     opcode = CastInst::getCastOpcode(LHS, LHSIsSigned, IntPtrTy, false);
     LHS = TheFolder->CreateCast(opcode, LHS, IntPtrTy);

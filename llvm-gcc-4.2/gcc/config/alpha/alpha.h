@@ -20,6 +20,13 @@ along with GCC; see the file COPYING.  If not, write to
 the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
+/* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+#undef TARGET_LONG_DOUBLE_128
+#define TARGET_LONG_DOUBLE_128 0
+#endif
+/* LLVM LOCAL end */
+
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()			\
   do							\
@@ -1605,6 +1612,7 @@ do {							\
  */
 #define LLVM_TARGET_NAME Alpha
 
+#define TARGET_ALPHA
 
 /* LLVM_TARGET_INTRINSIC_LOWER - To handle builtins, we want to expand the
  * invocation into normal LLVM code.  If the target can handle the builtin, this

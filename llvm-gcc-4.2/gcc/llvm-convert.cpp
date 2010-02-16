@@ -622,7 +622,7 @@ void TreeToLLVM::StartFunctionBody() {
 
   // Rename and alloca'ify real arguments.
   FunctionPrologArgumentConversion Client(FnDecl, AI, Builder, CallingConv);
-  TheLLVMABI ABIConverter(Client);
+  DefaultABI ABIConverter(Client);
 
   // Handle the DECL_RESULT.
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
@@ -2831,7 +2831,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   FunctionCallArgumentConversion Client(CallOperands, FTy, DestLoc,
                                         CALL_EXPR_RETURN_SLOT_OPT(exp),
                                         Builder, CallingConvention);
-  TheLLVMABI ABIConverter(Client);
+  DefaultABI ABIConverter(Client);
 
   // Handle the result, including struct returns.
   ABIConverter.HandleReturnType(TREE_TYPE(exp),

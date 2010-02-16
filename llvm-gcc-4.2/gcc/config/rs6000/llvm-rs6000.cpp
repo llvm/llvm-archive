@@ -387,6 +387,118 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   return false;
 }
 
+static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
+  unsigned NumGPRs = 0;
+  for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
+    if (NumGPRs >= 8)
+      break;
+    const Type *Ty = ScalarElts[i];
+    if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
+      abort();
+    } else if (isa<PointerType>(Ty)) {
+      NumGPRs++;
+    } else if (Ty->isIntegerTy()) {
+      unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+      unsigned NumRegs = (TypeSize + 31) / 32;
+
+      NumGPRs += NumRegs;
+    } else if (Ty->isVoidTy()) {
+      // Padding bytes that are not passed anywhere
+      ;
+    } else {
+      // Floating point scalar argument.
+      assert(Ty->isFloatingPointTy() && Ty->isPrimitiveType() &&
+             "Expecting a floating point primitive type!");
+    }
+  }
+  return NumGPRs < 8 ? NumGPRs : 8;
+}
+
+/// _Complex arguments are never split, thus their two scalars are either
+/// passed both in argument registers or both on the stack. Also _Complex
+/// arguments are always passed in general purpose registers, never in
+/// Floating-point registers or vector registers.
+bool llvm_rs6000_try_pass_aggregate_custom(tree type,
+					   std::vector<const Type*> &ScalarElts,
+					   const CallingConv::ID &CC,
+					   struct DefaultABIClient* C) {
+  if (!isSVR4ABI())
+    return false;
+
+  // Eight GPR's are availabe for parameter passing.
+  const unsigned NumArgRegs = 8;
+  unsigned NumGPR = count_num_registers_uses(ScalarElts);
+  const Type *Ty = ConvertType(type);
+  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
+  if (Ty->isSingleValueType()) {
+    if (Ty->isIntegerTy()) {
+      unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+
+      // Determine how many general purpose registers are needed for the
+      // argument.
+      unsigned NumRegs = (TypeSize + 31) / 32;
+
+      // Make sure argument registers are aligned. 64-bit arguments are put in
+      // a register pair which starts with an odd register number.
+      if (TypeSize == 64 && (NumGPR % 2) == 1) {
+	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
+	C->HandlePad(Int32Ty);
+      }
+
+      if (NumGPR > (NumArgRegs - NumRegs)) {
+	for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+	  ScalarElts.push_back(Int32Ty);
+	  C->HandlePad(Int32Ty);
+	}
+      }
+    } else if (!(Ty->isFloatingPointTy() ||
+		 isa<VectorType>(Ty)   ||
+		 isa<PointerType>(Ty))) {
+      abort();
+    }
+
+    C->HandleScalarArgument(Ty, type);
+    ScalarElts.push_back(Ty);
+    return true;
+  }
+  if (TREE_CODE(type) == COMPLEX_TYPE) {
+    unsigned SrcSize = int_size_in_bytes(type);
+    unsigned NumRegs = (SrcSize + 3) / 4;
+    std::vector<const Type*> Elts;
+
+    // This looks very strange, but matches the old code.
+    if (SrcSize == 8) {
+      // Make sure argument registers are aligned. 64-bit arguments are put in
+      // a register pair which starts with an odd register number.
+      if (NumGPR % 2 == 1) {
+	NumGPR++;
+	ScalarElts.push_back(Int32Ty);
+	C->HandlePad(Int32Ty);
+      }
+    }
+
+    if (NumGPR > (NumArgRegs - NumRegs)) {
+      for (unsigned int i = 0; i < NumArgRegs - NumGPR; ++i) {
+        ScalarElts.push_back(Int32Ty);
+        C->HandlePad(Int32Ty);
+      }
+    }
+    for (unsigned int i = 0; i < NumRegs; ++i) {
+      Elts.push_back(Int32Ty);
+    }
+    const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
+    for (unsigned int i = 0; i < NumRegs; ++i) {
+      C->EnterField(i, STy);
+      C->HandleScalarArgument(Int32Ty, 0);
+      ScalarElts.push_back(Int32Ty);
+      C->ExitField();
+    }
+    return true;
+  }
+  return false;
+}
+
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed using the byval mechanism. */
 bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {

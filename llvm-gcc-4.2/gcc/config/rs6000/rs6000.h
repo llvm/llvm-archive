@@ -3488,6 +3488,15 @@ enum rs6000_builtins
         TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
 #ifdef LLVM_ABI_H
+
+extern bool llvm_rs6000_try_pass_aggregate_custom(tree,
+						  std::vector<const Type*>&,
+						  const CallingConv::ID &,
+						  struct DefaultABIClient*);
+
+#define LLVM_TRY_PASS_AGGREGATE_CUSTOM(T, E, CC, C)	\
+  llvm_rs6000_try_pass_aggregate_custom((T), (E), (CC), (C))
+
 extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \

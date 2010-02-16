@@ -1274,7 +1274,7 @@ objc_add_property_variable (tree decl)
     }
   if (objc_implementation_context)
     {
-      error ("property cannot be declared inside @implemenation context");
+      error ("property cannot be declared inside @implementation context");
       return;
     }
   else if (!objc_interface_context)
@@ -10241,7 +10241,7 @@ build_v2_category_template (void)
 }
 
 
-/* Build following types which represent each class implemenation.
+/* Build following types which represent each class implementation.
 
   struct class_t {
     struct class_t *isa;
@@ -16809,7 +16809,7 @@ lookup_accessor_in_base_class_impl (tree category_impl, tree base_class, tree me
 /* APPLE LOCAL end radar 4966565 */
 
 /* Main routine to generate code/data for all the property information for 
-   current implemenation (class or category). CLASS is the interface where
+   current implementation (class or category). CLASS is the interface where
    ivars are declared in. CLASS_METHODS is where methods are found which
    could be a class or a category depending on wheter we are implementing
    property of a class or a category.  */

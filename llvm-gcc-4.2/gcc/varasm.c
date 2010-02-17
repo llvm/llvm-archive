@@ -1361,15 +1361,7 @@ notice_global_symbol (tree decl)
 {
   const char **type = &first_global_object_name;
 
-  /* LLVM LOCAL begin */
-  if (
-#ifndef ENABLE_LLVM
-    !MEM_P (DECL_RTL (decl))
-#else
-    (DECL_LLVM (decl), 0)
-#endif
-    || first_global_object_name
-    /* LLVM LOCAL end */
+  if (first_global_object_name
       || !TREE_PUBLIC (decl)
       || DECL_EXTERNAL (decl)
       || !DECL_NAME (decl)
@@ -1377,7 +1369,15 @@ notice_global_symbol (tree decl)
 	  && (TREE_CODE (decl) != VAR_DECL
 	      || (DECL_COMMON (decl)
 		  && (DECL_INITIAL (decl) == 0
-		      || DECL_INITIAL (decl) == error_mark_node)))))
+		      || DECL_INITIAL (decl) == error_mark_node))))
+      /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
+      || !MEM_P (DECL_RTL (decl))
+#else
+      || (DECL_LLVM (decl), 0)
+#endif
+      )
+    /* LLVM LOCAL end */
     return;
 
   /* We win when global object is found, but it is useful to know about weak

@@ -3407,8 +3407,10 @@ objc_build_struct (tree class, tree fields, tree super_name)
       DECL_ALIGN (base) = 1;
       DECL_FIELD_CONTEXT (base) = s;
       /* APPLE LOCAL begin radar 4477797 */
-      if (write_symbols == DWARF2_DEBUG)
-	DECL_IGNORED_P (base) = 1;
+      /* LLVM LOCAL begin */
+      /* Do not check write-symbols in llvm-gcc. */
+	 DECL_IGNORED_P (base) = 1;
+      /* LLVM LOCAL end */
       /* APPLE LOCAL end radar 4477797 */
 #ifdef OBJCPLUS
       DECL_FIELD_IS_BASE (base) = 1;

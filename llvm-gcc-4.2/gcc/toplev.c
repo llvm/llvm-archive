@@ -1926,6 +1926,8 @@ process_options (void)
 
   /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
+  // write_symbols set up debug_hooks. llvm-gcc does not use this hooks
+  // to emit debug info. 
   write_symbols = NO_DEBUG;
 #endif
   /* LLVM LOCAL end */

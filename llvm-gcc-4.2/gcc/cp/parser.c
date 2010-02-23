@@ -23492,6 +23492,13 @@ c_parse_file (void)
 				? dk_no_deferred : dk_no_check);
   error_occurred = cp_parser_translation_unit (the_parser);
   the_parser = NULL;
+  /* APPLE LOCAL begin radar 4874613 */
+  /* Bad parse errors.  Just forget about it.  */
+  if (! global_bindings_p () || current_class_type || decl_namespace_list)
+    return;
+  if (pch_file)
+    c_common_write_pch ();
+  /* APPLE LOCAL end radar 4874613 */
 }
 
 /* This variable must be provided by every front end.  */

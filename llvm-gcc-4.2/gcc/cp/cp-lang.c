@@ -149,12 +149,6 @@ void
 finish_file (void)
 {
   cp_finish_file ();
-  /* APPLE LOCAL begin radar 4874613 */
-  /* Bad parse errors.  Just forget about it.  */
-  if (pch_file && lang_hooks.decls.global_bindings_p () &&
-      !current_class_type && !decl_namespace_list)
-    c_common_write_pch ();
-  /* APPLE LOCAL end radar 4874613 */
 }
 
 #include "gtype-cp.h"

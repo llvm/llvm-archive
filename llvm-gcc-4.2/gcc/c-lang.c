@@ -88,11 +88,6 @@ const char *const tree_code_name[] = {
 void
 finish_file (void)
 {
-  /* APPLE LOCAL begin radar 4874613 */
-  /* Bad parse errors.  Just forget about it.  */
-  if (!errorcount && !sorrycount && pch_file)
-    c_common_write_pch ();
-  /* APPLE LOCAL end radar 4874613 */
 }
 
 #include "gtype-c.h"

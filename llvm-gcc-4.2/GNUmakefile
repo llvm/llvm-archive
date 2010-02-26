@@ -50,9 +50,9 @@ PREFIX = /usr
 # LLVM defaults to enabled.
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
-# LLVM gets installed into /Developer/usr/local, not /usr.
+# LLVM gets installed into /AppleInternal/Developer/LLVM/usr/local, not /usr.
 ifndef DEVELOPER_DIR
-PREFIX = /Developer/usr/llvm-gcc-4.2
+PREFIX = /AppleInternal/Developer/LLVM/usr/llvm-gcc-4.2
 else
 PREFIX = ${DEVELOPER_DIR}/usr/llvm-gcc-4.2
 endif
@@ -69,7 +69,7 @@ endif
 
 ifndef LLVMCORE_PATH
 ifndef DEVELOPER_DIR
-LLVMCORE_PATH = /Developer/usr/local
+LLVMCORE_PATH = /AppleInternal/Developer/LLVM/usr/local
 else
 LLVMCORE_PATH = ${DEVELOPER_DIR}/usr/local
 endif

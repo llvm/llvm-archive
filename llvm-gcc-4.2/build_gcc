@@ -112,7 +112,7 @@ MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 LIBSTDCXX_VERSION=4.2.1
 # LLVM LOCAL begin
 # DO NOT USE $DEST_ROOT to check LIBSTDCXX_VERSION here. Directly use /usr here.
-# $DEST_ROOT is /Developer for llvm-gcc
+# $DEST_ROOT is /AppleInternal/Developer/LLVM for llvm-gcc
 if [ ! -d "/usr/include/c++/$LIBSTDCXX_VERSION" ]; then
   LIBSTDCXX_VERSION=4.0.0
 fi
@@ -575,11 +575,11 @@ done
 # LLVM LOCAL begin
 # Compress manpages
 gzip -f $MDIR/*
-mkdir -p $DEST_DIR/Developer/usr/share/man/man1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
+mkdir -p $DEST_DIR/AppleInternal/Developer/LLVM/usr/share/man/man1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/AppleInternal/Developer/LLVM/usr/share/man/man1/llvm-gcc.1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/AppleInternal/Developer/LLVM/usr/share/man/man1/llvm-g++.1
+gzip -f $DEST_DIR/AppleInternal/Developer/LLVM/usr/share/man/man1/llvm-gcc.1
+gzip -f $DEST_DIR/AppleInternal/Developer/LLVM/usr/share/man/man1/llvm-g++.1
 # LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers
@@ -693,8 +693,8 @@ done
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
     mkdir -p $DEST_DIR/usr/bin
     cd $DEST_DIR/usr/bin
-    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+    ln -s /AppleInternal/Developer/LLVM/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+    ln -s /AppleInternal/Developer/LLVM/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi
 # LLVM LOCAL end
 

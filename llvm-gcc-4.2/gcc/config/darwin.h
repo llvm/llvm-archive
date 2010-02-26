@@ -398,8 +398,7 @@ do {					\
      %{Zbundle:-bundle} \
      %{Zbundle_loader*:-bundle_loader %*} \
      %{client_name*} \
-     %{compatibility_version*:%e-compatibility_version only allowed with -dynamiclib\
-} \
+     %{compatibility_version*:%e-compatibility_version only allowed with -dynamiclib} \
      %{current_version*:%e-current_version only allowed with -dynamiclib} \
      %{Zforce_flat_namespace:-force_flat_namespace} \
      %{Zinstall_name*:%e-install_name only allowed with -dynamiclib} \
@@ -450,6 +449,11 @@ do {					\
    %{Zmultiplydefinedunused*:-multiply_defined_unused %*} \
    "/* APPLE LOCAL mainline 2007-06-01 5238485 */" \
    %{fpie:-pie} \
+   "/* LLVM LOCAL begin <rdar://problem/7651045> */" \
+   %{fPIE:-pie} \
+   %{fno-pie:-no_pie} \
+   %{fno-PIE:-no_pie} \
+   "/* LLVM LOCAL end <rdar://problem/7651045> */" \
    %{prebind} %{noprebind} %{nofixprebinding} %{prebind_all_twolevel_modules} \
    %{read_only_relocs} \
    %{sectcreate*} %{sectorder*} %{seg1addr*} %{segprot*} \

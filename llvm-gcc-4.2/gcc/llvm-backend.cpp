@@ -672,11 +672,19 @@ static void createPerFunctionOptimizationPasses() {
       // -O3 and above.
       OptLevel = CodeGenOpt::Aggressive;
 
+    // Request that addPassesToEmitFile run the Verifier after running
+    // passes which modify the IR.
+#ifndef NDEBUG
+    bool DisableVerify = false;
+#else
+    bool DisableVerify = true;
+#endif
+
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
     if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                        TargetMachine::CGFT_AssemblyFile,
-                                       OptLevel)) {
+                                       OptLevel, DisableVerify)) {
       errs() << "Error interfacing to target machine!\n";
       exit(1);
     }
@@ -757,11 +765,19 @@ static void createPerModuleOptimizationPasses() {
       case 3: OptLevel = CodeGenOpt::Aggressive; break;
       }
 
+      // Request that addPassesToEmitFile run the Verifier after running
+      // passes which modify the IR.
+#ifndef NDEBUG
+      bool DisableVerify = false;
+#else
+      bool DisableVerify = true;
+#endif
+
       // Normal mode, emit a .s file by running the code generator.
       // Note, this also adds codegenerator level optimization passes.
       if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                          TargetMachine::CGFT_AssemblyFile,
-                                         OptLevel)) {
+                                         OptLevel, DisableVerify)) {
         errs() << "Error interfacing to target machine!\n";
         exit(1);
       }

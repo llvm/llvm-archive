@@ -146,6 +146,12 @@
 #
 #  use_fixproto		Set to "yes" if fixproto should be run normally,
 #			"no" if fixproto should never be run.
+#  LLVM LOCAL begin
+#
+#  install_unwind_h  Set to "no" if you are using a libunwind based
+#  header and already have one installed on the system.
+#
+#  LLVM LOCAL end
 
 # The following variables are used in each case-construct to build up the
 # outgoing variables:
@@ -187,6 +193,12 @@ need_64bit_hwint=
 # Default to not using fixproto.  Targets which need fixproto should
 # specifically set this to 'yes'.
 use_fixproto=no
+
+# LLVM LOCAL begin
+# Default to installing unwind.h.  Targets which don't want to install
+# this header should specifically set this to 'no'.
+install_unwind_h=yes
+# LLVM LOCAL end
 
 # Don't carry these over build->host->target.  Please.
 xm_file=
@@ -423,6 +435,8 @@ case ${target} in
     # APPLE LOCAL begin .file/.loc 6349436
   *-*-darwin[12][0-9]*)
     tm_file="${tm_file} darwin9.h darwin10.h"
+    # LLVM LOCAL
+    install_unwind_h=no
     ;;
     # APPLE LOCAL end .file/.loc 6349436
   esac

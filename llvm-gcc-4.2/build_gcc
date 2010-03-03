@@ -773,6 +773,12 @@ else
         ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
     fi
 fi
+
+# Remove unwind.h from the install directory for > 10.6
+if [ $DARWIN_VERS -gt 10 ]; then
+    find $DEST_DIR -name "unwind.h" -print | xargs rm || exit 1
+fi
+
 # LLVM LOCAL end
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1

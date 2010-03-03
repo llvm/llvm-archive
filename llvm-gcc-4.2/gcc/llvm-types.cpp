@@ -387,10 +387,10 @@ namespace {
                                     const Type *NewTy);
     virtual void typeBecameConcrete(const DerivedType *AbsTy);
     
+  public:
     // TypeUsers - For each abstract LLVM type, we keep track of all of the GCC
     // types that point to it.
     std::map<const Type*, std::vector<tree> > TypeUsers;
-  public:
     /// setType - call SET_TYPE_LLVM(type, Ty), associating the type with the
     /// specified tree type.  In addition, if the LLVM type is an abstract type,
     /// we add it to our data structure to track it.
@@ -406,6 +406,8 @@ namespace {
       return SET_TYPE_LLVM(type, Ty);
     }
 
+    void friend readLLVMTypeUsers();
+    void friend writeLLVMTypeUsers();
     void RemoveTypeFromTable(tree type);
     void dump() const;
   };
@@ -494,6 +496,31 @@ void TypeRefinementDatabase::dump() const {
   outs().flush();
 }
 
+// We've just read in a PCH; retrieve the set of GCC types that were
+// known to TypeUsers[], and re-populate it.  Intended to be called
+// once, but harmless if called multiple times, or if no PCH is
+// present.
+void readLLVMTypeUsers() {
+  tree ty;
+  while ((ty = llvm_pop_TypeUsers())) {
+    const Type *NewTy = GET_TYPE_LLVM(ty);
+    std::vector<tree> &NewSlot = TypeDB.TypeUsers[NewTy];
+    if (NewSlot.empty()) NewTy->addAbstractTypeUser(&TypeDB);
+    NewSlot.push_back(ty);
+  }
+}
+
+// Record the set of GCC types currently known to TypeUsers[] inside
+// GCC so they will be preserved in a PCH.  Intended to be called
+// once, just before the PCH is written.
+void writeLLVMTypeUsers() {
+  std::map<const Type*, std::vector<tree> >::iterator
+    I = TypeDB.TypeUsers.begin(),
+    E = TypeDB.TypeUsers.end();
+  for (; I != E; I++)
+    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
+      llvm_push_TypeUsers(I->second[i]);
+}
 //===----------------------------------------------------------------------===//
 //                              Helper Routines
 //===----------------------------------------------------------------------===//

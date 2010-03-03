@@ -7961,6 +7961,28 @@ llvm_note_type_used(tree type)
 {
   VEC_safe_push(tree, gc, llvm_types_used, type);
 }
+
+static GTY(()) VEC(tree,gc) *llvm_TypeUsers;
+
+/* We're about to write a PCH; record the set of GCC types known to
+   the llvm-types.ccp:TypeRefinementDatabase::TypeUsers[] mapping.  */
+void
+llvm_push_TypeUsers(tree type)
+{
+  VEC_safe_push(tree, gc, llvm_TypeUsers, type);
+}
+
+/* We just read in a PCH.  Retrieve the set of types recorded here,
+   used to repopulate the
+   llvm-types.ccp:TypeRefinementDatabase::TypeUsers[] mapping.  */
+tree
+llvm_pop_TypeUsers(void)
+{
+  if (VEC_empty (tree, llvm_TypeUsers))
+    return NULL_TREE;
+  else
+    return VEC_pop(tree, llvm_TypeUsers);
+}
 /* LLVM LOCAL end */
 
 /* APPLE LOCAL begin weak_import on property 6676828 */

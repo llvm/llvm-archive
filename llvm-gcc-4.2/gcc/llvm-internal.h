@@ -102,6 +102,8 @@ void readLLVMTypesStringTable();
 void writeLLVMTypesStringTable();
 void readLLVMValues();
 void writeLLVMValues();
+void readLLVMTypeUsers();
+void writeLLVMTypeUsers();
 void eraseLocalLLVMValues();
 void clearTargetBuiltinCache();
 const char* extractRegisterName(union tree_node*);

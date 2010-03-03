@@ -855,6 +855,7 @@ void llvm_asm_file_end(void) {
   if (flag_pch_file) {
     writeLLVMTypesStringTable();
     writeLLVMValues();
+    writeLLVMTypeUsers();
   }
 
   // Add an llvm.global_ctors global if needed.
@@ -986,6 +987,11 @@ void llvm_emit_code_for_current_function(tree fndecl) {
     TREE_ASM_WRITTEN(fndecl) = 1;
     return;  // Do not process broken code.
   }
+
+  // Random initialization of TypeRefinementDatabase if we're using a
+  // PCH.  Won't work until the GCC PCH has been read in and digested.
+  readLLVMTypeUsers();
+
   timevar_push(TV_LLVM_FUNCS);
 
   // Convert the AST to raw/ugly LLVM code.

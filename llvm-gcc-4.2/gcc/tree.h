@@ -4433,6 +4433,8 @@ extern bool empty_body_p (tree);
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 extern void llvm_note_type_used(tree);
+extern void llvm_push_TypeUsers(tree);
+extern tree llvm_pop_TypeUsers(void);
 #endif
 /* LLVM LOCAL begin */
 

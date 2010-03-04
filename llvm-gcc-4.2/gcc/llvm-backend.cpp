@@ -988,9 +988,16 @@ void llvm_emit_code_for_current_function(tree fndecl) {
     return;  // Do not process broken code.
   }
 
-  // Random initialization of TypeRefinementDatabase if we're using a
-  // PCH.  Won't work until the GCC PCH has been read in and digested.
-  readLLVMTypeUsers();
+  // Initial fill of TypeRefinementDatabase::TypeUsers[] if we're
+  // using a PCH.  Won't work until the GCC PCH has been read in and
+  // digested.
+  {
+    static bool done = false;
+    if (!done && flag_llvm_pch_read) {
+      readLLVMTypeUsers();
+      done = true;
+    }
+  }
 
   timevar_push(TV_LLVM_FUNCS);
 

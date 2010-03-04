@@ -496,10 +496,10 @@ void TypeRefinementDatabase::dump() const {
   outs().flush();
 }
 
-// We've just read in a PCH; retrieve the set of GCC types that were
-// known to TypeUsers[], and re-populate it.  Intended to be called
-// once, but harmless if called multiple times, or if no PCH is
-// present.
+/// readLLVMTypeUsers - We've just read in a PCH; retrieve the set of
+/// GCC types that were known to TypeUsers[], and re-populate it.
+/// Intended to be called once, but harmless if called multiple times,
+/// or if no PCH is present.
 void readLLVMTypeUsers() {
   tree ty;
   while ((ty = llvm_pop_TypeUsers())) {
@@ -510,17 +510,18 @@ void readLLVMTypeUsers() {
   }
 }
 
-// Record the set of GCC types currently known to TypeUsers[] inside
-// GCC so they will be preserved in a PCH.  Intended to be called
-// once, just before the PCH is written.
+/// writeLLVMTypeUSers - Record the set of GCC types currently known
+/// to TypeUsers[] inside GCC so they will be preserved in a PCH.
+/// Intended to be called once, just before the PCH is written.
 void writeLLVMTypeUsers() {
   std::map<const Type*, std::vector<tree> >::iterator
     I = TypeDB.TypeUsers.begin(),
     E = TypeDB.TypeUsers.end();
-  for (; I != E; I++)
+  for (; I != E; ++I)
     for (unsigned i = 0, e = I->second.size(); i != e; ++i)
       llvm_push_TypeUsers(I->second[i]);
 }
+
 //===----------------------------------------------------------------------===//
 //                              Helper Routines
 //===----------------------------------------------------------------------===//

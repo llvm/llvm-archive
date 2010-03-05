@@ -415,7 +415,8 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     // TREE_BLOCK is GCC's lexical block.
     // Recursively create all necessary contexts:
     DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
-    DILexicalBlock lexical_block = DebugFactory.CreateLexicalBlock(context);
+    DILexicalBlock lexical_block = 
+      DebugFactory.CreateLexicalBlock(context, CurLineNo);
     RegionMap[Node] = WeakVH(lexical_block.getNode());
     return DIDescriptor(lexical_block);
   }

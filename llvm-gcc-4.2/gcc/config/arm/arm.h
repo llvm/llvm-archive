@@ -3519,7 +3519,9 @@ enum neon_builtins
                : (arm_arch5                                                \
                   ? "armv5"                                                \
                   : (arm_arch4t                                            \
-                     ? "armv4t" : "")))))))
+                     ? "armv4t"                                            \
+                     : (arm_arch4                                          \
+                        ? "armv4" : ""))))))))
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
   if (TARGET_SOFT_FLOAT)                               \

@@ -35,6 +35,20 @@
 	EQUIV SYM (\name), SYM (__\name)
 .endm
 
+/* LLVM LOCAL begin.  Merge r122658 from mainline.  */
+#if (__ARM_ARCH__ == 4)
+/* Some coprocessors require armv5.  We know this code will never be run on
+   other cpus.  Tell gas to allow armv5, but only mark the objects as armv4.
+ */
+.arch armv5t
+#ifdef __ARM_ARCH_4T__
+.object_arch armv4t
+#else
+.object_arch armv4
+#endif
+#endif
+/* LLVM LOCAL end.  Merge r122658 from mainline.  */
+
 /* r0 points to a 16-word block.  Upload these values to the actual core
    state.  */
 ARM_FUNC_START restore_core_regs

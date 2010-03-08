@@ -2521,10 +2521,15 @@ static tree get_final_block_variable (tree name, tree var) {
     {
       /* 'byref' globals are never copied-in. So, do not add
        them to the copied-in list. */
-      if (!in_block_global_byref_list (decl))
+      if (!in_block_global_byref_list (decl)) {
+	/* APPLE LOCAL begin radar 7721728 */
+        if (TREE_CODE (TREE_TYPE (decl)) == ARRAY_TYPE)
+          error ("cannot access copied-in variable of array type inside block");
+	/* APPLE LOCAL end radar 7721728 */
       /* build a new decl node. set its type to 'const' type
         of the old decl. */
         decl = build_block_ref_decl (name, decl);
+      }
     }
   }
   return decl;

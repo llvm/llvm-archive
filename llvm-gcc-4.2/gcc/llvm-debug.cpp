@@ -1147,7 +1147,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
     MainTy = getOrCreateType(TYPE_MAIN_VARIANT(type));
 
   DIType Ty = createVariantType(type, MainTy);
-  if (!Ty.isValid())
+  if (!Ty.isNull())
     return Ty;
 
   // Work out details of type.

@@ -1098,10 +1098,16 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
     Attrs.push_back(AttributeWithIndex::get(0, RAttributes));
 
   // If this function returns via a shadow argument, the dest loc is passed
-  // in as a pointer.  Mark that pointer as struct-ret and noalias.
+  // in as a pointer.  Mark that pointer as struct-ret.
+  //
+  // It's tempting to want NoAlias here too, however even though llvm-gcc
+  // itself currently always passes a dedicated alloca as the actual argument,
+  // this isn't mandated by the ABI. There are other compilers which don't
+  // always pass a dedicated alloca. Using NoAlias here would make code which
+  // isn't interoperable with that of other compilers.
   if (ABIConverter.isShadowReturn())
     Attrs.push_back(AttributeWithIndex::get(ArgTys.size(),
-                                    Attribute::StructRet | Attribute::NoAlias));
+                                    Attribute::StructRet));
 
   std::vector<const Type*> ScalarArgs;
   if (static_chain) {

@@ -974,7 +974,10 @@ void llvm_asm_file_end(void) {
 
 // llvm_call_llvm_shutdown - Release LLVM global state.
 void llvm_call_llvm_shutdown(void) {
+#ifndef NDEBUG
+  delete TheModule;
   llvm_shutdown();
+#endif
 }
 
 /// llvm_emit_code_for_current_function - Top level interface for emitting a

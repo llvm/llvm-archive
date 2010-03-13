@@ -1156,8 +1156,8 @@ enum {
      BLOCK_IS_GC =             (1 << 27),
      /* APPLE LOCAL radar 5822844 */
      BLOCK_IS_GLOBAL = 	       (1 << 28),
-     /* APPLE LOCAL radar 5847213 */
-     BLOCK_HAS_DESCRIPTOR =    (1 << 29)
+     /* APPLE LOCAL radar 7735196 */
+     BLOCK_USE_STRET =    (1 << 29)
 };
 
 struct block_sema_info {

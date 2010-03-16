@@ -1320,10 +1320,17 @@ void emit_global_to_llvm(tree decl) {
   // Convert the initializer over.
   Constant *Init;
   if (DECL_INITIAL(decl) == 0 || DECL_INITIAL(decl) == error_mark_node) {
-    // This global should be zero initialized.  Reconvert the type in case the
+    // This global does not have an explicit initializer.  This usually means
+    // that it should be zero initialized.  Reconvert the type in case the
     // forward def of the global and the real def differ in type (e.g. declared
     // as 'int A[]', and defined as 'int A[100]').
-    Init = Constant::getNullValue(ConvertType(TREE_TYPE(decl)));
+    if (TYPE_NEEDS_CONSTRUCTING(TREE_TYPE(decl))) {
+      // The global will be initialized by a code sequence - it does not need to
+      // be zero initialized.
+      Init = UndefValue::get(ConvertType(TREE_TYPE(decl)));
+    } else {
+      Init = Constant::getNullValue(ConvertType(TREE_TYPE(decl)));
+    }
   } else {
     assert((TREE_CONSTANT(DECL_INITIAL(decl)) || 
             TREE_CODE(DECL_INITIAL(decl)) == STRING_CST) &&

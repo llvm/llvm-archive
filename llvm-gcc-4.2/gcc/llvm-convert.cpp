@@ -7021,6 +7021,11 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       LVAlign = MinAlign(LVAlign, ByteOffset);
     }
 
+    // Since we're using GCC's offset, we're obliged to use GCC's
+    // "shrink-wrapped" type for the reference, lest we reference
+    // memory outside of this struct.
+    FieldTy = ConvertType(TREE_TYPE(FieldDecl));
+
     Value *Ptr = CastToType(Instruction::PtrToInt, StructAddrLV.Ptr,
                             Offset->getType());
     Ptr = Builder.CreateAdd(Ptr, Offset);

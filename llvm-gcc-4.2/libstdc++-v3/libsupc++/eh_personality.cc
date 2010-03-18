@@ -52,34 +52,6 @@ struct lsda_header_info
   unsigned char call_site_encoding;
 };
 
-struct SjLj_Function_Context
-{
-  /* This is the chain through all registered contexts.  It is
-     filled in by _Unwind_SjLj_Register.  */
-  struct SjLj_Function_Context *prev;
-
-  /* This is assigned in by the target function before every call
-     to the index of the call site in the lsda.  It is assigned by
-     the personality routine to the landing pad index.  */
-  int call_site;
-
-  /* This is how data is returned from the personality routine to
-     the target function's handler.  */
-  _Unwind_Word data[4];
-
-  /* These are filled in once by the target function before any
-     exceptions are expected to be handled.  */
-  _Unwind_Personality_Fn personality;
-  void *lsda;
-
-  void *jbuf[];
-};
-
-struct _Unwind_Context
-{
-  struct SjLj_Function_Context *fc;
-};
-
 static const unsigned char *
 parse_lsda_header (_Unwind_Context *context, const unsigned char *p,
 		   lsda_header_info *info)

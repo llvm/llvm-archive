@@ -1242,6 +1242,9 @@ extern tree build_block_helper_name (int);
 /* APPLE LOCAL radar 6353006  */
 extern tree c_build_generic_block_struct_type (void);
 
+/* APPLE LOCAL radar 7760213 */
+extern int HasByrefArray(tree);
+
 /* In c-omp.c  */
 extern tree c_finish_omp_master (tree);
 extern tree c_finish_omp_critical (tree, tree);

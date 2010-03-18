@@ -2146,6 +2146,7 @@ build_array_ref (tree array, tree index)
 				 "array indexing");
     }
 }
+
 
 /* Build an external reference to identifier ID.  FUN indicates
    whether this will be used for a function call.  LOC is the source
@@ -2209,9 +2210,14 @@ build_external_ref (tree id, int fun, location_t loc)
 	    {
 	      /* APPLE LOCAL begin radar 5803600 (C++ ci) */
 	      /* byref globals are directly accessed. */
-	      if (!gdecl)
+              /* APPLE LOCAL begin radar 7760213 */
+	      if (!gdecl) {
+                if (HasByrefArray(TREE_TYPE (decl)))
+       		  error ("cannot access __block variable of array type inside block");
 		/* build a decl for the byref variable. */
 		decl = build_block_byref_decl (id, decl, decl);
+              }
+              /* APPLE LOCAL end radar 7760213 */
 	      else
 		add_block_global_byref_list (decl);
 	    }

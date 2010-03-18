@@ -1,3 +1,9 @@
+2010-03-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 7760213
+        * gcc.apple/block-dynamic-array.c: Modified.
+        * g++.apple/block-dynamic-array.C: Modified.
+
 2010-03-18  Jim Grosbach <grosbach@apple.com>
 
         Radar 6671703

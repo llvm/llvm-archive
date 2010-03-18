@@ -75,3 +75,12 @@ int main (int argc, const char *argv[])
 	[pool drain];
 	return 0 + res;
 }
+
+int test()
+{
+__block int arr[100];
+
+  ^ {  
+      (void)arr[2];	/* { dg-error "cannot access __block variable of array type inside block" } */
+    };
+}

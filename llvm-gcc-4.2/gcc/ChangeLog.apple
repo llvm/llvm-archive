@@ -1,3 +1,11 @@
+2010-03-16  Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 7760213
+        * c-common.h (HasByrefArray): New decl.
+        * c-common.c (HasByrefArray): New definition.
+        * c-typeck.c (build_external_ref): Diagnose access of
+          __block array.
+ 
 2010-01-07  Jim Grosbach <grosbach@apple.com>
 
         Radar 7519550

@@ -16570,13 +16570,21 @@ objc_synthesize_new_getter (tree class, tree class_method, tree property)
         /* APPLE LOCAL end radar 5376125 */
 
 	/* Handle struct-valued functions */
-	if ((TREE_CODE (ret_type) == RECORD_TYPE || TREE_CODE (ret_type) == UNION_TYPE)
+        /* APPLE LOCAL begin 6671703 ARM 64-bit atomic properties */
+        if (
+#ifdef TARGET_ARM
+          (IS_ATOMIC (property)
+           && TREE_INT_CST_LOW (TYPE_SIZE_UNIT (ret_type)) > 4) ||
+#endif
+          ((TREE_CODE (ret_type) == RECORD_TYPE
+            || TREE_CODE (ret_type) == UNION_TYPE)
             /* APPLE LOCAL radar 5080710 */
             && (TREE_ADDRESSABLE (ret_type) || targetm.calls.return_in_memory  (ret_type, 0))
-	    && (IS_ATOMIC (property) || 
-		(isStrong = ((flag_objc_gc || flag_objc_gc_only) 
-			     && aggregate_contains_objc_pointer (ret_type)))))
-	  {
+	    && (IS_ATOMIC (property) ||
+		(isStrong = ((flag_objc_gc || flag_objc_gc_only)
+			     && aggregate_contains_objc_pointer (ret_type))))))
+        /* APPLE LOCAL end 6671703 ARM 64-bit atomic properties */
+        {
 	    /* struct something tmp; 
 	       objc_copyStruct (&tmp, &structIvar, sizeof (struct something), isAtomic, false);
 	       return tmp;
@@ -16732,11 +16740,18 @@ objc_synthesize_new_setter (tree class, tree class_method, tree property)
         TREE_USED (rhs) = 1;
       /* APPLE LOCAL end radar 5232840 */
       ivar_type = TREE_TYPE (lhs);
-      if ((TREE_CODE (ivar_type) == RECORD_TYPE || TREE_CODE (ivar_type) == UNION_TYPE)
+      /* APPLE LOCAL begin 6671703 ARM 64-bit atomic properties */
+      if (
+#ifdef TARGET_ARM
+        (IS_ATOMIC (property)
+         && TREE_INT_CST_LOW (TYPE_SIZE_UNIT (ivar_type)) > 4) ||
+#endif
+       ((TREE_CODE (ivar_type) == RECORD_TYPE || TREE_CODE (ivar_type) == UNION_TYPE)
           /* APPLE LOCAL begin radar 5080710 */
           && IS_ATOMIC (property)
-          && (TREE_ADDRESSABLE (ivar_type) || targetm.calls.return_in_memory  (ivar_type, 0)))
+          && (TREE_ADDRESSABLE (ivar_type) || targetm.calls.return_in_memory  (ivar_type, 0))))
           /* APPLE LOCAL end radar 5080710 */
+      /* APPLE LOCAL end 6671703 ARM 64-bit atomic properties */
         {
 	  /* objc_copyStruct (&structIvar, &value, sizeof (struct something), true, false); */
 	  tree func_params;

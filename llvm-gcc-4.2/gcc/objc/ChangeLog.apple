@@ -1,3 +1,10 @@
+2019-03-17  Jim Grosbach <grosbach@apple.com>
+
+        Radar 6671703
+	* objc-act.c (objc_synthesize_new_getter, objc_synthesize_new_setter):
+	On ARM, for atomic access to any type of larger than 4 bytes, use
+	objc_copyStruct().
+
 2009-05-06  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 6083666

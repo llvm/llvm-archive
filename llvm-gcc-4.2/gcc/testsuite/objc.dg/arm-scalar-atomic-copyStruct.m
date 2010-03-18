@@ -35,4 +35,4 @@ int main()
   return 0;
 }
 
-/* { dg-final { scan-assembler-times "blx\tL_objc_copyStruct.stub" 2 } } */
+/* { dg-final { scan-assembler-times "blx\t_objc_copyStruct" 2 } } */

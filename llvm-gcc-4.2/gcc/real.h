@@ -263,6 +263,9 @@ extern const struct real_format ibm_extended_format;
 extern const struct real_format mips_extended_format;
 extern const struct real_format ieee_quad_format;
 extern const struct real_format mips_quad_format;
+/* LLVM LOCAL begin */
+extern const struct real_format ieee_half_format;
+/* LLVM LOCAL end */
 extern const struct real_format vax_f_format;
 extern const struct real_format vax_d_format;
 extern const struct real_format vax_g_format;

@@ -3814,6 +3814,30 @@ const struct real_format mips_quad_format =
     false
   };
 
+
+/* LLVM LOCAL begin */
+/* IEEE half precision format. */
+const struct real_format ieee_half_format =
+  {
+    NULL,
+    NULL,
+    2,
+    1,
+    11,
+    11,
+    -13,
+    16,
+    15,
+    15,
+    true,
+    true,
+    true,
+    true,
+    true,
+  };
+/* LLVM LOCAL end */
+
+
 /* Descriptions of VAX floating point formats can be found beginning at
 
    http://h71000.www7.hp.com/doc/73FINAL/4515/4515pro_013.html#f_floating_point_format

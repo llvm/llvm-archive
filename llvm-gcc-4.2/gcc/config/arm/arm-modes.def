@@ -25,6 +25,9 @@
 /* Extended precision floating point.
    FIXME What format is this?  */
 FLOAT_MODE (XF, 12, 0);
+/* LLVM LOCAL begin */
+FLOAT_MODE (HF, 2, ieee_half_format);
+/* LLVM LOCAL end */
 
 /* CCFPEmode should be used with floating inequalities,
    CCFPmode should be used with floating equalities.

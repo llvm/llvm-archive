@@ -770,6 +770,10 @@ struct gcc_target
      is not permitted on TYPE1 and TYPE2, NULL otherwise.  */
   const char *(*invalid_binary_op) (int op, tree type1, tree type2);
 
+  /* LLVM LOCAL begin */
+  tree (*perform_target_promotions) (tree exp);
+  /* LLVM LOCAL end */
+
   /* Return the class for a secondary reload, and fill in extra information.  */
   enum reg_class (*secondary_reload) (bool, rtx, enum reg_class,
 				      enum machine_mode,

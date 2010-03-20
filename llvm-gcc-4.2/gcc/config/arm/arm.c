@@ -143,6 +143,8 @@ static void arm_output_function_epilogue (FILE *, HOST_WIDE_INT);
 static void arm_output_function_prologue (FILE *, HOST_WIDE_INT);
 /* APPLE LOCAL v7 support. Merge from mainline */
 static void thumb1_output_function_prologue (FILE *, HOST_WIDE_INT);
+static tree arm_perform_target_promotions(tree);
+static bool arm_is_fp16(tree);
 static int arm_comp_type_attributes (tree, tree);
 static void arm_set_default_type_attributes (tree);
 static int arm_adjust_cost (rtx, rtx, rtx, int);
@@ -512,6 +514,11 @@ static tree arm_md_asm_clobbers (tree, tree, tree);
 #undef TARGET_MD_ASM_CLOBBERS
 #define TARGET_MD_ASM_CLOBBERS arm_md_asm_clobbers
 /* APPLE LOCAL end 6902792 Q register clobbers in inline asm */
+
+/* LLVM LOCAL begin */
+#undef TARGET_PERFORM_TARGET_PROMOTIONS
+#define TARGET_PERFORM_TARGET_PROMOTIONS arm_perform_target_promotions
+/* LLVM LOCAL end */
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -3836,6 +3843,26 @@ arm_comp_type_attributes (tree type1, tree type2)
 
   return 1;
 }
+
+/* LLVM LOCAL begin */
+bool
+arm_is_fp16(tree ty)
+{
+  return (SCALAR_FLOAT_TYPE_P (ty) && TYPE_PRECISION (ty) == 16);
+}
+
+
+tree
+arm_perform_target_promotions (tree exp)
+{
+  /* FIXME: Is NOP_EXPR better here? */
+  if (arm_is_fp16 (TREE_TYPE(exp)))
+    return build1 (CONVERT_EXPR, float_type_node, exp);
+
+  return NULL_TREE;
+}
+
+/* LLVM LOCAL end */
 
 /* APPLE LOCAL begin ARM longcall */
 /*  Encode long_call or short_call attribute by prefixing

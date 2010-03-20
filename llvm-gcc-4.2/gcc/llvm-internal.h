@@ -492,6 +492,7 @@ private:
   Value *EmitCallOf(Value *Callee, tree_node *exp, const MemRef *DestLoc,
                     const AttrListPtr &PAL);
   Value *EmitMODIFY_EXPR(tree_node *exp, const MemRef *DestLoc);
+  Value *EmitFP16Conversion(tree_node *fromty, tree_node *toty, Value *V);
   Value *EmitNOP_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitVIEW_CONVERT_EXPR(tree_node *exp, const MemRef *DestLoc);

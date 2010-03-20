@@ -3197,6 +3197,29 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   return RHS;
 }
 
+Value *TreeToLLVM::EmitFP16Conversion(tree fromty, tree toty, Value *V) {
+  bool OpIsSigned = !TYPE_UNSIGNED(fromty);
+  bool ExpIsSigned = !TYPE_UNSIGNED(toty);
+
+  if (SCALAR_FLOAT_TYPE_P (fromty) && TYPE_PRECISION (fromty) == 16) {
+    // HF -> something cast is performed as HF -> SF -> something
+    Value *Result =
+      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+						   Intrinsic::convert_from_fp16),
+			 &V, &V+1);
+    return CastToAnyType(Result, false, ConvertType(toty), ExpIsSigned);
+  } else if (SCALAR_FLOAT_TYPE_P (toty) && TYPE_PRECISION (toty) == 16) {
+    // something -> HF cast is performed as something -> SF -> HF
+    V = CastToAnyType(V, OpIsSigned, Type::getFloatTy(Context), false);
+    return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
+						Intrinsic::convert_to_fp16),
+			      &V, &V+1);
+  }
+
+  return 0;
+}
+
+
 Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   if (TREE_CODE(TREE_TYPE(exp)) == VOID_TYPE &&    // deleted statement.
       TREE_CODE(TREE_OPERAND(exp, 0)) == INTEGER_CST)
@@ -3208,9 +3231,14 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
   if (DestLoc == 0) {
     // Scalar to scalar copy.
     assert(!isAggregateTreeType(TREE_TYPE(Op))
-           && "Aggregate to scalar nop_expr!");
+	   && "Aggregate to scalar nop_expr!");
     Value *OpVal = Emit(Op, DestLoc);
     if (Ty->isVoidTy()) return 0;
+
+    // Special case: something <-> HF casts are made via special intrinsics.
+    if (Value *V = EmitFP16Conversion(TREE_TYPE(Op), TREE_TYPE(exp), OpVal))
+      return V;
+
     return CastToAnyType(OpVal, OpIsSigned, Ty, ExpIsSigned);
   } else if (isAggregateTreeType(TREE_TYPE(Op))) {
     // Aggregate to aggregate copy.
@@ -3231,10 +3259,16 @@ Value *TreeToLLVM::EmitNOP_EXPR(tree exp, const MemRef *DestLoc) {
 
 Value *TreeToLLVM::EmitCONVERT_EXPR(tree exp, const MemRef *DestLoc) {
   assert(!DestLoc && "Cannot handle aggregate casts!");
-  Value *Op = Emit(TREE_OPERAND(exp, 0), 0);
-  bool OpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool ExpIsSigned = !TYPE_UNSIGNED(TREE_TYPE(exp));
-  return CastToAnyType(Op, OpIsSigned, ConvertType(TREE_TYPE(exp)),ExpIsSigned);
+  tree op0 = TREE_OPERAND(exp, 0);
+  tree opty = TREE_TYPE(op0), expty = TREE_TYPE(exp);
+  Value *Op = Emit(op0, 0);
+
+  // Special case: something <-> HF casts are made via special intrinsics.
+  if (Value *V = EmitFP16Conversion(opty, expty, Op))
+    return V;
+
+  bool OpIsSigned = !TYPE_UNSIGNED(opty), ExpIsSigned = !TYPE_UNSIGNED(expty);
+  return CastToAnyType(Op, OpIsSigned, ConvertType(expty), ExpIsSigned);
 }
 
 Value *TreeToLLVM::EmitVIEW_CONVERT_EXPR(tree exp, const MemRef *DestLoc) {
@@ -3464,31 +3498,40 @@ Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {
 Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
                                unsigned FPPred, const Type *DestTy) {
   // Get the type of the operands
-  tree Op0Ty = TREE_TYPE(TREE_OPERAND(exp,0));
+  tree lhsty = TREE_TYPE(TREE_OPERAND(exp, 0));
+  tree rhsty = TREE_TYPE(TREE_OPERAND(exp, 1));
 
   Value *Result;
 
   // Deal with complex types
-  if (TREE_CODE(Op0Ty) == COMPLEX_TYPE) {
+  if (TREE_CODE(lhsty) == COMPLEX_TYPE) {
     Result = EmitComplexBinOp(exp, 0);  // Complex ==/!=
   } else {
     // Get the compare operands, in the right type. Comparison of struct is not
     // allowed, so this is safe as we already handled complex (struct) type.
     Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
     Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
-    bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-    bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
+
+    // FIXME: This should be generalized for other storage-only types, if any.
+    if (Value *V = EmitFP16Conversion(lhsty, float_type_node, LHS)) {
+      LHS = V; lhsty = float_type_node;
+    }
+    if (Value *V = EmitFP16Conversion(rhsty, float_type_node, RHS)) {
+      RHS = V; rhsty = float_type_node;
+    }
+
+    bool LHSIsSigned = !TYPE_UNSIGNED(lhsty);
+    bool RHSIsSigned = !TYPE_UNSIGNED(rhsty);
     RHS = CastToAnyType(RHS, RHSIsSigned, LHS->getType(), LHSIsSigned);
     assert(LHS->getType() == RHS->getType() && "Binop type equality failure!");
 
-    if (FLOAT_TYPE_P(Op0Ty)) {
+    if (FLOAT_TYPE_P(lhsty)) {
       // Handle floating point comparisons, if we get here.
       Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
     } else {
       // Handle the integer/pointer cases.  Determine which predicate to use based
       // on signedness.
-      ICmpInst::Predicate pred =
-        ICmpInst::Predicate(TYPE_UNSIGNED(Op0Ty) ? UIOpc : SIOpc);
+      ICmpInst::Predicate pred = ICmpInst::Predicate(LHSIsSigned ? SIOpc: UIOpc);
 
       // Get the compare instructions
       Result = Builder.CreateICmp(pred, LHS, RHS);
@@ -3508,23 +3551,35 @@ Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
 /// EmitBinOp - 'exp' is a binary operator.
 ///
 Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
-  const Type *Ty = ConvertType(TREE_TYPE(exp));
+  tree expty = TREE_TYPE(exp);
+  const Type *Ty = ConvertType(expty);
   if (Ty->isPointerTy())
     return EmitPtrBinOp(exp, Opc);   // Pointer arithmetic!
   if (Ty->isStructTy())
     return EmitComplexBinOp(exp, DestLoc);
   assert(Ty->isSingleValueType() && DestLoc == 0 &&
-         "Bad binary operation!");
+	 "Bad binary operation!");
+
+  tree lhsty = TREE_TYPE(TREE_OPERAND(exp, 0));
+  tree rhsty = TREE_TYPE(TREE_OPERAND(exp, 1));
 
   Value *LHS = Emit(TREE_OPERAND(exp, 0), 0);
   Value *RHS = Emit(TREE_OPERAND(exp, 1), 0);
 
+  // FIXME: This should be generalized for other storage-only types, if any.
+  if (Value *V = EmitFP16Conversion(lhsty, float_type_node, LHS)) {
+    LHS = V; lhsty = float_type_node; Ty = Type::getFloatTy(Context);
+  }
+  if (Value *V = EmitFP16Conversion(rhsty, float_type_node, RHS)) {
+    RHS = V; rhsty = float_type_node; Ty = Type::getFloatTy(Context);
+  }
+
   // GCC has no problem with things like "xor uint X, int 17", and X-Y, where
   // X and Y are pointer types, but the result is an integer.  As such, convert
   // everything to the result type.
-  bool LHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 0)));
-  bool RHSIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_OPERAND(exp, 1)));
-  bool TyIsSigned  = !TYPE_UNSIGNED(TREE_TYPE(exp));
+  bool LHSIsSigned = !TYPE_UNSIGNED(lhsty);
+  bool RHSIsSigned = !TYPE_UNSIGNED(rhsty);
+  bool TyIsSigned  = !TYPE_UNSIGNED(expty);
   bool IsExactDiv  = TREE_CODE(exp) == EXACT_DIV_EXPR;
 
   LHS = CastToAnyType(LHS, LHSIsSigned, Ty, TyIsSigned);
@@ -3538,7 +3593,7 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   if (isLogicalOp &&
       (Ty->isFloatingPointTy() ||
        (Ty->isVectorTy() &&
-        cast<VectorType>(Ty)->getElementType()->isFloatingPointTy()))) {
+	cast<VectorType>(Ty)->getElementType()->isFloatingPointTy()))) {
     Ty = getSuitableBitCastIntType(Ty);
     LHS = BitCastToType(LHS, Ty);
     RHS = BitCastToType(RHS, Ty);
@@ -3547,16 +3602,21 @@ Value *TreeToLLVM::EmitBinOp(tree exp, const MemRef *DestLoc, unsigned Opc) {
   Value *V;
   if (Opc == Instruction::SDiv && IsExactDiv)
     V = Builder.CreateExactSDiv(LHS, RHS);
-  else if (Opc == Instruction::Add && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
+  else if (Opc == Instruction::Add && !TYPE_OVERFLOW_WRAPS(expty))
     V = Builder.CreateNSWAdd(LHS, RHS);
-  else if (Opc == Instruction::Sub && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
+  else if (Opc == Instruction::Sub && !TYPE_OVERFLOW_WRAPS(expty))
     V = Builder.CreateNSWSub(LHS, RHS);
-  else if (Opc == Instruction::Mul && !TYPE_OVERFLOW_WRAPS(TREE_TYPE(exp)))
+  else if (Opc == Instruction::Mul && !TYPE_OVERFLOW_WRAPS(expty))
     V = Builder.CreateNSWMul(LHS, RHS);
   else
     V = Builder.CreateBinOp((Instruction::BinaryOps)Opc, LHS, RHS);
   if (ResTy != Ty)
     V = BitCastToType(V, ResTy);
+
+  // FIXME: This should be generalized for other storage-only types, if any.
+  if (Value *CV = EmitFP16Conversion(float_type_node, expty, V))
+    V = CV;
+
   return V;
 }
 

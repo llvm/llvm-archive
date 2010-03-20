@@ -1223,6 +1223,23 @@ arm_init_libfuncs (void)
   set_optab_libfunc (umod_optab, DImode, NULL);
   set_optab_libfunc (smod_optab, SImode, NULL);
   set_optab_libfunc (umod_optab, SImode, NULL);
+
+  set_conv_libfunc (trunc_optab, HFmode, SFmode, "__gnu_f2h_ieee");
+  set_conv_libfunc (sext_optab,  SFmode, HFmode, "__gnu_h2f_ieee");
+
+  set_optab_libfunc (add_optab,  HFmode, NULL);
+  set_optab_libfunc (sdiv_optab, HFmode, NULL);
+  set_optab_libfunc (smul_optab, HFmode, NULL);
+  set_optab_libfunc (neg_optab,  HFmode, NULL);
+  set_optab_libfunc (sub_optab,  HFmode, NULL);
+
+  set_optab_libfunc (eq_optab,   HFmode, NULL);
+  set_optab_libfunc (ne_optab,   HFmode, NULL);
+  set_optab_libfunc (lt_optab,   HFmode, NULL);
+  set_optab_libfunc (le_optab,   HFmode, NULL);
+  set_optab_libfunc (ge_optab,   HFmode, NULL);
+  set_optab_libfunc (gt_optab,   HFmode, NULL);
+  set_optab_libfunc (unord_optab,HFmode, NULL);
 }
 
 /* Implement TARGET_HANDLE_OPTION.  */

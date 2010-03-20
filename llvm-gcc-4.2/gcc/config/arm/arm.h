@@ -100,6 +100,13 @@ extern char arm_arch_name[];
 	if (TARGET_NEON)				\
 	  builtin_define ("__ARM_NEON__");		\
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */   \
+	/* LLVM LOCAL begin HF */			\
+	if (TARGET_FP16)				\
+	  {						\
+	    builtin_define ("__ARM_FP16");		\
+	    builtin_define ("__ARM_FP16__");		\
+	  }						\
+	/* LLVM LOCAL end HF */				\
 	/* Add a define for interworking.		\
 	   Needed when building libgcc.a.  */		\
 	if (arm_cpp_interwork)				\
@@ -279,6 +286,9 @@ extern GTY(()) rtx aof_pic_label;
 #define TARGET_NEON (TARGET_32BIT && TARGET_HARD_FLOAT \
                      && arm_fpu_desc->model == ARM_FP_MODEL_VFP \
 		     && arm_fpu_desc->fpu == FPUTYPE_NEON)
+
+#define TARGET_FP16 (TARGET_VFP && arm_fpu_desc->fp16)
+
 /* LLVM LOCAL end */
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */
 /* APPLE LOCAL begin v7 support. Merge from mainline */
@@ -3499,6 +3509,10 @@ enum neon_builtins
       F.AddFeature("neon");					\
     else							\
       F.AddFeature("neon", false);				\
+    if (TARGET_FP16)						\
+      F.AddFeature("fp16");					\
+    else							\
+      F.AddFeature("fp16", false);				\
   }
 
 /* Encode arm / thumb modes and arm subversion number in the triplet. e.g.

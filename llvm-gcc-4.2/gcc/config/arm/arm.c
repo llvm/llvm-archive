@@ -19587,6 +19587,15 @@ arm_init_neon_builtins (void)
 }
 
 static void
+arm_init_fp16_builtins (void)
+{
+  tree fp16_type = make_node (REAL_TYPE);
+  TYPE_PRECISION (fp16_type) = 16;
+  layout_type (fp16_type);
+  (*lang_hooks.types.register_builtin_type) (fp16_type, "__fp16");
+}
+
+static void
 arm_init_builtins (void)
 {
   arm_init_tls_builtins ();
@@ -19596,6 +19605,10 @@ arm_init_builtins (void)
   
   if (TARGET_NEON)
     arm_init_neon_builtins ();
+
+  if (TARGET_FP16)
+    arm_init_fp16_builtins ();
+
 /* APPLE LOCAL begin ARM darwin builtins */
 #ifdef SUBTARGET_INIT_BUILTINS
   SUBTARGET_INIT_BUILTINS;

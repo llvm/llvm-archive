@@ -544,14 +544,11 @@ enum processor_type arm_tune = arm_none;
 static enum processor_type arm_default_cpu = arm_none;
 
 /* APPLE LOCAL end v7 support. Merge from mainline */
-/* Which floating point model to use.  */
-enum arm_fp_model arm_fp_model;
+/* LLVM LOCAL begin */
+int arm_fpu_attr;
 
-/* Which floating point hardware is available.  */
-enum fputype arm_fpu_arch;
-
-/* Which floating point hardware to schedule for.  */
-enum fputype arm_fpu_tune;
+const struct fpu_desc * arm_fpu_desc;
+/* LLVM LOCAL end */
 
 /* Whether to use floating point hardware.  */
 enum float_abi_type arm_float_abi;
@@ -881,49 +878,26 @@ static struct arm_cpu_select arm_select[] =
 char arm_arch_name[ARM_ARCH_NAME_SIZE] = "__ARM_ARCH_0UNK__";
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */
 
-struct fpu_desc
-{
-  const char * name;
-  enum fputype fpu;
-};
-
+/* LLVM LOCAL delete fpu_desc type fwd decl */
 
 /* Available values for -mfpu=.  */
 
+/* LLVM LOCAL begin */
 static const struct fpu_desc all_fpus[] =
 {
-  {"fpa",	FPUTYPE_FPA},
-  {"fpe2",	FPUTYPE_FPA_EMU2},
-  {"fpe3",	FPUTYPE_FPA_EMU2},
-  {"maverick",	FPUTYPE_MAVERICK},
-/* APPLE LOCAL begin v7 support. Merge from mainline */
-  {"vfp",	FPUTYPE_VFP},
-  {"vfp3",	FPUTYPE_VFP3},
-/* APPLE LOCAL end v7 support. Merge from mainline */
-/* APPLE LOCAL v7 support. Merge from Codesourcery */
-  {"neon",	FPUTYPE_NEON}
+  {"fpa",	FPUTYPE_FPA,      ARM_FP_MODEL_FPA,      false},
+  {"fpe2",	FPUTYPE_FPA_EMU2, ARM_FP_MODEL_FPA,      false},
+  {"fpe3",	FPUTYPE_FPA_EMU3, ARM_FP_MODEL_FPA,      false},
+  {"maverick",	FPUTYPE_MAVERICK, ARM_FP_MODEL_MAVERICK, false},
+  {"vfp",	FPUTYPE_VFP,      ARM_FP_MODEL_VFP,      false},
+  {"vfp3",	FPUTYPE_VFP3,     ARM_FP_MODEL_VFP,      false},
+  {"vfp3-fp16",	FPUTYPE_VFP3,     ARM_FP_MODEL_VFP,      true},
+  {"neon",	FPUTYPE_NEON,     ARM_FP_MODEL_VFP,      false},
+  {"neon-fp16",	FPUTYPE_NEON,     ARM_FP_MODEL_VFP,      true}
 };
+/* LLVM LOCAL end */
 
-
-/* Floating point models used by the different hardware.
-   See fputype in arm.h.  */
-
-static const enum fputype fp_model_for_fpu[] =
-{
-  /* No FP hardware.  */
-  ARM_FP_MODEL_UNKNOWN,		/* FPUTYPE_NONE  */
-  ARM_FP_MODEL_FPA,		/* FPUTYPE_FPA  */
-  ARM_FP_MODEL_FPA,		/* FPUTYPE_FPA_EMU2  */
-  ARM_FP_MODEL_FPA,		/* FPUTYPE_FPA_EMU3  */
-  ARM_FP_MODEL_MAVERICK,	/* FPUTYPE_MAVERICK  */
-/* APPLE LOCAL v7 support. Merge from mainline */
-  ARM_FP_MODEL_VFP,		/* FPUTYPE_VFP  */
-/* APPLE LOCAL begin v7 support. Merge from Codesourcery */
-  ARM_FP_MODEL_VFP,		/* FPUTYPE_VFP3  */
-  ARM_FP_MODEL_VFP		/* FPUTYPE_NEON  */
-/* APPLE LOCAL end v7 support. Merge from Codesourcery */
-};
-
+/* LLVM LOCAL remove fp_mode_for_fpu */
 
 struct float_abi
 {
@@ -1224,6 +1198,7 @@ arm_init_libfuncs (void)
   set_optab_libfunc (smod_optab, SImode, NULL);
   set_optab_libfunc (umod_optab, SImode, NULL);
 
+  /* LLVM LOCAL begin HF */
   set_conv_libfunc (trunc_optab, HFmode, SFmode, "__gnu_f2h_ieee");
   set_conv_libfunc (sext_optab,  SFmode, HFmode, "__gnu_h2f_ieee");
 
@@ -1240,6 +1215,7 @@ arm_init_libfuncs (void)
   set_optab_libfunc (ge_optab,   HFmode, NULL);
   set_optab_libfunc (gt_optab,   HFmode, NULL);
   set_optab_libfunc (unord_optab,HFmode, NULL);
+  /* LLVM LOCAL end HF */
 }
 
 /* Implement TARGET_HANDLE_OPTION.  */
@@ -1637,7 +1613,6 @@ arm_override_options (void)
   if (TARGET_IWMMXT_ABI && !TARGET_IWMMXT)
     error ("iwmmxt abi requires an iwmmxt capable cpu");
 
-  arm_fp_model = ARM_FP_MODEL_UNKNOWN;
   if (target_fpu_name == NULL && target_fpe_name != NULL)
     {
       if (streq (target_fpe_name, "2"))
@@ -1648,47 +1623,33 @@ arm_override_options (void)
 	error ("invalid floating point emulation option: -mfpe=%s",
 	       target_fpe_name);
     }
-  if (target_fpu_name != NULL)
-    {
-      /* The user specified a FPU.  */
-      for (i = 0; i < ARRAY_SIZE (all_fpus); i++)
-	{
-	  if (streq (all_fpus[i].name, target_fpu_name))
-	    {
-	      arm_fpu_arch = all_fpus[i].fpu;
-	      arm_fpu_tune = arm_fpu_arch;
-	      arm_fp_model = fp_model_for_fpu[arm_fpu_arch];
-	      break;
-	    }
-	}
-      if (arm_fp_model == ARM_FP_MODEL_UNKNOWN)
-	error ("invalid floating point option: -mfpu=%s", target_fpu_name);
-    }
-  else
+  /* LLVM LOCAL begin */
+  if (target_fpu_name == NULL)
     {
 #ifdef FPUTYPE_DEFAULT
-      /* Use the default if it is specified for this platform.  */
-      arm_fpu_arch = FPUTYPE_DEFAULT;
-      arm_fpu_tune = FPUTYPE_DEFAULT;
+      target_fpu_name = FPUTYPE_DEFAULT;
 #else
-      /* Pick one based on CPU type.  */
-      /* ??? Some targets assume FPA is the default.
-      if ((insn_flags & FL_VFP) != 0)
-	arm_fpu_arch = FPUTYPE_VFP;
-      else
-      */
       if (arm_arch_cirrus)
-	arm_fpu_arch = FPUTYPE_MAVERICK;
+	target_fpu_name = "maverick";
       else
-	arm_fpu_arch = FPUTYPE_FPA_EMU2;
+	target_fpu_name = "fpe2";
 #endif
-      if (tune_flags & FL_CO_PROC && arm_fpu_arch == FPUTYPE_FPA_EMU2)
-	arm_fpu_tune = FPUTYPE_FPA;
-      else
-	arm_fpu_tune = arm_fpu_arch;
-      arm_fp_model = fp_model_for_fpu[arm_fpu_arch];
-      gcc_assert (arm_fp_model != ARM_FP_MODEL_UNKNOWN);
     }
+
+  arm_fpu_desc = NULL;
+  for (i = 0; i < ARRAY_SIZE (all_fpus); i++)
+    {
+      if (streq (all_fpus[i].name, target_fpu_name))
+	{
+	  arm_fpu_desc = &all_fpus[i];
+	  arm_fpu_attr= arm_fpu_desc->fpu;
+	  break;
+	}
+    }
+
+  if (arm_fpu_desc == NULL)
+    error ("invalid floating point option: -mfpu=%s", target_fpu_name);
+  /* LLVM LOCAL end */
 
   if (target_float_abi_name != NULL)
     {
@@ -1729,15 +1690,16 @@ arm_override_options (void)
   /* APPLE LOCAL end v7 support. Merge from mainline */
   /* If soft-float is specified then don't use FPU.  */
   if (TARGET_SOFT_FLOAT)
-    arm_fpu_arch = FPUTYPE_NONE;
+    /* LLVM LOCAL */
+    arm_fpu_attr = FPUTYPE_NONE;
 
   /* For arm2/3 there is no need to do any scheduling if there is only
      a floating point emulator, or we are doing software floating-point.  */
   /* LLVM LOCAL begin */
 #ifndef ENABLE_LLVM
   if ((TARGET_SOFT_FLOAT
-       || arm_fpu_tune == FPUTYPE_FPA_EMU2
-       || arm_fpu_tune == FPUTYPE_FPA_EMU3)
+       || arm_fpu_attr == FPUTYPE_FPA_EMU2
+       || arm_fpu_attr == FPUTYPE_FPA_EMU3)
       && (tune_flags & FL_MODE32) == 0)
     flag_schedule_insns = flag_schedule_insns_after_reload = 0;
 #endif
@@ -12977,7 +12939,8 @@ arm_output_epilogue (rtx sibling)
         inclusive_bitmask (ARM_HARD_FRAME_POINTER_REGNUM + 1, 11);
       /* APPLE LOCAL end ARM custom frame layout */
 
-      if (arm_fpu_arch == FPUTYPE_FPA_EMU2)
+      /* LLVM LOCAL */
+      if (arm_fpu_attr == FPUTYPE_FPA_EMU2)
 	{
 	  for (reg = LAST_FPA_REGNUM; reg >= FIRST_FPA_REGNUM; reg--)
 	    if (regs_ever_live[reg] && !call_used_regs[reg])
@@ -13244,7 +13207,8 @@ arm_output_epilogue (rtx sibling)
 	      && !TARGET_IWMMXT
 	      && really_return
 	      && TARGET_SOFT_FLOAT
-	      && arm_fpu_arch == FPUTYPE_NONE
+	      /* LLVM LOCAL */
+	      && arm_fpu_attr == FPUTYPE_NONE
 	      && !flag_pic
 	      && !frame_pointer_needed)
 	    {
@@ -13266,7 +13230,8 @@ arm_output_epilogue (rtx sibling)
       /* APPLE LOCAL end ARM combine stack pop and register pop */
       /* APPLE LOCAL end ARM indirect sibcalls */
 
-      if (arm_fpu_arch == FPUTYPE_FPA_EMU2)
+      /* LLVM LOCAL */
+      if (arm_fpu_attr == FPUTYPE_FPA_EMU2)
 	{
 	  for (reg = FIRST_FPA_REGNUM; reg <= LAST_FPA_REGNUM; reg++)
 	    if (regs_ever_live[reg] && !call_used_regs[reg])
@@ -13945,7 +13910,8 @@ arm_save_coproc_regs(void)
 
   /* Save any floating point call-saved registers used by this
      function.  */
-  if (arm_fpu_arch == FPUTYPE_FPA_EMU2)
+  /* LLVM LOCAL */
+  if (arm_fpu_attr == FPUTYPE_FPA_EMU2)
     {
       for (reg = LAST_FPA_REGNUM; reg >= FIRST_FPA_REGNUM; reg--)
 	if (regs_ever_live[reg] && !call_used_regs[reg])
@@ -14182,7 +14148,8 @@ arm_expand_prologue (void)
       if (optimize_size
 	  && !flag_pic
 	  && !frame_pointer_needed
-	  && arm_fpu_arch == FPUTYPE_NONE
+	  /* LLVM LOCAL */
+	  && arm_fpu_attr == FPUTYPE_NONE
 	  && TARGET_SOFT_FLOAT
 	  && !TARGET_IWMMXT)
 	{
@@ -22065,7 +22032,7 @@ arm_file_start (void)
       else
 	{
 	  int set_float_abi_attributes = 0;
-	  switch (arm_fpu_arch)
+	  switch (arm_fpu_desc->fpu)
 	    {
 	    case FPUTYPE_FPA:
 	      fpu_name = "fpa";

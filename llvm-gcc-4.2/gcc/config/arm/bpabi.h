@@ -31,7 +31,7 @@
 
 /* Section 4.1 of the AAPCS requires the use of VFP format.  */
 #undef FPUTYPE_DEFAULT
-#define FPUTYPE_DEFAULT FPUTYPE_VFP
+#define FPUTYPE_DEFAULT "vfp"
 
 /* EABI targets should enable interworking by default.  */
 #undef TARGET_DEFAULT

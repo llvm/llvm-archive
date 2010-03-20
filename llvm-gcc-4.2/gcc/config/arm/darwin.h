@@ -329,7 +329,7 @@ do {									\
 
 /* APPLE LOCAL begin 6093388 -mfpu=neon default for v7a */
 /* We default to VFP for v6, NEON for v7 */
-#define FPUTYPE_DEFAULT (arm_arch7a ? FPUTYPE_NEON : FPUTYPE_VFP)
+#define FPUTYPE_DEFAULT (arm_arch7a ? "neon" : "vfp")
 
 #undef TARGET_DEFAULT_FLOAT_ABI
 #define TARGET_DEFAULT_FLOAT_ABI ((arm_arch6 || arm_arch7a) ? ARM_FLOAT_ABI_SOFTFP : ARM_FLOAT_ABI_SOFT)

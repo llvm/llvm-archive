@@ -146,6 +146,7 @@ static void thumb1_output_function_prologue (FILE *, HOST_WIDE_INT);
 /* LLVM LOCAL begin */
 static tree arm_type_promotes_to(tree);
 static bool arm_is_fp16(tree);
+static const char * arm_mangle_type (tree type);
 /* LLVM LOCAL end */
 static int arm_comp_type_attributes (tree, tree);
 static void arm_set_default_type_attributes (tree);
@@ -500,7 +501,10 @@ static tree arm_md_asm_clobbers (tree, tree, tree);
 #endif
 /* APPLE LOCAL end ARM darwin local binding */
 
-/* LLVM LOCAL pr5037 removed arm_mangle_type */
+/* APPLE LOCAL begin v7 support. Merge from Codesourcery */
+#undef TARGET_MANGLE_TYPE
+#define TARGET_MANGLE_TYPE arm_mangle_type
+/* APPLE LOCAL end support. Merge from Codesourcery */
 
 /* APPLE LOCAL begin ARM reliable backtraces */
 #undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
@@ -19614,6 +19618,7 @@ arm_init_neon_builtins (void)
 #undef TYPE6
 }
 
+/* LLVM LOCAL begin */
 static void
 arm_init_fp16_builtins (void)
 {
@@ -19622,6 +19627,7 @@ arm_init_fp16_builtins (void)
   layout_type (fp16_type);
   (*lang_hooks.types.register_builtin_type) (fp16_type, "__fp16");
 }
+/* LLVM LOCAL end */
 
 static void
 arm_init_builtins (void)
@@ -23897,8 +23903,19 @@ thumb2_output_casesi (rtx *operands)
     }
 }
 /* APPLE LOCAL end v7 support. Merge from mainline */
-/* APPLE LOCAL begin v7 support. Merge from Codesourcery */
-/* LLVM LOCAL pr5037 removed arm_mangle_type */
+
+/* LLVM LOCAL begin */
+static const char *
+arm_mangle_type (tree type)
+{
+  if (arm_is_fp16(type))
+    return "Dh";
+
+  /* Use the default mangling for unrecognized (possibly user-defined)
+     vector types.  */
+  return NULL;
+}
+/* LLVM LOCAL end */
 
 void
 arm_asm_output_addr_diff_vec (FILE *file, rtx label, rtx body)

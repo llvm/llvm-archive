@@ -754,7 +754,9 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     default:
       fprintf(stderr, "Unknown FP type!\n");
       debug_tree(type);
-      abort();        
+      abort();
+    // Half precision FP is a storage only format, use i16 for it.
+    case 16: return SET_TYPE_LLVM(type, Type::getInt16Ty(Context));
     case 32: return SET_TYPE_LLVM(type, Type::getFloatTy(Context));
     case 64: return SET_TYPE_LLVM(type, Type::getDoubleTy(Context));
     case 80: return SET_TYPE_LLVM(type, Type::getX86_FP80Ty(Context));

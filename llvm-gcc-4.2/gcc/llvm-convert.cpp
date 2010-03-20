@@ -7417,7 +7417,8 @@ Constant *TreeConstantToLLVM::ConvertINTEGER_CST(tree exp) {
 
 Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
   const Type *Ty = ConvertType(TREE_TYPE(exp));
-  assert(Ty->isFloatingPointTy() && "Integer REAL_CST?");
+  assert((Ty->isFloatingPointTy() ||
+	  Ty->isIntegerTy(16)) && "Integer REAL_CST?");
   long RealArr[2];
   union {
     int UArr[2];
@@ -7459,8 +7460,7 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
               ((uint64_t)((uint32_t)RealArr[1]) << 32);
     UArr[1] = (uint16_t)RealArr[2];
     return ConstantFP::get(Context, APFloat(APInt(80, 2, UArr)));
-  } else if (Ty->isPPC_FP128Ty() ||
-             Ty->isFP128Ty()) {
+  } else if (Ty->isPPC_FP128Ty() || Ty->isFP128Ty()) {
     long RealArr[4];
     uint64_t UArr[2];
     REAL_VALUE_TO_TARGET_LONG_DOUBLE(TREE_REAL_CST(exp), RealArr);
@@ -7472,6 +7472,10 @@ Constant *TreeConstantToLLVM::ConvertREAL_CST(tree exp) {
     return ConstantFP::get(Context,
                            APFloat(APInt(128, 2, UArr),
                                    /*isIEEE*/ Ty->isFP128Ty()));
+  } else if (Ty->isIntegerTy(16)) {
+    long RealVal;
+    REAL_VALUE_TO_TARGET_HALF(TREE_REAL_CST(exp), RealVal);
+    return ConstantInt::get(Context, APInt(16, RealVal));
   }
   assert(0 && "Floating point type not handled yet");
   return 0;   // outwit compiler warning

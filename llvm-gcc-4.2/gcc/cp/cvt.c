@@ -1253,10 +1253,20 @@ build_expr_type_conversion (int desires, tree expr, bool complain)
 tree
 type_promotes_to (tree type)
 {
+  /* LLVM LOCAL */
+  tree promoted_type;
+
   if (type == error_mark_node)
     return error_mark_node;
 
   type = TYPE_MAIN_VARIANT (type);
+
+  /* LLVM LOCAL begin */
+  /* Perform target promotions (e.g. HF -> SF on ARM) */
+  promoted_type = targetm.type_promotes_to (type);
+  if (promoted_type != NULL_TREE)
+    return promoted_type;
+  /* LLVM LOCAL end */
 
   /* bool always promotes to int (not unsigned), even if it's the same
      size.  */

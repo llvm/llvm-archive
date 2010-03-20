@@ -1623,6 +1623,13 @@ decay_conversion (tree exp)
 tree
 default_conversion (tree exp)
 {
+  /* LLVM LOCAL begin */
+  /* Perform target promotions (e.g. HF -> SF on ARM) */
+  tree promoted_type = targetm.type_promotes_to (TREE_TYPE(exp));
+  if (promoted_type != NULL_TREE)
+    return cp_convert (promoted_type, exp);
+  /* LLVM LOCAL end */
+
   /* Perform the integral promotions first so that bitfield
      expressions (which may promote to "int", even if the bitfield is
      declared "unsigned") are promoted correctly.  */

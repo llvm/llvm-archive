@@ -1692,8 +1692,10 @@ perform_integral_promotions (tree exp)
 tree
 default_conversion (tree exp)
 {
-  tree orig_exp, promoted_exp;
-  tree type = TREE_TYPE (exp);
+  /* LLVM LOCAL begin */
+  tree orig_exp;
+  tree type = TREE_TYPE (exp), promoted_type;
+  /* LLVM LOCAL end */
   enum tree_code code = TREE_CODE (type);
 
   /* Functions and arrays have been converted during parsing.  */
@@ -1721,9 +1723,11 @@ default_conversion (tree exp)
   if (TREE_NO_WARNING (orig_exp))
     TREE_NO_WARNING (exp) = 1;
 
-  promoted_exp = targetm.perform_target_promotions (exp);
-  if (promoted_exp != NULL_TREE)
-    return promoted_exp;
+  /* LLVM LOCAL begin */
+  promoted_type = targetm.type_promotes_to (type);
+  if (promoted_type != NULL_TREE)
+    return convert (promoted_type, exp);
+  /* LLVM LOCAL end */
 
   if (INTEGRAL_TYPE_P (type))
     return perform_integral_promotions (exp);

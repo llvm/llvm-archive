@@ -477,7 +477,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #define TARGET_INVALID_UNARY_OP hook_constcharptr_int_tree_null
 #define TARGET_INVALID_BINARY_OP hook_constcharptr_int_tree_tree_null
 /* LLVM LOCAL begin */
-#define TARGET_PERFORM_TARGET_PROMOTIONS hook_tree_tree_null
+#define TARGET_TYPE_PROMOTES_TO hook_tree_tree_null
 /* LLVM LOCAL end */
 
 #define TARGET_FIXED_CONDITION_CODE_REGS hook_bool_uintp_uintp_false
@@ -743,7 +743,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   TARGET_INVALID_UNARY_OP,			\
   TARGET_INVALID_BINARY_OP,			\
   /* LLVM LOCAL begin */			\
-  TARGET_PERFORM_TARGET_PROMOTIONS,		\
+  TARGET_TYPE_PROMOTES_TO,		        \
   /* LLVM LOCAL end   */			\
   TARGET_SECONDARY_RELOAD,			\
   TARGET_CXX,					\

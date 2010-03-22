@@ -975,6 +975,9 @@ void llvm_asm_file_end(void) {
 // llvm_call_llvm_shutdown - Release LLVM global state.
 void llvm_call_llvm_shutdown(void) {
 #ifndef NDEBUG
+  delete PerModulePasses;
+  delete PerFunctionPasses;
+  delete CodeGenPasses;
   delete TheModule;
   llvm_shutdown();
 #endif

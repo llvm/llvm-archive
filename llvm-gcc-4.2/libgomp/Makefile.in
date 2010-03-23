@@ -457,6 +457,9 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 
+# LLVM LOCAL: Try to avoid a mysterious race condition by adding a dependency.
+all-multi: $(LTLIBRARIES)
+
 # GNU Make needs to see an explicit $(MAKE) variable in the command it
 # runs to enable its job server during parallel builds.  Hence the
 # comments below.

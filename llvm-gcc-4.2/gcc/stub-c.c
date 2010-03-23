@@ -191,3 +191,11 @@ create_init_utf16_var (const unsigned char * inbuf  ATTRIBUTE_UNUSED,
   gcc_assert(0);
   return NULL;
 }
+
+tree pushdecl_top_level(tree) ATTRIBUTE_WEAK;
+
+tree
+pushdecl_top_level(tree x ATTRIBUTE_UNUSED) {
+  gcc_assert(0);
+  return NULL;
+}

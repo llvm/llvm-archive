@@ -4639,6 +4639,8 @@ extern HOST_WIDE_INT cxx_get_alias_set		(tree);
 extern bool cxx_warn_unused_global_decl		(tree);
 extern tree cp_expr_size			(tree);
 extern size_t cp_tree_size			(enum tree_code);
+/* LLVM LOCAL 7659636 */
+extern int cp_empty_type_p                      (tree);
 extern bool cp_var_mod_type_p			(tree, tree);
 extern void cxx_initialize_diagnostics		(struct diagnostic_context *);
 extern int cxx_types_compatible_p		(tree, tree);

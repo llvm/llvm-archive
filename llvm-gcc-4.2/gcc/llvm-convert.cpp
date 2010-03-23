@@ -3046,6 +3046,20 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
   tree lhs = TREE_OPERAND (exp, 0);
   tree rhs = TREE_OPERAND (exp, 1);
 
+  // Avoid generating stores of empty types.  This is rare, but necessary
+  // to support the compressed_pair template.
+  if (lang_hooks.empty_type_p(TREE_TYPE(exp))) {
+    if (TREE_SIDE_EFFECTS(rhs)) {
+      // There's a side-effect; alloc a temporary to receive the
+      // value, if any.  Do not store into lhs; we must not
+      // reference it.
+      const Type *RHSTy = ConvertType(TREE_TYPE(rhs));
+      MemRef dest = CreateTempLoc(RHSTy);
+      return Emit(rhs, &dest);
+    } else
+      return (Value *)0;
+  }
+
   // If this is the definition of a gimple temporary, set its DECL_LLVM to the
   // RHS.
   bool LHSSigned = !TYPE_UNSIGNED(TREE_TYPE(lhs));

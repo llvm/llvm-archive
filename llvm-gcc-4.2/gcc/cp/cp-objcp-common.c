@@ -111,6 +111,30 @@ cp_expr_size (tree exp)
     return lhd_expr_size (exp);
 }
 
+/* LLVM LOCAL begin 7659636 */
+/* lang_hooks.empty_type_p: Return true if the given type has size
+   zero.  */
+
+int
+cp_empty_type_p (tree exp)
+{
+  gcc_assert(TYPE_P(exp));
+  if (VOID_TYPE_P(exp))
+    return 0;
+
+  /* C++ classes with non-trivial constructors or non-trivial
+     assignment operators are assumed non-empty, thus assignments of
+     these types can't be elided.  */
+  if (CLASS_TYPE_P(exp)
+      && (TYPE_HAS_COMPLEX_INIT_REF(exp)
+          || TYPE_HAS_COMPLEX_ASSIGN_REF(exp)))
+    return 0;
+
+  return is_empty_class(exp);
+}
+
+/* LLVM LOCAL end 7659636 */
+
 /* Langhook for tree_size: determine size of our 'x' and 'c' nodes.  */
 size_t
 cp_tree_size (enum tree_code code)

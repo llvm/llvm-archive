@@ -33,6 +33,10 @@ extern tree objcp_tsubst_copy_and_build (tree, tree, tsubst_flags_t,
 
 #undef LANG_HOOKS_TREE_SIZE
 #define LANG_HOOKS_TREE_SIZE cp_tree_size
+/* LLVM LOCAL begin 7659636 */
+#undef LANG_HOOKS_EMPTY_TYPE_P
+#define LANG_HOOKS_EMPTY_TYPE_P cp_empty_type_p
+/* LLVM LOCAL end 7659636 */
 #undef LANG_HOOKS_FINISH
 #define LANG_HOOKS_FINISH cxx_finish
 #undef LANG_HOOKS_CLEAR_BINDING_STACK

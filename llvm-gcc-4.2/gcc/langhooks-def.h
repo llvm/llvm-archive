@@ -70,6 +70,8 @@ extern void lhd_register_builtin_type (tree, const char *);
 extern bool lhd_decl_ok_for_sibcall (tree);
 extern const char *lhd_comdat_group (tree);
 extern tree lhd_expr_size (tree);
+/* LLVM LOCAL 7659636 */
+extern int lhd_empty_type_p (tree);
 extern size_t lhd_tree_size (enum tree_code);
 extern HOST_WIDE_INT lhd_to_target_charset (HOST_WIDE_INT);
 extern tree lhd_expr_to_decl (tree, bool *, bool *, bool *);
@@ -139,6 +141,8 @@ extern bool lhd_is_runtime_specific_type (tree);
 #define LANG_HOOKS_DWARF_NAME		lhd_dwarf_name
 #define LANG_HOOKS_GET_CALLEE_FNDECL	lhd_return_null_tree
 #define LANG_HOOKS_EXPR_SIZE		lhd_expr_size
+/* LLVM LOCAL 7659636 */
+#define LANG_HOOKS_EMPTY_TYPE_P		lhd_empty_type_p
 #define LANG_HOOKS_TREE_SIZE		lhd_tree_size
 #define LANG_HOOKS_TYPES_COMPATIBLE_P	lhd_types_compatible_p
 #define LANG_HOOKS_BUILTIN_FUNCTION	builtin_function
@@ -336,6 +340,8 @@ extern tree lhd_make_node (enum tree_code);
   LANG_HOOKS_GET_CALLEE_FNDECL, \
   LANG_HOOKS_PRINT_ERROR_FUNCTION, \
   LANG_HOOKS_EXPR_SIZE, \
+/* LLVM LOCAL 7659636 */ \
+  LANG_HOOKS_EMPTY_TYPE_P, \
   LANG_HOOKS_TO_TARGET_CHARSET, \
   LANG_HOOKS_ATTRIBUTE_TABLE, \
   LANG_HOOKS_COMMON_ATTRIBUTE_TABLE, \

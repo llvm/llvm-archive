@@ -439,6 +439,21 @@ lhd_expr_size (tree exp)
     return size_in_bytes (TREE_TYPE (exp));
 }
 
+/* LLVM LOCAL begin 7659636 */
+/* lang_hooks.empty_type_p: Return true if the given type has size
+   zero.  */
+
+int
+lhd_empty_type_p (tree exp)
+{
+  gcc_assert(TYPE_P(exp));
+  if (VOID_TYPE_P(exp))
+    return 0;
+  return size_in_bytes(exp) == 0;
+}
+
+/* LLVM LOCAL end 7659636 */
+
 /* lang_hooks.gimplify_expr re-writes *EXPR_P into GIMPLE form.  */
 
 int

@@ -410,6 +410,11 @@ struct lang_hooks
      semantics in cases that it doesn't want to handle specially.  */
   tree (*expr_size) (tree);
 
+/* LLVM LOCAL begin 7659636 */
+  /* Return true (non-zero) if the given RECORD_TYPE has size zero.  */
+  int (*empty_type_p) (tree);
+/* LLVM LOCAL end 7659636 */
+
   /* Convert a character from the host's to the target's character
      set.  The character should be in what C calls the "basic source
      character set" (roughly, the set of characters defined by plain

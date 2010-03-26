@@ -3097,8 +3097,15 @@ gimplify_init_constructor (tree *expr_p, tree *pre_p,
 		TREE_STATIC (new) = 1;
 		TREE_READONLY (new) = 1;
                 /* LLVM LOCAL begin */
+                /* On Darwin, we can't emit temporaries like this with private
+                 * linkage, because it breaks 'atomization' of stuff in the
+                 * object file by the linker.  We need to emit this as a l label
+                 * without .globl.
+                 */
+#ifndef CONFIG_DARWIN_H
 #ifdef ENABLE_LLVM
 		DECL_LLVM_PRIVATE (new) = 1;
+#endif
 #endif
                 /* LLVM LOCAL end */
 		DECL_INITIAL (new) = ctor;

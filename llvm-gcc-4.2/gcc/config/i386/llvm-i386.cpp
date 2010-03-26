@@ -80,6 +80,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_MULPD:
   case IX86_BUILTIN_PMULLW:
   case IX86_BUILTIN_PMULLW128:
+  case IX86_BUILTIN_PMULLD128:
     Result = Builder.CreateMul(Ops[0], Ops[1]);
     return true;
   case IX86_BUILTIN_DIVPS:

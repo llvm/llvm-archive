@@ -33,6 +33,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -97,6 +98,9 @@ void dummy_function() {
   llvm::DIFactory::DIFactory(*static_cast<llvm::Module *>(0));
   std::string Err;
   llvm::TargetRegistry::lookupTarget("", Err);
+
+  llvm::IRBuilder<> * volatile X;
+  X->getCurrentFunctionReturnType();
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

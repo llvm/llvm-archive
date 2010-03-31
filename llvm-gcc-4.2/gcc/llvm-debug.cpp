@@ -475,7 +475,7 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   llvm::DILocation DL = 
     DebugFactory.CreateLocation(CurLineNo, 0 /* column */, VarScope, DO);
   
-  Call->setMetadata("dbg", DL.getNode());
+  Call->setDbgMetadata(DL.getNode());
 }
 
 

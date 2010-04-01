@@ -122,8 +122,14 @@ unsigned Heuristic::getRecommendedAlignment(const Type *Ty,
 ///
 unsigned Heuristic::getRecommendedAlignment(const DSNode *N) {
   const Type * VoidType = Type::getVoidTy(getGlobalContext());
-  if (N->getType() == VoidType)  // Is this void or collapsed?
-    return 0;  // No known alignment, let runtime decide.
+
+  //
+  // If this node has a void type (which can be signified by getType()
+  // returning NULL) or the node is collapsed, then there is no known
+  // alignment.  We will return 0 to let the runtime decide.
+  //
+  if ((!(N->getType())) || (N->getType() == VoidType))
+    return 0;
 
   const TargetData &TD = N->getParentGraph()->getTargetData();
 
@@ -454,7 +460,7 @@ static Value *getDynamicallyNullPool(BasicBlock::iterator I) {
   if (!NullGlobal) {
     Module *M = I->getParent()->getParent()->getParent();
     const Type * PoolTy = PoolAllocate::PoolDescPtrTy;
-    Constant * Init = ConstantAggregateZero::get(PoolTy);
+    Constant * Init = ConstantPointerNull::get(cast<PointerType>(PoolTy));
     NullGlobal = new GlobalVariable(*M,
                                     PoolAllocate::PoolDescPtrTy, false,
                                     GlobalValue::ExternalLinkage,

@@ -279,34 +279,15 @@ void FuncTransform::visitMallocInst(MallocInst &MI) {
 }
 
 void FuncTransform::visitAllocaInst(AllocaInst &MI) {
-  // Don't do anything if bounds checking will not be done by SAFECode later.
-  if (!(PAInfo.BoundsChecksEnabled)) return;
-
-  // Get the pool handle for the node that this contributes to...
-  DSNode *Node = getDSNodeHFor(&MI).getNode();
-  if (Node->isArray()) {
-    Value *PH = getPoolHandle(&MI);
-    if (PH == 0 || isa<ConstantPointerNull>(PH)) return;
-    TargetData &TD = PAInfo.getAnalysis<TargetData>();
-    Value *AllocSize = ConstantInt::get(Int32Type, TD.getTypeAllocSize(MI.getAllocatedType()));
-    
-    if (MI.isArrayAllocation())
-      AllocSize = BinaryOperator::Create(Instruction::Mul, AllocSize,
-					 MI.getOperand(0), "sizetmp", &MI);
-    
-    //  TransformAllocationInstr(&MI, AllocSize);
-    BasicBlock::iterator InsertPt(MI);
-    ++InsertPt;
-    Instruction *Casted = CastInst::CreatePointerCast(&MI, PointerType::getUnqual(Int8Type),
-				       MI.getName()+".casted", InsertPt);
-    std::vector<Value *> args;
-    args.push_back (PH);
-    args.push_back (Casted);
-    args.push_back (AllocSize);
-    Instruction *V = CallInst::Create(PAInfo.PoolRegister,
-				  args.begin(), args.end(), "", InsertPt);
-    AddPoolUse(*V, PH, PoolUses);
-  }
+  //
+  // SAFECode will register alloca instructions with the run-time, so do not
+  // do that here.
+  //
+  // FIXME:
+  //  There is a chance that we may need to update PoolUses to make sure that
+  //  the pool handle is available in this function.
+  //
+  return;
 }
 
 

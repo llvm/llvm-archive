@@ -2165,7 +2165,7 @@ void TreeToLLVM::EmitLandingPads() {
               Init = cast<Constant>(Emit(catch_all_type, 0));
 
             CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
-                                          GlobalVariable::PrivateLinkage,
+                                          GlobalVariable::LinkOnceAnyLinkage,
                                           Init, ".llvm.eh.catch.all.value");
           }
 

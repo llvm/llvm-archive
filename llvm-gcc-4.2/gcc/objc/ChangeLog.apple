@@ -1,3 +1,10 @@
+2010-04-02 Fariborz Jahanian <fjahanian@apple.com>
+
+        Radar 7591784
+	* objc-act.c (objc_build_compound_setter_call): Issue unimplemented 
+        error attempting to use dot-syntax on a RHS which is c++ object
+        requiring construction.
+
 2019-03-17  Jim Grosbach <grosbach@apple.com>
 
         Radar 6671703

@@ -1,3 +1,8 @@
+2010-04-02 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 7591784
+	* obj-c++.dg/property-getter-codegen.mm: Modified.
+
 2010-03-16  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 7760213

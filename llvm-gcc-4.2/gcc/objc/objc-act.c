@@ -1983,7 +1983,22 @@ objc_build_compound_setter_call (tree receiver, tree prop_ident, tree rhs)
       bind = build3 (BIND_EXPR, void_type_node, temp, NULL, NULL);
       TREE_SIDE_EFFECTS (bind) = 1;
       add_stmt (bind);
+      /* APPLE LOCAL begin radar 7591784 */
+#ifdef OBJCPLUS
+      {
+	tree type = TREE_TYPE (rhs);
+	if (TYPE_NEEDS_CONSTRUCTING (type))
+          {
+	    comma_exp = temp;
+	    error("setting a C++ non-POD object value is not implemented - assign the value to a temporary and use the temporary.");
+	  }
+	else
+      	  comma_exp = build_modify_expr (temp, NOP_EXPR, rhs);
+      }
+#else
       comma_exp = build_modify_expr (temp, NOP_EXPR, rhs);
+#endif
+      /* APPLE LOCAL end radar 7591784 */
       comma_exp = build_compound_expr (comma_exp,
 		    objc_setter_func_call (receiver, prop_ident, temp));
       /* APPLE LOCAL begin radar 6264448 */

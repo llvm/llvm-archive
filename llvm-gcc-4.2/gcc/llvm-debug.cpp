@@ -289,10 +289,12 @@ void DebugInfo::change_regions(tree desired, tree grand) {
   setCurrentLexicalBlock(desired);
 }
 
-/// CreateSubprogramFromFnDecl - Constructs the debug code for
-/// entering a function - "llvm.dbg.func.start."
+/// EmitFunctionStart - Constructs the debug code for entering a function -
+/// "llvm.dbg.func.start."
+void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
+                                  BasicBlock *CurBB) {
+  setCurrentLexicalBlock(FnDecl);
 
-DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
   DIType FNType = getOrCreateType(TREE_TYPE(FnDecl));
 
   std::map<tree_node *, WeakVH >::iterator I = SPCache.find(FnDecl);
@@ -300,9 +302,12 @@ DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
     DISubprogram SPDecl(cast<MDNode>(I->second));
     DISubprogram SP = 
       DebugFactory.CreateSubprogramDefinition(SPDecl);
-    if (SP.getNode() != SPDecl.getNode())
-      SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
-    return SP;
+    SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
+
+    // Push function on region stack.
+    RegionStack.push_back(WeakVH(SP.getNode()));
+    RegionMap[FnDecl] = WeakVH(SP.getNode());
+    return;
   } 
 
   bool ArtificialFnWithAbstractOrigin = false;
@@ -324,13 +329,12 @@ DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
     DISubprogram SPDecl(cast<MDNode>(I->second));
     DISubprogram SP = 
       DebugFactory.CreateSubprogramDefinition(SPDecl);
-    if (SP.getNode() != SPDecl.getNode())
-      SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
+    SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
 
     // Push function on region stack.
     RegionStack.push_back(WeakVH(SP.getNode()));
     RegionMap[FnDecl] = WeakVH(SP.getNode());
-    return SP;
+    return;
   } 
 
   // Gather location information.
@@ -352,36 +356,23 @@ DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
   }
 
   StringRef FnName = getFunctionName(FnDecl);
-  // If the Function * hasn't been created yet, use a bogus value for
-  // the debug internal linkage bit.
-  bool hasInternalLinkage = true;
-  if (GET_DECL_LLVM_INDEX(FnDecl)) {
-    Function *Fn = cast<Function>DECL_LLVM(FnDecl);
-    hasInternalLinkage = Fn->hasInternalLinkage();
-  }
+
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(SPContext,
                                   FnName, FnName,
                                   LinkageName,
                                   getOrCreateFile(Loc.file), lineno,
                                   FNType,
-                                  hasInternalLinkage,
+                                  Fn->hasInternalLinkage(),
                                   true /*definition*/,
                                   Virtuality, VIndex, ContainingType);
                           
 
   SPCache[FnDecl] = WeakVH(SP.getNode());
-  RegionMap[FnDecl] = WeakVH(SP.getNode());
-  return SP;
-}
 
-/// EmitFunctionStart - Constructs the debug code for entering a function -
-/// "llvm.dbg.func.start", and pushes it onto the RegionStack.
-void DebugInfo::EmitFunctionStart(tree FnDecl) {
-  setCurrentLexicalBlock(FnDecl);
-  DISubprogram SP = CreateSubprogramFromFnDecl(FnDecl);
   // Push function on region stack.
   RegionStack.push_back(WeakVH(SP.getNode()));
+  RegionMap[FnDecl] = WeakVH(SP.getNode());
 }
 
 /// getOrCreateNameSpace - Get name space descriptor for the tree node.
@@ -414,20 +405,12 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     DIType Ty = getOrCreateType(Node);
     return DIDescriptor(Ty.getNode());
   } else if (DECL_P (Node)) {
-    switch (TREE_CODE(Node)) {
-    default:
-      /// What kind of DECL is this?
-      return findRegion (DECL_CONTEXT (Node));
-    case NAMESPACE_DECL: {
+    if (TREE_CODE (Node) == NAMESPACE_DECL) {
       DIDescriptor NSContext = findRegion(DECL_CONTEXT(Node));
       DINameSpace NS = getOrCreateNameSpace(Node, NSContext);
       return DIDescriptor(NS.getNode());
     }
-    case FUNCTION_DECL: {
-      DISubprogram SP = CreateSubprogramFromFnDecl(Node);
-      return SP;
-    }
-    }
+    return findRegion (DECL_CONTEXT (Node));
   } else if (TREE_CODE(Node) == BLOCK) {
     // TREE_BLOCK is GCC's lexical block.
     // Recursively create all necessary contexts:
@@ -640,7 +623,7 @@ DIType DebugInfo::createMethodType(tree type) {
   sprintf(FwdTypeName, "fwd.type.%d", FwdTypeCount++);
   llvm::DIType FwdType = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                     findRegion(TYPE_CONTEXT(type)),
+                                     getOrCreateFile(main_input_filename),
                                      FwdTypeName,
                                      getOrCreateFile(main_input_filename),
                                      0, 0, 0, 0, 0,
@@ -726,10 +709,9 @@ DIType DebugInfo::createPointerType(tree type) {
       return Ty;
     }
   
-  tree type_with_context = TYPE_CONTEXT(type) ? type : TREE_TYPE(type);
   StringRef PName = FromTy.getName();
   DIType PTy = 
-    DebugFactory.CreateDerivedType(Tag, findRegion(type_with_context), 
+    DebugFactory.CreateDerivedType(Tag, findRegion(TYPE_CONTEXT(type)), 
                                    Tag == DW_TAG_pointer_type ? 
                                    StringRef() : PName,
                                    getOrCreateFile(main_input_filename),

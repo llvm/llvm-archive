@@ -5643,8 +5643,17 @@ c_parser_postfix_expression (c_parser *parser)
 	  c_parser_compound_statement_nostart (parser);
 	  c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
 				     "expected %<)%>");
+/* LLVM LOCAL begin */
+          /* Disable this warning for the sake of ARM NEON intrinsics, which
+             are implemented as macros with statement expressions in llvm-gcc
+             since the inliner is not run later and the arguments need to be
+             visible to the front-end.  Otherwise, it is not possible to
+             compile NEON intrinsics with "-pedantic -Werror".  */
+#ifndef ENABLE_LLVM
 	  if (pedantic)
 	    pedwarn ("ISO C forbids braced-groups within expressions");
+#endif
+/* LLVM LOCAL end */
 	  expr.value = c_finish_stmt_expr (stmt);
 	  expr.original_code = ERROR_MARK;
 	}

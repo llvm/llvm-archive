@@ -148,7 +148,6 @@ static unsigned int getPointerAlignment(tree exp) {
 //===----------------------------------------------------------------------===//
 
 /// TheTreeToLLVM - Keep track of the current function being compiled.
-static TreeToLLVM *TheTreeToLLVM = 0;
 
 const TargetData &getTargetData() {
   return *TheTarget->getTargetData();
@@ -157,20 +156,22 @@ const TargetData &getTargetData() {
 /// EmitDebugInfo - Return true if debug info is to be emitted for current 
 /// function.
 bool TreeToLLVM::EmitDebugInfo() {
-  if (TheDebugInfo && !DECL_IGNORED_P(getFUNCTION_DECL()))
+  if (TheDebugInfo &&
+      (!getFUNCTION_DECL() || !DECL_IGNORED_P(getFUNCTION_DECL())))
     return true;
   return false;
 }
 
-TreeToLLVM::TreeToLLVM(tree fndecl) :
-    TD(getTargetData()), Builder(Context, *TheFolder) {
-  FnDecl = fndecl;
+TreeToLLVM::TreeToLLVM(tree decl) :
+  TD(getTargetData()), Builder(Context, *TheFolder) {
+  // If this isn't a FUNCITON_DECL, use only the source loc info from it.
+  FnDecl = (decl && TREE_CODE(decl) == FUNCTION_DECL) ? decl : NULL_TREE;
   Fn = 0;
   ReturnBB = UnwindBB = 0;
   ReturnOffset = 0;
 
   if (EmitDebugInfo()) {
-    expanded_location Location = expand_location(DECL_SOURCE_LOCATION (fndecl));
+    expanded_location Location = expand_location(DECL_SOURCE_LOCATION (decl));
 
     if (Location.file) {
       TheDebugInfo->setLocationFile(Location.file);
@@ -179,6 +180,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
       TheDebugInfo->setLocationFile("<unknown file>");
       TheDebugInfo->setLocationLine(0);
     }
+    TheDebugInfo->Initialize();
   }
 
   AllocaInsertionPoint = 0;
@@ -188,13 +190,25 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   FuncEHException = 0;
   FuncEHSelector = 0;
   FuncEHGetTypeID = 0;
-
-  assert(TheTreeToLLVM == 0 && "Reentering function creation?");
-  TheTreeToLLVM = this;
 }
 
-TreeToLLVM::~TreeToLLVM() {
-  TheTreeToLLVM = 0;
+
+TreeToLLVM::~TreeToLLVM() {}
+
+TreeToLLVM *getTreeToLLVM(tree decl) {
+  // FIXME: should this static move into the TreeToLLVM class decl?
+  static std::map<tree_node *, TreeToLLVM * > FunctionMap;
+  TreeToLLVM *newTreeToLLVM = FunctionMap[decl];
+  if (!newTreeToLLVM) {
+    tree fndecl = (decl && TREE_CODE(decl) == FUNCTION_DECL) ? decl : NULL_TREE;
+    newTreeToLLVM = FunctionMap[fndecl] = new TreeToLLVM(decl);
+  }
+  return newTreeToLLVM;
+}
+
+TreeToLLVM *getCurrentTreeToLLVM(void) {
+  assert(current_function_decl && "no current_function_decl?");
+  return getTreeToLLVM(current_function_decl);
 }
 
 /// getLabelDeclBlock - Lazily get and create a basic block for the specified
@@ -308,7 +322,8 @@ namespace {
       assert(TREE_CODE(TREE_TYPE(ResultDecl)) == REFERENCE_TYPE &&
              "Not type match and not passing by reference?");
       // Create an alloca for the ResultDecl.
-      Value *Tmp = TheTreeToLLVM->CreateTemporary(AI->getType());
+      TreeToLLVM *Emitter = getCurrentTreeToLLVM();
+      Value *Tmp = Emitter->CreateTemporary(AI->getType());
       Builder.CreateStore(AI, Tmp);
 
       SET_DECL_LLVM(ResultDecl, Tmp);
@@ -451,7 +466,7 @@ void TreeToLLVM::setLexicalBlockDepths(tree t, treeset &s, unsigned level) {
   }
 }
 
-void TreeToLLVM::StartFunctionBody() {
+Function *TreeToLLVM::StartFunctionBody() {
   const char *Name = "";
   // Get the name of the function.
   if (tree ID = DECL_ASSEMBLER_NAME(FnDecl))
@@ -610,10 +625,10 @@ void TreeToLLVM::StartFunctionBody() {
   // Set the BLOCK_NUMBER()s to the depth of each lexical block.
   setLexicalBlockDepths(FnDecl, block_declared_vars, 1);
 
-  SeenBlocks.clear();
-
-  if (EmitDebugInfo())
-    TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
+  if (TheDebugInfo) {
+    TheDebugInfo->EmitFunctionStart(FnDecl);
+    Builder.GetInsertBlock();
+  }
 
   // Loop over all of the arguments to the function, setting Argument names and
   // creating argument alloca's for the PARM_DECLs in case their address is
@@ -628,7 +643,7 @@ void TreeToLLVM::StartFunctionBody() {
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
                                 DECL_BUILT_IN(FnDecl));
   // Remember this for use by FinishFunctionBody.
-  TheTreeToLLVM->ReturnOffset = Client.Offset;
+  ReturnOffset = Client.Offset;
 
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
@@ -709,12 +724,7 @@ void TreeToLLVM::StartFunctionBody() {
         block_declared_vars.count(TREE_VALUE(t)) == 0)
       EmitAutomaticVariableDecl(TREE_VALUE(t));
   }
-
-  // Push the outermost lexical block onto the RegionStack.
-  switchLexicalBlock(DECL_INITIAL(FnDecl));
-
-  // Create a new block for the return node, but don't insert it yet.
-  ReturnBB = BasicBlock::Create(Context, "return");
+  return Fn;
 }
 
 Function *TreeToLLVM::FinishFunctionBody() {
@@ -802,8 +812,18 @@ Function *TreeToLLVM::FinishFunctionBody() {
 }
 
 Function *TreeToLLVM::EmitFunction() {
-  // Set up parameters and prepare for return, for the function.
+  // Set up parameters for the function.
   StartFunctionBody();
+
+  // We'll remember the lexical BLOCKs we've seen here.
+  SeenBlocks.clear();
+
+  // FIXME: Should these two statements move to StartFunctionBody() ?
+  // Push the outermost lexical block onto the RegionStack.
+  switchLexicalBlock(DECL_INITIAL(FnDecl));
+
+  // Create a new block for the return node, but don't insert it yet.
+  ReturnBB = BasicBlock::Create(Context, "return");
 
   // Emit the body of the function iterating over all BBs
   basic_block bb;
@@ -2616,7 +2636,7 @@ namespace {
       if (!Loc) {
         // A value.  Store to a temporary, and return the temporary's address.
         // Any future access to this argument will reuse the same address.
-        Loc = TheTreeToLLVM->CreateTemporary(TheValue->getType());
+        Loc = getCurrentTreeToLLVM()->CreateTemporary(TheValue->getType());
         Builder.CreateStore(TheValue, Loc);
       }
       return Loc;
@@ -2656,7 +2676,7 @@ namespace {
         assert(ConvertType(type) ==
                cast<PointerType>(RetBuf.Ptr->getType())->getElementType() &&
                "Inconsistent result types!");
-        TheTreeToLLVM->EmitAggregateCopy(*DestLoc, RetBuf, type);
+        getCurrentTreeToLLVM()->EmitAggregateCopy(*DestLoc, RetBuf, type);
         return 0;
       } else {
         // Read out the scalar return value now.
@@ -2699,7 +2719,7 @@ namespace {
 
       if (DestLoc == 0) {
         // The result is unused, but still needs to be stored somewhere.
-        Value *Buf = TheTreeToLLVM->CreateTemporary(PtrArgTy->getElementType());
+        Value *Buf = getCurrentTreeToLLVM()->CreateTemporary(PtrArgTy->getElementType());
         CallOperands.push_back(Buf);
       } else if (useReturnSlot) {
         // Letting the call write directly to the final destination is safe and
@@ -2709,7 +2729,7 @@ namespace {
         // Letting the call write directly to the final destination may not be
         // safe (eg: if DestLoc aliases a parameter) and is not required - pass
         // a buffer and copy it to DestLoc after the call.
-        RetBuf = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+        RetBuf = getCurrentTreeToLLVM()->CreateTempLoc(PtrArgTy->getElementType());
         CallOperands.push_back(RetBuf.Ptr);
       }
 
@@ -2730,7 +2750,7 @@ namespace {
              "Call returns a scalar but caller expects aggregate!");
       // Create a buffer to hold the result.  The result will be loaded out of
       // it after the call.
-      RetBuf = TheTreeToLLVM->CreateTempLoc(PtrArgTy->getElementType());
+      RetBuf = getCurrentTreeToLLVM()->CreateTempLoc(PtrArgTy->getElementType());
       CallOperands.push_back(RetBuf.Ptr);
 
       // Note the use of a shadow argument.
@@ -2754,7 +2774,7 @@ namespace {
         if (Loc->getType() != CalledTy) {
           assert(type && "Inconsistent parameter types?");
           bool isSigned = !TYPE_UNSIGNED(type);
-          Loc = TheTreeToLLVM->CastToAnyType(Loc, isSigned, CalledTy, false);
+          Loc = getCurrentTreeToLLVM()->CastToAnyType(Loc, isSigned, CalledTy, false);
         }
       }
 
@@ -8457,18 +8477,18 @@ Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {
 
 /// EmitLV_LABEL_DECL - Someone took the address of a label.
 Constant *TreeConstantToLLVM::EmitLV_LABEL_DECL(tree exp) {
-  assert(TheTreeToLLVM &&
+  assert(getCurrentTreeToLLVM() &&
          "taking the address of a label while not compiling the function!");
 
   // Figure out which function this is for, verify it's the one we're compiling.
   if (DECL_CONTEXT(exp)) {
     assert(TREE_CODE(DECL_CONTEXT(exp)) == FUNCTION_DECL &&
            "Address of label in nested function?");
-    assert(TheTreeToLLVM->getFUNCTION_DECL() == DECL_CONTEXT(exp) &&
+    assert(getCurrentTreeToLLVM()->getFUNCTION_DECL() == DECL_CONTEXT(exp) &&
            "Taking the address of a label that isn't in the current fn!?");
   }
 
-  return TheTreeToLLVM->EmitLV_LABEL_DECL(exp);
+  return getCurrentTreeToLLVM()->EmitLV_LABEL_DECL(exp);
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {

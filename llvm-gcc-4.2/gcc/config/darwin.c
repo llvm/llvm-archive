@@ -2712,16 +2712,9 @@ darwin_kextabi_p (void) {
 void
 darwin_override_options (void)
 {
-  /* APPLE LOCAL begin for iframework for 4.3 4094959 */
-  /* Remove this: */
-#if 0
-  if (flag_apple_kext && strcmp (lang_hooks.name, "GNU C++") != 0)
-    {
-      warning (0, "command line option %<-fapple-kext%> is only valid for C++");
-      flag_apple_kext = 0;
-    }
-#endif
-  /* APPLE LOCAL end for iframework for 4.3 4094959 */
+  /* LLVM LOCAL begin 7563705 */
+  /* Removed. */
+  /* LLVM LOCAL begin 7563705 */
   if (flag_mkernel || flag_apple_kext)
     {
       /* -mkernel implies -fapple-kext for C++ */
@@ -2741,6 +2734,14 @@ darwin_override_options (void)
 	  ! TARGET_SUPPORTS_KEXTABI1)
 	flag_apple_kext = 2;
       /* APPLE LOCAL end kext v2 */
+      /* LLVM LOCAL begin 7563705 */
+#ifdef ENABLE_LLVM
+      if (flag_apple_kext
+          && strverscmp (darwin_macosx_version_min, "10.6") > 0
+          && ! TARGET_64BIT)
+        target_flags |= MASK_MACHO_DYNAMIC_NO_PIC;
+#endif
+      /* LLVM LOCAL end 7563705 */
     }
   /* APPLE LOCAL begin axe stubs 5571540 */
   /* APPLE LOCAL begin ARM 5683689 */

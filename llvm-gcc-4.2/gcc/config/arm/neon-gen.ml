@@ -93,15 +93,16 @@ let print_function arity fnname body =
   | Arity4 (ret, arg0, arg1, arg2, arg3) ->
       Format.printf "%s(__a, __b, __c, __d)" fnname
   end;
-  Format.printf " \\@,";
   let rec print_lines = function
     [] -> ()
   | [line] -> Format.printf "%s; \\" line
   | line::lines -> Format.printf "%s; \\@," line; print_lines lines in
   let print_macro_body = function
-    [] -> ()
-  | [line] -> Format.printf "%s" line
-  | line::lines -> Format.printf "@[<v 3>({ \\@,%s; \\@," line;
+    [] -> Format.printf " \\@,";
+  | [line] -> Format.printf " \\@,";
+              Format.printf "%s" line
+  | line::lines -> Format.printf " __extension__ \\@,";
+                   Format.printf "@[<v 3>({ \\@,%s; \\@," line;
                    print_lines lines;
                    Format.printf "@]@, })" in
   print_macro_body body;

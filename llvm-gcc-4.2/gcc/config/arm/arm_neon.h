@@ -514,7 +514,7 @@ typedef struct poly16x8x4_t
 } poly16x8x4_t;
 
 
-#define vadd_s8(__a, __b) \
+#define vadd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -523,7 +523,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_s16(__a, __b) \
+#define vadd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -532,7 +532,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_s32(__a, __b) \
+#define vadd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -541,7 +541,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_s64(__a, __b) \
+#define vadd_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -550,7 +550,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_f32(__a, __b) \
+#define vadd_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -559,7 +559,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_u8(__a, __b) \
+#define vadd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -568,7 +568,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_u16(__a, __b) \
+#define vadd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -577,7 +577,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_u32(__a, __b) \
+#define vadd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -586,7 +586,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vadd_u64(__a, __b) \
+#define vadd_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -595,7 +595,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_s8(__a, __b) \
+#define vaddq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -604,7 +604,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_s16(__a, __b) \
+#define vaddq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -613,7 +613,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_s32(__a, __b) \
+#define vaddq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -622,7 +622,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_s64(__a, __b) \
+#define vaddq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -631,7 +631,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_f32(__a, __b) \
+#define vaddq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -640,7 +640,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_u8(__a, __b) \
+#define vaddq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -649,7 +649,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_u16(__a, __b) \
+#define vaddq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -658,7 +658,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_u32(__a, __b) \
+#define vaddq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -667,7 +667,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddq_u64(__a, __b) \
+#define vaddq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -676,7 +676,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_s8(__a, __b) \
+#define vaddl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -685,7 +685,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_s16(__a, __b) \
+#define vaddl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -694,7 +694,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_s32(__a, __b) \
+#define vaddl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -703,7 +703,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_u8(__a, __b) \
+#define vaddl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -712,7 +712,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_u16(__a, __b) \
+#define vaddl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -721,7 +721,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddl_u32(__a, __b) \
+#define vaddl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -730,7 +730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_s8(__a, __b) \
+#define vaddw_s8(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -739,7 +739,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_s16(__a, __b) \
+#define vaddw_s16(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -748,7 +748,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_s32(__a, __b) \
+#define vaddw_s32(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -757,7 +757,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_u8(__a, __b) \
+#define vaddw_u8(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -766,7 +766,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_u16(__a, __b) \
+#define vaddw_u16(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -775,7 +775,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddw_u32(__a, __b) \
+#define vaddw_u32(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -784,7 +784,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_s8(__a, __b) \
+#define vhadd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -793,7 +793,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_s16(__a, __b) \
+#define vhadd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -802,7 +802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_s32(__a, __b) \
+#define vhadd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -811,7 +811,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_u8(__a, __b) \
+#define vhadd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -820,7 +820,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_u16(__a, __b) \
+#define vhadd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -829,7 +829,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhadd_u32(__a, __b) \
+#define vhadd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -838,7 +838,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_s8(__a, __b) \
+#define vhaddq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -847,7 +847,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_s16(__a, __b) \
+#define vhaddq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -856,7 +856,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_s32(__a, __b) \
+#define vhaddq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -865,7 +865,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_u8(__a, __b) \
+#define vhaddq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -874,7 +874,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_u16(__a, __b) \
+#define vhaddq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -883,7 +883,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhaddq_u32(__a, __b) \
+#define vhaddq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -892,7 +892,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_s8(__a, __b) \
+#define vrhadd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -901,7 +901,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_s16(__a, __b) \
+#define vrhadd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -910,7 +910,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_s32(__a, __b) \
+#define vrhadd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -919,7 +919,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_u8(__a, __b) \
+#define vrhadd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -928,7 +928,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_u16(__a, __b) \
+#define vrhadd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -937,7 +937,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhadd_u32(__a, __b) \
+#define vrhadd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -946,7 +946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_s8(__a, __b) \
+#define vrhaddq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -955,7 +955,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_s16(__a, __b) \
+#define vrhaddq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -964,7 +964,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_s32(__a, __b) \
+#define vrhaddq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -973,7 +973,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_u8(__a, __b) \
+#define vrhaddq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -982,7 +982,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_u16(__a, __b) \
+#define vrhaddq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -991,7 +991,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrhaddq_u32(__a, __b) \
+#define vrhaddq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1000,7 +1000,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_s8(__a, __b) \
+#define vqadd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1009,7 +1009,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_s16(__a, __b) \
+#define vqadd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1018,7 +1018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_s32(__a, __b) \
+#define vqadd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1027,7 +1027,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_s64(__a, __b) \
+#define vqadd_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -1036,7 +1036,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_u8(__a, __b) \
+#define vqadd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1045,7 +1045,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_u16(__a, __b) \
+#define vqadd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1054,7 +1054,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_u32(__a, __b) \
+#define vqadd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1063,7 +1063,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqadd_u64(__a, __b) \
+#define vqadd_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -1072,7 +1072,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_s8(__a, __b) \
+#define vqaddq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -1081,7 +1081,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_s16(__a, __b) \
+#define vqaddq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1090,7 +1090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_s32(__a, __b) \
+#define vqaddq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1099,7 +1099,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_s64(__a, __b) \
+#define vqaddq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -1108,7 +1108,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_u8(__a, __b) \
+#define vqaddq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -1117,7 +1117,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_u16(__a, __b) \
+#define vqaddq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1126,7 +1126,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_u32(__a, __b) \
+#define vqaddq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1135,7 +1135,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqaddq_u64(__a, __b) \
+#define vqaddq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -1144,7 +1144,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_s16(__a, __b) \
+#define vaddhn_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1153,7 +1153,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_s32(__a, __b) \
+#define vaddhn_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1162,7 +1162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_s64(__a, __b) \
+#define vaddhn_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -1171,7 +1171,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_u16(__a, __b) \
+#define vaddhn_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1180,7 +1180,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_u32(__a, __b) \
+#define vaddhn_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1189,7 +1189,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaddhn_u64(__a, __b) \
+#define vaddhn_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -1198,7 +1198,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_s16(__a, __b) \
+#define vraddhn_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1207,7 +1207,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_s32(__a, __b) \
+#define vraddhn_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1216,7 +1216,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_s64(__a, __b) \
+#define vraddhn_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -1225,7 +1225,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_u16(__a, __b) \
+#define vraddhn_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1234,7 +1234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_u32(__a, __b) \
+#define vraddhn_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1243,7 +1243,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vraddhn_u64(__a, __b) \
+#define vraddhn_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -1252,7 +1252,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_s8(__a, __b) \
+#define vmul_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1261,7 +1261,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_s16(__a, __b) \
+#define vmul_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1270,7 +1270,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_s32(__a, __b) \
+#define vmul_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1279,7 +1279,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_f32(__a, __b) \
+#define vmul_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -1288,7 +1288,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_u8(__a, __b) \
+#define vmul_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1297,7 +1297,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_u16(__a, __b) \
+#define vmul_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1306,7 +1306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_u32(__a, __b) \
+#define vmul_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1315,7 +1315,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_p8(__a, __b) \
+#define vmul_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -1324,7 +1324,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_s8(__a, __b) \
+#define vmulq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -1333,7 +1333,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_s16(__a, __b) \
+#define vmulq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1342,7 +1342,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_s32(__a, __b) \
+#define vmulq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1351,7 +1351,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_f32(__a, __b) \
+#define vmulq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -1360,7 +1360,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_u8(__a, __b) \
+#define vmulq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -1369,7 +1369,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_u16(__a, __b) \
+#define vmulq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1378,7 +1378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_u32(__a, __b) \
+#define vmulq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1387,7 +1387,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_p8(__a, __b) \
+#define vmulq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -1396,7 +1396,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_s16(__a, __b) \
+#define vqdmulh_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1405,7 +1405,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_s32(__a, __b) \
+#define vqdmulh_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1414,7 +1414,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_s16(__a, __b) \
+#define vqdmulhq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1423,7 +1423,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_s32(__a, __b) \
+#define vqdmulhq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1432,7 +1432,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_s16(__a, __b) \
+#define vqrdmulh_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1441,7 +1441,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_s32(__a, __b) \
+#define vqrdmulh_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1450,7 +1450,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_s16(__a, __b) \
+#define vqrdmulhq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1459,7 +1459,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_s32(__a, __b) \
+#define vqrdmulhq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1468,7 +1468,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_s8(__a, __b) \
+#define vmull_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1477,7 +1477,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_s16(__a, __b) \
+#define vmull_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1486,7 +1486,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_s32(__a, __b) \
+#define vmull_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1495,7 +1495,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_u8(__a, __b) \
+#define vmull_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1504,7 +1504,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_u16(__a, __b) \
+#define vmull_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1513,7 +1513,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_u32(__a, __b) \
+#define vmull_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1522,7 +1522,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_p8(__a, __b) \
+#define vmull_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -1531,7 +1531,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_s16(__a, __b) \
+#define vqdmull_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1540,7 +1540,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_s32(__a, __b) \
+#define vqdmull_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1549,7 +1549,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_s8(__a, __b, __c) \
+#define vmla_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1559,7 +1559,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_s16(__a, __b, __c) \
+#define vmla_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1569,7 +1569,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_s32(__a, __b, __c) \
+#define vmla_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1579,7 +1579,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_f32(__a, __b, __c) \
+#define vmla_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -1589,7 +1589,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_u8(__a, __b, __c) \
+#define vmla_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1599,7 +1599,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_u16(__a, __b, __c) \
+#define vmla_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1609,7 +1609,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_u32(__a, __b, __c) \
+#define vmla_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1619,7 +1619,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_s8(__a, __b, __c) \
+#define vmlaq_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -1629,7 +1629,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_s16(__a, __b, __c) \
+#define vmlaq_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1639,7 +1639,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_s32(__a, __b, __c) \
+#define vmlaq_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1649,7 +1649,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_f32(__a, __b, __c) \
+#define vmlaq_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -1659,7 +1659,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_u8(__a, __b, __c) \
+#define vmlaq_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -1669,7 +1669,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_u16(__a, __b, __c) \
+#define vmlaq_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1679,7 +1679,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_u32(__a, __b, __c) \
+#define vmlaq_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1689,7 +1689,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_s8(__a, __b, __c) \
+#define vmlal_s8(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1699,7 +1699,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_s16(__a, __b, __c) \
+#define vmlal_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1709,7 +1709,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_s32(__a, __b, __c) \
+#define vmlal_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1719,7 +1719,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_u8(__a, __b, __c) \
+#define vmlal_u8(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1729,7 +1729,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_u16(__a, __b, __c) \
+#define vmlal_u16(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1739,7 +1739,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_u32(__a, __b, __c) \
+#define vmlal_u32(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1749,7 +1749,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_s16(__a, __b, __c) \
+#define vqdmlal_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1759,7 +1759,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_s32(__a, __b, __c) \
+#define vqdmlal_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1769,7 +1769,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_s8(__a, __b, __c) \
+#define vmls_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1779,7 +1779,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_s16(__a, __b, __c) \
+#define vmls_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1789,7 +1789,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_s32(__a, __b, __c) \
+#define vmls_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1799,7 +1799,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_f32(__a, __b, __c) \
+#define vmls_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -1809,7 +1809,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_u8(__a, __b, __c) \
+#define vmls_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1819,7 +1819,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_u16(__a, __b, __c) \
+#define vmls_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1829,7 +1829,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_u32(__a, __b, __c) \
+#define vmls_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1839,7 +1839,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_s8(__a, __b, __c) \
+#define vmlsq_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -1849,7 +1849,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_s16(__a, __b, __c) \
+#define vmlsq_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -1859,7 +1859,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_s32(__a, __b, __c) \
+#define vmlsq_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -1869,7 +1869,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_f32(__a, __b, __c) \
+#define vmlsq_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -1879,7 +1879,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_u8(__a, __b, __c) \
+#define vmlsq_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -1889,7 +1889,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_u16(__a, __b, __c) \
+#define vmlsq_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -1899,7 +1899,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_u32(__a, __b, __c) \
+#define vmlsq_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -1909,7 +1909,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_s8(__a, __b, __c) \
+#define vmlsl_s8(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1919,7 +1919,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_s16(__a, __b, __c) \
+#define vmlsl_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1929,7 +1929,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_s32(__a, __b, __c) \
+#define vmlsl_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1939,7 +1939,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_u8(__a, __b, __c) \
+#define vmlsl_u8(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -1949,7 +1949,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_u16(__a, __b, __c) \
+#define vmlsl_u16(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -1959,7 +1959,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_u32(__a, __b, __c) \
+#define vmlsl_u32(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -1969,7 +1969,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_s16(__a, __b, __c) \
+#define vqdmlsl_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -1979,7 +1979,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_s32(__a, __b, __c) \
+#define vqdmlsl_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -1989,7 +1989,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_s8(__a, __b) \
+#define vsub_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -1998,7 +1998,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_s16(__a, __b) \
+#define vsub_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2007,7 +2007,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_s32(__a, __b) \
+#define vsub_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2016,7 +2016,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_s64(__a, __b) \
+#define vsub_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -2025,7 +2025,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_f32(__a, __b) \
+#define vsub_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -2034,7 +2034,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_u8(__a, __b) \
+#define vsub_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2043,7 +2043,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_u16(__a, __b) \
+#define vsub_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2052,7 +2052,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_u32(__a, __b) \
+#define vsub_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2061,7 +2061,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsub_u64(__a, __b) \
+#define vsub_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -2070,7 +2070,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_s8(__a, __b) \
+#define vsubq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2079,7 +2079,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_s16(__a, __b) \
+#define vsubq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2088,7 +2088,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_s32(__a, __b) \
+#define vsubq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2097,7 +2097,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_s64(__a, __b) \
+#define vsubq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -2106,7 +2106,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_f32(__a, __b) \
+#define vsubq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -2115,7 +2115,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_u8(__a, __b) \
+#define vsubq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2124,7 +2124,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_u16(__a, __b) \
+#define vsubq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2133,7 +2133,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_u32(__a, __b) \
+#define vsubq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2142,7 +2142,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubq_u64(__a, __b) \
+#define vsubq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -2151,7 +2151,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_s8(__a, __b) \
+#define vsubl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2160,7 +2160,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_s16(__a, __b) \
+#define vsubl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2169,7 +2169,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_s32(__a, __b) \
+#define vsubl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2178,7 +2178,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_u8(__a, __b) \
+#define vsubl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2187,7 +2187,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_u16(__a, __b) \
+#define vsubl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2196,7 +2196,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubl_u32(__a, __b) \
+#define vsubl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2205,7 +2205,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_s8(__a, __b) \
+#define vsubw_s8(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2214,7 +2214,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_s16(__a, __b) \
+#define vsubw_s16(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2223,7 +2223,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_s32(__a, __b) \
+#define vsubw_s32(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2232,7 +2232,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_u8(__a, __b) \
+#define vsubw_u8(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2241,7 +2241,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_u16(__a, __b) \
+#define vsubw_u16(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2250,7 +2250,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubw_u32(__a, __b) \
+#define vsubw_u32(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2259,7 +2259,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_s8(__a, __b) \
+#define vhsub_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2268,7 +2268,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_s16(__a, __b) \
+#define vhsub_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2277,7 +2277,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_s32(__a, __b) \
+#define vhsub_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2286,7 +2286,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_u8(__a, __b) \
+#define vhsub_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2295,7 +2295,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_u16(__a, __b) \
+#define vhsub_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2304,7 +2304,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsub_u32(__a, __b) \
+#define vhsub_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2313,7 +2313,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_s8(__a, __b) \
+#define vhsubq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2322,7 +2322,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_s16(__a, __b) \
+#define vhsubq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2331,7 +2331,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_s32(__a, __b) \
+#define vhsubq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2340,7 +2340,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_u8(__a, __b) \
+#define vhsubq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2349,7 +2349,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_u16(__a, __b) \
+#define vhsubq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2358,7 +2358,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vhsubq_u32(__a, __b) \
+#define vhsubq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2367,7 +2367,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_s8(__a, __b) \
+#define vqsub_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2376,7 +2376,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_s16(__a, __b) \
+#define vqsub_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2385,7 +2385,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_s32(__a, __b) \
+#define vqsub_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2394,7 +2394,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_s64(__a, __b) \
+#define vqsub_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -2403,7 +2403,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_u8(__a, __b) \
+#define vqsub_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2412,7 +2412,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_u16(__a, __b) \
+#define vqsub_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2421,7 +2421,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_u32(__a, __b) \
+#define vqsub_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2430,7 +2430,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsub_u64(__a, __b) \
+#define vqsub_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -2439,7 +2439,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_s8(__a, __b) \
+#define vqsubq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2448,7 +2448,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_s16(__a, __b) \
+#define vqsubq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2457,7 +2457,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_s32(__a, __b) \
+#define vqsubq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2466,7 +2466,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_s64(__a, __b) \
+#define vqsubq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -2475,7 +2475,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_u8(__a, __b) \
+#define vqsubq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2484,7 +2484,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_u16(__a, __b) \
+#define vqsubq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2493,7 +2493,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_u32(__a, __b) \
+#define vqsubq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2502,7 +2502,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqsubq_u64(__a, __b) \
+#define vqsubq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -2511,7 +2511,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_s16(__a, __b) \
+#define vsubhn_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2520,7 +2520,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_s32(__a, __b) \
+#define vsubhn_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2529,7 +2529,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_s64(__a, __b) \
+#define vsubhn_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -2538,7 +2538,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_u16(__a, __b) \
+#define vsubhn_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2547,7 +2547,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_u32(__a, __b) \
+#define vsubhn_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2556,7 +2556,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsubhn_u64(__a, __b) \
+#define vsubhn_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -2565,7 +2565,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_s16(__a, __b) \
+#define vrsubhn_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2574,7 +2574,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_s32(__a, __b) \
+#define vrsubhn_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2583,7 +2583,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_s64(__a, __b) \
+#define vrsubhn_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -2592,7 +2592,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_u16(__a, __b) \
+#define vrsubhn_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2601,7 +2601,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_u32(__a, __b) \
+#define vrsubhn_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2610,7 +2610,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsubhn_u64(__a, __b) \
+#define vrsubhn_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -2619,7 +2619,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_s8(__a, __b) \
+#define vceq_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2628,7 +2628,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_s16(__a, __b) \
+#define vceq_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2637,7 +2637,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_s32(__a, __b) \
+#define vceq_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2646,7 +2646,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_f32(__a, __b) \
+#define vceq_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -2655,7 +2655,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_u8(__a, __b) \
+#define vceq_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2664,7 +2664,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_u16(__a, __b) \
+#define vceq_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2673,7 +2673,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_u32(__a, __b) \
+#define vceq_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2682,7 +2682,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceq_p8(__a, __b) \
+#define vceq_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -2691,7 +2691,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_s8(__a, __b) \
+#define vceqq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2700,7 +2700,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_s16(__a, __b) \
+#define vceqq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2709,7 +2709,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_s32(__a, __b) \
+#define vceqq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2718,7 +2718,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_f32(__a, __b) \
+#define vceqq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -2727,7 +2727,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_u8(__a, __b) \
+#define vceqq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2736,7 +2736,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_u16(__a, __b) \
+#define vceqq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2745,7 +2745,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_u32(__a, __b) \
+#define vceqq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2754,7 +2754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vceqq_p8(__a, __b) \
+#define vceqq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -2763,7 +2763,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_s8(__a, __b) \
+#define vcge_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2772,7 +2772,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_s16(__a, __b) \
+#define vcge_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2781,7 +2781,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_s32(__a, __b) \
+#define vcge_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2790,7 +2790,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_f32(__a, __b) \
+#define vcge_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -2799,7 +2799,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_u8(__a, __b) \
+#define vcge_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2808,7 +2808,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_u16(__a, __b) \
+#define vcge_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2817,7 +2817,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcge_u32(__a, __b) \
+#define vcge_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2826,7 +2826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_s8(__a, __b) \
+#define vcgeq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2835,7 +2835,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_s16(__a, __b) \
+#define vcgeq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2844,7 +2844,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_s32(__a, __b) \
+#define vcgeq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2853,7 +2853,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_f32(__a, __b) \
+#define vcgeq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -2862,7 +2862,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_u8(__a, __b) \
+#define vcgeq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2871,7 +2871,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_u16(__a, __b) \
+#define vcgeq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -2880,7 +2880,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgeq_u32(__a, __b) \
+#define vcgeq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -2889,7 +2889,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_s8(__a, __b) \
+#define vcle_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -2898,7 +2898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_s16(__a, __b) \
+#define vcle_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -2907,7 +2907,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_s32(__a, __b) \
+#define vcle_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -2916,7 +2916,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_f32(__a, __b) \
+#define vcle_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -2925,7 +2925,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_u8(__a, __b) \
+#define vcle_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -2934,7 +2934,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_u16(__a, __b) \
+#define vcle_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -2943,7 +2943,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcle_u32(__a, __b) \
+#define vcle_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -2952,7 +2952,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_s8(__a, __b) \
+#define vcleq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -2961,7 +2961,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_s16(__a, __b) \
+#define vcleq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -2970,7 +2970,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_s32(__a, __b) \
+#define vcleq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -2979,7 +2979,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_f32(__a, __b) \
+#define vcleq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -2988,7 +2988,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_u8(__a, __b) \
+#define vcleq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -2997,7 +2997,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_u16(__a, __b) \
+#define vcleq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3006,7 +3006,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcleq_u32(__a, __b) \
+#define vcleq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3015,7 +3015,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_s8(__a, __b) \
+#define vcgt_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3024,7 +3024,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_s16(__a, __b) \
+#define vcgt_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3033,7 +3033,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_s32(__a, __b) \
+#define vcgt_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3042,7 +3042,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_f32(__a, __b) \
+#define vcgt_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3051,7 +3051,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_u8(__a, __b) \
+#define vcgt_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3060,7 +3060,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_u16(__a, __b) \
+#define vcgt_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3069,7 +3069,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgt_u32(__a, __b) \
+#define vcgt_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3078,7 +3078,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_s8(__a, __b) \
+#define vcgtq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3087,7 +3087,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_s16(__a, __b) \
+#define vcgtq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3096,7 +3096,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_s32(__a, __b) \
+#define vcgtq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3105,7 +3105,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_f32(__a, __b) \
+#define vcgtq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3114,7 +3114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_u8(__a, __b) \
+#define vcgtq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3123,7 +3123,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_u16(__a, __b) \
+#define vcgtq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3132,7 +3132,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcgtq_u32(__a, __b) \
+#define vcgtq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3141,7 +3141,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_s8(__a, __b) \
+#define vclt_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3150,7 +3150,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_s16(__a, __b) \
+#define vclt_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3159,7 +3159,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_s32(__a, __b) \
+#define vclt_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3168,7 +3168,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_f32(__a, __b) \
+#define vclt_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3177,7 +3177,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_u8(__a, __b) \
+#define vclt_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3186,7 +3186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_u16(__a, __b) \
+#define vclt_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3195,7 +3195,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclt_u32(__a, __b) \
+#define vclt_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3204,7 +3204,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_s8(__a, __b) \
+#define vcltq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3213,7 +3213,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_s16(__a, __b) \
+#define vcltq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3222,7 +3222,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_s32(__a, __b) \
+#define vcltq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3231,7 +3231,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_f32(__a, __b) \
+#define vcltq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3240,7 +3240,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_u8(__a, __b) \
+#define vcltq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3249,7 +3249,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_u16(__a, __b) \
+#define vcltq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3258,7 +3258,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcltq_u32(__a, __b) \
+#define vcltq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3267,7 +3267,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcage_f32(__a, __b) \
+#define vcage_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3276,7 +3276,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcageq_f32(__a, __b) \
+#define vcageq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3285,7 +3285,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcale_f32(__a, __b) \
+#define vcale_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3294,7 +3294,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcaleq_f32(__a, __b) \
+#define vcaleq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3303,7 +3303,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcagt_f32(__a, __b) \
+#define vcagt_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3312,7 +3312,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcagtq_f32(__a, __b) \
+#define vcagtq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3321,7 +3321,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcalt_f32(__a, __b) \
+#define vcalt_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3330,7 +3330,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcaltq_f32(__a, __b) \
+#define vcaltq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3339,7 +3339,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_s8(__a, __b) \
+#define vtst_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3348,7 +3348,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_s16(__a, __b) \
+#define vtst_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3357,7 +3357,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_s32(__a, __b) \
+#define vtst_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3366,7 +3366,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_u8(__a, __b) \
+#define vtst_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3375,7 +3375,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_u16(__a, __b) \
+#define vtst_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3384,7 +3384,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_u32(__a, __b) \
+#define vtst_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3393,7 +3393,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtst_p8(__a, __b) \
+#define vtst_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -3402,7 +3402,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_s8(__a, __b) \
+#define vtstq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3411,7 +3411,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_s16(__a, __b) \
+#define vtstq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3420,7 +3420,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_s32(__a, __b) \
+#define vtstq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3429,7 +3429,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_u8(__a, __b) \
+#define vtstq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3438,7 +3438,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_u16(__a, __b) \
+#define vtstq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3447,7 +3447,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_u32(__a, __b) \
+#define vtstq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3456,7 +3456,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtstq_p8(__a, __b) \
+#define vtstq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -3465,7 +3465,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_s8(__a, __b) \
+#define vabd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3474,7 +3474,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_s16(__a, __b) \
+#define vabd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3483,7 +3483,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_s32(__a, __b) \
+#define vabd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3492,7 +3492,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_f32(__a, __b) \
+#define vabd_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3501,7 +3501,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_u8(__a, __b) \
+#define vabd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3510,7 +3510,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_u16(__a, __b) \
+#define vabd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3519,7 +3519,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabd_u32(__a, __b) \
+#define vabd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3528,7 +3528,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_s8(__a, __b) \
+#define vabdq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3537,7 +3537,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_s16(__a, __b) \
+#define vabdq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3546,7 +3546,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_s32(__a, __b) \
+#define vabdq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3555,7 +3555,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_f32(__a, __b) \
+#define vabdq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3564,7 +3564,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_u8(__a, __b) \
+#define vabdq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3573,7 +3573,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_u16(__a, __b) \
+#define vabdq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3582,7 +3582,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdq_u32(__a, __b) \
+#define vabdq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3591,7 +3591,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_s8(__a, __b) \
+#define vabdl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3600,7 +3600,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_s16(__a, __b) \
+#define vabdl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3609,7 +3609,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_s32(__a, __b) \
+#define vabdl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3618,7 +3618,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_u8(__a, __b) \
+#define vabdl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3627,7 +3627,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_u16(__a, __b) \
+#define vabdl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3636,7 +3636,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabdl_u32(__a, __b) \
+#define vabdl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3645,7 +3645,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_s8(__a, __b, __c) \
+#define vaba_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3655,7 +3655,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_s16(__a, __b, __c) \
+#define vaba_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3665,7 +3665,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_s32(__a, __b, __c) \
+#define vaba_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3675,7 +3675,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_u8(__a, __b, __c) \
+#define vaba_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3685,7 +3685,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_u16(__a, __b, __c) \
+#define vaba_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3695,7 +3695,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vaba_u32(__a, __b, __c) \
+#define vaba_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3705,7 +3705,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_s8(__a, __b, __c) \
+#define vabaq_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3715,7 +3715,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_s16(__a, __b, __c) \
+#define vabaq_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3725,7 +3725,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_s32(__a, __b, __c) \
+#define vabaq_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3735,7 +3735,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_u8(__a, __b, __c) \
+#define vabaq_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3745,7 +3745,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_u16(__a, __b, __c) \
+#define vabaq_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3755,7 +3755,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabaq_u32(__a, __b, __c) \
+#define vabaq_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3765,7 +3765,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_s8(__a, __b, __c) \
+#define vabal_s8(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3775,7 +3775,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_s16(__a, __b, __c) \
+#define vabal_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3785,7 +3785,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_s32(__a, __b, __c) \
+#define vabal_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3795,7 +3795,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_u8(__a, __b, __c) \
+#define vabal_u8(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3805,7 +3805,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_u16(__a, __b, __c) \
+#define vabal_u16(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3815,7 +3815,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabal_u32(__a, __b, __c) \
+#define vabal_u32(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3825,7 +3825,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_s8(__a, __b) \
+#define vmax_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3834,7 +3834,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_s16(__a, __b) \
+#define vmax_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3843,7 +3843,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_s32(__a, __b) \
+#define vmax_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3852,7 +3852,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_f32(__a, __b) \
+#define vmax_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3861,7 +3861,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_u8(__a, __b) \
+#define vmax_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3870,7 +3870,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_u16(__a, __b) \
+#define vmax_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -3879,7 +3879,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmax_u32(__a, __b) \
+#define vmax_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -3888,7 +3888,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_s8(__a, __b) \
+#define vmaxq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -3897,7 +3897,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_s16(__a, __b) \
+#define vmaxq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -3906,7 +3906,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_s32(__a, __b) \
+#define vmaxq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -3915,7 +3915,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_f32(__a, __b) \
+#define vmaxq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -3924,7 +3924,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_u8(__a, __b) \
+#define vmaxq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -3933,7 +3933,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_u16(__a, __b) \
+#define vmaxq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -3942,7 +3942,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmaxq_u32(__a, __b) \
+#define vmaxq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -3951,7 +3951,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_s8(__a, __b) \
+#define vmin_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -3960,7 +3960,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_s16(__a, __b) \
+#define vmin_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -3969,7 +3969,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_s32(__a, __b) \
+#define vmin_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -3978,7 +3978,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_f32(__a, __b) \
+#define vmin_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -3987,7 +3987,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_u8(__a, __b) \
+#define vmin_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -3996,7 +3996,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_u16(__a, __b) \
+#define vmin_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -4005,7 +4005,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmin_u32(__a, __b) \
+#define vmin_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -4014,7 +4014,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_s8(__a, __b) \
+#define vminq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4023,7 +4023,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_s16(__a, __b) \
+#define vminq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4032,7 +4032,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_s32(__a, __b) \
+#define vminq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4041,7 +4041,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_f32(__a, __b) \
+#define vminq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -4050,7 +4050,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_u8(__a, __b) \
+#define vminq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -4059,7 +4059,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_u16(__a, __b) \
+#define vminq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -4068,7 +4068,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vminq_u32(__a, __b) \
+#define vminq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -4077,7 +4077,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_s8(__a, __b) \
+#define vpadd_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4086,7 +4086,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_s16(__a, __b) \
+#define vpadd_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4095,7 +4095,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_s32(__a, __b) \
+#define vpadd_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4104,7 +4104,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_f32(__a, __b) \
+#define vpadd_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -4113,7 +4113,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_u8(__a, __b) \
+#define vpadd_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -4122,7 +4122,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_u16(__a, __b) \
+#define vpadd_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -4131,7 +4131,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadd_u32(__a, __b) \
+#define vpadd_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -4140,7 +4140,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_s8(__a) \
+#define vpaddl_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -4148,7 +4148,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_s16(__a) \
+#define vpaddl_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -4156,7 +4156,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_s32(__a) \
+#define vpaddl_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -4164,7 +4164,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_u8(__a) \
+#define vpaddl_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -4172,7 +4172,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_u16(__a) \
+#define vpaddl_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -4180,7 +4180,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddl_u32(__a) \
+#define vpaddl_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -4188,7 +4188,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_s8(__a) \
+#define vpaddlq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -4196,7 +4196,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_s16(__a) \
+#define vpaddlq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -4204,7 +4204,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_s32(__a) \
+#define vpaddlq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -4212,7 +4212,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_u8(__a) \
+#define vpaddlq_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -4220,7 +4220,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_u16(__a) \
+#define vpaddlq_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -4228,7 +4228,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpaddlq_u32(__a) \
+#define vpaddlq_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -4236,7 +4236,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_s8(__a, __b) \
+#define vpadal_s8(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4245,7 +4245,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_s16(__a, __b) \
+#define vpadal_s16(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4254,7 +4254,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_s32(__a, __b) \
+#define vpadal_s32(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4263,7 +4263,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_u8(__a, __b) \
+#define vpadal_u8(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -4272,7 +4272,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_u16(__a, __b) \
+#define vpadal_u16(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -4281,7 +4281,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadal_u32(__a, __b) \
+#define vpadal_u32(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -4290,7 +4290,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_s8(__a, __b) \
+#define vpadalq_s8(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4299,7 +4299,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_s16(__a, __b) \
+#define vpadalq_s16(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4308,7 +4308,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_s32(__a, __b) \
+#define vpadalq_s32(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4317,7 +4317,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_u8(__a, __b) \
+#define vpadalq_u8(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -4326,7 +4326,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_u16(__a, __b) \
+#define vpadalq_u16(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -4335,7 +4335,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpadalq_u32(__a, __b) \
+#define vpadalq_u32(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -4344,7 +4344,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_s8(__a, __b) \
+#define vpmax_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4353,7 +4353,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_s16(__a, __b) \
+#define vpmax_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4362,7 +4362,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_s32(__a, __b) \
+#define vpmax_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4371,7 +4371,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_f32(__a, __b) \
+#define vpmax_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -4380,7 +4380,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_u8(__a, __b) \
+#define vpmax_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -4389,7 +4389,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_u16(__a, __b) \
+#define vpmax_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -4398,7 +4398,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmax_u32(__a, __b) \
+#define vpmax_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -4407,7 +4407,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_s8(__a, __b) \
+#define vpmin_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4416,7 +4416,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_s16(__a, __b) \
+#define vpmin_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4425,7 +4425,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_s32(__a, __b) \
+#define vpmin_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4434,7 +4434,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_f32(__a, __b) \
+#define vpmin_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -4443,7 +4443,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_u8(__a, __b) \
+#define vpmin_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -4452,7 +4452,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_u16(__a, __b) \
+#define vpmin_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -4461,7 +4461,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vpmin_u32(__a, __b) \
+#define vpmin_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -4470,7 +4470,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecps_f32(__a, __b) \
+#define vrecps_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -4479,7 +4479,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecpsq_f32(__a, __b) \
+#define vrecpsq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -4488,7 +4488,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrts_f32(__a, __b) \
+#define vrsqrts_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -4497,7 +4497,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrtsq_f32(__a, __b) \
+#define vrsqrtsq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -4506,7 +4506,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_s8(__a, __b) \
+#define vshl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4515,7 +4515,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_s16(__a, __b) \
+#define vshl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4524,7 +4524,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_s32(__a, __b) \
+#define vshl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4533,7 +4533,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_s64(__a, __b) \
+#define vshl_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4542,7 +4542,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_u8(__a, __b) \
+#define vshl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4551,7 +4551,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_u16(__a, __b) \
+#define vshl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4560,7 +4560,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_u32(__a, __b) \
+#define vshl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4569,7 +4569,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_u64(__a, __b) \
+#define vshl_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4578,7 +4578,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_s8(__a, __b) \
+#define vshlq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4587,7 +4587,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_s16(__a, __b) \
+#define vshlq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4596,7 +4596,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_s32(__a, __b) \
+#define vshlq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4605,7 +4605,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_s64(__a, __b) \
+#define vshlq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4614,7 +4614,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_u8(__a, __b) \
+#define vshlq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4623,7 +4623,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_u16(__a, __b) \
+#define vshlq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4632,7 +4632,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_u32(__a, __b) \
+#define vshlq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4641,7 +4641,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_u64(__a, __b) \
+#define vshlq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4650,7 +4650,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_s8(__a, __b) \
+#define vrshl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4659,7 +4659,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_s16(__a, __b) \
+#define vrshl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4668,7 +4668,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_s32(__a, __b) \
+#define vrshl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4677,7 +4677,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_s64(__a, __b) \
+#define vrshl_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4686,7 +4686,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_u8(__a, __b) \
+#define vrshl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4695,7 +4695,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_u16(__a, __b) \
+#define vrshl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4704,7 +4704,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_u32(__a, __b) \
+#define vrshl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4713,7 +4713,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshl_u64(__a, __b) \
+#define vrshl_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4722,7 +4722,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_s8(__a, __b) \
+#define vrshlq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4731,7 +4731,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_s16(__a, __b) \
+#define vrshlq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4740,7 +4740,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_s32(__a, __b) \
+#define vrshlq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4749,7 +4749,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_s64(__a, __b) \
+#define vrshlq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4758,7 +4758,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_u8(__a, __b) \
+#define vrshlq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4767,7 +4767,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_u16(__a, __b) \
+#define vrshlq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4776,7 +4776,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_u32(__a, __b) \
+#define vrshlq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4785,7 +4785,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshlq_u64(__a, __b) \
+#define vrshlq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4794,7 +4794,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_s8(__a, __b) \
+#define vqshl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4803,7 +4803,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_s16(__a, __b) \
+#define vqshl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4812,7 +4812,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_s32(__a, __b) \
+#define vqshl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4821,7 +4821,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_s64(__a, __b) \
+#define vqshl_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4830,7 +4830,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_u8(__a, __b) \
+#define vqshl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4839,7 +4839,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_u16(__a, __b) \
+#define vqshl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4848,7 +4848,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_u32(__a, __b) \
+#define vqshl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4857,7 +4857,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_u64(__a, __b) \
+#define vqshl_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4866,7 +4866,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_s8(__a, __b) \
+#define vqshlq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4875,7 +4875,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_s16(__a, __b) \
+#define vqshlq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4884,7 +4884,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_s32(__a, __b) \
+#define vqshlq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4893,7 +4893,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_s64(__a, __b) \
+#define vqshlq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4902,7 +4902,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_u8(__a, __b) \
+#define vqshlq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -4911,7 +4911,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_u16(__a, __b) \
+#define vqshlq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -4920,7 +4920,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_u32(__a, __b) \
+#define vqshlq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -4929,7 +4929,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_u64(__a, __b) \
+#define vqshlq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -4938,7 +4938,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_s8(__a, __b) \
+#define vqrshl_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4947,7 +4947,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_s16(__a, __b) \
+#define vqrshl_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4956,7 +4956,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_s32(__a, __b) \
+#define vqrshl_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -4965,7 +4965,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_s64(__a, __b) \
+#define vqrshl_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -4974,7 +4974,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_u8(__a, __b) \
+#define vqrshl_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -4983,7 +4983,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_u16(__a, __b) \
+#define vqrshl_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -4992,7 +4992,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_u32(__a, __b) \
+#define vqrshl_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -5001,7 +5001,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshl_u64(__a, __b) \
+#define vqrshl_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -5010,7 +5010,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_s8(__a, __b) \
+#define vqrshlq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -5019,7 +5019,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_s16(__a, __b) \
+#define vqrshlq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -5028,7 +5028,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_s32(__a, __b) \
+#define vqrshlq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -5037,7 +5037,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_s64(__a, __b) \
+#define vqrshlq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -5046,7 +5046,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_u8(__a, __b) \
+#define vqrshlq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -5055,7 +5055,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_u16(__a, __b) \
+#define vqrshlq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -5064,7 +5064,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_u32(__a, __b) \
+#define vqrshlq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -5073,7 +5073,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshlq_u64(__a, __b) \
+#define vqrshlq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -5082,7 +5082,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_s8(__a, __b) \
+#define vshr_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5090,7 +5090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_s16(__a, __b) \
+#define vshr_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5098,7 +5098,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_s32(__a, __b) \
+#define vshr_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5106,7 +5106,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_s64(__a, __b) \
+#define vshr_n_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5114,7 +5114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_u8(__a, __b) \
+#define vshr_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5122,7 +5122,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_u16(__a, __b) \
+#define vshr_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5130,7 +5130,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_u32(__a, __b) \
+#define vshr_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5138,7 +5138,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshr_n_u64(__a, __b) \
+#define vshr_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5146,7 +5146,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_s8(__a, __b) \
+#define vshrq_n_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5154,7 +5154,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_s16(__a, __b) \
+#define vshrq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5162,7 +5162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_s32(__a, __b) \
+#define vshrq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5170,7 +5170,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_s64(__a, __b) \
+#define vshrq_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5178,7 +5178,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_u8(__a, __b) \
+#define vshrq_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5186,7 +5186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_u16(__a, __b) \
+#define vshrq_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5194,7 +5194,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_u32(__a, __b) \
+#define vshrq_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5202,7 +5202,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrq_n_u64(__a, __b) \
+#define vshrq_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5210,7 +5210,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_s8(__a, __b) \
+#define vrshr_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5218,7 +5218,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_s16(__a, __b) \
+#define vrshr_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5226,7 +5226,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_s32(__a, __b) \
+#define vrshr_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5234,7 +5234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_s64(__a, __b) \
+#define vrshr_n_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5242,7 +5242,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_u8(__a, __b) \
+#define vrshr_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5250,7 +5250,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_u16(__a, __b) \
+#define vrshr_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5258,7 +5258,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_u32(__a, __b) \
+#define vrshr_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5266,7 +5266,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshr_n_u64(__a, __b) \
+#define vrshr_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5274,7 +5274,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_s8(__a, __b) \
+#define vrshrq_n_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5282,7 +5282,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_s16(__a, __b) \
+#define vrshrq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5290,7 +5290,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_s32(__a, __b) \
+#define vrshrq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5298,7 +5298,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_s64(__a, __b) \
+#define vrshrq_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5306,7 +5306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_u8(__a, __b) \
+#define vrshrq_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5314,7 +5314,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_u16(__a, __b) \
+#define vrshrq_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5322,7 +5322,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_u32(__a, __b) \
+#define vrshrq_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5330,7 +5330,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrq_n_u64(__a, __b) \
+#define vrshrq_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5338,7 +5338,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_s16(__a, __b) \
+#define vshrn_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5346,7 +5346,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_s32(__a, __b) \
+#define vshrn_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5354,7 +5354,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_s64(__a, __b) \
+#define vshrn_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5362,7 +5362,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_u16(__a, __b) \
+#define vshrn_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5370,7 +5370,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_u32(__a, __b) \
+#define vshrn_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5378,7 +5378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshrn_n_u64(__a, __b) \
+#define vshrn_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5386,7 +5386,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_s16(__a, __b) \
+#define vrshrn_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5394,7 +5394,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_s32(__a, __b) \
+#define vrshrn_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5402,7 +5402,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_s64(__a, __b) \
+#define vrshrn_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5410,7 +5410,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_u16(__a, __b) \
+#define vrshrn_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5418,7 +5418,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_u32(__a, __b) \
+#define vrshrn_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5426,7 +5426,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrshrn_n_u64(__a, __b) \
+#define vrshrn_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5434,7 +5434,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_s16(__a, __b) \
+#define vqshrn_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5442,7 +5442,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_s32(__a, __b) \
+#define vqshrn_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5450,7 +5450,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_s64(__a, __b) \
+#define vqshrn_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5458,7 +5458,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_u16(__a, __b) \
+#define vqshrn_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5466,7 +5466,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_u32(__a, __b) \
+#define vqshrn_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5474,7 +5474,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrn_n_u64(__a, __b) \
+#define vqshrn_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5482,7 +5482,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_s16(__a, __b) \
+#define vqrshrn_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5490,7 +5490,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_s32(__a, __b) \
+#define vqrshrn_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5498,7 +5498,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_s64(__a, __b) \
+#define vqrshrn_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5506,7 +5506,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_u16(__a, __b) \
+#define vqrshrn_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5514,7 +5514,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_u32(__a, __b) \
+#define vqrshrn_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5522,7 +5522,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrn_n_u64(__a, __b) \
+#define vqrshrn_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5530,7 +5530,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrun_n_s16(__a, __b) \
+#define vqshrun_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5538,7 +5538,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrun_n_s32(__a, __b) \
+#define vqshrun_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5546,7 +5546,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshrun_n_s64(__a, __b) \
+#define vqshrun_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5554,7 +5554,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrun_n_s16(__a, __b) \
+#define vqrshrun_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5562,7 +5562,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrun_n_s32(__a, __b) \
+#define vqrshrun_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5570,7 +5570,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrshrun_n_s64(__a, __b) \
+#define vqrshrun_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5578,7 +5578,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_s8(__a, __b) \
+#define vshl_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5586,7 +5586,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_s16(__a, __b) \
+#define vshl_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5594,7 +5594,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_s32(__a, __b) \
+#define vshl_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5602,7 +5602,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_s64(__a, __b) \
+#define vshl_n_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5610,7 +5610,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_u8(__a, __b) \
+#define vshl_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5618,7 +5618,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_u16(__a, __b) \
+#define vshl_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5626,7 +5626,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_u32(__a, __b) \
+#define vshl_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5634,7 +5634,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshl_n_u64(__a, __b) \
+#define vshl_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5642,7 +5642,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_s8(__a, __b) \
+#define vshlq_n_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5650,7 +5650,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_s16(__a, __b) \
+#define vshlq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5658,7 +5658,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_s32(__a, __b) \
+#define vshlq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5666,7 +5666,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_s64(__a, __b) \
+#define vshlq_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5674,7 +5674,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_u8(__a, __b) \
+#define vshlq_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5682,7 +5682,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_u16(__a, __b) \
+#define vshlq_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5690,7 +5690,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_u32(__a, __b) \
+#define vshlq_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5698,7 +5698,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshlq_n_u64(__a, __b) \
+#define vshlq_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5706,7 +5706,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_s8(__a, __b) \
+#define vqshl_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5714,7 +5714,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_s16(__a, __b) \
+#define vqshl_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5722,7 +5722,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_s32(__a, __b) \
+#define vqshl_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5730,7 +5730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_s64(__a, __b) \
+#define vqshl_n_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5738,7 +5738,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_u8(__a, __b) \
+#define vqshl_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5746,7 +5746,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_u16(__a, __b) \
+#define vqshl_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5754,7 +5754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_u32(__a, __b) \
+#define vqshl_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5762,7 +5762,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshl_n_u64(__a, __b) \
+#define vqshl_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5770,7 +5770,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_s8(__a, __b) \
+#define vqshlq_n_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5778,7 +5778,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_s16(__a, __b) \
+#define vqshlq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5786,7 +5786,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_s32(__a, __b) \
+#define vqshlq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5794,7 +5794,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_s64(__a, __b) \
+#define vqshlq_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5802,7 +5802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_u8(__a, __b) \
+#define vqshlq_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5810,7 +5810,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_u16(__a, __b) \
+#define vqshlq_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5818,7 +5818,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_u32(__a, __b) \
+#define vqshlq_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5826,7 +5826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlq_n_u64(__a, __b) \
+#define vqshlq_n_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5834,7 +5834,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlu_n_s8(__a, __b) \
+#define vqshlu_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -5842,7 +5842,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlu_n_s16(__a, __b) \
+#define vqshlu_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -5850,7 +5850,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlu_n_s32(__a, __b) \
+#define vqshlu_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -5858,7 +5858,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshlu_n_s64(__a, __b) \
+#define vqshlu_n_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -5866,7 +5866,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshluq_n_s8(__a, __b) \
+#define vqshluq_n_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -5874,7 +5874,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshluq_n_s16(__a, __b) \
+#define vqshluq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5882,7 +5882,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshluq_n_s32(__a, __b) \
+#define vqshluq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5890,7 +5890,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqshluq_n_s64(__a, __b) \
+#define vqshluq_n_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5898,7 +5898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_s8(__a, __b) \
+#define vshll_n_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5906,7 +5906,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_s16(__a, __b) \
+#define vshll_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5914,7 +5914,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_s32(__a, __b) \
+#define vshll_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5922,7 +5922,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_u8(__a, __b) \
+#define vshll_n_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -5930,7 +5930,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_u16(__a, __b) \
+#define vshll_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -5938,7 +5938,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vshll_n_u32(__a, __b) \
+#define vshll_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -5946,7 +5946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_s8(__a, __b, __c) \
+#define vsra_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -5955,7 +5955,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_s16(__a, __b, __c) \
+#define vsra_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -5964,7 +5964,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_s32(__a, __b, __c) \
+#define vsra_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -5973,7 +5973,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_s64(__a, __b, __c) \
+#define vsra_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -5982,7 +5982,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_u8(__a, __b, __c) \
+#define vsra_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -5991,7 +5991,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_u16(__a, __b, __c) \
+#define vsra_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -6000,7 +6000,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_u32(__a, __b, __c) \
+#define vsra_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -6009,7 +6009,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsra_n_u64(__a, __b, __c) \
+#define vsra_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -6018,7 +6018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_s8(__a, __b, __c) \
+#define vsraq_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -6027,7 +6027,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_s16(__a, __b, __c) \
+#define vsraq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -6036,7 +6036,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_s32(__a, __b, __c) \
+#define vsraq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -6045,7 +6045,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_s64(__a, __b, __c) \
+#define vsraq_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -6054,7 +6054,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_u8(__a, __b, __c) \
+#define vsraq_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -6063,7 +6063,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_u16(__a, __b, __c) \
+#define vsraq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -6072,7 +6072,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_u32(__a, __b, __c) \
+#define vsraq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -6081,7 +6081,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsraq_n_u64(__a, __b, __c) \
+#define vsraq_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -6090,7 +6090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_s8(__a, __b, __c) \
+#define vrsra_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -6099,7 +6099,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_s16(__a, __b, __c) \
+#define vrsra_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -6108,7 +6108,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_s32(__a, __b, __c) \
+#define vrsra_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -6117,7 +6117,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_s64(__a, __b, __c) \
+#define vrsra_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -6126,7 +6126,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_u8(__a, __b, __c) \
+#define vrsra_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -6135,7 +6135,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_u16(__a, __b, __c) \
+#define vrsra_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -6144,7 +6144,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_u32(__a, __b, __c) \
+#define vrsra_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -6153,7 +6153,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsra_n_u64(__a, __b, __c) \
+#define vrsra_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -6162,7 +6162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_s8(__a, __b, __c) \
+#define vrsraq_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -6171,7 +6171,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_s16(__a, __b, __c) \
+#define vrsraq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -6180,7 +6180,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_s32(__a, __b, __c) \
+#define vrsraq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -6189,7 +6189,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_s64(__a, __b, __c) \
+#define vrsraq_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -6198,7 +6198,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_u8(__a, __b, __c) \
+#define vrsraq_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -6207,7 +6207,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_u16(__a, __b, __c) \
+#define vrsraq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -6216,7 +6216,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_u32(__a, __b, __c) \
+#define vrsraq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -6225,7 +6225,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsraq_n_u64(__a, __b, __c) \
+#define vrsraq_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -6234,7 +6234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_s8(__a, __b, __c) \
+#define vsri_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -6243,7 +6243,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_s16(__a, __b, __c) \
+#define vsri_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -6252,7 +6252,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_s32(__a, __b, __c) \
+#define vsri_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -6261,7 +6261,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_s64(__a, __b, __c) \
+#define vsri_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -6270,7 +6270,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_u8(__a, __b, __c) \
+#define vsri_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -6279,7 +6279,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_u16(__a, __b, __c) \
+#define vsri_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -6288,7 +6288,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_u32(__a, __b, __c) \
+#define vsri_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -6297,7 +6297,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_u64(__a, __b, __c) \
+#define vsri_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -6306,7 +6306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_p8(__a, __b, __c) \
+#define vsri_n_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -6315,7 +6315,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsri_n_p16(__a, __b, __c) \
+#define vsri_n_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -6324,7 +6324,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_s8(__a, __b, __c) \
+#define vsriq_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -6333,7 +6333,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_s16(__a, __b, __c) \
+#define vsriq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -6342,7 +6342,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_s32(__a, __b, __c) \
+#define vsriq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -6351,7 +6351,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_s64(__a, __b, __c) \
+#define vsriq_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -6360,7 +6360,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_u8(__a, __b, __c) \
+#define vsriq_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -6369,7 +6369,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_u16(__a, __b, __c) \
+#define vsriq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -6378,7 +6378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_u32(__a, __b, __c) \
+#define vsriq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -6387,7 +6387,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_u64(__a, __b, __c) \
+#define vsriq_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -6396,7 +6396,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_p8(__a, __b, __c) \
+#define vsriq_n_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -6405,7 +6405,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsriq_n_p16(__a, __b, __c) \
+#define vsriq_n_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -6414,7 +6414,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_s8(__a, __b, __c) \
+#define vsli_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -6423,7 +6423,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_s16(__a, __b, __c) \
+#define vsli_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -6432,7 +6432,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_s32(__a, __b, __c) \
+#define vsli_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -6441,7 +6441,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_s64(__a, __b, __c) \
+#define vsli_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -6450,7 +6450,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_u8(__a, __b, __c) \
+#define vsli_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -6459,7 +6459,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_u16(__a, __b, __c) \
+#define vsli_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -6468,7 +6468,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_u32(__a, __b, __c) \
+#define vsli_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -6477,7 +6477,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_u64(__a, __b, __c) \
+#define vsli_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -6486,7 +6486,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_p8(__a, __b, __c) \
+#define vsli_n_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -6495,7 +6495,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsli_n_p16(__a, __b, __c) \
+#define vsli_n_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -6504,7 +6504,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_s8(__a, __b, __c) \
+#define vsliq_n_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -6513,7 +6513,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_s16(__a, __b, __c) \
+#define vsliq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -6522,7 +6522,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_s32(__a, __b, __c) \
+#define vsliq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -6531,7 +6531,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_s64(__a, __b, __c) \
+#define vsliq_n_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -6540,7 +6540,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_u8(__a, __b, __c) \
+#define vsliq_n_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -6549,7 +6549,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_u16(__a, __b, __c) \
+#define vsliq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -6558,7 +6558,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_u32(__a, __b, __c) \
+#define vsliq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -6567,7 +6567,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_u64(__a, __b, __c) \
+#define vsliq_n_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -6576,7 +6576,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_p8(__a, __b, __c) \
+#define vsliq_n_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -6585,7 +6585,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsliq_n_p16(__a, __b, __c) \
+#define vsliq_n_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -6594,7 +6594,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabs_s8(__a) \
+#define vabs_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6602,7 +6602,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabs_s16(__a) \
+#define vabs_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6610,7 +6610,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabs_s32(__a) \
+#define vabs_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6618,7 +6618,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabs_f32(__a) \
+#define vabs_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -6626,7 +6626,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabsq_s8(__a) \
+#define vabsq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6634,7 +6634,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabsq_s16(__a) \
+#define vabsq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6642,7 +6642,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabsq_s32(__a) \
+#define vabsq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6650,7 +6650,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vabsq_f32(__a) \
+#define vabsq_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -6658,7 +6658,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabs_s8(__a) \
+#define vqabs_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6666,7 +6666,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabs_s16(__a) \
+#define vqabs_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6674,7 +6674,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabs_s32(__a) \
+#define vqabs_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6682,7 +6682,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabsq_s8(__a) \
+#define vqabsq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6690,7 +6690,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabsq_s16(__a) \
+#define vqabsq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6698,7 +6698,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqabsq_s32(__a) \
+#define vqabsq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6706,7 +6706,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vneg_s8(__a) \
+#define vneg_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6714,7 +6714,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vneg_s16(__a) \
+#define vneg_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6722,7 +6722,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vneg_s32(__a) \
+#define vneg_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6730,7 +6730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vneg_f32(__a) \
+#define vneg_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -6738,7 +6738,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vnegq_s8(__a) \
+#define vnegq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6746,7 +6746,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vnegq_s16(__a) \
+#define vnegq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6754,7 +6754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vnegq_s32(__a) \
+#define vnegq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6762,7 +6762,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vnegq_f32(__a) \
+#define vnegq_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -6770,7 +6770,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqneg_s8(__a) \
+#define vqneg_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6778,7 +6778,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqneg_s16(__a) \
+#define vqneg_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6786,7 +6786,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqneg_s32(__a) \
+#define vqneg_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6794,7 +6794,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqnegq_s8(__a) \
+#define vqnegq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6802,7 +6802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqnegq_s16(__a) \
+#define vqnegq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6810,7 +6810,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqnegq_s32(__a) \
+#define vqnegq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6818,7 +6818,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_s8(__a) \
+#define vmvn_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6826,7 +6826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_s16(__a) \
+#define vmvn_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6834,7 +6834,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_s32(__a) \
+#define vmvn_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6842,7 +6842,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_u8(__a) \
+#define vmvn_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6850,7 +6850,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_u16(__a) \
+#define vmvn_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6858,7 +6858,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_u32(__a) \
+#define vmvn_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6866,7 +6866,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvn_p8(__a) \
+#define vmvn_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6874,7 +6874,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_s8(__a) \
+#define vmvnq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6882,7 +6882,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_s16(__a) \
+#define vmvnq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6890,7 +6890,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_s32(__a) \
+#define vmvnq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6898,7 +6898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_u8(__a) \
+#define vmvnq_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6906,7 +6906,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_u16(__a) \
+#define vmvnq_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6914,7 +6914,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_u32(__a) \
+#define vmvnq_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6922,7 +6922,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmvnq_p8(__a) \
+#define vmvnq_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6930,7 +6930,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcls_s8(__a) \
+#define vcls_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6938,7 +6938,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcls_s16(__a) \
+#define vcls_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6946,7 +6946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcls_s32(__a) \
+#define vcls_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -6954,7 +6954,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclsq_s8(__a) \
+#define vclsq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -6962,7 +6962,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclsq_s16(__a) \
+#define vclsq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -6970,7 +6970,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclsq_s32(__a) \
+#define vclsq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -6978,7 +6978,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_s8(__a) \
+#define vclz_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -6986,7 +6986,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_s16(__a) \
+#define vclz_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -6994,7 +6994,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_s32(__a) \
+#define vclz_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7002,7 +7002,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_u8(__a) \
+#define vclz_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7010,7 +7010,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_u16(__a) \
+#define vclz_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7018,7 +7018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclz_u32(__a) \
+#define vclz_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7026,7 +7026,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_s8(__a) \
+#define vclzq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7034,7 +7034,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_s16(__a) \
+#define vclzq_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7042,7 +7042,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_s32(__a) \
+#define vclzq_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7050,7 +7050,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_u8(__a) \
+#define vclzq_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7058,7 +7058,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_u16(__a) \
+#define vclzq_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7066,7 +7066,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vclzq_u32(__a) \
+#define vclzq_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7074,7 +7074,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcnt_s8(__a) \
+#define vcnt_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7082,7 +7082,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcnt_u8(__a) \
+#define vcnt_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7090,7 +7090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcnt_p8(__a) \
+#define vcnt_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7098,7 +7098,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcntq_s8(__a) \
+#define vcntq_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7106,7 +7106,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcntq_u8(__a) \
+#define vcntq_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7114,7 +7114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcntq_p8(__a) \
+#define vcntq_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7122,7 +7122,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecpe_f32(__a) \
+#define vrecpe_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7130,7 +7130,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecpe_u32(__a) \
+#define vrecpe_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7138,7 +7138,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecpeq_f32(__a) \
+#define vrecpeq_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -7146,7 +7146,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrecpeq_u32(__a) \
+#define vrecpeq_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7154,7 +7154,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrte_f32(__a) \
+#define vrsqrte_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7162,7 +7162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrte_u32(__a) \
+#define vrsqrte_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7170,7 +7170,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrteq_f32(__a) \
+#define vrsqrteq_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -7178,7 +7178,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrsqrteq_u32(__a) \
+#define vrsqrteq_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7186,139 +7186,139 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_lane_s8(__a, __b) \
+#define vget_lane_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      (int8_t)__builtin_neon_vget_lanev8qi (__ax.val, __b, 1); \
    })
 
-#define vget_lane_s16(__a, __b) \
+#define vget_lane_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      (int16_t)__builtin_neon_vget_lanev4hi (__ax.val, __b, 1); \
    })
 
-#define vget_lane_s32(__a, __b) \
+#define vget_lane_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      (int32_t)__builtin_neon_vget_lanev2si (__ax.val, __b, 1); \
    })
 
-#define vget_lane_f32(__a, __b) \
+#define vget_lane_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      (float32_t)__builtin_neon_vget_lanev2sf (__ax.val, __b, 5); \
    })
 
-#define vget_lane_u8(__a, __b) \
+#define vget_lane_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      (uint8_t)__builtin_neon_vget_lanev8qi ((__neon_int8x8_t) __ax.val, __b, 0); \
    })
 
-#define vget_lane_u16(__a, __b) \
+#define vget_lane_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      (uint16_t)__builtin_neon_vget_lanev4hi ((__neon_int16x4_t) __ax.val, __b, 0); \
    })
 
-#define vget_lane_u32(__a, __b) \
+#define vget_lane_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      (uint32_t)__builtin_neon_vget_lanev2si ((__neon_int32x2_t) __ax.val, __b, 0); \
    })
 
-#define vget_lane_p8(__a, __b) \
+#define vget_lane_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      (poly8_t)__builtin_neon_vget_lanev8qi ((__neon_int8x8_t) __ax.val, __b, 4); \
    })
 
-#define vget_lane_p16(__a, __b) \
+#define vget_lane_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      (poly16_t)__builtin_neon_vget_lanev4hi ((__neon_int16x4_t) __ax.val, __b, 4); \
    })
 
-#define vget_lane_s64(__a, __b) \
+#define vget_lane_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      (int64_t)__builtin_neon_vget_lanev1di (__ax.val, __b, 1); \
    })
 
-#define vget_lane_u64(__a, __b) \
+#define vget_lane_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      (uint64_t)__builtin_neon_vget_lanev1di ((__neon_int64x1_t) __ax.val, __b, 0); \
    })
 
-#define vgetq_lane_s8(__a, __b) \
+#define vgetq_lane_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      (int8_t)__builtin_neon_vget_lanev16qi (__ax.val, __b, 1); \
    })
 
-#define vgetq_lane_s16(__a, __b) \
+#define vgetq_lane_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      (int16_t)__builtin_neon_vget_lanev8hi (__ax.val, __b, 1); \
    })
 
-#define vgetq_lane_s32(__a, __b) \
+#define vgetq_lane_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      (int32_t)__builtin_neon_vget_lanev4si (__ax.val, __b, 1); \
    })
 
-#define vgetq_lane_f32(__a, __b) \
+#define vgetq_lane_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      (float32_t)__builtin_neon_vget_lanev4sf (__ax.val, __b, 5); \
    })
 
-#define vgetq_lane_u8(__a, __b) \
+#define vgetq_lane_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      (uint8_t)__builtin_neon_vget_lanev16qi ((__neon_int8x16_t) __ax.val, __b, 0); \
    })
 
-#define vgetq_lane_u16(__a, __b) \
+#define vgetq_lane_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      (uint16_t)__builtin_neon_vget_lanev8hi ((__neon_int16x8_t) __ax.val, __b, 0); \
    })
 
-#define vgetq_lane_u32(__a, __b) \
+#define vgetq_lane_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      (uint32_t)__builtin_neon_vget_lanev4si ((__neon_int32x4_t) __ax.val, __b, 0); \
    })
 
-#define vgetq_lane_p8(__a, __b) \
+#define vgetq_lane_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      (poly8_t)__builtin_neon_vget_lanev16qi ((__neon_int8x16_t) __ax.val, __b, 4); \
    })
 
-#define vgetq_lane_p16(__a, __b) \
+#define vgetq_lane_p16(__a, __b) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      (poly16_t)__builtin_neon_vget_lanev8hi ((__neon_int16x8_t) __ax.val, __b, 4); \
    })
 
-#define vgetq_lane_s64(__a, __b) \
+#define vgetq_lane_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      (int64_t)__builtin_neon_vget_lanev2di (__ax.val, __b, 1); \
    })
 
-#define vgetq_lane_u64(__a, __b) \
+#define vgetq_lane_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      (uint64_t)__builtin_neon_vget_lanev2di ((__neon_int64x2_t) __ax.val, __b, 0); \
    })
 
-#define vset_lane_s8(__a, __b, __c) \
+#define vset_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -7327,7 +7327,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_s16(__a, __b, __c) \
+#define vset_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -7336,7 +7336,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_s32(__a, __b, __c) \
+#define vset_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -7345,7 +7345,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_f32(__a, __b, __c) \
+#define vset_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -7354,7 +7354,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_u8(__a, __b, __c) \
+#define vset_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -7363,7 +7363,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_u16(__a, __b, __c) \
+#define vset_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -7372,7 +7372,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_u32(__a, __b, __c) \
+#define vset_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -7381,7 +7381,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_p8(__a, __b, __c) \
+#define vset_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -7390,7 +7390,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_p16(__a, __b, __c) \
+#define vset_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -7399,7 +7399,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_s64(__a, __b, __c) \
+#define vset_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      int64_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -7408,7 +7408,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vset_lane_u64(__a, __b, __c) \
+#define vset_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -7417,7 +7417,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_s8(__a, __b, __c) \
+#define vsetq_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -7426,7 +7426,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_s16(__a, __b, __c) \
+#define vsetq_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -7435,7 +7435,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_s32(__a, __b, __c) \
+#define vsetq_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -7444,7 +7444,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_f32(__a, __b, __c) \
+#define vsetq_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -7453,7 +7453,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_u8(__a, __b, __c) \
+#define vsetq_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -7462,7 +7462,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_u16(__a, __b, __c) \
+#define vsetq_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -7471,7 +7471,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_u32(__a, __b, __c) \
+#define vsetq_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -7480,7 +7480,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_p8(__a, __b, __c) \
+#define vsetq_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -7489,7 +7489,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_p16(__a, __b, __c) \
+#define vsetq_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -7498,7 +7498,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_s64(__a, __b, __c) \
+#define vsetq_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      int64_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -7507,7 +7507,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vsetq_lane_u64(__a, __b, __c) \
+#define vsetq_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -7516,7 +7516,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_s8(__a) \
+#define vcreate_s8(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7524,7 +7524,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_s16(__a) \
+#define vcreate_s16(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7532,7 +7532,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_s32(__a) \
+#define vcreate_s32(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7540,7 +7540,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_s64(__a) \
+#define vcreate_s64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7548,7 +7548,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_f32(__a) \
+#define vcreate_f32(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7556,7 +7556,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_u8(__a) \
+#define vcreate_u8(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7564,7 +7564,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_u16(__a) \
+#define vcreate_u16(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7572,7 +7572,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_u32(__a) \
+#define vcreate_u32(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7580,7 +7580,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_u64(__a) \
+#define vcreate_u64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7588,7 +7588,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_p8(__a) \
+#define vcreate_p8(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7596,7 +7596,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcreate_p16(__a) \
+#define vcreate_p16(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7604,7 +7604,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_s8(__a) \
+#define vdup_n_s8(__a) __extension__ \
   ({ \
      int8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7612,7 +7612,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_s16(__a) \
+#define vdup_n_s16(__a) __extension__ \
   ({ \
      int16_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7620,7 +7620,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_s32(__a) \
+#define vdup_n_s32(__a) __extension__ \
   ({ \
      int32_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7628,7 +7628,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_f32(__a) \
+#define vdup_n_f32(__a) __extension__ \
   ({ \
      float32_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7636,7 +7636,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_u8(__a) \
+#define vdup_n_u8(__a) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7644,7 +7644,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_u16(__a) \
+#define vdup_n_u16(__a) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7652,7 +7652,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_u32(__a) \
+#define vdup_n_u32(__a) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7660,7 +7660,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_p8(__a) \
+#define vdup_n_p8(__a) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7668,7 +7668,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_p16(__a) \
+#define vdup_n_p16(__a) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7676,7 +7676,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_s64(__a) \
+#define vdup_n_s64(__a) __extension__ \
   ({ \
      int64_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7684,7 +7684,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_n_u64(__a) \
+#define vdup_n_u64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7692,7 +7692,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_s8(__a) \
+#define vdupq_n_s8(__a) __extension__ \
   ({ \
      int8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7700,7 +7700,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_s16(__a) \
+#define vdupq_n_s16(__a) __extension__ \
   ({ \
      int16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7708,7 +7708,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_s32(__a) \
+#define vdupq_n_s32(__a) __extension__ \
   ({ \
      int32_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7716,7 +7716,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_f32(__a) \
+#define vdupq_n_f32(__a) __extension__ \
   ({ \
      float32_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -7724,7 +7724,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_u8(__a) \
+#define vdupq_n_u8(__a) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7732,7 +7732,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_u16(__a) \
+#define vdupq_n_u16(__a) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7740,7 +7740,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_u32(__a) \
+#define vdupq_n_u32(__a) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7748,7 +7748,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_p8(__a) \
+#define vdupq_n_p8(__a) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7756,7 +7756,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_p16(__a) \
+#define vdupq_n_p16(__a) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7764,7 +7764,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_s64(__a) \
+#define vdupq_n_s64(__a) __extension__ \
   ({ \
      int64_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -7772,7 +7772,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_n_u64(__a) \
+#define vdupq_n_u64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -7780,7 +7780,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_s8(__a) \
+#define vmov_n_s8(__a) __extension__ \
   ({ \
      int8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7788,7 +7788,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_s16(__a) \
+#define vmov_n_s16(__a) __extension__ \
   ({ \
      int16_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7796,7 +7796,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_s32(__a) \
+#define vmov_n_s32(__a) __extension__ \
   ({ \
      int32_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7804,7 +7804,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_f32(__a) \
+#define vmov_n_f32(__a) __extension__ \
   ({ \
      float32_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7812,7 +7812,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_u8(__a) \
+#define vmov_n_u8(__a) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7820,7 +7820,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_u16(__a) \
+#define vmov_n_u16(__a) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7828,7 +7828,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_u32(__a) \
+#define vmov_n_u32(__a) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7836,7 +7836,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_p8(__a) \
+#define vmov_n_p8(__a) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7844,7 +7844,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_p16(__a) \
+#define vmov_n_p16(__a) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7852,7 +7852,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_s64(__a) \
+#define vmov_n_s64(__a) __extension__ \
   ({ \
      int64_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7860,7 +7860,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmov_n_u64(__a) \
+#define vmov_n_u64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -7868,7 +7868,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_s8(__a) \
+#define vmovq_n_s8(__a) __extension__ \
   ({ \
      int8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7876,7 +7876,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_s16(__a) \
+#define vmovq_n_s16(__a) __extension__ \
   ({ \
      int16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7884,7 +7884,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_s32(__a) \
+#define vmovq_n_s32(__a) __extension__ \
   ({ \
      int32_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7892,7 +7892,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_f32(__a) \
+#define vmovq_n_f32(__a) __extension__ \
   ({ \
      float32_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -7900,7 +7900,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_u8(__a) \
+#define vmovq_n_u8(__a) __extension__ \
   ({ \
      uint8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7908,7 +7908,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_u16(__a) \
+#define vmovq_n_u16(__a) __extension__ \
   ({ \
      uint16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7916,7 +7916,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_u32(__a) \
+#define vmovq_n_u32(__a) __extension__ \
   ({ \
      uint32_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -7924,7 +7924,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_p8(__a) \
+#define vmovq_n_p8(__a) __extension__ \
   ({ \
      poly8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -7932,7 +7932,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_p16(__a) \
+#define vmovq_n_p16(__a) __extension__ \
   ({ \
      poly16_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -7940,7 +7940,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_s64(__a) \
+#define vmovq_n_s64(__a) __extension__ \
   ({ \
      int64_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -7948,7 +7948,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovq_n_u64(__a) \
+#define vmovq_n_u64(__a) __extension__ \
   ({ \
      uint64_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -7956,7 +7956,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_s8(__a, __b) \
+#define vdup_lane_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7964,7 +7964,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_s16(__a, __b) \
+#define vdup_lane_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -7972,7 +7972,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_s32(__a, __b) \
+#define vdup_lane_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -7980,7 +7980,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_f32(__a, __b) \
+#define vdup_lane_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -7988,7 +7988,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_u8(__a, __b) \
+#define vdup_lane_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -7996,7 +7996,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_u16(__a, __b) \
+#define vdup_lane_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8004,7 +8004,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_u32(__a, __b) \
+#define vdup_lane_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8012,7 +8012,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_p8(__a, __b) \
+#define vdup_lane_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8020,7 +8020,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_p16(__a, __b) \
+#define vdup_lane_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8028,7 +8028,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_s64(__a, __b) \
+#define vdup_lane_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8036,7 +8036,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdup_lane_u64(__a, __b) \
+#define vdup_lane_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8044,7 +8044,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_s8(__a, __b) \
+#define vdupq_lane_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -8052,7 +8052,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_s16(__a, __b) \
+#define vdupq_lane_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -8060,7 +8060,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_s32(__a, __b) \
+#define vdupq_lane_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8068,7 +8068,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_f32(__a, __b) \
+#define vdupq_lane_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -8076,7 +8076,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_u8(__a, __b) \
+#define vdupq_lane_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -8084,7 +8084,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_u16(__a, __b) \
+#define vdupq_lane_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -8092,7 +8092,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_u32(__a, __b) \
+#define vdupq_lane_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8100,7 +8100,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_p8(__a, __b) \
+#define vdupq_lane_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -8108,7 +8108,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_p16(__a, __b) \
+#define vdupq_lane_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -8116,7 +8116,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_s64(__a, __b) \
+#define vdupq_lane_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -8124,7 +8124,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vdupq_lane_u64(__a, __b) \
+#define vdupq_lane_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -8132,7 +8132,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_s8(__a, __b) \
+#define vcombine_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -8141,7 +8141,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_s16(__a, __b) \
+#define vcombine_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -8150,7 +8150,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_s32(__a, __b) \
+#define vcombine_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -8159,7 +8159,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_s64(__a, __b) \
+#define vcombine_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -8168,7 +8168,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_f32(__a, __b) \
+#define vcombine_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -8177,7 +8177,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_u8(__a, __b) \
+#define vcombine_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -8186,7 +8186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_u16(__a, __b) \
+#define vcombine_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -8195,7 +8195,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_u32(__a, __b) \
+#define vcombine_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -8204,7 +8204,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_u64(__a, __b) \
+#define vcombine_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -8213,7 +8213,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_p8(__a, __b) \
+#define vcombine_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -8222,7 +8222,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcombine_p16(__a, __b) \
+#define vcombine_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -8231,7 +8231,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_s8(__a) \
+#define vget_high_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8239,7 +8239,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_s16(__a) \
+#define vget_high_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8247,7 +8247,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_s32(__a) \
+#define vget_high_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8255,7 +8255,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_s64(__a) \
+#define vget_high_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8263,7 +8263,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_f32(__a) \
+#define vget_high_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8271,7 +8271,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_u8(__a) \
+#define vget_high_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8279,7 +8279,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_u16(__a) \
+#define vget_high_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8287,7 +8287,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_u32(__a) \
+#define vget_high_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8295,7 +8295,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_u64(__a) \
+#define vget_high_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8303,7 +8303,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_p8(__a) \
+#define vget_high_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8311,7 +8311,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_high_p16(__a) \
+#define vget_high_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8319,7 +8319,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_s8(__a) \
+#define vget_low_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8327,7 +8327,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_s16(__a) \
+#define vget_low_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8335,7 +8335,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_s32(__a) \
+#define vget_low_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8343,7 +8343,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_s64(__a) \
+#define vget_low_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8351,7 +8351,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_f32(__a) \
+#define vget_low_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8359,7 +8359,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_u8(__a) \
+#define vget_low_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8367,7 +8367,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_u16(__a) \
+#define vget_low_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8375,7 +8375,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_u32(__a) \
+#define vget_low_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8383,7 +8383,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_u64(__a) \
+#define vget_low_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -8391,7 +8391,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_p8(__a) \
+#define vget_low_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8399,7 +8399,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vget_low_p16(__a) \
+#define vget_low_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8407,7 +8407,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_s32_f32(__a) \
+#define vcvt_s32_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8415,7 +8415,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_f32_s32(__a) \
+#define vcvt_f32_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8423,7 +8423,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_f32_u32(__a) \
+#define vcvt_f32_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8431,7 +8431,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_u32_f32(__a) \
+#define vcvt_u32_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8439,7 +8439,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_s32_f32(__a) \
+#define vcvtq_s32_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8447,7 +8447,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_f32_s32(__a) \
+#define vcvtq_f32_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -8455,7 +8455,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_f32_u32(__a) \
+#define vcvtq_f32_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -8463,7 +8463,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_u32_f32(__a) \
+#define vcvtq_u32_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8471,7 +8471,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_n_s32_f32(__a, __b) \
+#define vcvt_n_s32_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8479,7 +8479,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_n_f32_s32(__a, __b) \
+#define vcvt_n_f32_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8487,7 +8487,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_n_f32_u32(__a, __b) \
+#define vcvt_n_f32_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -8495,7 +8495,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvt_n_u32_f32(__a, __b) \
+#define vcvt_n_u32_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8503,7 +8503,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_n_s32_f32(__a, __b) \
+#define vcvtq_n_s32_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8511,7 +8511,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_n_f32_s32(__a, __b) \
+#define vcvtq_n_f32_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -8519,7 +8519,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_n_f32_u32(__a, __b) \
+#define vcvtq_n_f32_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -8527,7 +8527,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vcvtq_n_u32_f32(__a, __b) \
+#define vcvtq_n_u32_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8535,7 +8535,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_s16(__a) \
+#define vmovn_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8543,7 +8543,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_s32(__a) \
+#define vmovn_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8551,7 +8551,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_s64(__a) \
+#define vmovn_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8559,7 +8559,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_u16(__a) \
+#define vmovn_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8567,7 +8567,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_u32(__a) \
+#define vmovn_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8575,7 +8575,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovn_u64(__a) \
+#define vmovn_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8583,7 +8583,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_s16(__a) \
+#define vqmovn_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8591,7 +8591,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_s32(__a) \
+#define vqmovn_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8599,7 +8599,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_s64(__a) \
+#define vqmovn_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8607,7 +8607,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_u16(__a) \
+#define vqmovn_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8615,7 +8615,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_u32(__a) \
+#define vqmovn_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8623,7 +8623,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovn_u64(__a) \
+#define vqmovn_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8631,7 +8631,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovun_s16(__a) \
+#define vqmovun_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -8639,7 +8639,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovun_s32(__a) \
+#define vqmovun_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -8647,7 +8647,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqmovun_s64(__a) \
+#define vqmovun_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -8655,7 +8655,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_s8(__a) \
+#define vmovl_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -8663,7 +8663,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_s16(__a) \
+#define vmovl_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8671,7 +8671,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_s32(__a) \
+#define vmovl_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -8679,7 +8679,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_u8(__a) \
+#define vmovl_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -8687,7 +8687,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_u16(__a) \
+#define vmovl_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -8695,7 +8695,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmovl_u32(__a) \
+#define vmovl_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -8703,7 +8703,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl1_s8(__a, __b) \
+#define vtbl1_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -8712,7 +8712,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl1_u8(__a, __b) \
+#define vtbl1_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -8721,7 +8721,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl1_p8(__a, __b) \
+#define vtbl1_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -8730,7 +8730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl2_s8(__a, __b) \
+#define vtbl2_s8(__a, __b) __extension__ \
   ({ \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __au = { __a }; \
      int8x8_t __bx = __b; \
@@ -8739,7 +8739,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl2_u8(__a, __b) \
+#define vtbl2_u8(__a, __b) __extension__ \
   ({ \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8748,7 +8748,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl2_p8(__a, __b) \
+#define vtbl2_p8(__a, __b) __extension__ \
   ({ \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8757,7 +8757,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl3_s8(__a, __b) \
+#define vtbl3_s8(__a, __b) __extension__ \
   ({ \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __au = { __a }; \
      int8x8_t __bx = __b; \
@@ -8766,7 +8766,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl3_u8(__a, __b) \
+#define vtbl3_u8(__a, __b) __extension__ \
   ({ \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8775,7 +8775,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl3_p8(__a, __b) \
+#define vtbl3_p8(__a, __b) __extension__ \
   ({ \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8784,7 +8784,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl4_s8(__a, __b) \
+#define vtbl4_s8(__a, __b) __extension__ \
   ({ \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __au = { __a }; \
      int8x8_t __bx = __b; \
@@ -8793,7 +8793,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl4_u8(__a, __b) \
+#define vtbl4_u8(__a, __b) __extension__ \
   ({ \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8802,7 +8802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbl4_p8(__a, __b) \
+#define vtbl4_p8(__a, __b) __extension__ \
   ({ \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __au = { __a }; \
      uint8x8_t __bx = __b; \
@@ -8811,7 +8811,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx1_s8(__a, __b, __c) \
+#define vtbx1_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -8821,7 +8821,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx1_u8(__a, __b, __c) \
+#define vtbx1_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -8831,7 +8831,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx1_p8(__a, __b, __c) \
+#define vtbx1_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -8841,7 +8841,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx2_s8(__a, __b, __c) \
+#define vtbx2_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -8851,7 +8851,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx2_u8(__a, __b, __c) \
+#define vtbx2_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -8861,7 +8861,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx2_p8(__a, __b, __c) \
+#define vtbx2_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -8871,7 +8871,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx3_s8(__a, __b, __c) \
+#define vtbx3_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -8881,7 +8881,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx3_u8(__a, __b, __c) \
+#define vtbx3_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -8891,7 +8891,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx3_p8(__a, __b, __c) \
+#define vtbx3_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -8901,7 +8901,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx4_s8(__a, __b, __c) \
+#define vtbx4_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -8911,7 +8911,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx4_u8(__a, __b, __c) \
+#define vtbx4_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -8921,7 +8921,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtbx4_p8(__a, __b, __c) \
+#define vtbx4_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -8931,7 +8931,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_lane_s16(__a, __b, __c) \
+#define vmul_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -8940,7 +8940,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_lane_s32(__a, __b, __c) \
+#define vmul_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -8949,7 +8949,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_lane_f32(__a, __b, __c) \
+#define vmul_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -8958,7 +8958,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_lane_u16(__a, __b, __c) \
+#define vmul_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -8967,7 +8967,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_lane_u32(__a, __b, __c) \
+#define vmul_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -8976,7 +8976,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_lane_s16(__a, __b, __c) \
+#define vmulq_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -8985,7 +8985,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_lane_s32(__a, __b, __c) \
+#define vmulq_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -8994,7 +8994,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_lane_f32(__a, __b, __c) \
+#define vmulq_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -9003,7 +9003,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_lane_u16(__a, __b, __c) \
+#define vmulq_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9012,7 +9012,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_lane_u32(__a, __b, __c) \
+#define vmulq_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9021,7 +9021,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_lane_s16(__a, __b, __c, __d) \
+#define vmla_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9031,7 +9031,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_lane_s32(__a, __b, __c, __d) \
+#define vmla_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9041,7 +9041,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_lane_f32(__a, __b, __c, __d) \
+#define vmla_lane_f32(__a, __b, __c, __d) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -9051,7 +9051,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_lane_u16(__a, __b, __c, __d) \
+#define vmla_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9061,7 +9061,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_lane_u32(__a, __b, __c, __d) \
+#define vmla_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9071,7 +9071,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_lane_s16(__a, __b, __c, __d) \
+#define vmlaq_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -9081,7 +9081,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_lane_s32(__a, __b, __c, __d) \
+#define vmlaq_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -9091,7 +9091,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_lane_f32(__a, __b, __c, __d) \
+#define vmlaq_lane_f32(__a, __b, __c, __d) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -9101,7 +9101,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_lane_u16(__a, __b, __c, __d) \
+#define vmlaq_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -9111,7 +9111,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_lane_u32(__a, __b, __c, __d) \
+#define vmlaq_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -9121,7 +9121,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_lane_s16(__a, __b, __c, __d) \
+#define vmlal_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9131,7 +9131,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_lane_s32(__a, __b, __c, __d) \
+#define vmlal_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9141,7 +9141,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_lane_u16(__a, __b, __c, __d) \
+#define vmlal_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9151,7 +9151,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_lane_u32(__a, __b, __c, __d) \
+#define vmlal_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9161,7 +9161,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_lane_s16(__a, __b, __c, __d) \
+#define vqdmlal_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9171,7 +9171,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_lane_s32(__a, __b, __c, __d) \
+#define vqdmlal_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9181,7 +9181,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_lane_s16(__a, __b, __c, __d) \
+#define vmls_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9191,7 +9191,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_lane_s32(__a, __b, __c, __d) \
+#define vmls_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9201,7 +9201,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_lane_f32(__a, __b, __c, __d) \
+#define vmls_lane_f32(__a, __b, __c, __d) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -9211,7 +9211,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_lane_u16(__a, __b, __c, __d) \
+#define vmls_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9221,7 +9221,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_lane_u32(__a, __b, __c, __d) \
+#define vmls_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9231,7 +9231,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_lane_s16(__a, __b, __c, __d) \
+#define vmlsq_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -9241,7 +9241,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_lane_s32(__a, __b, __c, __d) \
+#define vmlsq_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -9251,7 +9251,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_lane_f32(__a, __b, __c, __d) \
+#define vmlsq_lane_f32(__a, __b, __c, __d) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -9261,7 +9261,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_lane_u16(__a, __b, __c, __d) \
+#define vmlsq_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -9271,7 +9271,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_lane_u32(__a, __b, __c, __d) \
+#define vmlsq_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -9281,7 +9281,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_lane_s16(__a, __b, __c, __d) \
+#define vmlsl_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9291,7 +9291,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_lane_s32(__a, __b, __c, __d) \
+#define vmlsl_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9301,7 +9301,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_lane_u16(__a, __b, __c, __d) \
+#define vmlsl_lane_u16(__a, __b, __c, __d) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9311,7 +9311,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_lane_u32(__a, __b, __c, __d) \
+#define vmlsl_lane_u32(__a, __b, __c, __d) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9321,7 +9321,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_lane_s16(__a, __b, __c, __d) \
+#define vqdmlsl_lane_s16(__a, __b, __c, __d) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9331,7 +9331,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_lane_s32(__a, __b, __c, __d) \
+#define vqdmlsl_lane_s32(__a, __b, __c, __d) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9341,7 +9341,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_lane_s16(__a, __b, __c) \
+#define vmull_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9350,7 +9350,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_lane_s32(__a, __b, __c) \
+#define vmull_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9359,7 +9359,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_lane_u16(__a, __b, __c) \
+#define vmull_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9368,7 +9368,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_lane_u32(__a, __b, __c) \
+#define vmull_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9377,7 +9377,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_lane_s16(__a, __b, __c) \
+#define vqdmull_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9386,7 +9386,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_lane_s32(__a, __b, __c) \
+#define vqdmull_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9395,7 +9395,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_lane_s16(__a, __b, __c) \
+#define vqdmulhq_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9404,7 +9404,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_lane_s32(__a, __b, __c) \
+#define vqdmulhq_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9413,7 +9413,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_lane_s16(__a, __b, __c) \
+#define vqdmulh_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9422,7 +9422,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_lane_s32(__a, __b, __c) \
+#define vqdmulh_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9431,7 +9431,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_lane_s16(__a, __b, __c) \
+#define vqrdmulhq_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9440,7 +9440,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_lane_s32(__a, __b, __c) \
+#define vqrdmulhq_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9449,7 +9449,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_lane_s16(__a, __b, __c) \
+#define vqrdmulh_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9458,7 +9458,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_lane_s32(__a, __b, __c) \
+#define vqrdmulh_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9467,7 +9467,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_n_s16(__a, __b) \
+#define vmul_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9476,7 +9476,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_n_s32(__a, __b) \
+#define vmul_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9485,7 +9485,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_n_f32(__a, __b) \
+#define vmul_n_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32_t __bx = __b; \
@@ -9494,7 +9494,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_n_u16(__a, __b) \
+#define vmul_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16_t __bx = __b; \
@@ -9503,7 +9503,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmul_n_u32(__a, __b) \
+#define vmul_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32_t __bx = __b; \
@@ -9512,7 +9512,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_n_s16(__a, __b) \
+#define vmulq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9521,7 +9521,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_n_s32(__a, __b) \
+#define vmulq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9530,7 +9530,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_n_f32(__a, __b) \
+#define vmulq_n_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32_t __bx = __b; \
@@ -9539,7 +9539,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_n_u16(__a, __b) \
+#define vmulq_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16_t __bx = __b; \
@@ -9548,7 +9548,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmulq_n_u32(__a, __b) \
+#define vmulq_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32_t __bx = __b; \
@@ -9557,7 +9557,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_n_s16(__a, __b) \
+#define vmull_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9566,7 +9566,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_n_s32(__a, __b) \
+#define vmull_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9575,7 +9575,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_n_u16(__a, __b) \
+#define vmull_n_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16_t __bx = __b; \
@@ -9584,7 +9584,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmull_n_u32(__a, __b) \
+#define vmull_n_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32_t __bx = __b; \
@@ -9593,7 +9593,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_n_s16(__a, __b) \
+#define vqdmull_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9602,7 +9602,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmull_n_s32(__a, __b) \
+#define vqdmull_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9611,7 +9611,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_n_s16(__a, __b) \
+#define vqdmulhq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9620,7 +9620,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulhq_n_s32(__a, __b) \
+#define vqdmulhq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9629,7 +9629,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_n_s16(__a, __b) \
+#define vqdmulh_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9638,7 +9638,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmulh_n_s32(__a, __b) \
+#define vqdmulh_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9647,7 +9647,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_n_s16(__a, __b) \
+#define vqrdmulhq_n_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9656,7 +9656,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulhq_n_s32(__a, __b) \
+#define vqrdmulhq_n_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9665,7 +9665,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_n_s16(__a, __b) \
+#define vqrdmulh_n_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16_t __bx = __b; \
@@ -9674,7 +9674,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqrdmulh_n_s32(__a, __b) \
+#define vqrdmulh_n_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32_t __bx = __b; \
@@ -9683,7 +9683,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_n_s16(__a, __b, __c) \
+#define vmla_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9693,7 +9693,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_n_s32(__a, __b, __c) \
+#define vmla_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9703,7 +9703,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_n_f32(__a, __b, __c) \
+#define vmla_n_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -9713,7 +9713,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_n_u16(__a, __b, __c) \
+#define vmla_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9723,7 +9723,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmla_n_u32(__a, __b, __c) \
+#define vmla_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9733,7 +9733,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_n_s16(__a, __b, __c) \
+#define vmlaq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -9743,7 +9743,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_n_s32(__a, __b, __c) \
+#define vmlaq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -9753,7 +9753,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_n_f32(__a, __b, __c) \
+#define vmlaq_n_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -9763,7 +9763,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_n_u16(__a, __b, __c) \
+#define vmlaq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -9773,7 +9773,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlaq_n_u32(__a, __b, __c) \
+#define vmlaq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -9783,7 +9783,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_n_s16(__a, __b, __c) \
+#define vmlal_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9793,7 +9793,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_n_s32(__a, __b, __c) \
+#define vmlal_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9803,7 +9803,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_n_u16(__a, __b, __c) \
+#define vmlal_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9813,7 +9813,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlal_n_u32(__a, __b, __c) \
+#define vmlal_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9823,7 +9823,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_n_s16(__a, __b, __c) \
+#define vqdmlal_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9833,7 +9833,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlal_n_s32(__a, __b, __c) \
+#define vqdmlal_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9843,7 +9843,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_n_s16(__a, __b, __c) \
+#define vmls_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9853,7 +9853,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_n_s32(__a, __b, __c) \
+#define vmls_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9863,7 +9863,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_n_f32(__a, __b, __c) \
+#define vmls_n_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -9873,7 +9873,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_n_u16(__a, __b, __c) \
+#define vmls_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9883,7 +9883,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmls_n_u32(__a, __b, __c) \
+#define vmls_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9893,7 +9893,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_n_s16(__a, __b, __c) \
+#define vmlsq_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -9903,7 +9903,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_n_s32(__a, __b, __c) \
+#define vmlsq_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -9913,7 +9913,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_n_f32(__a, __b, __c) \
+#define vmlsq_n_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -9923,7 +9923,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_n_u16(__a, __b, __c) \
+#define vmlsq_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -9933,7 +9933,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsq_n_u32(__a, __b, __c) \
+#define vmlsq_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -9943,7 +9943,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_n_s16(__a, __b, __c) \
+#define vmlsl_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9953,7 +9953,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_n_s32(__a, __b, __c) \
+#define vmlsl_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -9963,7 +9963,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_n_u16(__a, __b, __c) \
+#define vmlsl_n_u16(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -9973,7 +9973,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vmlsl_n_u32(__a, __b, __c) \
+#define vmlsl_n_u32(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -9983,7 +9983,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_n_s16(__a, __b, __c) \
+#define vqdmlsl_n_s16(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -9993,7 +9993,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vqdmlsl_n_s32(__a, __b, __c) \
+#define vqdmlsl_n_s32(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -10003,7 +10003,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_s8(__a, __b, __c) \
+#define vext_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -10012,7 +10012,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_s16(__a, __b, __c) \
+#define vext_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -10021,7 +10021,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_s32(__a, __b, __c) \
+#define vext_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -10030,7 +10030,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_s64(__a, __b, __c) \
+#define vext_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -10039,7 +10039,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_f32(__a, __b, __c) \
+#define vext_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -10048,7 +10048,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_u8(__a, __b, __c) \
+#define vext_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -10057,7 +10057,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_u16(__a, __b, __c) \
+#define vext_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -10066,7 +10066,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_u32(__a, __b, __c) \
+#define vext_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -10075,7 +10075,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_u64(__a, __b, __c) \
+#define vext_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -10084,7 +10084,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_p8(__a, __b, __c) \
+#define vext_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -10093,7 +10093,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vext_p16(__a, __b, __c) \
+#define vext_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -10102,7 +10102,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_s8(__a, __b, __c) \
+#define vextq_s8(__a, __b, __c) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -10111,7 +10111,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_s16(__a, __b, __c) \
+#define vextq_s16(__a, __b, __c) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -10120,7 +10120,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_s32(__a, __b, __c) \
+#define vextq_s32(__a, __b, __c) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -10129,7 +10129,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_s64(__a, __b, __c) \
+#define vextq_s64(__a, __b, __c) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -10138,7 +10138,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_f32(__a, __b, __c) \
+#define vextq_f32(__a, __b, __c) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -10147,7 +10147,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_u8(__a, __b, __c) \
+#define vextq_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -10156,7 +10156,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_u16(__a, __b, __c) \
+#define vextq_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -10165,7 +10165,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_u32(__a, __b, __c) \
+#define vextq_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -10174,7 +10174,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_u64(__a, __b, __c) \
+#define vextq_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -10183,7 +10183,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_p8(__a, __b, __c) \
+#define vextq_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -10192,7 +10192,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vextq_p16(__a, __b, __c) \
+#define vextq_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -10201,7 +10201,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_s8(__a) \
+#define vrev64_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10209,7 +10209,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_s16(__a) \
+#define vrev64_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10217,7 +10217,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_s32(__a) \
+#define vrev64_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -10225,7 +10225,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_f32(__a) \
+#define vrev64_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -10233,7 +10233,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_u8(__a) \
+#define vrev64_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10241,7 +10241,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_u16(__a) \
+#define vrev64_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10249,7 +10249,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_u32(__a) \
+#define vrev64_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -10257,7 +10257,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_p8(__a) \
+#define vrev64_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10265,7 +10265,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64_p16(__a) \
+#define vrev64_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10273,7 +10273,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_s8(__a) \
+#define vrev64q_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10281,7 +10281,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_s16(__a) \
+#define vrev64q_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10289,7 +10289,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_s32(__a) \
+#define vrev64q_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -10297,7 +10297,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_f32(__a) \
+#define vrev64q_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -10305,7 +10305,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_u8(__a) \
+#define vrev64q_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10313,7 +10313,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_u16(__a) \
+#define vrev64q_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10321,7 +10321,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_u32(__a) \
+#define vrev64q_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -10329,7 +10329,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_p8(__a) \
+#define vrev64q_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10337,7 +10337,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev64q_p16(__a) \
+#define vrev64q_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10345,7 +10345,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_s8(__a) \
+#define vrev32_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10353,7 +10353,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_s16(__a) \
+#define vrev32_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10361,7 +10361,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_u8(__a) \
+#define vrev32_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10369,7 +10369,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_u16(__a) \
+#define vrev32_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10377,7 +10377,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_p8(__a) \
+#define vrev32_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10385,7 +10385,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32_p16(__a) \
+#define vrev32_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -10393,7 +10393,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_s8(__a) \
+#define vrev32q_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10401,7 +10401,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_s16(__a) \
+#define vrev32q_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10409,7 +10409,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_u8(__a) \
+#define vrev32q_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10417,7 +10417,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_u16(__a) \
+#define vrev32q_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10425,7 +10425,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_p8(__a) \
+#define vrev32q_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10433,7 +10433,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev32q_p16(__a) \
+#define vrev32q_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -10441,7 +10441,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16_s8(__a) \
+#define vrev16_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10449,7 +10449,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16_u8(__a) \
+#define vrev16_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10457,7 +10457,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16_p8(__a) \
+#define vrev16_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -10465,7 +10465,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16q_s8(__a) \
+#define vrev16q_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10473,7 +10473,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16q_u8(__a) \
+#define vrev16q_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10481,7 +10481,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vrev16q_p8(__a) \
+#define vrev16q_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -10489,7 +10489,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_s8(__a, __b, __c) \
+#define vbsl_s8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -10499,7 +10499,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_s16(__a, __b, __c) \
+#define vbsl_s16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -10509,7 +10509,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_s32(__a, __b, __c) \
+#define vbsl_s32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -10519,7 +10519,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_s64(__a, __b, __c) \
+#define vbsl_s64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -10529,7 +10529,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_f32(__a, __b, __c) \
+#define vbsl_f32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -10539,7 +10539,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_u8(__a, __b, __c) \
+#define vbsl_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -10549,7 +10549,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_u16(__a, __b, __c) \
+#define vbsl_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -10559,7 +10559,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_u32(__a, __b, __c) \
+#define vbsl_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -10569,7 +10569,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_u64(__a, __b, __c) \
+#define vbsl_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -10579,7 +10579,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_p8(__a, __b, __c) \
+#define vbsl_p8(__a, __b, __c) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -10589,7 +10589,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbsl_p16(__a, __b, __c) \
+#define vbsl_p16(__a, __b, __c) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -10599,7 +10599,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_s8(__a, __b, __c) \
+#define vbslq_s8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -10609,7 +10609,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_s16(__a, __b, __c) \
+#define vbslq_s16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -10619,7 +10619,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_s32(__a, __b, __c) \
+#define vbslq_s32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -10629,7 +10629,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_s64(__a, __b, __c) \
+#define vbslq_s64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -10639,7 +10639,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_f32(__a, __b, __c) \
+#define vbslq_f32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -10649,7 +10649,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_u8(__a, __b, __c) \
+#define vbslq_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -10659,7 +10659,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_u16(__a, __b, __c) \
+#define vbslq_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -10669,7 +10669,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_u32(__a, __b, __c) \
+#define vbslq_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -10679,7 +10679,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_u64(__a, __b, __c) \
+#define vbslq_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -10689,7 +10689,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_p8(__a, __b, __c) \
+#define vbslq_p8(__a, __b, __c) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -10699,7 +10699,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbslq_p16(__a, __b, __c) \
+#define vbslq_p16(__a, __b, __c) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -10709,7 +10709,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_s8(__a, __b) \
+#define vtrn_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -10718,7 +10718,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_s16(__a, __b) \
+#define vtrn_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -10727,7 +10727,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_s32(__a, __b) \
+#define vtrn_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -10736,7 +10736,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_f32(__a, __b) \
+#define vtrn_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -10745,7 +10745,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_u8(__a, __b) \
+#define vtrn_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -10754,7 +10754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_u16(__a, __b) \
+#define vtrn_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -10763,7 +10763,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_u32(__a, __b) \
+#define vtrn_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -10772,7 +10772,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_p8(__a, __b) \
+#define vtrn_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -10781,7 +10781,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrn_p16(__a, __b) \
+#define vtrn_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -10790,7 +10790,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_s8(__a, __b) \
+#define vtrnq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -10799,7 +10799,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_s16(__a, __b) \
+#define vtrnq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -10808,7 +10808,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_s32(__a, __b) \
+#define vtrnq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -10817,7 +10817,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_f32(__a, __b) \
+#define vtrnq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -10826,7 +10826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_u8(__a, __b) \
+#define vtrnq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -10835,7 +10835,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_u16(__a, __b) \
+#define vtrnq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -10844,7 +10844,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_u32(__a, __b) \
+#define vtrnq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -10853,7 +10853,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_p8(__a, __b) \
+#define vtrnq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -10862,7 +10862,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vtrnq_p16(__a, __b) \
+#define vtrnq_p16(__a, __b) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -10871,7 +10871,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_s8(__a, __b) \
+#define vzip_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -10880,7 +10880,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_s16(__a, __b) \
+#define vzip_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -10889,7 +10889,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_s32(__a, __b) \
+#define vzip_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -10898,7 +10898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_f32(__a, __b) \
+#define vzip_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -10907,7 +10907,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_u8(__a, __b) \
+#define vzip_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -10916,7 +10916,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_u16(__a, __b) \
+#define vzip_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -10925,7 +10925,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_u32(__a, __b) \
+#define vzip_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -10934,7 +10934,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_p8(__a, __b) \
+#define vzip_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -10943,7 +10943,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzip_p16(__a, __b) \
+#define vzip_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -10952,7 +10952,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_s8(__a, __b) \
+#define vzipq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -10961,7 +10961,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_s16(__a, __b) \
+#define vzipq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -10970,7 +10970,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_s32(__a, __b) \
+#define vzipq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -10979,7 +10979,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_f32(__a, __b) \
+#define vzipq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -10988,7 +10988,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_u8(__a, __b) \
+#define vzipq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -10997,7 +10997,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_u16(__a, __b) \
+#define vzipq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -11006,7 +11006,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_u32(__a, __b) \
+#define vzipq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -11015,7 +11015,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_p8(__a, __b) \
+#define vzipq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -11024,7 +11024,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vzipq_p16(__a, __b) \
+#define vzipq_p16(__a, __b) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -11033,7 +11033,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_s8(__a, __b) \
+#define vuzp_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -11042,7 +11042,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_s16(__a, __b) \
+#define vuzp_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -11051,7 +11051,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_s32(__a, __b) \
+#define vuzp_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -11060,7 +11060,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_f32(__a, __b) \
+#define vuzp_f32(__a, __b) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      float32x2_t __bx = __b; \
@@ -11069,7 +11069,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_u8(__a, __b) \
+#define vuzp_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -11078,7 +11078,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_u16(__a, __b) \
+#define vuzp_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -11087,7 +11087,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_u32(__a, __b) \
+#define vuzp_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -11096,7 +11096,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_p8(__a, __b) \
+#define vuzp_p8(__a, __b) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -11105,7 +11105,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzp_p16(__a, __b) \
+#define vuzp_p16(__a, __b) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -11114,7 +11114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_s8(__a, __b) \
+#define vuzpq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -11123,7 +11123,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_s16(__a, __b) \
+#define vuzpq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -11132,7 +11132,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_s32(__a, __b) \
+#define vuzpq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -11141,7 +11141,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_f32(__a, __b) \
+#define vuzpq_f32(__a, __b) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      float32x4_t __bx = __b; \
@@ -11150,7 +11150,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_u8(__a, __b) \
+#define vuzpq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -11159,7 +11159,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_u16(__a, __b) \
+#define vuzpq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -11168,7 +11168,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_u32(__a, __b) \
+#define vuzpq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -11177,7 +11177,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_p8(__a, __b) \
+#define vuzpq_p8(__a, __b) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -11186,7 +11186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vuzpq_p16(__a, __b) \
+#define vuzpq_p16(__a, __b) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -11195,7 +11195,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_s8(__a) \
+#define vld1_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11203,7 +11203,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_s16(__a) \
+#define vld1_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11211,7 +11211,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_s32(__a) \
+#define vld1_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -11219,7 +11219,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_s64(__a) \
+#define vld1_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -11227,7 +11227,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_f32(__a) \
+#define vld1_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -11235,7 +11235,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_u8(__a) \
+#define vld1_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11243,7 +11243,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_u16(__a) \
+#define vld1_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11251,7 +11251,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_u32(__a) \
+#define vld1_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -11259,7 +11259,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_u64(__a) \
+#define vld1_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -11267,7 +11267,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_p8(__a) \
+#define vld1_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11275,7 +11275,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_p16(__a) \
+#define vld1_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11283,7 +11283,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_s8(__a) \
+#define vld1q_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11291,7 +11291,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_s16(__a) \
+#define vld1q_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11299,7 +11299,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_s32(__a) \
+#define vld1q_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -11307,7 +11307,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_s64(__a) \
+#define vld1q_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -11315,7 +11315,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_f32(__a) \
+#define vld1q_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -11323,7 +11323,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_u8(__a) \
+#define vld1q_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11331,7 +11331,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_u16(__a) \
+#define vld1q_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11339,7 +11339,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_u32(__a) \
+#define vld1q_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -11347,7 +11347,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_u64(__a) \
+#define vld1q_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -11355,7 +11355,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_p8(__a) \
+#define vld1q_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11363,7 +11363,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_p16(__a) \
+#define vld1q_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11371,7 +11371,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_s8(__a, __b, __c) \
+#define vld1_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      int8x8_t __bx = __b; \
@@ -11380,7 +11380,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_s16(__a, __b, __c) \
+#define vld1_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      int16x4_t __bx = __b; \
@@ -11389,7 +11389,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_s32(__a, __b, __c) \
+#define vld1_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      int32x2_t __bx = __b; \
@@ -11398,7 +11398,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_f32(__a, __b, __c) \
+#define vld1_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      float32x2_t __bx = __b; \
@@ -11407,7 +11407,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_u8(__a, __b, __c) \
+#define vld1_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -11416,7 +11416,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_u16(__a, __b, __c) \
+#define vld1_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -11425,7 +11425,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_u32(__a, __b, __c) \
+#define vld1_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -11434,7 +11434,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_p8(__a, __b, __c) \
+#define vld1_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      poly8x8_t __bx = __b; \
@@ -11443,7 +11443,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_p16(__a, __b, __c) \
+#define vld1_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      poly16x4_t __bx = __b; \
@@ -11452,7 +11452,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_s64(__a, __b, __c) \
+#define vld1_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      int64x1_t __bx = __b; \
@@ -11461,7 +11461,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_lane_u64(__a, __b, __c) \
+#define vld1_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -11470,7 +11470,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_s8(__a, __b, __c) \
+#define vld1q_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      int8x16_t __bx = __b; \
@@ -11479,7 +11479,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_s16(__a, __b, __c) \
+#define vld1q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      int16x8_t __bx = __b; \
@@ -11488,7 +11488,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_s32(__a, __b, __c) \
+#define vld1q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      int32x4_t __bx = __b; \
@@ -11497,7 +11497,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_f32(__a, __b, __c) \
+#define vld1q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      float32x4_t __bx = __b; \
@@ -11506,7 +11506,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_u8(__a, __b, __c) \
+#define vld1q_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -11515,7 +11515,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_u16(__a, __b, __c) \
+#define vld1q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -11524,7 +11524,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_u32(__a, __b, __c) \
+#define vld1q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -11533,7 +11533,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_p8(__a, __b, __c) \
+#define vld1q_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      poly8x16_t __bx = __b; \
@@ -11542,7 +11542,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_p16(__a, __b, __c) \
+#define vld1q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      poly16x8_t __bx = __b; \
@@ -11551,7 +11551,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_s64(__a, __b, __c) \
+#define vld1q_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      int64x2_t __bx = __b; \
@@ -11560,7 +11560,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_lane_u64(__a, __b, __c) \
+#define vld1q_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -11569,7 +11569,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_s8(__a) \
+#define vld1_dup_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11577,7 +11577,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_s16(__a) \
+#define vld1_dup_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11585,7 +11585,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_s32(__a) \
+#define vld1_dup_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -11593,7 +11593,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_f32(__a) \
+#define vld1_dup_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -11601,7 +11601,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_u8(__a) \
+#define vld1_dup_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11609,7 +11609,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_u16(__a) \
+#define vld1_dup_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11617,7 +11617,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_u32(__a) \
+#define vld1_dup_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -11625,7 +11625,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_p8(__a) \
+#define vld1_dup_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -11633,7 +11633,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_p16(__a) \
+#define vld1_dup_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -11641,7 +11641,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_s64(__a) \
+#define vld1_dup_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -11649,7 +11649,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1_dup_u64(__a) \
+#define vld1_dup_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -11657,7 +11657,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_s8(__a) \
+#define vld1q_dup_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11665,7 +11665,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_s16(__a) \
+#define vld1q_dup_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11673,7 +11673,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_s32(__a) \
+#define vld1q_dup_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -11681,7 +11681,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_f32(__a) \
+#define vld1q_dup_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -11689,7 +11689,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_u8(__a) \
+#define vld1q_dup_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11697,7 +11697,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_u16(__a) \
+#define vld1q_dup_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11705,7 +11705,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_u32(__a) \
+#define vld1q_dup_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -11713,7 +11713,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_p8(__a) \
+#define vld1q_dup_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -11721,7 +11721,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_p16(__a) \
+#define vld1q_dup_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -11729,7 +11729,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_s64(__a) \
+#define vld1q_dup_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -11737,7 +11737,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld1q_dup_u64(__a) \
+#define vld1q_dup_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -11745,315 +11745,315 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vst1_s8(__a, __b) \
+#define vst1_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      int8x8_t __bx = __b; \
      __builtin_neon_vst1v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bx.val); \
    })
 
-#define vst1_s16(__a, __b) \
+#define vst1_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      int16x4_t __bx = __b; \
      __builtin_neon_vst1v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bx.val); \
    })
 
-#define vst1_s32(__a, __b) \
+#define vst1_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      int32x2_t __bx = __b; \
      __builtin_neon_vst1v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bx.val); \
    })
 
-#define vst1_s64(__a, __b) \
+#define vst1_s64(__a, __b) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      int64x1_t __bx = __b; \
      __builtin_neon_vst1v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bx.val); \
    })
 
-#define vst1_f32(__a, __b) \
+#define vst1_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      float32x2_t __bx = __b; \
      __builtin_neon_vst1v2sf (__ax, __bx.val); \
    })
 
-#define vst1_u8(__a, __b) \
+#define vst1_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      uint8x8_t __bx = __b; \
      __builtin_neon_vst1v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x8_t) __bx.val); \
    })
 
-#define vst1_u16(__a, __b) \
+#define vst1_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      uint16x4_t __bx = __b; \
      __builtin_neon_vst1v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x4_t) __bx.val); \
    })
 
-#define vst1_u32(__a, __b) \
+#define vst1_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      uint32x2_t __bx = __b; \
      __builtin_neon_vst1v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), (__neon_int32x2_t) __bx.val); \
    })
 
-#define vst1_u64(__a, __b) \
+#define vst1_u64(__a, __b) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      uint64x1_t __bx = __b; \
      __builtin_neon_vst1v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), (__neon_int64x1_t) __bx.val); \
    })
 
-#define vst1_p8(__a, __b) \
+#define vst1_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      poly8x8_t __bx = __b; \
      __builtin_neon_vst1v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x8_t) __bx.val); \
    })
 
-#define vst1_p16(__a, __b) \
+#define vst1_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      poly16x4_t __bx = __b; \
      __builtin_neon_vst1v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x4_t) __bx.val); \
    })
 
-#define vst1q_s8(__a, __b) \
+#define vst1q_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      int8x16_t __bx = __b; \
      __builtin_neon_vst1v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bx.val); \
    })
 
-#define vst1q_s16(__a, __b) \
+#define vst1q_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      int16x8_t __bx = __b; \
      __builtin_neon_vst1v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bx.val); \
    })
 
-#define vst1q_s32(__a, __b) \
+#define vst1q_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      int32x4_t __bx = __b; \
      __builtin_neon_vst1v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bx.val); \
    })
 
-#define vst1q_s64(__a, __b) \
+#define vst1q_s64(__a, __b) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      int64x2_t __bx = __b; \
      __builtin_neon_vst1v2di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bx.val); \
    })
 
-#define vst1q_f32(__a, __b) \
+#define vst1q_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      float32x4_t __bx = __b; \
      __builtin_neon_vst1v4sf (__ax, __bx.val); \
    })
 
-#define vst1q_u8(__a, __b) \
+#define vst1q_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      uint8x16_t __bx = __b; \
      __builtin_neon_vst1v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x16_t) __bx.val); \
    })
 
-#define vst1q_u16(__a, __b) \
+#define vst1q_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      uint16x8_t __bx = __b; \
      __builtin_neon_vst1v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x8_t) __bx.val); \
    })
 
-#define vst1q_u32(__a, __b) \
+#define vst1q_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      uint32x4_t __bx = __b; \
      __builtin_neon_vst1v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), (__neon_int32x4_t) __bx.val); \
    })
 
-#define vst1q_u64(__a, __b) \
+#define vst1q_u64(__a, __b) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      uint64x2_t __bx = __b; \
      __builtin_neon_vst1v2di (__neon_ptr_cast(__builtin_neon_di *, __ax), (__neon_int64x2_t) __bx.val); \
    })
 
-#define vst1q_p8(__a, __b) \
+#define vst1q_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      poly8x16_t __bx = __b; \
      __builtin_neon_vst1v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x16_t) __bx.val); \
    })
 
-#define vst1q_p16(__a, __b) \
+#define vst1q_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      poly16x8_t __bx = __b; \
      __builtin_neon_vst1v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x8_t) __bx.val); \
    })
 
-#define vst1_lane_s8(__a, __b, __c) \
+#define vst1_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      int8x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bx.val, __c); \
    })
 
-#define vst1_lane_s16(__a, __b, __c) \
+#define vst1_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      int16x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bx.val, __c); \
    })
 
-#define vst1_lane_s32(__a, __b, __c) \
+#define vst1_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      int32x2_t __bx = __b; \
      __builtin_neon_vst1_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bx.val, __c); \
    })
 
-#define vst1_lane_f32(__a, __b, __c) \
+#define vst1_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      float32x2_t __bx = __b; \
      __builtin_neon_vst1_lanev2sf (__ax, __bx.val, __c); \
    })
 
-#define vst1_lane_u8(__a, __b, __c) \
+#define vst1_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      uint8x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x8_t) __bx.val, __c); \
    })
 
-#define vst1_lane_u16(__a, __b, __c) \
+#define vst1_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      uint16x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x4_t) __bx.val, __c); \
    })
 
-#define vst1_lane_u32(__a, __b, __c) \
+#define vst1_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      uint32x2_t __bx = __b; \
      __builtin_neon_vst1_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), (__neon_int32x2_t) __bx.val, __c); \
    })
 
-#define vst1_lane_p8(__a, __b, __c) \
+#define vst1_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      poly8x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x8_t) __bx.val, __c); \
    })
 
-#define vst1_lane_p16(__a, __b, __c) \
+#define vst1_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      poly16x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x4_t) __bx.val, __c); \
    })
 
-#define vst1_lane_s64(__a, __b, __c) \
+#define vst1_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      int64x1_t __bx = __b; \
      __builtin_neon_vst1_lanev1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bx.val, __c); \
    })
 
-#define vst1_lane_u64(__a, __b, __c) \
+#define vst1_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      uint64x1_t __bx = __b; \
      __builtin_neon_vst1_lanev1di (__neon_ptr_cast(__builtin_neon_di *, __ax), (__neon_int64x1_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_s8(__a, __b, __c) \
+#define vst1q_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      int8x16_t __bx = __b; \
      __builtin_neon_vst1_lanev16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bx.val, __c); \
    })
 
-#define vst1q_lane_s16(__a, __b, __c) \
+#define vst1q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      int16x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bx.val, __c); \
    })
 
-#define vst1q_lane_s32(__a, __b, __c) \
+#define vst1q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      int32x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bx.val, __c); \
    })
 
-#define vst1q_lane_f32(__a, __b, __c) \
+#define vst1q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      float32x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4sf (__ax, __bx.val, __c); \
    })
 
-#define vst1q_lane_u8(__a, __b, __c) \
+#define vst1q_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      uint8x16_t __bx = __b; \
      __builtin_neon_vst1_lanev16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x16_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_u16(__a, __b, __c) \
+#define vst1q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      uint16x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x8_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_u32(__a, __b, __c) \
+#define vst1q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      uint32x4_t __bx = __b; \
      __builtin_neon_vst1_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), (__neon_int32x4_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_p8(__a, __b, __c) \
+#define vst1q_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      poly8x16_t __bx = __b; \
      __builtin_neon_vst1_lanev16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), (__neon_int8x16_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_p16(__a, __b, __c) \
+#define vst1q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      poly16x8_t __bx = __b; \
      __builtin_neon_vst1_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), (__neon_int16x8_t) __bx.val, __c); \
    })
 
-#define vst1q_lane_s64(__a, __b, __c) \
+#define vst1q_lane_s64(__a, __b, __c) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      int64x2_t __bx = __b; \
      __builtin_neon_vst1_lanev2di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bx.val, __c); \
    })
 
-#define vst1q_lane_u64(__a, __b, __c) \
+#define vst1q_lane_u64(__a, __b, __c) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      uint64x2_t __bx = __b; \
      __builtin_neon_vst1_lanev2di (__neon_ptr_cast(__builtin_neon_di *, __ax), (__neon_int64x2_t) __bx.val, __c); \
    })
 
-#define vld2_s8(__a) \
+#define vld2_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12061,7 +12061,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_s16(__a) \
+#define vld2_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12069,7 +12069,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_s32(__a) \
+#define vld2_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x2_t __i; __neon_int32x2x2_t __o; } __rv; \
@@ -12077,7 +12077,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_f32(__a) \
+#define vld2_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x2_t __i; __neon_float32x2x2_t __o; } __rv; \
@@ -12085,7 +12085,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_u8(__a) \
+#define vld2_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12093,7 +12093,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_u16(__a) \
+#define vld2_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12101,7 +12101,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_u32(__a) \
+#define vld2_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x2_t __i; __neon_int32x2x2_t __o; } __rv; \
@@ -12109,7 +12109,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_p8(__a) \
+#define vld2_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12117,7 +12117,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_p16(__a) \
+#define vld2_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12125,7 +12125,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_s64(__a) \
+#define vld2_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x2_t __i; __neon_int64x1x2_t __o; } __rv; \
@@ -12133,7 +12133,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_u64(__a) \
+#define vld2_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x2_t __i; __neon_int64x1x2_t __o; } __rv; \
@@ -12141,7 +12141,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_s8(__a) \
+#define vld2q_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x16x2_t __i; __neon_int8x16x2_t __o; } __rv; \
@@ -12149,7 +12149,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_s16(__a) \
+#define vld2q_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x2_t __i; __neon_int16x8x2_t __o; } __rv; \
@@ -12157,7 +12157,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_s32(__a) \
+#define vld2q_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x2_t __i; __neon_int32x4x2_t __o; } __rv; \
@@ -12165,7 +12165,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_f32(__a) \
+#define vld2q_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x2_t __i; __neon_float32x4x2_t __o; } __rv; \
@@ -12173,7 +12173,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_u8(__a) \
+#define vld2q_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x16x2_t __i; __neon_int8x16x2_t __o; } __rv; \
@@ -12181,7 +12181,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_u16(__a) \
+#define vld2q_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x2_t __i; __neon_int16x8x2_t __o; } __rv; \
@@ -12189,7 +12189,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_u32(__a) \
+#define vld2q_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x2_t __i; __neon_int32x4x2_t __o; } __rv; \
@@ -12197,7 +12197,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_p8(__a) \
+#define vld2q_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x16x2_t __i; __neon_int8x16x2_t __o; } __rv; \
@@ -12205,7 +12205,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_p16(__a) \
+#define vld2q_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x2_t __i; __neon_int16x8x2_t __o; } __rv; \
@@ -12213,7 +12213,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_s8(__a, __b, __c) \
+#define vld2_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -12222,7 +12222,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_s16(__a, __b, __c) \
+#define vld2_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
@@ -12231,7 +12231,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_s32(__a, __b, __c) \
+#define vld2_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
@@ -12240,7 +12240,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_f32(__a, __b, __c) \
+#define vld2_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x2_t __i; __neon_float32x2x2_t __o; } __bu = { __b }; \
@@ -12249,7 +12249,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_u8(__a, __b, __c) \
+#define vld2_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -12258,7 +12258,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_u16(__a, __b, __c) \
+#define vld2_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
@@ -12267,7 +12267,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_u32(__a, __b, __c) \
+#define vld2_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
@@ -12276,7 +12276,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_p8(__a, __b, __c) \
+#define vld2_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
@@ -12285,7 +12285,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_lane_p16(__a, __b, __c) \
+#define vld2_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
@@ -12294,7 +12294,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_s16(__a, __b, __c) \
+#define vld2q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
@@ -12303,7 +12303,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_s32(__a, __b, __c) \
+#define vld2q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
@@ -12312,7 +12312,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_f32(__a, __b, __c) \
+#define vld2q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x2_t __i; __neon_float32x4x2_t __o; } __bu = { __b }; \
@@ -12321,7 +12321,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_u16(__a, __b, __c) \
+#define vld2q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
@@ -12330,7 +12330,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_u32(__a, __b, __c) \
+#define vld2q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
@@ -12339,7 +12339,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2q_lane_p16(__a, __b, __c) \
+#define vld2q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
@@ -12348,7 +12348,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_s8(__a) \
+#define vld2_dup_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12356,7 +12356,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_s16(__a) \
+#define vld2_dup_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12364,7 +12364,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_s32(__a) \
+#define vld2_dup_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x2_t __i; __neon_int32x2x2_t __o; } __rv; \
@@ -12372,7 +12372,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_f32(__a) \
+#define vld2_dup_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x2_t __i; __neon_float32x2x2_t __o; } __rv; \
@@ -12380,7 +12380,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_u8(__a) \
+#define vld2_dup_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12388,7 +12388,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_u16(__a) \
+#define vld2_dup_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12396,7 +12396,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_u32(__a) \
+#define vld2_dup_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x2_t __i; __neon_int32x2x2_t __o; } __rv; \
@@ -12404,7 +12404,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_p8(__a) \
+#define vld2_dup_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __rv; \
@@ -12412,7 +12412,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_p16(__a) \
+#define vld2_dup_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x2_t __i; __neon_int16x4x2_t __o; } __rv; \
@@ -12420,7 +12420,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_s64(__a) \
+#define vld2_dup_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x2_t __i; __neon_int64x1x2_t __o; } __rv; \
@@ -12428,7 +12428,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld2_dup_u64(__a) \
+#define vld2_dup_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x2_t __i; __neon_int64x1x2_t __o; } __rv; \
@@ -12436,252 +12436,252 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vst2_s8(__a, __b) \
+#define vst2_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2_s16(__a, __b) \
+#define vst2_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2_s32(__a, __b) \
+#define vst2_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst2_f32(__a, __b) \
+#define vst2_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x2_t __i; __neon_float32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v2sf (__ax, __bu.__o); \
    })
 
-#define vst2_u8(__a, __b) \
+#define vst2_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2_u16(__a, __b) \
+#define vst2_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2_u32(__a, __b) \
+#define vst2_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst2_p8(__a, __b) \
+#define vst2_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2_p16(__a, __b) \
+#define vst2_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2_s64(__a, __b) \
+#define vst2_s64(__a, __b) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      union { int64x1x2_t __i; __neon_int64x1x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst2_u64(__a, __b) \
+#define vst2_u64(__a, __b) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      union { uint64x1x2_t __i; __neon_int64x1x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst2q_s8(__a, __b) \
+#define vst2q_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x16x2_t __i; __neon_int8x16x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2q_s16(__a, __b) \
+#define vst2q_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2q_s32(__a, __b) \
+#define vst2q_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst2q_f32(__a, __b) \
+#define vst2q_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x2_t __i; __neon_float32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4sf (__ax, __bu.__o); \
    })
 
-#define vst2q_u8(__a, __b) \
+#define vst2q_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x16x2_t __i; __neon_int8x16x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2q_u16(__a, __b) \
+#define vst2q_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2q_u32(__a, __b) \
+#define vst2q_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst2q_p8(__a, __b) \
+#define vst2q_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x16x2_t __i; __neon_int8x16x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst2q_p16(__a, __b) \
+#define vst2q_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst2_lane_s8(__a, __b, __c) \
+#define vst2_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_s16(__a, __b, __c) \
+#define vst2_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_s32(__a, __b, __c) \
+#define vst2_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_f32(__a, __b, __c) \
+#define vst2_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x2_t __i; __neon_float32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2sf (__ax, __bu.__o, __c); \
    })
 
-#define vst2_lane_u8(__a, __b, __c) \
+#define vst2_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_u16(__a, __b, __c) \
+#define vst2_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_u32(__a, __b, __c) \
+#define vst2_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x2_t __i; __neon_int32x2x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_p8(__a, __b, __c) \
+#define vst2_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x2_t __i; __neon_int8x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2_lane_p16(__a, __b, __c) \
+#define vst2_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x2_t __i; __neon_int16x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2q_lane_s16(__a, __b, __c) \
+#define vst2q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2q_lane_s32(__a, __b, __c) \
+#define vst2q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst2q_lane_f32(__a, __b, __c) \
+#define vst2q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x2_t __i; __neon_float32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4sf (__ax, __bu.__o, __c); \
    })
 
-#define vst2q_lane_u16(__a, __b, __c) \
+#define vst2q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst2q_lane_u32(__a, __b, __c) \
+#define vst2q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x2_t __i; __neon_int32x4x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst2q_lane_p16(__a, __b, __c) \
+#define vst2q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x2_t __i; __neon_int16x8x2_t __o; } __bu = { __b }; \
      __builtin_neon_vst2_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vld3_s8(__a) \
+#define vld3_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -12689,7 +12689,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_s16(__a) \
+#define vld3_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -12697,7 +12697,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_s32(__a) \
+#define vld3_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x3_t __i; __neon_int32x2x3_t __o; } __rv; \
@@ -12705,7 +12705,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_f32(__a) \
+#define vld3_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x3_t __i; __neon_float32x2x3_t __o; } __rv; \
@@ -12713,7 +12713,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_u8(__a) \
+#define vld3_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -12721,7 +12721,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_u16(__a) \
+#define vld3_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -12729,7 +12729,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_u32(__a) \
+#define vld3_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x3_t __i; __neon_int32x2x3_t __o; } __rv; \
@@ -12737,7 +12737,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_p8(__a) \
+#define vld3_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -12745,7 +12745,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_p16(__a) \
+#define vld3_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -12753,7 +12753,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_s64(__a) \
+#define vld3_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x3_t __i; __neon_int64x1x3_t __o; } __rv; \
@@ -12761,7 +12761,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_u64(__a) \
+#define vld3_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x3_t __i; __neon_int64x1x3_t __o; } __rv; \
@@ -12769,7 +12769,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_s8(__a) \
+#define vld3q_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x16x3_t __i; __neon_int8x16x3_t __o; } __rv; \
@@ -12777,7 +12777,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_s16(__a) \
+#define vld3q_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x3_t __i; __neon_int16x8x3_t __o; } __rv; \
@@ -12785,7 +12785,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_s32(__a) \
+#define vld3q_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x3_t __i; __neon_int32x4x3_t __o; } __rv; \
@@ -12793,7 +12793,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_f32(__a) \
+#define vld3q_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x3_t __i; __neon_float32x4x3_t __o; } __rv; \
@@ -12801,7 +12801,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_u8(__a) \
+#define vld3q_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x16x3_t __i; __neon_int8x16x3_t __o; } __rv; \
@@ -12809,7 +12809,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_u16(__a) \
+#define vld3q_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x3_t __i; __neon_int16x8x3_t __o; } __rv; \
@@ -12817,7 +12817,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_u32(__a) \
+#define vld3q_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x3_t __i; __neon_int32x4x3_t __o; } __rv; \
@@ -12825,7 +12825,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_p8(__a) \
+#define vld3q_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x16x3_t __i; __neon_int8x16x3_t __o; } __rv; \
@@ -12833,7 +12833,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_p16(__a) \
+#define vld3q_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x3_t __i; __neon_int16x8x3_t __o; } __rv; \
@@ -12841,7 +12841,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_s8(__a, __b, __c) \
+#define vld3_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -12850,7 +12850,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_s16(__a, __b, __c) \
+#define vld3_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
@@ -12859,7 +12859,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_s32(__a, __b, __c) \
+#define vld3_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
@@ -12868,7 +12868,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_f32(__a, __b, __c) \
+#define vld3_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x3_t __i; __neon_float32x2x3_t __o; } __bu = { __b }; \
@@ -12877,7 +12877,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_u8(__a, __b, __c) \
+#define vld3_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -12886,7 +12886,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_u16(__a, __b, __c) \
+#define vld3_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
@@ -12895,7 +12895,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_u32(__a, __b, __c) \
+#define vld3_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
@@ -12904,7 +12904,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_p8(__a, __b, __c) \
+#define vld3_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
@@ -12913,7 +12913,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_lane_p16(__a, __b, __c) \
+#define vld3_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
@@ -12922,7 +12922,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_s16(__a, __b, __c) \
+#define vld3q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
@@ -12931,7 +12931,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_s32(__a, __b, __c) \
+#define vld3q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
@@ -12940,7 +12940,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_f32(__a, __b, __c) \
+#define vld3q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x3_t __i; __neon_float32x4x3_t __o; } __bu = { __b }; \
@@ -12949,7 +12949,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_u16(__a, __b, __c) \
+#define vld3q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
@@ -12958,7 +12958,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_u32(__a, __b, __c) \
+#define vld3q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
@@ -12967,7 +12967,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3q_lane_p16(__a, __b, __c) \
+#define vld3q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
@@ -12976,7 +12976,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_s8(__a) \
+#define vld3_dup_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -12984,7 +12984,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_s16(__a) \
+#define vld3_dup_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -12992,7 +12992,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_s32(__a) \
+#define vld3_dup_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x3_t __i; __neon_int32x2x3_t __o; } __rv; \
@@ -13000,7 +13000,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_f32(__a) \
+#define vld3_dup_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x3_t __i; __neon_float32x2x3_t __o; } __rv; \
@@ -13008,7 +13008,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_u8(__a) \
+#define vld3_dup_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -13016,7 +13016,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_u16(__a) \
+#define vld3_dup_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -13024,7 +13024,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_u32(__a) \
+#define vld3_dup_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x3_t __i; __neon_int32x2x3_t __o; } __rv; \
@@ -13032,7 +13032,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_p8(__a) \
+#define vld3_dup_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __rv; \
@@ -13040,7 +13040,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_p16(__a) \
+#define vld3_dup_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x3_t __i; __neon_int16x4x3_t __o; } __rv; \
@@ -13048,7 +13048,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_s64(__a) \
+#define vld3_dup_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x3_t __i; __neon_int64x1x3_t __o; } __rv; \
@@ -13056,7 +13056,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld3_dup_u64(__a) \
+#define vld3_dup_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x3_t __i; __neon_int64x1x3_t __o; } __rv; \
@@ -13064,252 +13064,252 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vst3_s8(__a, __b) \
+#define vst3_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3_s16(__a, __b) \
+#define vst3_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3_s32(__a, __b) \
+#define vst3_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst3_f32(__a, __b) \
+#define vst3_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x3_t __i; __neon_float32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v2sf (__ax, __bu.__o); \
    })
 
-#define vst3_u8(__a, __b) \
+#define vst3_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3_u16(__a, __b) \
+#define vst3_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3_u32(__a, __b) \
+#define vst3_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst3_p8(__a, __b) \
+#define vst3_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3_p16(__a, __b) \
+#define vst3_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3_s64(__a, __b) \
+#define vst3_s64(__a, __b) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      union { int64x1x3_t __i; __neon_int64x1x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst3_u64(__a, __b) \
+#define vst3_u64(__a, __b) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      union { uint64x1x3_t __i; __neon_int64x1x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst3q_s8(__a, __b) \
+#define vst3q_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x16x3_t __i; __neon_int8x16x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3q_s16(__a, __b) \
+#define vst3q_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3q_s32(__a, __b) \
+#define vst3q_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst3q_f32(__a, __b) \
+#define vst3q_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x3_t __i; __neon_float32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4sf (__ax, __bu.__o); \
    })
 
-#define vst3q_u8(__a, __b) \
+#define vst3q_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x16x3_t __i; __neon_int8x16x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3q_u16(__a, __b) \
+#define vst3q_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3q_u32(__a, __b) \
+#define vst3q_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst3q_p8(__a, __b) \
+#define vst3q_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x16x3_t __i; __neon_int8x16x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst3q_p16(__a, __b) \
+#define vst3q_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst3_lane_s8(__a, __b, __c) \
+#define vst3_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_s16(__a, __b, __c) \
+#define vst3_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_s32(__a, __b, __c) \
+#define vst3_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_f32(__a, __b, __c) \
+#define vst3_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x3_t __i; __neon_float32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2sf (__ax, __bu.__o, __c); \
    })
 
-#define vst3_lane_u8(__a, __b, __c) \
+#define vst3_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_u16(__a, __b, __c) \
+#define vst3_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_u32(__a, __b, __c) \
+#define vst3_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x3_t __i; __neon_int32x2x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_p8(__a, __b, __c) \
+#define vst3_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x3_t __i; __neon_int8x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3_lane_p16(__a, __b, __c) \
+#define vst3_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x3_t __i; __neon_int16x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3q_lane_s16(__a, __b, __c) \
+#define vst3q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3q_lane_s32(__a, __b, __c) \
+#define vst3q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst3q_lane_f32(__a, __b, __c) \
+#define vst3q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x3_t __i; __neon_float32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4sf (__ax, __bu.__o, __c); \
    })
 
-#define vst3q_lane_u16(__a, __b, __c) \
+#define vst3q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst3q_lane_u32(__a, __b, __c) \
+#define vst3q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x3_t __i; __neon_int32x4x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst3q_lane_p16(__a, __b, __c) \
+#define vst3q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x3_t __i; __neon_int16x8x3_t __o; } __bu = { __b }; \
      __builtin_neon_vst3_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vld4_s8(__a) \
+#define vld4_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13317,7 +13317,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_s16(__a) \
+#define vld4_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13325,7 +13325,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_s32(__a) \
+#define vld4_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x4_t __i; __neon_int32x2x4_t __o; } __rv; \
@@ -13333,7 +13333,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_f32(__a) \
+#define vld4_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x4_t __i; __neon_float32x2x4_t __o; } __rv; \
@@ -13341,7 +13341,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_u8(__a) \
+#define vld4_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13349,7 +13349,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_u16(__a) \
+#define vld4_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13357,7 +13357,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_u32(__a) \
+#define vld4_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x4_t __i; __neon_int32x2x4_t __o; } __rv; \
@@ -13365,7 +13365,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_p8(__a) \
+#define vld4_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13373,7 +13373,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_p16(__a) \
+#define vld4_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13381,7 +13381,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_s64(__a) \
+#define vld4_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x4_t __i; __neon_int64x1x4_t __o; } __rv; \
@@ -13389,7 +13389,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_u64(__a) \
+#define vld4_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x4_t __i; __neon_int64x1x4_t __o; } __rv; \
@@ -13397,7 +13397,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_s8(__a) \
+#define vld4q_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x16x4_t __i; __neon_int8x16x4_t __o; } __rv; \
@@ -13405,7 +13405,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_s16(__a) \
+#define vld4q_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x4_t __i; __neon_int16x8x4_t __o; } __rv; \
@@ -13413,7 +13413,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_s32(__a) \
+#define vld4q_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x4_t __i; __neon_int32x4x4_t __o; } __rv; \
@@ -13421,7 +13421,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_f32(__a) \
+#define vld4q_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x4_t __i; __neon_float32x4x4_t __o; } __rv; \
@@ -13429,7 +13429,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_u8(__a) \
+#define vld4q_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x16x4_t __i; __neon_int8x16x4_t __o; } __rv; \
@@ -13437,7 +13437,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_u16(__a) \
+#define vld4q_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x4_t __i; __neon_int16x8x4_t __o; } __rv; \
@@ -13445,7 +13445,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_u32(__a) \
+#define vld4q_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x4_t __i; __neon_int32x4x4_t __o; } __rv; \
@@ -13453,7 +13453,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_p8(__a) \
+#define vld4q_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x16x4_t __i; __neon_int8x16x4_t __o; } __rv; \
@@ -13461,7 +13461,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_p16(__a) \
+#define vld4q_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x4_t __i; __neon_int16x8x4_t __o; } __rv; \
@@ -13469,7 +13469,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_s8(__a, __b, __c) \
+#define vld4_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -13478,7 +13478,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_s16(__a, __b, __c) \
+#define vld4_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
@@ -13487,7 +13487,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_s32(__a, __b, __c) \
+#define vld4_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
@@ -13496,7 +13496,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_f32(__a, __b, __c) \
+#define vld4_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x4_t __i; __neon_float32x2x4_t __o; } __bu = { __b }; \
@@ -13505,7 +13505,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_u8(__a, __b, __c) \
+#define vld4_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -13514,7 +13514,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_u16(__a, __b, __c) \
+#define vld4_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
@@ -13523,7 +13523,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_u32(__a, __b, __c) \
+#define vld4_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
@@ -13532,7 +13532,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_p8(__a, __b, __c) \
+#define vld4_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
@@ -13541,7 +13541,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_lane_p16(__a, __b, __c) \
+#define vld4_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
@@ -13550,7 +13550,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_s16(__a, __b, __c) \
+#define vld4q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
@@ -13559,7 +13559,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_s32(__a, __b, __c) \
+#define vld4q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
@@ -13568,7 +13568,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_f32(__a, __b, __c) \
+#define vld4q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x4x4_t __i; __neon_float32x4x4_t __o; } __bu = { __b }; \
@@ -13577,7 +13577,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_u16(__a, __b, __c) \
+#define vld4q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
@@ -13586,7 +13586,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_u32(__a, __b, __c) \
+#define vld4q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
@@ -13595,7 +13595,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4q_lane_p16(__a, __b, __c) \
+#define vld4q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
@@ -13604,7 +13604,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_s8(__a) \
+#define vld4_dup_s8(__a) __extension__ \
   ({ \
      const int8_t * __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13612,7 +13612,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_s16(__a) \
+#define vld4_dup_s16(__a) __extension__ \
   ({ \
      const int16_t * __ax = __a; \
      union { int16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13620,7 +13620,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_s32(__a) \
+#define vld4_dup_s32(__a) __extension__ \
   ({ \
      const int32_t * __ax = __a; \
      union { int32x2x4_t __i; __neon_int32x2x4_t __o; } __rv; \
@@ -13628,7 +13628,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_f32(__a) \
+#define vld4_dup_f32(__a) __extension__ \
   ({ \
      const float32_t * __ax = __a; \
      union { float32x2x4_t __i; __neon_float32x2x4_t __o; } __rv; \
@@ -13636,7 +13636,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_u8(__a) \
+#define vld4_dup_u8(__a) __extension__ \
   ({ \
      const uint8_t * __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13644,7 +13644,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_u16(__a) \
+#define vld4_dup_u16(__a) __extension__ \
   ({ \
      const uint16_t * __ax = __a; \
      union { uint16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13652,7 +13652,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_u32(__a) \
+#define vld4_dup_u32(__a) __extension__ \
   ({ \
      const uint32_t * __ax = __a; \
      union { uint32x2x4_t __i; __neon_int32x2x4_t __o; } __rv; \
@@ -13660,7 +13660,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_p8(__a) \
+#define vld4_dup_p8(__a) __extension__ \
   ({ \
      const poly8_t * __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __rv; \
@@ -13668,7 +13668,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_p16(__a) \
+#define vld4_dup_p16(__a) __extension__ \
   ({ \
      const poly16_t * __ax = __a; \
      union { poly16x4x4_t __i; __neon_int16x4x4_t __o; } __rv; \
@@ -13676,7 +13676,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_s64(__a) \
+#define vld4_dup_s64(__a) __extension__ \
   ({ \
      const int64_t * __ax = __a; \
      union { int64x1x4_t __i; __neon_int64x1x4_t __o; } __rv; \
@@ -13684,7 +13684,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vld4_dup_u64(__a) \
+#define vld4_dup_u64(__a) __extension__ \
   ({ \
      const uint64_t * __ax = __a; \
      union { uint64x1x4_t __i; __neon_int64x1x4_t __o; } __rv; \
@@ -13692,252 +13692,252 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vst4_s8(__a, __b) \
+#define vst4_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4_s16(__a, __b) \
+#define vst4_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4_s32(__a, __b) \
+#define vst4_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst4_f32(__a, __b) \
+#define vst4_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x4_t __i; __neon_float32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v2sf (__ax, __bu.__o); \
    })
 
-#define vst4_u8(__a, __b) \
+#define vst4_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4_u16(__a, __b) \
+#define vst4_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4_u32(__a, __b) \
+#define vst4_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst4_p8(__a, __b) \
+#define vst4_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4_p16(__a, __b) \
+#define vst4_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4_s64(__a, __b) \
+#define vst4_s64(__a, __b) __extension__ \
   ({ \
      int64_t * __ax = __a; \
      union { int64x1x4_t __i; __neon_int64x1x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst4_u64(__a, __b) \
+#define vst4_u64(__a, __b) __extension__ \
   ({ \
      uint64_t * __ax = __a; \
      union { uint64x1x4_t __i; __neon_int64x1x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v1di (__neon_ptr_cast(__builtin_neon_di *, __ax), __bu.__o); \
    })
 
-#define vst4q_s8(__a, __b) \
+#define vst4q_s8(__a, __b) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x16x4_t __i; __neon_int8x16x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4q_s16(__a, __b) \
+#define vst4q_s16(__a, __b) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4q_s32(__a, __b) \
+#define vst4q_s32(__a, __b) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst4q_f32(__a, __b) \
+#define vst4q_f32(__a, __b) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x4_t __i; __neon_float32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4sf (__ax, __bu.__o); \
    })
 
-#define vst4q_u8(__a, __b) \
+#define vst4q_u8(__a, __b) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x16x4_t __i; __neon_int8x16x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4q_u16(__a, __b) \
+#define vst4q_u16(__a, __b) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4q_u32(__a, __b) \
+#define vst4q_u32(__a, __b) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o); \
    })
 
-#define vst4q_p8(__a, __b) \
+#define vst4q_p8(__a, __b) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x16x4_t __i; __neon_int8x16x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v16qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o); \
    })
 
-#define vst4q_p16(__a, __b) \
+#define vst4q_p16(__a, __b) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4v8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o); \
    })
 
-#define vst4_lane_s8(__a, __b, __c) \
+#define vst4_lane_s8(__a, __b, __c) __extension__ \
   ({ \
      int8_t * __ax = __a; \
      union { int8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_s16(__a, __b, __c) \
+#define vst4_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_s32(__a, __b, __c) \
+#define vst4_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_f32(__a, __b, __c) \
+#define vst4_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x2x4_t __i; __neon_float32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2sf (__ax, __bu.__o, __c); \
    })
 
-#define vst4_lane_u8(__a, __b, __c) \
+#define vst4_lane_u8(__a, __b, __c) __extension__ \
   ({ \
      uint8_t * __ax = __a; \
      union { uint8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_u16(__a, __b, __c) \
+#define vst4_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_u32(__a, __b, __c) \
+#define vst4_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x2x4_t __i; __neon_int32x2x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev2si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_p8(__a, __b, __c) \
+#define vst4_lane_p8(__a, __b, __c) __extension__ \
   ({ \
      poly8_t * __ax = __a; \
      union { poly8x8x4_t __i; __neon_int8x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8qi (__neon_ptr_cast(__builtin_neon_qi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4_lane_p16(__a, __b, __c) \
+#define vst4_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x4x4_t __i; __neon_int16x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4q_lane_s16(__a, __b, __c) \
+#define vst4q_lane_s16(__a, __b, __c) __extension__ \
   ({ \
      int16_t * __ax = __a; \
      union { int16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4q_lane_s32(__a, __b, __c) \
+#define vst4q_lane_s32(__a, __b, __c) __extension__ \
   ({ \
      int32_t * __ax = __a; \
      union { int32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst4q_lane_f32(__a, __b, __c) \
+#define vst4q_lane_f32(__a, __b, __c) __extension__ \
   ({ \
      float32_t * __ax = __a; \
      union { float32x4x4_t __i; __neon_float32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4sf (__ax, __bu.__o, __c); \
    })
 
-#define vst4q_lane_u16(__a, __b, __c) \
+#define vst4q_lane_u16(__a, __b, __c) __extension__ \
   ({ \
      uint16_t * __ax = __a; \
      union { uint16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vst4q_lane_u32(__a, __b, __c) \
+#define vst4q_lane_u32(__a, __b, __c) __extension__ \
   ({ \
      uint32_t * __ax = __a; \
      union { uint32x4x4_t __i; __neon_int32x4x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev4si (__neon_ptr_cast(__builtin_neon_si *, __ax), __bu.__o, __c); \
    })
 
-#define vst4q_lane_p16(__a, __b, __c) \
+#define vst4q_lane_p16(__a, __b, __c) __extension__ \
   ({ \
      poly16_t * __ax = __a; \
      union { poly16x8x4_t __i; __neon_int16x8x4_t __o; } __bu = { __b }; \
      __builtin_neon_vst4_lanev8hi (__neon_ptr_cast(__builtin_neon_hi *, __ax), __bu.__o, __c); \
    })
 
-#define vand_s8(__a, __b) \
+#define vand_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -13946,7 +13946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_s16(__a, __b) \
+#define vand_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -13955,7 +13955,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_s32(__a, __b) \
+#define vand_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -13964,7 +13964,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_s64(__a, __b) \
+#define vand_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -13973,7 +13973,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_u8(__a, __b) \
+#define vand_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -13982,7 +13982,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_u16(__a, __b) \
+#define vand_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -13991,7 +13991,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_u32(__a, __b) \
+#define vand_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -14000,7 +14000,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vand_u64(__a, __b) \
+#define vand_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -14009,7 +14009,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_s8(__a, __b) \
+#define vandq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -14018,7 +14018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_s16(__a, __b) \
+#define vandq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -14027,7 +14027,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_s32(__a, __b) \
+#define vandq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -14036,7 +14036,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_s64(__a, __b) \
+#define vandq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -14045,7 +14045,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_u8(__a, __b) \
+#define vandq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -14054,7 +14054,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_u16(__a, __b) \
+#define vandq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -14063,7 +14063,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_u32(__a, __b) \
+#define vandq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -14072,7 +14072,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vandq_u64(__a, __b) \
+#define vandq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -14081,7 +14081,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_s8(__a, __b) \
+#define vorr_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -14090,7 +14090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_s16(__a, __b) \
+#define vorr_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -14099,7 +14099,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_s32(__a, __b) \
+#define vorr_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -14108,7 +14108,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_s64(__a, __b) \
+#define vorr_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -14117,7 +14117,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_u8(__a, __b) \
+#define vorr_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -14126,7 +14126,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_u16(__a, __b) \
+#define vorr_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -14135,7 +14135,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_u32(__a, __b) \
+#define vorr_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -14144,7 +14144,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorr_u64(__a, __b) \
+#define vorr_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -14153,7 +14153,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_s8(__a, __b) \
+#define vorrq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -14162,7 +14162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_s16(__a, __b) \
+#define vorrq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -14171,7 +14171,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_s32(__a, __b) \
+#define vorrq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -14180,7 +14180,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_s64(__a, __b) \
+#define vorrq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -14189,7 +14189,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_u8(__a, __b) \
+#define vorrq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -14198,7 +14198,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_u16(__a, __b) \
+#define vorrq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -14207,7 +14207,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_u32(__a, __b) \
+#define vorrq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -14216,7 +14216,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorrq_u64(__a, __b) \
+#define vorrq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -14225,7 +14225,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_s8(__a, __b) \
+#define veor_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -14234,7 +14234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_s16(__a, __b) \
+#define veor_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -14243,7 +14243,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_s32(__a, __b) \
+#define veor_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -14252,7 +14252,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_s64(__a, __b) \
+#define veor_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -14261,7 +14261,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_u8(__a, __b) \
+#define veor_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -14270,7 +14270,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_u16(__a, __b) \
+#define veor_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -14279,7 +14279,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_u32(__a, __b) \
+#define veor_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -14288,7 +14288,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veor_u64(__a, __b) \
+#define veor_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -14297,7 +14297,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_s8(__a, __b) \
+#define veorq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -14306,7 +14306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_s16(__a, __b) \
+#define veorq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -14315,7 +14315,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_s32(__a, __b) \
+#define veorq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -14324,7 +14324,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_s64(__a, __b) \
+#define veorq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -14333,7 +14333,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_u8(__a, __b) \
+#define veorq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -14342,7 +14342,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_u16(__a, __b) \
+#define veorq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -14351,7 +14351,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_u32(__a, __b) \
+#define veorq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -14360,7 +14360,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define veorq_u64(__a, __b) \
+#define veorq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -14369,7 +14369,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_s8(__a, __b) \
+#define vbic_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -14378,7 +14378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_s16(__a, __b) \
+#define vbic_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -14387,7 +14387,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_s32(__a, __b) \
+#define vbic_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -14396,7 +14396,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_s64(__a, __b) \
+#define vbic_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -14405,7 +14405,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_u8(__a, __b) \
+#define vbic_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -14414,7 +14414,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_u16(__a, __b) \
+#define vbic_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -14423,7 +14423,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_u32(__a, __b) \
+#define vbic_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -14432,7 +14432,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbic_u64(__a, __b) \
+#define vbic_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -14441,7 +14441,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_s8(__a, __b) \
+#define vbicq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -14450,7 +14450,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_s16(__a, __b) \
+#define vbicq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -14459,7 +14459,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_s32(__a, __b) \
+#define vbicq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -14468,7 +14468,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_s64(__a, __b) \
+#define vbicq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -14477,7 +14477,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_u8(__a, __b) \
+#define vbicq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -14486,7 +14486,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_u16(__a, __b) \
+#define vbicq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -14495,7 +14495,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_u32(__a, __b) \
+#define vbicq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -14504,7 +14504,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vbicq_u64(__a, __b) \
+#define vbicq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -14513,7 +14513,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_s8(__a, __b) \
+#define vorn_s8(__a, __b) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      int8x8_t __bx = __b; \
@@ -14522,7 +14522,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_s16(__a, __b) \
+#define vorn_s16(__a, __b) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      int16x4_t __bx = __b; \
@@ -14531,7 +14531,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_s32(__a, __b) \
+#define vorn_s32(__a, __b) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      int32x2_t __bx = __b; \
@@ -14540,7 +14540,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_s64(__a, __b) \
+#define vorn_s64(__a, __b) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      int64x1_t __bx = __b; \
@@ -14549,7 +14549,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_u8(__a, __b) \
+#define vorn_u8(__a, __b) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      uint8x8_t __bx = __b; \
@@ -14558,7 +14558,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_u16(__a, __b) \
+#define vorn_u16(__a, __b) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      uint16x4_t __bx = __b; \
@@ -14567,7 +14567,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_u32(__a, __b) \
+#define vorn_u32(__a, __b) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      uint32x2_t __bx = __b; \
@@ -14576,7 +14576,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vorn_u64(__a, __b) \
+#define vorn_u64(__a, __b) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      uint64x1_t __bx = __b; \
@@ -14585,7 +14585,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_s8(__a, __b) \
+#define vornq_s8(__a, __b) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      int8x16_t __bx = __b; \
@@ -14594,7 +14594,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_s16(__a, __b) \
+#define vornq_s16(__a, __b) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      int16x8_t __bx = __b; \
@@ -14603,7 +14603,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_s32(__a, __b) \
+#define vornq_s32(__a, __b) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      int32x4_t __bx = __b; \
@@ -14612,7 +14612,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_s64(__a, __b) \
+#define vornq_s64(__a, __b) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      int64x2_t __bx = __b; \
@@ -14621,7 +14621,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_u8(__a, __b) \
+#define vornq_u8(__a, __b) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      uint8x16_t __bx = __b; \
@@ -14630,7 +14630,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_u16(__a, __b) \
+#define vornq_u16(__a, __b) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      uint16x8_t __bx = __b; \
@@ -14639,7 +14639,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_u32(__a, __b) \
+#define vornq_u32(__a, __b) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      uint32x4_t __bx = __b; \
@@ -14648,7 +14648,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vornq_u64(__a, __b) \
+#define vornq_u64(__a, __b) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      uint64x2_t __bx = __b; \
@@ -14658,7 +14658,7 @@ typedef struct poly16x8x4_t
    })
 
 
-#define vreinterpret_p8_s8(__a) \
+#define vreinterpret_p8_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14666,7 +14666,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_s16(__a) \
+#define vreinterpret_p8_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14674,7 +14674,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_s32(__a) \
+#define vreinterpret_p8_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14682,7 +14682,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_s64(__a) \
+#define vreinterpret_p8_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14690,7 +14690,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_f32(__a) \
+#define vreinterpret_p8_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14698,7 +14698,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_u8(__a) \
+#define vreinterpret_p8_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14706,7 +14706,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_u16(__a) \
+#define vreinterpret_p8_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14714,7 +14714,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_u32(__a) \
+#define vreinterpret_p8_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14722,7 +14722,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_u64(__a) \
+#define vreinterpret_p8_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14730,7 +14730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p8_p16(__a) \
+#define vreinterpret_p8_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { poly8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -14738,7 +14738,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_s8(__a) \
+#define vreinterpretq_p8_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14746,7 +14746,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_s16(__a) \
+#define vreinterpretq_p8_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14754,7 +14754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_s32(__a) \
+#define vreinterpretq_p8_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14762,7 +14762,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_s64(__a) \
+#define vreinterpretq_p8_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14770,7 +14770,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_f32(__a) \
+#define vreinterpretq_p8_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14778,7 +14778,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_u8(__a) \
+#define vreinterpretq_p8_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14786,7 +14786,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_u16(__a) \
+#define vreinterpretq_p8_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14794,7 +14794,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_u32(__a) \
+#define vreinterpretq_p8_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14802,7 +14802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_u64(__a) \
+#define vreinterpretq_p8_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14810,7 +14810,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p8_p16(__a) \
+#define vreinterpretq_p8_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { poly8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -14818,7 +14818,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_s8(__a) \
+#define vreinterpret_p16_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14826,7 +14826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_s16(__a) \
+#define vreinterpret_p16_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14834,7 +14834,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_s32(__a) \
+#define vreinterpret_p16_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14842,7 +14842,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_s64(__a) \
+#define vreinterpret_p16_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14850,7 +14850,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_f32(__a) \
+#define vreinterpret_p16_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14858,7 +14858,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_u8(__a) \
+#define vreinterpret_p16_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14866,7 +14866,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_u16(__a) \
+#define vreinterpret_p16_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14874,7 +14874,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_u32(__a) \
+#define vreinterpret_p16_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14882,7 +14882,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_u64(__a) \
+#define vreinterpret_p16_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14890,7 +14890,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_p16_p8(__a) \
+#define vreinterpret_p16_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { poly16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -14898,7 +14898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_s8(__a) \
+#define vreinterpretq_p16_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14906,7 +14906,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_s16(__a) \
+#define vreinterpretq_p16_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14914,7 +14914,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_s32(__a) \
+#define vreinterpretq_p16_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14922,7 +14922,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_s64(__a) \
+#define vreinterpretq_p16_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14930,7 +14930,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_f32(__a) \
+#define vreinterpretq_p16_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14938,7 +14938,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_u8(__a) \
+#define vreinterpretq_p16_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14946,7 +14946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_u16(__a) \
+#define vreinterpretq_p16_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14954,7 +14954,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_u32(__a) \
+#define vreinterpretq_p16_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14962,7 +14962,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_u64(__a) \
+#define vreinterpretq_p16_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14970,7 +14970,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_p16_p8(__a) \
+#define vreinterpretq_p16_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { poly16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -14978,7 +14978,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_s8(__a) \
+#define vreinterpret_f32_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -14986,7 +14986,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_s16(__a) \
+#define vreinterpret_f32_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -14994,7 +14994,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_s32(__a) \
+#define vreinterpret_f32_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15002,7 +15002,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_s64(__a) \
+#define vreinterpret_f32_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15010,7 +15010,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_u8(__a) \
+#define vreinterpret_f32_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15018,7 +15018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_u16(__a) \
+#define vreinterpret_f32_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15026,7 +15026,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_u32(__a) \
+#define vreinterpret_f32_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15034,7 +15034,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_u64(__a) \
+#define vreinterpret_f32_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15042,7 +15042,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_p8(__a) \
+#define vreinterpret_f32_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15050,7 +15050,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_f32_p16(__a) \
+#define vreinterpret_f32_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { float32x2_t __i; __neon_float32x2_t __o; } __rv; \
@@ -15058,7 +15058,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_s8(__a) \
+#define vreinterpretq_f32_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15066,7 +15066,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_s16(__a) \
+#define vreinterpretq_f32_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15074,7 +15074,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_s32(__a) \
+#define vreinterpretq_f32_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15082,7 +15082,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_s64(__a) \
+#define vreinterpretq_f32_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15090,7 +15090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_u8(__a) \
+#define vreinterpretq_f32_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15098,7 +15098,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_u16(__a) \
+#define vreinterpretq_f32_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15106,7 +15106,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_u32(__a) \
+#define vreinterpretq_f32_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15114,7 +15114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_u64(__a) \
+#define vreinterpretq_f32_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15122,7 +15122,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_p8(__a) \
+#define vreinterpretq_f32_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15130,7 +15130,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_f32_p16(__a) \
+#define vreinterpretq_f32_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { float32x4_t __i; __neon_float32x4_t __o; } __rv; \
@@ -15138,7 +15138,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_s8(__a) \
+#define vreinterpret_s64_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15146,7 +15146,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_s16(__a) \
+#define vreinterpret_s64_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15154,7 +15154,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_s32(__a) \
+#define vreinterpret_s64_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15162,7 +15162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_f32(__a) \
+#define vreinterpret_s64_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15170,7 +15170,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_u8(__a) \
+#define vreinterpret_s64_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15178,7 +15178,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_u16(__a) \
+#define vreinterpret_s64_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15186,7 +15186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_u32(__a) \
+#define vreinterpret_s64_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15194,7 +15194,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_u64(__a) \
+#define vreinterpret_s64_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15202,7 +15202,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_p8(__a) \
+#define vreinterpret_s64_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15210,7 +15210,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s64_p16(__a) \
+#define vreinterpret_s64_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { int64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15218,7 +15218,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_s8(__a) \
+#define vreinterpretq_s64_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15226,7 +15226,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_s16(__a) \
+#define vreinterpretq_s64_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15234,7 +15234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_s32(__a) \
+#define vreinterpretq_s64_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15242,7 +15242,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_f32(__a) \
+#define vreinterpretq_s64_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15250,7 +15250,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_u8(__a) \
+#define vreinterpretq_s64_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15258,7 +15258,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_u16(__a) \
+#define vreinterpretq_s64_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15266,7 +15266,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_u32(__a) \
+#define vreinterpretq_s64_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15274,7 +15274,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_u64(__a) \
+#define vreinterpretq_s64_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15282,7 +15282,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_p8(__a) \
+#define vreinterpretq_s64_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15290,7 +15290,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s64_p16(__a) \
+#define vreinterpretq_s64_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { int64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15298,7 +15298,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_s8(__a) \
+#define vreinterpret_u64_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15306,7 +15306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_s16(__a) \
+#define vreinterpret_u64_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15314,7 +15314,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_s32(__a) \
+#define vreinterpret_u64_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15322,7 +15322,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_s64(__a) \
+#define vreinterpret_u64_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15330,7 +15330,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_f32(__a) \
+#define vreinterpret_u64_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15338,7 +15338,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_u8(__a) \
+#define vreinterpret_u64_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15346,7 +15346,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_u16(__a) \
+#define vreinterpret_u64_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15354,7 +15354,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_u32(__a) \
+#define vreinterpret_u64_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15362,7 +15362,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_p8(__a) \
+#define vreinterpret_u64_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15370,7 +15370,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u64_p16(__a) \
+#define vreinterpret_u64_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { uint64x1_t __i; __neon_int64x1_t __o; } __rv; \
@@ -15378,7 +15378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_s8(__a) \
+#define vreinterpretq_u64_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15386,7 +15386,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_s16(__a) \
+#define vreinterpretq_u64_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15394,7 +15394,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_s32(__a) \
+#define vreinterpretq_u64_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15402,7 +15402,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_s64(__a) \
+#define vreinterpretq_u64_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15410,7 +15410,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_f32(__a) \
+#define vreinterpretq_u64_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15418,7 +15418,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_u8(__a) \
+#define vreinterpretq_u64_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15426,7 +15426,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_u16(__a) \
+#define vreinterpretq_u64_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15434,7 +15434,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_u32(__a) \
+#define vreinterpretq_u64_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15442,7 +15442,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_p8(__a) \
+#define vreinterpretq_u64_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15450,7 +15450,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u64_p16(__a) \
+#define vreinterpretq_u64_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { uint64x2_t __i; __neon_int64x2_t __o; } __rv; \
@@ -15458,7 +15458,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_s16(__a) \
+#define vreinterpret_s8_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15466,7 +15466,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_s32(__a) \
+#define vreinterpret_s8_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15474,7 +15474,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_s64(__a) \
+#define vreinterpret_s8_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15482,7 +15482,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_f32(__a) \
+#define vreinterpret_s8_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15490,7 +15490,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_u8(__a) \
+#define vreinterpret_s8_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15498,7 +15498,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_u16(__a) \
+#define vreinterpret_s8_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15506,7 +15506,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_u32(__a) \
+#define vreinterpret_s8_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15514,7 +15514,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_u64(__a) \
+#define vreinterpret_s8_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15522,7 +15522,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_p8(__a) \
+#define vreinterpret_s8_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15530,7 +15530,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s8_p16(__a) \
+#define vreinterpret_s8_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { int8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15538,7 +15538,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_s16(__a) \
+#define vreinterpretq_s8_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15546,7 +15546,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_s32(__a) \
+#define vreinterpretq_s8_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15554,7 +15554,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_s64(__a) \
+#define vreinterpretq_s8_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15562,7 +15562,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_f32(__a) \
+#define vreinterpretq_s8_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15570,7 +15570,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_u8(__a) \
+#define vreinterpretq_s8_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15578,7 +15578,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_u16(__a) \
+#define vreinterpretq_s8_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15586,7 +15586,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_u32(__a) \
+#define vreinterpretq_s8_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15594,7 +15594,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_u64(__a) \
+#define vreinterpretq_s8_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15602,7 +15602,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_p8(__a) \
+#define vreinterpretq_s8_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15610,7 +15610,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s8_p16(__a) \
+#define vreinterpretq_s8_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { int8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -15618,7 +15618,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_s8(__a) \
+#define vreinterpret_s16_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15626,7 +15626,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_s32(__a) \
+#define vreinterpret_s16_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15634,7 +15634,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_s64(__a) \
+#define vreinterpret_s16_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15642,7 +15642,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_f32(__a) \
+#define vreinterpret_s16_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15650,7 +15650,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_u8(__a) \
+#define vreinterpret_s16_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15658,7 +15658,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_u16(__a) \
+#define vreinterpret_s16_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15666,7 +15666,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_u32(__a) \
+#define vreinterpret_s16_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15674,7 +15674,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_u64(__a) \
+#define vreinterpret_s16_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15682,7 +15682,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_p8(__a) \
+#define vreinterpret_s16_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15690,7 +15690,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s16_p16(__a) \
+#define vreinterpret_s16_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { int16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -15698,7 +15698,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_s8(__a) \
+#define vreinterpretq_s16_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15706,7 +15706,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_s32(__a) \
+#define vreinterpretq_s16_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15714,7 +15714,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_s64(__a) \
+#define vreinterpretq_s16_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15722,7 +15722,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_f32(__a) \
+#define vreinterpretq_s16_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15730,7 +15730,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_u8(__a) \
+#define vreinterpretq_s16_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15738,7 +15738,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_u16(__a) \
+#define vreinterpretq_s16_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15746,7 +15746,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_u32(__a) \
+#define vreinterpretq_s16_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15754,7 +15754,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_u64(__a) \
+#define vreinterpretq_s16_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15762,7 +15762,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_p8(__a) \
+#define vreinterpretq_s16_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15770,7 +15770,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s16_p16(__a) \
+#define vreinterpretq_s16_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { int16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -15778,7 +15778,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_s8(__a) \
+#define vreinterpret_s32_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15786,7 +15786,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_s16(__a) \
+#define vreinterpret_s32_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15794,7 +15794,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_s64(__a) \
+#define vreinterpret_s32_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15802,7 +15802,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_f32(__a) \
+#define vreinterpret_s32_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15810,7 +15810,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_u8(__a) \
+#define vreinterpret_s32_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15818,7 +15818,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_u16(__a) \
+#define vreinterpret_s32_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15826,7 +15826,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_u32(__a) \
+#define vreinterpret_s32_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15834,7 +15834,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_u64(__a) \
+#define vreinterpret_s32_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15842,7 +15842,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_p8(__a) \
+#define vreinterpret_s32_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15850,7 +15850,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_s32_p16(__a) \
+#define vreinterpret_s32_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { int32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -15858,7 +15858,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_s8(__a) \
+#define vreinterpretq_s32_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15866,7 +15866,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_s16(__a) \
+#define vreinterpretq_s32_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15874,7 +15874,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_s64(__a) \
+#define vreinterpretq_s32_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15882,7 +15882,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_f32(__a) \
+#define vreinterpretq_s32_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15890,7 +15890,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_u8(__a) \
+#define vreinterpretq_s32_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15898,7 +15898,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_u16(__a) \
+#define vreinterpretq_s32_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15906,7 +15906,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_u32(__a) \
+#define vreinterpretq_s32_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15914,7 +15914,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_u64(__a) \
+#define vreinterpretq_s32_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15922,7 +15922,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_p8(__a) \
+#define vreinterpretq_s32_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15930,7 +15930,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_s32_p16(__a) \
+#define vreinterpretq_s32_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { int32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -15938,7 +15938,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_s8(__a) \
+#define vreinterpret_u8_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15946,7 +15946,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_s16(__a) \
+#define vreinterpret_u8_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15954,7 +15954,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_s32(__a) \
+#define vreinterpret_u8_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15962,7 +15962,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_s64(__a) \
+#define vreinterpret_u8_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15970,7 +15970,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_f32(__a) \
+#define vreinterpret_u8_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15978,7 +15978,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_u16(__a) \
+#define vreinterpret_u8_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15986,7 +15986,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_u32(__a) \
+#define vreinterpret_u8_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -15994,7 +15994,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_u64(__a) \
+#define vreinterpret_u8_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -16002,7 +16002,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_p8(__a) \
+#define vreinterpret_u8_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -16010,7 +16010,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u8_p16(__a) \
+#define vreinterpret_u8_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { uint8x8_t __i; __neon_int8x8_t __o; } __rv; \
@@ -16018,7 +16018,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_s8(__a) \
+#define vreinterpretq_u8_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16026,7 +16026,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_s16(__a) \
+#define vreinterpretq_u8_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16034,7 +16034,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_s32(__a) \
+#define vreinterpretq_u8_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16042,7 +16042,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_s64(__a) \
+#define vreinterpretq_u8_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16050,7 +16050,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_f32(__a) \
+#define vreinterpretq_u8_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16058,7 +16058,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_u16(__a) \
+#define vreinterpretq_u8_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16066,7 +16066,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_u32(__a) \
+#define vreinterpretq_u8_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16074,7 +16074,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_u64(__a) \
+#define vreinterpretq_u8_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16082,7 +16082,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_p8(__a) \
+#define vreinterpretq_u8_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16090,7 +16090,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u8_p16(__a) \
+#define vreinterpretq_u8_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { uint8x16_t __i; __neon_int8x16_t __o; } __rv; \
@@ -16098,7 +16098,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_s8(__a) \
+#define vreinterpret_u16_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16106,7 +16106,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_s16(__a) \
+#define vreinterpret_u16_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16114,7 +16114,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_s32(__a) \
+#define vreinterpret_u16_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16122,7 +16122,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_s64(__a) \
+#define vreinterpret_u16_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16130,7 +16130,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_f32(__a) \
+#define vreinterpret_u16_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16138,7 +16138,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_u8(__a) \
+#define vreinterpret_u16_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16146,7 +16146,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_u32(__a) \
+#define vreinterpret_u16_u32(__a) __extension__ \
   ({ \
      uint32x2_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16154,7 +16154,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_u64(__a) \
+#define vreinterpret_u16_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16162,7 +16162,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_p8(__a) \
+#define vreinterpret_u16_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16170,7 +16170,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u16_p16(__a) \
+#define vreinterpret_u16_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { uint16x4_t __i; __neon_int16x4_t __o; } __rv; \
@@ -16178,7 +16178,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_s8(__a) \
+#define vreinterpretq_u16_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16186,7 +16186,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_s16(__a) \
+#define vreinterpretq_u16_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16194,7 +16194,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_s32(__a) \
+#define vreinterpretq_u16_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16202,7 +16202,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_s64(__a) \
+#define vreinterpretq_u16_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16210,7 +16210,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_f32(__a) \
+#define vreinterpretq_u16_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16218,7 +16218,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_u8(__a) \
+#define vreinterpretq_u16_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16226,7 +16226,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_u32(__a) \
+#define vreinterpretq_u16_u32(__a) __extension__ \
   ({ \
      uint32x4_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16234,7 +16234,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_u64(__a) \
+#define vreinterpretq_u16_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16242,7 +16242,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_p8(__a) \
+#define vreinterpretq_u16_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16250,7 +16250,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u16_p16(__a) \
+#define vreinterpretq_u16_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { uint16x8_t __i; __neon_int16x8_t __o; } __rv; \
@@ -16258,7 +16258,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_s8(__a) \
+#define vreinterpret_u32_s8(__a) __extension__ \
   ({ \
      int8x8_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16266,7 +16266,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_s16(__a) \
+#define vreinterpret_u32_s16(__a) __extension__ \
   ({ \
      int16x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16274,7 +16274,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_s32(__a) \
+#define vreinterpret_u32_s32(__a) __extension__ \
   ({ \
      int32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16282,7 +16282,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_s64(__a) \
+#define vreinterpret_u32_s64(__a) __extension__ \
   ({ \
      int64x1_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16290,7 +16290,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_f32(__a) \
+#define vreinterpret_u32_f32(__a) __extension__ \
   ({ \
      float32x2_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16298,7 +16298,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_u8(__a) \
+#define vreinterpret_u32_u8(__a) __extension__ \
   ({ \
      uint8x8_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16306,7 +16306,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_u16(__a) \
+#define vreinterpret_u32_u16(__a) __extension__ \
   ({ \
      uint16x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16314,7 +16314,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_u64(__a) \
+#define vreinterpret_u32_u64(__a) __extension__ \
   ({ \
      uint64x1_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16322,7 +16322,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_p8(__a) \
+#define vreinterpret_u32_p8(__a) __extension__ \
   ({ \
      poly8x8_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16330,7 +16330,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpret_u32_p16(__a) \
+#define vreinterpret_u32_p16(__a) __extension__ \
   ({ \
      poly16x4_t __ax = __a; \
      union { uint32x2_t __i; __neon_int32x2_t __o; } __rv; \
@@ -16338,7 +16338,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_s8(__a) \
+#define vreinterpretq_u32_s8(__a) __extension__ \
   ({ \
      int8x16_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16346,7 +16346,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_s16(__a) \
+#define vreinterpretq_u32_s16(__a) __extension__ \
   ({ \
      int16x8_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16354,7 +16354,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_s32(__a) \
+#define vreinterpretq_u32_s32(__a) __extension__ \
   ({ \
      int32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16362,7 +16362,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_s64(__a) \
+#define vreinterpretq_u32_s64(__a) __extension__ \
   ({ \
      int64x2_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16370,7 +16370,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_f32(__a) \
+#define vreinterpretq_u32_f32(__a) __extension__ \
   ({ \
      float32x4_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16378,7 +16378,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_u8(__a) \
+#define vreinterpretq_u32_u8(__a) __extension__ \
   ({ \
      uint8x16_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16386,7 +16386,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_u16(__a) \
+#define vreinterpretq_u32_u16(__a) __extension__ \
   ({ \
      uint16x8_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16394,7 +16394,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_u64(__a) \
+#define vreinterpretq_u32_u64(__a) __extension__ \
   ({ \
      uint64x2_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16402,7 +16402,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_p8(__a) \
+#define vreinterpretq_u32_p8(__a) __extension__ \
   ({ \
      poly8x16_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \
@@ -16410,7 +16410,7 @@ typedef struct poly16x8x4_t
      __rv.__i; \
    })
 
-#define vreinterpretq_u32_p16(__a) \
+#define vreinterpretq_u32_p16(__a) __extension__ \
   ({ \
      poly16x8_t __ax = __a; \
      union { uint32x4_t __i; __neon_int32x4_t __o; } __rv; \

@@ -282,14 +282,7 @@ handle_option (const char **argv, unsigned int lang_mask)
   /* APPLE LOCAL begin iframework for 4.3 4094959 */
   else if ((option->flags & CL_TARGET)
 	   && (option->flags & CL_LANG_ALL)
-           /* LLVM LOCAL begin 7563705 */
-	   && !(option->flags & lang_mask)
-#ifdef ALLOW_FAPPLE_KEXT_FLAG
-           && (strcmp (*argv, "-fapple-kext") != 0 ||
-               ! ALLOW_FAPPLE_KEXT_FLAG)
-#endif
-           )
-           /* LLVM LOCAL end 7563705 */
+	   && !(option->flags & lang_mask))
     {
       /* Complain for target flag language mismatches if any languages
 	 are specified.  */

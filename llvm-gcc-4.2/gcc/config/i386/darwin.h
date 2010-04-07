@@ -113,14 +113,8 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL begin mainline */
 #undef ASM_SPEC
 /* APPLE LOCAL begin kext weak_import 5935650 */
-/* LLVM LOCAL begin 7563705 */
 #define ASM_SPEC "-arch %(darwin_arch) -force_cpusubtype_ALL \
-  %{!m64:                                                               \
-    %{!fapple-kext:%{mkernel|static:-static}}                           \
-    %{fapple-kext:                                                      \
-      %:version-compare(>= 10.7 mmacosx-version-min= -dynamic)          \
-      %:version-compare(<  10.7 mmacosx-version-min= -static)}}"
-/* LLVM LOCAL end 7563705 */
+  %{mkernel|static|fapple-kext:%{!m64:-static}}"
 /* APPLE LOCAL end kext weak_import 5935650 */
 
 #define DARWIN_ARCH_SPEC "%{m64:x86_64;:i386}"

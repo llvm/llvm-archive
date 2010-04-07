@@ -43,6 +43,6 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message) {
 
 int main (int argc, char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
-  llvm::llvm_install_error_handler(LLVMErrorHandler);
+  llvm::install_fatal_error_handler(LLVMErrorHandler);
   return toplev_main (argc, (const char **) argv);
 }

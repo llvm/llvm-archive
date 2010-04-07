@@ -1620,8 +1620,7 @@ struct StructTypeConversionInfo {
     return ~0U;
   }
 
-  void addNewBitField(uint64_t Size, uint64_t Extra,
-                      uint64_t FirstUnallocatedByte);
+  void addNewBitField(uint64_t Size, uint64_t FirstUnallocatedByte);
 
   void dump() const;
 };
@@ -1629,43 +1628,22 @@ struct StructTypeConversionInfo {
 // Add new element which is a bit field. Size is not the size of bit field,
 // but size of bits required to determine type of new Field which will be
 // used to access this bit field.
-// If possible, allocate a field with room for Size+Extra bits.
-void StructTypeConversionInfo::addNewBitField(uint64_t Size, uint64_t Extra,
+void StructTypeConversionInfo::addNewBitField(uint64_t Size,
                                               uint64_t FirstUnallocatedByte) {
 
   // Figure out the LLVM type that we will use for the new field.
   // Note, Size is not necessarily size of the new field. It indicates
   // additional bits required after FirstunallocatedByte to cover new field.
-  const Type *NewFieldTy = 0;
-
-  // First try an ABI-aligned field including (some of) the Extra bits.
-  // This field must satisfy Size <= w && w <= XSize.
-  uint64_t XSize = RoundUpToAlignment(Size + Extra, 8);
-  for (unsigned w = NextPowerOf2(std::min(UINT64_C(64), XSize)/2);
-       w >= Size && w >= 8; w /= 2) {
-    if (TD.isIllegalInteger(w))
-      continue;
-    // Would a w-sized integer field be aligned here?
-    const unsigned a = TD.getABIIntegerTypeAlignment(w);
-    if (FirstUnallocatedByte & (a-1) || a > getGCCStructAlignmentInBytes())
-      continue;
-    // OK, use w-sized integer.
-    NewFieldTy = IntegerType::get(Context, w);
-    break;
-  }
-
-  // Try an integer field that holds Size bits.
-  if (!NewFieldTy) {
-    if (Size <= 8)
-      NewFieldTy = Type::getInt8Ty(Context);
-    else if (Size <= 16)
-      NewFieldTy = Type::getInt16Ty(Context);
-    else if (Size <= 32)
-      NewFieldTy = Type::getInt32Ty(Context);
-    else {
-      assert(Size <= 64 && "Bitfield too large!");
-      NewFieldTy = Type::getInt64Ty(Context);
-    }
+  const Type *NewFieldTy;
+  if (Size <= 8)
+    NewFieldTy = Type::getInt8Ty(Context);
+  else if (Size <= 16)
+    NewFieldTy = Type::getInt16Ty(Context);
+  else if (Size <= 32)
+    NewFieldTy = Type::getInt32Ty(Context);
+  else {
+    assert(Size <= 64 && "Bitfield too large!");
+    NewFieldTy = Type::getInt64Ty(Context);
   }
 
   // Check that the alignment of NewFieldTy won't cause a gap in the structure!
@@ -2009,19 +1987,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
   // LLVM struct such that there are no holes in the struct where the bitfield
   // is: these holes would make it impossible to statically initialize a global
   // of this type that has an initializer for the bitfield.
-
-  // We want the integer-typed fields as large as possible up to the machine
-  // word size. If there are more bitfields following this one, try to include
-  // them in the same field.
-
-  // Calculate the total number of bits in the continuous group of bitfields
-  // following this one. This is the number of bits that addNewBitField should
-  // try to include.
-  unsigned ExtraSizeInBits = 0;
-  for (tree f = TREE_CHAIN(Field); f && ExtraSizeInBits < 64 && isBitfield(f);
-       f = TREE_CHAIN(f))
-    ExtraSizeInBits += TREE_INT_CST_LOW(DECL_SIZE(f));
-
+  
   // Compute the number of bits that we need to add to this struct to cover
   // this field.
   uint64_t FirstUnallocatedByte = Info.getEndUnallocatedByte();
@@ -2035,7 +2001,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
       // This field starts at byte boundry. Need to allocate space
       // for additional bytes not yet allocated.
       unsigned NumBitsToAdd = FieldSizeInBits - AvailableBits;
-      Info.addNewBitField(NumBitsToAdd, ExtraSizeInBits, FirstUnallocatedByte);
+      Info.addNewBitField(NumBitsToAdd, FirstUnallocatedByte);
       return;
     }
 
@@ -2059,7 +2025,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
       for (unsigned idx = 0; idx < (prevFieldTypeSizeInBits/8); ++idx)
 	FirstUnallocatedByte--;
     }
-    Info.addNewBitField(NumBitsRequired, ExtraSizeInBits, FirstUnallocatedByte);
+    Info.addNewBitField(NumBitsRequired, FirstUnallocatedByte);
     // Do this after adding Field.
     Info.lastFieldStartsAtNonByteBoundry(true);
     return;
@@ -2093,7 +2059,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
   }
 
   // Now, Field starts at FirstUnallocatedByte and everything is aligned.
-  Info.addNewBitField(FieldSizeInBits, ExtraSizeInBits, FirstUnallocatedByte);
+  Info.addNewBitField(FieldSizeInBits, FirstUnallocatedByte);
 }
 
 /// UnionHasOnlyZeroOffsets - Check if a union type has only members with
@@ -2165,7 +2131,7 @@ void TypeConverter::SelectUnionMember(tree type,
 
     if (isBitfield(UnionField)) {
       unsigned FieldSizeInBits = TREE_INT_CST_LOW(DECL_SIZE(UnionField));
-      Info.addNewBitField(FieldSizeInBits, 0, 0);
+      Info.addNewBitField(FieldSizeInBits, 0);
     } else {
       Info.allFieldsAreNotBitFields();
       Info.addElement(UnionTy, 0, Info.getTypeSize(UnionTy));

@@ -24,3 +24,10 @@
 # which therefore need to be scanned by gengtype.c.
 
 gtfiles="\$(srcdir)/c-lang.c \$(srcdir)/c-tree.h \$(srcdir)/c-decl.c \$(srcdir)/c-common.c \$(srcdir)/c-common.h \$(srcdir)/c-pragma.c \$(srcdir)/c-objc-common.c \$(srcdir)/c-parser.c"
+
+# LLVM LOCAL begin 7210265
+case "$target" in
+*-*-darwin*)
+  gtfiles="${gtfiles} \$(srcdir)/config/darwin-c.c"
+esac
+#LLVM LOCAL end 7210265

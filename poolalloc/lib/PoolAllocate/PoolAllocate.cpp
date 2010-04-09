@@ -722,7 +722,8 @@ void PoolAllocate::ProcessFunctionBody(Function &F, Function &NewF) {
   for (DSGraph::node_iterator I = G->node_begin(), E = G->node_end(); I != E;++I){
     // We only need to make a pool if there is a heap object in it...
     DSNode *N = I;
-    if ((N->isHeapNode()) || (BoundsChecksEnabled && (N->isArray()))) {
+    if ((N->isHeapNode()) || (BoundsChecksEnabled && (N->isArray())) ||
+    	GlobalsGraphNodeMapping.count(N) && GlobalsGraphNodeMapping[N].getNode()->isHeapNode()) {
       if (GlobalsGraphNodeMapping.count(N)) {
         // If it is a global pool, set up the pool descriptor appropriately.
         DSNode *GGN = GlobalsGraphNodeMapping[N].getNode();

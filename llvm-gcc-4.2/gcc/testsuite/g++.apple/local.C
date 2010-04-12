@@ -1,6 +1,7 @@
 /* Radar 5636185  */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-O0 -gdwarf-2 -dA -c -Wno-deprecated-declarations" } */
+/* LLVM LOCAL - -fverbose-asm
+/* { dg-options "-O0 -gdwarf-2 -dA -fverbose-asm -c -Wno-deprecated-declarations" } */
 /* { dg-final { scan-assembler "DW_AT_MIPS_linkage_name" } } */
 /* { dg-final { scan-assembler "_Z7marker1v" } } */
 /* { dg-final { scan-assembler "_Z7marker2v" } } */

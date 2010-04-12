@@ -1,4 +1,6 @@
 /* APPLE LOCAL file 5559195 */
+// LLVM LOCAL - -m32
+// { dg-options "-m32" }
 // { dg-do compile }
 // { dg-final { scan-assembler-not "(\tcall|\tbl)\[ 	\]*__ZN6ClassAD1Ev" } }
 // { dg-final { scan-assembler "(\tcall|\tbl)\[ 	\]*__ZN6ClassBD1Ev" } }

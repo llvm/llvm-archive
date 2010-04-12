@@ -1,6 +1,7 @@
 /* Radar 4535968 */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-O0 -gdwarf-2 -dA -fno-eliminate-unused-debug-types" } */
+/* LLVM LOCAL - -fverbose-asm */
+/* { dg-options "-O0 -gdwarf-2 -dA -fverbose-asm -fno-eliminate-unused-debug-types" } */
 /* { dg-final { scan-assembler "__debug_pubtypes" } } */
 /* APPLE LOCAL begin ARM assembler uses @ for comments */
 /* { dg-final { scan-assembler "long+\[ \t\]+\(0x\)?\[0-9a-f]+\[ \t\n\]+\[#;@]+\[ \t\]+Length of Public Type Names Info" } } */

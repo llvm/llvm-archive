@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 6237086  */
 /* { dg-do compile } */
-/* { dg-options "-g -O0 -dA -mmacosx-version-min=10.6" }*/
+/* LLVM LOCAL */
+/* { dg-options "-g -O0 -dA -fverbose-asm -mmacosx-version-min=10.6" }*/
 /* { dg-final { scan-assembler "DW_OP_fbreg+\[ \t\n]+\[ \t]\\.byte+\[ \t]0x\[0-9a-f]+\[ \t]+\[#;@]\[ \t]sleb128 -\[0-9]+\[ \t\n]+\[ \t]\\.byte+\[ \t]0x6+\[ \t]+\[#;@]\[ \t]DW_OP_deref+\[ \t\n]+\[ \t]\\.byte+\[ \t]\[0x6;0x23]+\[ \t]+\[#;@]\[ \t]\[DW_OP_deref;DW_OP_plus_uconst]" } } */
 
 #include <stdio.h>

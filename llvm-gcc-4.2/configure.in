@@ -1524,8 +1524,13 @@ AC_ARG_WITH([build-sysroot],
   [  --with-build-sysroot=sysroot
                           use sysroot as the system root during the build],
   [if test x"$withval" != x ; then
+     # LLVM LOCAL begin Keep original --sysroot usage for non-Darwin targets.
+     case "${target}" in
      # APPLE LOCAL 7852964 Use -isysroot instead of --sysroot.
-     SYSROOT_CFLAGS_FOR_TARGET="-isysroot $withval"
+     *-*-darwin*) SYSROOT_CFLAGS_FOR_TARGET="-isysroot $withval" ;;
+     *) SYSROOT_CFLAGS_FOR_TARGET="--sysroot=$withval" ;;
+     esac
+     # LLVM LOCAL end Keep original --sysroot usage for non-Darwin targets.
    fi],
   [SYSROOT_CFLAGS_FOR_TARGET=])
 AC_SUBST(SYSROOT_CFLAGS_FOR_TARGET)

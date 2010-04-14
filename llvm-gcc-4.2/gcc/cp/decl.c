@@ -2210,9 +2210,11 @@ redeclaration_error_message (tree newdecl, tree olddecl)
 	   union { int i; };
 
 	   is invalid.  */
-      if (DECL_ANON_UNION_VAR_P (newdecl)
-	  || DECL_ANON_UNION_VAR_P (olddecl))
-	return "redeclaration of %q#D";
+      if (TREE_CODE (olddecl) == VAR_DECL
+          && TREE_CODE (newdecl) == VAR_DECL
+          && (DECL_ANON_UNION_VAR_P (newdecl)
+              || DECL_ANON_UNION_VAR_P (olddecl)))
+          return "redeclaration of %q#D";
       /* If at least one declaration is a reference, there is no
 	 conflict.  For example:
 

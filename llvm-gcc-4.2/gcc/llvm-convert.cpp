@@ -2090,7 +2090,7 @@ void TreeToLLVM::EmitLandingPads() {
     foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
     bool HasCleanup = false;
-    static Value *CatchAll = 0;
+    static GlobalVariable *CatchAll = 0;
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
@@ -2125,6 +2125,7 @@ void TreeToLLVM::EmitLandingPads() {
             CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
                                           GlobalVariable::LinkOnceAnyLinkage,
                                           Init, ".llvm.eh.catch.all.value");
+            CatchAll->setSection("llvm.metadata");
           }
 
           Args.push_back(CatchAll);
@@ -2167,6 +2168,7 @@ void TreeToLLVM::EmitLandingPads() {
             CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
                                           GlobalVariable::LinkOnceAnyLinkage,
                                           Init, ".llvm.eh.catch.all.value");
+            CatchAll->setSection("llvm.metadata");
           }
 
           Args.push_back(CatchAll);

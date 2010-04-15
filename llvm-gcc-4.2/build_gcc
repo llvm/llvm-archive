@@ -89,6 +89,8 @@ LLVM_SUBMIT_SUBVERSION="${11}"
 # LLVM_BIN_DIR - This is the place where llvm-gcc/llvm-g++ symlinks get installed.
 LLVM_BIN_DIR=$DEST_ROOT/../bin
 
+# Install special OpenGL version to AppleInternal directory.  Radar 7864940.
+LLVM_ROOT_PATH=/AppleInternal/Developer/LLVM_For_OpenGL_Sim
 # LLVM LOCAL end
 
 # The current working directory is where the build will happen.
@@ -112,7 +114,7 @@ MAJ_VERS=`echo $VERS | sed 's/\([0-9]*\.[0-9]*\)[.-].*/\1/'`
 LIBSTDCXX_VERSION=4.2.1
 # LLVM LOCAL begin
 # DO NOT USE $DEST_ROOT to check LIBSTDCXX_VERSION here. Directly use /usr here.
-# $DEST_ROOT is /Developer for llvm-gcc
+# $DEST_ROOT is $LLVM_ROOT_PATH/Developer for llvm-gcc
 if [ ! -d "/usr/include/c++/$LIBSTDCXX_VERSION" ]; then
   LIBSTDCXX_VERSION=4.0.0
 fi
@@ -573,11 +575,11 @@ done
 # LLVM LOCAL begin
 # Compress manpages
 gzip -f $MDIR/*
-mkdir -p $DEST_DIR/Developer/usr/share/man/man1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-gcc.1
-gzip -f $DEST_DIR/Developer/usr/share/man/man1/llvm-g++.1
+mkdir -p $DEST_DIR$LLVM_ROOT_PATH/Developer/usr/share/man/man1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR$LLVM_ROOT_PATH/Developer/usr/share/man/man1/llvm-gcc.1
+cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 $DEST_DIR$LLVM_ROOT_PATH/Developer/usr/share/man/man1/llvm-g++.1
+gzip -f $DEST_DIR$LLVM_ROOT_PATH/Developer/usr/share/man/man1/llvm-gcc.1
+gzip -f $DEST_DIR$LLVM_ROOT_PATH/Developer/usr/share/man/man1/llvm-g++.1
 # LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers
@@ -691,8 +693,8 @@ done
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
     mkdir -p $DEST_DIR/usr/bin
     cd $DEST_DIR/usr/bin
-    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+    ln -s $LLVM_ROOT_PATH/Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+    ln -s $LLVM_ROOT_PATH/Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi
 # LLVM LOCAL end
 

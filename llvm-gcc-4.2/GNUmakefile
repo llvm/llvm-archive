@@ -35,15 +35,13 @@ PREFIX = /usr
 #######################################################################
 
 # LLVM LOCAL begin
+# Install special OpenGL version to AppleInternal directory.  Radar 7864940.
+LLVM_ROOT_PATH = /AppleInternal/Developer/LLVM_For_OpenGL_Sim
 # LLVM defaults to enabled.
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
-# LLVM gets installed into /Developer/usr/local, not /usr.
-ifndef DEVELOPER_DIR
-PREFIX = /Developer/usr/llvm-gcc-4.2
-else
-PREFIX = ${DEVELOPER_DIR}/usr/llvm-gcc-4.2
-endif
+# LLVM gets installed into $(LLVM_ROOT_PATH)/Developer/usr/local, not /usr.
+PREFIX = $(LLVM_ROOT_PATH)/Developer/usr/llvm-gcc-4.2
 else
 ENABLE_LLVM = false
 endif
@@ -56,11 +54,7 @@ LLVM_ASSERTIONS := no
 endif
 
 ifndef LLVMCORE_PATH
-ifndef DEVELOPER_DIR
-LLVMCORE_PATH = /Developer/usr/local
-else
-LLVMCORE_PATH = ${DEVELOPER_DIR}/usr/local
-endif
+LLVMCORE_PATH = $(LLVM_ROOT_PATH)/Developer/usr/local
 endif
 
 ifndef RC_ProjectSourceVersion

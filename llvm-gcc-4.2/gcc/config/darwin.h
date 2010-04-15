@@ -240,17 +240,6 @@ do {					\
   darwin_init_cfstring_builtins ();	\
 } while(0)
 
-/* LLVM LOCAL begin 7563705 */
-#ifdef ENABLE_LLVM
-#define ALLOW_FAPPLE_KEXT_FLAG                                  \
-  (strcmp (lang_hooks.name, "GNU C++") == 0 ||                  \
-   (strcmp (lang_hooks.name, "GNU C") == 0 &&                   \
-    strverscmp (darwin_macosx_version_min, "10.6") > 0))
-#else
-#define ALLOW_FAPPLE_KEXT_FLAG false
-#endif
-/* LLVM LOCAL end 7563705 */
-
 #undef TARGET_EXPAND_TREE_BUILTIN
 #define TARGET_EXPAND_TREE_BUILTIN darwin_expand_tree_builtin
 #undef TARGET_CONSTRUCT_OBJC_STRING
@@ -604,16 +593,10 @@ do {					\
 /* Default Darwin ASM_SPEC, very simple.  */
 /* APPLE LOCAL begin kext weak_import 5935650 */
 /* APPLE LOCAL begin radar 4161346 */
-/* LLVM LOCAL begin 7563705 */
 #define ASM_SPEC "-arch %(darwin_arch) \
-  %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL}                        \
-  %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}}           \
-  %{!m64:                                                               \
-    %{!fapple-kext:%{mkernel|static:-static}}                           \
-    %{fapple-kext:                                                      \
-      %:version-compare(>= 10.7 mmacosx-version-min= -dynamic)          \
-      %:version-compare(<  10.7 mmacosx-version-min= -static)}}"
-/* LLVM LOCAL end 7563705 */
+  %{Zforce_cpusubtype_ALL:-force_cpusubtype_ALL} \
+  %{!Zforce_cpusubtype_ALL:%{faltivec:-force_cpusubtype_ALL}} \
+  %{mkernel|static|fapple-kext:%{!Zdynamic:-static}}"
 /* APPLE LOCAL end radar 4161346 */
 /* APPLE LOCAL end kext weak_import 5935650 */
 /* APPLE LOCAL begin mainline 4.3 2006-10-31 4370143 */

@@ -273,6 +273,12 @@ RegisterCustomizedAllocation::registerFreeSite (CallInst * FreeSite,
 Instruction *
 RegisterVariables::CreateRegistrationFunction(Function * F) {
   //
+  // Destroy any code that currently exists in the function.  We are going to
+  // replace it.
+  //
+  destroyFunction (F);
+
+  //
   // Add a call in the new constructor function to the SAFECode initialization
   // function.
   //

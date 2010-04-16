@@ -142,11 +142,20 @@ bool PoolAllocateSimple::runOnModule(Module &M) {
   TheGlobalPool = CreateGlobalPool(32, 1, M);
 
   //
-  // Now that all call targets are available, rewrite the function bodies of the
-  // clones.
+  // Now that all call targets are available, rewrite the function bodies of
+  // the clones.
+  //
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    //
+    // Skip functions that this pass added.
+    //
     std::string name = I->getName();
     if (name == "__poolalloc_init") continue;
+    if (name == PoolInit->getNameStr()) continue;
+
+    //
+    // Skip declarations.
+    //
     if (!(I->isDeclaration()))
       ProcessFunctionBodySimple(*I, TD);
   }
@@ -359,6 +368,17 @@ GlobalVariable *
 PoolAllocateSimple::CreateGlobalPool (unsigned RecSize,
                                       unsigned Align,
                                       Module& M) {
+  //
+  // Give poolinit() a dummy body.  A later transform will remove the dummy
+  // body.
+  //
+  if (SAFECodeEnabled) {
+    LLVMContext & Context = getGlobalContext();
+    Function * PoolInitFunc = dyn_cast<Function>(PoolInit);
+    BasicBlock * entryBB = BasicBlock::Create (Context, "entry", PoolInitFunc);
+    ReturnInst::Create (Context, entryBB);
+  }
+
   GlobalVariable *GV =
     new GlobalVariable(M,
                        getPoolType(), false, GlobalValue::ExternalLinkage, 

@@ -607,16 +607,100 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateLoad(Ptr);
     return true;
   }
-  case IX86_BUILTIN_PALIGNR:
+  case IX86_BUILTIN_PALIGNR: {
+    if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
+
+      // In the header we multiply by 8, correct that back now.
+      unsigned shiftVal = (cast<ConstantInt>(Ops[2])->getZExtValue())/8;
+    
+      // If palignr is shifting the pair of input vectors less than 9 bytes,
+      // emit a shuffle instruction.
+      if (shiftVal <= 8) {
+        const llvm::Type *IntTy = Type::getInt32Ty(Context);
+        const llvm::Type *EltTy = Type::getInt8Ty(Context);
+        const llvm::Type *VecTy = VectorType::get(EltTy, 8);
+        
+        Ops[1] = Builder.CreateBitCast(Ops[1], VecTy);
+        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy);
+
+        SmallVector<Constant*, 8> Indices;
+        for (unsigned i = 0; i != 8; ++i)
+          Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
+      
+        Value* SV = ConstantVector::get(Indices.begin(), Indices.size());
+        Result = Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
+        return true;
+      }
+    
+      // If palignr is shifting the pair of input vectors more than 8 but less
+      // than 16 bytes, emit a logical right shift of the destination.
+      if (shiftVal < 16) {
+        // MMX has these as 1 x i64 vectors for some odd optimization reasons.
+        const llvm::Type *EltTy = Type::getInt64Ty(Context);
+        const llvm::Type *VecTy = VectorType::get(EltTy, 1);
+      
+        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
+        Ops[1] = ConstantInt::get(VecTy, (shiftVal-8) * 8);
+      
+        // create i32 constant
+        Function *F = Intrinsic::getDeclaration(TheModule,
+                                                Intrinsic::x86_mmx_psrl_q);
+        Result = Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "palignr");
+        return true;
+      }
+    
+      // If palignr is shifting the pair of vectors more than 32 bytes,
+      // emit zero.
+      Result = Constant::getNullValue(ResultType);
+      return true;
+    } else {
+      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
+      Result = Ops[0];
+      return true;
+    }
+  }
   case IX86_BUILTIN_PALIGNR128: {
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
-      Function *palignr =
-	Intrinsic::getDeclaration(TheModule, FnCode == IX86_BUILTIN_PALIGNR ?
-				  Intrinsic::x86_ssse3_palign_r :
-				  Intrinsic::x86_ssse3_palign_r_128);
-      Value *Op2 = Builder.CreateTrunc(Ops[2], Type::getInt8Ty(Context));
-      Value *CallOps[3] = { Ops[0], Ops[1], Op2 };
-      Result = Builder.CreateCall(palignr, CallOps, CallOps+3);
+      unsigned shiftVal = cast<ConstantInt>(Ops[2])->getZExtValue();
+
+      // If palignr is shifting the pair of input vectors less than 17 bytes,
+      // emit a shuffle instruction.
+      if (shiftVal <= 16) {
+        const llvm::Type *IntTy = Type::getInt32Ty(Context);
+        const llvm::Type *EltTy = Type::getInt8Ty(Context);
+        const llvm::Type *VecTy = VectorType::get(EltTy, 16);
+        
+        Ops[1] = Builder.CreateBitCast(Ops[1], VecTy);
+        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy);
+
+        llvm::SmallVector<Constant*, 16> Indices;
+        for (unsigned i = 0; i != 16; ++i)
+          Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
+
+        Value* SV = ConstantVector::get(Indices.begin(), Indices.size());
+        Result = Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
+        return true;
+      }
+
+      // If palignr is shifting the pair of input vectors more than 16 but less
+      // than 32 bytes, emit a logical right shift of the destination.
+      if (shiftVal < 32) {
+        const llvm::Type *EltTy = Type::getInt64Ty(Context);
+        const llvm::Type *VecTy = VectorType::get(EltTy, 2);
+        const llvm::Type *IntTy = Type::getInt32Ty(Context);
+
+        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
+        Ops[1] = ConstantInt::get(IntTy, (shiftVal-16) * 8);
+
+        // create i32 constant
+        llvm::Function *F = Intrinsic::getDeclaration(TheModule,
+                                                  Intrinsic::x86_sse2_psrl_dq);        
+        Result = Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "palignr");
+        return true;
+      }
+
+      // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
+      Result = Constant::getNullValue(ResultType);
       return true;
     } else {
       error("%Hmask must be an immediate", &EXPR_LOCATION(exp));

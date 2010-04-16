@@ -11001,11 +11001,28 @@ objc_class_visibility (tree class)
   return NULL;
 }
 
+/* APPLE LOCAL begin radar 7865106 */
+static bool objc_class_weak_import(tree class)
+{
+  tree chain;
+  if (class && TREE_CODE (class) == CLASS_IMPLEMENTATION_TYPE)
+    return false;
+  gcc_assert (class && TREE_CODE (class) == CLASS_INTERFACE_TYPE);
+  for (chain = CLASS_ATTRIBUTES (class); chain; chain = TREE_CHAIN (chain))
+    if (is_attribute_p ("weak_import", TREE_PURPOSE (chain)))
+      return true;
+  return false;
+}
+/* APPLE LOCAL end radar 7865106 */
+
 /* Create a symbol whose visibility attribute matches that of 
    the given class. */
 
 static tree
-objc_create_global_decl_for_class (tree type, const char *name, tree class)
+/* APPLE LOCAL begin radar 7865106 */
+objc_create_global_decl_for_class (tree type, const char *name, tree class,
+				   int classSymbol)
+/* APPLE LOCAL end radar 7865106 */
 {
   tree decl = create_global_decl (type, name);
   const char *visibility = objc_class_visibility (class);
@@ -11021,6 +11038,12 @@ objc_create_global_decl_for_class (tree type, const char *name, tree class)
       DECL_VISIBILITY_SPECIFIED (decl) = 1;
     }
 
+  /* APPLE LOCAL begin radar 7865106 */
+  if (classSymbol && objc_class_weak_import(class)) {
+    tree attribute = build_tree_list (get_identifier ("weak_import"), NULL_TREE);
+    decl_attributes (&decl, attribute, 0);
+  }
+  /* APPLE LOCAL end radar 7865106 */
   return decl;
 }
 /* APPLE LOCAL end radar 4705298 , 4843145*/
@@ -11073,7 +11096,8 @@ ivar_offset_ref (tree class_name, tree field_decl)
   /* APPLE LOCAL begin radar 4705298, 4843145 */
   decl = global_var ? 
          objc_create_global_decl_for_class (
-	   TREE_TYPE (size_zero_node), buf, implementation_template) : 
+           /* APPLE LOCAL radar 7865106 */
+	   TREE_TYPE (size_zero_node), buf, implementation_template, 0) : 
 	 create_hidden_decl (TREE_TYPE (size_zero_node), buf);
   /* APPLE LOCAL end radar 4705298 , 4843145*/
   /* APPLE LOCAL end radar 4441049 */
@@ -12753,11 +12777,13 @@ generate_v2_shared_structures (int cls_flags)
   class_decl = objc_create_global_decl_for_class (
 		 objc_v2_class_template, 
 		 IDENTIFIER_POINTER (DECL_NAME (UOBJC_V2_CLASS_decl)), 
-		 implementation_template);
+                 /* APPLE LOCAL radar 7865106 */
+		 implementation_template, 1);
   metaclass_decl = objc_create_global_decl_for_class (
 		     objc_v2_class_template, 
 		     IDENTIFIER_POINTER (DECL_NAME (UOBJC_V2_METACLASS_decl)), 
-		     implementation_template);
+                     /* APPLE LOCAL radar 7865106 */
+		     implementation_template, 1);
 
   if (DECL_VISIBILITY (class_decl) == VISIBILITY_HIDDEN)
     flags |= OBJC2_CLS_HIDDEN; 
@@ -15175,6 +15201,10 @@ objc_warn_on_class_attributes (tree class, bool use)
       else if (is_attribute_p ("objc_exception", TREE_PURPOSE (chain)))
         ;
       /* APPLE LOCAL end radar 5008110 */
+      /* APPLE LOCAL begin radar 7865106 */
+      else if (is_attribute_p ("weak_import", TREE_PURPOSE (chain)))
+        ;
+      /* APPLE LOCAL end radar 7865106 */
       else if (!use)
 	warning (0, "attribute %s is unknown - ignored",
 		  IDENTIFIER_POINTER (TREE_PURPOSE (chain)));

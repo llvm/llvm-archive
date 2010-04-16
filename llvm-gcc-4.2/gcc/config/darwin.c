@@ -2839,20 +2839,5 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
   
   return 1;
 }
-
 /* LLVM LOCAL end radar 6230142 */
-/* APPLE LOCAL begin radar 7865106 */
-int objc_weak_import_class(tree decl)
-{
-  if (flag_objc_abi == 2 &&
-      TREE_CODE(decl) == VAR_DECL && 
-      lookup_attribute ("weak_import", DECL_ATTRIBUTES (decl)))
-    {
-      const char* name = IDENTIFIER_POINTER (DECL_NAME(decl)); 
-      return (!strncmp (name, "OBJC_CLASS_$_", 13)
-              || !strncmp (name, "OBJC_METACLASS_$_", 17));
-    }
-  return 0;
-}
-/* APPLE LOCAL end radar 7865106 */
 #include "gt-darwin.h"

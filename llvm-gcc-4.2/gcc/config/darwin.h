@@ -43,8 +43,6 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL begin dynamic-no-pic */
 extern int machopic_symbol_defined_p (rtx);
 /* APPLE LOCAL end dynamic-no-pic */
-/* APPLE LOCAL radar 7865106 */
-extern int objc_weak_import_class(tree);
 
 /* APPLE LOCAL begin axe stubs 5571540 */
 extern int darwin_stubs;
@@ -663,8 +661,7 @@ do {					\
  									\
     if (! DECL_EXTERNAL (DECL) && TREE_PUBLIC (DECL))			\
       targetm.asm_out.globalize_label (FILE, NAME);			\
-    /* APPLE LOCAL radar 7865106 */					\
-    if (DECL_EXTERNAL (DECL) || objc_weak_import_class(DECL))		\
+    if (DECL_EXTERNAL (DECL))						\
       fputs ("\t.weak_reference ", FILE);				\
     else if (! lookup_attribute ("weak", DECL_ATTRIBUTES (DECL))	\
 	&& lookup_attribute ("weak_import", DECL_ATTRIBUTES (DECL)))	\

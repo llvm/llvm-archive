@@ -1211,6 +1211,8 @@ EOF
 		fi ;;
 	    unknown) UNAME_PROCESSOR=powerpc ;;
 	esac
+        # LLVM LOCAL "10.5.0" => "10"
+        UNAME_RELEASE=`echo $UNAME_RELEASE | sed -E 's/([0-9]+).*/\1/'`
 	echo ${UNAME_PROCESSOR}-apple-darwin${UNAME_RELEASE}
 	exit ;;
     *:procnto*:*:* | *:QNX:[0123456789]*:*)

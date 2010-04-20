@@ -20,7 +20,7 @@ llvm-g++  [\fB\-c\fR|\fB\-S\fR|\fB\-E\fR] [\fB\-std=\fR\fIstandard\fR]
           [\fB\-f\fR\fIoption\fR...] [\fB\-m\fR\fImachine-option\fR...]
           [\fB\-o\fR \fIoutfile\fR] \fIinfile\fR...
 .Sh DESCRIPTION
-llvm-gcc is a C, C++, Objective-C and Objective-C++ compiler. llvm-g++ is a compiler driver for C++. llvm-gcc uses gcc front-end and gcc's command line interface. Consult the cc(1) man page for command line options supported by llvm-gcc. Only selected LLVM specific options are listed here.
+llvm-gcc is a C, C++, Objective-C and Objective-C++ compiler. llvm-g++ is a compiler driver for C++. llvm-gcc uses gcc front-end and gcc's command line interface. Consult the cc(1) man page for command line options supported by llvm-gcc. llvm-gcc does not support #pragma optimization_level supported by Darwin gcc. Only selected LLVM specific options are listed here.
 .Pp
 .Bl -tag -width -indent
 .It Fl flto

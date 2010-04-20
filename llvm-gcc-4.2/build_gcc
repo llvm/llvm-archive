@@ -691,8 +691,8 @@ for t in $TARGETS ; do
 done
 
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-    mkdir -p $DEST_DIR/usr/bin
-    cd $DEST_DIR/usr/bin
+    mkdir -p $DEST_DIR$LLVM_ROOT_PATH/usr/bin
+    cd $DEST_DIR$LLVM_ROOT_PATH/usr/bin
     ln -s $LLVM_ROOT_PATH/Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
     ln -s $LLVM_ROOT_PATH/Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi

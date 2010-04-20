@@ -1596,9 +1596,10 @@ main (int argc, const char **argv)
       if (num_infiles > 1 && !compile_only_request)
 	ima_is_used = 1;
 
-      /* Linker wants to know this in case of multiple -arch.  */
-      if (!compile_only_request && !dash_dynamiclib_seen)
-	new_argv[new_argc++] = "-Wl,-arch_multiple";
+      /* The compiler and linker both want to know if we have multiple archs.
+         The compiler for debug info emission and the linker for augmenting
+         error and warning messages.  */
+	    new_argv[new_argc++] = "-arch_multiple";
 
 
       /* If only one input file is specified OR IMA is used then expected output

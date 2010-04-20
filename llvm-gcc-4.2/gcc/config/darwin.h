@@ -194,6 +194,8 @@ extern GTY(()) int darwin_ms_struct;
   { "-fpascal-strings", "-mpascal-strings" },	\
   { "-fno-pascal-strings", "-mno-pascal-strings" },	\
   /* APPLE LOCAL end constant cfstrings */	\
+  /* APPLE LOCAL multiple arch */ \
+  { "-arch_multiple", "-Zarch_multiple"}, \
   SUBTARGET_OPTION_TRANSLATE_TABLE
 
 /* APPLE LOCAL begin constant cfstrings */
@@ -363,7 +365,8 @@ do {					\
 %{!fdump=*:%{!fsyntax-only:%{!c:%{!M:%{!MM:%{!E:%{!S:\
 "/* APPLE LOCAL end mainline 4.3 2006-10-31 4370146 */"\
     %{.c|.cc|.C|.cpp|.cp|.c++|.cxx|.CPP|.m|.mm: \
-    %{g*:%{!gstabs*:%{!g0: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}"
+"/* APPLE LOCAL arch_multiple */"\
+    %{g*:%{!gstabs*:%{!g0:%{!Zarch_multiple: dsymutil %{o*:%*}%{!o:a.out}}}}}}}}}}}}}"
 /* APPLE LOCAL end mainline */
 
 #ifdef TARGET_SYSTEM_ROOT
@@ -466,6 +469,8 @@ do {					\
    " LINK_SYSROOT_SPEC " \
    %{twolevel_namespace} %{twolevel_namespace_hints} \
    %{Zumbrella*: -umbrella %*} \
+   "/* APPLE LOCAL arch_multiple */" \
+   %{Zarch_multiple: -arch_multiple} \
    %{undefined*} \
    %{Zunexported_symbols_list*:-unexported_symbols_list %*} \
    %{Zweak_reference_mismatches*:-weak_reference_mismatches %*} \

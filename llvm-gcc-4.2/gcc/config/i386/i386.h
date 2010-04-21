@@ -3950,7 +3950,9 @@ enum ix86_builtins
   case CM_32:					   \
     argvec.push_back("--code-model=default");	   \
     break;					   \
-  }
+  }                                                \
+  if (TARGET_OMIT_LEAF_FRAME_POINTER)              \
+    argvec.push_back("--disable-non-leaf-fp-elim");
 
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */

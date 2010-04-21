@@ -243,6 +243,10 @@ Print pass manager arguments
 fdebug-llvm-module-opt
 Common Report Var(flag_debug_llvm_module_opt)
 Help debug llvm module-level optimizer
+
+fdebug-disable-debug-info-print
+Common Report Var(flag_disable_debug_info_print)
+Disable debug info printing into .s file
 ; LLVM LOCAL end
 
 ; The version of the C++ ABI in use.  The following values are allowed:

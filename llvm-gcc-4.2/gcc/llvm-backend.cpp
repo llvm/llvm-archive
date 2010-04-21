@@ -413,6 +413,8 @@ void llvm_initialize_backend(void) {
     Args.push_back("--ffunction-sections");
   if (flag_data_sections)
     Args.push_back("--fdata-sections");
+  if (flag_disable_debug_info_print)
+    Args.push_back("--disable-debug-info-print");
 
   // If there are options that should be passed through to the LLVM backend
   // directly from the command line, do so now.  This is mainly for debugging

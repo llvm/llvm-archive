@@ -19,6 +19,8 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/InstVisitor.h"
+
 #include "safecode/Config/config.h"
 #include "safecode/SAFECodeConfig.h"
 
@@ -31,7 +33,7 @@ using namespace llvm;
 NAMESPACE_SC_BEGIN
 
 /// Passes that holds DSNode and Pool Handle information
-  struct DSNodePass : public ModulePass {
+struct DSNodePass : public ModulePass {
 	public :
     static char ID;
     DSNodePass () : ModulePass ((intptr_t) &ID) { }
@@ -98,6 +100,47 @@ NAMESPACE_SC_BEGIN
 
     // The set of values that already have run-time checks
     std::set<const Value *> CheckedValues;
+};
+
+//
+// Pass: PoolMDPass
+//
+// Description:
+//  This pass takes pool handle information and instruments the LLVM bitcode
+//  with meta-data linking each pointer used in a GEP or load/store with the
+//  pool to which it belongs.  Additionally, it records DSA information about
+//  each pool in the metadata, freeing most passes from having to consult the
+//  DSA passes.
+//
+struct PoolMDPass : public ModulePass,
+                    public InstVisitor<PoolMDPass> {
+	public :
+    static char ID;
+    PoolMDPass () : ModulePass ((intptr_t) &ID) { }
+    const char *getPassName() const {
+      return "Pool Handle Metadata Creation Pass";
+    }
+    virtual bool runOnModule(Module &M);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DSNodePass>();
+      AU.addPreserved<DSNodePass>();
+      AU.setPreservesCFG();
+    };
+
+    // Instruction visitor methods
+    void visitLoadInst(LoadInst &I);
+    void visitStoreInst(StoreInst &I);
+    //void visitCallInst(CallInst &CI);
+
+  private:
+    // Pointers to analysis passes that we use
+    DSNodePass * dsnPass;
+
+    // Data structure containing value to pool metadata nodes
+    std::vector<MDNode *> ValueToPoolNodes;
+
+    // Private methods
+    void createPoolMetaData (Value * P, Function * F);
 };
 
 NAMESPACE_SC_END

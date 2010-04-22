@@ -43,6 +43,7 @@ PoolMDPass::createPoolMetaData (Value * V, Function * F) {
   //
   // Get the pool associated with the value.
   //
+  V = V->stripPointerCasts();
   PA::FuncInfo *FI = dsnPass->paPass->getFuncInfoOrClone(*F);
   Value * PH = dsnPass->getPoolHandle (V, F, *FI);
   assert (PH && "No pool handle for the specified value!\n");

@@ -143,5 +143,68 @@ struct PoolMDPass : public ModulePass,
     void createPoolMetaData (Value * P, Function * F);
 };
 
+//
+// Pass: QueryPoolPass
+//
+// Description:
+//  This pass is an analysis pass that reads the metadata added by the
+//  PoolMDPass.  This pass makes querying the pool handle and DSA information
+//  easier for other passes and centralizes the reading of the metadata
+//  information.
+//
+class QueryPoolPass : public ModulePass {
+  public:
+    // Pass ID variable
+    static char ID;
+
+    // Pass Manager methods
+    QueryPoolPass () : ModulePass ((intptr_t) &ID) {}
+    virtual bool runOnModule (Module & M);
+    const char *getPassName() const {
+      return "Pool Handle Metadata Query Pass";
+    }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+    };
+
+    // Data query methods
+    Value * getPool (Value * V);
+    unsigned getDSFlags (Value * V) {
+      return FlagMap[V];
+    }
+    bool isTypeKnown (Value * V) {
+      return FoldedMap[V];
+    }
+
+  protected:
+    std::map<Value *, Value *>  PoolMap;
+    std::map<Value *, bool>     FoldedMap;
+    std::map<Value *, unsigned> FlagMap;
+};
+
+//
+// Pass: RemovePoolMDPass
+//
+// Description:
+//  This pass removes meta-data inserted by the PoolMDPass.  This is required
+//  for LLVM 2.6 because the meta-data that we add is usable during analysis
+//  and transformation but is invalid input to the BitcodeWriter.
+//
+struct RemovePoolMDPass : public ModulePass,
+                          public InstVisitor<PoolMDPass> {
+	public :
+    static char ID;
+    RemovePoolMDPass () : ModulePass ((intptr_t) &ID) { }
+    const char *getPassName() const {
+      return "Pool Handle Metadata Removal Pass";
+    }
+    virtual bool runOnModule(Module &M);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+    };
+
+  private:
+};
+
 NAMESPACE_SC_END
 #endif

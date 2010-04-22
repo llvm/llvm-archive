@@ -122,6 +122,7 @@ struct PoolMDPass : public ModulePass,
     }
     virtual bool runOnModule(Module &M);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      DSNodePass::preservePAandDSA(AU);
       AU.addRequired<DSNodePass>();
       AU.addPreserved<DSNodePass>();
       AU.setPreservesCFG();

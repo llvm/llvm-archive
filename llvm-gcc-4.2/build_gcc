@@ -124,35 +124,17 @@ ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
 if [ -n "$ARM_SDK" ]; then
-
   ARM_PLATFORM=`xcodebuild -version -sdk $ARM_SDK PlatformPath`
   ARM_SYSROOT=`xcodebuild -version -sdk $ARM_SDK Path`
-  ARM_TOOLROOT=$ARM_PLATFORM/Developer
-
-elif [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
-
-  # If the build target is iPhone, use the iPhone SDK as the build sysroot
-  # and use the tools from the iPhone platform directory.  FIXME: This is a
-  # temporary fallback for builds where ARM_SDK is not set.  It can be removed,
-  # along with the following bootstrap SDK fallback, when ARM_SDK is set for
-  # all builds.
-  ARM_PLATFORM=/Developer/Platforms/iPhoneOS.platform
-  ARM_IPHONE_SDK=iPhoneOS${IPHONEOS_DEPLOYMENT_TARGET}.Internal.sdk
-
-  ARM_SYSROOT=$ARM_PLATFORM/Developer/SDKs/$ARM_IPHONE_SDK
-  ARM_TOOLROOT=$ARM_PLATFORM/Developer
-
 else
-
   # Use bootstrap SDK if it is available.
+  # FIXME: This can be removed once all builds set ARM_SDK.
   if [ -d /Developer/SDKs/Extra ]; then
     ARM_SYSROOT=/Developer/SDKs/Extra
   else
     ARM_SYSROOT=/
   fi
   ARM_PLATFORM=/
-  ARM_TOOLROOT=/
-
 fi
 ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-build-sysroot=\"$ARM_SYSROOT\""
 
@@ -169,10 +151,6 @@ fi
 if echo $TARGETS | grep arm; then
   if [ ! -d $ARM_SYSROOT ]; then
     echo "Error: cannot find ARM SDK to build ARM target"
-    exit 1
-  fi
-  if [ ! -d $ARM_TOOLROOT ]; then
-    echo "Error: $ARM_TOOLROOT directory is not installed"
     exit 1
   fi
   if [ "x$ARM_MULTILIB_ARCHS" = "x" ] ; then
@@ -320,36 +298,37 @@ PATH=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin:$PATH
 rm -rf $DIR/bin || exit 1
 mkdir $DIR/bin || exit 1
 for prog in ar nm ranlib strip lipo ld ; do
-  for t in `echo $TARGETS $HOSTS | sort -u`; do
+  for t in `echo $TARGETS $HOSTS | tr ' ' '\n' | sort -u`; do
     P=$DIR/bin/${t}-apple-darwin$DARWIN_VERS-${prog}
-    # APPLE LOCAL begin toolroot
-    if [ $t = "arm" ]; then
-      toolroot=$ARM_TOOLROOT
+    # Use the specified ARM_SDK for arm, but otherwise force the SDK to / for
+    # now, since SDKROOT may be set to an SDK that does not include support
+    # for all the targets being built (i.e., ppc).
+    if [ "$t" = "arm" -a -n "$ARM_SDK" ]; then
+      sdkoption="-sdk $ARM_SDK"
     else
-      toolroot=
+      sdkoption="-sdk /"
     fi
-    # APPLE LOCAL end toolroot
+    progpath=`xcrun $sdkoption -find $prog`
     echo '#!/bin/sh' > $P || exit 1
-    # APPLE LOCAL insert toolroot below
-    echo 'exec '${toolroot}'/usr/bin/'${prog}' "$@"' >> $P || exit 1
+    echo 'exec '${progpath}' "$@"' >> $P || exit 1
     chmod a+x $P || exit 1
   done
 done
-for t in `echo $1 $2 | sort -u`; do
+# The "as" script adds a default "-arch" option.  Iterate over the lists of
+# untranslated HOSTS and TARGETS in $1 and $2 so those names can be used as
+# the arguments for "-arch" in the scripts.
+for t in `echo $1 $2 | tr ' ' '\n' | sort -u`; do
   gt=`echo $t | $TRANSLATE_ARCH`
   P=$DIR/bin/${gt}-apple-darwin$DARWIN_VERS-as
-  # APPLE LOCAL begin toolroot
-  if [ $gt = "arm" ]; then
-    toolroot=$ARM_TOOLROOT
+  if [ "$gt" = "arm" -a -n "$ARM_SDK" ]; then
+    sdkoption="-sdk $ARM_SDK"
   else
-    toolroot=
+    sdkoption="-sdk /"
   fi
-  # APPLE LOCAL end toolroot
+  progpath=`xcrun $sdkoption -find as`
   echo '#!/bin/sh' > $P || exit 1
-
-  # APPLE LOCAL insert toolroot below
-  echo 'for a; do case $a in -arch) exec '${toolroot}'/usr/bin/as "$@";;  esac; done' >> $P || exit 1
-  echo 'exec '${toolroot}'/usr/bin/as -arch '${t}' "$@"' >> $P || exit 1
+  echo 'for a; do case $a in -arch) exec '${progpath}' "$@";;  esac; done' >> $P || exit 1
+  echo 'exec '${progpath}' -arch '${t}' "$@"' >> $P || exit 1
   chmod a+x $P || exit 1
 done
 PATH=$DIR/bin:$PATH
@@ -437,11 +416,18 @@ for h in $HOSTS ; do
 	# APPLE LOCAL end ARM ARM_CONFIGFLAGS
       fi
 
-      # For ARM, we need to make sure it picks up the ARM_TOOLROOT versions
+      # For ARM, we need to make sure it picks up the correct versions
       # of the linker and cctools.
       if [ $t = 'arm' ] ; then
+        if [ -n "$ARM_SDK" ]; then
+          sdkoption="-sdk $ARM_SDK"
+        else
+          sdkoption="-sdk /"
+        fi
+        progpath=`xcrun $sdkoption -find ld`
+        comppath=`dirname $progpath`
         ORIG_COMPILER_PATH=$COMPILER_PATH
-        export COMPILER_PATH=$ARM_TOOLROOT/usr/bin:$COMPILER_PATH
+        export COMPILER_PATH=$comppath:$COMPILER_PATH
       fi
 
       if [ $h = $t ] ; then

@@ -123,7 +123,6 @@ echo DARWIN_VERS = $DARWIN_VERS
 ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
-ARM_SDK=/Developer/SDKs/bootstrap.arm.sdk
 if [ -n "$ARM_SDK" ]; then
   ARM_PLATFORM=`xcodebuild -version -sdk $ARM_SDK PlatformPath`
   ARM_SYSROOT=`xcodebuild -version -sdk $ARM_SDK Path`

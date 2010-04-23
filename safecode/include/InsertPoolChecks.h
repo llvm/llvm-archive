@@ -34,8 +34,6 @@ extern bool isSVAEnabled();
 
 NAMESPACE_SC_BEGIN
 
-using namespace CUA;
-
 struct InsertPoolChecks : public FunctionPass {
     public :
     static char ID;

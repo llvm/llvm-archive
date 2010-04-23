@@ -75,7 +75,6 @@ struct InitAllocas : public FunctionPass {
     }
 };
 
-namespace CUA {
 //
 // Pass: ConvertUnsafeAllocas
 //
@@ -180,8 +179,6 @@ struct PAConvertUnsafeAllocas : public ConvertUnsafeAllocas {
 
     }
 };
-
-}
 
 NAMESPACE_SC_END
  

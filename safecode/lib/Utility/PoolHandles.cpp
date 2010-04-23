@@ -16,12 +16,74 @@
 
 #include "safecode/Config/config.h"
 #include "safecode/PoolHandles.h"
+#include "safecode/SAFECodeConfig.h"
+#include "safecode/Support/AllocatorInfo.h"
 
 NAMESPACE_SC_BEGIN
 
 // Pass ID variables
 char PoolMDPass::ID       = 0;
+char QueryPoolPass::ID    = 0;
 char RemovePoolMDPass::ID = 0;
+
+static RegisterPass<PoolMDPass>
+X ("pool-md", "Insert meta-data about pool allocation");
+
+static RegisterPass<QueryPoolPass>
+Y ("querypool", "Query pool meta-data");
+
+static RegisterPass<RemovePoolMDPass>
+Z ("remove-poolmd", "Remove meta-data about pool allocation");
+
+//
+// Method: createPoolMetaData()
+//
+// Description:
+//  This method locates the pool for the specified value and creates a metadata
+//  node that links the value with its pool.
+//
+// Inputs:
+//  GV - The global variable for which a pool metadata node should be created.
+//
+// Side effects:
+//  This method will add the metata node to a container that is global to class
+//  member methods.
+//
+void
+PoolMDPass::createPoolMetaData (GlobalVariable * GV) {
+  //
+  // Get the DSNode information associated with the value.
+  //
+  DSNode * Node  = dsnPass->getDSNodeForGlobalVariable (GV);
+  assert (Node && "No DSNode for global!\n");
+
+  //
+  // Get the pool associated with the value.
+  //
+  Value * PH = dsnPass->paPass->getGlobalPool (Node);
+  assert (PH && "No pool handle for the global variable!\n");
+
+  //
+  // Create LLVM values representing the pointer's type, DSNode Flags, etc.
+  //
+  LLVMContext & Context = GV->getContext();
+  const Type * Int1Type  = Type::getInt1Ty (Context);
+  const Type * Int32Type = Type::getInt32Ty(Context);
+  Value * IsFolded = ConstantInt::get(Int1Type, Node->isNodeCompletelyFolded());
+  Value * DSFlags = ConstantInt::get(Int32Type, Node->getNodeFlags());
+
+  // 
+  // Create a new metadata node that contains the pool handle and the value.
+  // 
+  Value * PoolMap[4] = {GV, PH, IsFolded, DSFlags};
+  MDNode * MD = MDNode::get (Context, PoolMap, 4);
+
+  //
+  // Add the value to pool mapping to the set of mappings we've created so far.
+  //
+  ValueToPoolNodes.push_back (MD);
+  return;
+}
 
 //
 // Method: createPoolMetaData()
@@ -95,6 +157,40 @@ PoolMDPass::visitStoreInst (StoreInst & SI) {
   return;
 }
 
+void
+PoolMDPass::visitCallInst (CallInst &CI) {
+  //
+  // Get the called function.  If this is an indirect call, then ignore it.
+  //
+  Function * CalledFunc = CI.getCalledFunction();
+  if (!CalledFunc) return;
+
+  //
+  // Determine whether this is a call to an allocator or deallocator.  If it is,
+  // then record the pool information for the allocated or deallocated pointer.
+  //
+  SAFECodeConfiguration::alloc_iterator it  = SCConfig.alloc_begin(),
+                                        end = SCConfig.alloc_end();
+  for (; it != end; ++it) {
+    // Handle a call to an allocator
+    AllocatorInfo * AllocInfo = *it;
+    if (AllocInfo->getAllocCallName() == CalledFunc->getNameStr()) {
+      createPoolMetaData (&CI, CI.getParent()->getParent());
+    }
+
+    // Handle a call to a deallocator
+    if (AllocInfo->getFreeCallName() == CalledFunc->getNameStr()) {
+      Value * Pointer = AllocInfo->getFreedPointer (&CI);
+      createPoolMetaData (Pointer, CI.getParent()->getParent());
+    }
+  }
+
+  //
+  // Create meta-data linking the dereferenced pointer with its pool.
+  //
+  return;
+}
+
 //
 // Method: runOnModule()
 //
@@ -109,9 +205,32 @@ PoolMDPass::visitStoreInst (StoreInst & SI) {
 bool
 PoolMDPass::runOnModule (Module &M) {
   //
-  // Get a handle to the pool allocation pass.
+  // Get a handle to the pool allocation pass and other passes which we
+  // require.
   //
-  dsnPass = &getAnalysis<DSNodePass>();
+  dsnPass    = &getAnalysis<DSNodePass>();
+
+  //
+  // Scan through all global variables and get their pool handles.
+  //
+  Module::global_iterator GI = M.global_begin(), GE = M.global_end();
+  for ( ; GI != GE; ++GI) {
+    //
+    // Skip anything that is not a global variable (e.g., functions).
+    //
+    GlobalVariable *GV = dyn_cast<GlobalVariable>(GI);
+    if (!GV) continue;
+
+    //
+    // Skip pool descriptors.
+    //
+    if (GV->getType()->getContainedType(0) == dsnPass->getPoolType()) continue;
+
+    //
+    // Create metadata for the global.
+    //
+    createPoolMetaData (GV);
+  }
 
   //
   // Visit all instructions within the module to find all of the pool handles
@@ -187,6 +306,17 @@ QueryPoolPass::runOnModule (Module & M) {
 Value *
 QueryPoolPass::getPool (Value * V) {
   return PoolMap[V];
+}
+
+//
+// Method: getPoolType()
+//
+// Description:
+//  Return the type of a pool.
+//
+const Type *
+QueryPoolPass::getPoolType (void) {
+  return PoolMap.begin()->second->getType();
 }
 
 //

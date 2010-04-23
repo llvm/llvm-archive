@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "sc-register"
 
 #include "safecode/InsertChecks/RegisterBounds.h"
 #include "safecode/Support/AllocatorInfo.h"
@@ -20,6 +21,7 @@
 
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/Statistic.h"
 
 #if 0
 #include <tr1/functional>
@@ -29,8 +31,12 @@
 
 using namespace llvm;
 
-NAMESPACE_SC_BEGIN
+namespace {
+  // Statistics
+  STATISTIC (RegisteredGVs, "Number of registered global variables");
+}
 
+NAMESPACE_SC_BEGIN
 
 char RegisterGlobalVariables::ID = 0;
 char RegisterMainArgs::ID = 0;
@@ -50,21 +56,34 @@ X3 ("reg-custom-alloc", "Register customized allocators", true);
 static llvm::RegisterPass<RegisterFunctionByvalArguments>
 X4 ("reg-byval-args", "Register byval arguments for functions", true);
 
+//
+// Method: registerGV()
+//
+// Description:
+//  This method adds code into a program to register a global variable into its
+//  pool.
+//
 void
-RegisterGlobalVariables::registerGV(GlobalVariable * GV, Instruction * InsertBefore) {
+RegisterGlobalVariables::registerGV (GlobalVariable * GV,
+                                     Instruction * InsertBefore) {
+  // Don't bother to register external global variables
   if (GV->isDeclaration()) {
-    // Don't bother to register external global variables
     return;
   } 
 
-  DSNode *DSN  = dsnPass->getDSNodeForGlobalVariable(GV);
-  if (DSN) {  
+  //
+  // Get the pool into which the global should be registered.
+  //
+  Value * PH = poolPass->getPool (GV);
+  if (PH) {  
     const Type* csiType = IntegerType::getInt32Ty(getGlobalContext());
     const Type * GlobalType = GV->getType()->getElementType();
     Value * AllocSize = ConstantInt::get 
       (csiType, TD->getTypeAllocSize(GlobalType));
-    Value * PH = dsnPass->paPass->getGlobalPool (DSN);
     RegisterVariableIntoPool(PH, GV, AllocSize, InsertBefore);
+
+    // Update statistics
+    ++RegisteredGVs;
   } else {
     llvm::cerr << "Warning: Missing DSNode for global" << *GV << "\n";
   }
@@ -73,8 +92,12 @@ RegisterGlobalVariables::registerGV(GlobalVariable * GV, Instruction * InsertBef
 bool
 RegisterGlobalVariables::runOnModule(Module & M) {
   init("sc.pool_register_global");
-  dsnPass = &getAnalysis<DSNodePass>();
-  TD = &getAnalysis<TargetData>();
+
+  //
+  // Get required analysis passes.
+  //
+  TD       = &getAnalysis<TargetData>();
+  poolPass = &getAnalysis<QueryPoolPass>();
 
   Instruction * InsertPt = 
     CreateRegistrationFunction(intrinsic->getIntrinsic("sc.register_globals").F);
@@ -97,6 +120,11 @@ RegisterGlobalVariables::runOnModule(Module & M) {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(GI);
     if (!GV) continue;
     std::string name = GV->getName();
+
+    // Skip pool descriptors
+    if (GV->getType()->getContainedType(0) == poolPass->getPoolType()) continue;
+
+    // Skip globals in special sections
     if ((GV->getSection()) == "llvm.metadata") continue;
 
     if (strncmp(name.c_str(), "llvm.", 5) == 0) continue;
@@ -180,8 +208,7 @@ RegisterCustomizedAllocation::proceedAllocator(Module * M, AllocatorInfo * info)
 bool
 RegisterCustomizedAllocation::runOnModule(Module & M) {
   init("sc.pool_register");
-  dsnPass = &getAnalysis<DSNodePass>();
-  paPass = &getAnalysis<PoolAllocateGroup>();
+  poolPass = &getAnalysis<QueryPoolPass>();
 
   PoolUnregisterFunc = intrinsic->getIntrinsic("sc.pool_unregister").F;
 #if 0
@@ -205,13 +232,10 @@ RegisterCustomizedAllocation::runOnModule(Module & M) {
 
 void
 RegisterCustomizedAllocation::registerAllocationSite(CallInst * AllocSite, AllocatorInfo * info) {
-  Function * F = AllocSite->getParent()->getParent();
-
   //
   // Get the pool handle for the node.
   //
-  PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-  Value *PH = dsnPass->getPoolHandle(AllocSite, F, *FI);
+  Value *PH = poolPass->getPool (AllocSite);
   assert (PH && "Pool handle is missing!");
 
   BasicBlock::iterator InsertPt = AllocSite;
@@ -223,9 +247,6 @@ RegisterCustomizedAllocation::registerAllocationSite(CallInst * AllocSite, Alloc
 void
 RegisterCustomizedAllocation::registerFreeSite (CallInst * FreeSite,
                                                 AllocatorInfo * info) {
-  // Function containing the call to the deallocator
-  Function * F = FreeSite->getParent()->getParent();
-
   //
   // Get the pointer being deallocated.  Strip away casts as these may have
   // been inserted after the DSA pass was executed and may, therefore, not have
@@ -243,8 +264,7 @@ RegisterCustomizedAllocation::registerFreeSite (CallInst * FreeSite,
   //
   // Get the pool handle for the freed pointer.
   //
-  PA::FuncInfo *FI = paPass->getFuncInfoOrClone(*F);
-  Value *PH = dsnPass->getPoolHandle(ptr, F, *FI);
+  Value *PH = poolPass->getPool (ptr);
   assert (PH && "Pool handle is missing!");
 
   //
@@ -334,10 +354,17 @@ RegisterVariables::RegisterVariableIntoPool(Value * PH, Value * val, Value * All
 bool
 RegisterFunctionByvalArguments::runOnModule(Module & M) {
   init("sc.pool_register");
-  dsnPass = &getAnalysis<DSNodePass>();
-  TD = &getAnalysis<TargetData>();
+
+  //
+  // Fetch prerequisite analysis passes.
+  //
+  TD        = &getAnalysis<TargetData>();
+  poolPass  = &getAnalysis<QueryPoolPass>();
   intrinsic = &getAnalysis<InsertSCIntrinsic>();
 
+  //
+  // Insert required intrinsics.
+  //
   StackFree = intrinsic->getIntrinsic("sc.pool_unregister").F;  
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++ I) {
@@ -372,8 +399,7 @@ RegisterFunctionByvalArguments::runOnFunction(Function & F) {
       const Type * ET = PT->getElementType();
       Value * AllocSize = ConstantInt::get
         (IntegerType::getInt32Ty(getGlobalContext()), TD->getTypeAllocSize(ET));
-      PA::FuncInfo *FI = dsnPass->paPass->getFuncInfoOrClone(F);
-      Value *PH = dsnPass->getPoolHandle(&*I, &F, *FI);
+      Value *PH = poolPass->getPool (&*I);
       Instruction * InsertBefore = &(F.getEntryBlock().front());
       RegisterVariableIntoPool(PH, &*I, AllocSize, InsertBefore);
       registeredArguments.push_back(std::make_pair<Value*, Argument*>(PH, &*I));

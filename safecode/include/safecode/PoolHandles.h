@@ -124,6 +124,7 @@ struct PoolMDPass : public ModulePass,
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       DSNodePass::preservePAandDSA(AU);
       AU.addRequired<DSNodePass>();
+
       AU.addPreserved<DSNodePass>();
       AU.setPreservesCFG();
     };
@@ -131,7 +132,7 @@ struct PoolMDPass : public ModulePass,
     // Instruction visitor methods
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
-    //void visitCallInst(CallInst &CI);
+    void visitCallInst(CallInst &CI);
 
   private:
     // Pointers to analysis passes that we use
@@ -141,6 +142,7 @@ struct PoolMDPass : public ModulePass,
     std::vector<MDNode *> ValueToPoolNodes;
 
     // Private methods
+    void createPoolMetaData (GlobalVariable * GV);
     void createPoolMetaData (Value * P, Function * F);
 };
 
@@ -153,7 +155,7 @@ struct PoolMDPass : public ModulePass,
 //  easier for other passes and centralizes the reading of the metadata
 //  information.
 //
-class QueryPoolPass : public ModulePass {
+struct QueryPoolPass : public ModulePass {
   public:
     // Pass ID variable
     static char ID;
@@ -170,6 +172,7 @@ class QueryPoolPass : public ModulePass {
 
     // Data query methods
     Value * getPool (Value * V);
+    const Type * getPoolType (void);
     unsigned getDSFlags (Value * V) {
       return FlagMap[V];
     }

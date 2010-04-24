@@ -2535,43 +2535,8 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
   // from thinking that control flow will fall into the subsequent block.
   //
   if (fndecl && TREE_THIS_VOLATILE(fndecl)) {
-    // LLVM LOCAL - begin radar 7885482
-    /*
-      Consider this pseudo-ObjC code:
-
-      // locking using some "lock" variable
-      @try {
-        // ...
-      } @catch (...) {
-        // ...
-        @throw;
-      } @finally {
-        // unlocking using the "lock" variable
-      }
-
-      The "lock" variable has live intervals from the top of the function
-      through the @try block and in the @finally block. On 32-bit x86, it
-      doesn't have a live interval in the @catch block. This is because in
-      32-bit mode Objective-C uses setjmp/longjmp for exception handling and not
-      the invoke/DWARF method.  The @throw is implemented as an
-      "objc_exception_throw" call marked with NORETURN. The upshot is that if
-      the "lock" variable is placed into a stack slot, there won't be an
-      indication that the "lock" can be used after the "objc_exception_throw"
-      executes. With the invoke/DWARF method, the unwind edge of the invoke
-      points to the @finally block, so the "lock" variable will have a live
-      interval leading to there.
-
-      The solution is to have the "objc_exception_throw" behave in a similar
-      manner to the invoke/DWARF method. That is remove the "NORETURN"
-      attribute, allowing it to have an edge from the call to the @finally
-      block.  */
-    if (!TARGET_64BIT && Callee->getName() == "objc_exception_throw")
-      cast<Function>(Callee)->removeFnAttr(Attribute::NoReturn);
-    else {
-      Builder.CreateUnreachable();
-      EmitBlock(BasicBlock::Create(Context, ""));
-    }
-    // LLVM LOCAL - end radar 7885482
+    Builder.CreateUnreachable();
+    EmitBlock(BasicBlock::Create(Context, ""));
   }
   return Result;
 }
@@ -2974,40 +2939,6 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
     cast<CallInst>(Call)->setAttributes(PAL);
-
-    // LLVM LOCAL - begin radar 7885482
-    /*
-      Consider this pseudo-ObjC code:
-
-      // locking using some "lock" variable
-      @try {
-        // ...
-      } @catch (...) {
-        // ...
-        @throw;
-      } @finally {
-        // unlocking using the "lock" variable
-      }
-
-      The "lock" variable has live intervals from the top of the function
-      through the @try block and in the @finally block. On 32-bit x86, it
-      doesn't have a live interval in the @catch block. This is because in
-      32-bit mode Objective-C uses setjmp/longjmp for exception handling and not
-      the invoke/DWARF method.  The @throw is implemented as an
-      "objc_exception_throw" call marked with NORETURN. The upshot is that if
-      the "lock" variable is placed into a stack slot, there won't be an
-      indication that the "lock" can be used after the "objc_exception_throw"
-      executes. With the invoke/DWARF method, the unwind edge of the invoke
-      points to the @finally block, so the "lock" variable will have a live
-      interval leading to there.
-
-      The solution is to have the "objc_exception_throw" behave in a similar
-      manner to the invoke/DWARF method. That is remove the "NORETURN"
-      attribute, allowing it to have an edge from the call to the @finally
-      block.  */
-    if (!TARGET_64BIT && Callee->getName() == "objc_exception_throw")
-      cast<CallInst>(Call)->removeAttribute(~0U, Attribute::NoReturn);
-    // LLVM LOCAL - end radar 7885482
   } else {
     BasicBlock *NextBlock = BasicBlock::Create(Context, "invcont");
     Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,

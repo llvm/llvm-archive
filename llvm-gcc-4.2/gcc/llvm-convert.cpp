@@ -2565,10 +2565,7 @@ Value *TreeToLLVM::EmitCALL_EXPR(tree exp, const MemRef *DestLoc) {
       manner to the invoke/DWARF method. That is remove the "NORETURN"
       attribute, allowing it to have an edge from the call to the @finally
       block.  */
-    if (
-#ifdef TARGET_64BIT
-        !TARGET_64BIT &&
-#endif
+    if (flag_objc_abi == 1 && 
         Callee->getName() == "objc_exception_throw")
       cast<Function>(Callee)->removeFnAttr(Attribute::NoReturn);
     else {
@@ -3009,10 +3006,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
       manner to the invoke/DWARF method. That is remove the "NORETURN"
       attribute, allowing it to have an edge from the call to the @finally
       block.  */
-    if (
-#ifdef TARGET_64BIT
-        !TARGET_64BIT &&
-#endif
+    if (flag_objc_abi == 1 && 
         Callee->getName() == "objc_exception_throw")
       cast<CallInst>(Call)->removeAttribute(~0U, Attribute::NoReturn);
     // LLVM LOCAL - end radar 7885482

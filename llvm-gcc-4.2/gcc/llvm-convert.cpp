@@ -7061,7 +7061,11 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
   if (VOID_TYPE_P(TREE_TYPE(ArrayTreeType)))
     return LValue(Builder.CreateGEP(ArrayAddr, IndexVal), 1);
 
-  Value *TypeSize = Emit(array_ref_element_size(exp), 0);
+  tree EltSize = array_ref_element_size(exp);
+  if (EltSize == 0)  // Force emit an error on invalid case.
+    EltSize = size_in_bytes(ElementType);
+  
+  Value *TypeSize = Emit(EltSize, 0);
   TypeSize = CastToUIntType(TypeSize, IntPtrTy);
   IndexVal = Builder.CreateMul(IndexVal, TypeSize);
   unsigned Alignment = 1;

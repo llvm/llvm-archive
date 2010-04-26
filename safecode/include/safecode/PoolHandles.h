@@ -135,6 +135,8 @@ struct PoolMDPass : public ModulePass,
     void visitStoreInst(StoreInst & I);
     void visitCallInst(CallInst & CI);
     void visitGetElementPtrInst(GetElementPtrInst & GEP);
+    void visitICmpInst (ICmpInst & CI);
+    void visitPtrToIntInst(PtrToIntInst &I);
 
   private:
     // Pointers to analysis passes that we use

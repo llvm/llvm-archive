@@ -178,6 +178,35 @@ PoolMDPass::visitGetElementPtrInst (GetElementPtrInst & GEP) {
 }
 
 void
+PoolMDPass::visitICmpInst (ICmpInst & CI) {
+  //
+  // Create meta-data for the operands of the compare instruction if they are
+  // pointers.  The RewriteOOB pass may look up their pools.
+  //
+  Function * F = CI.getParent()->getParent();
+
+  if (isa<PointerType>(CI.getOperand(0)->getType()))
+    if (!isa<ConstantPointerNull>(CI.getOperand(0)))
+      createPoolMetaData (CI.getOperand(0), F);
+
+  if (isa<PointerType>(CI.getOperand(1)->getType()))
+    if (!isa<ConstantPointerNull>(CI.getOperand(1)))
+      createPoolMetaData (CI.getOperand(1), F);
+  return;
+}
+
+void
+PoolMDPass::visitPtrToIntInst(PtrToIntInst &I) {
+  //
+  // Create meta-data linking the casted pointer with its pool.
+  //
+  Function * F = I.getParent()->getParent();
+  if (isa<PointerType>(I.getOperand(0)->getType()))
+    createPoolMetaData (I.getOperand(0), F);
+  return;
+}
+
+void
 PoolMDPass::visitCallInst (CallInst &CI) {
   //
   // Get the called function.  If this is an indirect call, then ignore it.

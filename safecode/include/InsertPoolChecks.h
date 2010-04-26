@@ -46,6 +46,7 @@ struct InsertPoolChecks : public FunctionPass {
       AU.addRequired<TargetData>();
       AU.addRequired<InsertSCIntrinsic>();
       AU.addRequired<DSNodePass>();
+      AU.addRequired<QueryPoolPass>();
 			//lying!
       DSNodePass::preservePAandDSA(AU);
       AU.addPreserved<InsertSCIntrinsic>();
@@ -58,6 +59,7 @@ struct InsertPoolChecks : public FunctionPass {
     PoolAllocateGroup * paPass;
     TargetData * TD;
     DSNodePass * dsnPass;
+    QueryPoolPass * poolPass;
     Function *PoolCheck;
     Function *PoolCheckUI;
     Function *PoolCheckAlign;

@@ -388,8 +388,26 @@ RegisterFunctionByvalArguments::runOnModule(Module & M) {
   return true;
 }
 
+//
+// Method: runOnFunction()
+//
+// Description:
+//  Entry point for this function pass.  This method will insert calls to
+//  register the memory allocated for the byval arguments passed into the
+//  specified function.
+//
+// Return value:
+//  true  - The function was modified.
+//  false - The function was not modified.
+//
 bool
-RegisterFunctionByvalArguments::runOnFunction(Function & F) {
+RegisterFunctionByvalArguments::runOnFunction (Function & F) {
+  //
+  // Scan through all arguments of the function.  For each byval argument,
+  // insert code to register the argument into its repspective pool.  Also
+  // record the mapping between argument and pool so that we can insert
+  // deregistration code at function exit.
+  //
   typedef SmallVector<std::pair<Value*, Argument *>, 4> RegisteredArgTy;
   RegisteredArgTy registeredArguments;
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
@@ -406,6 +424,9 @@ RegisterFunctionByvalArguments::runOnFunction(Function & F) {
     }
   }
 
+  //
+  // Find all basic blocks which terminate the function.
+  //
   SmallSet<BasicBlock *, 4> exitBlocks;
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     if (isa<ReturnInst>(*I) || isa<UnwindInst>(*I)) {
@@ -413,8 +434,15 @@ RegisterFunctionByvalArguments::runOnFunction(Function & F) {
     }
   }
 
-  for (SmallSet<BasicBlock*, 4>::const_iterator BI = exitBlocks.begin(), BE = exitBlocks.end(); BI != BE; ++BI) {
-    for (RegisteredArgTy::const_iterator I = registeredArguments.begin(), E = registeredArguments.end(); I != E; ++I) {
+  //
+  // At each function exit, insert code to deregister all byval arguments.
+  //
+  for (SmallSet<BasicBlock*, 4>::const_iterator BI = exitBlocks.begin(),
+                                                BE = exitBlocks.end();
+       BI != BE; ++BI) {
+    for (RegisteredArgTy::const_iterator I = registeredArguments.begin(),
+                                         E = registeredArguments.end();
+         I != E; ++I) {
       SmallVector<Value *, 2> args;
       Instruction * Pt = &((*BI)->back());
       Value *CastPH  = castTo (I->first, getVoidPtrType(), Pt);

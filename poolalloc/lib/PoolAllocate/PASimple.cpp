@@ -207,9 +207,22 @@ PoolAllocateSimple::ProcessFunctionBodySimple (Function& F, TargetData & TD) {
 				       TD.getTypeAllocSize(MI->getAllocatedType()));
         }
 
+        //
+        // Create the pool allocation call.
+        //
         Value* args[] = {TheGlobalPool, AllocSize};
         Instruction* x = CallInst::Create(PoolAlloc, &args[0], &args[2], MI->getName(), ii);
-        ii->replaceAllUsesWith(CastInst::CreatePointerCast(x, ii->getType(), "", ii));
+
+        //
+        // Update the DSGraph.
+        //
+        CombinedDSGraph->getScalarMap().replaceScalar (ii, x);
+
+        //
+        // Replace the old malloc instruction with the call to poolalloc().
+        //
+        x = CastInst::CreatePointerCast(x, ii->getType(), "", ii);
+        ii->replaceAllUsesWith(x);
       } else if (CallInst * CI = dyn_cast<CallInst>(ii)) {
         CallSite CS(CI);
         Function *CF = CS.getCalledFunction();
@@ -252,6 +265,11 @@ PoolAllocateSimple::ProcessFunctionBodySimple (Function& F, TargetData & TD) {
                                          Opts + 3,
                                          Name,
                                          InsertPt);
+          //
+          // Update the DSGraph.
+          //
+          CombinedDSGraph->getScalarMap().replaceScalar (CI, V);
+
           Instruction *Casted = V;
           if (V->getType() != CI->getType())
             Casted = CastInst::CreatePointerCast (V, CI->getType(), V->getName(), InsertPt);
@@ -294,6 +312,11 @@ PoolAllocateSimple::ProcessFunctionBodySimple (Function& F, TargetData & TD) {
                                              Name,
                                              InsertPt);
 
+          //
+          // Update the DSGraph.
+          //
+          CombinedDSGraph->getScalarMap().replaceScalar (CI, V);
+
           Instruction *Casted = V;
           if (V->getType() != CI->getType())
             Casted = CastInst::CreatePointerCast (V, CI->getType(), V->getName(), InsertPt);
@@ -327,6 +350,12 @@ PoolAllocateSimple::ProcessFunctionBodySimple (Function& F, TargetData & TD) {
                                          Opts + 2,
                                          Name,
                                          InsertPt);
+
+          //
+          // Update the DSGraph.
+          //
+          CombinedDSGraph->getScalarMap().replaceScalar (CI, V);
+
           Instruction *Casted = V;
           if (V->getType() != CI->getType())
             Casted = CastInst::CreatePointerCast (V, CI->getType(), V->getName(), InsertPt);

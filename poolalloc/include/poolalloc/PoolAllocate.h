@@ -353,10 +353,10 @@ protected:
     }
 
     //
-    // We either do not have a pool, or the pool is not accessible from the
-    // specified function.  Return NULL.
+    // Perhaps this is a global pool.  If it isn't, then return a NULL
+    // pointer.
     //
-    return 0;
+    return getGlobalPool (N);
   }
 
   virtual Value * getGlobalPool (const DSNode * Node) {

@@ -130,6 +130,7 @@ struct PoolMDPass : public ModulePass,
     };
 
     // Instruction visitor methods
+    void visitAllocaInst(AllocaInst & AI);
     void visitLoadInst(LoadInst & I);
     void visitStoreInst(StoreInst & I);
     void visitCallInst(CallInst & CI);

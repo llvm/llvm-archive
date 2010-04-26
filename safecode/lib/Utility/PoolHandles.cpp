@@ -138,6 +138,16 @@ PoolMDPass::createPoolMetaData (Value * V, Function * F) {
 }
 
 void
+PoolMDPass::visitAllocaInst(AllocaInst & AI) {
+  //
+  // Create meta-data linking the allocated pointer with its pool.
+  //
+  Function * F = AI.getParent()->getParent();
+  createPoolMetaData (&AI, F);
+  return;
+}
+
+void
 PoolMDPass::visitLoadInst (LoadInst & LI) {
   //
   // Create meta-data linking the dereferenced pointer with its pool.

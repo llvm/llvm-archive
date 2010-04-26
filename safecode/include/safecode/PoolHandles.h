@@ -130,9 +130,10 @@ struct PoolMDPass : public ModulePass,
     };
 
     // Instruction visitor methods
-    void visitLoadInst(LoadInst &I);
-    void visitStoreInst(StoreInst &I);
-    void visitCallInst(CallInst &CI);
+    void visitLoadInst(LoadInst & I);
+    void visitStoreInst(StoreInst & I);
+    void visitCallInst(CallInst & CI);
+    void visitGetElementPtrInst(GetElementPtrInst & GEP);
 
   private:
     // Pointers to analysis passes that we use
@@ -171,7 +172,7 @@ struct QueryPoolPass : public ModulePass {
     };
 
     // Data query methods
-    Value * getPool (Value * V);
+    Value * getPool (const Value * V);
     const Type * getPoolType (void);
     unsigned getDSFlags (Value * V) {
       return FlagMap[V];
@@ -181,9 +182,9 @@ struct QueryPoolPass : public ModulePass {
     }
 
   protected:
-    std::map<Value *, Value *>  PoolMap;
-    std::map<Value *, bool>     FoldedMap;
-    std::map<Value *, unsigned> FlagMap;
+    std::map<const Value *, Value *>  PoolMap;
+    std::map<const Value *, bool>     FoldedMap;
+    std::map<const Value *, unsigned> FlagMap;
 };
 
 //

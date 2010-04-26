@@ -158,6 +158,16 @@ PoolMDPass::visitStoreInst (StoreInst & SI) {
 }
 
 void
+PoolMDPass::visitGetElementPtrInst (GetElementPtrInst & GEP) {
+  //
+  // Create meta-data linking the dereferenced pointer with its pool.
+  //
+  Function * F = GEP.getParent()->getParent();
+  createPoolMetaData (&GEP, F);
+  return;
+}
+
+void
 PoolMDPass::visitCallInst (CallInst &CI) {
   //
   // Get the called function.  If this is an indirect call, then ignore it.
@@ -225,6 +235,13 @@ PoolMDPass::runOnModule (Module &M) {
     // Skip pool descriptors.
     //
     if (GV->getType()->getContainedType(0) == dsnPass->getPoolType()) continue;
+
+    //
+    // Skip debug metadata and other LLVM metadata.
+    //
+    std::string name = GV->getName();
+    if ((GV->getSection()) == "llvm.metadata") continue;
+    if (strncmp(name.c_str(), "llvm.", 5) == 0) continue;
 
     //
     // Create metadata for the global.
@@ -304,8 +321,8 @@ QueryPoolPass::runOnModule (Module & M) {
 //  Given an LLVM value, attempt to find the pool associated with that value.
 //
 Value *
-QueryPoolPass::getPool (Value * V) {
-  return PoolMap[V];
+QueryPoolPass::getPool (const Value * V) {
+  return PoolMap[V->stripPointerCasts()];
 }
 
 //

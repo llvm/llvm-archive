@@ -145,6 +145,8 @@ struct PoolMDPass : public ModulePass,
     // Private methods
     void createPoolMetaData (GlobalVariable * GV);
     void createPoolMetaData (Value * P, Function * F);
+    void createGlobalMetaData (Module & M);
+    void createByValMetaData (Module & M);
 };
 
 //

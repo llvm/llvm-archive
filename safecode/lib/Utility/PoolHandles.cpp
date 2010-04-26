@@ -202,24 +202,14 @@ PoolMDPass::visitCallInst (CallInst &CI) {
 }
 
 //
-// Method: runOnModule()
+// Method: createGlobalMetaData()
 //
 // Description:
-//  The LLVM pass manager will call this method when this pass is to be run on
-//  a Module.
+//  This method scans over all global variables in the program and creates pool
+//  metadata for those globals that interest the SAFECode passes.
 //
-// Return value:
-//  true  - The module was modified.
-//  false - The module was not modified.
-//
-bool
-PoolMDPass::runOnModule (Module &M) {
-  //
-  // Get a handle to the pool allocation pass and other passes which we
-  // require.
-  //
-  dsnPass    = &getAnalysis<DSNodePass>();
-
+void
+PoolMDPass::createGlobalMetaData (Module & M) {
   //
   // Scan through all global variables and get their pool handles.
   //
@@ -248,6 +238,68 @@ PoolMDPass::runOnModule (Module &M) {
     //
     createPoolMetaData (GV);
   }
+}
+
+//
+// Method: createByValMetaData()
+//
+// Description:
+//  Scan through all functions in the specified module and create metadata for
+//  all of the byval arguments of each function.
+//
+// Inputs:
+//  M - The module to modify.
+//
+// Outputs:
+//  M - The modified module with metadata mapping byval arguments to their
+//      pools and their DSNode information.
+//
+void
+PoolMDPass::createByValMetaData (Module & M) {
+  //
+  // Scan through each function looking for byval arguments.
+  //
+  Module::iterator FI = M.begin(), FE = M.end();
+  for ( ; FI != FE; ++FI) {
+    Function::arg_iterator Arg = FI->arg_begin();
+    for (; Arg != FI->arg_end(); ++Arg) {
+      if (Arg->hasByValAttr()) {
+        createPoolMetaData (Arg, FI);
+      }
+    }
+  }
+
+  return;
+}
+
+//
+// Method: runOnModule()
+//
+// Description:
+//  The LLVM pass manager will call this method when this pass is to be run on
+//  a Module.
+//
+// Return value:
+//  true  - The module was modified.
+//  false - The module was not modified.
+//
+bool
+PoolMDPass::runOnModule (Module &M) {
+  //
+  // Get a handle to the pool allocation pass and other passes which we
+  // require.
+  //
+  dsnPass    = &getAnalysis<DSNodePass>();
+
+  //
+  // Create metadata for global varibles.
+  //
+  createGlobalMetaData (M);
+
+  //
+  // Create metadata for function byval arguments.
+  //
+  createByValMetaData (M);
 
   //
   // Visit all instructions within the module to find all of the pool handles

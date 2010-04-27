@@ -14642,9 +14642,16 @@ build_ivar_reference (tree id)
 	 to an instance variable.  It's better to catch the cases
 	 where this is done unknowingly than to support the above
 	 paradigm.  */
+      /* APPLE LOCAL begin radar 7901648 */
+      if (cur_block) {
+        error ("instance variable %qs accessed in class method",
+	        IDENTIFIER_POINTER (id));
+        return error_mark_node;
+      }
       warning (0, "instance variable %qs accessed in class method",
-	       IDENTIFIER_POINTER (id));
+                  IDENTIFIER_POINTER (id));
       self_decl = convert (objc_instance_type, self_decl); /* cast */
+      /* APPLE LOCAL end radar 7901648 */
     }
 
   /* APPLE LOCAL begin ObjC new abi */

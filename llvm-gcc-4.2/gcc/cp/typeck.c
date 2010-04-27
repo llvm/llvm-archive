@@ -7063,6 +7063,11 @@ check_return_expr (tree retval, bool *no_warning)
   /* APPLE LOCAL radar 6185344 */
   if (cur_block && !cur_block->block_has_return_type)
     {
+      /* APPLE LOCAL begin radar 7901648 */
+      if (retval == error_mark_node ||
+          retval && TREE_TYPE(retval) == error_mark_node)
+        return error_mark_node;
+      /* APPLE LOCAL end radar 7901648 */
       /* If this is the first return we've seen in the block, infer the type of
 	 the block from it. */
       if (cur_block->return_type == NULL_TREE)

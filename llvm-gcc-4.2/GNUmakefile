@@ -54,6 +54,9 @@ else
 PREFIX = ${DEVELOPER_DIR}/usr/llvm-gcc-4.2
 endif
 
+# Default to not reinstall libLTO.dylib.
+INSTALL_LIBLTO := no
+
 # Unless assertions are forced on in the GMAKE command line, disable them.
 ifndef ENABLE_ASSERTIONS
 ENABLE_ASSERTIONS := no
@@ -67,6 +70,13 @@ LLVMCORE_PATH = ${DEVELOPER_DIR}/usr/local
 endif
 endif
 
+# Default is optimized build.
+ifeq ($(LLVM_DEBUG),1)
+LLVM_OPTIMIZED := no
+else
+LLVM_OPTIMIZED := yes
+endif
+
 ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
 endif
@@ -75,10 +85,30 @@ ifndef RC_ProjectSourceSubversion
 RC_ProjectSourceSubversion = 00
 endif
 
-install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
+install:
+	$(MAKE) OBJROOT=$(OBJROOT)/obj-llvmCore \
+	        SYMROOT=$(OBJROOT)/sym-llvmCore \
+	        DSTROOT=$(OBJROOT)/dst-llvmCore \
+	        INSTALL_LIBLTO=yes install-llvmCore
+	$(MAKE) LLVMCORE_PATH=$(OBJROOT)/dst-llvmCore/Developer/usr/local \
+	        INSTALL_LIBLTO=yes install-llvmgcc42
+
+install-llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
+	if [ ! -d $(SRC)/llvmCore ]; then \
+	  echo "Error: llvmCore source directory is missing"; \
+	  exit 1; \
+	fi
+	cd $(OBJROOT) && \
+	  DEVELOPER_DIR=Developer \
+	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
+	    $(SRC)/llvmCore /usr/local $(DSTROOT) $(SYMROOT) \
+	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
+	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
+
+install-llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
-	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) true \
+	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(INSTALL_LIBLTO) \
 	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
@@ -106,6 +136,7 @@ installsrc:
 	                        -type f -a -name .DS_Store -o \
 				-name \*~ -o -name .\#\* \) \
 	  -exec rm -rf {} \;
+	rm -rf "$(SRCROOT)/llvmCore/test"
 
 #######################################################################
 

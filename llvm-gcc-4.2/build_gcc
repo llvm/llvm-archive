@@ -69,8 +69,9 @@ DEST_DIR="$5"
 SYM_DIR="$6"
 
 # LLVM LOCAL begin
-# The seventh parameter is currently unused.
-ENABLE_LLVM=true
+# The seventh parameter is a yes/no that indicates whether libLTO.dylib
+# should be installed from LLVMCORE_PATH.
+INSTALL_LIBLTO="$7"
 
 # The eighth parameter is a yes/no that indicates whether assertions should be
 # enabled in the LLVM libs/tools.
@@ -84,6 +85,8 @@ LLVM_SUBMIT_VERSION="${10}"
 
 # The eleventh parameter is the subversion number of the submission, e.g. 03.
 LLVM_SUBMIT_SUBVERSION="${11}"
+
+ENABLE_LLVM=true
 
 # LLVM LOCAL end
 
@@ -762,6 +765,22 @@ fi
 # Remove unwind.h from the install directory for > 10.6
 if [ $DARWIN_VERS -gt 10 ]; then
     find $DEST_DIR -name "unwind.h" -print | xargs rm || exit 1
+fi
+
+# Install libLTO.dylib
+if [ "$INSTALL_LIBLTO" == yes ]; then
+  if [ ! -r $LLVMCORE_PATH/Developer/usr/lib/libLTO.dylib ]; then
+    echo "Error: llvmCore installation is missing libLTO.dylib"
+    exit 1
+  fi
+  mkdir -p $DEST_DIR/Developer/usr/lib
+  cp $LLVMCORE_PATH/Developer/usr/lib/libLTO.dylib \
+     $DEST_DIR/Developer/usr/lib/libLTO.dylib
+
+  # Add a symlink in /usr/lib for B&I.
+  mkdir -p $DEST_DIR/usr/lib/
+  cd $DEST_DIR/usr/lib && \
+    ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
 fi
 
 # LLVM LOCAL end

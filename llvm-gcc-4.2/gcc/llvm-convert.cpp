@@ -578,6 +578,10 @@ void TreeToLLVM::StartFunctionBody() {
   if (lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl)))
     Fn->addFnAttr(Attribute::AlwaysInline);
 
+  // asm functions are implicitly naked
+  if (DECL_IASM_ASM_FUNCTION (FnDecl) == 1)
+    Fn->addFnAttr(Attribute::Naked);
+
   // Pass inline keyword to optimizer.
   if (DECL_EXPLICIT_INLINE_P (FnDecl))
     Fn->addFnAttr(Attribute::InlineHint);

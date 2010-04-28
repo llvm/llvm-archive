@@ -8090,6 +8090,8 @@ iasm_stmt (tree expr, tree args, int lineno)
   sexpr = build_string (strlen (iasm_buffer), iasm_buffer);
 
   clobbers = uses;
+  /* LLVM LOCAL uses have been moved into clobbers. */
+  uses = NULL_TREE;
 #ifdef TARGET_MACHO
   if (iasm_memory_clobber (opcodename))
     {

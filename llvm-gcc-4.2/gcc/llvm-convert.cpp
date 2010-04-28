@@ -7395,6 +7395,13 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
       Alignment = DECL_ALIGN(exp) / 8;
   }
 
+  // Function arguments may have extra alignment attributes.
+  if (Argument *Arg = dyn_cast<Argument>(Decl)) {
+    unsigned pa = Arg->getParent()->getParamAlignment(Arg->getArgNo()+1);
+    if (pa && pa < Alignment)
+      Alignment = pa;
+  }
+
   return LValue(BitCastToType(Decl, PTy), Alignment);
 }
 

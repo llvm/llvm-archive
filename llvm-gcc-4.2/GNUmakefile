@@ -108,7 +108,7 @@ installsrc:
 	fi
 	# LLVM LOCAL begin: Avoid verification error due to binaries in libjava.
 	rm -rf "$(SRCROOT)/libjava/"
-	find -d "$(SRCROOT)" \( -type d -a -name CVS -o \
+	find -d "$(SRCROOT)" \( -type d -a -name .svn -o \
 	                        -type f -a -name .DS_Store -o \
 				-name \*~ -o -name .\#\* \) \
 	  -exec rm -rf {} \;

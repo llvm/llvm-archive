@@ -69,9 +69,8 @@ DEST_DIR="$5"
 SYM_DIR="$6"
 
 # LLVM LOCAL begin
-# The seventh parameter is true/false indicating whether LLVM should be enabled
-# or not.
-ENABLE_LLVM="$7"
+# The seventh parameter is currently unused.
+ENABLE_LLVM=true
 
 # The eighth parameter is a yes/no that indicates whether assertions should be
 # enabled in the LLVM libs/tools.

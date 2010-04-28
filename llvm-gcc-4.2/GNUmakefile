@@ -47,17 +47,11 @@ PREFIX = /usr
 #######################################################################
 
 # LLVM LOCAL begin
-# LLVM defaults to enabled.
-ifndef DISABLE_LLVM
-ENABLE_LLVM = true
 # LLVM gets installed into /Developer/usr/local, not /usr.
 ifndef DEVELOPER_DIR
 PREFIX = /Developer/usr/llvm-gcc-4.2
 else
 PREFIX = ${DEVELOPER_DIR}/usr/llvm-gcc-4.2
-endif
-else
-ENABLE_LLVM = false
 endif
 
 # Unless assertions are forced on in the GMAKE command line, disable them.
@@ -84,7 +78,7 @@ endif
 install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
-	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
+	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) true \
 	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 

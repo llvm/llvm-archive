@@ -55,13 +55,10 @@ class RewriteOOB : public ModulePass {
       // We require Dominator information
       AU.addRequired<DominatorTree>();
 
-      // We require these pass to get information on pool handles
-      AU.addRequired<DSNodePass>();
-
       // This pass gives us information on the various run-time checks
       AU.addRequired<InsertSCIntrinsic>();
 
-      // This pass gives us information on the various run-time checks
+      // We require these pass to get information on pool handles
       AU.addRequired<QueryPoolPass>();
 
       // Pretend that we don't modify anything

@@ -137,6 +137,58 @@ PoolMDPass::createPoolMetaData (Value * V, Function * F) {
   return;
 }
 
+//
+// Method: createOffsetMetaData()
+//
+// Description:
+//  This method generates meta-data that describes the offset into an object
+//  from which the result of a load is taken.
+//
+void
+PoolMDPass::createOffsetMetaData (LoadInst & LI) {
+  //
+  // Get the DSNode information for both the result of the load instruction
+  // and its pointer operand.  If the result of the load has no DSNode, then
+  // nothing needs to be done.
+  //
+  Function * F = LI.getParent()->getParent();
+  DSNode* ResultNode = dsnPass->getDSNode (&LI, F);
+  DSNode* PtrNode    = dsnPass->getDSNode (LI.getPointerOperand(), F);
+  if (!ResultNode) return;
+  assert (PtrNode && "Load operand has no DSNode!\n");
+
+  //
+  // Scan through the links of the DSNode of the load's pointer operand; we
+  // need to determine the offset into the memory object from which the result
+  // of the load is loaded.
+  //
+  for (unsigned index = 0 ; index < PtrNode->getNumLinks(); index += 4) {
+    DSNodeHandle & LinkNode = PtrNode->getLink(index);
+    if (LinkNode.getNode() == ResultNode) {
+      //
+      // Get the offset from the DSNodeHandle.
+      //
+      unsigned offset = LinkNode.getOffset();
+
+      //
+      // Create meta-data describing the offset of the pointer loaded by the
+      // load instruction.
+      //
+      const Type * Int32Type = Type::getInt32Ty(F->getParent()->getContext());
+      Value * Alignment = ConstantInt::get(Int32Type, offset);
+      Value * AlignData[2] = {&LI, Alignment};
+      MDNode * MD = MDNode::get (F->getParent()->getContext(), AlignData, 2);
+
+      //
+      // Add the alignment metadata to the set of alignment metadata notdes.
+      //
+      AlignmentNodes.push_back (MD);
+    }
+  }
+
+  return;
+}
+
 void
 PoolMDPass::visitAllocaInst(AllocaInst & AI) {
   //
@@ -354,52 +406,86 @@ PoolMDPass::runOnModule (Module &M) {
   for (unsigned index = 0; index < ValueToPoolNodes.size(); ++index)
     MD->addElement (ValueToPoolNodes[index]);
 
+  //
+  // Create a global meta-data node that links to all the alignment meta-data.
+  //
+  Twine name2 ("SCAlignData");
+  NamedMDNode * AMD = NamedMDNode::Create (M.getContext(), name2, 0, 0, &M);
+  for (unsigned index = 0; index < AlignmentNodes.size(); ++index)
+    AMD->addElement (AlignmentNodes[index]);
+
   // Assume that we modified something
   return true;
 }
 
 bool
 QueryPoolPass::runOnModule (Module & M) {
- //
-  // Get the basic block metadata.  If there isn't any metadata, then no basic
-  // block has been numbered.
   //
-  const NamedMDNode * MD = M.getNamedMetadata ("SCValueMap");
-  if (!MD) return false;
+  // Get the pool mapping metadata, scan through all of the metadata, and add
+  // the information in it into our internal data structures.
+  //
+  if (const NamedMDNode * MD = M.getNamedMetadata ("SCValueMap")) {
+    for (unsigned index = 0; index < MD->getNumElements(); ++index) {
+      //
+      // Get one entry of meta-data.
+      //
+      MDNode * Node = dyn_cast<MDNode>(MD->getElement (index));
+      assert (Node && "Wrong type of meta data!\n");
+
+      //
+      // Extract the information about this value from the metadata.
+      //
+      Value * V              = dyn_cast<Value>(Node->getElement (0));
+      Value * PH             = dyn_cast<Value>(Node->getElement (1));
+      ConstantInt * IsFolded = dyn_cast<ConstantInt>(Node->getElement (2));
+      ConstantInt * DSFlags  = dyn_cast<ConstantInt>(Node->getElement (3));
+
+      //
+      // Do some assertions to make sure that everything is sane.
+      //
+      assert (V  && "MDNode first element is not a Value!\n");
+      assert (PH && "MDNode second element is not a Pool Handle!\n");
+      assert (IsFolded && "MDNode third element is not a constant integer!\n");
+      assert (DSFlags && "MDNode fourth element is not a constant integer!\n");
+
+      //
+      // Add the values into the maps.
+      //
+      PoolMap[V]   = PH;
+      FoldedMap[V] = !(IsFolded->isZero());
+      FlagMap[V]   = DSFlags->getZExtValue();
+    }
+  }
 
   //
-  // Scan through all of the metadata and add the information in it into our
-  // internal data structures.
+  // Get the alignment metadata, scan through all of the metadata, and add
+  // the information in it into our internal data structures.
   //
-  for (unsigned index = 0; index < MD->getNumElements(); ++index) {
-    //
-    // Get one entry of meta-data.
-    //
-    MDNode * Node = dyn_cast<MDNode>(MD->getElement (index));
-    assert (Node && "Wrong type of meta data!\n");
+  if (const NamedMDNode * MD = M.getNamedMetadata ("SCAlignData")) {
+    for (unsigned index = 0; index < MD->getNumElements(); ++index) {
+      //
+      // Get one entry of meta-data.
+      //
+      MDNode * Node = dyn_cast<MDNode>(MD->getElement (index));
+      assert (Node && "Wrong type of meta data!\n");
 
-    //
-    // Extract the information about this value from the metadata.
-    //
-    Value * V              = dyn_cast<Value>(Node->getElement (0));
-    Value * PH             = dyn_cast<Value>(Node->getElement (1));
-    ConstantInt * IsFolded = dyn_cast<ConstantInt>(Node->getElement (2));
-    ConstantInt * DSFlags  = dyn_cast<ConstantInt>(Node->getElement (3));
+      //
+      // Extract the information about this value from the metadata.
+      //
+      LoadInst * LI           = dyn_cast<LoadInst>(Node->getElement (0));
+      ConstantInt * Alignment = dyn_cast<ConstantInt>(Node->getElement (1));
 
-    //
-    // Do some assertions to make sure that everything is sane.
-    //
-    assert (V  && "MDNode first element is not a Value!\n");
-    assert (PH && "MDNode second element is not a Pool Handle!\n");
-    assert (IsFolded && "MDNode third element is not a constant integer!\n");
-    assert (DSFlags && "MDNode fourth element is not a constant integer!\n");
+      //
+      // Do some assertions to make sure that everything is sane.
+      //
+      assert (LI && "MDNode first element is not a load instruction!\n");
+      assert (Alignment && "MDNode second element is not an integer!\n");
 
-    //
-    // Add the values into the maps.
-    //
-    PoolMap[V]   = PH;
-    FoldedMap[V] = !(IsFolded->isZero());
-    FlagMap[V]   = DSFlags->getZExtValue();
+      //
+      // Add the values into the maps.
+      //
+      AlignMap[LI] = Alignment;
+    }
   }
 
   return false;
@@ -444,13 +530,14 @@ RemovePoolMDPass::runOnModule (Module & M) {
   // Get the pool metadata.  If there isn't any metadata, then nothing needs to
   // be done.
   //  
-  NamedMDNode * MD = M.getNamedMetadata ("SCValueMap");
-  if (!MD) return false;
+  NamedMDNode * MD  = M.getNamedMetadata ("SCValueMap");
+  NamedMDNode * AMD = M.getNamedMetadata ("SCAlignData");
   
   //
   // Remove the metadata.
   //
-  MD->eraseFromParent();
+  if (MD)   MD->eraseFromParent();
+  if (AMD) AMD->eraseFromParent();
       
   //    
   // Assume we always modify the module.

@@ -145,11 +145,15 @@ struct PoolMDPass : public ModulePass,
     // Data structure containing value to pool metadata nodes
     std::vector<MDNode *> ValueToPoolNodes;
 
+    // Data structure containing alignment metadata nodes
+    std::vector<MDNode *> AlignmentNodes;
+
     // Private methods
     void createPoolMetaData (GlobalVariable * GV);
     void createPoolMetaData (Value * P, Function * F);
     void createGlobalMetaData (Module & M);
     void createByValMetaData (Module & M);
+    void createOffsetMetaData (LoadInst & LI);
 };
 
 //
@@ -182,14 +186,20 @@ struct QueryPoolPass : public ModulePass {
     unsigned getDSFlags (Value * V) {
       return FlagMap[V];
     }
+
     bool isTypeKnown (Value * V) {
       return FoldedMap[V];
     }
 
+    Value * getAlignment (const LoadInst * LI) {
+      return AlignMap[LI];
+    }
+
   protected:
-    std::map<const Value *, Value *>  PoolMap;
-    std::map<const Value *, bool>     FoldedMap;
-    std::map<const Value *, unsigned> FlagMap;
+    std::map<const Value *, Value *>    PoolMap;
+    std::map<const Value *, bool>       FoldedMap;
+    std::map<const Value *, unsigned>   FlagMap;
+    std::map<const LoadInst *, Value *> AlignMap;
 };
 
 //

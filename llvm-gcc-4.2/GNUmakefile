@@ -88,8 +88,7 @@ endif
 install:
 	$(MAKE) OBJROOT=$(OBJROOT)/obj-llvmCore \
 	        SYMROOT=$(OBJROOT)/sym-llvmCore \
-	        DSTROOT=$(OBJROOT)/dst-llvmCore \
-	        INSTALL_LIBLTO=yes llvmCore
+	        DSTROOT=$(OBJROOT)/dst-llvmCore llvmCore
 	$(MAKE) LLVMCORE_PATH=$(OBJROOT)/dst-llvmCore/Developer/usr/local \
 	        INSTALL_LIBLTO=yes llvmgcc42
 

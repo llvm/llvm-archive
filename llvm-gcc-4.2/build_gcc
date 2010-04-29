@@ -769,13 +769,14 @@ fi
 
 # Install libLTO.dylib
 if [ "$INSTALL_LIBLTO" == yes ]; then
-  if [ ! -r $LLVMCORE_PATH/Developer/usr/lib/libLTO.dylib ]; then
+  if [ ! -r $LLVMCORE_PATH/lib/libLTO.dylib ]; then
     echo "Error: llvmCore installation is missing libLTO.dylib"
     exit 1
   fi
   mkdir -p $DEST_DIR/Developer/usr/lib
-  cp $LLVMCORE_PATH/Developer/usr/lib/libLTO.dylib \
+  cp $LLVMCORE_PATH/lib/libLTO.dylib \
      $DEST_DIR/Developer/usr/lib/libLTO.dylib
+  strip -S $DEST_DIR/Developer/usr/lib/libLTO.dylib
 
   # Add a symlink in /usr/lib for B&I.
   mkdir -p $DEST_DIR/usr/lib/

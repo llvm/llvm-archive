@@ -263,6 +263,7 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
   }
 
   Value * PH = poolPass->getPool (V);
+  unsigned DSFlags = poolPass->getDSFlags (V);
   DSNode* Node = dsnPass->getDSNode(V, F);
   if (!PH) {
     return;
@@ -274,8 +275,8 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
   // original allocator routines, external globals and stack allocations remain
   // invisible.
   //
-  if (Node && (Node->isIncompleteNode())) return;
-  if (Node && (Node->isExternalNode())) return;
+  if (DSFlags & DSNode::IncompleteNode) return;
+  if (DSFlags & DSNode::ExternalNode) return;
 
   //
   // Determine whether a load/store check (or an indirect call check) is
@@ -289,14 +290,13 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
   //     the pointer is within bounds.
   //  3) Pointers that may have been integers casted into pointers.
   //
-  if (Node &&
-      (Node->isNodeCompletelyFolded() || Node->isArray() ||
-       Node->isIntToPtrNode())) {
+  if ((!(poolPass->isTypeKnown (V))) ||
+      (DSFlags & (DSNode::ArrayNode | DSNode::IntToPtrNode))) {
     // I am amazed the check here since the commet says that I is an load/store
     // instruction! 
     if (dyn_cast<CallInst>(I)) {
       // Do not perform function checks on incomplete nodes
-      if (Node->isIncompleteNode()) return;
+      if (DSFlags & DSNode::IncompleteNode) return;
 
       // Get the globals list corresponding to the node
       std::vector<const Function *> FuncList;
@@ -340,17 +340,18 @@ InsertPoolChecks::addLSChecks (Value *Vnew,
       if ((isa<AllocationInst>(Vnew)) || (isa<GlobalVariable>(Vnew)))
         return;
 
-        CastInst *CastVI = 
-          CastInst::CreatePointerCast (Vnew, 
-                 getVoidPtrType(), "casted", I);
-        CastInst *CastPHI = 
-          CastInst::CreatePointerCast (PH, 
-                 getVoidPtrType(), "casted", I);
-        std::vector<Value *> args(1,CastPHI);
-        args.push_back(CastVI);
+      CastInst *CastVI = 
+        CastInst::CreatePointerCast (Vnew, 
+               getVoidPtrType(), "casted", I);
+      CastInst *CastPHI = 
+        CastInst::CreatePointerCast (PH, 
+               getVoidPtrType(), "casted", I);
+      std::vector<Value *> args(1,CastPHI);
+      args.push_back(CastVI);
 
-        Constant * PoolCheckFunc = (Node->isIncompleteNode() || Node->isUnknownNode()) ? PoolCheckUI : PoolCheck;
-        CallInst::Create (PoolCheckFunc, args.begin(), args.end(), "", I);
+      bool isUI = (DSFlags & (DSNode::IncompleteNode | DSNode::UnknownNode));
+      Constant * PoolCheckFunc =  isUI ? PoolCheckUI : PoolCheck;
+      CallInst::Create (PoolCheckFunc, args.begin(), args.end(), "", I);
     }
   }
 }
@@ -444,7 +445,6 @@ InsertPoolChecks::addGetElementPtrChecks (GetElementPtrInst * GEP) {
       //      std::cerr << " function call \n";
       return;
     }
-    Function *F = GEP->getParent()->getParent();
     // Now we need to decide if we need to pass in the alignmnet
     //for the poolcheck
     //     if (getDSNodeOffset(GEP->getPointerOperand(), F)) {
@@ -576,10 +576,10 @@ std::cerr << "Ins   : " << *GEP << std::endl;
         args.push_back(Casted);
 
         // Insert it
-        DSNode * Node = dsnPass->getDSNode (GEP, F);
+        unsigned DSFlags = poolPass->getDSFlags (GEP);
 
         Instruction * CI;
-        if (Node->isIncompleteNode() || Node->isUnknownNode())
+        if ((!(poolPass->isTypeKnown (GEP))) || (DSFlags & DSNode::UnknownNode))
           CI = CallInst::Create(PoolCheckArrayUI, args.begin(), args.end(),
                                 "", InsertPt);
         else

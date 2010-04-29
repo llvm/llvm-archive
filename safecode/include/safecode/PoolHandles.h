@@ -183,11 +183,11 @@ struct QueryPoolPass : public ModulePass {
     // Data query methods
     Value * getPool (const Value * V);
     const Type * getPoolType (void);
-    unsigned getDSFlags (Value * V) {
+    unsigned getDSFlags (const Value * V) {
       return FlagMap[V];
     }
 
-    bool isTypeKnown (Value * V) {
+    bool isTypeKnown (const Value * V) {
       return FoldedMap[V];
     }
 

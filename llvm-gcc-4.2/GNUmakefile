@@ -89,11 +89,11 @@ install:
 	$(MAKE) OBJROOT=$(OBJROOT)/obj-llvmCore \
 	        SYMROOT=$(OBJROOT)/sym-llvmCore \
 	        DSTROOT=$(OBJROOT)/dst-llvmCore \
-	        INSTALL_LIBLTO=yes install-llvmCore
+	        INSTALL_LIBLTO=yes llvmCore
 	$(MAKE) LLVMCORE_PATH=$(OBJROOT)/dst-llvmCore/Developer/usr/local \
-	        INSTALL_LIBLTO=yes install-llvmgcc42
+	        INSTALL_LIBLTO=yes llvmgcc42
 
-install-llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
+llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	if [ ! -d $(SRC)/llvmCore ]; then \
 	  echo "Error: llvmCore source directory is missing"; \
 	  exit 1; \
@@ -105,7 +105,7 @@ install-llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
-install-llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
+llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(INSTALL_LIBLTO) \
@@ -164,4 +164,4 @@ clean:
 $(OBJROOT) $(SYMROOT) $(DSTROOT):
 	mkdir -p $@
 
-.PHONY: install installsrc clean
+.PHONY: install installsrc clean llvmCore llvmgcc42

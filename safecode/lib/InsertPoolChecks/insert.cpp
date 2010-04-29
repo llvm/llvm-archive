@@ -166,15 +166,10 @@ InsertPoolChecks::addPoolChecks(Function &F) {
 //
 void
 InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
-  // Get the function containing the load instruction
-  Function * F = LI->getParent()->getParent();
-
   // Get the DSNode for the result of the load instruction.  If it is type
   // unknown, then no alignment check is needed.
-  DSNode * LoadResultNode = dsnPass->getDSNode (LI,F);
-  if (!(LoadResultNode && (!(LoadResultNode->isNodeCompletelyFolded())))) {
+  if (!(poolPass->isTypeKnown (LI)))
     return;
-  }
 
   //
   // Get the pool handle for the node.
@@ -186,53 +181,49 @@ InsertPoolChecks::insertAlignmentCheck (LoadInst * LI) {
   // If the node is incomplete or unknown, then only perform the check if
   // checks to incomplete or unknown are allowed.
   //
-  Constant * ThePoolCheckFunction = PoolCheckAlign;
-  if ((LoadResultNode->isUnknownNode()) ||
-      (LoadResultNode->isIncompleteNode())) {
+  Constant * CheckAlignment = PoolCheckAlign;
+  if ((poolPass->getDSFlags (LI)) & (DSNode::IncompleteNode | DSNode::UnknownNode)) {
 #if 0
     if (EnableUnknownChecks) {
-      ThePoolCheckFunction = PoolCheckAlignUI;
+      CheckAlignment = PoolCheckAlignUI;
     } else {
       ++MissedIncompleteChecks;
       return;
     }
 #else
-    ThePoolCheckFunction = PoolCheckAlignUI;
+    CheckAlignment = PoolCheckAlignUI;
     return;
 #endif
   }
 
   //
-  // A check is needed.  Scan through the links of the DSNode of the load's
-  // pointer operand; we need to determine the offset for the alignment check.
+  // A check is needed.  Fetch the alignment of the loaded pointer and insert
+  // an alignment check.
   //
-  DSNode * Node = dsnPass->getDSNode (LI->getPointerOperand(), F);
-  if (!Node) return;
-  for (unsigned i = 0 ; i < Node->getNumLinks(); i+=4) {
-    DSNodeHandle & LinkNode = Node->getLink(i);
-    if (LinkNode.getNode() == LoadResultNode) {
-      // Insertion point for this check is *after* the load.
-      BasicBlock::iterator InsertPt = LI;
-      ++InsertPt;
+  Value * Alignment = poolPass->getAlignment (LI);
+  assert (Alignment);
 
-      // Create instructions to cast the checked pointer and the checked pool
-      // into sbyte pointers.
-      Value *CastVI  = castTo (LI, getVoidPtrType(), InsertPt);
-      Value *CastPHI = castTo (PH, getVoidPtrType(), InsertPt);
+  // Insertion point for this check is *after* the load.
+  BasicBlock::iterator InsertPt = LI;
+  ++InsertPt;
 
-      // Create the call to poolcheck
-      const Type * Int32Type = IntegerType::getInt32Ty(getGlobalContext());
-      std::vector<Value *> args(1,CastPHI);
-      args.push_back(CastVI);
-      args.push_back (ConstantInt::get(Int32Type, LinkNode.getOffset()));
-      CallInst::Create (ThePoolCheckFunction,args.begin(), args.end(), "", InsertPt);
+  //
+  // Create instructions to cast the checked pointer and the checked pool
+  // into sbyte pointers.
+  //
+  Value *CastLI  = castTo (LI, getVoidPtrType(), InsertPt);
+  Value *CastPHI = castTo (PH, getVoidPtrType(), InsertPt);
 
-      // Update the statistics
-      ++AlignLSChecks;
+  // Create the call to poolcheckalign
+  std::vector<Value *> args(1, CastPHI);
+  args.push_back(CastLI);
+  args.push_back (Alignment);
+  CallInst::Create (CheckAlignment, args.begin(), args.end(), "", InsertPt);
 
-      break;
-    }
-  }
+  // Update the statistics
+  ++AlignLSChecks;
+
+  return;
 }
 
 //

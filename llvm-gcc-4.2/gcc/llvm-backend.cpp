@@ -523,11 +523,6 @@ void llvm_initialize_backend(void) {
 /// performLateBackendInitialization - Set backend options that may only be
 /// known at codegen time.
 void performLateBackendInitialization(void) {
-  // The Ada front-end sets flag_exceptions only after processing the file.
-  if (USING_SJLJ_EXCEPTIONS)
-    SjLjExceptionHandling = flag_exceptions;
-  else
-    DwarfExceptionHandling = flag_exceptions;
   for (Module::iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
     if (!I->isDeclaration()) {

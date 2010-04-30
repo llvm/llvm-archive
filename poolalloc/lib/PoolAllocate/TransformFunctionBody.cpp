@@ -545,6 +545,7 @@ void FuncTransform::visitStrdupCall(CallSite CS) {
 void FuncTransform::visitCallSite(CallSite& CS) {
   const Function *CF = CS.getCalledFunction();
   Instruction *TheCall = CS.getInstruction();
+  bool thread_creation_point = false;
 
   // If the called function is casted from one function type to another, peer
   // into the cast instruction and pull out the actual function being called.
@@ -583,6 +584,21 @@ void FuncTransform::visitCallSite(CallSite& CS) {
     } else if (CF->getName() == "valloc") {
       std::cerr << "VALLOC USED BUT NOT HANDLED!\n";
       abort();
+    } else if (CF->getName() == "pthread_create") {
+      thread_creation_point = true;
+      //Get DSNode representing the void* passed to the callee
+	  DSNodeHandle passed_dsnode_handle = G->getNodeForValue(CS.getArgument(3));
+
+      //Get DSNode representing the DSNode of the function pointer Value of the pthread_create call
+      DSNode* thread_callee_node = G->getNodeForValue(CS.getArgument(2)).getNode();
+      if(!thread_callee_node)
+      {
+    	  FuncInfo *CFI = PAInfo.getFuncInfo(*CF);
+    	  thread_callee_node = G->getNodeForValue(CFI->MapValueToOriginal(CS.getArgument(2))).getNode();
+      }
+
+      //Fill in CF with the name of one of the functions in thread_callee_node
+      CF = const_cast<Function*>(dyn_cast<Function>(*thread_callee_node->globals_begin()));
     }
   }
 
@@ -754,8 +770,9 @@ void FuncTransform::visitCallSite(CallSite& CS) {
     Args.push_back(ArgVal);
   }
 
-  // Add the rest of the arguments...
-  Args.insert(Args.end(), CS.arg_begin(), CS.arg_end());
+  // Add the rest of the arguments unless we're a thread creation point, in which case we only need the pools
+  if(!thread_creation_point)
+	  Args.insert(Args.end(), CS.arg_begin(), CS.arg_end());
     
   //
   // There are circumstances where a function is casted to another type and
@@ -776,7 +793,27 @@ void FuncTransform::visitCallSite(CallSite& CS) {
 
   std::string Name = TheCall->getName();    TheCall->setName("");
 
-  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
+  if(thread_creation_point) {
+	Module *M = CS.getInstruction()->getParent()->getParent()->getParent();
+	Value* pthread_replacement = M->getFunction("poolalloc_pthread_create");
+	vector<Value*> thread_args;
+
+	//Push back original thread arguments through the callee
+	thread_args.push_back(CS.getArgument(0));
+	thread_args.push_back(CS.getArgument(1));
+	thread_args.push_back(CS.getArgument(2));
+
+	//Push back the integer argument saying how many uses there are
+	thread_args.push_back(Constant::getIntegerValue(llvm::Type::getInt32Ty(M->getContext()),APInt(32,Args.size())));
+	thread_args.insert(thread_args.end(),Args.begin(),Args.end());
+	thread_args.push_back(CS.getArgument(3));
+
+	//Make the thread creation call
+	NewCall = CallInst::Create(pthread_replacement,
+							   thread_args.begin(),thread_args.end(),
+							   Name,TheCall);
+  }
+  else if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
     NewCall = InvokeInst::Create (NewCallee, II->getNormalDest(),
                                   II->getUnwindDest(),
                                   Args.begin(), Args.end(), Name, TheCall);

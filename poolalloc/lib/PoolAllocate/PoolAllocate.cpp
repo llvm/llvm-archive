@@ -271,13 +271,16 @@ void PoolAllocate::AddPoolPrototypes(Module* M) {
                                  PoolDescPtrTy, VoidPtrTy, Int32Type, NULL);
 
   Function* pthread_create_func = M->getFunction("pthread_create");
-  Function::arg_iterator i = pthread_create_func->arg_begin();
-  vector<const Type*> non_vararg_params;
-  non_vararg_params.push_back(i++->getType());
-  non_vararg_params.push_back(i++->getType());
-  non_vararg_params.push_back(i++->getType());
-  non_vararg_params.push_back(Int32Type);
-  PoolThreadWrapper = M->getOrInsertFunction("poolalloc_pthread_create",FunctionType::get(Int32Type,non_vararg_params,true));
+  if(pthread_create_func)
+  {
+      Function::arg_iterator i = pthread_create_func->arg_begin();
+      vector<const Type*> non_vararg_params;
+      non_vararg_params.push_back(i++->getType());
+      non_vararg_params.push_back(i++->getType());
+      non_vararg_params.push_back(i++->getType());
+      non_vararg_params.push_back(Int32Type);
+      PoolThreadWrapper = M->getOrInsertFunction("poolalloc_pthread_create",FunctionType::get(Int32Type,non_vararg_params,true));
+  }
 }
 
 static void getCallsOf(Constant *C, std::vector<CallInst*> &Calls) {

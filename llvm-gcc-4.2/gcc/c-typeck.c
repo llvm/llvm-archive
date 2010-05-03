@@ -2137,6 +2137,14 @@ build_array_ref (tree array, tree index)
             || TREE_CODE(ty) == QUAL_UNION_TYPE)
           ty = TYPE_MAIN_VARIANT (ty);
 
+        if (TYPE_SIZE_UNIT (ty) == 0) {
+          /* We don't know the size of the array elements, so we can't
+             index it.  Invoke the usual GCC routine; it will diagnose
+             the error and return a tree that won't ICE.  */
+          return build_indirect_ref (build_binary_op (PLUS_EXPR, ar, index, 0),
+                                     "array indexing");
+        }
+
         ar = build4 (ARRAY_REF, ty, ar, index, NULL_TREE, NULL_TREE);
         /* Mirror logic from build_indirect_ref to set TREE_THIS_VOLATILE and
          * other flags.

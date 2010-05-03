@@ -1379,8 +1379,12 @@ void emit_global_to_llvm(tree decl) {
   } else if (!TREE_PUBLIC(decl)) {
     Linkage = GlobalValue::InternalLinkage;
   } else if (DECL_WEAK(decl)) {
-    // The user may have explicitly asked for weak linkage - ignore flag_odr.
-    Linkage = GlobalValue::WeakAnyLinkage;
+    if (DECL_ONE_ONLY(decl) &&
+        !lookup_attribute("weak", DECL_ATTRIBUTES(decl)))
+      Linkage = GlobalValue::getWeakLinkage(flag_odr);
+    else
+      // The user may have explicitly asked for weak linkage - ignore flag_odr.
+      Linkage = GlobalValue::WeakAnyLinkage;
   } else if (DECL_ONE_ONLY(decl)) {
     Linkage = GlobalValue::getWeakLinkage(flag_odr);
   } else if (DECL_COMMON(decl) &&  // DECL_COMMON is only meaningful if no init

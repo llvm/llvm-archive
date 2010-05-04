@@ -54,6 +54,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   default: break;
   case IX86_BUILTIN_ADDPS:
   case IX86_BUILTIN_ADDPD:
+    Result = Builder.CreateFAdd(Ops[0], Ops[1]);
+    return true;
   case IX86_BUILTIN_PADDB:
   case IX86_BUILTIN_PADDW:
   case IX86_BUILTIN_PADDD:
@@ -66,6 +68,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_SUBPS:
   case IX86_BUILTIN_SUBPD:
+    Result = Builder.CreateFSub(Ops[0], Ops[1]);
+    return true;
   case IX86_BUILTIN_PSUBB:
   case IX86_BUILTIN_PSUBW:
   case IX86_BUILTIN_PSUBD:
@@ -78,6 +82,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   case IX86_BUILTIN_MULPS:
   case IX86_BUILTIN_MULPD:
+    Result = Builder.CreateFMul(Ops[0], Ops[1]);
+    return true;
   case IX86_BUILTIN_PMULLW:
   case IX86_BUILTIN_PMULLW128:
   case IX86_BUILTIN_PMULLD128:

@@ -733,11 +733,18 @@ for t in $TARGETS ; do
     ln -s ../../libllvmgcc.dylib
 done
 
+# Backward compatibility: Allow LLVM_BUILT_ROOTS instead of DISABLE_USR_LINKS.
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+    DISABLE_USR_LINKS=1
+fi
+# Roots built by B&I, need to include sym links in /usr/bin and /usr/lib
+# because B&I sets XCODE_DEVELOPER_USR_PATH=/.  Otherwise, we don't want those
+# sym links.
+if [ "x$DISABLE_USR_LINKS" == "x" ]; then
     mkdir -p $DEST_DIR/usr/bin
     cd $DEST_DIR/usr/bin
-    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
+    ln -s ../../Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+    ln -s ../../Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi
 
 # Remove unwind.h from the install directory for > 10.6
@@ -759,10 +766,12 @@ if [ "$INSTALL_LIBLTO" == yes ]; then
   cp $LTO $DEST_DIR/Developer/usr/lib/libLTO.dylib
   strip -S $DEST_DIR/Developer/usr/lib/libLTO.dylib
 
-  # Add a symlink in /usr/lib for B&I.
-  mkdir -p $DEST_DIR/usr/lib/
-  cd $DEST_DIR/usr/lib && \
-    ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
+  if [ "x$DISABLE_USR_LINKS" == "x" ]; then
+    # Add a symlink in /usr/lib for B&I.
+    mkdir -p $DEST_DIR/usr/lib/
+    cd $DEST_DIR/usr/lib && \
+      ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
+  fi
 fi
 
 # LLVM LOCAL end

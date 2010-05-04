@@ -7141,6 +7141,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
   // struct, in bits.  For bitfields this may be on a non-byte boundary.
   unsigned BitStart = getComponentRefOffsetInBits(exp);
   Value *FieldPtr;
+  unsigned ByteOffset = 0;
 
   tree field_offset = component_ref_field_offset (exp);
   // If this is a normal field at a fixed offset from the start, handle it.
@@ -7160,12 +7161,12 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // the offset from BitStart.
     if (MemberIndex) {
       const StructLayout *SL = TD.getStructLayout(cast<StructType>(StructTy));
-      unsigned Offset = SL->getElementOffset(MemberIndex);
-      BitStart -= Offset * 8;
+      ByteOffset = SL->getElementOffset(MemberIndex);
+      BitStart -= ByteOffset * 8;
 
       // If the base is known to be 8-byte aligned, and we're adding a 4-byte
       // offset, the field is known to be 4-byte aligned.
-      LVAlign = MinAlign(LVAlign, Offset);
+      LVAlign = MinAlign(LVAlign, ByteOffset);
     }
 
     // There is debate about whether this is really safe or not, be conservative
@@ -7197,7 +7198,7 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     }
     // Here BitStart gives the offset of the field in bits from field_offset.
     // Incorporate as much of it as possible into the pointer computation.
-    unsigned ByteOffset = BitStart/8;
+    ByteOffset = BitStart/8;
     if (ByteOffset > 0) {
       Offset = Builder.CreateAdd(Offset,
         ConstantInt::get(Offset->getType(), ByteOffset));
@@ -7231,15 +7232,38 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     const Type *LLVMFieldTy =
       cast<PointerType>(FieldPtr->getType())->getElementType();
 
-    // If the LLVM notion of the field type contains the entire bitfield being
-    // accessed, use the LLVM type.  This avoids pointer casts and other bad
-    // things that are difficult to clean up later.  This occurs in cases like
-    // "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing y.
-    // We want to access the field as a ulong, not as a uint with an offset.
-    if (LLVMFieldTy->isIntegerTy() &&
-        LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize &&
-        LLVMFieldTy->getPrimitiveSizeInBits() ==
-        TD.getTypeAllocSizeInBits(LLVMFieldTy))
+    // 'piecemeal' will be true if the fetch-type we wish to use will
+    // reference memory outside of the struct.  (That's not good.)
+    // Note this check is too simplistic: if this field is part of a
+    // struct within another struct, it's probably O.K. to fetch data
+    // outside of the bitfield, unless the inadvertently-referenced
+    // data is volatile.  But we're too lazy to check for that; choose
+    // the slow-but-conservative-and-always-correct path.
+    tree gccContext = DECL_FIELD_CONTEXT(FieldDecl);
+    tree gccSize = TYPE_SIZE(gccContext);
+    unsigned int gccStructSize = TREE_INT_CST_LOW(gccSize);
+    // piecemeal == true means we fetch the bitfield in pieces and
+    // reassemble in a register.
+    bool piecemeal = false;
+
+    if (ByteOffset * 8 + TD.getTypeAllocSizeInBits(FieldTy) > gccStructSize) {
+      // If the LLVM notion of the type would reference memory outside
+      // of the enclosing struct, punt and fetch the bitfield
+      // piecemeal.  Round the bitfield size up to the nearest byte;
+      // use existing size if it's already a multiple of 8:
+      unsigned int byteAlignedBitfieldSize = (BitfieldSize % 8) ?
+        ((BitfieldSize / 8) + 1) * 8 : BitfieldSize;
+      FieldTy = Type::getIntNTy(Context, byteAlignedBitfieldSize);
+      piecemeal = true;
+    } else if (LLVMFieldTy->isIntegerTy() &&
+             LLVMFieldTy->getPrimitiveSizeInBits() >= BitStart + BitfieldSize &&
+             LLVMFieldTy->getPrimitiveSizeInBits() ==
+             TD.getTypeAllocSizeInBits(LLVMFieldTy))
+      // If the LLVM notion of the field type contains the entire bitfield being
+      // accessed, use the LLVM type.  This avoids pointer casts and other bad
+      // things that are difficult to clean up later.  This occurs in cases like
+      // "struct X{ unsigned long long x:50; unsigned y:2; }" when accessing y.
+      // We want to access the field as a ulong, not as a uint with an offset.
       FieldTy = LLVMFieldTy;
     else
       // If the field result type T is a bool or some other curiously sized
@@ -7251,8 +7275,9 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       // inaccessible.  Avoid this by rounding up the size appropriately.
       FieldTy = IntegerType::get(Context, TD.getTypeAllocSizeInBits(FieldTy));
 
-    assert(FieldTy->getPrimitiveSizeInBits() ==
-           TD.getTypeAllocSizeInBits(FieldTy) && "Field type not sequential!");
+    assert((piecemeal || (FieldTy->getPrimitiveSizeInBits() ==
+                          TD.getTypeAllocSizeInBits(FieldTy))) &&
+           "Field type not sequential!");
 
     // If this is a bitfield, the field may span multiple fields in the LLVM
     // type.  As such, cast the pointer to be a pointer to the declared type.

@@ -111,6 +111,14 @@ llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
+Embedded:
+	@if [ -z "$(ARM_SDK)" ]; then \
+	  echo "ARM_SDK must be set to build the Embedded target"; \
+	  exit 1; \
+	fi
+	ARM_PLATFORM=`xcodebuild -version -sdk $(ARM_SDK) PlatformPath` && \
+	$(MAKE) DSTROOT=$(DSTROOT)$$ARM_PLATFORM DISABLE_USR_LINKS=1 install
+
 # LLVM LOCAL end
 
 # installhdrs does nothing, because the headers aren't useful until
@@ -163,4 +171,4 @@ clean:
 $(OBJROOT) $(SYMROOT) $(DSTROOT):
 	mkdir -p $@
 
-.PHONY: install installsrc clean llvmCore llvmgcc42
+.PHONY: install installsrc clean llvmCore llvmgcc42 Embedded

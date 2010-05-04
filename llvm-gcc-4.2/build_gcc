@@ -126,7 +126,6 @@ ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
 if [ -n "$ARM_SDK" ]; then
-  ARM_PLATFORM=`xcodebuild -version -sdk $ARM_SDK PlatformPath`
   ARM_SYSROOT=`xcodebuild -version -sdk $ARM_SDK Path`
 else
   # Use bootstrap SDK if it is available.
@@ -136,16 +135,8 @@ else
   else
     ARM_SYSROOT=/
   fi
-  ARM_PLATFORM=/
 fi
 ARM_CONFIGFLAGS="$ARM_CONFIGFLAGS --with-build-sysroot=\"$ARM_SYSROOT\""
-
-# If it's being built for iPhoneOS, assume the llvmCore bits are under
-# iPhoneOS platform directory.
-if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
-  LLVMCORE_PATH="${ARM_PLATFORM}${LLVMCORE_PATH}"
-  DEST_ROOT="${ARM_PLATFORM}${DEST_ROOT}"
-fi
 
 # If building an ARM target, check that the required directories exist
 # and query the libSystem arm slices to determine which multilibs we should
@@ -622,11 +613,7 @@ done
 # Compress manpages
 gzip -f $MDIR/*
 
-if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
-MAN1_DIR=${DEST_DIR}${ARM_PLATFORM}/Developer/usr/share/man/man1
-else
 MAN1_DIR=$DEST_DIR/Developer/usr/share/man/man1
-fi
 mkdir -p ${MAN1_DIR}
 cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-gcc.1
 cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-g++.1
@@ -746,20 +733,11 @@ for t in $TARGETS ; do
     ln -s ../../libllvmgcc.dylib
 done
 
-if [ "x$RC_ProjectName" == "xllvmgcc42_Embedded" ]; then
-    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-        mkdir -p $DEST_DIR${ARM_PLATFORM}/usr/bin
-        cd $DEST_DIR${ARM_PLATFORM}/usr/bin
-        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
-    fi
-else
-    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-        mkdir -p $DEST_DIR/usr/bin
-        cd $DEST_DIR/usr/bin
-        ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-        ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
-    fi
+if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+    mkdir -p $DEST_DIR/usr/bin
+    cd $DEST_DIR/usr/bin
+    ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
+    ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi
 
 # Remove unwind.h from the install directory for > 10.6

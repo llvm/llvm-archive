@@ -734,7 +734,7 @@ for t in $TARGETS ; do
 done
 
 # Backward compatibility: Allow LLVM_BUILT_ROOTS instead of DISABLE_USR_LINKS.
-if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
+if [ "x$LLVM_BUILT_ROOTS" != "x" ]; then
     DISABLE_USR_LINKS=1
 fi
 # Roots built by B&I, need to include sym links in /usr/bin and /usr/lib

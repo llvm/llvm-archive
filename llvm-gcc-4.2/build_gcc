@@ -691,8 +691,11 @@ for t in $TARGETS ; do
 done
 
 if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-    mkdir -p $DEST_DIR/usr/bin
-    cd $DEST_DIR/usr/bin
+    # NOTE: This code should never run.  There's no reason to have anything
+    # in /AppleInternal/Developer/usr/bin, but just in case something breaks
+    # it's better to go there instead of /usr/bin.
+    mkdir -p $DEST_DIR/AppleInternal/Developer/usr/bin
+    cd $DEST_DIR/AppleInternal/Developer/usr/bin
     ln -s /AppleInternal/Developer/LLVM/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
     ln -s /AppleInternal/Developer/LLVM/usr/bin/llvm-g++-4.2 llvm-g++-4.2
 fi

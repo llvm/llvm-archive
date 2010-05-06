@@ -51,11 +51,7 @@ PREFIX = /usr
 ifndef DISABLE_LLVM
 ENABLE_LLVM = true
 # LLVM gets installed into /AppleInternal/Developer/LLVM/usr/local, not /usr.
-ifndef DEVELOPER_DIR
 PREFIX = /AppleInternal/Developer/LLVM/usr/llvm-gcc-4.2
-else
-PREFIX = ${DEVELOPER_DIR}/usr/llvm-gcc-4.2
-endif
 else
 ENABLE_LLVM = false
 endif
@@ -68,11 +64,7 @@ LLVM_ASSERTIONS := no
 endif
 
 ifndef LLVMCORE_PATH
-ifndef DEVELOPER_DIR
 LLVMCORE_PATH = /AppleInternal/Developer/LLVM/usr/local
-else
-LLVMCORE_PATH = ${DEVELOPER_DIR}/usr/local
-endif
 endif
 
 ifndef RC_ProjectSourceVersion
@@ -83,8 +75,12 @@ ifndef RC_ProjectSourceSubversion
 RC_ProjectSourceSubversion = 00
 endif
 
+# NOTE: Set LLVM_BUILT_ROOTS to disable installing symlinks in /usr/bin.
+# That doesn't even make sense for the installed directory structure for
+# this special version of llvm-gcc.
 install: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
+	  LLVM_BUILT_ROOTS=1 \
 	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(ENABLE_LLVM) \
 	    $(LLVM_ASSERTIONS) $(LLVMCORE_PATH) \

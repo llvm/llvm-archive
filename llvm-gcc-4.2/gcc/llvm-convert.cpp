@@ -7241,7 +7241,10 @@ LValue TreeToLLVM::EmitLV_COMPONENT_REF(tree exp) {
     // the slow-but-conservative-and-always-correct path.
     tree gccContext = DECL_FIELD_CONTEXT(FieldDecl);
     tree gccSize = TYPE_SIZE(gccContext);
-    unsigned int gccStructSize = TREE_INT_CST_LOW(gccSize);
+    // If the size isn't constant, assume the worst (a one byte
+    // struct).
+    unsigned int gccStructSize = TREE_CODE(gccSize) == INTEGER_CST ?
+      TREE_INT_CST_LOW(gccSize) : 1;
     // piecemeal == true means we fetch the bitfield in pieces and
     // reassemble in a register.
     bool piecemeal = false;

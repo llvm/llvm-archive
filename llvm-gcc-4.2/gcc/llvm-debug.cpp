@@ -268,7 +268,8 @@ void DebugInfo::push_regions(tree desired, tree grand) {
   // grand, but it should be fixed so nothing weird happens if they're
   // equal.
   llvm::DIDescriptor D = findRegion(desired);
-  RegionStack.push_back(D.getNode());
+  llvm::MDNode *DN = D;
+  RegionStack.push_back(DN);
 }
 
 // Pop the current region/lexical-block back to 'grand', then push
@@ -302,11 +303,11 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
     DISubprogram SPDecl(cast<MDNode>(I->second));
     DISubprogram SP = 
       DebugFactory.CreateSubprogramDefinition(SPDecl);
-    SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
+    SPDecl->replaceAllUsesWith(SP);
 
     // Push function on region stack.
-    RegionStack.push_back(WeakVH(SP.getNode()));
-    RegionMap[FnDecl] = WeakVH(SP.getNode());
+    RegionStack.push_back(WeakVH(SP));
+    RegionMap[FnDecl] = WeakVH(SP);
     return;
   } 
 
@@ -329,11 +330,11 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
     DISubprogram SPDecl(cast<MDNode>(I->second));
     DISubprogram SP = 
       DebugFactory.CreateSubprogramDefinition(SPDecl);
-    SPDecl.getNode()->replaceAllUsesWith(SP.getNode());
+    SPDecl->replaceAllUsesWith(SP);
 
     // Push function on region stack.
-    RegionStack.push_back(WeakVH(SP.getNode()));
-    RegionMap[FnDecl] = WeakVH(SP.getNode());
+    RegionStack.push_back(WeakVH(SP));
+    RegionMap[FnDecl] = WeakVH(SP);
     return;
   } 
 
@@ -368,11 +369,11 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
                                   Virtuality, VIndex, ContainingType,
                                   DECL_ARTIFICIAL (FnDecl), optimize);
 
-  SPCache[FnDecl] = WeakVH(SP.getNode());
+  SPCache[FnDecl] = WeakVH(SP);
 
   // Push function on region stack.
-  RegionStack.push_back(WeakVH(SP.getNode()));
-  RegionMap[FnDecl] = WeakVH(SP.getNode());
+  RegionStack.push_back(WeakVH(SP));
+  RegionMap[FnDecl] = WeakVH(SP);
 }
 
 /// getOrCreateNameSpace - Get name space descriptor for the tree node.
@@ -387,7 +388,7 @@ DINameSpace DebugInfo::getOrCreateNameSpace(tree Node, DIDescriptor Context) {
     DebugFactory.CreateNameSpace(Context, GetNodeName(Node),
                                  getOrCreateFile(Loc.file), Loc.line);
 
-  NameSpaceCache[Node] = WeakVH(DNS.getNode());
+  NameSpaceCache[Node] = WeakVH(DNS);
   return DNS;
 }
 
@@ -403,12 +404,12 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
 
   if (TYPE_P (Node)) {
     DIType Ty = getOrCreateType(Node);
-    return DIDescriptor(Ty.getNode());
+    return DIDescriptor(Ty);
   } else if (DECL_P (Node)) {
     if (TREE_CODE (Node) == NAMESPACE_DECL) {
       DIDescriptor NSContext = findRegion(DECL_CONTEXT(Node));
       DINameSpace NS = getOrCreateNameSpace(Node, NSContext);
-      return DIDescriptor(NS.getNode());
+      return DIDescriptor(NS);
     }
     return findRegion (DECL_CONTEXT (Node));
   } else if (TREE_CODE(Node) == BLOCK) {
@@ -417,7 +418,7 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
     DILexicalBlock lexical_block = 
       DebugFactory.CreateLexicalBlock(context, CurLineNo);
-    RegionMap[Node] = WeakVH(lexical_block.getNode());
+    RegionMap[Node] = WeakVH(lexical_block);
     return DIDescriptor(lexical_block);
   }
 
@@ -467,7 +468,7 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Instruction *Call = DebugFactory.InsertDeclare(AI, D, 
                                                  Builder.GetInsertBlock());
   
-  Call->setDebugLoc(DebugLoc::get(CurLineNo, 0, VarScope.getNode()));
+  Call->setDebugLoc(DebugLoc::get(CurLineNo, 0, VarScope));
 }
 
 
@@ -624,11 +625,12 @@ DIType DebugInfo::createMethodType(tree type) {
                                      getOrCreateFile(main_input_filename),
                                      0, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray());
-  llvm::TrackingVH<llvm::MDNode> FwdTypeNode = FwdType.getNode();
-  TypeCache[type] = WeakVH(FwdType.getNode());
+  llvm::MDNode *FTN = FwdType;
+  llvm::TrackingVH<llvm::MDNode> FwdTypeNode = FTN;
+  TypeCache[type] = WeakVH(FwdType);
   // Push the struct on region stack.
-  RegionStack.push_back(WeakVH(FwdType.getNode()));
-  RegionMap[type] = WeakVH(FwdType.getNode());
+  RegionStack.push_back(WeakVH(FwdType));
+  RegionMap[type] = WeakVH(FwdType);
   
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
   
@@ -701,7 +703,7 @@ DIType DebugInfo::createPointerType(tree type) {
                                        0 /*offset */, 
                                        0 /*flags*/, 
                                        FromTy);
-      TypeCache[TyName] = WeakVH(Ty.getNode());
+      TypeCache[TyName] = WeakVH(Ty);
       return Ty;
     }
   
@@ -888,12 +890,13 @@ DIType DebugInfo::createStructType(tree type) {
     return FwdDecl;
   
   // Insert into the TypeCache so that recursive uses will find it.
-  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FwdDecl.getNode();
-  TypeCache[type] =  WeakVH(FwdDecl.getNode());
+  llvm::MDNode *FDN = FwdDecl;
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = FDN;
+  TypeCache[type] =  WeakVH(FwdDecl);
 
   // Push the struct on region stack.
-  RegionStack.push_back(WeakVH(FwdDecl.getNode()));
-  RegionMap[type] = WeakVH(FwdDecl.getNode());
+  RegionStack.push_back(WeakVH(FwdDecl));
+  RegionMap[type] = WeakVH(FwdDecl);
   
   // Convert all the elements.
   llvm::SmallVector<llvm::DIDescriptor, 16> EltTys;
@@ -1017,7 +1020,7 @@ DIType DebugInfo::createStructType(tree type) {
                                       Virtuality, VIndex, ContainingType,
                                       DECL_ARTIFICIAL (Member), optimize);
       EltTys.push_back(SP);
-      SPCache[Member] = WeakVH(SP.getNode());
+      SPCache[Member] = WeakVH(SP);
     }
   }
   
@@ -1041,8 +1044,8 @@ DIType DebugInfo::createStructType(tree type) {
                                      Loc.line, 
                                      NodeSizeInBits(type), NodeAlignInBits(type),
                                      0, SFlags, llvm::DIType(), Elements,
-                                     RunTimeLang, ContainingType.getNode());
-  RegionMap[type] = WeakVH(RealDecl.getNode());
+                                     RunTimeLang, ContainingType);
+  RegionMap[type] = WeakVH(RealDecl);
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
@@ -1072,7 +1075,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                           0 /*offset */, 
                                           0 /*flags*/, 
                                           MainTy);
-      TypeCache[TyDef] = WeakVH(Ty.getNode());
+      TypeCache[TyDef] = WeakVH(Ty);
       return Ty;
     }
   }
@@ -1104,7 +1107,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
                                          MainTy);
   
   if (TYPE_VOLATILE(type) || TYPE_READONLY(type)) {
-    TypeCache[type] = WeakVH(Ty.getNode());
+    TypeCache[type] = WeakVH(Ty);
     return Ty;
   }
 
@@ -1196,7 +1199,7 @@ DIType DebugInfo::getOrCreateType(tree type) {
       Ty = createBasicType(type);
       break;
   }
-  TypeCache[type] = WeakVH(Ty.getNode());
+  TypeCache[type] = WeakVH(Ty);
   return Ty;
 }
 

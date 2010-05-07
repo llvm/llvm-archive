@@ -3931,6 +3931,12 @@ enum ix86_builtins
   ((REG_NAME) + (*(REG_NAME) == '%' ? 1 : 0))
 
 /* Propagate code model setting to backend */
+/*
+  FIXME: (See <rdar://problem/7946145>) This option was mis-compiling a library.
+
+    if (TARGET_OMIT_LEAF_FRAME_POINTER)
+      argvec.push_back("--disable-non-leaf-fp-elim");
+*/
 #define LLVM_SET_MACHINE_OPTIONS(argvec)	   \
   switch (ix86_cmodel) {			   \
   default:                                         \
@@ -3950,9 +3956,7 @@ enum ix86_builtins
   case CM_32:					   \
     argvec.push_back("--code-model=default");	   \
     break;					   \
-  }                                                \
-  if (TARGET_OMIT_LEAF_FRAME_POINTER)              \
-    argvec.push_back("--disable-non-leaf-fp-elim");
+  }
 
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */

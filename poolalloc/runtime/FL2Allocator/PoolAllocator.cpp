@@ -896,6 +896,7 @@ void *poolrealloc(PoolTy<NormalPoolTraits> *Pool, void *Node,
   pthread_mutex_lock(&Pool->pool_lock);
   void* to_return = poolrealloc_internal(Pool, Node, NumBytes);
   pthread_mutex_unlock(&Pool->pool_lock);
+  return to_return;
 }
 
 #ifdef USE_DYNCALL

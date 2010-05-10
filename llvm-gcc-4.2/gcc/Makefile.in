@@ -4108,6 +4108,7 @@ install-driver: installdirs xgcc$(exeext)
 	-rm -f $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
 	-$(INSTALL_PROGRAM) xgcc$(exeext) $(DESTDIR)$(bindir)/$(GCC_INSTALL_NAME)$(exeext)
 	-rm -f $(DESTDIR)$(bindir)/$(target_noncanonical)-gcc-$(version)$(exeext)
+	-rm -f $(DESTDIR)$(libsubdir)/libstdc++.dylib
 	$(LN_S) /usr/lib/libstdc++.6.dylib $(DESTDIR)$(libsubdir)/libstdc++.dylib
 	-( cd $(DESTDIR)$(bindir) && \
 	   $(LN) $(GCC_INSTALL_NAME)$(exeext) $(target_noncanonical)-gcc-$(version)$(exeext) )

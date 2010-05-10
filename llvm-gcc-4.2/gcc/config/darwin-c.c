@@ -412,135 +412,21 @@ darwin_pragma_reverse_bitfields (cpp_reader *pfile ATTRIBUTE_UNUSED)
 /* APPLE LOCAL end pragma reverse_bitfields */
 
 /* APPLE LOCAL begin optimization pragmas 3124235/3420242 */
-/* LLVM LOCAL put va_opt in GC memory 7210265 */
-static GTY(()) varray_type va_opt;
-
-static void
-push_opt_level (int level, int size)
-{
-  if (!va_opt)
-    VARRAY_INT_INIT (va_opt, 5, "va_opt");
-  VARRAY_PUSH_INT (va_opt, size << 16 | level);
-}
-
-static void
-pop_opt_level (void)
-{
-  int level;
-  if (!va_opt)
-    VARRAY_INT_INIT (va_opt, 5, "va_opt");
-  if (!VARRAY_ACTIVE_SIZE (va_opt))
-    BAD ("optimization pragma stack underflow");
-  level = VARRAY_TOP_INT (va_opt);
-  VARRAY_POP (va_opt);
-
-  optimize_size = level >> 16;
-  optimize = level & 0xffff;
-}
-
-/* APPLE LOCAL begin 4760857 optimization pragmas */
-/* Set the global flags as required by #pragma optimization_level or
-   #pragma optimize_size.  */
-
-static void darwin_set_flags_from_pragma (void)
-{
-  set_flags_from_O (false);
-
-  /* MERGE FIXME 5416402 flag_loop_optimize2 is gone now */
-#if 0
-  /* Enable new loop optimizer pass if any of its optimizations is called.  */
-  if (flag_move_loop_invariants
-      || flag_unswitch_loops
-      || flag_peel_loops
-      || flag_unroll_loops
-      || flag_branch_on_count_reg)
-    flag_loop_optimize2 = 1;
-#endif
-
-  /* This is expected to be defined in each target.   Should contain
-     any snippets from OPTIMIZATION_OPTIONS and OVERRIDE_OPTIONS that
-     set per-func flags on the basis of -O level. */
-  reset_optimization_options (optimize, optimize_size);
-
-  if (align_loops <= 0) align_loops = 1;
-  if (align_loops_max_skip > align_loops || !align_loops)
-    align_loops_max_skip = align_loops - 1;
-  if (align_jumps <= 0) align_jumps = 1;
-  if (align_jumps_max_skip > align_jumps || !align_jumps)
-    align_jumps_max_skip = align_jumps - 1;
-  if (align_labels <= 0) align_labels = 1;
-}
-/* APPLE LOCAL end 4760857 optimization pragmas */
-
+/* LLVM LOCAL begin disable optimization pragmas */
 void
 darwin_pragma_opt_level  (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
-  tree t;
-  enum cpp_ttype argtype = pragma_lex (&t);
-
-  if (argtype == CPP_NAME)
-    {
-      const char* arg = IDENTIFIER_POINTER (t);
-      if (strcmp (arg, "reset") != 0)
-	BAD ("malformed '#pragma optimization_level [GCC] {0|1|2|3|reset}', ignoring");
-      pop_opt_level ();
-    }
-  else if (argtype == CPP_NUMBER)
-    {
-      if (TREE_CODE (t) != INTEGER_CST
-	  || INT_CST_LT (t, integer_zero_node)
-	  || TREE_INT_CST_HIGH (t) != 0)
-	BAD ("malformed '#pragma optimization_level [GCC] {0|1|2|3|reset}', ignoring");
-
-      push_opt_level (optimize, optimize_size);
-      optimize = TREE_INT_CST_LOW (t);
-      if (optimize > 3)
-	optimize = 3;
-      optimize_size = 0;
-    }
-  else
-    BAD ("malformed '#pragma optimization_level [GCC] {0|1|2|3|reset}', ignoring");
-
-  /* APPLE LOCAL begin 4760857 optimization pragmas */
-  darwin_set_flags_from_pragma ();
-  /* APPLE LOCAL end 4760857 optimization pragmas */
-
-  if (pragma_lex (&t) != CPP_EOF)
-    BAD ("junk at end of '#pragma optimization_level'");
+  warning (0, "ignoring '#pragma optimization_level'");  
+  return;
 }
 
 void
 darwin_pragma_opt_size  (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
-  const char* arg;
-  tree t;
-
-  if (pragma_lex (&t) != CPP_NAME)
-    BAD ("malformed '#pragma optimize_for_size { on | off | reset}', ignoring");
-  arg = IDENTIFIER_POINTER (t);
-
-  if (!strcmp (arg, "on"))
-    {
-      push_opt_level (optimize, optimize_size);
-      optimize_size = 1;
-      optimize = 2;
-    }
-  else if (!strcmp (arg, "off"))
-    /* Not clear what this should do exactly.  CW does not do a pop so
-       we don't either.  */
-    optimize_size = 0;
-  else if (!strcmp (arg, "reset"))
-    pop_opt_level ();
-  else
-    BAD ("malformed '#pragma optimize_for_size { on | off | reset }', ignoring");
-
-  /* APPLE LOCAL begin 4760857 optimization pragmas */
-  darwin_set_flags_from_pragma ();
-  /* APPLE LOCAL end 4760857 optimization pragmas */
-
-  if (pragma_lex (&t) != CPP_EOF)
-    BAD ("junk at end of '#pragma optimize_for_size'");
+  warning (0, "ignoring '#pragma optimize_for_size'");
+  return;
 }
+/* LLVM LOCAL end disable optimization pragmas */
 /* APPLE LOCAL end optimization pragmas 3124235/3420242 */
 
 static struct {
@@ -1261,5 +1147,3 @@ create_init_utf16_var (const unsigned char *inbuf, size_t length, size_t *numUni
   return decl;
 }
 /* APPLE LOCAL end radar 2996215 - 6068877 */
-/* LLVM LOCAL put va_opt in GC memory 7210265 */
-#include "gt-darwin-c.h"

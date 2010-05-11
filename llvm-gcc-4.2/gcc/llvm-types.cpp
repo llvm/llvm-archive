@@ -37,7 +37,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
-#undef VISIBILITY_HIDDEN
 
 extern "C" {
 #include "config.h"

@@ -43,8 +43,6 @@ namespace llvm {
   class BasicBlock;
 }
 
-#undef VISIBILITY_HIDDEN
-
 extern "C" {
 #include "config.h"
 #include "system.h"

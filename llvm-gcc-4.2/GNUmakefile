@@ -101,7 +101,7 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	  DEVELOPER_DIR=Developer \
 	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC)/llvmCore /usr/local $(DSTROOT) $(SYMROOT) \
-	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
+	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) no \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)

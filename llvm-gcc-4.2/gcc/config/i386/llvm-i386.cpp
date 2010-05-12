@@ -329,7 +329,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
-    Result = SI;
     return true;
   }
   case IX86_BUILTIN_STOREUPD: {
@@ -338,7 +337,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
-    Result = SI;
     return true;
   }
   case IX86_BUILTIN_STOREDQU: {
@@ -347,7 +345,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
-    Result = SI;
     return true;
   }
   case IX86_BUILTIN_LOADHPS: {
@@ -600,7 +597,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Ptr = CreateTemporary(Type::getInt32Ty(Context));
     Builder.CreateStore(Ops[0], Ptr);
     Ptr = Builder.CreateBitCast(Ptr, Type::getInt8PtrTy(Context));
-    Result = Builder.CreateCall(ldmxcsr, Ptr);
+    Builder.CreateCall(ldmxcsr, Ptr);
     return true;
   }
   case IX86_BUILTIN_STMXCSR: {

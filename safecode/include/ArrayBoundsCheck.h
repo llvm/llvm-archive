@@ -66,7 +66,6 @@ public:
   virtual bool isGEPSafe(GetElementPtrInst * GEP);
   virtual void getAnalysisUsage(AnalysisUsage & AU) const {
     AU.addRequiredTransitive<QueryPoolPass>();
-    AU.addRequiredTransitive<DSNodePass>();
     AU.addRequiredTransitive<ArrayBoundsCheckGroup>();
     AU.setPreservesAll();  
   }

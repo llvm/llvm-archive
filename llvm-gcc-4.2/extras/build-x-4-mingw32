@@ -4,18 +4,18 @@ set -e                     # Terminate script at the first line that fails.
 set -o pipefail            # Return the first non-zero pipe command error.
 set -x                     # Print commands as they are executed
 
-# This script performs an automated cross build on x86_64-apple-darwin10 of
-# self-hosted llvm-gcc for i686-pc-mingw32. It assumes the valid native
-# cross compiler for i686-pc-mingw32 is in place and available as well as
-# cross libraries and headers.
+# This script performs an automated build on x86_64-apple-darwin10 of
+# cross llvm-gcc for i686-pc-mingw32. It assumes the valid native
+# compiler for x86_64-apple-darwin10 is in place and available as well as
+# cross libraries and headers for i686-pc-mingw32.
 
 # --build=x86_64-apple-darwin10
-# --host=i686-pc-mingw32
+# --host=x86_64-apple-darwin10
 # --target=i686-pc-mingw32
 
 # The usage:
 # Run this build from the build from the build root directory as
-# build-4-mingw32 [<step>] [<extra args>]
+# build-x-4-mingw32 [<step>] [<extra args>]
 
 # Expected project tree structure:
 # <build root>
@@ -47,6 +47,7 @@ do_clean=no                # Clean up the build directory.
 do_configure_llvm=no       # Configure LLVM.
 do_make_llvm=no            # Make LLVM.
 do_test_llvm=no            # Test LLVM.
+do_cross_tools=no          # Copy cross-tools. 
 do_configure_llvmgcc=no    # Configure LLVM-GCC.
 do_make_llvmgcc=no         # Make LLVM-GCC.
 do_install_llvmgcc=no      # Install LLVM-GCC.
@@ -64,6 +65,7 @@ if (( ! $# == 0 )) ; then
       configure_llvm    |  \
       make_llvm         |  \
       test_llvm         |  \
+      cross_tools       |  \
       configure_llvmgcc |  \
       make_llvmgcc      |  \
       install_llvmgcc   |  \
@@ -84,6 +86,7 @@ if [ "$do_all" == "yes" ] ; then
    do_configure_llvm=yes
    do_make_llvm=yes
    do_test_llvm=yes
+   do_cross_tools=yes
    do_configure_llvmgcc=yes
    do_make_llvmgcc=yes
    do_install_llvmgcc=yes
@@ -111,11 +114,12 @@ if [ "$do_configure_llvm" == "yes" ] ; then
    mkdir -p ${BUILD_ROOT}/${LLVM_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_obj}
    cd ${BUILD_ROOT}/${LLVM_obj}
-
-   ../${LLVM_src}/configure --prefix=${PRIVATE_INSTALL}      \
-      --build=x86_64-apple-darwin10 --host=i686-pc-mingw32   \
-      --target=i686-pc-mingw32                               \
-      --enable-optimize                                      \
+   
+   ../${LLVM_src}/configure --prefix=${PRIVATE_INSTALL}          \
+      --build=x86_64-apple-darwin10 --host=x86_64-apple-darwin10 \
+      --target=i686-pc-mingw32                                   \
+      --enable-optimize                                          \
+	  --without-llvmgcc --without-llvmgxx                        \
       $@  # Extra args if any
 
 fi
@@ -126,6 +130,7 @@ fi
 if [ "$do_make_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
+   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.   
    nice -n 20 make VERBOSE=1 \
       $@  # Extra args if any, like -j16 for example.
 
@@ -143,6 +148,17 @@ if [ "$do_test_llvm" == "yes" ] ; then
 fi
 
 #------------------------------------------------------------------------------
+# Step: Copy cross-tools.
+#------------------------------------------------------------------------------
+if [ "$do_cross_tools" == "yes" ] ; then
+
+   # We need a local copy of binutils, system libraries and headers,
+   # since we will be installing there.
+   cp -RL /cross-tools/ ${PRIVATE_INSTALL}
+
+fi
+
+#------------------------------------------------------------------------------
 # Step: Configure LLVM-GCC.
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvmgcc" == "yes" ] ; then
@@ -152,15 +168,16 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
    mkdir -p ${BUILD_ROOT}/${LLVM_GCC_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_GCC_obj}
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
-
-   ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL}  \
-      --build=x86_64-apple-darwin10 --host=i686-pc-mingw32   \
-      --target=i686-pc-mingw32                               \
-      --program-prefix=llvm-                                 \
-      --enable-llvm=${BUILD_ROOT}/${LLVM_obj}                \
-      --enable-languages=c,c++                               \
-      --disable-multilib --disable-nls --disable-shared      \
-      --disable-sjlj-exceptions --disable-__cxa_atexit       \
+   
+   ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL}      \
+      --build=x86_64-apple-darwin10 --host=x86_64-apple-darwin10 \
+	  --with-local-prefix=/tools                                 \
+      --target=i686-pc-mingw32                                   \
+      --program-prefix=i686-pc-mingw32-                          \
+      --enable-llvm=${BUILD_ROOT}/${LLVM_obj}                    \
+      --enable-languages=c,c++                                   \
+      --disable-multilib --disable-nls --disable-shared          \
+      --disable-sjlj-exceptions --disable-__cxa_atexit           \
       $@  # Extra args if any
 
 fi

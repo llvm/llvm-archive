@@ -226,6 +226,11 @@ int main(int argc, char **argv) {
       NOT_FOR_SVA(Passes.add(new ConvertUnsafeAllocas()));
     }
 
+    //
+    // Ensure that all type-safe stack allocations are initialized.
+    //
+    NOT_FOR_SVA(Passes.add(new InitAllocas()));
+
 #if 0
     // Schedule the Bottom-Up Call Graph analysis before pool allocation.  The
     // Bottom-Up Call Graph pass doesn't work after pool allocation has
@@ -291,8 +296,7 @@ int main(int argc, char **argv) {
     Passes.add(new ExactCheckOpt());
 
     NOT_FOR_SVA(Passes.add(new RegisterStackObjPass()));
-    NOT_FOR_SVA(Passes.add(new InitAllocas()));
-    
+
     if (EnableFastCallChecks)
       Passes.add(createIndirectCallChecksPass());
 

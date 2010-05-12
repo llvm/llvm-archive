@@ -78,17 +78,6 @@ NAMESPACE_SC_BEGIN
 
   inline bool
   InitAllocas::TypeContainsPointer(const Type *Ty) {
-    //
-    // FIXME:
-    //  What this should really do is ask Pool Allocation if the given memory
-    //  object is a pool descriptor.  However, I don't think Pool Allocation
-    //  has a good API for requesting that information.
-    //
-    // If this type is a pool descriptor type, then pretend that it doesn't
-    // have any pointer.
-    //
-    if (Ty == PoolType) return false;
-
     if (Ty->getTypeID() == Type::PointerTyID)
       return true;
     else if (Ty->getTypeID() == Type::StructTyID) {
@@ -145,13 +134,9 @@ NAMESPACE_SC_BEGIN
     //
     if (isa<AllocaInst>(Inst)) {
       // Get the DSNode for this instruction
-      DSNode *Node = dsnPass->getDSNode(Inst, Inst->getParent()->getParent());
-
-      //
-      // If this allocation has no DSNode e.g., it's a pool handle, then don't
-      // bother looking at it.
-      //
-      if (!Node) return false;
+      DSGraph * DSG = dsaPass->getDSGraph (*(Inst->getParent()->getParent()));
+      DSNode *Node = DSG->getNodeForValue (Inst).getNode();
+      assert (Node && "Alloca has no DSNode!\n");
 
       //
       // Do not bother to change this allocation if the type is unknown;
@@ -219,13 +204,7 @@ NAMESPACE_SC_BEGIN
       return modified;
 
     // Get references to previous analysis passes
-    dsnPass = &getAnalysis<DSNodePass>();
-    paPass = dsnPass->paPass;
-
-    //
-    // Get the type of a pool descriptor.
-    //
-    PoolType = paPass->getPoolType();
+    dsaPass = &getAnalysis<EQTDDataStructures>();
 
     for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
       for (BasicBlock::iterator IAddrBegin=I->begin(), IAddrEnd = I->end();

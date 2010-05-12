@@ -214,17 +214,11 @@ NAMESPACE_SC_BEGIN
   InitAllocas::runOnFunction (Function &F) {
     bool modified = false;
 
-    //
-    // Create needed LLVM types.
-    //
-    Type * VoidPtrType = PointerType::getUnqual(Int8Type);
-
     // Don't bother processing external functions
     if ((F.isDeclaration()) || (F.getName() == "poolcheckglobals"))
       return modified;
 
     // Get references to previous analysis passes
-    TargetData &TD = getAnalysis<TargetData>();
     dsnPass = &getAnalysis<DSNodePass>();
     paPass = dsnPass->paPass;
 
@@ -242,32 +236,20 @@ NAMESPACE_SC_BEGIN
         //
         if (changeType (IAddrBegin)) {
           AllocationInst * AllocInst = cast<AllocationInst>(IAddrBegin);
-#if 0
           //
-          // Get the type of object allocated.
+          // Create an aggregate zero value to initialize the alloca.
           //
-          const Type * TypeCreated = AllocInst->getAllocatedType ();
-
-          MallocInst * TheMalloc = 
-          new MallocInst(TypeCreated, 0, AllocInst->getName(), 
-          IAddrBegin);
-          std::cerr << "Found alloca that is struct or array" << std::endl;
+          const Type * AllocedType = AllocInst->getAllocatedType();
+          Constant * Init = Constant::getNullValue (AllocedType);
 
           //
-          // Remove old uses of the old instructions.
+          // Scan for a place to insert the instruction to initialize the
+          // allocated memory.
           //
-          AllocInst->replaceAllUsesWith (TheMalloc);
-
-          //
-          // Remove the old instruction.
-          //
-          AllocInst->getParent()->getInstList().erase(AllocInst);
-          modified = true;
-#endif
-          // Insert object registration at the end of allocas.
           Instruction * iptI = ++IAddrBegin;
           --IAddrBegin;
-          if (AllocInst->getParent() == (&(AllocInst->getParent()->getParent()->getEntryBlock()))) {
+          BasicBlock & entryBlock = F.getEntryBlock();
+          if (AllocInst->getParent() == (&entryBlock)) {
             BasicBlock::iterator InsertPt = AllocInst->getParent()->begin();
             while (&(*(InsertPt)) != AllocInst)
               ++InsertPt;
@@ -276,24 +258,14 @@ NAMESPACE_SC_BEGIN
             iptI = InsertPt;
           }
 
-          // Create a value that calculates the alloca's size
-          const Type * AllocaType = AllocInst->getAllocatedType();
-          Value *AllocSize = ConstantInt::get (Int32Type,
-                                               TD.getTypeAllocSize(AllocaType));
+          //
+          // Store the zero value into the allocated memory.
+          //
+          new StoreInst (Init, AllocInst, iptI);
 
-          if (AllocInst->isArrayAllocation())
-            AllocSize = BinaryOperator::Create(Instruction::Mul, AllocSize,
-                                               AllocInst->getOperand(0),
-                                               "sizetmp",
-                                               iptI);
-
-          Value * TheAlloca = castTo (AllocInst, VoidPtrType, "cast", iptI);
-
-          std::vector<Value *> args(1, TheAlloca);
-          args.push_back (ConstantInt::get (Int8Type, meminitvalue));
-          args.push_back (AllocSize);
-          args.push_back (ConstantInt::get (Int32Type, 0));
-          CallInst::Create (memsetF, args.begin(), args.end(), "", iptI);
+          //
+          // Update statistics.
+          //
           ++InitedAllocas;
         }
       }

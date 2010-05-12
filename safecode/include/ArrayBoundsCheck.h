@@ -65,15 +65,14 @@ public:
   ArrayBoundsCheckStruct() : FunctionPass ((intptr_t) &ID) {}
   virtual bool isGEPSafe(GetElementPtrInst * GEP);
   virtual void getAnalysisUsage(AnalysisUsage & AU) const {
-    AU.addRequired<TargetData>();
-    AU.addRequired<DSNodePass>();
-    AU.addRequired<ArrayBoundsCheckGroup>();
+    AU.addRequiredTransitive<QueryPoolPass>();
+    AU.addRequiredTransitive<DSNodePass>();
+    AU.addRequiredTransitive<ArrayBoundsCheckGroup>();
     AU.setPreservesAll();  
   }
   virtual bool runOnFunction(Function & F);
 private:
-  TargetData * TD;
-  DSNodePass * dsaPass;
+  QueryPoolPass * poolPass;
   ArrayBoundsCheckGroup * abcPass;
 };
 

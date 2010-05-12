@@ -342,8 +342,14 @@ bool cgraph_default_inline_p (struct cgraph_node *, const char **);
    C++ uses DECL_EXTERNAL to mark functions instantiated as part of
    template instantiation which should not be emitted. Objective C uses
    it for some other convoluted purpose.  Functions marked this way in
-   other languages should not be passed down to the LLVM BE.  The easiest
+   other languages should not be passed down to the LLVM BE (except functions
+   marked always_inline should be passed down in all languages).  The easiest
    way to outwit this, although inelegant, seems to be to check the language.
+   IS_EXTERN_NOINLINE seems a reasonable name for this quality.
+
+   IS_EXTERN_INLINE, on the other hand, describes functions that have the
+   semantics of "extern inline" in C99.  As such it is not the inverse of
+   IS_EXTERN_NOINLINE.  Sorry about that.
 
    Weak extern inlines are treated as weak.
 
@@ -356,6 +362,7 @@ bool cgraph_default_inline_p (struct cgraph_node *, const char **);
            !lookup_attribute ("weak", DECL_ATTRIBUTES (f)) && \
            strcmp (lang_hooks.name, "GNU C") == 0)
 #define IS_EXTERN_NOINLINE(f) (DECL_EXTERNAL(f) && \
+           !lookup_attribute ("always_inline", DECL_ATTRIBUTES (f)) && \
            (!DECL_EXPLICIT_INLINE_P(f) || \
             lookup_attribute ("weak", DECL_ATTRIBUTES (f)) || \
             strcmp (lang_hooks.name, "GNU C") != 0))

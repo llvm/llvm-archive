@@ -3238,7 +3238,10 @@ expand_body (tree fn)
      `-fexternal-templates'; we instantiate the function, even though
      we're not planning on emitting it, in case we get a chance to
      inline it.  */
-  if (DECL_EXTERNAL (fn))
+  /* LLVM LOCAL begin  always_inline functions need to be emitted */
+  if (DECL_EXTERNAL (fn) &&
+      !lookup_attribute ("always_inline", DECL_ATTRIBUTES (fn)))
+  /* LLVM LOCAL end */
     return;
 
   /* ??? When is this needed?  */

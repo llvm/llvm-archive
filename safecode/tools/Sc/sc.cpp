@@ -38,7 +38,6 @@
 
 #include "poolalloc/PoolAllocate.h"
 
-#include "ABCPreProcess.h"
 #include "InsertPoolChecks.h"
 #include "IndirectCallChecks.h"
 #include "safecode/BreakConstantGEPs.h"
@@ -465,7 +464,6 @@ static void addStaticGEPCheckingPass(PassManager & Passes) {
 			break;
 		case SAFECodeConfiguration::ABC_CHECK_FULL:
 #if 0
-			Passes.add(new ABCPreProcess());
 			Passes.add(new ArrayBoundsCheckStruct());
 			Passes.add(new ArrayBoundsCheck());
 #else

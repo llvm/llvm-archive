@@ -266,6 +266,17 @@ int main(int argc, char **argv) {
 #endif
 
     //
+    // Use static analysis to determine which indexing operations (GEPs) do not
+    // require run-time checks.  This is scheduled right before the check
+    // insertion pass because it seems that the PassManager will invalidate the
+    // results if they are not consumed immediently.
+    //
+    addStaticGEPCheckingPass(Passes);
+
+    Passes.add(new InsertPoolChecks());
+    Passes.add (new DummyUse());
+
+    //
     // Instrument the code so that memory objects are registered into the
     // correct pools.  Note that user-space SAFECode requires a few additional
     // transforms to do this.
@@ -282,16 +293,6 @@ int main(int argc, char **argv) {
     // Register all customized allocators, such as vmalloc() / kmalloc() in
     // kernel, or poolalloc() in pool allocation
     Passes.add(new RegisterCustomizedAllocation());      
-
-    //
-    // Use static analysis to determine which indexing operations (GEPs) do not
-    // require run-time checks.  This is scheduled right before the check
-    // insertion pass because it seems that the PassManager will invalidate the
-    // results if they are not consumed immediently.
-    //
-    addStaticGEPCheckingPass(Passes);
-
-    Passes.add(new InsertPoolChecks());
 
     Passes.add(new ExactCheckOpt());
 
@@ -329,8 +330,6 @@ int main(int argc, char **argv) {
       Passes.add (new OptimizeChecks());
       Passes.add(new RewriteOOB());
     }
-
-    Passes.add (new DummyUse());
 
 #if 0
     //

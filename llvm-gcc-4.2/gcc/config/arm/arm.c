@@ -146,7 +146,6 @@ static void thumb1_output_function_prologue (FILE *, HOST_WIDE_INT);
 /* LLVM LOCAL begin */
 static tree arm_type_promotes_to(tree);
 static bool arm_is_fp16(tree);
-static const char * arm_mangle_type (tree type);
 /* LLVM LOCAL end */
 static int arm_comp_type_attributes (tree, tree);
 static void arm_set_default_type_attributes (tree);
@@ -16775,8 +16774,48 @@ valid_neon_mode (enum machine_mode mode)
 
 /* LLVM LOCAL pr5037 removed make_neon_float_type */
 
-/* LLVM LOCAL begin multi-vector types */
 #ifdef ENABLE_LLVM
+/* LLVM LOCAL begin use builtin vector types for easier mangling */
+/* Create a new vector type node for a Neon vector.  This is just like
+   make_vector_type() but it does not enter the new type in the hash table.
+   The whole point of having these types built-in is to make them unique so
+   that the mangling function can identify them.  */
+
+static tree
+build_neonvec_type (tree innertype, int nunits)
+{
+  tree t;
+
+  t = make_node (VECTOR_TYPE);
+  TREE_TYPE (t) = TYPE_MAIN_VARIANT (innertype);
+  SET_TYPE_VECTOR_SUBPARTS (t, nunits);
+  TYPE_MODE (t) = VOIDmode;
+  TYPE_READONLY (t) = TYPE_READONLY (innertype);
+  TYPE_VOLATILE (t) = TYPE_VOLATILE (innertype);
+
+  layout_type (t);
+
+  {
+    tree index = build_int_cst (NULL_TREE, nunits - 1);
+    tree array = build_array_type (innertype, build_index_type (index));
+    tree rt = make_node (RECORD_TYPE);
+
+    TYPE_FIELDS (rt) = build_decl (FIELD_DECL, get_identifier ("f"), array);
+    DECL_CONTEXT (TYPE_FIELDS (rt)) = rt;
+    layout_type (rt);
+    TYPE_DEBUG_REPRESENTATION_TYPE (t) = rt;
+    /* In dwarfout.c, type lookup uses TYPE_UID numbers.  We want to output
+       the representation type, and we want to find that die when looking up
+       the vector type.  This is most easily achieved by making the TYPE_UID
+       numbers equal.  */
+    TYPE_UID (rt) = TYPE_UID (t);
+  }
+
+  return t;
+}
+/* LLVM LOCAL end use builtin vector types for easier mangling */
+
+/* LLVM LOCAL begin multi-vector types */
 /* Create a new builtin struct type containing NUMVECS fields (where NUMVECS
    is in the range from 1 to 4) of type VECTYPE.  */
 static tree
@@ -16809,6 +16848,57 @@ build_multivec_type (tree vectype, unsigned numvecs, const char *tag)
 }
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end multi-vector types */
+
+/* LLVM LOCAL begin use builtin vector types for easier mangling */
+typedef struct
+{
+  tree neonvec_type;
+  const char *aapcs_name;
+} arm_mangle_map_entry;
+
+enum neonvec_types {
+  neon_int8x8_type,
+  neon_int16x4_type,
+  neon_int32x2_type,
+  neon_int64x1_type,
+  neon_float32x2_type,
+  neon_poly8x8_type,
+  neon_poly16x4_type,
+  neon_uint8x8_type,
+  neon_uint16x4_type,
+  neon_uint32x2_type,
+  neon_uint64x1_type,
+  neon_int8x16_type,
+  neon_int16x8_type,
+  neon_int32x4_type,
+  neon_int64x2_type,
+  neon_float32x4_type,
+  neon_poly8x16_type,
+  neon_poly16x8_type,
+  neon_uint8x16_type,
+  neon_uint16x8_type,
+  neon_uint32x4_type,
+  neon_uint64x2_type,
+  neon_LAST_type
+};
+
+static arm_mangle_map_entry arm_mangle_map[neon_LAST_type];
+
+/* Create a unique type node for a Neon vector type and enter it in the
+   arm_mangle_map along with the corresponding mangled name.  */
+static void
+define_neonvec_type (tree elt_type, unsigned num_elts,
+                     const char *type_name, const char *mangling,
+                     enum neonvec_types neonvec)
+{
+  tree neon_type_node = build_neonvec_type(elt_type, num_elts);
+  (*lang_hooks.types.register_builtin_type) (neon_type_node, type_name);
+
+  arm_mangle_map[neonvec].neonvec_type = neon_type_node;
+  arm_mangle_map[neonvec].aapcs_name = mangling;
+}
+
+/* LLVM LOCAL end use builtin vector types for easier mangling */
 
 static void
 arm_init_neon_builtins (void)
@@ -17879,6 +17969,36 @@ arm_init_neon_builtins (void)
 					     "__builtin_neon_usi");
   (*lang_hooks.types.register_builtin_type) (intUDI_type_node,
 					     "__builtin_neon_udi");
+
+  /* LLVM LOCAL begin use builtin vector types for easier mangling */
+#define DEFINE_NEONVEC_TYPE(VECT, ELTT, NUMELTS, MANGLING) \
+  define_neonvec_type (ELTT, NUMELTS, "__neon_" #VECT "_t", \
+                       MANGLING, neon_##VECT##_type)
+
+  DEFINE_NEONVEC_TYPE(int8x8,    intQI_type_node,  8, "15__simd64_int8_t");
+  DEFINE_NEONVEC_TYPE(int16x4,   intHI_type_node,  4, "16__simd64_int16_t");
+  DEFINE_NEONVEC_TYPE(int32x2,   intSI_type_node,  2, "16__simd64_int32_t");
+  DEFINE_NEONVEC_TYPE(int64x1,   intDI_type_node,  1, "16__simd64_int64_t");
+  DEFINE_NEONVEC_TYPE(float32x2, float_type_node,  2, "18__simd64_float32_t");
+  DEFINE_NEONVEC_TYPE(poly8x8,   intQI_type_node,  8, "16__simd64_poly8_t");
+  DEFINE_NEONVEC_TYPE(poly16x4,  intHI_type_node,  4, "17__simd64_poly16_t");
+  DEFINE_NEONVEC_TYPE(uint8x8,  intUQI_type_node,  8, "16__simd64_uint8_t");
+  DEFINE_NEONVEC_TYPE(uint16x4, intUHI_type_node,  4, "17__simd64_uint16_t");
+  DEFINE_NEONVEC_TYPE(uint32x2, intUSI_type_node,  2, "17__simd64_uint32_t");
+  DEFINE_NEONVEC_TYPE(uint64x1, intUDI_type_node,  1, "17__simd64_uint64_t");
+
+  DEFINE_NEONVEC_TYPE(int8x16,   intQI_type_node, 16, "16__simd128_int8_t");
+  DEFINE_NEONVEC_TYPE(int16x8,   intHI_type_node,  8, "17__simd128_int16_t");
+  DEFINE_NEONVEC_TYPE(int32x4,   intSI_type_node,  4, "17__simd128_int32_t");
+  DEFINE_NEONVEC_TYPE(int64x2,   intDI_type_node,  2, "17__simd128_int64_t");
+  DEFINE_NEONVEC_TYPE(float32x4, float_type_node,  4, "19__simd128_float32_t");
+  DEFINE_NEONVEC_TYPE(poly8x16,  intQI_type_node, 16, "17__simd128_poly8_t");
+  DEFINE_NEONVEC_TYPE(poly16x8,  intHI_type_node,  8, "18__simd128_poly16_t");
+  DEFINE_NEONVEC_TYPE(uint8x16, intUQI_type_node, 16, "17__simd128_uint8_t");
+  DEFINE_NEONVEC_TYPE(uint16x8, intUHI_type_node,  8, "18__simd128_uint16_t");
+  DEFINE_NEONVEC_TYPE(uint32x4, intUSI_type_node,  4, "18__simd128_uint32_t");
+  DEFINE_NEONVEC_TYPE(uint64x2, intUDI_type_node,  2, "18__simd128_uint64_t");
+  /* LLVM LOCAL end use builtin vector types for easier mangling */
 
   /* LLVM LOCAL begin multi-vector types */
   (*lang_hooks.types.register_builtin_type) (V8QI2_type_node,
@@ -23904,18 +24024,41 @@ thumb2_output_casesi (rtx *operands)
 }
 /* APPLE LOCAL end v7 support. Merge from mainline */
 
-/* LLVM LOCAL begin */
-static const char *
+/* A table and a function to perform ARM-specific name mangling for
+   NEON vector types in order to conform to the AAPCS (see "Procedure
+   Call Standard for the ARM Architecture", Appendix A).  To qualify
+   for emission with the mangled names defined in that document, a
+   vector type must not only be of the correct mode but also be
+   composed of NEON vector element types (e.g. __builtin_neon_qi).  */
+/* LLVM LOCAL moved arm_mangle_map declarations earlier in this file */
+const char *
 arm_mangle_type (tree type)
 {
+  /* LLVM LOCAL */
+  unsigned pos;
+
+  /* LLVM LOCAL begin half-float */
   if (arm_is_fp16(type))
     return "Dh";
+  /* LLVM LOCAL end half-float */
+
+  if (TREE_CODE (type) != VECTOR_TYPE)
+    return NULL;
+
+  /* LLVM LOCAL begin use builtin vector types for easier mangling */
+  /* Check if this type matches any of the unique vector type nodes in the
+     arm_mangle_map table.  */
+  for (pos = 0; pos < neon_LAST_type; ++pos)
+    {
+      if (type == arm_mangle_map[pos].neonvec_type)
+        return arm_mangle_map[pos].aapcs_name;
+    }
+  /* LLVM LOCAL end use builtin vector types for easier mangling */
 
   /* Use the default mangling for unrecognized (possibly user-defined)
      vector types.  */
   return NULL;
 }
-/* LLVM LOCAL end */
 
 void
 arm_asm_output_addr_diff_vec (FILE *file, rtx label, rtx body)

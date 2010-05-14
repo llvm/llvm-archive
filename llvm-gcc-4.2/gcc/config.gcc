@@ -264,7 +264,7 @@ strongarm*-*-*)
 arm*-*-*)
 	cpu_type=arm
         # APPLE LOCAL ARM v7 support, merge from Codesourcery.
-	extra_headers="mmintrin.h arm_neon.h"
+	extra_headers="mmintrin.h arm_neon.h arm_neon_std.h arm_neon_gcc.h"
 # LLVM LOCAL begin
 	out_cxx_file=arm/llvm-arm.cpp
 # LLVM LOCAL end                               
@@ -822,7 +822,7 @@ arm*-*-darwin*)
 	extra_options="${extra_options} arm/darwin.opt"
         tm_file="${tm_file} arm/darwin.h"
         tmake_file="${tmake_file} arm/t-slibgcc-iphoneos"
-	extra_headers="arm_neon.h"
+	extra_headers="arm_neon.h arm_neon_std.h arm_neon_gcc.h"
         ;;
 # APPLE LOCAL end ARM darwin target
 arm*-wince-pe*)

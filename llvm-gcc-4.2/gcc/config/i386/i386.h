@@ -3955,7 +3955,7 @@ enum ix86_builtins
       argvec.push_back("--code-model=default");         \
       break;                                            \
     }                                                   \
-    if (TARGET_OMIT_LEAF_FRAME_POINTER)                 \
+    if (flag_omit_frame_pointer == 3)                   \
       argvec.push_back("--disable-non-leaf-fp-elim");   \
   } while (0)
 #endif /* ENABLE_LLVM */

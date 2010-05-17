@@ -2081,7 +2081,7 @@ override_options (void)
   if (flag_omit_frame_pointer)
     target_flags &= ~MASK_OMIT_LEAF_FRAME_POINTER;
   else if (TARGET_OMIT_LEAF_FRAME_POINTER)
-    flag_omit_frame_pointer = 1;
+    flag_omit_frame_pointer = 3;
 
   /* If we're doing fast math, we don't care about comparison order
      wrt NaNs.  This lets us use a shorter comparison sequence.  */

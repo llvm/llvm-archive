@@ -24037,6 +24037,9 @@ arm_mangle_type (tree type)
   /* LLVM LOCAL */
   unsigned pos;
 
+  /* LLVM LOCAL look through typedefs */
+  type = TYPE_MAIN_VARIANT (type);
+
   /* LLVM LOCAL begin half-float */
   if (arm_is_fp16(type))
     return "Dh";

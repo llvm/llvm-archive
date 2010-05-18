@@ -1591,7 +1591,7 @@ write_type (tree type)
   else
     {
       /* APPLE LOCAL begin mangle_type 7105099 */
-      /* LLVM LOCAL removed copy to type_orig */
+      tree type_orig = type;
 
       /* See through any typedefs.  */
       type = TYPE_MAIN_VARIANT (type);
@@ -1602,8 +1602,7 @@ write_type (tree type)
         {
 	  /* Handle any target-specific fundamental types.  */
 	  const char *target_mangling
-            /* LLVM LOCAL mangle based on TYPE_MAIN_VARIANT, not type_orig */
-	    = targetm.mangle_type (type);
+	    = targetm.mangle_type (type_orig);
 
 	  if (target_mangling)
 	    {

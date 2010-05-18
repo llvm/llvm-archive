@@ -181,6 +181,13 @@ private:
   /// name is constructred on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
   StringRef getFunctionName(tree_node *FnDecl);
+
+  /// getCU - Get Compile Unit.
+  DICompileUnit getCU() { return TheCU;}
+
+  /// replaceBasicTypesFromPCH - Replace basic type debug info received
+  /// from PCH file.
+  void replaceBasicTypesFromPCH();
 };
 
 } // end namespace llvm

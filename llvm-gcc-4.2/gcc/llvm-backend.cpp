@@ -265,6 +265,17 @@ void readLLVMValues() {
 
   // Now, llvm.pch.values is not required so remove it from the symbol table.
   GV->eraseFromParent();
+
+  if (TheDebugInfo) {
+    // Replace compile unit received from the PCH file.
+    NamedMDNode *NMD = TheModule->getOrInsertNamedMetadata("llvm.dbg.pch.cu");
+    if (NMD->getNumOperands() == 1) {
+      MDNode *HeaderCUNode = NMD->getOperand(0);
+      Value *CUNode = TheDebugInfo->getCU();
+      HeaderCUNode->replaceAllUsesWith(CUNode);
+    }
+    TheDebugInfo->replaceBasicTypesFromPCH();
+  }
 }
 
 /// writeLLVMValues - GCC tree's uses LLVMValues vector's index to reach LLVM
@@ -295,6 +306,11 @@ void writeLLVMValues() {
                      GlobalValue::ExternalLinkage,
                      LLVMValuesTable,
                      "llvm.pch.values");
+
+  if (TheDebugInfo && TheDebugInfo->getCU().Verify()) {
+    NamedMDNode *NMD = TheModule->getOrInsertNamedMetadata("llvm.dbg.pch.cu");
+    NMD->addOperand(TheDebugInfo->getCU());
+  }
 }
 
 /// eraseLocalLLVMValues - drop all non-global values from the LLVM values map.
@@ -513,9 +529,7 @@ void llvm_initialize_backend(void) {
   else
     RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
 
-  // FIXME - Do not disable debug info while writing pch.
-  if (!flag_pch_file &&
-      debug_info_level > DINFO_LEVEL_NONE)
+  if (debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 }
 
@@ -560,8 +574,7 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   TheModule = ParseBitcodeFile(MB, getGlobalContext(), &ErrMsg);
   delete MB;
 
-  // FIXME - Do not disable debug info while writing pch.
-  if (!flag_pch_file && debug_info_level > DINFO_LEVEL_NONE) {
+  if (debug_info_level > DINFO_LEVEL_NONE) {
     TheDebugInfo = new DebugInfo(TheModule);
     TheDebugInfo->Initialize();
   }

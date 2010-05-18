@@ -41,6 +41,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 extern "C" {
 #include "langhooks.h"
 #include "toplev.h"
+#include "flags.h"
 #include "tree.h"
 #include "version.h"
 #include "function.h"
@@ -540,7 +541,12 @@ void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
   if (DECL_CONTEXT (decl))
     if (TREE_CODE (DECL_CONTEXT (decl)) != FUNCTION_DECL)
       LinkageName = GV->getName();
-  DebugFactory.CreateGlobalVariable(findRegion(DECL_CONTEXT(decl)),
+  DIDescriptor Context;
+  if (DECL_CONTEXT(decl)) 
+    Context = findRegion(DECL_CONTEXT(decl));
+  else
+    Context = getOrCreateFile(Loc.file);
+  DebugFactory.CreateGlobalVariable(Context,
                                     DispName, DispName, LinkageName,
                                     getOrCreateFile(Loc.file), Loc.line,
                                     TyD, GV->hasInternalLinkage(),
@@ -588,12 +594,37 @@ DIType DebugInfo::createBasicType(tree type) {
   }
   }
 
-  return 
+  DIBasicType BTy =  
     DebugFactory.CreateBasicType(getOrCreateFile(main_input_filename),
                                  TypeName, 
                                  getOrCreateFile(main_input_filename),
                                  0, Size, Align,
                                  0, 0, Encoding);
+
+  if (TheDebugInfo && flag_pch_file) {
+    NamedMDNode *NMD = TheModule->getOrInsertNamedMetadata("llvm.dbg.pch.bt");
+    NMD->addOperand(BTy);
+  }
+
+  return BTy;
+}
+
+/// replaceBasicTypesFromPCH - Replace basic type debug info received
+/// from PCH file.
+void DebugInfo::replaceBasicTypesFromPCH() {
+  NamedMDNode *NMD = TheModule->getOrInsertNamedMetadata("llvm.dbg.pch.bt");
+  for (int i = 0, e = NMD->getNumOperands(); i != e; ++i) {
+    DIBasicType HeaderBTy(NMD->getOperand(i));
+    MDNode *NewBTy = NULL;
+    NewBTy = DebugFactory.CreateBasicType(getOrCreateFile(main_input_filename),
+                                          HeaderBTy.getName(),
+                                          getOrCreateFile(main_input_filename),
+                                          0, HeaderBTy.getSizeInBits(), 
+                                          HeaderBTy.getAlignInBits(),
+                                          0, 0, HeaderBTy.getEncoding());
+    MDNode *HBTyNode = HeaderBTy;
+    HBTyNode->replaceAllUsesWith(NewBTy);
+  }
 }
 
 /// isArtificialArgumentType - Return true if arg_type represents artificial,
@@ -1063,8 +1094,13 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
           return DIType(cast<MDNode>(M));
     if (TREE_CODE(TyDef) == TYPE_DECL &&  DECL_ORIGINAL_TYPE(TyDef)) {
       expanded_location TypeDefLoc = GetNodeLocation(TyDef);
+      DIDescriptor Context;
+      if (DECL_CONTEXT(TyDef)) 
+        Context = findRegion(DECL_CONTEXT(TyDef));
+      else
+        Context = getOrCreateFile(TypeDefLoc.file);
       Ty = DebugFactory.CreateDerivedType(DW_TAG_typedef, 
-                                          findRegion(DECL_CONTEXT(TyDef)),
+                                          Context,
                                           GetNodeName(TyDef), 
                                           getOrCreateFile(TypeDefLoc.file),
                                           TypeDefLoc.line,

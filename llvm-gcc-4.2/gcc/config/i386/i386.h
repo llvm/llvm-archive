@@ -3955,6 +3955,8 @@ enum ix86_builtins
       argvec.push_back("--code-model=default");         \
       break;                                            \
     }                                                   \
+    /* A value of 3 in flag_omit_frame_pointer implies  \
+       omitting leaf frame pointers only.  */           \
     if (flag_omit_frame_pointer == 3)                   \
       argvec.push_back("--disable-non-leaf-fp-elim");   \
   } while (0)

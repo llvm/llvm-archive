@@ -2093,6 +2093,23 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     assert(STy && "expected a struct type");
     const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
     assert(VTy && "expected a vector type");
+    intOpTypes[0] = VTy;
+
+    // Handle 64-bit elements as a special-case.  There is no "dup" needed.
+    if (VTy->getElementType()->getPrimitiveSizeInBits() == 64) {
+      switch (neon_code) {
+      case NEON_BUILTIN_vld2_dup: intID = Intrinsic::arm_neon_vld2; break;
+      case NEON_BUILTIN_vld3_dup: intID = Intrinsic::arm_neon_vld3; break;
+      case NEON_BUILTIN_vld4_dup: intID = Intrinsic::arm_neon_vld4; break;
+      default: assert(false);
+      }
+      intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+      Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+      Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+      Builder.CreateStore(Result, DestLoc->Ptr);
+      Result = 0;
+      break;
+    }
 
     // First use a vldN_lane intrinsic to load into lane 0 of undef vectors.
     switch (neon_code) {
@@ -2101,7 +2118,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case NEON_BUILTIN_vld4_dup: intID = Intrinsic::arm_neon_vld4lane; break;
     default: assert(false);
     }
-    intOpTypes[0] = VTy;
     intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
     unsigned NumVecs = 0;
     switch (neon_code) {

@@ -156,6 +156,9 @@ extern bool lhd_is_runtime_specific_type (tree);
 #define LANG_HOOKS_FUNCTION_LEAVE_NESTED lhd_do_nothing_f
 #define LANG_HOOKS_FUNCTION_MISSING_NORETURN_OK_P hook_bool_tree_true
 
+/* LLVM LOCAL <rdar://problem/7929157> */
+#define LANG_HOOKS_FUNCTION_THUNK_P     hook_bool_tree_false
+
 /* APPLE LOCAL begin radar 6353006  */
 #define LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE \
   lhd_build_generic_block_struct_type
@@ -303,64 +306,66 @@ extern tree lhd_make_node (enum tree_code);
 }
 
 /* The whole thing.  The structure is defined in langhooks.h.  */
-#define LANG_HOOKS_INITIALIZER { \
-  LANG_HOOKS_NAME, \
-  LANG_HOOKS_IDENTIFIER_SIZE, \
-  LANG_HOOKS_TREE_SIZE, \
-  LANG_HOOKS_INIT_OPTIONS, \
-  LANG_HOOKS_INITIALIZE_DIAGNOSTICS, \
-  LANG_HOOKS_HANDLE_OPTION, \
-  LANG_HOOKS_MISSING_ARGUMENT, \
-  LANG_HOOKS_POST_OPTIONS, \
-  LANG_HOOKS_INIT, \
-  LANG_HOOKS_FINISH, \
-  LANG_HOOKS_PARSE_FILE, \
-  LANG_HOOKS_CLEAR_BINDING_STACK, \
-  LANG_HOOKS_GET_ALIAS_SET, \
-  LANG_HOOKS_EXPAND_CONSTANT, \
-  LANG_HOOKS_EXPAND_EXPR, \
-  LANG_HOOKS_EXPAND_DECL, \
-  LANG_HOOKS_SAFE_FROM_P, \
-  LANG_HOOKS_FINISH_INCOMPLETE_DECL, \
-  LANG_HOOKS_MARK_ADDRESSABLE, \
-  LANG_HOOKS_STATICP, \
-  LANG_HOOKS_DUP_LANG_SPECIFIC_DECL, \
-  LANG_HOOKS_SET_DECL_ASSEMBLER_NAME, \
-  LANG_HOOKS_CAN_USE_BIT_FIELDS_P, \
-  LANG_HOOKS_REDUCE_BIT_FIELD_OPERATIONS, \
-  LANG_HOOKS_NO_BODY_BLOCKS, \
-  LANG_HOOKS_PRINT_STATISTICS, \
-  LANG_HOOKS_PRINT_XNODE, \
-  LANG_HOOKS_PRINT_DECL, \
-  LANG_HOOKS_PRINT_TYPE, \
-  LANG_HOOKS_PRINT_IDENTIFIER, \
-  LANG_HOOKS_DECL_PRINTABLE_NAME, \
-  LANG_HOOKS_DWARF_NAME, \
-  LANG_HOOKS_TYPES_COMPATIBLE_P, \
-  LANG_HOOKS_GET_CALLEE_FNDECL, \
-  LANG_HOOKS_PRINT_ERROR_FUNCTION, \
-  LANG_HOOKS_EXPR_SIZE, \
-/* LLVM LOCAL 7659636 */ \
-  LANG_HOOKS_EMPTY_TYPE_P, \
-  LANG_HOOKS_TO_TARGET_CHARSET, \
-  LANG_HOOKS_ATTRIBUTE_TABLE, \
-  LANG_HOOKS_COMMON_ATTRIBUTE_TABLE, \
-  LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE, \
-/* APPLE LOCAL kext identify vtables */ \
-  LANG_HOOKS_VTABLE_P, \
-  LANG_HOOKS_FUNCTION_INITIALIZER, \
-  LANG_HOOKS_TREE_INLINING_INITIALIZER, \
-  LANG_HOOKS_CALLGRAPH_INITIALIZER, \
-  LANG_HOOKS_TREE_DUMP_INITIALIZER, \
-  LANG_HOOKS_DECLS, \
-  LANG_HOOKS_FOR_TYPES_INITIALIZER, \
-  LANG_HOOKS_GIMPLIFY_EXPR, \
-  LANG_HOOKS_FOLD_OBJ_TYPE_REF, \
-  LANG_HOOKS_BUILTIN_FUNCTION, \
-  LANG_HOOKS_INIT_TS,          \
-  LANG_HOOKS_EXPR_TO_DECL, \
-/* APPLE LOCAL radar 6353006  */ \
-  LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE, \
+#define LANG_HOOKS_INITIALIZER {                        \
+    LANG_HOOKS_NAME,                                    \
+      LANG_HOOKS_IDENTIFIER_SIZE,                       \
+      LANG_HOOKS_TREE_SIZE,                             \
+      LANG_HOOKS_INIT_OPTIONS,                          \
+      LANG_HOOKS_INITIALIZE_DIAGNOSTICS,                \
+      LANG_HOOKS_HANDLE_OPTION,                         \
+      LANG_HOOKS_MISSING_ARGUMENT,                      \
+      LANG_HOOKS_POST_OPTIONS,                          \
+      LANG_HOOKS_INIT,                                  \
+      LANG_HOOKS_FINISH,                                \
+      LANG_HOOKS_PARSE_FILE,                            \
+      LANG_HOOKS_CLEAR_BINDING_STACK,                   \
+      LANG_HOOKS_GET_ALIAS_SET,                         \
+      LANG_HOOKS_EXPAND_CONSTANT,                       \
+      LANG_HOOKS_EXPAND_EXPR,                           \
+      LANG_HOOKS_EXPAND_DECL,                           \
+      LANG_HOOKS_SAFE_FROM_P,                           \
+      LANG_HOOKS_FINISH_INCOMPLETE_DECL,                \
+      LANG_HOOKS_MARK_ADDRESSABLE,                      \
+      LANG_HOOKS_STATICP,                               \
+      LANG_HOOKS_DUP_LANG_SPECIFIC_DECL,                \
+      LANG_HOOKS_SET_DECL_ASSEMBLER_NAME,               \
+      LANG_HOOKS_CAN_USE_BIT_FIELDS_P,                  \
+      LANG_HOOKS_REDUCE_BIT_FIELD_OPERATIONS,           \
+      LANG_HOOKS_NO_BODY_BLOCKS,                        \
+      LANG_HOOKS_PRINT_STATISTICS,                      \
+      LANG_HOOKS_PRINT_XNODE,                           \
+      LANG_HOOKS_PRINT_DECL,                            \
+      LANG_HOOKS_PRINT_TYPE,                            \
+      LANG_HOOKS_PRINT_IDENTIFIER,                      \
+      LANG_HOOKS_DECL_PRINTABLE_NAME,                   \
+      LANG_HOOKS_DWARF_NAME,                            \
+      LANG_HOOKS_TYPES_COMPATIBLE_P,                    \
+      LANG_HOOKS_GET_CALLEE_FNDECL,                     \
+      LANG_HOOKS_PRINT_ERROR_FUNCTION,                  \
+      LANG_HOOKS_EXPR_SIZE,                             \
+      /* LLVM LOCAL 7659636 */                          \
+      LANG_HOOKS_EMPTY_TYPE_P,                          \
+      LANG_HOOKS_TO_TARGET_CHARSET,                     \
+      LANG_HOOKS_ATTRIBUTE_TABLE,                       \
+      LANG_HOOKS_COMMON_ATTRIBUTE_TABLE,                \
+      LANG_HOOKS_FORMAT_ATTRIBUTE_TABLE,                \
+      /* APPLE LOCAL kext identify vtables */           \
+      LANG_HOOKS_VTABLE_P,                              \
+      LANG_HOOKS_FUNCTION_INITIALIZER,                  \
+      LANG_HOOKS_TREE_INLINING_INITIALIZER,             \
+      LANG_HOOKS_CALLGRAPH_INITIALIZER,                 \
+      LANG_HOOKS_TREE_DUMP_INITIALIZER,                 \
+      LANG_HOOKS_DECLS,                                 \
+      LANG_HOOKS_FOR_TYPES_INITIALIZER,                 \
+      LANG_HOOKS_GIMPLIFY_EXPR,                         \
+      LANG_HOOKS_FOLD_OBJ_TYPE_REF,                     \
+      LANG_HOOKS_BUILTIN_FUNCTION,                      \
+      LANG_HOOKS_INIT_TS,                               \
+      LANG_HOOKS_EXPR_TO_DECL,                          \
+      /* APPLE LOCAL radar 6353006  */                  \
+      LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE,       \
+      /* LLVM LOCAL <rdar://problem/7929157> */         \
+      LANG_HOOKS_FUNCTION_THUNK_P,                      \
 }
 
 #endif /* GCC_LANG_HOOKS_DEF_H */

@@ -527,7 +527,7 @@ void TreeToLLVM::StartFunctionBody() {
 
   // The function should not already have a body.
   assert(Fn->empty() && "Function expanded multiple times!");
-  
+
   // Compute the linkage that the function should get.
   if (DECL_LLVM_PRIVATE(FnDecl)) {
     Fn->setLinkage(Function::PrivateLinkage);
@@ -540,10 +540,10 @@ void TreeToLLVM::StartFunctionBody() {
     Fn->setLinkage(Function::AvailableExternallyLinkage);
   } else if (DECL_COMDAT(FnDecl)) {
     Fn->setLinkage(Function::getLinkOnceLinkage(flag_odr));
-  } else if (DECL_WEAK(FnDecl)) {
+  } else if (DECL_WEAK(FnDecl) && !lang_hooks.function_is_thunk_p (FnDecl)) {
     // The user may have explicitly asked for weak linkage - ignore flag_odr.
     Fn->setLinkage(Function::WeakAnyLinkage);
-  } else if (DECL_ONE_ONLY(FnDecl)) {
+  } else if (DECL_ONE_ONLY(FnDecl) || lang_hooks.function_is_thunk_p (FnDecl)) {
     Fn->setLinkage(Function::getWeakLinkage(flag_odr));
   } else if (IS_EXTERN_INLINE(FnDecl)) {
     // gcc "extern inline", C99 "inline"

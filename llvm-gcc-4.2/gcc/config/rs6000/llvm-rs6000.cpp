@@ -99,12 +99,16 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   switch (FnCode) {
   default: break;
   case ALTIVEC_BUILTIN_VADDFP:
+    Result = Builder.CreateFAdd(Ops[0], Ops[1], "tmp");
+    return true;
   case ALTIVEC_BUILTIN_VADDUBM:
   case ALTIVEC_BUILTIN_VADDUHM:
   case ALTIVEC_BUILTIN_VADDUWM:
     Result = Builder.CreateAdd(Ops[0], Ops[1], "tmp");
     return true;
   case ALTIVEC_BUILTIN_VSUBFP:
+    Result = Builder.CreateFSub(Ops[0], Ops[1], "tmp");
+    return true;
   case ALTIVEC_BUILTIN_VSUBUBM:
   case ALTIVEC_BUILTIN_VSUBUHM:
   case ALTIVEC_BUILTIN_VSUBUWM:

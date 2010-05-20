@@ -17156,6 +17156,8 @@ arm_init_neon_builtins (void)
   tree V4HI_pointer_node = build_pointer_type (V4HI_type_node);
   tree V2SI_pointer_node = build_pointer_type (V2SI_type_node);
   tree V2SF_pointer_node = build_pointer_type (V2SF_type_node);
+  /* LLVM LOCAL use v1di instead of di mode */
+  tree V1DI_pointer_node = build_pointer_type (V1DI_type_node);
   tree V16QI_pointer_node = build_pointer_type (V16QI_type_node);
   tree V8HI_pointer_node = build_pointer_type (V8HI_type_node);
   tree V4SI_pointer_node = build_pointer_type (V4SI_type_node);

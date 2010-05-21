@@ -283,6 +283,10 @@ static GTY(()) int lastfile_is_base;
 /* Typical USG systems don't have stab.h, and they also have
    no use for DBX-format debugging info.  */
 
+static GTY ((length ("type_queue_index"))) tree *type_queue;
+static GTY (()) int type_queue_index = 0;
+static GTY (()) int type_queue_size = 0;
+
 #if defined (DBX_DEBUGGING_INFO) || defined (XCOFF_DEBUGGING_INFO)
 
 #ifdef DBX_USE_BINCL
@@ -4291,10 +4295,6 @@ dbxout_type_with_name (tree type)
   dbxout_type (type, 2);
   dbxout_finish_complex_stabs (0, N_LSYM, 0, 0, 0);
 }
-
-static GTY ((length ("type_queue_index"))) tree *type_queue;
-static GTY (()) int type_queue_index = 0;
-static GTY (()) int type_queue_size = 0;
 
 /* Generate the type definitions for queued up types.  */
 

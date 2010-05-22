@@ -6131,9 +6131,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
                       Buf);
     Result = 0;
     return true;
-#else
-    return false;
 #endif
+    // Fall-through
   }
   case BUILT_IN_APPLY_ARGS:
   case BUILT_IN_APPLY:

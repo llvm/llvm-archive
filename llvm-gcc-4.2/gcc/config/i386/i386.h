@@ -3929,8 +3929,8 @@ enum ix86_builtins
    means we can't distinguish them. */
 #define LLVM_GET_REG_NAME(REG_NAME, REG_NUM) __extension__ \
   ({ const char *nm = (REG_NAME); \
-     if (*nm == '%' || *nm == '#') ++nm; \
-     (ISDIGIT (*nm) ? reg_names[REG_NUM] : nm); })
+     if (nm && (*nm == '%' || *nm == '#')) ++nm; \
+     ((!nm || ISDIGIT (*nm)) ? reg_names[REG_NUM] : nm); })
 
 /* Propagate code model setting to backend */
 #define LLVM_SET_MACHINE_OPTIONS(argvec)                \

@@ -50,6 +50,12 @@ struct lower_data
      of the function.  */
   tree return_statements;
 
+  /* LLVM LOCAL begin 7789102 */
+  /* A TREE_LIST of return statements to be stripped of location
+     info.  */
+  tree returns_to_strip;
+  /* LLVM LOCAL end 7789102 */
+
   /* True if the function calls __builtin_setjmp.  */
   bool calls_builtin_setjmp;
 };
@@ -101,6 +107,7 @@ lower_function_body (void)
       tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
     }
 
+  /* LLVM LOCAL begin 7789102 */
   /* If we lowered any return statements, emit the representative
      at the end of the function.  */
   for (t = data.return_statements ; t ; t = TREE_CHAIN (t))
@@ -108,17 +115,31 @@ lower_function_body (void)
       x = build1 (LABEL_EXPR, void_type_node, TREE_PURPOSE (t));
       tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
 
+      /* This RETURN_EXPR was replaced with one or more GOTO_EXPRs to
+         the label we just placed above.  Now install this RETURN_EXPR
+         at the end of the function body:  */
+      x = TREE_VALUE (t);
+      tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
+    }
+
+  /* If we lowered any return statements, and any of those returns
+     were used by multiple GOTO_EXPRs, strip those RETURN_EXPRs of
+     their location information.  We're taking pains not to strip the
+     location info from any RETURN_EXPR referenced by only one
+     GOTO_EXPR.  */
+  for (t = data.returns_to_strip ; t ; t = TREE_CHAIN (t))
+    {
       /* Remove the line number from the representative return statement.
 	 It now fills in for many such returns.  Failure to remove this
 	 will result in incorrect results for coverage analysis.  */
-      x = TREE_VALUE (t);
+      x = TREE_PURPOSE (t);
 #ifdef USE_MAPPED_LOCATION
       SET_EXPR_LOCATION (x, UNKNOWN_LOCATION);
 #else
       SET_EXPR_LOCUS (x, NULL);
 #endif
-      tsi_link_after (&i, x, TSI_CONTINUE_LINKING);
     }
+  /* LLVM LOCAL end 7789102 */
 
   /* If the function calls __builtin_setjmp, we need to emit the computed
      goto that will serve as the unique dispatcher for all the receivers.  */
@@ -588,6 +609,8 @@ lower_return_expr (tree_stmt_iterator *tsi, struct lower_data *data)
       if (value == tvalue)
 	{
 	  label = TREE_PURPOSE (t);
+          /* LLVM LOCAL 7789102 */
+          data->returns_to_strip = tree_cons (stmt, NULL_TREE, data->returns_to_strip);
 	  goto found;
 	}
     }

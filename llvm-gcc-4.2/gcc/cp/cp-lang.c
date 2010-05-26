@@ -36,20 +36,26 @@ Boston, MA 02110-1301, USA.  */
 
 enum c_language_kind c_language = clk_cxx;
 static void cp_init_ts (void);
+/* LLVM LOCAL <rdar://problem/7929157> */
+static bool cp_function_thunk_p (tree fndecl);
 
 /* Lang hooks common to C++ and ObjC++ are declared in cp/cp-objcp-common.h;
    consequently, there should be very few hooks below.  */
 
 #undef LANG_HOOKS_NAME
-#define LANG_HOOKS_NAME "GNU C++"
+#define LANG_HOOKS_NAME                 "GNU C++"
 #undef LANG_HOOKS_INIT
-#define LANG_HOOKS_INIT cxx_init
+#define LANG_HOOKS_INIT                 cxx_init
 #undef LANG_HOOKS_DECL_PRINTABLE_NAME
 #define LANG_HOOKS_DECL_PRINTABLE_NAME	cxx_printable_name
 #undef LANG_HOOKS_FOLD_OBJ_TYPE_REF
-#define LANG_HOOKS_FOLD_OBJ_TYPE_REF cp_fold_obj_type_ref
+#define LANG_HOOKS_FOLD_OBJ_TYPE_REF    cp_fold_obj_type_ref
 #undef LANG_HOOKS_INIT_TS
-#define LANG_HOOKS_INIT_TS cp_init_ts
+#define LANG_HOOKS_INIT_TS              cp_init_ts
+/* LLVM LOCAL begin <rdar://problem/7929157> */
+#undef LANG_HOOKS_FUNCTION_THUNK_P
+#define LANG_HOOKS_FUNCTION_THUNK_P     cp_function_thunk_p
+/* LLVM LOCAL end <rdar://problem/7929157> */
 
 /* Each front end provides its own lang hook initializer.  */
 const struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
@@ -144,6 +150,14 @@ cp_init_ts (void)
   init_shadowed_var_for_decl ();
 
 }
+
+/* LLVM LOCAL begin <rdar://problem/7929157> */
+bool
+cp_function_thunk_p (tree fndecl)
+{
+  return DECL_THUNK_P (fndecl);
+}
+/* LLVM LOCAL end <rdar://problem/7929157> */
 
 void
 finish_file (void)

@@ -479,12 +479,16 @@ struct lang_hooks
      TREE_SIDE_EFFECTS need updating.  */
   tree (*expr_to_decl) (tree expr, bool *tc, bool *ti, bool *se);
 
-
   /* APPLE LOCAL begin radar 6353006  */
   /*  For c-based languages, builds a generic type for Blocks pointers (for
       emitting debug information.  For other languages, returns NULL.  */
   tree (*build_generic_block_struct_type) (void);
   /* APPLE LOCAL end radar 6353006  */
+
+  /* LLVM LOCAL begin <rdar://problem/7929157> */
+  /* Returns true if the function decl is a thunk.  */
+  bool (*function_is_thunk_p) (tree fndecl);
+  /* LLVM LOCAL end <rdar://problem/7929157> */
 
   /* Whenever you add entries here, make sure you adjust langhooks-def.h
      and langhooks.c accordingly.  */

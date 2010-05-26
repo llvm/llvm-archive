@@ -4498,6 +4498,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   std::vector<const Type*> CallArgTypes;
   std::string NewAsmStr = ConvertInlineAsmStr(exp, NumOutputs+NumInputs);
   std::string ConstraintStr;
+  bool HasSideEffects = ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp);
 
   // StoreCallResultAddr - The pointer to store the result of the call through.
   SmallVector<Value *, 4> StoreCallResultAddrs;
@@ -4546,6 +4547,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         NewConstraint[RegNameLen+2] = '}';
         NewConstraint[RegNameLen+3] = 0;
         SimplifiedConstraint = NewConstraint;
+        // This output will now be implicit; set the sideffect flag on the asm.
+        HasSideEffects = true;
         // We should no longer consider mem constraints.
         AllowsMem = false;
       } else {
@@ -4780,8 +4783,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   }
 
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
-                              ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp),
-                              ASM_ASM_BLOCK(exp));
+                              HasSideEffects, ASM_ASM_BLOCK(exp));
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     CallResultTypes.empty() ? "" : "asmtmp");
   CV->setDoesNotThrow();

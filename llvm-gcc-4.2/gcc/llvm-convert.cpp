@@ -4730,12 +4730,11 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       if (RegNum >= 0) {
         RegName = LLVM_GET_REG_NAME(RegName, RegNum);
         unsigned RegNameLen = strlen(RegName);
-        char *NewConstraint = (char*)alloca(RegNameLen+4);
-        NewConstraint[0] = '=';
-        NewConstraint[1] = '{';
-        memcpy(NewConstraint+2, RegName, RegNameLen);
-        NewConstraint[RegNameLen+2] = '}';
-        NewConstraint[RegNameLen+3] = 0;
+        char *NewConstraint = (char*)alloca(RegNameLen+3);
+        NewConstraint[0] = '{';
+        memcpy(NewConstraint+1, RegName, RegNameLen);
+        NewConstraint[RegNameLen+1] = '}';
+        NewConstraint[RegNameLen+2] = 0;
         SimplifiedConstraint = NewConstraint;
         // This output will now be implicit; set the sideffect flag on the asm.
         HasSideEffects = true;
@@ -4889,7 +4888,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     if (isIndirect)
       ConstraintStr += '*';
 
-    // If this output register is pinned to a machine register, use that machine
+    // If this input register is pinned to a machine register, use that machine
     // register instead of the specified constraint.
     if (TREE_CODE(Val) == VAR_DECL && DECL_HARD_REGISTER(Val)) {
       const char *RegName = extractRegisterName(Val);

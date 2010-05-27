@@ -3578,6 +3578,8 @@ Value *TreeToLLVM::EmitABS_EXPR(tree exp) {
   TARGET_ADJUST_LLVM_CC(CallingConvention, FunctionType);
 #endif
 
+  Function *F = cast<Function>(V);
+  F->setCallingConv(CallingConvention);
   CallInst *Call = Builder.CreateCall(V, Op);
   Call->setDoesNotThrow();
   Call->setDoesNotAccessMemory();

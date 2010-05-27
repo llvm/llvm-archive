@@ -3548,6 +3548,16 @@ enum neon_builtins
                                     DESTTY, OPS)                              \
         TargetIntrinsicLower(EXP, BUILTIN_CODE, DESTLOC, RESULT, DESTTY, OPS);
 
+/* LLVM_GET_REG_NAME - The registers known to llvm as "r10", "r11", and "r12"
+   may have different names in GCC.  Register "r12" is called "ip", and on
+   non-Darwin OSs, "r10" is "sl" and "r11" is "fp".  Translate those names,
+   and use the default register names for everything else.  */
+#define LLVM_GET_REG_NAME(REG_NAME, REG_NUM) \
+  ((REG_NUM) == 10 ? "r10" \
+   : (REG_NUM) == 11 ? "r11" \
+   : (REG_NUM) == 12 ? "r12" \
+   : reg_names[REG_NUM])
+
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */
 

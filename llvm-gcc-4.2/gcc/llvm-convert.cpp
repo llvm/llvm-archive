@@ -148,7 +148,7 @@ static unsigned int getPointerAlignment(tree exp) {
 //===----------------------------------------------------------------------===//
 
 /// TheTreeToLLVM - Keep track of the current function being compiled.
-static TreeToLLVM *TheTreeToLLVM = 0;
+TreeToLLVM *TheTreeToLLVM = 0;
 
 const TargetData &getTargetData() {
   return *TheTarget->getTargetData();
@@ -157,7 +157,7 @@ const TargetData &getTargetData() {
 /// EmitDebugInfo - Return true if debug info is to be emitted for current 
 /// function.
 bool TreeToLLVM::EmitDebugInfo() {
-  if (TheDebugInfo && !DECL_IGNORED_P(getFUNCTION_DECL()))
+  if (TheDebugInfo && getFUNCTION_DECL() && !DECL_IGNORED_P(getFUNCTION_DECL()))
     return true;
   return false;
 }
@@ -425,13 +425,13 @@ static bool LanguageIsC() {
   return (Val = false);
 }
 
-// Walk the GCC BLOCK() tree.  Set BLOCK_NUMBER() to the depth of each
-// block; this is necessary for lexical block debug info.  Visit all
-// the BLOCK_VARS(), and add them to the set s.  Since the
-// unexpanded_var_list seems to be a superset of all the scoped
-// variables in every lexical BLOCK(), this facilitates allocating the
-// scoped variables in their blocks, and the rest at the outermost
-// scope of the function.
+// Depth-first walk of the GCC BLOCK() tree.  Set BLOCK_NUMBER() to
+// the depth of each block; this is necessary for lexical block debug
+// info.  Visit all the BLOCK_VARS(), and add them to the set s.
+// Since the unexpanded_var_list seems to be a superset of all the
+// scoped variables in every lexical BLOCK(), this facilitates
+// allocating the scoped variables in their blocks, and the rest at
+// the outermost scope of the function.
 void TreeToLLVM::setLexicalBlockDepths(tree t, treeset &s, unsigned level) {
   tree bstep, step;
   switch (TREE_CODE(t)) {
@@ -616,7 +616,7 @@ void TreeToLLVM::StartFunctionBody() {
   SeenBlocks.clear();
 
   if (EmitDebugInfo())
-    TheDebugInfo->EmitFunctionStart(FnDecl, Fn, Builder.GetInsertBlock());
+    TheDebugInfo->EmitFunctionStart(FnDecl);
 
   // Loop over all of the arguments to the function, setting Argument names and
   // creating argument alloca's for the PARM_DECLs in case their address is
@@ -631,7 +631,7 @@ void TreeToLLVM::StartFunctionBody() {
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
                                 DECL_BUILT_IN(FnDecl));
   // Remember this for use by FinishFunctionBody.
-  TheTreeToLLVM->ReturnOffset = Client.Offset;
+  ReturnOffset = Client.Offset;
 
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);

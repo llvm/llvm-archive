@@ -1762,7 +1762,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Size = Emit(DECL_SIZE_UNIT(decl), 0);
       Ty = Type::getInt8Ty(Context);
     }
-    Size = CastToUIntType(Size, Type::getInt32Ty(Context));
   }
 
   unsigned Alignment = 0; // Alignment in bytes.
@@ -6676,7 +6675,6 @@ bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
-  Amt = CastToSIntType(Amt, Type::getInt32Ty(Context));
   Result = Builder.CreateAlloca(Type::getInt8Ty(Context), Amt);
   return true;
 }

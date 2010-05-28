@@ -524,11 +524,6 @@ void llvm_initialize_backend(void) {
   TheModule->setDataLayout(TheTarget->getTargetData()->
                            getStringRepresentation());
 
-  if (optimize)
-    RegisterRegAlloc::setDefault(createLinearScanRegisterAllocator);
-  else
-    RegisterRegAlloc::setDefault(createLocalRegisterAllocator);
-
   if (debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
 }

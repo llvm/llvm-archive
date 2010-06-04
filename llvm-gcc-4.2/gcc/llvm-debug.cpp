@@ -573,7 +573,7 @@ void DebugInfo::EmitStopPoint(Function *Fn, BasicBlock *CurBB,
 /// EmitGlobalVariable - Emit information about a global variable.
 ///
 void DebugInfo::EmitGlobalVariable(GlobalVariable *GV, tree decl) {
-  if (DECL_ARTIFICIAL(decl))
+  if (DECL_ARTIFICIAL(decl) || DECL_IGNORED_P(decl))
     return;
   // Gather location information.
   expanded_location Loc = expand_location(DECL_SOURCE_LOCATION(decl));

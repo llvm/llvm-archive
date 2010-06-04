@@ -2633,6 +2633,7 @@ darwin_build_constant_cfstring (tree str)
       var = build_decl (CONST_DECL, NULL, TREE_TYPE (constructor));
       DECL_INITIAL (var) = constructor;
       TREE_STATIC (var) = 1;
+      DECL_IGNORED_P (var) = 1;
       pushdecl_top_level (var);
       desc->constructor = var;
     }

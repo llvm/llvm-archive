@@ -75,7 +75,7 @@ typedef SmallPtrSet<union tree_node *, 16> treeset;
 extern llvm::Module *TheModule;
 
 /// TheDebugInfo - This object is responsible for gather all debug information.
-/// If its value is NULL then no debug information should be gathered.
+/// If it's value is NULL then no debug information should be gathered.
 extern llvm::DebugInfo *TheDebugInfo;
 
 /// TheTarget - The current target being compiled for.
@@ -281,7 +281,6 @@ class TreeToLLVM {
   BasicBlock *ReturnBB;
   BasicBlock *UnwindBB;
   unsigned ReturnOffset;
-
   // Lexical BLOCKS that we have previously seen and processed.
   treeset SeenBlocks;
 
@@ -398,10 +397,6 @@ public:
   // allocation would change with -g, and users dislike that.
   void switchLexicalBlock(tree_node *exp);
 
-  /// StartFunctionBody - Start the emission of 'FnDecl', outputing all
-  /// declarations for parameters and setting things up.
-  void StartFunctionBody();
-  
 private: // Helper functions.
 
   // Walk over the lexical BLOCK() tree of the given FUNCTION_DECL;
@@ -410,6 +405,10 @@ private: // Helper functions.
   // the given set.
   void setLexicalBlockDepths(tree_node *t, treeset &s, unsigned level);
 
+  /// StartFunctionBody - Start the emission of 'fndecl', outputing all
+  /// declarations for parameters and setting things up.
+  void StartFunctionBody();
+  
   /// FinishFunctionBody - Once the body of the function has been emitted, this
   /// cleans up and returns the result function.
   Function *FinishFunctionBody();
@@ -608,9 +607,6 @@ public:
   // Helper for taking the address of a label.
   Constant *EmitLV_LABEL_DECL(tree_node *exp);
 };
-
-/// TheTreeToLLVM - Keep track of the current function being compiled.
-extern TreeToLLVM *TheTreeToLLVM;
 
 /// TreeConstantToLLVM - An instance of this class is created and used to 
 /// convert tree constant values to LLVM.  This is primarily for things like

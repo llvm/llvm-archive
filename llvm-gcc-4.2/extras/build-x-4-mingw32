@@ -44,10 +44,11 @@ PRIVATE_INSTALL=${BUILD_ROOT}/${INSTALL}  # Where the result will be installed.
 
 # This script supports the following steps:
 do_clean=no                # Clean up the build directory.
+do_copy_cross_tools=no     # Copy cross-tools.
 do_configure_llvm=no       # Configure LLVM.
 do_make_llvm=no            # Make LLVM.
 do_test_llvm=no            # Test LLVM.
-do_cross_tools=no          # Copy cross-tools. 
+do_cross_tools=no          # Copy cross-tools. Deprecated. Use copy_cross_tools instead.
 do_configure_llvmgcc=no    # Configure LLVM-GCC.
 do_make_llvmgcc=no         # Make LLVM-GCC.
 do_install_llvmgcc=no      # Install LLVM-GCC.
@@ -62,6 +63,7 @@ if (( ! $# == 0 )) ; then
    # First check that the parameter actually defines a step.
    case $1 in
       clean             |  \
+      copy_cross_tools  |  \
       configure_llvm    |  \
       make_llvm         |  \
       test_llvm         |  \
@@ -83,13 +85,18 @@ fi
 if [ "$do_all" == "yes" ] ; then
    # Set all steps to yes
    do_clean=yes
+   do_copy_cross_tools=yes
    do_configure_llvm=yes
    do_make_llvm=yes
    do_test_llvm=yes
-   do_cross_tools=yes
    do_configure_llvmgcc=yes
    do_make_llvmgcc=yes
    do_install_llvmgcc=yes
+fi
+
+# Handle deprecated steps.
+if [ "$do_cross_tools" == "yes" ] ; then
+   do_copy_cross_tools=yes
 fi
 
 #------------------------------------------------------------------------------
@@ -105,11 +112,22 @@ if [ "$do_clean" == "yes" ] ; then
 fi
 
 #------------------------------------------------------------------------------
+# Step: Copy cross-tools.
+#------------------------------------------------------------------------------
+if [ "$do_copy_cross_tools" == "yes" ] ; then
+
+   # We need a local copy of binutils, system libraries and headers,
+   # since we will be installing there.
+   cp -RL /cross-tools/ ${PRIVATE_INSTALL}
+
+fi
+
+#------------------------------------------------------------------------------
 # Step: Configure LLVM.
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvm" == "yes" ] ; then
 
-   # Remove previous build files if any.
+   # Remove previously build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_obj}
    mkdir -p ${BUILD_ROOT}/${LLVM_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_obj}
@@ -119,7 +137,7 @@ if [ "$do_configure_llvm" == "yes" ] ; then
       --build=x86_64-apple-darwin10 --host=x86_64-apple-darwin10 \
       --target=i686-pc-mingw32                                   \
       --enable-optimize                                          \
-	  --without-llvmgcc --without-llvmgxx                        \
+      --without-llvmgcc --without-llvmgxx                        \
       $@  # Extra args if any
 
 fi
@@ -148,22 +166,11 @@ if [ "$do_test_llvm" == "yes" ] ; then
 fi
 
 #------------------------------------------------------------------------------
-# Step: Copy cross-tools.
-#------------------------------------------------------------------------------
-if [ "$do_cross_tools" == "yes" ] ; then
-
-   # We need a local copy of binutils, system libraries and headers,
-   # since we will be installing there.
-   cp -RL /cross-tools/ ${PRIVATE_INSTALL}
-
-fi
-
-#------------------------------------------------------------------------------
 # Step: Configure LLVM-GCC.
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvmgcc" == "yes" ] ; then
 
-   # Remove previous build files if any.
+   # Remove previously build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_GCC_obj}
    mkdir -p ${BUILD_ROOT}/${LLVM_GCC_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_GCC_obj}
@@ -171,7 +178,7 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
    
    ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL}      \
       --build=x86_64-apple-darwin10 --host=x86_64-apple-darwin10 \
-	  --with-local-prefix=/tools                                 \
+      --with-local-prefix=/tools                                 \
       --target=i686-pc-mingw32                                   \
       --program-prefix=i686-pc-mingw32-                          \
       --enable-llvm=${BUILD_ROOT}/${LLVM_obj}                    \

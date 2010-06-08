@@ -106,7 +106,7 @@ fi
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvm" == "yes" ] ; then
 
-   # Remove previous build files if any.
+   # Remove previously build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_obj}
    mkdir -p ${BUILD_ROOT}/${LLVM_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_obj}
@@ -147,7 +147,7 @@ fi
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvmgcc" == "yes" ] ; then
 
-   # Remove previous build files if any.
+   # Remove previously build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_GCC_obj}
    mkdir -p ${BUILD_ROOT}/${LLVM_GCC_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_GCC_obj}

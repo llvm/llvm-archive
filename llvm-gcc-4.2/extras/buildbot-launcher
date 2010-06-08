@@ -19,13 +19,12 @@ shift
 cd $BUILD_DIR
 
 # The build script expects source code directories in certain place with
-# certain names.
-# TODO: Handle relative paths here
-if [ "$LLVM_SOURCE" != "llvm.src" ] ; then
-   ln -sf $BUILD_DIR/$LLVM_SOURCE $BUILD_DIR/llvm.src
+# certain names. Create link only if target directory or link does not exist.
+if [ ! -d $BUILD_DIR/llvm.src ] ; then
+   ln -sf $LLVM_SOURCE $BUILD_DIR/llvm.src
 fi
-if [ "$LLVM_GCC_SOURCE" != "llvm-gcc.src" ] ; then
-   ln -sf $BUILD_DIR/$LLVM_GCC_SOURCE $BUILD_DIR/llvm-gcc.src
+if [ ! -d $BUILD_DIR/llvm-gcc.src ] ; then
+   ln -sf $LLVM_GCC_SOURCE $BUILD_DIR/llvm-gcc.src
 fi
 
 # Launch the build script with all the remaining parameters

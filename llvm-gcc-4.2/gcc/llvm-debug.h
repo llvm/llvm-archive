@@ -118,9 +118,13 @@ private:
   // by GCC's cfglayout.c:change_scope().
   void change_regions(tree_node *desired, tree_node *grand);
 
-  /// EmitFunctionStart - Constructs the debug code for entering a function -
+  /// CreateSubprogramFromFnDecl - Constructs the debug code for entering a function -
   /// "llvm.dbg.func.start."
-  void EmitFunctionStart(tree_node *FnDecl, Function *Fn, BasicBlock *CurBB);
+  DISubprogram CreateSubprogramFromFnDecl(tree_node *FnDecl);
+
+  /// EmitFunctionStart - Constructs the debug code for entering a function -
+  /// "llvm.dbg.func.start", and pushes it onto the RegionStack.
+  void EmitFunctionStart(tree_node *FnDecl);
 
   /// EmitFunctionEnd - Constructs the debug code for exiting a declarative
   /// region - "llvm.dbg.region.end."

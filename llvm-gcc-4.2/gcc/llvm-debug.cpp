@@ -277,7 +277,7 @@ void DebugInfo::push_regions(tree desired, tree grand) {
 // regions to arrive at 'desired'.  This was inspired (cribbed from)
 // by GCC's cfglayout.c:change_scope().
 void DebugInfo::change_regions(tree desired, tree grand) {
-  tree current_lexical_block = getCurrentLexicalBlock();
+  tree current_lexical_block = getCurrentLexicalBlock(), t;
   // FIXME: change_regions is currently never called with desired ==
   // grand, but it should be fixed so nothing weird happens if they're
   // equal.
@@ -288,28 +288,34 @@ void DebugInfo::change_regions(tree desired, tree grand) {
     RegionStack.pop_back();
   }
   DebugInfo::push_regions(desired, grand);
-  setCurrentLexicalBlock(desired);
+  // There's no point in declaring an empty (declares no variables)
+  // lexical BLOCK as the current lexical BLOCK.  Locate nearest
+  // non-empty ancestor BLOCK and declare that.
+  for (t = desired; TREE_CODE(t) == BLOCK; t = BLOCK_SUPERCONTEXT(t))
+    if (BLOCK_VARS(t))
+      break;
+  setCurrentLexicalBlock(t);
 }
 
-/// EmitFunctionStart - Constructs the debug code for entering a function.
-void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
-                                  BasicBlock *CurBB) {
-  setCurrentLexicalBlock(FnDecl);
-
+/// CreateSubprogramFromFnDecl - Constructs the debug code for
+/// entering a function - "llvm.dbg.func.start."
+DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
+  DISubprogram SPDecl;
+  bool SPDeclIsSet = false;
+  // True if we're currently generating LLVM for this function.
+  bool definition = llvm_set_decl_p(FnDecl);
   DIType FNType = getOrCreateType(TREE_TYPE(FnDecl));
 
   std::map<tree_node *, WeakVH >::iterator I = SPCache.find(FnDecl);
   if (I != SPCache.end()) {
-    DISubprogram SPDecl(cast<MDNode>(I->second));
-    DISubprogram SP = 
-      DebugFactory.CreateSubprogramDefinition(SPDecl);
-    SPDecl->replaceAllUsesWith(SP);
-
-    // Push function on region stack.
-    RegionStack.push_back(WeakVH(SP));
-    RegionMap[FnDecl] = WeakVH(SP);
-    return;
-  } 
+    SPDecl = DISubprogram(cast<MDNode>(I->second));
+    SPDeclIsSet = true;
+    // If we've already created the defining instance, OR this
+    // invocation won't create the defining instance, return what we
+    // already have.
+    if (SPDecl.isDefinition() || !definition)
+      return SPDecl;
+  }
 
   bool ArtificialFnWithAbstractOrigin = false;
   // If this artificial function has abstract origin then put this function
@@ -323,26 +329,34 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
     getOrCreateFile(main_input_filename) :
     findRegion (DECL_CONTEXT(FnDecl));
 
+  // Declare block_invoke functions at file scope for GDB.
+  if (BLOCK_SYNTHESIZED_FUNC(FnDecl))
+    SPContext = findRegion(NULL_TREE);
+
   // Creating context may have triggered creation of this SP descriptor. So
   // check the cache again.
-  I = SPCache.find(FnDecl);
-  if (I != SPCache.end()) {
-    DISubprogram SPDecl(cast<MDNode>(I->second));
-    DISubprogram SP = 
-      DebugFactory.CreateSubprogramDefinition(SPDecl);
-    SPDecl->replaceAllUsesWith(SP);
+  if (!SPDeclIsSet) {
+    I = SPCache.find(FnDecl);
+    if (I != SPCache.end()) {
+      SPDecl = DISubprogram(cast<MDNode>(I->second));
+      DISubprogram SP = 
+        DebugFactory.CreateSubprogramDefinition(SPDecl);
+      SPDecl->replaceAllUsesWith(SP);
 
-    // Push function on region stack.
-    RegionStack.push_back(WeakVH(SP));
-    RegionMap[FnDecl] = WeakVH(SP);
-    return;
-  } 
-
+      // Push function on region stack.
+      RegionStack.push_back(WeakVH(SP));
+      RegionMap[FnDecl] = WeakVH(SP);
+      return SP;
+    }
+  }
   // Gather location information.
   expanded_location Loc = GetNodeLocation(FnDecl, false);
-  StringRef LinkageName = getLinkageName(FnDecl);
+  // If the name isn't public, omit the linkage name.  Adding a
+  // linkage name to a class method can confuse GDB.
+  StringRef LinkageName = TREE_PUBLIC(FnDecl) ?
+    getLinkageName(FnDecl) : StringRef();
 
-  unsigned lineno = CurLineNo;
+  unsigned lineno = LOCATION_LINE(Loc);
   if (isCopyOrDestroyHelper(FnDecl))
     lineno = 0;
 
@@ -357,23 +371,40 @@ void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn,
   }
 
   StringRef FnName = getFunctionName(FnDecl);
-
+  // If the Function * hasn't been created yet, use a bogus value for
+  // the debug internal linkage bit.
+  bool hasInternalLinkage = true;
+  Function *Fn = 0;
+  if (GET_DECL_LLVM_INDEX(FnDecl)) {
+    Fn = cast<Function>DECL_LLVM(FnDecl);
+    if (Fn)
+      hasInternalLinkage = Fn->hasInternalLinkage();
+  }
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(SPContext,
                                   FnName, FnName,
                                   LinkageName,
                                   getOrCreateFile(Loc.file), lineno,
                                   FNType,
-                                  Fn->hasInternalLinkage(),
-                                  true /*definition*/,
+                                  hasInternalLinkage,
+                                  definition,
                                   Virtuality, VIndex, ContainingType,
-                                  DECL_ARTIFICIAL (FnDecl), optimize);
+                                  DECL_ARTIFICIAL (FnDecl), optimize,
+                                  Fn);
 
   SPCache[FnDecl] = WeakVH(SP);
+  RegionMap[FnDecl] = WeakVH(SP);
+  if (SPDeclIsSet && SPDecl != SP)
+    SPDecl->replaceAllUsesWith(SP);
+  return SP;
+}
 
+/// EmitFunctionStart - Constructs the debug code for entering a function.
+void DebugInfo::EmitFunctionStart(tree FnDecl) {
+  setCurrentLexicalBlock(FnDecl);
+  DISubprogram SP = CreateSubprogramFromFnDecl(FnDecl);
   // Push function on region stack.
   RegionStack.push_back(WeakVH(SP));
-  RegionMap[FnDecl] = WeakVH(SP);
 }
 
 /// getOrCreateNameSpace - Get name space descriptor for the tree node.
@@ -392,6 +423,58 @@ DINameSpace DebugInfo::getOrCreateNameSpace(tree Node, DIDescriptor Context) {
   return DNS;
 }
 
+/// variablesDeclaredAtThisLevel - yield true if this block, or any
+/// sibling thereof, declares any variables or types.  Expectes a
+/// BLOCK or FUNCTION_DECL tree.
+// GDB Kludge
+static bool variablesDeclaredAtThisLevel(tree blk) {
+  if (TREE_CODE(blk) == FUNCTION_DECL)
+    return true;
+  assert(TREE_CODE(blk) == BLOCK && "expected FUNCTION_DECL or BLOCK tree");
+  tree supercontext = BLOCK_SUPERCONTEXT(blk);
+  if (!supercontext)	// External scope.  Pretend it's the same as module scope.
+    return false;
+  tree step = TREE_CODE(supercontext) == BLOCK ?
+    BLOCK_SUBBLOCKS(supercontext) : DECL_INITIAL(supercontext);
+  for ( ; step && TREE_CODE(step) == BLOCK; step = TREE_CHAIN(step))
+    if (BLOCK_VARS(step))
+      return true;
+  return false;
+}
+
+/// supercontextWithDecls - walk up the BLOCKS tree, return an
+/// ancestor BLOCK that has vars, or sibling BLOCKs that do.  May
+/// return the FUNCTION_DECL.
+// GDB Kludge
+static tree supercontextWithDecls(tree blk) {
+  assert(TREE_CODE(blk) == BLOCK && "expected BLOCK");
+  tree step = BLOCK_SUPERCONTEXT(blk);
+  if (!step)    // No parent BLOCKs to search.
+    return blk;
+  while (step && TREE_CODE(step) == BLOCK && BLOCK_SUPERCONTEXT(step) &&
+         !variablesDeclaredAtThisLevel(step))
+    step = BLOCK_SUPERCONTEXT(step);
+  return step;
+}
+
+/// nonemptySibling - true if the given BLOCK has a sibling that is
+/// not empty (declares types and/or vars).
+// GDB Kludge
+static bool nonemptySibling(tree blk) {
+  if (TREE_CODE(blk) == FUNCTION_DECL)
+    return true;
+  assert(TREE_CODE(blk) == BLOCK && "expected FUNCTION_DECL or BLOCK tree");
+  tree supercontext = BLOCK_SUPERCONTEXT(blk);
+  if (!supercontext)	// External scope.  Pretend it's the same as module scope.
+    return false;
+  tree step = TREE_CODE(supercontext) == BLOCK ?
+    BLOCK_SUBBLOCKS(supercontext) : DECL_INITIAL(supercontext);
+  for ( ; step; step = TREE_CHAIN(step))
+    if (step != blk && BLOCK_VARS(step))
+      return true;
+  return false;
+}
+
 /// findRegion - Find tree_node N's region.
 DIDescriptor DebugInfo::findRegion(tree Node) {
   if (Node == NULL_TREE)
@@ -406,20 +489,71 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     DIType Ty = getOrCreateType(Node);
     return DIDescriptor(Ty);
   } else if (DECL_P (Node)) {
-    if (TREE_CODE (Node) == NAMESPACE_DECL) {
+    switch (TREE_CODE(Node)) {
+    default:
+      /// What kind of DECL is this?
+      return findRegion (DECL_CONTEXT (Node));
+    case NAMESPACE_DECL: {
       DIDescriptor NSContext = findRegion(DECL_CONTEXT(Node));
       DINameSpace NS = getOrCreateNameSpace(Node, NSContext);
       return DIDescriptor(NS);
     }
-    return findRegion (DECL_CONTEXT (Node));
+    case FUNCTION_DECL: {
+      DISubprogram SP = CreateSubprogramFromFnDecl(Node);
+      return SP;
+    }
+    }
   } else if (TREE_CODE(Node) == BLOCK) {
     // TREE_BLOCK is GCC's lexical block.
-    // Recursively create all necessary contexts:
-    DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
-    DILexicalBlock lexical_block = 
-      DebugFactory.CreateLexicalBlock(context, CurLineNo);
-    RegionMap[Node] = WeakVH(lexical_block);
-    return DIDescriptor(lexical_block);
+    tree scopeToDeclare, step;
+
+#if 0
+    // GDB Kludge
+    // This code section is devoted to eliminating as many lexical
+    // blocks as possible, in order to mimic GCC debug output.  In a
+    // perfect world, the debugger would not be adversely affected by
+    // a few extra lexical scopes.  Ideally this stuff could be
+    // drastically simplified when LLDB replaces GDB.
+    if (nonemptySibling(Node)) {
+      // If any sibling BLOCK declares anything, use this scope.
+      scopeToDeclare = Node;
+    } else {
+      tree upper = supercontextWithDecls(Node);
+      if (TREE_CODE(upper) == FUNCTION_DECL) {
+        scopeToDeclare = upper;
+      } else if (TREE_CODE(upper) == BLOCK && BLOCK_VARS(upper) && BLOCK_VARS(Node) &&
+                 upper != Node) {
+        // We can't use upper because it declares something.  Find the
+        // uppermost empty BLOCK /between/ Node and upper.
+        for (step = BLOCK_SUPERCONTEXT(Node);
+             TREE_CODE(step) == BLOCK && !BLOCK_VARS(step) &&
+               BLOCK_SUPERCONTEXT(step);
+             step = BLOCK_SUPERCONTEXT(step))
+          ;
+        scopeToDeclare = step;
+      } else
+        // Either or both of upper and Node are empty (declare
+        // nothing); fuse Node's scope with upper.
+        scopeToDeclare = upper;
+    }
+#else
+    scopeToDeclare = Node;
+#endif
+        
+    switch (TREE_CODE(scopeToDeclare)) {
+    default:
+      assert("non-BLOCK, non-FUNCTION_DECL scope!");
+    case FUNCTION_DECL:
+      return CreateSubprogramFromFnDecl(scopeToDeclare);
+    case BLOCK:
+      // Recursively establish ancestor scopes.
+      DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(scopeToDeclare));
+      DILexicalBlock lexical_block = 
+        DebugFactory.CreateLexicalBlock(context, CurLineNo);
+      RegionMap[scopeToDeclare] = WeakVH(lexical_block);
+      return DIDescriptor(lexical_block);
+    }
+    // GDB Kludge end
   }
 
   // Otherwise main compile unit covers everything.
@@ -651,7 +785,7 @@ DIType DebugInfo::createMethodType(tree type) {
   sprintf(FwdTypeName, "fwd.type.%d", FwdTypeCount++);
   llvm::DIType FwdType = 
     DebugFactory.CreateCompositeType(llvm::dwarf::DW_TAG_subroutine_type,
-                                     getOrCreateFile(main_input_filename),
+                                     findRegion(TYPE_CONTEXT(type)),
                                      FwdTypeName,
                                      getOrCreateFile(main_input_filename),
                                      0, 0, 0, 0, 0,
@@ -738,7 +872,7 @@ DIType DebugInfo::createPointerType(tree type) {
   
   StringRef PName = FromTy.getName();
   DIType PTy = 
-    DebugFactory.CreateDerivedType(Tag, findRegion(TYPE_CONTEXT(type)), 
+    DebugFactory.CreateDerivedType(Tag, findRegion(TYPE_CONTEXT(type)),
                                    Tag == DW_TAG_pointer_type ? 
                                    StringRef() : PName,
                                    getOrCreateFile(main_input_filename),

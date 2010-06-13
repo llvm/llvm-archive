@@ -2098,6 +2098,7 @@ void TreeToLLVM::EmitLandingPads() {
     foreach_reachable_handler(i, false, AddHandler, &Handlers);
 
     bool HasCleanup = false;
+    bool HasCatchAll = false;
     static GlobalVariable *CatchAll = 0;
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
@@ -2137,6 +2138,7 @@ void TreeToLLVM::EmitLandingPads() {
           }
 
           Args.push_back(CatchAll);
+          HasCatchAll = true;
         } else {
           // Add the type infos.
           for (; TypeList; TypeList = TREE_CHAIN(TypeList)) {
@@ -2151,18 +2153,17 @@ void TreeToLLVM::EmitLandingPads() {
     }
 
     if (can_throw_external_1(i, false)) {
-      if (HasCleanup && Args.size() == 2) {
-        Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), 0));
-      } else {
-        // Some exceptions from this region may not be caught by any handler.
-        // Since invokes are required to branch to the unwind label no matter
-        // what exception is being unwound, append a catch-all.
-
-        // The representation of a catch-all is language specific.
-        if (USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
-          // Use a "cleanup" - this should be good enough for most languages.
+      if (HasCleanup) {
+        if (Args.size() == 2 || USING_SJLJ_EXCEPTIONS || !lang_eh_catch_all) {
+          // Insert the sentinal indicating that this is a cleanup-only
+          // selector.  It may also be the representation of a catch-all for
+          // some languages.
           Args.push_back(ConstantInt::get(Type::getInt32Ty(Context), 0));
-        } else {
+        } else if (!HasCatchAll) {
+          // Some exceptions from this region may not be caught by any handler.
+          // Since invokes are required to branch to the unwind label no matter
+          // what exception is being unwound, append a catch-all.
+
           if (!CatchAll) {
             Constant *Init = 0;
             tree catch_all_type = lang_eh_catch_all();

@@ -59,8 +59,6 @@ void dummy_function() {
   llvm::createCFGSimplificationPass();
 
   llvm::createDefaultScheduler(NULL, llvm::CodeGenOpt::Default);
-  llvm::createLinearScanRegisterAllocator();
-  llvm::createLocalRegisterAllocator();
 
   llvm::createGVNPass();
   llvm::createLoopRotatePass();

@@ -25,17 +25,24 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    specification says that varargs functions must use the base standard
    instead of the VFP hard float variant. We check for that with
    (isVoid || hasArgList). */
+
+/* from  TARGET_AAPCS_BASED */
+#define DEFAULT_TARGET_AAPCS_BASED \
+  (ARM_DEFAULT_ABI != ARM_ABI_APCS && ARM_DEFAULT_ABI != ARM_ABI_ATPCS)
+
 #define TARGET_ADJUST_LLVM_CC(CC, type)                       \
   {                                                           \
-    if (TARGET_AAPCS_BASED)                                   \
-      CC = ((TARGET_VFP && TARGET_HARD_FLOAT_ABI &&           \
+    if (TARGET_AAPCS_BASED) {                                 \
+      if (TARGET_VFP && TARGET_HARD_FLOAT_ABI &&              \
              ((TYPE_ARG_TYPES(type) == 0) ||                  \
               (TREE_VALUE(tree_last(TYPE_ARG_TYPES(type))) == \
-               void_type_node))) ?                            \
-      CallingConv::ARM_AAPCS_VFP :                            \
-      CallingConv::ARM_AAPCS);                                \
-    else                                                      \
-      CC = CallingConv::ARM_APCS;                             \
+               void_type_node)))                              \
+        CC = CallingConv::ARM_AAPCS_VFP;                      \
+      if (!DEFAULT_TARGET_AAPCS_BASED)                        \
+        CC = CallingConv::ARM_AAPCS;                          \
+    } else if (DEFAULT_TARGET_AAPCS_BASED) {                  \
+        CC = CallingConv::ARM_APCS;                           \
+    }                                                         \
   }
 
 #ifdef LLVM_ABI_H

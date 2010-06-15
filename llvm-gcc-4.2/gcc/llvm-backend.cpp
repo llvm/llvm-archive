@@ -512,6 +512,8 @@ void llvm_initialize_backend(void) {
   if (!flag_pch_file &&
       debug_info_level > DINFO_LEVEL_NONE)
     TheDebugInfo = new DebugInfo(TheModule);
+  else
+    TheDebugInfo = 0;
 }
 
 /// performLateBackendInitialization - Set backend options that may only be
@@ -1007,7 +1009,8 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   // Convert the AST to raw/ugly LLVM code.
   Function *Fn;
   {
-    TreeToLLVM Emitter(fndecl);
+    TreeToLLVM *Emitter = new TreeToLLVM(fndecl);
+    // FIXME: should we store TheTreeToLLVM right here (current in constructor)?
     enum symbol_visibility vis = DECL_VISIBILITY (fndecl);
 
     if (vis != VISIBILITY_DEFAULT)
@@ -1015,7 +1018,8 @@ void llvm_emit_code_for_current_function(tree fndecl) {
       // visibility that's not supported by the target.
       targetm.asm_out.visibility(fndecl, vis);
 
-    Fn = Emitter.EmitFunction();
+    Fn = TheTreeToLLVM->EmitFunction();
+    Emitter->~TreeToLLVM();
   }
 
 #if 0

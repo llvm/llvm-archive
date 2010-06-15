@@ -5533,7 +5533,7 @@ gimplify_expr (tree *expr_p, tree *pre_p, tree *post_p,
              pointer-based ARRAY_REFs as binary expressions. */
           if (TREE_CODE (TREE_TYPE (TREE_OPERAND (*expr_p, 0))) != ARRAY_TYPE) {
             /* LLVM LOCAL 8004649 */
-            gimplify_type_sizes (TREE_TYPE (*expr_p), expr_p);
+            gimplify_type_sizes (TREE_TYPE (*expr_p), pre_p);
             goto expr_2;
           }
 #endif

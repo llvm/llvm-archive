@@ -812,11 +812,12 @@ Function *TreeToLLVM::EmitFunction() {
   basic_block bb;
   edge e;
   edge_iterator ei;
+  tree stmt = NULL_TREE;
   FOR_EACH_BB (bb) {
     for (block_stmt_iterator bsi = bsi_start (bb); !bsi_end_p (bsi);
          bsi_next (&bsi)) {
       MemRef DestLoc;
-      tree stmt = bsi_stmt (bsi);
+      stmt = bsi_stmt (bsi);
 
       // If this stmt returns an aggregate value (e.g. a call whose result is
       // ignored), create a temporary to receive the value.  Note that we don't
@@ -826,6 +827,21 @@ Function *TreeToLLVM::EmitFunction() {
         DestLoc = CreateTempLoc(ConvertType(TREE_TYPE(stmt)));
 
       Emit(stmt, DestLoc.Ptr ? &DestLoc : NULL);
+    }
+
+    // If we didn't see any statements, the current bb is an empty
+    // basic block.  But an empty block must have one outgoing edge,
+    // and there might be some location info there; grab it.
+    if (!stmt && EmitDebugInfo()) {
+      assert(EDGE_COUNT(b->succs) == 1 && "empty basic block with multiple successors?") ;
+      e = EDGE_I(bb->succs, 0);
+      source_locus locus = e->goto_locus;
+      if (locus) {
+        // Set new location on the way up the tree.
+        TheDebugInfo->setLocationFile(LOCATION_FILE(*locus));
+        TheDebugInfo->setLocationLine(LOCATION_LINE(*locus));
+      }
+      TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
     }
 
     FOR_EACH_EDGE (e, ei, bb->succs)

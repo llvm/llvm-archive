@@ -4696,6 +4696,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   SmallVector<Value *, 4> StoreCallResultAddrs;
   SmallVector<const Type *, 4> CallResultTypes;
   SmallVector<bool, 4> CallResultIsSigned;
+  SmallVector<std::pair<bool, unsigned>, 4> OutputLocations;
 
   // Process outputs.
   ValNum = 0;
@@ -4763,11 +4764,13 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       ConstraintStr += SimplifiedConstraint;
       CallResultTypes.push_back(DestValTy);
       CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
+      OutputLocations.push_back(std::make_pair(true, CallResultTypes.size()-1));
     } else {
       ConstraintStr += ",=*";
       ConstraintStr += SimplifiedConstraint;
       CallOps.push_back(Dest.Ptr);
       CallArgTypes.push_back(Dest.Ptr->getType());
+      OutputLocations.push_back(std::make_pair(false, CallArgTypes.size()-1));
     }
   }
 
@@ -4832,8 +4835,19 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       // is big endian.
       if (ISDIGIT(Constraint[0])) {
         unsigned Match = atoi(Constraint);
-        const Type *OTy = (Match < CallResultTypes.size())
-          ? CallResultTypes[Match] : 0;
+        // This output might have gotten put in either CallResult or CallArg
+        // depending whether it's a register or not.  Find its type.
+        const Type *OTy = 0;
+        if (Match < OutputLocations.size()) {
+          // Indices here known to be within range.
+          if (OutputLocations[Match].first)
+            OTy = CallResultTypes[OutputLocations[Match].second];
+          else {
+            OTy = CallArgTypes[OutputLocations[Match].second];
+            assert(OTy->isPointerTy() && "Expected pointer type!");
+            OTy = cast<PointerType>(OTy)->getElementType();
+          }
+        }
         if (OTy && OTy != OpTy) {
           if (!(OTy->isIntegerTy() || OTy->isPointerTy()) ||
               !(OpTy->isIntegerTy() || OpTy->isPointerTy())) {

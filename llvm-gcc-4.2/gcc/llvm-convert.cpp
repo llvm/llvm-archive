@@ -833,7 +833,7 @@ Function *TreeToLLVM::EmitFunction() {
     // basic block.  But an empty block must have one outgoing edge,
     // and there might be some location info there; grab it.
     if (!stmt && EmitDebugInfo()) {
-      assert(EDGE_COUNT(b->succs) == 1 && "empty basic block with multiple successors?") ;
+      assert(EDGE_COUNT(bb->succs) == 1 && "empty basic block with multiple successors?") ;
       e = EDGE_I(bb->succs, 0);
       source_locus locus = e->goto_locus;
       if (locus) {

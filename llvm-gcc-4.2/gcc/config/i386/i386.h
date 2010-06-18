@@ -3959,6 +3959,9 @@ enum ix86_builtins
        omitting leaf frame pointers only.  */           \
     if (flag_omit_frame_pointer == 3)                   \
       argvec.push_back("--disable-non-leaf-fp-elim");   \
+                                                        \
+    if (ix86_force_align_arg_pointer)                   \
+      argvec.push_back("-realign-stack");               \
   } while (0)
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */

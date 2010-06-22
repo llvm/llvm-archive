@@ -490,6 +490,11 @@ struct lang_hooks
   bool (*function_is_thunk_p) (tree fndecl);
   /* LLVM LOCAL end <rdar://problem/7929157> */
 
+  /* LLVM LOCAL begin <rdar://problem/8104369> */
+  /* Returns the target of a thunk.  */
+  tree (*thunk_target) (tree thunk);
+  /* LLVM LOCAL end <rdar://problem/8104369> */
+
   /* Whenever you add entries here, make sure you adjust langhooks-def.h
      and langhooks.c accordingly.  */
 };

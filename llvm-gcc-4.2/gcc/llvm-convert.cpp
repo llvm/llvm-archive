@@ -75,6 +75,8 @@ extern enum machine_mode reg_raw_mode[FIRST_PSEUDO_REGISTER];
 
 static LLVMContext &Context = getGlobalContext();
 
+extern std::vector<tree> Thunks;
+
 // Check for GCC bug 17347: C++ FE sometimes creates bogus ctor trees
 // which we should throw out
 #define BOGUS_CTOR(exp)                                                \
@@ -528,34 +530,41 @@ void TreeToLLVM::StartFunctionBody() {
   // The function should not already have a body.
   assert(Fn->empty() && "Function expanded multiple times!");
 
-  // Compute the linkage that the function should get.
-  if (DECL_LLVM_PRIVATE(FnDecl)) {
-    Fn->setLinkage(Function::PrivateLinkage);
-  } else if (DECL_LLVM_LINKER_PRIVATE(FnDecl)) {
-    Fn->setLinkage(Function::LinkerPrivateLinkage);
-  } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
-    Fn->setLinkage(Function::InternalLinkage);
-  } else if (DECL_EXTERNAL(FnDecl) && 
-             lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl))) {
-    Fn->setLinkage(Function::AvailableExternallyLinkage);
-  } else if (DECL_COMDAT(FnDecl)) {
-    Fn->setLinkage(Function::getLinkOnceLinkage(flag_odr));
-  } else if (DECL_WEAK(FnDecl) && !lang_hooks.function_is_thunk_p (FnDecl)) {
-    // The user may have explicitly asked for weak linkage - ignore flag_odr.
-    Fn->setLinkage(Function::WeakAnyLinkage);
-  } else if (DECL_ONE_ONLY(FnDecl) || lang_hooks.function_is_thunk_p (FnDecl)) {
-    Fn->setLinkage(Function::getWeakLinkage(flag_odr));
-  } else if (IS_EXTERN_INLINE(FnDecl)) {
-    // gcc "extern inline", C99 "inline"
-    Fn->setLinkage(Function::AvailableExternallyLinkage);
-  }
+  if (!lang_hooks.function_is_thunk_p (FnDecl)) {
+    // Compute the linkage that the function should get.
+    if (DECL_LLVM_PRIVATE(FnDecl)) {
+      Fn->setLinkage(Function::PrivateLinkage);
+    } else if (DECL_LLVM_LINKER_PRIVATE(FnDecl)) {
+      Fn->setLinkage(Function::LinkerPrivateLinkage);
+    } else if (!TREE_PUBLIC(FnDecl) /*|| lang_hooks.llvm_is_in_anon(subr)*/) {
+      Fn->setLinkage(Function::InternalLinkage);
+    } else if (DECL_EXTERNAL(FnDecl) && 
+               lookup_attribute ("always_inline", DECL_ATTRIBUTES (FnDecl))) {
+      Fn->setLinkage(Function::AvailableExternallyLinkage);
+    } else if (DECL_COMDAT(FnDecl)) {
+      Fn->setLinkage(Function::getLinkOnceLinkage(flag_odr));
+    } else if (DECL_WEAK(FnDecl)) {
+      // The user may have explicitly asked for weak linkage - ignore flag_odr.
+      Fn->setLinkage(Function::WeakAnyLinkage);
+    } else if (DECL_ONE_ONLY(FnDecl) || lang_hooks.function_is_thunk_p (FnDecl)) {
+      Fn->setLinkage(Function::getWeakLinkage(flag_odr));
+    } else if (IS_EXTERN_INLINE(FnDecl)) {
+      // gcc "extern inline", C99 "inline"
+      Fn->setLinkage(Function::AvailableExternallyLinkage);
+    }
 
 #ifdef TARGET_ADJUST_LLVM_LINKAGE
-  TARGET_ADJUST_LLVM_LINKAGE(Fn,FnDecl);
+    TARGET_ADJUST_LLVM_LINKAGE(Fn, FnDecl);
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
-  // Handle visibility style
-  handleVisibility(FnDecl, Fn);
+    // Handle visibility style.
+    handleVisibility(FnDecl, Fn);
+  } else {
+    // A thunk should get its visibility and linkage from the function being
+    // thunked. Set the information after all functions have been processed
+    // through here.
+    Thunks.push_back(FnDecl);
+  }
 
   // Handle attribute "aligned".
   if (DECL_ALIGN (FnDecl) != FUNCTION_BOUNDARY)

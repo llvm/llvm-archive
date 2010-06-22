@@ -38,6 +38,8 @@ enum c_language_kind c_language = clk_cxx;
 static void cp_init_ts (void);
 /* LLVM LOCAL <rdar://problem/7929157> */
 static bool cp_function_thunk_p (tree fndecl);
+/* LLVM LOCAL <rdar://problem/8104369> */
+static tree cp_thunk_target (tree thunk);
 
 /* Lang hooks common to C++ and ObjC++ are declared in cp/cp-objcp-common.h;
    consequently, there should be very few hooks below.  */
@@ -56,6 +58,10 @@ static bool cp_function_thunk_p (tree fndecl);
 #undef LANG_HOOKS_FUNCTION_THUNK_P
 #define LANG_HOOKS_FUNCTION_THUNK_P     cp_function_thunk_p
 /* LLVM LOCAL end <rdar://problem/7929157> */
+/* LLVM LOCAL begin <rdar://problem/8104369> */
+#undef LANG_HOOKS_THUNK_TARGET
+#define LANG_HOOKS_THUNK_TARGET         cp_thunk_target
+/* LLVM LOCAL end <rdar://problem/8104369> */
 
 /* Each front end provides its own lang hook initializer.  */
 const struct lang_hooks lang_hooks = LANG_HOOKS_INITIALIZER;
@@ -152,12 +158,20 @@ cp_init_ts (void)
 }
 
 /* LLVM LOCAL begin <rdar://problem/7929157> */
-bool
+static bool
 cp_function_thunk_p (tree fndecl)
 {
   return DECL_THUNK_P (fndecl);
 }
 /* LLVM LOCAL end <rdar://problem/7929157> */
+
+/* LLVM LOCAL begin <rdar://problem/8104369> */
+static tree
+cp_thunk_target (tree thunk)
+{
+  return THUNK_TARGET (thunk);
+}
+/* LLVM LOCAL begin <rdar://problem/8104369> */
 
 void
 finish_file (void)

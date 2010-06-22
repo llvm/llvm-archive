@@ -91,6 +91,9 @@ TargetMachine *TheTarget = 0;
 TargetFolder *TheFolder = 0;
 TypeConverter *TheTypeConverter = 0;
 
+// A list of thunks to post-process.
+std::vector<tree> Thunks;
+
 /// DisableLLVMOptimizations - Allow the user to specify:
 /// "-mllvm -disable-llvm-optzns" on the llvm-gcc command line to force llvm
 /// optimizations off.
@@ -121,8 +124,8 @@ static void destroyOptimizationPasses();
 // than the LLVM Value pointer while using PCH.
 
 // Collection of LLVM Values
-static std::vector<Value *> LLVMValues;
-typedef DenseMap<Value *, unsigned> LLVMValuesMapTy;
+static std::vector<Value*> LLVMValues;
+typedef DenseMap<Value*, unsigned> LLVMValuesMapTy;
 static LLVMValuesMapTy LLVMValuesMap;
 
 /// LocalLLVMValueIDs - This is the set of local IDs we have in our mapping,
@@ -858,6 +861,47 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
 void llvm_asm_file_end(void) {
   timevar_push(TV_LLVM_PERFILE);
   LLVMContext &Context = getGlobalContext();
+
+  // Assign the correct linkage to the thunks now that we've set the linkage and
+  // visibility to their targets.
+  SmallPtrSet<tree, 4> ThunkOfThunk;
+
+  for (std::vector<tree>::iterator
+         I = Thunks.begin(), E = Thunks.end(); I != E; ++I) {
+    tree thunk = *I;
+    tree thunk_target = lang_hooks.thunk_target(thunk);
+
+    if (lang_hooks.function_is_thunk_p (thunk_target)) {
+      ThunkOfThunk.insert(thunk);
+      continue;
+    }
+
+    Function *Thunk = cast<Function>(DECL_LLVM(thunk));
+    const Function *ThunkTarget = cast<Function>(DECL_LLVM(thunk_target));
+
+    Thunk->setLinkage(ThunkTarget->getLinkage());
+    Thunk->setVisibility(ThunkTarget->getVisibility());
+  }
+
+  // There's a situation where a thunk calls another thunk. In that case, we
+  // want to process first the thunk that calls a non-thunk. Then we process
+  // each thunk in turn until all thunks have been processed.
+  while (!ThunkOfThunk.empty())
+    for (SmallPtrSet<tree, 4>::iterator
+           I = ThunkOfThunk.begin(), E = ThunkOfThunk.end(); I != E; ++I) {
+      tree thunk = *I;
+      tree thunk_target = lang_hooks.thunk_target(thunk);
+
+      if (!ThunkOfThunk.count(thunk_target)) {
+        Function *Thunk = cast<Function>(DECL_LLVM(thunk));
+        const Function *ThunkTarget = cast<Function>(DECL_LLVM(thunk_target));
+
+        Thunk->setLinkage(ThunkTarget->getLinkage());
+        Thunk->setVisibility(ThunkTarget->getVisibility());
+        ThunkOfThunk.erase(thunk);
+        break;
+      }
+    }
 
   performLateBackendInitialization();
   createPerFunctionOptimizationPasses();

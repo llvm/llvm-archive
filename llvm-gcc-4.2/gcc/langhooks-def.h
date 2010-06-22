@@ -159,6 +159,9 @@ extern bool lhd_is_runtime_specific_type (tree);
 /* LLVM LOCAL <rdar://problem/7929157> */
 #define LANG_HOOKS_FUNCTION_THUNK_P     hook_bool_tree_false
 
+/* LLVM LOCAL <rdar://problem/8104369> */
+#define LANG_HOOKS_THUNK_TARGET         lhd_return_null_tree
+
 /* APPLE LOCAL begin radar 6353006  */
 #define LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE \
   lhd_build_generic_block_struct_type
@@ -366,6 +369,8 @@ extern tree lhd_make_node (enum tree_code);
       LANG_HOOKS_BUILD_GENERIC_BLOCK_STRUCT_TYPE,       \
       /* LLVM LOCAL <rdar://problem/7929157> */         \
       LANG_HOOKS_FUNCTION_THUNK_P,                      \
+      /* LLVM LOCAL <rdar://problem/8104369> */         \
+      LANG_HOOKS_THUNK_TARGET,                          \
 }
 
 #endif /* GCC_LANG_HOOKS_DEF_H */

@@ -1466,6 +1466,13 @@ int main() { mcontext_t m; if (m->ss.srr0) return 0; return 0; }
     ;;
 esac
 
+# Check if we have a particular darwin crash reporter library.
+case ${host} in
+  *-*-darwin*)
+    AC_CHECK_LIB(CrashReporterClient, gCRAnnotations)
+    ;;
+esac
+
 # ---------
 # Threading
 # ---------

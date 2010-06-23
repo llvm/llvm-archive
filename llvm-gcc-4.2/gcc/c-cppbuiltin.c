@@ -639,6 +639,11 @@ c_cpp_builtins (cpp_reader *pfile)
   if (flag_openmp)
     cpp_define (pfile, "_OPENMP=200505");
 
+  /* LLVM LOCAL begin tls */
+  if (targetm.have_tls)
+    cpp_define (pfile, "__HAS_TLS__");
+  /* LLVM LOCAL end tls */
+
   /* A straightforward target hook doesn't work, because of problems
      linking that hook's body when part of non-C front ends.  */
 # define preprocessing_asm_p() (cpp_get_options (pfile)->lang == CLK_ASM)

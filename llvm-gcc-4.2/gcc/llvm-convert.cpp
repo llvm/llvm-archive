@@ -8297,6 +8297,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
   unsigned HOST_WIDE_INT CtorIndex;
   tree FieldValue;
   tree Field; // The FIELD_DECL for the field.
+
   FOR_EACH_CONSTRUCTOR_ELT(CONSTRUCTOR_ELTS(exp), CtorIndex, Field, FieldValue){
     // If an explicit field is specified, use it.
     if (Field == 0) {
@@ -8310,30 +8311,40 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       }
     }
 
-    // Decode the field's value.
-    Constant *Val = Convert(FieldValue);
-
     // GCCFieldOffsetInBits is where GCC is telling us to put the current field.
     uint64_t GCCFieldOffsetInBits = getFieldOffsetInBits(Field);
     NextField = TREE_CHAIN(Field);
 
     uint64_t FieldSizeInBits = 0;
-    if (DECL_SIZE(Field))
+    uint64_t ValueSizeInBits = 0;
+    Constant *Val = 0;
+    ConstantInt *ValC = 0;
+    
+    // Zero-sized bitfields upset the type converter.  If it's not a
+    // bit-field, or it is a bit-field but it has a non-zero precision
+    // type, go ahead and convert it.
+    if (!DECL_BIT_FIELD_TYPE(Field) || TYPE_PRECISION(TREE_TYPE(Field)))
+      Val = Convert(FieldValue);        // Decode the field's value.
+
+    if (DECL_SIZE(Field)) {
       FieldSizeInBits = getInt64(DECL_SIZE(Field), true);
-    uint64_t ValueSizeInBits = Val->getType()->getPrimitiveSizeInBits();
-    ConstantInt *ValC = dyn_cast<ConstantInt>(Val);
-    if (ValC && ValC->isZero() && DECL_SIZE(Field)) {
-      // G++ has various bugs handling {} initializers where it doesn't
-      // synthesize a zero node of the right type.  Instead of figuring out G++,
-      // just hack around it by special casing zero and allowing it to be the
-      // wrong size.
-      if (ValueSizeInBits != FieldSizeInBits) {
-        APInt ValAsInt = ValC->getValue();
-        ValC = ConstantInt::get(Context, ValueSizeInBits < FieldSizeInBits ?
-                                         ValAsInt.zext(FieldSizeInBits) :
-                                         ValAsInt.trunc(FieldSizeInBits));
-        ValueSizeInBits = FieldSizeInBits;
-        Val = ValC;
+      if (FieldSizeInBits == 0)
+        continue;       // Skip zero-sized fields.
+      ValueSizeInBits = Val->getType()->getPrimitiveSizeInBits();
+      ValC = dyn_cast<ConstantInt>(Val);
+      if (ValC && ValC->isZero()) {
+        // G++ has various bugs handling {} initializers where it doesn't
+        // synthesize a zero node of the right type.  Instead of figuring out G++,
+        // just hack around it by special casing zero and allowing it to be the
+        // wrong size.
+        if (ValueSizeInBits != FieldSizeInBits) {
+          APInt ValAsInt = ValC->getValue();
+          ValC = ConstantInt::get(Context, ValueSizeInBits < FieldSizeInBits ?
+                                  ValAsInt.zext(FieldSizeInBits) :
+                                  ValAsInt.trunc(FieldSizeInBits));
+          ValueSizeInBits = FieldSizeInBits;
+          Val = ValC;
+        }
       }
     }
 

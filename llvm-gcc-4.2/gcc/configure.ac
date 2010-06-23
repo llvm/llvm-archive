@@ -2485,6 +2485,11 @@ foo:	.long	25
 	tls_first_major=2
 	tls_first_minor=17
 	;;
+  i[34567]86-*-darwin*)
+    conftest_s='.tbss _a,4,2'
+    tls_first_major=0
+    tls_first_minor=0
+    ;;
   i[34567]86-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits
@@ -2505,6 +2510,11 @@ foo:	.long	25
 	tls_first_minor=14
 	tls_as_opt=--fatal-warnings
 	;;
+  x86_64-*-darwin*)
+    conftest_s='.tbss _a,4,2'
+    tls_first_major=0
+    tls_first_minor=0
+    ;;
   x86_64-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits

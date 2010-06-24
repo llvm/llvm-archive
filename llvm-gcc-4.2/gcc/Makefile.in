@@ -1246,7 +1246,7 @@ DYLIB_COMPILE_FLAGS := $(filter-out -mdynamic-no-pic, \
                              $(ALL_CXXFLAGS) $(ALL_CPPFLAGS))
 libllvmgcc$(LLVM_STAGE).dylib: llvm-linker-hack.cpp $(LLVMLIBFILES)
 	echo $(LLVMLIBFILES)
-	$(CXX) $(DYLIB_COMPILE_FLAGS) $(INCLUDES) -o $@ \
+	$(CXX) $(DYLIB_COMPILE_FLAGS) $(INCLUDES) $(LIBS) -o $@ \
            $< $(LLVMLIBFILES) -dynamiclib -single_module \
            -compatibility_version 1.0.0 -current_version 1.0.0 \
            -install_name @executable_path/$@ \

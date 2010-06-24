@@ -6,7 +6,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC++" { target *-*-darwin* } } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 typedef void (^blockATYPE)(void);
 

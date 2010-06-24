@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-void *_NSConcreteStackBlock;
+void *_NSConcreteStackBlock[32];
 void _Block_object_assign(void * dst, void *src, int flag){}
 
 extern "C" void abort(void);

@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 void _Block_byref_assign_copy(void * dst, void *src){}
 void _Block_byref_release(void*src){}
 

@@ -8,7 +8,7 @@
 
 extern "C" void abort(void);
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 
 void callVoidVoid(void (^closure)(void)) {

@@ -4,7 +4,7 @@
 /* { dg-final { scan-assembler "DW_AT_APPLE_block" } } */
 
 #include <stdio.h>
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 int
 blockTaker (int (^myBlock)(int), int other_input)

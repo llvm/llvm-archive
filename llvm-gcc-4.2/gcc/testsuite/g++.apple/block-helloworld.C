@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-void* _NSConcreteStackBlock;
+void* _NSConcreteStackBlock[32];
 
 int main()
 {

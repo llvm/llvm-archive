@@ -6,7 +6,7 @@
 
 #import <Foundation/Foundation.h>
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 int CalledRetain = 0;
 

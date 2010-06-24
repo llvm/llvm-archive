@@ -14,7 +14,7 @@ static void _Block_object_dispose(void * arg, int flag) {
   ++count;
 }
 
-void *_NSConcreteStackBlock;
+void *_NSConcreteStackBlock[32];
 
 void FOO(int arg) {
   __block int X = 1234;

@@ -4,7 +4,7 @@
 /* { dg-do compile } */
 
 typedef int (^myblock)(void);
-void *_NSConcreteStackBlock;
+void *_NSConcreteStackBlock[32];
 
 myblock foo(int i, myblock b) {
   if (!i ? (void *)0 : b)

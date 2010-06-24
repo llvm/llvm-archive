@@ -4,7 +4,7 @@
 /* { dg-options "-fblocks" } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 #ifndef _BLOCK_PRIVATE_H_
 #define _BLOCK_PRIVATE_H_
 

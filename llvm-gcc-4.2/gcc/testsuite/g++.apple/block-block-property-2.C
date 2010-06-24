@@ -5,7 +5,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC++ -framework Foundation" { target *-*-darwin* } } */
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 void _Block_byref_assign_copy(void * dst, void *src){}
 void _Block_byref_release(void*src){}
 

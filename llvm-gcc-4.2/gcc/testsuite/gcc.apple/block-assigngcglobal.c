@@ -5,7 +5,7 @@
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #include <stdio.h>
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 int GlobalInt = 0;
 

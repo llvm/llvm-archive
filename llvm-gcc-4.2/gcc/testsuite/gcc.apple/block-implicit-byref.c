@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 enum {
     BLOCK_NEEDS_FREE =        (1 << 24),

@@ -7,7 +7,7 @@
 #import <Foundation/Foundation.h>
 #include <stdio.h>
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 @interface TestObject {
 

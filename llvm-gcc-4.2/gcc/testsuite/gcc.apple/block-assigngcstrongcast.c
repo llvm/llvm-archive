@@ -11,7 +11,7 @@
 
 #undef objc_assign_ivar
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 int GlobalInt = 0;
 
 id objc_assign_global(id val, id *dest) {

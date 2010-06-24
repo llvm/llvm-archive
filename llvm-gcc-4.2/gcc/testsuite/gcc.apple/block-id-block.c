@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-void * _NSConcreteStackBlock;
+void * _NSConcreteStackBlock[32];
 
 typedef void (^blockATYPE)(void);
 

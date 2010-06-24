@@ -1183,7 +1183,13 @@ common_handle_option (size_t scode, const char *arg, int value,
 
     case OPT_gstabs:
     case OPT_gstabs_:
+      /* LLVM LOCAL begin */
+#ifdef ENABLE_LLVM
+      error ("llvm-gcc does not support STABS debugging format");
+#else
       set_debug_level (DBX_DEBUG, code == OPT_gstabs_, arg);
+#endif
+      /* LLVM LOCAL end */
       break;
 
     case OPT_gvms:

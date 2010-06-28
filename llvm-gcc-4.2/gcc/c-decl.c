@@ -771,7 +771,10 @@ pop_scope (void)
 	      error ("label %q+D used but not defined", p);
 	      DECL_INITIAL (p) = error_mark_node;
 	    }
-	  else if (!TREE_USED (p) && warn_unused_label)
+/* LLVM LOCAL begin 7729514 */
+  	  else if (!TREE_USED (p) && warn_unused_label &&
+                   strncmp( IDENTIFIER_POINTER (DECL_NAME (p)), "LASM$", 5) != 0)
+/* LLVM LOCAL end */
 	    {
 	      if (DECL_INITIAL (p))
 		warning (0, "label %q+D defined but not used", p);

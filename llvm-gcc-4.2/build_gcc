@@ -125,6 +125,12 @@ echo DARWIN_VERS = $DARWIN_VERS
 ARM_LIBSTDCXX_VERSION=4.2.1
 ARM_CONFIGFLAGS="--with-gxx-include-dir=/usr/include/c++/$ARM_LIBSTDCXX_VERSION"
 
+# When building for a non-embedded train, ARM defaults to MacOSX, just like
+# x86 and ppc.
+if [ "x$RC_TARGET_CONFIG" = "xiPhone" ]; then
+  ARM_DARWIN_TARGET_IPHONEOS="YES"
+fi
+
 if [ -n "$ARM_SDK" ]; then
   ARM_SYSROOT=`xcodebuild -version -sdk $ARM_SDK Path`
 else
@@ -357,9 +363,20 @@ for t in $CROSS_TARGETS ; do
     fi
     # APPLE LOCAL end ARM ARM_CONFIGFLAGS
    fi
-   make $MAKEFLAGS all CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+   if [ $t = 'arm' ] ; then
+     if [ $ARM_DARWIN_TARGET_IPHONEOS = 'YES' ] ; then
+       DEFAULT_TARGET="-DDEFAULT_TARGET_OS=DARWIN_VERSION_IPHONEOS"
+     else
+        DEFAULT_TARGET="-DDEFAULT_TARGET_OS=DARWIN_VERSION_MACOSX"
+     fi
+   else
+     DEFAULT_TARGET=""
+   fi
+   make $MAKEFLAGS all CFLAGS="$CFLAGS $DEFAULT_TARGET" \
+     CXXFLAGS="$CFLAGS $DEFAULT_TARGET" || exit 1
    make $MAKEFLAGS DESTDIR=$DIR/dst-$BUILD-$t install-gcc install-target \
-     CFLAGS="$CFLAGS" CXXFLAGS="$CFLAGS" || exit 1
+     CFLAGS="$CFLAGS $DEFAULT_TARGET" \
+     CXXFLAGS="$CFLAGS $DEFAULT_TARGET" | exit 1
 
    # Add the compiler we just built to the path.
    # LLVM LOCAL Support for non /usr $DEST_ROOT

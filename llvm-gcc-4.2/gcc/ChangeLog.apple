@@ -1,3 +1,10 @@
+2010-06-28 Jim Grosbach <grosbach@apple.com>
+
+	Radar 7449793
+	* config/arm/darwin.h (DEFAULT_TARGET_OS): New.
+	(DARWIN_DEFAULT_VERSION_TYPE): OSX or iOS, depending on setting of
+	DEFAULT_TARGET_OS.
+
 2010-03-16  Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 7760213

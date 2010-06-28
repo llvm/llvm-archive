@@ -1,3 +1,9 @@
+2010-06-28 Jim Grosbach <grosbach@apple.com>
+
+	Radar 7449793
+	* build_gcc: Set DEFAULT_TARGET_OS to iOS when specified, OSX
+	otherwise.
+
 2009-05-27  Bob Wilson  <bob.wilson@apple.com>
 
 	Radar 6915254

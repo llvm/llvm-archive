@@ -247,7 +247,11 @@
 #define DARWIN_LD_MINVERSION_SPEC "-iphoneos_version_min %(darwin_minversion)"
 
 /* Use iPhone OS version numbers by default.  */
+#ifdef DEFAULT_TARGET_OS
+#define DARWIN_DEFAULT_VERSION_TYPE  DEFAULT_TARGET_OS
+#else
 #define DARWIN_DEFAULT_VERSION_TYPE  DARWIN_VERSION_IPHONEOS
+#endif
 
 #define DARWIN_IPHONEOS_LIBGCC_SPEC "-lgcc_s.1 -lgcc"
 

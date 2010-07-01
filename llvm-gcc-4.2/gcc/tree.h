@@ -3107,7 +3107,7 @@ struct tree_decl_with_vis GTY(())
  unsigned block_synthesized_function : 1;
  /* APPLE LOCAL radar 5847976 */
  unsigned block_weak : 1;
- /* 3 unused bits (llvm). */
+ /* 2 unused bits (llvm). */
  /* APPLE LOCAL end radar 5932809 - copyable byref blocks */
  /* APPLE LOCAL end radar 5732232 - blocks */
 };

@@ -1165,6 +1165,8 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
     Linkage = GlobalValue::PrivateLinkage;
   else if (DECL_LLVM_LINKER_PRIVATE(decl))
     Linkage = GlobalValue::LinkerPrivateLinkage;
+  else if (DECL_LLVM_LINKER_PRIVATE_WEAK(decl))
+    Linkage = GlobalValue::LinkerPrivateWeakLinkage;
   else if (DECL_WEAK(decl))
     // The user may have explicitly asked for weak linkage - ignore flag_odr.
     Linkage = GlobalValue::WeakAnyLinkage;
@@ -1431,6 +1433,9 @@ void emit_global_to_llvm(tree decl) {
   } else if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
              && DECL_LLVM_LINKER_PRIVATE(decl)) {
     Linkage = GlobalValue::LinkerPrivateLinkage;
+  } else if (CODE_CONTAINS_STRUCT (TREE_CODE (decl), TS_DECL_WITH_VIS)
+             && DECL_LLVM_LINKER_PRIVATE_WEAK(decl)) {
+    Linkage = GlobalValue::LinkerPrivateWeakLinkage;
   } else if (!TREE_PUBLIC(decl)) {
     Linkage = GlobalValue::InternalLinkage;
   } else if (DECL_WEAK(decl)) {
@@ -1499,7 +1504,8 @@ void emit_global_to_llvm(tree decl) {
 
     // Handle used decls
     if (DECL_PRESERVE_P (decl)) {
-      if (DECL_LLVM_LINKER_PRIVATE (decl))
+      if (DECL_LLVM_LINKER_PRIVATE (decl) ||
+          DECL_LLVM_LINKER_PRIVATE_WEAK (decl))
         AttributeCompilerUsedGlobals.insert(GV);
       else
         AttributeUsedGlobals.insert(GV);

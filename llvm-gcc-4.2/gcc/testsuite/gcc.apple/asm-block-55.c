@@ -1,4 +1,4 @@
-/* { dg-do compile { target i?86*-*-darwin* } } */
+/* { dg-do compile { target i?86*-*-darwin* x86_64*-*-darwin*} } */
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options { -fasm-blocks -msse3 -mdynamic-no-pic } } */
 /* { dg-final { scan-assembler "movq _packedw1.*, %mm0" } } */

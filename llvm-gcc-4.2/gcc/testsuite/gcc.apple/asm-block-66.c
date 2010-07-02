@@ -1,5 +1,5 @@
 /* APPLE LOCAL file CW asm blocks */
-/* { dg-do compile { target i?86*-*-darwin* } } */
+/* { dg-do compile { target i?86*-*-darwin* x86_64*-*-darwin*} } */
 /* { dg-options { -fasm-blocks } } */
 /* { dg-final { scan-assembler "filds" } } */
 /* { dg-final { scan-assembler "fstps" } } */

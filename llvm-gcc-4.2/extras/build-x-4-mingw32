@@ -195,7 +195,6 @@ fi
 if [ "$do_make_llvmgcc" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
-   # NOTE: Do not build in parallel! It doesn't build.
    nice -n 20 make          \
       $@  # Extra args if any
 

@@ -224,7 +224,6 @@ fi
 if [ "$do_make_llvmgcc_1" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_GCC_obj_1}
-   # NOTE: Do not build in parallel! It doesn't build.
    nice -n 20 make          \
       $@  # Extra args if any
 
@@ -341,7 +340,6 @@ if [ "$do_make_llvmgcc_2" == "yes" ] ; then
    fi
 
    cd ${BUILD_ROOT}/${LLVM_GCC_obj_2}
-   # NOTE: Do not build in parallel! It doesn't build.
    nice -n 20 make          \
       $@  # Extra args if any
 

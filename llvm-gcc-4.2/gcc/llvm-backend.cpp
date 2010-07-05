@@ -478,7 +478,7 @@ void llvm_initialize_backend(void) {
   // If the target wants to override the architecture, e.g. turning
   // powerpc-darwin-... into powerpc64-darwin-... when -m64 is enabled, do so
   // now.
-  std::string TargetTriple = TARGET_NAME;
+  std::string TargetTriple = TARGET_CANONICAL_NAME;
 #ifdef LLVM_OVERRIDE_TARGET_ARCH
   std::string Arch = LLVM_OVERRIDE_TARGET_ARCH();
   if (!Arch.empty()) {

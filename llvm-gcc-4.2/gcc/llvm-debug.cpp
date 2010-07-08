@@ -288,13 +288,7 @@ void DebugInfo::change_regions(tree desired, tree grand) {
     RegionStack.pop_back();
   }
   DebugInfo::push_regions(desired, grand);
-  // There's no point in declaring an empty (declares no variables)
-  // lexical BLOCK as the current lexical BLOCK.  Locate nearest
-  // non-empty ancestor BLOCK and declare that.
-  for (t = desired; TREE_CODE(t) == BLOCK; t = BLOCK_SUPERCONTEXT(t))
-    if (BLOCK_VARS(t))
-      break;
-  setCurrentLexicalBlock(t);
+  setCurrentLexicalBlock(desired);
 }
 
 /// CreateSubprogramFromFnDecl - Constructs the debug code for
@@ -475,10 +469,40 @@ static bool nonemptySibling(tree blk) {
   return false;
 }
 
-/// findRegion - Find tree_node N's region.
-DIDescriptor DebugInfo::findRegion(tree Node) {
-  if (Node == NULL_TREE)
+/// findRegion - Find the region (context) of a GCC tree.
+DIDescriptor DebugInfo::findRegion(tree exp) {
+  if (exp == NULL_TREE)
     return getOrCreateFile(main_input_filename);
+
+  tree Node = exp;
+  location_t *p_locus = 0;
+  tree_code code = TREE_CODE(exp);
+  enum tree_code_class tree_cc = TREE_CODE_CLASS(code);
+  switch (tree_cc) {
+  case tcc_declaration:  /* A decl node */
+    p_locus = &DECL_SOURCE_LOCATION(exp);
+    break;
+
+  case tcc_expression:  /* an expression */
+  case tcc_comparison:  /* a comparison expression */
+  case tcc_unary:  /* a unary arithmetic expression */
+  case tcc_binary:  /* a binary arithmetic expression */
+    Node = TREE_BLOCK(exp);
+    p_locus = EXPR_LOCUS(exp);
+    break;
+
+  case tcc_exceptional:
+    switch (code) {
+    case BLOCK:
+      p_locus = &BLOCK_SOURCE_LOCATION(Node);
+      break;
+    default:
+      gcc_unreachable ();
+    }
+    break;
+  default:
+    break;
+  }
 
   std::map<tree_node *, WeakVH>::iterator I = RegionMap.find(Node);
   if (I != RegionMap.end())
@@ -504,56 +528,23 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     }
     }
   } else if (TREE_CODE(Node) == BLOCK) {
-    // TREE_BLOCK is GCC's lexical block.
-    tree scopeToDeclare, step;
-
-#if 0
-    // GDB Kludge
-    // This code section is devoted to eliminating as many lexical
-    // blocks as possible, in order to mimic GCC debug output.  In a
-    // perfect world, the debugger would not be adversely affected by
-    // a few extra lexical scopes.  Ideally this stuff could be
-    // drastically simplified when LLDB replaces GDB.
-    if (nonemptySibling(Node)) {
-      // If any sibling BLOCK declares anything, use this scope.
-      scopeToDeclare = Node;
+    // Recursively establish ancestor scopes.
+    DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
+    // If we don't have a location, use the last-seen info.
+    unsigned int line;
+    const char *fullpath;
+    if (LOCATION_FILE(*p_locus) == (char*)0) {
+      fullpath = CurFullPath;
+      line = CurLineNo;
     } else {
-      tree upper = supercontextWithDecls(Node);
-      if (TREE_CODE(upper) == FUNCTION_DECL) {
-        scopeToDeclare = upper;
-      } else if (TREE_CODE(upper) == BLOCK && BLOCK_VARS(upper) && BLOCK_VARS(Node) &&
-                 upper != Node) {
-        // We can't use upper because it declares something.  Find the
-        // uppermost empty BLOCK /between/ Node and upper.
-        for (step = BLOCK_SUPERCONTEXT(Node);
-             TREE_CODE(step) == BLOCK && !BLOCK_VARS(step) &&
-               BLOCK_SUPERCONTEXT(step);
-             step = BLOCK_SUPERCONTEXT(step))
-          ;
-        scopeToDeclare = step;
-      } else
-        // Either or both of upper and Node are empty (declare
-        // nothing); fuse Node's scope with upper.
-        scopeToDeclare = upper;
+      fullpath = LOCATION_FILE(*p_locus);
+      line = LOCATION_LINE(*p_locus);
     }
-#else
-    scopeToDeclare = Node;
-#endif
-        
-    switch (TREE_CODE(scopeToDeclare)) {
-    default:
-      assert("non-BLOCK, non-FUNCTION_DECL scope!");
-    case FUNCTION_DECL:
-      return CreateSubprogramFromFnDecl(scopeToDeclare);
-    case BLOCK:
-      // Recursively establish ancestor scopes.
-      DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(scopeToDeclare));
-      DILexicalBlock lexical_block = 
-        DebugFactory.CreateLexicalBlock(context, CurLineNo);
-      RegionMap[scopeToDeclare] = WeakVH(lexical_block);
-      return DIDescriptor(lexical_block);
-    }
-    // GDB Kludge end
+    DIFile F(getOrCreateFile(fullpath));
+    DILexicalBlock lexical_block = 
+      DebugFactory.CreateLexicalBlock(context, F, line, 0U);
+    RegionMap[Node] = WeakVH(lexical_block);
+    return DIDescriptor(lexical_block);
   }
 
   // Otherwise main compile unit covers everything.

@@ -960,20 +960,19 @@ Value *TreeToLLVM::Emit(tree exp, const MemRef *DestLoc) {
 
   Value *Result = 0;
 
-  bool emitdebuginfo = EmitDebugInfo();
-
-  if (emitdebuginfo && EXPR_HAS_LOCATION(exp)) {
-    // Set new location on the way up the tree.
-    TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
-    TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
-  }
-
   // If we've just changed lexical blocks, emit any local variables
   // declared in the new block.
   TreeToLLVM::switchLexicalBlock(exp);
 
-  if (emitdebuginfo)
+  if (EmitDebugInfo()) {
+    if (EXPR_HAS_LOCATION(exp)) {
+      // Set new location on the way up the tree.
+      TheDebugInfo->setLocationFile(EXPR_FILENAME(exp));
+      TheDebugInfo->setLocationLine(EXPR_LINENO(exp));
+    }
+
     TheDebugInfo->EmitStopPoint(Fn, Builder.GetInsertBlock(), Builder);
+  }
 
   switch (TREE_CODE(exp)) {
   default:

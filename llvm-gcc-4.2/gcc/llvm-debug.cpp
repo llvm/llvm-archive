@@ -604,7 +604,7 @@ void DebugInfo::EmitDeclare(tree decl, unsigned Tag, const char *Name,
   Instruction *Call = 
     DebugFactory.InsertDeclare(AI, D, Builder.GetInsertBlock());
   
-  Call->setDebugLoc(DebugLoc::get(CurLineNo, 0, VarScope));
+  Call->setDebugLoc(DebugLoc::get(Loc.line, 0, VarScope));
 }
 
 

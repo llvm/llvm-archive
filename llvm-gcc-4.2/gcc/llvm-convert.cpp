@@ -39,6 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -1754,6 +1755,15 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   // definition is encountered.
   if (isGimpleTemporary(decl))
     return;
+
+  /* If this is a vla type and we requested an alignment greater than the stack
+     alignment, error out since we're not going to dynamically realign
+     variable length array allocations.  We're placing this here instead of
+     later in case it's a relatively unused variable.  */
+  if (TREE_CODE (type) == ARRAY_TYPE && C_TYPE_VARIABLE_SIZE (type) &&
+      DECL_ALIGN(decl)/8u > TheTarget->getFrameInfo()->getStackAlignment())
+        error ("alignment for %q+D is greater than the stack alignment, "
+               "we cannot guarantee the alignment.", decl);
 
   // If this is just the rotten husk of a variable that the gimplifier
   // eliminated all uses of, but is preserving for debug info, ignore it.

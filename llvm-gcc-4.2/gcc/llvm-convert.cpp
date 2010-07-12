@@ -546,7 +546,8 @@ void TreeToLLVM::StartFunctionBody() {
     } else if (DECL_WEAK(FnDecl)) {
       // The user may have explicitly asked for weak linkage - ignore flag_odr.
       Fn->setLinkage(Function::WeakAnyLinkage);
-    } else if (DECL_ONE_ONLY(FnDecl) || lang_hooks.function_is_thunk_p (FnDecl)) {
+    } else if (DECL_ONE_ONLY(FnDecl) || 
+               lang_hooks.function_is_thunk_p (FnDecl)) {
       Fn->setLinkage(Function::getWeakLinkage(flag_odr));
     } else if (IS_EXTERN_INLINE(FnDecl)) {
       // gcc "extern inline", C99 "inline"
@@ -770,7 +771,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
           RetVal = BitCastToType(RetVal,
                                  Type::getInt8PtrTy(Context));
           RetVal = Builder.CreateGEP(RetVal,
-                      ConstantInt::get(TD.getIntPtrType(Context), ReturnOffset));
+                    ConstantInt::get(TD.getIntPtrType(Context), ReturnOffset));
         }
         RetVal = BitCastToType(RetVal, Fn->getReturnType()->getPointerTo());
         RetVal = Builder.CreateLoad(RetVal, "retval");
@@ -842,7 +843,8 @@ Function *TreeToLLVM::EmitFunction() {
     // basic block.  But an empty block must have one outgoing edge,
     // and there might be some location info there; grab it.
     if (!stmt && EmitDebugInfo()) {
-      assert(EDGE_COUNT(bb->succs) == 1 && "empty basic block with multiple successors?") ;
+      assert(EDGE_COUNT(bb->succs) == 1 && 
+             "empty basic block with multiple successors?");
       e = EDGE_I(bb->succs, 0);
       source_locus locus = e->goto_locus;
       if (locus) {
@@ -908,14 +910,16 @@ void TreeToLLVM::switchLexicalBlock(tree exp) {
       // equal, but the climbers differ, they are siblings: both
       // climbers rise to the next level.
       while (new_climber != current_climber) {
-        current_climber_depth = DECL_P(current_climber) ? 0 : BLOCK_NUMBER(current_climber);
+        current_climber_depth = DECL_P(current_climber) ? 
+                                        0 : BLOCK_NUMBER(current_climber);
         new_climber_depth = DECL_P(new_climber) ? 0 : BLOCK_NUMBER(new_climber);
         if (new_climber_depth <= current_climber_depth)
           current_climber = BLOCK_SUPERCONTEXT(current_climber);
         if (new_climber_depth >= current_climber_depth)
           new_climber = BLOCK_SUPERCONTEXT(new_climber);
       }
-      assert(new_climber == current_climber && "missed common TREE_BLOCK parent");
+      assert(new_climber == current_climber &&
+             "missed common TREE_BLOCK parent");
       // Pop and push lexical blocks to arrive at the new context.
       TheDebugInfo->change_regions(new_block, new_climber);
     }
@@ -1958,7 +1962,8 @@ Value *TreeToLLVM::EmitCOND_EXPR(tree exp) {
     if (!Cond->getType()->isIntegerTy(1))
       Cond = Builder.CreateIsNotNull(Cond, "toBool");
   } else {
-    Cond = EmitCompare(exp_cond, UIPred, SIPred, FPPred, Type::getInt1Ty(Context));
+    Cond = EmitCompare(exp_cond, UIPred, SIPred, FPPred,
+                       Type::getInt1Ty(Context));
     assert(Cond->getType() == Type::getInt1Ty(Context));
   }
 
@@ -3143,7 +3148,8 @@ void TreeToLLVM::HandleMultiplyDefinedGimpleTemporary(tree Var) {
     }
 
     if (!InsertPtFinal) {
-      // If the instruction is an invoke, the init is inserted on the normal edge.
+      // If the instruction is an invoke, the init is inserted on the normal
+      // edge.
       if (InvokeInst *II = dyn_cast<InvokeInst>(InsertPt)) {
         InsertPt = II->getNormalDest()->begin();
         while (isa<PHINode>(InsertPt))
@@ -3294,7 +3300,8 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
       ThisLastBitPlusOne = LV.BitStart+LV.BitSize;
 
     Value *Ptr = Index ?
-      Builder.CreateGEP(LV.Ptr, ConstantInt::get(Type::getInt32Ty(Context), Index)) :
+      Builder.CreateGEP(LV.Ptr, 
+                        ConstantInt::get(Type::getInt32Ty(Context), Index)) :
       LV.Ptr;
     LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
     LI->setAlignment(Alignment);
@@ -3693,15 +3700,16 @@ Value *TreeToLLVM::EmitCompare(tree exp, unsigned UIOpc, unsigned SIOpc,
       // Handle floating point comparisons, if we get here.
       Result = Builder.CreateFCmp(FCmpInst::Predicate(FPPred), LHS, RHS);
     } else {
-      // Handle the integer/pointer cases.  Determine which predicate to use based
-      // on signedness.
-      ICmpInst::Predicate pred = ICmpInst::Predicate(LHSIsSigned ? SIOpc: UIOpc);
+      // Handle the integer/pointer cases.  Determine which predicate to use 
+      // based on signedness.
+      ICmpInst::Predicate pred = ICmpInst::Predicate(LHSIsSigned ? SIOpc:UIOpc);
 
       // Get the compare instructions
       Result = Builder.CreateICmp(pred, LHS, RHS);
     }
   }
-  assert(Result->getType() == Type::getInt1Ty(Context) && "Expected i1 result for compare");
+  assert(Result->getType() == Type::getInt1Ty(Context) && 
+         "Expected i1 result for compare");
 
   if (DestTy == 0)
     DestTy = ConvertType(TREE_TYPE(exp));
@@ -4886,17 +4894,17 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           unsigned OTyBits = TD.getTypeSizeInBits(OTy);
           unsigned OpTyBits = TD.getTypeSizeInBits(OpTy);
           if (OTyBits == 0 || OpTyBits == 0 || OTyBits < OpTyBits) {
-            // It's tempting to implement the OTyBits < OpTyBits case by truncating
-            // Op down to OTy, however that breaks in the case of an inline asm
-            // constraint that corresponds to a single register, because the
-            // user can write code that assumes the whole register is defined,
-            // despite the output operand being only a subset of the register. For
-            // example:
+            // It's tempting to implement the OTyBits < OpTyBits case by 
+            // truncating Op down to OTy, however that breaks in the case of an 
+            // inline asm constraint that corresponds to a single register, 
+            // because the user can write code that assumes the whole register 
+            // is defined, despite the output operand being only a subset of the
+            // register. For example:
             //
             //   asm ("sarl $10, %%eax" : "=a"(c) : "0"(1000000));
             //
-            // The expected behavior is for %eax to be fully defined with the value
-            // 1000000 immediately before the asm.
+            // The expected behavior is for %eax to be fully defined with the 
+            // value 1000000 immediately before the asm.
             error("%Hunsupported inline asm: input constraint with a matching "
                   "output constraint of incompatible type!",
                   &EXPR_LOCATION(exp));
@@ -5064,7 +5072,7 @@ Value *TreeToLLVM::BuildVector(const std::vector<Value*> &Ops) {
 
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     Result = Builder.CreateInsertElement(Result, Ops[i],
-                                      ConstantInt::get(Type::getInt32Ty(Context), i));
+                                ConstantInt::get(Type::getInt32Ty(Context), i));
 
   return Result;
 }
@@ -5419,7 +5427,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctlz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+    Result = Builder.CreateIntCast(Result, DestTy, 
+                                   !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                    "cast");
     return true;
   }
@@ -5429,7 +5438,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+    Result = Builder.CreateIntCast(Result, DestTy,
+                                   !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                    "cast");
     return true;
   }
@@ -5448,7 +5458,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctpop);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+    Result = Builder.CreateIntCast(Result, DestTy,
+                                   !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                    "cast");
     return true;
   }
@@ -5457,7 +5468,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
     EmitBuiltinUnaryOp(Amt, Result, Intrinsic::bswap);
     const Type *DestTy = ConvertType(TREE_TYPE(exp));
-    Result = Builder.CreateIntCast(Result, DestTy, !TYPE_UNSIGNED(TREE_TYPE(exp)),
+    Result = Builder.CreateIntCast(Result, DestTy,
+                                   !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                    "cast");
     return true;
   }
@@ -6302,7 +6314,8 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
       ReadWrite = 0;
     } else {
       ReadWrite = Builder.getFolder().CreateIntCast(cast<Constant>(ReadWrite),
-                                                    Type::getInt32Ty(Context), false);
+                                                    Type::getInt32Ty(Context),
+                                                    false);
     }
 
     if (TREE_CHAIN(TREE_CHAIN(arglist))) {
@@ -6315,7 +6328,8 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
         Locality = 0;
       } else {
         Locality = Builder.getFolder().CreateIntCast(cast<Constant>(Locality),
-                                                     Type::getInt32Ty(Context), false);
+                                                     Type::getInt32Ty(Context),
+                                                     false);
       }
     }
   }
@@ -6436,7 +6450,8 @@ bool TreeToLLVM::EmitBuiltinDwarfCFA(tree exp, Value *&Result) {
   // FIXME: is i32 always enough here?
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                         Intrinsic::eh_dwarf_cfa),
-                              ConstantInt::get(Type::getInt32Ty(Context), cfa_offset));
+                                      ConstantInt::get(Type::getInt32Ty(Context),
+                                                       cfa_offset));
 
   return true;
 }
@@ -6552,13 +6567,15 @@ bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp,
 
   if (!wrote_return_column) {
     Size = ConstantInt::get(Type::getInt8Ty(Context), GET_MODE_SIZE (Pmode));
-    Idx  = ConstantInt::get(Type::getInt32Ty(Context), DWARF_FRAME_RETURN_COLUMN);
+    Idx  = ConstantInt::get(Type::getInt32Ty(Context),
+                            DWARF_FRAME_RETURN_COLUMN);
     Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx), false);
   }
 
 #ifdef DWARF_ALT_FRAME_RETURN_COLUMN
   Size = ConstantInt::get(Type::getInt8Ty(Context), GET_MODE_SIZE (Pmode));
-  Idx  = ConstantInt::get(Type::getInt32Ty(Context), DWARF_ALT_FRAME_RETURN_COLUMN);
+  Idx  = ConstantInt::get(Type::getInt32Ty(Context),
+                          DWARF_ALT_FRAME_RETURN_COLUMN);
   Builder.CreateStore(Size, Builder.CreateGEP(Addr, Idx), false);
 #endif
 
@@ -7053,7 +7070,8 @@ LValue TreeToLLVM::EmitLV_BIT_FIELD_REF(tree exp) {
     // than this.  e.g. check out when compiling unwind-dw2-fde-darwin.c.
     Ptr.Ptr = BitCastToType(Ptr.Ptr, ValTy->getPointerTo());
     Ptr.Ptr = Builder.CreateGEP(Ptr.Ptr,
-                            ConstantInt::get(Type::getInt32Ty(Context), UnitOffset));
+                            ConstantInt::get(Type::getInt32Ty(Context),
+                                             UnitOffset));
     BitStart -= UnitOffset*ValueSizeInBits;
   }
 
@@ -7696,7 +7714,8 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
         Elts.push_back(ConstantInt::get(Type::getInt16Ty(Context), InStr[i]));
       else
-        Elts.push_back(ConstantInt::get(Type::getInt16Ty(Context), ByteSwap_16(InStr[i])));
+        Elts.push_back(ConstantInt::get(Type::getInt16Ty(Context),
+                                        ByteSwap_16(InStr[i])));
     }
   } else if (ElTy->isIntegerTy(32)) {
     assert((Len&3) == 0 &&
@@ -7709,7 +7728,8 @@ Constant *TreeConstantToLLVM::ConvertSTRING_CST(tree exp) {
       if (llvm::sys::isBigEndianHost() == BYTES_BIG_ENDIAN)
         Elts.push_back(ConstantInt::get(Type::getInt32Ty(Context), InStr[i]));
       else
-        Elts.push_back(ConstantInt::get(Type::getInt32Ty(Context), ByteSwap_32(InStr[i])));
+        Elts.push_back(ConstantInt::get(Type::getInt32Ty(Context),
+                                        ByteSwap_32(InStr[i])));
     }
   } else {
     assert(0 && "Unknown character type!");
@@ -8334,7 +8354,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
       ValC = dyn_cast<ConstantInt>(Val);
       if (ValC && ValC->isZero()) {
         // G++ has various bugs handling {} initializers where it doesn't
-        // synthesize a zero node of the right type.  Instead of figuring out G++,
+        // synthesize a zero node of the right type. Instead of figuring out G++,
         // just hack around it by special casing zero and allowing it to be the
         // wrong size.
         if (ValueSizeInBits != FieldSizeInBits) {

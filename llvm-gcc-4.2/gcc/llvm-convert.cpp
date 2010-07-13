@@ -185,6 +185,8 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   }
 
   AllocaInsertionPoint = 0;
+  GreatestAlignment = TheTarget->getFrameInfo()->getStackAlignment();
+  SeenVLA = NULL;
 
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
@@ -811,6 +813,15 @@ Function *TreeToLLVM::FinishFunctionBody() {
     BI->eraseFromParent();
   }
   UniquedValues.clear();
+
+  // If we've seen a vla in this function and we'll possibly need to
+  // either dynamically realign or this is greater than the maximum stack
+  // alignment, error out now.  This is here so we don't output an error
+  // every time we see a variable.
+  if (SeenVLA &&
+      GreatestAlignment > TheTarget->getFrameInfo()->getStackAlignment())
+      error ("alignment for %q+D conflicts with either a dynamically "
+             "realigned stack or the maximum stack alignment", SeenVLA);
 
   return Fn;
 }
@@ -1751,23 +1762,18 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       TREE_STATIC(decl) || DECL_EXTERNAL(decl) || type == error_mark_node)
     return;
 
+  // If we've seen a VLA remember it in case we try to dynamically realign
+  // the stack or request an alignment greater than the default stack
+  // alignment.
+  // We're basing the VLA on an expression that is an array that doesn't have
+  // a constant decl size as below.  
+  if (TREE_CODE(type) == ARRAY_TYPE &&
+      DECL_SIZE(decl) != 0 && TREE_CODE(DECL_SIZE_UNIT(decl)) != INTEGER_CST)
+    SeenVLA = decl;
+      
   // Gimple temporaries are handled specially: their DECL_LLVM is set when the
   // definition is encountered.
   if (isGimpleTemporary(decl))
-    return;
-
-  /* If this is a vla type and we requested an alignment greater than the stack
-     alignment, error out since we're not going to dynamically realign
-     variable length array allocations.  We're placing this here instead of
-     later in case it's a relatively unused variable.  */
-  if (TREE_CODE (type) == ARRAY_TYPE && C_TYPE_VARIABLE_SIZE (type) &&
-      DECL_ALIGN(decl)/8u > TheTarget->getFrameInfo()->getStackAlignment())
-        error ("alignment for %q+D is greater than the stack alignment, "
-               "we cannot guarantee the alignment.", decl);
-
-  // If this is just the rotten husk of a variable that the gimplifier
-  // eliminated all uses of, but is preserving for debug info, ignore it.
-  if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
     return;
 
   const Type *Ty;  // Type to allocate
@@ -1832,6 +1838,10 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
   }
 
   AI->setAlignment(Alignment);
+  
+  // Record the alignment if it's the largest we've seen.
+  if (Alignment > GreatestAlignment)
+    GreatestAlignment = Alignment;
 
   SET_DECL_LLVM(decl, AI);
 

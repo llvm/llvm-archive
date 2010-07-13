@@ -299,6 +299,15 @@ class TreeToLLVM {
   /// unique.  These can be simplified once the function has been emitted.
   std::vector<BitCastInst *> UniquedValues;
 
+  /// GreatestAlignment - The largest alignment seen on a variable declaration.
+  /// With stack realignment the TargetMachine's frame info won't be sufficient
+  /// to determine the greatest stack alignment.
+  unsigned GreatestAlignment;
+  
+  /// SeenVLA - Whether or not we have a VLA in the current function.  This
+  /// and dynamic stack realignment currently conflict so we'll use this to
+  /// warn later.
+  tree_node *SeenVLA;
   //===---------------------- Exception Handling --------------------------===//
 
   /// LandingPads - The landing pad for a given EH region.

@@ -1771,6 +1771,13 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       DECL_SIZE(decl) != 0 && TREE_CODE(DECL_SIZE_UNIT(decl)) != INTEGER_CST)
     SeenVLA = decl;
       
+  // If this is just the rotten husk of a variable that the gimplifier
+  // eliminated all uses of, but is preserving for debug info, ignore it.
+  // TODO: This affects the correctness of the warning we're attempting to
+  // watch above.
+  if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
+    return;
+      
   // Gimple temporaries are handled specially: their DECL_LLVM is set when the
   // definition is encountered.
   if (isGimpleTemporary(decl))

@@ -25,6 +25,14 @@ llvm-gcc is a C, C++, Objective-C and Objective-C++ compiler. llvm-g++ is a comp
 .Bl -tag -width -indent
 .It Fl flto
 Enables Link Time Optimization. Link Time Optimization is performed by ld(1) transparently using the LLVM optimizer. The object file generated contains intermediate LLVM bitcode instead of Mach-O objects.
+.It Fl fno-honor-nans
+Allow optimizations for floating-point arithmetic that assume that arguments and results are not NaNs.
+
+The default is -fhonor-nans.
+.It Fl fno-honor-infinites
+Allow optimizations for floating-point arithmetic that assume that arguments and results are not +-Infs.
+
+The default is -fhonor-infinites.
 .It Fl O4
 Enables Link Time Optimization in addition to all optimizations enabled at -O3.
 .It Fl O

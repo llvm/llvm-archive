@@ -598,7 +598,8 @@ c_cpp_builtins (cpp_reader *pfile)
     cpp_define (pfile, "__NO_INLINE__");
   if (flag_signaling_nans)
     cpp_define (pfile, "__SUPPORT_SNAN__");
-  if (flag_finite_math_only)
+  /* LLVM LOCAL */
+  if (!flag_honor_infinites & !flag_honor_nans)
     cpp_define (pfile, "__FINITE_MATH_ONLY__=1");
   else
     cpp_define (pfile, "__FINITE_MATH_ONLY__=0");

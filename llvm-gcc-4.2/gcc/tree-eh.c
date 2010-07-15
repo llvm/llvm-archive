@@ -1872,7 +1872,8 @@ tree_could_trap_p (tree expr)
       fp_operation = FLOAT_TYPE_P (t);
       if (fp_operation)
 	{
-	  honor_nans = flag_trapping_math && !flag_finite_math_only;
+          /* LLVM LOCAL */
+	  honor_nans = flag_trapping_math && flag_honor_nans;
 	  honor_snans = flag_signaling_nans != 0;
 	}
       else if (INTEGRAL_TYPE_P (t) && TYPE_OVERFLOW_TRAPS (t))

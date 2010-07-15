@@ -537,6 +537,16 @@ Common Report Var(flag_finite_math_only) PerFunc
 Assume no NaNs or infinities are generated
 ; APPLE LOCAL end optimization pragmas 3124235/3420242
 
+; LLVM LOCAL begin
+fhonor-nans
+Common Report Var(flag_honor_nans) Init(1) PerFunc
+Assume no NaNs are generated
+
+fhonor-infinites
+Common Report Var(flag_honor_infinites) Init(1) PerFunc
+Assume no infinites are generated
+; LLVM LOCAL end
+
 ffixed-
 Common Joined RejectNegative
 -ffixed-<register>	Mark <register> as being unavailable to the compiler

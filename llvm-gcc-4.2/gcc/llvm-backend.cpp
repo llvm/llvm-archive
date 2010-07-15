@@ -411,10 +411,10 @@ void llvm_initialize_backend(void) {
     Args.push_back("--time-passes");
   if (fast_math_flags_set_p())
     Args.push_back("--enable-unsafe-fp-math");
-  if (flag_finite_math_only) {
-    Args.push_back("--enable-no-nans-fp-math");
+  if (!flag_honor_infinites)
     Args.push_back("--enable-no-infs-fp-math");
-  }
+  if (!flag_honor_nans)
+    Args.push_back("--enable-no-nans-fp-math");
   if (!flag_omit_frame_pointer)
     Args.push_back("--disable-fp-elim");
   if (!flag_zero_initialized_in_bss)

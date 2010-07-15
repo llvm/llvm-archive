@@ -284,16 +284,18 @@ extern const char *flag_random_seed;
    x * 0 into 0, are not correct for NaN operands, and are normally
    disabled for modes with NaNs.  The user can ask for them to be
    done anyway using the -funsafe-math-optimizations switch.  */
+/* LLVM LOCAL */
 #define HONOR_NANS(MODE) \
-  (MODE_HAS_NANS (MODE) && !flag_finite_math_only)
+  (MODE_HAS_NANS (MODE) && flag_honor_nans)
 
 /* Like HONOR_NANs, but true if we honor signaling NaNs (or sNaNs).  */
 #define HONOR_SNANS(MODE) (flag_signaling_nans && HONOR_NANS (MODE))
 
 /* As for HONOR_NANS, but true if the mode can represent infinity and
    the treatment of infinite values is important.  */
+/* LLVM LOCAL */
 #define HONOR_INFINITIES(MODE) \
-  (MODE_HAS_INFINITIES (MODE) && !flag_finite_math_only)
+  (MODE_HAS_INFINITIES (MODE) && flag_honor_infinites)
 
 /* Like HONOR_NANS, but true if the given mode distinguishes between
    positive and negative zero, and the sign of zero is important.  */

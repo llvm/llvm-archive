@@ -1713,10 +1713,7 @@ const char *darwin_objc_llvm_special_name_section(const char *name) {
     else if (!strncmp (name, "PROP_NAME_ATTR_", 15))
       return "__TEXT,__cstring,cstring_literals";
   } else if (flag_objc_abi == 2) {
-    if (!strncmp (name, "PROP_NAME_ATTR_", 15)
-        || !strncmp (name, "CLASS_NAME_", 11)
-        || !strncmp (name, "METH_VAR_NAME_", 14)
-        || !strncmp (name, "METH_VAR_TYPE_", 14))
+    if (!strncmp (name, "PROP_NAME_ATTR_", 15))
       return "__TEXT,__cstring,cstring_literals";
     else if (!strncmp (name, "CLASSLIST_REFERENCES_", 21))
       return "__DATA, __objc_classrefs, regular, no_dead_strip";
@@ -1743,6 +1740,12 @@ const char *darwin_objc_llvm_special_name_section(const char *name) {
     else if (!strncmp (name, "CLASS_$_", 8)
              || !strncmp (name, "METACLASS_$_", 12))
       return "__DATA, __objc_data";
+    else if (!strncmp (name, "METH_VAR_NAME_", 14))
+      return "__TEXT, __objc_methname, cstring_literals";
+    else if (!strncmp (name, "METH_VAR_TYPE_", 14))
+      return "__TEXT, __objc_methtype, cstring_literals";
+    else if (!strncmp (name, "CLASS_NAME_", 11))
+      return "__TEXT, __objc_classname, cstring_literals";
   }
   return 0;
 }

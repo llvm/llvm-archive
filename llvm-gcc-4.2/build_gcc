@@ -768,18 +768,17 @@ fi
 
 # Install libLTO.dylib
 if [ "$INSTALL_LIBLTO" == yes ]; then
-  LTO=$LLVMCORE_PATH/lib/libLTO.dylib
-  if [ ! -r $LTO  ]; then
-    LTO=$LLVMCORE_PATH/../lib/libLTO.dylib
-    if [ ! -r $LTO ]; then
-      echo "Error: llvmCore installation is missing libLTO.dylib"
-      exit 1
-    fi
+  LTO=$LLVMCORE_PATH/../lib/libLTO.dylib
+  if [ ! -r $LTO ]; then
+    echo "Error: llvmCore installation is missing libLTO.dylib"
+    exit 1
   fi
   mkdir -p $DEST_DIR/Developer/usr/lib
   cp $LTO $DEST_DIR/Developer/usr/lib/libLTO.dylib
-  strip -S $DEST_DIR/Developer/usr/lib/libLTO.dylib
-
+  # FIXME: The unstripped libLTO.dylib from llvmCore's SYM_DIR should be
+  # copied to the current SYM_DIR.  Clang is currently responsible for
+  # installing libLTO.dylib, not llvm-gcc, so it's not worth fixing now.
+  
   if [ "x$DISABLE_USR_LINKS" == "x" ]; then
     # Add a symlink in /usr/lib for B&I.
     mkdir -p $DEST_DIR/usr/lib/

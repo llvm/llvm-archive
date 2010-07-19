@@ -93,7 +93,7 @@ install:
 	        SYMROOT=$(OBJROOT)/sym-llvmCore \
 	        DSTROOT=$(OBJROOT)/dst-llvmCore llvmCore
 	$(MAKE) LLVMCORE_PATH=$(OBJROOT)/dst-llvmCore/Developer/usr/local \
-	        INSTALL_LIBLTO=no llvmgcc42
+	        llvmgcc42
 
 llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	if [ ! -d $(SRC)/llvmCore ]; then \

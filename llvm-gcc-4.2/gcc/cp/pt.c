@@ -6696,8 +6696,6 @@ tsubst_decl (tree t, tree args, tsubst_flags_t complain)
 	   template, and in any case are considered separate under the
 	   discrete model.  */
 	r = copy_decl (t);
-        /* LLVM LOCAL 7514620 */
-        DECL_SOURCE_LOCATION(r) = saved_loc;
 	DECL_USE_TEMPLATE (r) = 0;
 	TREE_TYPE (r) = type;
 	/* Clear out the mangled name and RTL for the instantiation.  */

@@ -101,9 +101,8 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	  exit 1; \
 	fi
 	cd $(OBJROOT) && \
-	  DEVELOPER_DIR=Developer \
 	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
-	    $(SRC)/llvmCore /usr/local $(DSTROOT) $(SYMROOT) \
+	    $(SRC)/llvmCore /Developer/usr/local $(DSTROOT) $(SYMROOT) \
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
 	    $(ARM_HOSTED_BUILD) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 

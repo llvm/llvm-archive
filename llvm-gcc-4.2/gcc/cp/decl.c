@@ -377,7 +377,10 @@ pop_label (tree label, tree old_value)
 	  /* Avoid crashing later.  */
 	  define_label (location, DECL_NAME (label));
 	}
-      else if (!TREE_USED (label))
+/* LLVM LOCAL begin 8204109 */
+      else if (!TREE_USED (label) &&
+               strncmp (IDENTIFIER_POINTER (DECL_NAME (label)), "LASM$", 5) != 0)
+/* LLVM LOCAL end */
 	warning (OPT_Wunused_label, "label %q+D defined but not used", label);
     }
 

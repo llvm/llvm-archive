@@ -3932,6 +3932,11 @@ enum ix86_builtins
      if (nm && (*nm == '%' || *nm == '#')) ++nm; \
      ((!nm || ISDIGIT (*nm)) ? reg_names[REG_NUM] : nm); })
 
+/* LLVM_CANONICAL_ADDRESS_CONSTRAINTS - Valid x86 memory addresses include
+   symbolic values and immediates.  Canonicalize GCC's "p" constraint for
+   memory addresses to allow both memory and immediate operands. */
+#define LLVM_CANONICAL_ADDRESS_CONSTRAINTS "im"
+
 /* Propagate code model setting to backend */
 #define LLVM_SET_MACHINE_OPTIONS(argvec)                \
   do {                                                  \

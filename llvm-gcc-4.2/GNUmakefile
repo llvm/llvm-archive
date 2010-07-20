@@ -77,8 +77,9 @@ else
 LLVM_OPTIMIZED := yes
 endif
 
-# Cross-builds for ARM hosts are not supported here.
+# Cross-builds for ARM hosts or iOS Simulator are not supported here.
 ARM_HOSTED_BUILD := no
+IOS_SIM_BUILD := no
 
 ifndef RC_ProjectSourceVersion
 RC_ProjectSourceVersion = 9999
@@ -104,7 +105,7 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC)/llvmCore /Developer/usr/local $(DSTROOT) $(SYMROOT) \
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
-	    $(ARM_HOSTED_BUILD) \
+	    $(ARM_HOSTED_BUILD) $(IOS_SIM_BUILD) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)

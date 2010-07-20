@@ -6629,7 +6629,15 @@ bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
   if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
     return false;
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
-  Result = Builder.CreateAlloca(Type::getInt8Ty(Context), Amt);
+  AllocaInst *AI = Builder.CreateAlloca(Type::getInt8Ty(Context), Amt);
+  
+  // If this was originally a vla alloca find the alignment and set it
+  // on our alloca.
+  tree fndecl = get_callee_fndecl(exp);
+  unsigned align = DECL_ALIGN(fndecl) ? DECL_ALIGN(fndecl)/8 : 1;
+  AI->setAlignment(align);
+  Result = AI;
+
   return true;
 }
 

@@ -1258,6 +1258,13 @@ gimplify_decl_expr (tree *stmt_p)
 
 	  args = tree_cons (NULL, DECL_SIZE_UNIT (decl), NULL);
 	  t = built_in_decls[BUILT_IN_ALLOCA];
+	  /* LLVM LOCAL begin add alloca alignment */
+    /* We may have specified an alignment on the alloca - store it on the
+       function call so that we can emit this later and not lose it.  */
+    DECL_USER_ALIGN (t) = DECL_USER_ALIGN (decl);
+    DECL_ALIGN(t) = DECL_ALIGN(decl);
+	  /* LLVM LOCAL end add alloca alignment */
+	  
 	  t = build_function_call_expr (t, args);
 	  t = fold_convert (ptr_type, t);
 	  t = build2 (MODIFY_EXPR, void_type_node, addr, t);

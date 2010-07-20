@@ -286,13 +286,7 @@ void DebugInfo::change_regions(tree desired, tree grand) {
     RegionStack.pop_back();
   }
   DebugInfo::push_regions(desired, grand);
-  // There's no point in declaring an empty (declares no variables)
-  // lexical BLOCK as the current lexical BLOCK.  Locate nearest
-  // non-empty ancestor BLOCK and declare that.
-  for (t = desired; TREE_CODE(t) == BLOCK; t = BLOCK_SUPERCONTEXT(t))
-    if (BLOCK_VARS(t))
-      break;
-  setCurrentLexicalBlock(t);
+  setCurrentLexicalBlock(desired);
 }
 
 /// CreateSubprogramFromFnDecl - Constructs the debug code for
@@ -422,10 +416,40 @@ DINameSpace DebugInfo::getOrCreateNameSpace(tree Node, DIDescriptor Context) {
   return DNS;
 }
 
-/// findRegion - Find tree_node N's region.
-DIDescriptor DebugInfo::findRegion(tree Node) {
-  if (Node == NULL_TREE)
+/// findRegion - Find the region (context) of a GCC tree.
+DIDescriptor DebugInfo::findRegion(tree exp) {
+  if (exp == NULL_TREE)
     return getOrCreateFile(main_input_filename);
+
+  tree Node = exp;
+  location_t *p_locus = 0;
+  tree_code code = TREE_CODE(exp);
+  enum tree_code_class tree_cc = TREE_CODE_CLASS(code);
+  switch (tree_cc) {
+  case tcc_declaration:  /* A decl node */
+    p_locus = &DECL_SOURCE_LOCATION(exp);
+    break;
+
+  case tcc_expression:  /* an expression */
+  case tcc_comparison:  /* a comparison expression */
+  case tcc_unary:  /* a unary arithmetic expression */
+  case tcc_binary:  /* a binary arithmetic expression */
+    Node = TREE_BLOCK(exp);
+    p_locus = EXPR_LOCUS(exp);
+    break;
+
+  case tcc_exceptional:
+    switch (code) {
+    case BLOCK:
+      p_locus = &BLOCK_SOURCE_LOCATION(Node);
+      break;
+    default:
+      gcc_unreachable ();
+    }
+    break;
+  default:
+    break;
+  }
 
   std::map<tree_node *, WeakVH>::iterator I = RegionMap.find(Node);
   if (I != RegionMap.end())
@@ -451,11 +475,21 @@ DIDescriptor DebugInfo::findRegion(tree Node) {
     }
     }
   } else if (TREE_CODE(Node) == BLOCK) {
-    // TREE_BLOCK is GCC's lexical block.
-    // Recursively create all necessary contexts:
+    // Recursively establish ancestor scopes.
     DIDescriptor context = findRegion(BLOCK_SUPERCONTEXT(Node));
+    // If we don't have a location, use the last-seen info.
+    unsigned int line;
+    const char *fullpath;
+    if (LOCATION_FILE(*p_locus) == (char*)0) {
+      fullpath = CurFullPath;
+      line = CurLineNo;
+    } else {
+      fullpath = LOCATION_FILE(*p_locus);
+      line = LOCATION_LINE(*p_locus);
+    }
+    DIFile F(getOrCreateFile(fullpath));
     DILexicalBlock lexical_block = 
-      DebugFactory.CreateLexicalBlock(context, CurLineNo);
+      DebugFactory.CreateLexicalBlock(context, F, line, 0U);
     RegionMap[Node] = WeakVH(lexical_block.getNode());
     return DIDescriptor(lexical_block);
   }

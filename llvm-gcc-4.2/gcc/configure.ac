@@ -2478,11 +2478,8 @@ foo:	.long	25
 	tls_first_major=2
 	tls_first_minor=17
 	;;
-  i[34567]86-*-darwin*)
-    conftest_s='.tbss _a,4,2'
-    tls_first_major=0
-    tls_first_minor=0
-    ;;
+	i[34567]86-*-darwin*)
+	;;
   i[34567]86-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits
@@ -2503,11 +2500,8 @@ foo:	.long	25
 	tls_first_minor=14
 	tls_as_opt=--fatal-warnings
 	;;
-  x86_64-*-darwin*)
-    conftest_s='.tbss _a,4,2'
-    tls_first_major=0
-    tls_first_minor=0
-    ;;
+	x86_64-*-darwin*)
+	;;
   x86_64-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits
@@ -2754,6 +2748,16 @@ else
   [$tls_first_major,$tls_first_minor,0], [$tls_as_opt], [$conftest_s],,
   [set_have_as_tls=yes])
 fi
+# Linker test for tls.
+case "$target" in
+  *-*-darwin*)
+    AC_MSG_CHECKING(darwin linker tls support)
+    AC_TRY_LINK_FUNC([_tlv_bootstrap],[set_have_as_tls=yes],[])
+    AC_MSG_RESULT($set_have_as_tls)
+  ;;
+  *)
+  ;;
+esac
 if test $set_have_as_tls = yes ; then
   AC_DEFINE(HAVE_AS_TLS, 1,
 	    [Define if your assembler supports thread-local storage.])

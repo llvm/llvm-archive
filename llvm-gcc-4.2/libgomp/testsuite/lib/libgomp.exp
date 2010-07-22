@@ -134,6 +134,9 @@ proc libgomp_init { args } {
 
     if [istarget *-*-darwin*] {
 	lappend ALWAYS_CFLAGS "additional_flags=-shared-libgcc"
+	# LLVM LOCAL enable nested functions
+	lappend ALWAYS_CFLAGS "additional_flags=-fnested-functions"
+	
     }
 
     if [istarget sparc*-*-*] {

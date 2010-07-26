@@ -416,14 +416,16 @@ darwin_pragma_reverse_bitfields (cpp_reader *pfile ATTRIBUTE_UNUSED)
 void
 darwin_pragma_opt_level  (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
-  warning (0, "ignoring '#pragma optimization_level'");  
+  if (warn_unknown_pragmas > in_system_header)
+    warning (OPT_Wunknown_pragmas, "ignoring #pragma optimization_level");  
   return;
 }
 
 void
 darwin_pragma_opt_size  (cpp_reader *pfile ATTRIBUTE_UNUSED)
 {
-  warning (0, "ignoring '#pragma optimize_for_size'");
+  if (warn_unknown_pragmas > in_system_header)
+    warning (OPT_Wunknown_pragmas, "ignoring #pragma optimize_for_size");
   return;
 }
 /* LLVM LOCAL end disable optimization pragmas */

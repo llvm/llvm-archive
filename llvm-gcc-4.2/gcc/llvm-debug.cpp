@@ -1381,14 +1381,6 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
       FullPath = main_input_filename;
   }
 
-  // Get source file information.
-  llvm::StringRef Dir;
-  if (FullPath[0] != '/') {
-    if (CWD.empty())
-      CWD = std::string(get_src_pwd());
-    Dir = llvm::StringRef(CWD);
-  }
-
   // Set up Language number.
   unsigned LangTag;
   const std::string LanguageName(lang_hooks.name);
@@ -1424,7 +1416,7 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   if (flag_objc_abi != 0 && flag_objc_abi != -1)
     ObjcRunTimeVer = flag_objc_abi;
   return DebugFactory.CreateCompileUnit(LangTag, FullPath,
-                                        Dir,
+                                        get_src_pwd(),
                                         version_string, isMain,
                                         optimize, Flags,
                                         ObjcRunTimeVer);
@@ -1439,14 +1431,7 @@ DIFile DebugInfo::getOrCreateFile(const char *FullPath) {
       FullPath = main_input_filename;
   }
 
-  // Get source file information.
-  llvm::StringRef Dir;
-  if (FullPath[0] != '/') {
-    if (CWD.empty())
-      CWD = std::string(get_src_pwd());
-    Dir = llvm::StringRef(CWD);
-  }
-  return DebugFactory.CreateFile(FullPath, Dir, TheCU);
+  return DebugFactory.CreateFile(FullPath, get_src_pwd(), TheCU);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

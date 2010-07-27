@@ -188,13 +188,14 @@ rm -f /usr/lib/gcc/*/4.0.0/specs
 
 # These are the configure and build flags that are used.
 # LLVM LOCAL begin
-if [ "x$LLVM_DEBUG" == "x" ]; then
-    CHECKING_FLAGS="--disable-checking --enable-werror"
+if [ "x$LLVM_ASSERTIONS" == "x" ]; then
+    CHECKING_FLAGS="--disable-checking"
 else
     CHECKING_FLAGS="--enable-checking"
 fi
 
 CONFIGFLAGS="$CHECKING_FLAGS \
+  --enable-werror \
   --prefix=$DEST_ROOT \
   --mandir=\${prefix}/share/man \
   --enable-languages=$LANGUAGES \

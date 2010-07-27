@@ -5714,6 +5714,9 @@ extract_muldiv_1 (tree t, tree c, enum tree_code code, tree wide_type,
       if (TYPE_UNSIGNED (ctype) != TYPE_UNSIGNED (type))
 	break;
 
+      /* LLVM LOCAL 8198362 */
+      if (TYPE_UNSIGNED (ctype)) break;
+
       /* MIN (a, b) / 5 -> MIN (a / 5, b / 5)  */
       sub_strict_overflow_p = false;
       if ((t1 = extract_muldiv (op0, c, code, wide_type,

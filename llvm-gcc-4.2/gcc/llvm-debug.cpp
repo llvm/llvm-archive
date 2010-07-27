@@ -57,28 +57,16 @@ using namespace llvm::dwarf;
 #endif
 
 
-/// DirectoryAndFile - Extract the directory and file name from a path.  If no
-/// directory is specified, then use the source working directory.
+/// DirectoryAndFile - If Filename is absolute then directory name is empty.
+/// Otherwise directory name is current working directory.
 static void DirectoryAndFile(const std::string &FullPath,
                              std::string &Directory, std::string &FileName) {
-  // Look for the directory slash.
-  size_t Slash = FullPath.rfind('/');
-  
-  // If no slash
-  if (Slash == std::string::npos) {
-    // The entire path is the file name.
+  FileName = FullPath;
+
+  if (FullPath[0] != '/')
+    Directory = std::string(get_src_pwd());
+  else
     Directory = "";
-    FileName = FullPath;
-  } else {
-    // Separate the directory from the file name.
-    Directory = FullPath.substr(0, Slash);
-    FileName = FullPath.substr(Slash + 1);
-  }
-  
-  // If no directory present then use source working directory.
-  if (Directory.empty() || Directory[0] != '/') {
-    Directory = std::string(get_src_pwd()) + "/" + Directory;
-  }
 }
 
 /// NodeSizeInBits - Returns the size in bits stored in a tree node regardless
@@ -1394,10 +1382,13 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   }
 
   // Get source file information.
-  std::string Directory;
-  std::string FileName;
-  DirectoryAndFile(FullPath, Directory, FileName);
-  
+  llvm::StringRef Dir;
+  if (FullPath[0] != '/') {
+    if (CWD.empty())
+      CWD = std::string(get_src_pwd());
+    Dir = llvm::StringRef(CWD);
+  }
+
   // Set up Language number.
   unsigned LangTag;
   const std::string LanguageName(lang_hooks.name);
@@ -1432,8 +1423,8 @@ DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
   unsigned ObjcRunTimeVer = 0;
   if (flag_objc_abi != 0 && flag_objc_abi != -1)
     ObjcRunTimeVer = flag_objc_abi;
-  return DebugFactory.CreateCompileUnit(LangTag, FileName.c_str(),
-                                        Directory.c_str(),
+  return DebugFactory.CreateCompileUnit(LangTag, FullPath,
+                                        Dir,
                                         version_string, isMain,
                                         optimize, Flags,
                                         ObjcRunTimeVer);
@@ -1449,10 +1440,13 @@ DIFile DebugInfo::getOrCreateFile(const char *FullPath) {
   }
 
   // Get source file information.
-  std::string Directory;
-  std::string FileName;
-  DirectoryAndFile(FullPath, Directory, FileName);
-  return DebugFactory.CreateFile(FileName, Directory, TheCU);
+  llvm::StringRef Dir;
+  if (FullPath[0] != '/') {
+    if (CWD.empty())
+      CWD = std::string(get_src_pwd());
+    Dir = llvm::StringRef(CWD);
+  }
+  return DebugFactory.CreateFile(FullPath, Dir, TheCU);
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

@@ -8136,6 +8136,11 @@ static GTY (())  tree descriptor_ptr_type_with_copydispose;
  // optional helper functions
  void *CopyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE is set (withCopyDispose true)
  void *DestroyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE is set (withCopyDispose true)
+
+ // APPLE LOCAL begin radar 8143947
+ const char *signature;   // the block signature
+ const char *layout;      // reserved
+ // APPLE LOCAL end radar 8143947
 } *descriptor_ptr_type;
 
 Objects of this type will always be static. This is one main component of abi change.
@@ -8174,6 +8179,16 @@ build_block_descriptor_type (bool withCopyDispose)
     chainon (field_decl_chain, field_decl);
   }
   
+
+  /* APPLE LOCAL begin radar 8143947 */
+  /* char * signature */
+  field_decl = build_decl (FIELD_DECL, get_identifier ("signature"), build_pointer_type (char_type_node));
+  chainon (field_decl_chain, field_decl);
+  /* char * layout */
+  field_decl = build_decl (FIELD_DECL, get_identifier ("layout"), build_pointer_type (char_type_node));
+  chainon (field_decl_chain, field_decl);
+  /* APPLE LOCAL end radar 8143947 */
+
    /* Mark this struct as being a block struct rather than a 'normal'
       struct.  */
   TYPE_BLOCK_IMPL_STRUCT (main_type) = 1;

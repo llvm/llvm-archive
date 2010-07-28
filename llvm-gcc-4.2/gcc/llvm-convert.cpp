@@ -820,8 +820,8 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // every time we see a variable.
   if (SeenVLA &&
       GreatestAlignment > TheTarget->getFrameInfo()->getStackAlignment())
-      error ("alignment for %q+D conflicts with a dynamically realigned stack",
-             SeenVLA);
+      error ("alignment for %q+D conflicts with either a dynamically "
+             "realigned stack or the maximum stack alignment", SeenVLA);
 
   return Fn;
 }
@@ -1772,6 +1772,13 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       DECL_SIZE(decl) != 0 && TREE_CODE(DECL_SIZE_UNIT(decl)) != INTEGER_CST)
     SeenVLA = decl;
       
+  // If this is just the rotten husk of a variable that the gimplifier
+  // eliminated all uses of, but is preserving for debug info, ignore it.
+  // TODO: This affects the correctness of the warning we're attempting to
+  // watch above.
+  if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
+    return;
+      
   // Gimple temporaries are handled specially: their DECL_LLVM is set when the
   // definition is encountered.
   if (isGimpleTemporary(decl))
@@ -1821,18 +1828,6 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Alignment = DECL_ALIGN(decl) / 8;
   }
 
-  // Record the alignment if it's the largest we've seen and is explicitly
-  // requested.
-  if (DECL_USER_ALIGN(decl) && Alignment > GreatestAlignment)
-    GreatestAlignment = Alignment;
-
-  // If this is just the rotten husk of a variable that the gimplifier
-  // eliminated all uses of, but is preserving for debug info, ignore it.
-  // We're doing this late so that we can get the alignment information from
-  // the code.
-  if (TREE_CODE(decl) == VAR_DECL && DECL_VALUE_EXPR(decl))
-    return;
-      
   const char *Name;      // Name of variable
   if (DECL_NAME(decl))
     Name = IDENTIFIER_POINTER(DECL_NAME(decl));
@@ -1852,6 +1847,10 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
 
   AI->setAlignment(Alignment);
   
+  // Record the alignment if it's the largest we've seen.
+  if (Alignment > GreatestAlignment)
+    GreatestAlignment = Alignment;
+
   SET_DECL_LLVM(decl, AI);
 
   // Handle annotate attributes

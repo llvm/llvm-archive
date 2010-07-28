@@ -9428,6 +9428,10 @@ c_parser_iasm_statement (c_parser* parser)
         {
           unsigned long int reserved;
 	  unsigned long int Size;
+          // APPLE LOCAL begin radar 8143927
+          const char *signature;   // the block signature
+          const char *layout;      // reserved
+          // APPLE LOCAL end radar 8143927
 	} *__descriptor;
    };
 
@@ -9488,6 +9492,10 @@ c_build_generic_block_struct_type (void)
     // optional helper functions
     void *CopyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE
     void *DestroyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE 
+    // APPLE LOCAL begin radar 8143927
+    const char *signature;   // the block signature
+    const char *layout;      // reserved
+    // APPLE LOCAL end radar 8143927
  } *__descriptor;
  
  // imported variables
@@ -9590,6 +9598,10 @@ build_block_struct_type (struct block_sema_info * block_impl)
   {0, sizeof(struct literal_block_n), 
    copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
    destroy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
+   // APPLE LOCAL begin radar 8143947
+   // const char *signature;   // the block signature set to 0
+   // const char *layout;      // reserved set to 0
+   // APPLE LOCAL end radar 8143947 
   }
 */
 static tree
@@ -9638,6 +9650,19 @@ build_descriptor_block_decl (tree block_struct_type, struct block_sema_info *blo
       helper_addr = convert (ptr_type_node, helper_addr);
       initlist = tree_cons (fields, helper_addr, initlist);
     }
+  /* APPLE LOCAL begin radar 8143947 */
+  /* signature field is set to 0 */
+  fields = TREE_CHAIN (fields);
+  initlist = tree_cons (fields,
+                        build_int_cst (build_pointer_type (char_type_node), 0),
+                        initlist);
+  /* layout field is set to 0 */
+  fields = TREE_CHAIN (fields);
+  initlist = tree_cons (fields,
+                        build_int_cst (build_pointer_type (char_type_node), 0),
+                        initlist);
+  /* APPLE LOCAL end radar 8143947 */
+  
   constructor = build_constructor_from_list (descriptor_type,
                                              nreverse (initlist));
   TREE_CONSTANT (constructor) = 1;
@@ -9658,6 +9683,7 @@ build_descriptor_block_decl (tree block_struct_type, struct block_sema_info *blo
  build_block_struct_initlist - builds the initializer list:
  { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // __isa,
    BLOCK_USE_STRET | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // __flags,
+   | BLOCK_HAS_SIGNATURE // __flags
    0, // __reserved
    &helper_1, // __FuncPtr,
    &static_descriptor_variable // __descriptor,
@@ -9673,7 +9699,7 @@ build_block_struct_initlist (tree block_struct_type,
   tree initlist, helper_addr;
   tree chain, fields;
   /* APPLE LOCAL radar 7735196 */
-  unsigned int flags = 0;
+  unsigned int flags = BLOCK_HAS_SIGNATURE;
   static tree NSConcreteStackBlock_decl = NULL_TREE;
   static tree NSConcreteGlobalBlock_decl = NULL_TREE;
   tree descriptor_block_decl = build_descriptor_block_decl (block_struct_type, block_impl);
@@ -9819,6 +9845,10 @@ build_block_struct_initlist (tree block_struct_type,
     // optional helper functions
     void *CopyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE
     void *DestroyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE
+    // APPLE LOCAL begin radar 8143927
+    const char *signature;   // the block signature
+    const char *layout;      // reserved
+    // APPLE LOCAL end radar 8143927
  } *__descriptor;
 
  // imported variables
@@ -9833,6 +9863,7 @@ build_block_struct_initlist (tree block_struct_type,
  struct __block_literal_n I = {
    &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // __isa,
    BLOCK_USE_STRET | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // __flags,
+   | BLOCK_HAS_SIGNATURE // __flags
    0, // __reserved
    &helper_1, // __FuncPtr 
    &static_descriptor_variable // __descriptor,

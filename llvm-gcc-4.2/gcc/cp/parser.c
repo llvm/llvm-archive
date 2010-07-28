@@ -20599,6 +20599,10 @@ cp_block_requires_copying (tree exp)
   {0, sizeof(struct literal_block_n), 
    copy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
    destroy_helper_block_1, // only if block BLOCK_HAS_COPY_DISPOSE
+   // APPLE LOCAL begin radar 8143947
+   // const char *signature;   // the block signature set to 0
+   // const char *layout;      // reserved set to 0
+   // APPLE LOCAL end radar 8143947
   }
 */
 static tree
@@ -20641,6 +20645,15 @@ build_descriptor_block_decl (tree block_struct_type, struct block_sema_info *blo
       helper_addr = convert (ptr_type_node, helper_addr);
       CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE, helper_addr);
     }
+  /* APPLE LOCAL begin radar 8143947 */
+  /* signature field is set to 0 */
+  CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE, 
+                         build_int_cst (build_pointer_type (char_type_node), 0));
+  /* layout field is set to 0 */
+  CONSTRUCTOR_APPEND_ELT(impl_v, NULL_TREE, 
+                         build_int_cst (build_pointer_type (char_type_node), 0));
+  /* APPLE LOCAL end radar 8143947 */
+
   /* Create a CONSTRUCTOR to represent the braced-initializer.  */
   constructor = make_node (CONSTRUCTOR);
   CONSTRUCTOR_ELTS (constructor) = impl_v;
@@ -20673,6 +20686,10 @@ build_descriptor_block_decl (tree block_struct_type, struct block_sema_info *blo
         {
           unsigned long int reserved;
 	  unsigned long int Size;
+          // APPLE LOCAL begin radar 8143927
+          const char *signature;   // the block signature
+          const char *layout;      // reserved
+          // APPLE LOCAL end radar 8143927
 	} *__descriptor;
    };
 
@@ -20872,6 +20889,7 @@ build_block_struct_type (struct block_sema_info * block_impl)
  build_block_struct_initlist - builds the initializer list:
  { &_NSConcreteStackBlock or &_NSConcreteGlobalBlock // __isa,
    BLOCK_USE_STRET | BLOCK_HAS_COPY_DISPOSE | BLOCK_IS_GLOBAL // __flags,
+   | BLOCK_HAS_SIGNATURE // __flags
    0, // __reserved,
    &helper_1, // __FuncPtr,
    &static_descriptor_variable // __descriptor,
@@ -20889,7 +20907,7 @@ build_block_struct_initlist (tree block_struct_type,
 {
   tree expr, chain, helper_addr;
   /* APPLE LOCAL radar 7735196 */
-  unsigned flags = 0;
+  unsigned flags = BLOCK_HAS_SIGNATURE;
   static tree NSConcreteStackBlock_decl = NULL_TREE;
   static tree NSConcreteGlobalBlock_decl = NULL_TREE;
   VEC(constructor_elt,gc) *impl_v = NULL;
@@ -21882,6 +21900,10 @@ static GTY (())  tree descriptor_ptr_type_with_copydispose;
  // optional helper functions
  void *CopyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE is set (withCopyDispose true)
  void *DestroyFuncPtr; // When BLOCK_HAS_COPY_DISPOSE is set (withCopyDispose true)
+ // APPLE LOCAL begin radar 8143947
+ const char *signature;   // the block signature
+ const char *layout;      // reserved
+ // APPLE LOCAL end radar 8143947
 } *descriptor_ptr_type;
 
 Objects of this type will always be static. This is one main component of abi change.
@@ -21921,6 +21943,17 @@ build_block_descriptor_type (bool withCopyDispose)
     TREE_CHAIN (field_decl) = field_decl_chain;
     field_decl_chain = field_decl;
   }
+
+  /* APPLE LOCAL begin radar 8143947 */
+  /* char * signature */
+  field_decl = build_decl (FIELD_DECL, get_identifier ("signature"), build_pointer_type (char_type_node));
+  TREE_CHAIN (field_decl) = field_decl_chain;
+  field_decl_chain = field_decl;
+  /* char * layout */
+  field_decl = build_decl (FIELD_DECL, get_identifier ("layout"), build_pointer_type (char_type_node));
+  TREE_CHAIN (field_decl) = field_decl_chain;
+  field_decl_chain = field_decl;
+  /* APPLE LOCAL end radar 8143947 */
 
    /* Mark this struct as being a block struct rather than a 'normal'
       struct.  */

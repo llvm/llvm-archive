@@ -816,13 +816,12 @@ Function *TreeToLLVM::FinishFunctionBody() {
 
   // If we've seen a vla in this function and we'll possibly need to
   // either dynamically realign or this is greater than the maximum stack
-  // alignment, error out now.  This is here so we don't output an error
-  // every time we see a variable.
+  // alignment, output a warning.  This is here so we don't warn every time
+  // we see a variable.
   if (SeenVLA &&
       GreatestAlignment > TheTarget->getFrameInfo()->getStackAlignment())
-      error ("alignment for %q+D conflicts with a dynamically realigned stack",
-             SeenVLA);
-
+      warning (0, "alignment for %q+D conflicts with a dynamically realigned "
+                  "stack", SeenVLA);
   return Fn;
 }
 

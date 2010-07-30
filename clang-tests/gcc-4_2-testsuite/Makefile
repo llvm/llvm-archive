@@ -45,6 +45,7 @@ site.exp:
 .PHONY: site.exp
 
 check: check-gcc check-g++ check-objc check-obj-c++
+.PHONY: check
 
 check-%: obj/.dir obj/%/.dir site.exp
 	@cp site.exp ${objdir}/$*
@@ -55,4 +56,4 @@ check-%: obj/.dir obj/%/.dir site.exp
 %/.dir:
 	@mkdir -p $* > /dev/null
 	@echo "Created." > $@
-.PHONY: %/.dir
+.PRECIOUS: %/.dir

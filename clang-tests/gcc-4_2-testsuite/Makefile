@@ -4,7 +4,7 @@ target := i386-apple-darwin10
 srcdir := $(shell pwd)/src
 objdir := $(shell pwd)/obj
 
-CCC_ADD_ARGS := -Qunused-arguments,-std-default=gnu89,-ferror-limit=0,-fmessage-length=0
+CCC_ADD_ARGS := -no-integrated-as,-Qunused-arguments,-std-default=gnu89,-ferror-limit=0,-fmessage-length=0
 CC_UNDER_TEST := /Developer/usr/bin/clang
 CXX_UNDER_TEST := /Developer/usr/bin/clang++
 ALT_CC_UNDER_TEST := /Developer/usr/bin/gcc

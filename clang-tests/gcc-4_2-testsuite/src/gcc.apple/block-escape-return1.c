@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 extern void abort(void);
-void _Block_object_assign(void *a, void *b, int flag){};
+void _Block_object_assign(void *a, const void *b, int flag){};
 
 static int count;
 static void _Block_object_dispose(void * arg, int flag) {

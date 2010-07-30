@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 void *_NSConcreteStackBlock;
-void _Block_object_assign(void * dst, void *src, int flag){}
+void _Block_object_assign(void * dst, const void *src, int flag){}
 
 extern void abort(void);
 

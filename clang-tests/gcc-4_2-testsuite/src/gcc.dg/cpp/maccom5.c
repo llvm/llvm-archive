@@ -11,8 +11,8 @@
 
 def:
 
-/*
+
    /* The + in the regexp prevents it from matching itself.  */
-   { dg-final { scan-file maccom5.i "p+assed" } }
-   { dg-final { scan-file-not maccom5.i "p+assed:" } }
-*/
+/*   { dg-final { scan-file maccom5.i "p+assed" } } */
+/*   { dg-final { scan-file-not maccom5.i "p+assed:" } } */
+

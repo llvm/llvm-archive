@@ -1,4 +1,4 @@
-/* APPLE LOCAL file mainline
+/* APPLE LOCAL file mainline */
 /* Test -fno-gnu89-extern-inline.  */
 /* { dg-do compile } */
 /* { dg-options "-std=gnu89 -fno-gnu89-inline" } */

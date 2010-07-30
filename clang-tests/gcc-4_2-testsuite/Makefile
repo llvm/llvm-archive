@@ -46,7 +46,8 @@ site.exp:
 	-@rm -f ./tmp?
 .PHONY: site.exp
 
-check: check-gcc check-g++ check-objc check-obj-c++
+check:
+	$(MAKE) -k check-gcc check-g++ check-objc check-obj-c++
 .PHONY: check
 
 save-results:

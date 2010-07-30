@@ -1,6 +1,6 @@
 /* PR c/29736 */
 
-int __attribute__ ((vector_size (8), vector_size (8))) v; /* { dg-error "invalid vector type" } */
+int __attribute__ ((vector_size (8), vector_size (8))) v; /* { dg-error "invalid vector element" } */
 
 extern int __attribute__ ((vector_size (8))) w;
 int __attribute__ ((vector_size (8))) w;

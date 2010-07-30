@@ -19,7 +19,7 @@ main (void)
   int j = i;				/* { dg-warning "warning" "declaration after statement" } */
   if (j != 1)
     abort ();
-  struct foo { int i0; } k = { 4 };	/* { dg-warning "warning" "declaration after statement" } */
+  struct foo { int i0; } k = { 4 };
   if (k.i0 != 4)
     abort ();
   exit (0);

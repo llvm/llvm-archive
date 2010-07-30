@@ -34,6 +34,8 @@ site.exp:
 	@echo "set HAVE_LIBSTDCXX_V3 1" >> ./tmp0
 	@echo "set GCC_UNDER_TEST \"$(CC_UNDER_TEST)\"" >> ./tmp0;
 	@echo "set GXX_UNDER_TEST \"$(CXX_UNDER_TEST)\"" >> ./tmp0;
+	@echo "set OBJC_UNDER_TEST \"$(CC_UNDER_TEST)\"" >> ./tmp0;
+	@echo "set OBJCXX_UNDER_TEST \"$(CXX_UNDER_TEST)\"" >> ./tmp0;
 	@echo "set ALT_CC_UNDER_TEST \"$(ALT_CC_UNDER_TEST)\"" >> ./tmp0;
 	@echo "set ALT_CXX_UNDER_TEST \"$(ALT_CXX_UNDER_TEST)\"" >> ./tmp0;
 	@echo "set COMPAT_OPTIONS \"$(COMPAT_OPTIONS)\"" >> ./tmp0;
@@ -46,6 +48,16 @@ site.exp:
 
 check: check-gcc check-g++ check-objc check-obj-c++
 .PHONY: check
+
+save-results:
+	if [ -z "$(VERSION)" ]; then \
+	  echo "usage: make $@ VERSION=107"; \
+	  exit 1; \
+	fi
+	rm -f results/clang-$(VERSION).sum
+	for i in gcc g++ objc obj-c++; do \
+	  cat obj/$$i/$$i.sum >> results/clang-$(VERSION).sum; \
+	done
 
 check-%: obj/.dir obj/%/.dir site.exp
 	@cp site.exp ${objdir}/$*

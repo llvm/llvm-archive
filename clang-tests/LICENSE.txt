@@ -62,3 +62,4 @@ licenses, and/or restrictions:
 
 Program             Directory
 -------             ---------
+GCC-4.2 Test Suite  gcc-4_2-testsuite/src/COPYING

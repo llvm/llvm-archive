@@ -6,9 +6,9 @@ typedef void (^P) (void);
 
 int DOO(void)
 {
-  P p = ^{ ^ { ; }; };
+  P p = ^{ (void) ^ { ; }; };
   p();
-  p = ^{ ^ { ; }; };
+  p = ^{ (void) ^ { ; }; };
   return 0;
 }
 

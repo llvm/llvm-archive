@@ -74,7 +74,7 @@ int parameters_example_real(int verbose) {
     return 0;
 }
 
-#endif __BLOCKS__
+#endif // __BLOCKS__
 
 struct parameters_example_struct {
     struct Block_basic base;

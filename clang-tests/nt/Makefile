@@ -14,7 +14,7 @@ check-%:
 		--test-suite ~/llvm.ref/test-suite.src \
 		--test-externals ~/llvm/projects/test-suite-externals \
 		lc-clang_qa-$* \
-		--arch $* --small --simple -j 8 \
+		--arch $* --small --simple -j 6 \
 		--no-timestamp --no-configure
 .PHONY: check-%
 

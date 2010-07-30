@@ -20,5 +20,5 @@ main ()
    return 0;
 }
  
-/* { dg-final { scan-assembler ".no_dead_strip _my_version_string" } } */
-/* { dg-final { scan-assembler ".no_dead_strip _static_debug_routine" } } */
+/* { dg-final { scan-assembler ".no_dead_strip	_my_version_string" } } */
+/* { dg-final { scan-assembler ".no_dead_strip	_static_debug_routine" } } */

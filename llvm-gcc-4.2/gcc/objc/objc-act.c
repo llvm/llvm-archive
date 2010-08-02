@@ -2003,7 +2003,17 @@ static tree
 objc_build_compound_setter_call (tree receiver, tree prop_ident, tree rhs)
 {
   tree temp, bind, comma_exp;
-  if (TREE_SIDE_EFFECTS (rhs))
+  /* LLVM LOCAL begin 8246180 */
+#ifdef OBJCPLUS
+  if (TYPE_NEEDS_CONSTRUCTING (TREE_TYPE(rhs)))
+    error("setting a C++ non-POD object value is not implemented - assign the value to a temporary and use the temporary.");
+#endif
+  if (TREE_SIDE_EFFECTS (rhs)
+#ifdef OBJCPLUS
+      || TYPE_NEEDS_CONSTRUCTING (TREE_TYPE(rhs))
+#endif
+  /* LLVM LOCAL end 8246180 */
+      )
     {
       /* To allow for correct property assignment semantics
          and in accordance with C99 rules we generate: type temp;
@@ -2021,10 +2031,7 @@ objc_build_compound_setter_call (tree receiver, tree prop_ident, tree rhs)
       {
 	tree type = TREE_TYPE (rhs);
 	if (TYPE_NEEDS_CONSTRUCTING (type))
-          {
-	    comma_exp = temp;
-	    error("setting a C++ non-POD object value is not implemented - assign the value to a temporary and use the temporary.");
-	  }
+          comma_exp = temp;
 	else
       	  comma_exp = build_modify_expr (temp, NOP_EXPR, rhs);
       }

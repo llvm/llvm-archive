@@ -1,1 +1,1 @@
-extern void*t[];x(i){goto*t[i];}
+extern void*t[];x(i){void *p = ({l: &&l; }); goto*t[i];}

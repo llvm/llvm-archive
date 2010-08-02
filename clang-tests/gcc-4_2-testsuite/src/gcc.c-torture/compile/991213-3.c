@@ -1,2 +1,2 @@
-int jump () { goto * (int (*) ()) 0xbabebec0; }
+int jump () { void *p = ({l: &&l; }); goto * (int (*) ()) 0xbabebec0; }
 

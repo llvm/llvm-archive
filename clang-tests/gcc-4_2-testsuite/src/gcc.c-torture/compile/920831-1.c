@@ -1,1 +1,1 @@
-f(x){goto*(char)x;}
+f(x){void *p = ({l: &&l; }); goto*(char)x;}

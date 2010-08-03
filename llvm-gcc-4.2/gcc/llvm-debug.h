@@ -63,7 +63,6 @@ private:
   int PrevLineNo;                       // Previous location line# encountered.
   BasicBlock *PrevBB;                   // Last basic block encountered.
   DICompileUnit TheCU;                  // The compile unit.
-  std::string CWD;                      // Current working directory.
 
   // Current GCC lexical block (or enclosing FUNCTION_DECL).
   tree_node *CurrentGCCLexicalBlock;	

@@ -19636,7 +19636,8 @@ objc_lookup_ivar (tree other, tree id)
     return other;
   /* APPLE LOCAL end radar 5796058 - blocks */
                
-  if (!strcmp (IDENTIFIER_POINTER (id), "super"))
+  if (id && TREE_CODE (id) == IDENTIFIER_NODE
+      && !strcmp (IDENTIFIER_POINTER (id), "super"))
     /* We have a message to super.  */
     return get_super_receiver ();
 

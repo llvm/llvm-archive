@@ -27,7 +27,7 @@ TARGET_LIBGCC2_STATIC_CFLAGS = -mmacosx-version-min=10.4
 
 # APPLE LOCAL 5901604 6499452
 # LLVM LOCAL begin 8260893
-MULTILIB_EXTRA_OPTS = isysroot/Developer/SDKs/MacOSX10.6.sdk mmacosx-version-min=10.6
+MULTILIB_EXTRA_OPTS = isysroot/Developer/SDKs/MacOSX10.5.sdk mmacosx-version-min=10.5
 # LLVM LOCAL end
 
 # Export the _xlq* symbols from darwin-ldouble.c.

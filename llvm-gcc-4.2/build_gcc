@@ -583,30 +583,6 @@ for t in $TARGETS ; do
 done
 fi
 
-# include
-HEADERPATH=$DEST_ROOT/include/gcc/darwin/$MAJ_VERS
-mkdir -p .$HEADERPATH || exit 1
-
-# Some headers are installed from more-hdrs/.  They all share
-# one common feature: they shouldn't be installed here.  Sometimes,
-# they should be part of FSF GCC and installed from there; sometimes,
-# they should be installed by some completely different package; sometimes,
-# they only exist for codewarrior compatibility and codewarrior should provide
-# its own.  We take care not to install the headers if Libc is already
-# providing them.
-cd $SRC_DIR/more-hdrs
-for h in `echo *.h` ; do
-  if [ ! -f /usr/include/$h -o -L /usr/include/$h ] ; then
-    cp -R $h $DEST_DIR$HEADERPATH/$h || exit 1
-    for t in $TARGETS ; do
-      THEADERPATH=$DEST_DIR$DEST_ROOT/lib/gcc/${t}-apple-darwin$DARWIN_VERS/$VERS/include
-      [ -f $THEADERPATH/$h ] || \
-        ln -s ../../../../../include/gcc/darwin/$MAJ_VERS/$h $THEADERPATH/$h || \
-        exit 1
-    done
-  fi
-done
-
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1
 if [ $BUILD_CXX -eq 1 ]; then

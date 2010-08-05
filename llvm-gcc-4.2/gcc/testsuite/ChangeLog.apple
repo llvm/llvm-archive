@@ -1,3 +1,9 @@
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+	
+	Radar 7982386
+	* gcc.apple/ppc_intrinsics-1.c: Remove -I option to more-hdrs directory.
+	* gcc.apple/ppc_intrinsics-2.c: Likewise.
+	
 2010-04-02 Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 7591784

@@ -85,7 +85,7 @@ struct tms
    clock time.  Use PPC intrinsics if possible.  */
 #if defined(__APPLE__) && defined(__POWERPC__) && HAVE_MACH_TIME
 #if __POWERPC__
-# include "../more-hdrs/ppc_intrinsics.h"
+# include "ginclude/ppc_intrinsics.h"
 # define HAVE_WALL_TIME
 # define USE_PPC_INTRINSICS
 static inline double

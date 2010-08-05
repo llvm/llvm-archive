@@ -1,4 +1,3 @@
-/* { dg-options "-I ${srcdir}/../../more-hdrs" } */
 /* { dg-do compile { target "powerpc*-*-darwin*" } } */
 /* Radar 3208244  */
 #include "ppc_intrinsics.h"

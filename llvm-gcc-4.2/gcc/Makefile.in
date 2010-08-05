@@ -371,10 +371,12 @@ INSTALL_HEADERS_DIR = @build_install_headers_dir@
 
 # Header files that are made available under the same name
 # to programs compiled with GCC.
+# APPLE LOCAL begin ppc_intrinsics.h 7982386
 # APPLE LOCAL begin mainline 2007-06-12 2872232
 USER_H = $(srcdir)/ginclude/decfloat.h \
 	 $(srcdir)/ginclude/float.h \
 	 $(srcdir)/ginclude/iso646.h \
+	 $(srcdir)/ginclude/ppc_intrinsics.h \
 	 $(srcdir)/ginclude/stdarg.h \
 	 $(srcdir)/ginclude/stdbool.h \
 	 $(srcdir)/ginclude/stddef.h \
@@ -382,6 +384,7 @@ USER_H = $(srcdir)/ginclude/decfloat.h \
 	 $(srcdir)/ginclude/varargs.h \
 	 $(EXTRA_HEADERS)
 # APPLE LOCAL end mainline 2007-06-12 2872232
+# APPLE LOCAL end ppc_intrinsics.h 7982386
 
 UNWIND_H = $(srcdir)/unwind-generic.h
 

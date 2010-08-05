@@ -1,3 +1,14 @@
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+	
+	Radar 7982386
+	* mode-hdrs: Remove this directory and all its contents.
+	* build_gcc: Stop installing files from more-hdrs.
+	
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 7982386
+	* more-hdrs/ppc_intrinsics.h: Moved to gcc/config/rs6000.
+
 2010-06-28 Jim Grosbach <grosbach@apple.com>
 
 	Radar 7449793

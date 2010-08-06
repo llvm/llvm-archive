@@ -4538,6 +4538,10 @@ convert_like_real (conversion *convs, tree expr, tree fn, int argnum,
 
 	/* Take the address of the thing to which we will bind the
 	   reference.  */
+        /* LLVM LOCAL begin 8264751 */
+        if (objc_property_reference_expr(expr))
+          expr = objc_build_property_getter_func_call(expr);
+        /* LLVM LOCAL end 8264751 */
 	expr = build_unary_op (ADDR_EXPR, expr, 1);
 	if (expr == error_mark_node)
 	  return error_mark_node;

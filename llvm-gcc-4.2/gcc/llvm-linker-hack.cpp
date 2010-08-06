@@ -89,6 +89,7 @@ void dummy_function() {
   llvm::createLoopDeletionPass();
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
+  llvm::createPromoteMemoryToRegisterPass();
   
   llvm::Type::getInt8Ty(llvm::getGlobalContext());
 

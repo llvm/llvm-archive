@@ -1448,6 +1448,14 @@ arm_override_options (void)
   else
     targetm.rtx_costs = all_cores[(int)arm_tune].rtx_costs;
 
+  /* LLVM LOCAL begin */
+  /* v7m processors don't have ARM mode, so default to thumb mode.
+     Explicitly only set for default so we can error if the user
+     sets -marm or -mno-thumb. */
+  if ((insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M && thumb_option < 0)
+    thumb_option = 1;
+  /* LLVM LOCAL end */
+
   /* Make sure that the processor choice does not conflict with any of the
      other command line choices.  */
 /* APPLE LOCAL begin v7 support. Merge from mainline */

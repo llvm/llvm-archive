@@ -1,3 +1,23 @@
+2010-08-06  Jim Grosbach <grosbach@apple.com>
+
+	* config/arm/arm.c(arm_override_options): v7m only has thumb mode.
+
+2010-08-04  Bob Wilson  <bob.wilson@apple.com>
+
+        Radar 7982386
+	* config/rs6000/ppc_intrinsics.h: Moved again from here to...
+	* ginclude/ppc_intrinsics.h: ...here.
+	* timevar.c: Update path to ppc_intrinsics.h.
+	* Makefile.in (USER_H): Add ppc_intrinsics.h.
+	* config.gcc: Revert previous change for ppc_intrinsics.h.
+
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+
+        Radar 7982386
+	* config/rs6000/ppc_intrinsics.h: Moved here from top-level more-hdrs.
+	* config.gcc: Add ppc_intrinsics.h to extra_headers.
+	* timevar.c: Update path to ppc_intrinsics.h.
+
 2010-06-28 Jim Grosbach <grosbach@apple.com>
 
 	Radar 7449793

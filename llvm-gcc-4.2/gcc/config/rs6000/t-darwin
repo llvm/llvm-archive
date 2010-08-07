@@ -26,9 +26,8 @@ TARGET_LIBGCC2_STATIC_CFLAGS = -mmacosx-version-min=10.4
 # APPLE LOCAL end gcov 5573505
 
 # APPLE LOCAL 5901604 6499452
-# LLVM LOCAL begin
-#MULTILIB_EXTRA_OPTS = isysroot/Developer/SDKs/MacOSX10.5.sdk mmacosx-version-min=10.5
-# LLVM LOCAL end
+# LLVM LOCAL 8260893
+MULTILIB_EXTRA_OPTS = isysroot/Developer/SDKs/MacOSX10.5.sdk mmacosx-version-min=10.5
 
 # Export the _xlq* symbols from darwin-ldouble.c.
 SHLIB_MAPFILES += $(srcdir)/config/rs6000/libgcc-ppc64.ver

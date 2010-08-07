@@ -1,3 +1,20 @@
+2010-08-06  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 8277973
+	* Makefile.in (FLAGS_FOR_TARGET): Add $(SYSROOT_CFLAGS_FOR_TARGET).
+	* build_gcc: Configure for powerpc using --with-build-sysroot.
+
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+	
+	Radar 7982386
+	* mode-hdrs: Remove this directory and all its contents.
+	* build_gcc: Stop installing files from more-hdrs.
+	
+2010-07-29  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 7982386
+	* more-hdrs/ppc_intrinsics.h: Moved to gcc/config/rs6000.
+
 2010-06-28 Jim Grosbach <grosbach@apple.com>
 
 	Radar 7449793

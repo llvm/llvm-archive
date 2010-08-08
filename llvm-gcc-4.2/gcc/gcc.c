@@ -7232,10 +7232,10 @@ main (int argc, char **argv)
 			  use_gold_plugin + strlen (use_gold_plugin), 0))
 	{
 	  gold_plugin_file_spec = find_a_file (&exec_prefixes,
-					       "libLLVMgold.so", X_OK,
+					       "LLVMgold.so", X_OK,
 					       false);
 	  if (!gold_plugin_file_spec)
-	    fatal ("-use-gold-plugin, but libLLVMgold.so not found.");
+	    fatal ("-use-gold-plugin, but LLVMgold.so not found.");
 	}
       gold_plugin_as_spec = find_a_file (&exec_prefixes, "as", X_OK, false);
       if (!gold_plugin_as_spec)

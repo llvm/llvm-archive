@@ -1,7 +1,8 @@
 /* APPLE LOCAL file radar 5932809 */
 /* Test the __byreg runtime features. */
-/* { dg-options "-mmacosx-version-min=10.5 -ObjC -framework Foundation" { target i?86-*-darwin*  } } */
-/* { dg-do run { target i?86-*-darwin* } } */
+/* LLVM LOCAL add x86_64 Darwin */
+/* { dg-options "-mmacosx-version-min=10.5 -ObjC -framework Foundation" { target i?86-*-darwin* x86_64-*-darwin* } } */
+/* { dg-do run { target i?86-*-darwin* x86_64-*-darwin* } } */
 /* { dg-require-effective-target ilp32 } */
 
 #import <Foundation/Foundation.h>

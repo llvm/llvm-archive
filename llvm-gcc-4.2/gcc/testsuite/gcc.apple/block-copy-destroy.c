@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 5782740 - blocks */
 /* Test generation of copy/destroy helper function. */
 /* { dg-do compile } */
-/* { dg-options "-mmacosx-version-min=10.5 -ObjC -fblocks" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-mmacosx-version-min=10.5 -ObjC -fblocks" { target powerpc*-*-darwin* i?86*-*-darwin* x86_64-*-darwin* } } */
 /* { dg-options "-iphoneos-version-min=4.0 -ObjC -fblocks" { target arm*-*-darwin* } } */
 
 #import <Cocoa/Cocoa.h>

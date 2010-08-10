@@ -1,7 +1,5 @@
 /* APPLE LOCAL file Radar 4539933 */
 
-#include <iostream>
-
 extern int result;
 
 class A

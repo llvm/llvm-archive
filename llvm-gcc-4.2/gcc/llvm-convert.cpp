@@ -4856,6 +4856,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const Type *LLVMTy = ConvertType(type);
 
       Value *Op = 0;
+      const Type *OpTy = LLVMTy;
       if (LLVMTy->isSingleValueType()) {
         if (TREE_CODE(Val)==ADDR_EXPR &&
             TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
@@ -4884,10 +4885,10 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
           // Otherwise, emit our value as a lvalue.
           isIndirect = true;
           Op = LV.Ptr;
+          OpTy = Op->getType();
         }
       }
 
-      const Type *OpTy = Op->getType();
       // If this input operand is matching an output operand, e.g. '0', check if
       // this is something that llvm supports. If the operand types are
       // different, then emit an error if 1) one of the types is not integer or
@@ -4946,13 +4947,12 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
                                                  OTyBits-OpTyBits);
               Op = Builder.CreateLShr(Op, ShAmt);
             }
-            OpTy = Op->getType();
           }
         }
       }
 
       CallOps.push_back(Op);
-      CallArgTypes.push_back(OpTy);
+      CallArgTypes.push_back(Op->getType());
     } else {                          // Memory operand.
       lang_hooks.mark_addressable(TREE_VALUE(Input));
       isIndirect = true;

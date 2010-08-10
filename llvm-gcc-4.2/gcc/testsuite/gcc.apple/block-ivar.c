@@ -5,8 +5,6 @@
 
 #import <Foundation/Foundation.h>
 
-void *Block_copy(const void *aBlock);
-
 @interface TestObject : NSObject {
 @public
     int refcount;

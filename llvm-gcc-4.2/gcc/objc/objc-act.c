@@ -1935,6 +1935,23 @@ objc_resolve_build_property_setter_name (tree receiver, tree property_ident)
                 && CLASS_SUPER_NAME (implementation_template))
 	    class = lookup_interface (CLASS_SUPER_NAME (implementation_template));
 	}
+      /* APPLE LOCAL begin radar 8290584 */
+      else {
+        /* receiver could be of type id<protocol,...> find property in 
+           protocol list. */
+        tree rprotos = (TYPE_HAS_OBJC_INFO (TREE_TYPE (rtype))
+                        ? TYPE_OBJC_PROTOCOL_LIST (TREE_TYPE (rtype))
+                        : NULL_TREE);
+        if (rprotos) {
+          x = lookup_property_in_protocol_list (rprotos, property_ident);
+          if (x) {
+            return PROPERTY_SETTER_NAME (x) ? 
+                     IDENTIFIER_POINTER (PROPERTY_SETTER_NAME (x)) :
+                     objc_build_property_setter_name(property_ident, true);
+          }
+        }
+      }
+      /* APPLE LOCAL end radar 8290584 */
     }
   else
     {

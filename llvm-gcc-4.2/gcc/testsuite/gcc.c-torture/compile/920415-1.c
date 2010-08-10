@@ -1,8 +1,8 @@
 /* APPLE LOCAL begin testsuite nested functions */
 /* { dg-options "-fnested-functions" } */
 /* APPLE LOCAL end testsuite nested functions */
-/* LLVM LOCAL 8251263 */
-/* { dg-xfail-if "" { *-*-darwin* } { "*" } { "" } } */
+/* LLVM LOCAL no nested functions 8251263 */
+/* { dg-require-fdump "" } */
 
 extern void abort (void);
 extern void exit (int);

@@ -683,6 +683,8 @@ int arm_arch6k = 0;
 /* Nonzero if this chip supports the ARM 7A extensions.  */
 int arm_arch7a = 0;
 /* APPLE LOCAL end 6093388 -mfpu=neon default for v7a */
+/* Nonzero if this chip supports the ARM 7M extensions.  */
+int arm_arch7m= 0;
 
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 /* Nonzero if instructions not present in the 'M' profile can be used.  */
@@ -846,6 +848,9 @@ static const struct processors all_architectures[] =
   {"armv6t2", arm1156t2s, "6T2", FL_CO_PROC |             FL_FOR_ARCH6T2, NULL},
   {"armv7",   cortexa8,	  "7",	 FL_CO_PROC |		  FL_FOR_ARCH7, NULL},
   {"armv7a",  cortexa8,	  "7A",	 FL_CO_PROC |		  FL_FOR_ARCH7A, NULL},
+  {"armv7m",  cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv7m3", cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv7m4", cortexm4,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
   {"armv7r",  cortexr4,	  "7R",	 FL_CO_PROC |		  FL_FOR_ARCH7R, NULL},
   {"armv7m",  cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
@@ -853,6 +858,8 @@ static const struct processors all_architectures[] =
   {"armv7-a", cortexa8,	  "7A",	 FL_CO_PROC |		  FL_FOR_ARCH7A, NULL},
   {"armv7-r", cortexr4,	  "7R",	 FL_CO_PROC |		  FL_FOR_ARCH7R, NULL},
   {"armv7-m", cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv7-m3", cortexm3,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv7-m4", cortexm4,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
 /* APPLE LOCAL end v7 support. Merge from mainline */
   {"ep9312",  ep9312,     "4T",  FL_LDSCHED | FL_CIRRUS | FL_FOR_ARCH4, NULL},
   {"iwmmxt",  iwmmxt,     "5TE", FL_LDSCHED | FL_STRONG | FL_FOR_ARCH5TE | FL_XSCALE | FL_IWMMXT , NULL},
@@ -1561,6 +1568,7 @@ arm_override_options (void)
   /* APPLE LOCAL 6093388 -mfpu=neon default for v7a */
   arm_arch7a = (insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A;
   /* APPLE LOCAL begin v7 support. Merge from mainline */
+  arm_arch7m = (insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M;
   arm_arch_notm = (insn_flags & FL_NOTM) != 0;
   arm_arch_thumb2 = (insn_flags & FL_THUMB2) != 0;
   /* APPLE LOCAL end v7 support. Merge from mainline */
@@ -24464,7 +24472,7 @@ neon_reload_out (rtx *operands, enum machine_mode mode)
 void
 arm_darwin_subtarget_conditional_register_usage (void)
 {
-  if (!(arm_arch6 && !darwin_reserve_r9_on_v6) && !arm_arch7a)
+  if (!(arm_arch6 && !darwin_reserve_r9_on_v6) && !(arm_arch7a || arm_arch7m))
     fixed_regs[9]   = 1;
   call_used_regs[9] = 1;
 

@@ -1,3 +1,11 @@
+2010-07-10 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 8290584
+	* objc-act.c (objc_resolve_build_property_setter_name): Lookup
+	property name in the receiver's protocol list when it is of
+	qualified id type.
+	* objc.dg/qualified-id-property.m: New
+
 2010-04-02 Fariborz Jahanian <fjahanian@apple.com>
 
         Radar 7591784

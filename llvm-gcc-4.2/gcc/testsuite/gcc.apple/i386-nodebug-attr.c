@@ -1,6 +1,8 @@
 /* APPLE LOCAL begin radar 4152603 */
 /* { dg-do compile { target i?86-*-* x86_64-*-* } } */
 /* { dg-options "-gstabs+ -gused -msse2" } */
+/* LLVM LOCAL test not applicable (no stabs) */
+/* { dg-require-fdump "" } */
 /* Test that no header file information for xmmintrin.h is generated. */
 
 #include "xmmintrin.h"

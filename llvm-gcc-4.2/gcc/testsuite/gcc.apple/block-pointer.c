@@ -1,6 +1,7 @@
 /* APPLE LOCAL file - testcase for Radar 5811943  */
 /* { dg-do compile } */
-/* { dg-options "-g -O0 -fblocks -dA" } */
+/* LLVM LOCAL -fverbose-asm */
+/* { dg-options "-g -O0 -fblocks -dA -fverbose-asm" } */
 /* { dg-final { scan-assembler "DW_AT_APPLE_block" } } */
 
 #include <stdio.h>

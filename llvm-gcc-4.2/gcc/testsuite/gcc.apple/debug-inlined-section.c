@@ -1,6 +1,7 @@
 /* APPLE LOCAL file, Radar 6275985  */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-g -dA -save-temps -mmacosx-version-min=10.6" } */
+/* LLVM LOCAL -fverbose-asm */
+/* { dg-options "-g -dA -save-temps -mmacosx-version-min=10.6 -fverbose-asm" } */
 /* { dg-final { scan-assembler "__debug_inlined" } } */
 /* { dg-final { scan-assembler "\[#;@]\[ \t]+MIPS linkage name: \"getData\"" } } */
 /* { dg-final { scan-assembler "\[#;@]\[ \t]+Function name: \"getData\"" } } */

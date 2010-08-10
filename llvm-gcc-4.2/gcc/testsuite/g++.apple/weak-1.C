@@ -1,7 +1,9 @@
 /* APPLE LOCAL file weak types 5954418 */
 /* { dg-do compile } */
-/* { dg-final { scan-assembler "weak_definition __ZTI1B" } } */
-/* { dg-final { scan-assembler "weak_definition __ZTI1A" } } */
+/* LLVM LOCAL begin - Whitespace */
+/* { dg-final { scan-assembler "weak_definition\[ \t]+__ZTI1B" } } */
+/* { dg-final { scan-assembler "weak_definition\[ \t]+__ZTI1A" } } */
+/* LLVM LOCAL end - Whitespace */
 /* Radar 5954418 */
 
 #define WEAK __attribute__ ((weak)) 

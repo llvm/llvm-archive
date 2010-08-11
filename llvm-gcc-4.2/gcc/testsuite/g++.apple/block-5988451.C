@@ -11,8 +11,8 @@ dispatch_item_t dispatch_call(dispatch_queue_t queue,
                               dispatch_legacy_block_t completion);
 
 void dispatch_apply_wait(dispatch_legacy_block_t work,
-     unsigned iterations,
-     void *context);
+                         unsigned iterations,
+                         void *context);
 
 
 
@@ -37,7 +37,7 @@ void dispatch_apply_wait(dispatch_legacy_block_t work,
                           },
                           10,NULL);
     },
-    ^(dispatch_item_t item) {NSLog(@"test");});  /* { dg-warning "deprecated" } */
+    ^(dispatch_item_t item) {NSLog(@"test");});
 }
 
 

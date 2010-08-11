@@ -645,6 +645,8 @@ static GTY(()) rtx switch32_libfunc;
 #define FL_FOR_ARCH7A	(FL_FOR_ARCH7 | FL_NOTM | FL_NEON)
 #define FL_FOR_ARCH7R	(FL_FOR_ARCH7A | FL_DIV)
 #define FL_FOR_ARCH7M	(FL_FOR_ARCH7 | FL_DIV)
+/* LLVM LOCAL processor support */
+#define FL_FOR_ARCH6M	(FL_FOR_ARCH6 &~ FL_NOTM)
 /* APPLE LOCAL end v7 support. Merge from mainline */
 
 /* The bits in this mask specify which
@@ -678,6 +680,9 @@ int arm_arch6 = 0;
 
 /* Nonzero if this chip supports the ARM 6K extensions.  */
 int arm_arch6k = 0;
+
+/* Nonzero if this chip supports the ARM 6M extensions.  */
+int arm_arch6m = 0;
 
 /* APPLE LOCAL begin 6093388 -mfpu=neon default for v7a */
 /* Nonzero if this chip supports the ARM 7A extensions.  */
@@ -834,10 +839,14 @@ static const struct processors all_architectures[] =
   {"armv5tej",arm926ejs,  "5TEJ",FL_CO_PROC |             FL_FOR_ARCH5TEJ, NULL},
   {"xscale",  xscale,     "5TE", FL_CO_PROC | FL_XSCALE | FL_FOR_ARCH5TE, NULL},
   {"armv6",   arm1136jfs, "6",   FL_CO_PROC |             FL_FOR_ARCH6, NULL},
+  /* LLVM LOCAL processor support */
+  {"armv6m",  cortexm0,   "6M",  FL_CO_PROC |             FL_FOR_ARCH6M, NULL},
   {"armv6j",  arm1136js,  "6J",  FL_CO_PROC |             FL_FOR_ARCH6J, NULL},
   {"armv6k",  arm1136jfs, "6K",  FL_CO_PROC |             FL_FOR_ARCH6K, NULL},
 #else
   {"armv6",   arm1136js,  "6",   FL_CO_PROC |             FL_FOR_ARCH6, NULL},
+  /* LLVM LOCAL processor support */
+  {"armv6m",  cortexm0,   "6M",  FL_CO_PROC |             FL_FOR_ARCH6M, NULL},
   {"armv6j",  arm1136js,  "6J",  FL_CO_PROC |             FL_FOR_ARCH6J, NULL},
   {"armv6k",  mpcore,	  "6K",  FL_CO_PROC |             FL_FOR_ARCH6K, NULL},
 #endif
@@ -848,18 +857,24 @@ static const struct processors all_architectures[] =
   {"armv6t2", arm1156t2s, "6T2", FL_CO_PROC |             FL_FOR_ARCH6T2, NULL},
   {"armv7",   cortexa8,	  "7",	 FL_CO_PROC |		  FL_FOR_ARCH7, NULL},
   {"armv7a",  cortexa8,	  "7A",	 FL_CO_PROC |		  FL_FOR_ARCH7A, NULL},
+  /* LLVM LOCAL begin processor support */
   {"armv7m",  cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
   {"armv7m3", cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
-  {"armv7m4", cortexm4,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv7m4", cortexm4,   "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv6m0", cortexm0,   "6M",	 FL_CO_PROC |		  FL_FOR_ARCH6M, NULL},
+  /* LLVM LOCAL end processor support */
 /* APPLE LOCAL begin v7 support. Merge from Codesourcery */
   {"armv7r",  cortexr4,	  "7R",	 FL_CO_PROC |		  FL_FOR_ARCH7R, NULL},
   {"armv7m",  cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */
   {"armv7-a", cortexa8,	  "7A",	 FL_CO_PROC |		  FL_FOR_ARCH7A, NULL},
   {"armv7-r", cortexr4,	  "7R",	 FL_CO_PROC |		  FL_FOR_ARCH7R, NULL},
+  /* LLVM LOCAL begin processor support */
   {"armv7-m", cortexm3,	  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
   {"armv7-m3", cortexm3,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
   {"armv7-m4", cortexm4,  "7M",	 FL_CO_PROC |		  FL_FOR_ARCH7M, NULL},
+  {"armv6-m0", cortexm0,  "6M",	 FL_CO_PROC |		  FL_FOR_ARCH6M, NULL},
+  /* LLVM LOCAL end processor support */
 /* APPLE LOCAL end v7 support. Merge from mainline */
   {"ep9312",  ep9312,     "4T",  FL_LDSCHED | FL_CIRRUS | FL_FOR_ARCH4, NULL},
   {"iwmmxt",  iwmmxt,     "5TE", FL_LDSCHED | FL_STRONG | FL_FOR_ARCH5TE | FL_XSCALE | FL_IWMMXT , NULL},
@@ -1456,10 +1471,12 @@ arm_override_options (void)
     targetm.rtx_costs = all_cores[(int)arm_tune].rtx_costs;
 
   /* LLVM LOCAL begin */
-  /* v7m processors don't have ARM mode, so default to thumb mode.
+  /* v7m and v6m  processors don't have ARM mode, so default to thumb mode.
      Explicitly only set for default so we can error if the user
      sets -marm or -mno-thumb. */
-  if ((insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M && thumb_option < 0)
+  if (((insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M
+       || (insn_flags & FL_FOR_ARCH6M) == FL_FOR_ARCH6M)
+      && thumb_option < 0)
     thumb_option = 1;
   /* LLVM LOCAL end */
 
@@ -1569,6 +1586,8 @@ arm_override_options (void)
   arm_arch7a = (insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A;
   /* APPLE LOCAL begin v7 support. Merge from mainline */
   arm_arch7m = (insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M;
+  /* LLVM LOCAL processor support */
+  arm_arch6m = (insn_flags & FL_FOR_ARCH6M) == FL_FOR_ARCH6M;
   arm_arch_notm = (insn_flags & FL_NOTM) != 0;
   arm_arch_thumb2 = (insn_flags & FL_THUMB2) != 0;
   /* APPLE LOCAL end v7 support. Merge from mainline */

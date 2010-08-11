@@ -328,8 +328,10 @@ do {									\
 #define SUBTARGET_ASM_DECLARE_FUNCTION_NAME ARM_DECLARE_FUNCTION_NAME
 
 /* APPLE LOCAL begin 6093388 -mfpu=neon default for v7a */
-/* We default to VFP for v6, NEON for v7 */
-#define FPUTYPE_DEFAULT (arm_arch7a ? "neon" : "vfp")
+/* We default to VFP for v6, NEON for v7. */
+#define FPUTYPE_DEFAULT (arm_arch7a ? "neon" : \
+                         ((arm_tune == cortexm3 || arm_tune == cortexm0) ? \
+                          "fpe2" : "vfp"))
 
 #undef TARGET_DEFAULT_FLOAT_ABI
 #define TARGET_DEFAULT_FLOAT_ABI ((arm_arch6 || arm_arch7a) ? ARM_FLOAT_ABI_SOFTFP : ARM_FLOAT_ABI_SOFT)

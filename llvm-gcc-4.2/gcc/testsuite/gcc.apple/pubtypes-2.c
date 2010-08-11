@@ -1,10 +1,12 @@
 /* Radar 4535968 */
 /* { dg-do compile { target *-*-darwin* } } */
-/* { dg-options "-O0 -gdwarf-2 -dA" } */
+/* { dg-options "-O0 -gdwarf-2 -dA -fverbose-asm" } */
 /* { dg-skip-if "Unmatchable assembly" { mmix-*-* } { "*" } { "" } } */
 /* { dg-final { scan-assembler "__debug_pubtypes" } } */
 /* APPLE LOCAL begin ARM assembler uses @ for comments */
-/* { dg-final { scan-assembler "long\[ \t]+\(0x6a|106\)+\[ \t\n]+\[#;@]\[ \t]+Length of Public Type Names Info" } } */
+/* LLVM LOCAL begin - Adjust for different (but apparently correct) output */
+/* { dg-final { scan-assembler "Lset\[0-9]+\[ \t]+=\[ \t]+Lpubtypes_end\[0-9]+-Lpubtypes_begin\[0-9]+\[ \t]+\[#;@]\[ \t]+Length of Public Types Info" } } */
+/* LLVM LOCAL end */
 /* { dg-final { scan-assembler "used_struct\\\\0\"\[ \t]+\[#;@]\[ \t\]+external name" } } */
 /* { dg-final { scan-assembler-not "unused_struct\\\\0\"\[ \t]+\[#;@]\[ \t]+external name" } } */
 /* APPLE LOCAL end ARM assembler uses @ for comments */

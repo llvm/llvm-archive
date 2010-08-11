@@ -787,7 +787,8 @@ set_user_assembler_name (tree decl, const char *name)
 
       if (has_objc_prefix) {
         DECL_LLVM_PRIVATE (decl) = (name[0] == 'L');
-        DECL_LLVM_LINKER_PRIVATE (decl) = (name[0] == 'l');
+        DECL_LLVM_LINKER_PRIVATE (decl) = (name[0] == 'l' && !DECL_WEAK (decl));
+        DECL_LLVM_LINKER_PRIVATE_WEAK(decl)=(name[0] == 'l' && DECL_WEAK(decl));
 
         /* Remove the "[Ll]_" prefix. The LLVM assembly printer is now
            intelligent enough to add the appropriate prefix to the name.  */

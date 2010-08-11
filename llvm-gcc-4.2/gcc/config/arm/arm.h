@@ -449,8 +449,8 @@ extern int arm_arch5e;
 /* Nonzero if this chip supports the ARM Architecture 6 extensions.  */
 extern int arm_arch6;
 
-/* LLVM LOCAL Declare arm_arch7m for use when setting the target triple.  */
-extern int arm_arch7m;
+/* LLVM LOCAL Declare arm_arch7a for use when setting the target triple.  */
+extern int arm_arch7a;
 
 /* APPLE LOCAL begin 6258536 Atomic builtins */
 /* Nonzero if this chip supports the ARM Architecture 7a extensions.  */
@@ -3497,7 +3497,6 @@ enum neon_builtins
     case cortexa9:      F.setCPU("cortex-a9"); break; \
     case cortexr4:      F.setCPU("cortex-r4"); break; \
     case cortexm3:      F.setCPU("cortex-m3"); break; \
-    case cortexm4:      F.setCPU("cortex-m4"); break; \
     default:						\
       F.setCPU("arm7tdmi"); \
       break; \
@@ -3529,18 +3528,16 @@ enum neon_builtins
   (TARGET_THUMB                                                            \
    ? (arm_arch7a                                                           \
       ? "thumbv7"                                                          \
-      : (arm_arch7m                                                        \
-         ? "thumbv7m"                                                      \
-         : (arm_arch_thumb2                                                \
-           ? "thumbv6t2"                                                   \
-           : (arm_arch6                                                    \
-              ? "thumbv6"                                                  \
-              : (arm_arch5e                                                \
-                 ? "thumbv5e"                                              \
-                 : (arm_arch5                                              \
-                    ? "thumbv5"                                            \
-                    : (arm_arch4t                                          \
-                       ? "thumbv4t" : "")))))))                            \
+      : (arm_arch_thumb2                                                   \
+         ? "thumbv6t2"                                                     \
+         : (arm_arch6                                                      \
+            ? "thumbv6"                                                    \
+            : (arm_arch5e                                                  \
+               ? "thumbv5e"                                                \
+               : (arm_arch5                                                \
+                  ? "thumbv5"                                              \
+                  : (arm_arch4t                                            \
+                     ? "thumbv4t" : ""))))))                               \
    : (arm_arch7a                                                           \
       ? "armv7"                                                            \
       : (arm_arch_thumb2                                                   \

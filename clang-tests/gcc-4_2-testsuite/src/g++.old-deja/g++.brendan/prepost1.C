@@ -11,5 +11,5 @@ int main()
 
   // This should fall back to calling operator++(), and be an error with
   // the -pedantic flag.
-  x++;// { dg-error "" } 
+  x++;  // clang no longer issues 2ndry error because class foo is marked invalid. 
 }

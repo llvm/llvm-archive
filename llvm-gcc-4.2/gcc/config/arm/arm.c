@@ -681,9 +681,6 @@ int arm_arch6 = 0;
 /* Nonzero if this chip supports the ARM 6K extensions.  */
 int arm_arch6k = 0;
 
-/* Nonzero if this chip supports the ARM 6M extensions.  */
-int arm_arch6m = 0;
-
 /* APPLE LOCAL begin 6093388 -mfpu=neon default for v7a */
 /* Nonzero if this chip supports the ARM 7A extensions.  */
 int arm_arch7a = 0;
@@ -1474,8 +1471,7 @@ arm_override_options (void)
   /* v7m and v6m  processors don't have ARM mode, so default to thumb mode.
      Explicitly only set for default so we can error if the user
      sets -marm or -mno-thumb. */
-  if (((insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M
-       || (insn_flags & FL_FOR_ARCH6M) == FL_FOR_ARCH6M)
+  if (((insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M || arm_tune == cortexm0)
       && thumb_option < 0)
     thumb_option = 1;
   /* LLVM LOCAL end */
@@ -1586,8 +1582,6 @@ arm_override_options (void)
   arm_arch7a = (insn_flags & FL_FOR_ARCH7A) == FL_FOR_ARCH7A;
   /* APPLE LOCAL begin v7 support. Merge from mainline */
   arm_arch7m = (insn_flags & FL_FOR_ARCH7M) == FL_FOR_ARCH7M;
-  /* LLVM LOCAL processor support */
-  arm_arch6m = (insn_flags & FL_FOR_ARCH6M) == FL_FOR_ARCH6M;
   arm_arch_notm = (insn_flags & FL_NOTM) != 0;
   arm_arch_thumb2 = (insn_flags & FL_THUMB2) != 0;
   /* APPLE LOCAL end v7 support. Merge from mainline */

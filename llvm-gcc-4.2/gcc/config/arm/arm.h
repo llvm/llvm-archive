@@ -3532,7 +3532,7 @@ enum neon_builtins
          ? "thumbv7m"                                                      \
          : (arm_arch_thumb2                                                \
            ? "thumbv6t2"                                                   \
-           : (arm_arch6m                                                   \
+           : (arm_tune == cortexm0                                         \
               ? "thumbv6m"                                                 \
               : (arm_arch6                                                 \
                  ? "thumbv6"                                               \
@@ -3541,7 +3541,7 @@ enum neon_builtins
                     : (arm_arch5                                           \
                        ? "thumbv5"                                         \
                        : (arm_arch4t                                       \
-                          ? "thumbv4t" : ""))))))))                         \
+                          ? "thumbv4t" : ""))))))))                        \
    : (arm_arch7a                                                           \
       ? "armv7"                                                            \
       : (arm_arch_thumb2                                                   \

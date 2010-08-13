@@ -6,7 +6,7 @@ template <template <class> class TT> class C {
 };
 
 template <class T> struct D {
-	C<T::template B> c; // { dg-error "context" }
+	C<T::template B> c; // { dg-error "private" }
 };
 
 struct E {
@@ -14,4 +14,4 @@ struct E {
 	template <class T> class B {}; // { dg-error "private" }
 };
 
-D<E> d; // { dg-error "instantiated" }
+D<E> d; // { dg-error "note" }

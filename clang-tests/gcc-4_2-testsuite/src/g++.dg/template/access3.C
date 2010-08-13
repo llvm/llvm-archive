@@ -4,7 +4,7 @@
 // Enforcing access of typename type.
 
 template <class T> struct A {
-  typename T::template X<int> x;	// { dg-error "this context" }
+  typename T::template X<int> x;	// { dg-error "private" }
 };
 
 class B {
@@ -13,5 +13,5 @@ class B {
 
 int main()
 {
-  A<B> ab;				// { dg-error "instantiated" }
+  A<B> ab;				// { dg-error "note" }
 }

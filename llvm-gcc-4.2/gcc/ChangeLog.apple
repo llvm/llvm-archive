@@ -1,3 +1,10 @@
+2010-08-13  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 8307333
+	* config/i386/darwin.h (DARWIN_IPHONEOS_LIBGCC_SPEC): Do not link
+	against libgcc_s.10.5.dylib.
+	* config/rs6000/darwin.h (DARWIN_IPHONEOS_LIBGCC_SPEC): Likewise.
+
 2010-08-06  Jim Grosbach <grosbach@apple.com>
 
 	* config/arm/arm.c(arm_override_options): v7m only has thumb mode.

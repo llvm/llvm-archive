@@ -3508,8 +3508,13 @@ enum neon_builtins
     } \
     if (TARGET_VFP3)						\
       F.AddFeature("vfp3");					\
-    else							\
+    else {							\
       F.AddFeature("vfp3", false);				\
+      if (TARGET_VFP && TARGET_HARD_FLOAT)			\
+        F.AddFeature("vfp2");					\
+      else							\
+        F.AddFeature("vfp2", false);				\
+    }								\
     if (TARGET_NEON)						\
       F.AddFeature("neon");					\
     else							\

@@ -99,6 +99,12 @@ std::vector<tree> Thunks;
 /// optimizations off.
 static cl::opt<bool> DisableLLVMOptimizations("disable-llvm-optzns");
 
+static cl::list<std::string>
+MAttrs("mattr",
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes (-mattr=help for details)"),
+  cl::value_desc("a1,+a2,-a3,..."));
+
 std::vector<std::pair<Constant*, int> > StaticCtors, StaticDtors;
 SmallSetVector<Constant*, 32> AttributeUsedGlobals;
 SmallSetVector<Constant*, 32> AttributeCompilerUsedGlobals;
@@ -512,13 +518,18 @@ void llvm_initialize_backend(void) {
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
+  SubtargetFeatures Features;
   // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
   // backend.
 #ifdef LLVM_SET_SUBTARGET_FEATURES
-  SubtargetFeatures Features;
   LLVM_SET_SUBTARGET_FEATURES(Features);
-  FeatureStr = Features.getString();
 #endif
+  
+  // Handle -mattr options passed into llvm
+  for (unsigned i = 0; i != MAttrs.size(); ++i)
+    Features.AddFeature(MAttrs[i]);
+  FeatureStr = Features.getString();
+
   TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 

@@ -2,7 +2,7 @@
 // Test whether __PRETTY_FUNCTION__ works in templates, functions and
 // in initializers at global scope
 // { dg-do compile }
-// { dg-options "" }
+// { dg-options "-Wno-unused-value" }
 
 extern "C" void __assert_fail (const char *, const char *,
 			       unsigned int, const char *)
@@ -33,8 +33,8 @@ bar<int> (int)
   return (assert (foo ()), 2);
 }
 
-int a = (assert (foo ()), 1);
-int b = (assert (foo ()), 2);
+int a = (assert (foo ()), 1); /* { dg-warning "predefined" } */
+int b = (assert (foo ()), 2); /* { dg-warning "predefined" } */
 
 int
 main ()
@@ -50,7 +50,7 @@ main ()
 
 namespace N
 {
-  int f = (assert (foo ()), 4);
+  int f = (assert (foo ()), 4); /* { dg-warning "predefined" } */
 }
 
 void __attribute__((noinline))
@@ -59,9 +59,3 @@ __assert_fail (const char *cond, const char *file, unsigned int line,
 {
   abort ();
 }
-
-// { dg-final { scan-assembler "int bar\\(T\\).*with T = int" } }
-// { dg-final { scan-assembler "top level" } }
-// { dg-final { scan-assembler "int main\\(\\)" } }
-// { dg-final { scan-assembler "int bar\\(T\\).*with T = double" } }
-// { dg-final { scan-assembler "int bar\\(T\\).*with T = unsigned char\*" } }

@@ -21,7 +21,8 @@ int num_failed = 0;
 #define xmm1d xmm_regs[1]._double
 
 typedef enum {
-  INT = 0,
+  INT1 = 0,
+  INT2, INT4, INT8,
   SSE_F,
   SSE_D,
   X87,
@@ -35,23 +36,23 @@ typedef enum {
 } Type;
 
 /* Structures which should be returned in INTEGER.  */
-#define D(I,MEMBERS,B) struct S_ ## I { MEMBERS ; }; Type class_ ## I = INT; \
+#define D(I,MEMBERS,B,INTSIZE) struct S_ ## I { MEMBERS ; }; Type class_ ## I = INT ## INTSIZE; \
 struct S_ ## I f_ ## I (void) { struct S_ ## I s; memset (&s, 0, sizeof(s)); B; return s; }
 
-D(1,char m1, s.m1=42)
-D(2,short m1, s.m1=42)
-D(3,int m1, s.m1=42)
-D(4,long m1, s.m1=42)
-D(5,long long m1, s.m1=42)
-D(6,char m1;short s, s.m1=42)
-D(7,char m1;int i, s.m1=42)
-D(8,char m1; long l, s.m1=42)
-D(9,char m1; long long l, s.m1=42)
-D(10,char m1[16], s.m1[0]=42)
-D(11,short m1[8], s.m1[0]=42)
-D(12,int m1[4], s.m1[0]=42)
-D(13,long m1[2], s.m1[0]=42)
-D(14,long long m1[2], s.m1[0]=42)
+D(1,char m1, s.m1=42, 1)
+D(2,short m1, s.m1=42, 2)
+D(3,int m1, s.m1=42, 4)
+D(4,long m1, s.m1=42, 8)
+D(5,long long m1, s.m1=42, 8)
+D(6,char m1;short s, s.m1=42, 1)
+D(7,char m1;int i, s.m1=42, 1)
+D(8,char m1; long l, s.m1=42, 1)
+D(9,char m1; long long l, s.m1=42, 1)
+D(10,char m1[16], s.m1[0]=42, 8)
+D(11,short m1[8], s.m1[0]=42, 8)
+D(12,int m1[4], s.m1[0]=42, 8)
+D(13,long m1[2], s.m1[0]=42, 8)
+D(14,long long m1[2], s.m1[0]=42, 8)
 
 #undef D
 
@@ -181,10 +182,13 @@ void clear_all (void)
   clear_x87_registers;
 }
 
-void check_all (Type class, unsigned long size)
+void check_all (Type class)
 {
   switch (class) {
-    case INT: if (size < 8) rax &= ~0UL >> (64-8*size); assert (rax == 42); break;
+    case INT1: assert ((rax & 0xFF) == 42); break;
+    case INT2: assert ((rax & 0xFFFF) == 42); break;
+    case INT4: assert ((rax & 0xFFFFFFFF) == 42); break;
+    case INT8: assert (rax == 42); break;
     case SSE_F: assert (xmm0f[0] == 42); break;
     case SSE_D: assert (xmm0d[0] == 42); break;
     case SSE_F_V: assert (xmm0f[0] == 42 && xmm0f[1]==42 && xmm1f[0] == 42 && xmm1f[1] == 42); break;
@@ -209,7 +213,7 @@ void check_all (Type class, unsigned long size)
 #define D(I) { struct S_ ## I s; current_test = I; struct_addr = (void*)&s; \
   clear_all(); \
   s = WRAP_RET(f_ ## I) (); \
-  check_all(class_ ## I, sizeof(s)); \
+  check_all(class_ ## I); \
 }
 
 int

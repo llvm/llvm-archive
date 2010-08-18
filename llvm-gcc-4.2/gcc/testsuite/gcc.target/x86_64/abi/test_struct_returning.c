@@ -206,7 +206,7 @@ void check_all (Type class)
        stack, but noone is forbidding that it could be a static variable
        if there's no threading or proper locking.  Nobody in his right mind
        will not use the stack for that.  */
-    case MEM: assert (*(unsigned char*)struct_addr == 42 && rdi == rax); break;
+    case MEM: assert (*(unsigned char*)struct_addr == 42); break;
   }
 }
 

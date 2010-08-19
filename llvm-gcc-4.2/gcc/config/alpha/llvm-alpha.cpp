@@ -183,7 +183,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   return false;
 }
-#include <iostream>
+
 bool llvm_alpha_should_return_scalar_as_shadow(const Type* Ty) {
   if (Ty && Ty->isIntegerTy(128))
     return true;

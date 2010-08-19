@@ -3,12 +3,12 @@
 
 struct S 
 {
-  S ();
+  S ();  /* { dg-error "note" } */
 };
 
 union U {
   struct { 
-    S s; // { dg-error "" } struct with constructor in union
+    S s; /* { dg-error "anonymous struct member" } */
   };
 };
 

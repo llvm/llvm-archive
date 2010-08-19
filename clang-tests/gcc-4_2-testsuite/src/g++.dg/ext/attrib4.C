@@ -1,31 +1,31 @@
 // Test for syntax support of various attribute permutations.
 
-int
+void
 __attribute__((noreturn))
 __attribute__((unused))
 one(void); // OK 
 
 __attribute__((noreturn))
 __attribute__((unused))
-int
+void
 two(void); // OK
 
-int
+void
 __attribute__((unused))
 three (void)
 __attribute__((noreturn)); // OK
 
 __attribute__((unused))
-int
+void
 four (void)
 __attribute__((noreturn)); // OK
 
-int
+void
 five(void)
 __attribute__((noreturn))
 __attribute__((unused));  // OK
 
 __attribute__((noreturn))
-int
+void
 __attribute__((unused)) // parse error before '__attribute__' in C++
 six (void);              // OK in C

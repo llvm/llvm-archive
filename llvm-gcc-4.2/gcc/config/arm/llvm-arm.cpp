@@ -1747,13 +1747,11 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   case NEON_BUILTIN_vmovl:
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vmovls;
+      Result = Builder.CreateSExt(Ops[0], ResultType);
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vmovlu;
+      Result = Builder.CreateZExt(Ops[0], ResultType);
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
   case NEON_BUILTIN_vext: {

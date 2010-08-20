@@ -33,7 +33,7 @@ extern "C" {
 extern const char *progname;
 }
 
-static void LLVMErrorHandler(void *UserData, const std::string &Message) {
+static void LLVMErrorHandler(void *, const std::string &Message) {
   fprintf(stderr, "%s: error in backend: %s\n", progname, Message.c_str());
   exit(FATAL_EXIT_CODE);
 }

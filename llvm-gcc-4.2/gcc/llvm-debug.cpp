@@ -210,7 +210,6 @@ DebugInfo::DebugInfo(Module *m)
 , PrevLineNo(0)
 , PrevBB(NULL)
 , CurrentGCCLexicalBlock(NULL)
-, FwdTypeCount(0)
 , RegionStack()
 {}
 

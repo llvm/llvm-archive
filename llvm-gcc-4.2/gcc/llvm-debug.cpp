@@ -1007,11 +1007,22 @@ DIType DebugInfo::createStructType(tree type) {
     if (MDNode *TN = dyn_cast_or_null<MDNode>(I->second))
       return DIType(TN);
   
-  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
-  
   // forward declaration, 
-  if (TYPE_SIZE(type) == 0) 
+  if (TYPE_SIZE(type) == 0) {
+    llvm::DICompositeType FwdDecl =
+      DebugFactory.CreateCompositeType(Tag, 
+                                       TyContext,
+                                       GetNodeName(type),
+                                       getOrCreateFile(Loc.file), 
+                                       Loc.line, 
+                                       0, 0, 0,
+                                       SFlags | llvm::DIType::FlagFwdDecl,
+                                       llvm::DIType(), llvm::DIArray(),
+                                       RunTimeLang);
     return FwdDecl;
+  }
+  
+  llvm::DIType FwdDecl = DebugFactory.CreateTemporaryType();
   
   // Insert into the TypeCache so that recursive uses will find it.
   llvm::MDNode *FDN = FwdDecl;

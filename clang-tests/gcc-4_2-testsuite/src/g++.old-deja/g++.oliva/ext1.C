@@ -10,7 +10,7 @@ extern "C" void abort();
 
 int main () {
   char x[1];
-  char *y = x ? /* implicit x */ : 0;
+  char *y = x ? /* implicit x */ : 0; // { dg-error "cannot compile this conditional operator with missing LHS yet" }
   /* For some reason, the array x is copied twice, and y points to the
      second copy (the first is never used).  If x is explicit, no copy
      is created, and the program succeeds.  */

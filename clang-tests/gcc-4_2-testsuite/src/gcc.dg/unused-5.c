@@ -4,5 +4,5 @@
 
 /* 'volatile' variables get output and don't produce a warning about being
    unused.  */
-static volatile char string[] 
-  = "string_to_look_for";  /* { dg-bogus "not used" } */
+static volatile char string[]  __attribute__((used))
+  = "string_to_look_for"; 

@@ -4,19 +4,30 @@
 // contributed by Alexandre Oliva <aoliva@redhat.com>
 // inspired in the failure reported in Red Hat bugzilla #168260.
 
-template<class F> void bind(F f) {}
+template<class F> void bind(F f) {}	// { dg-error "note" }
+					// { dg-error "note" "" { target *-*-* } 7 }
+					// { dg-error "note" "" { target *-*-* } 7 }
+					// { dg-error "note" "" { target *-*-* } 7 }
+					// { dg-error "note" "" { target *-*-* } 7 }
+					// { dg-error "note" "" { target *-*-* } 7 }
 
-template<class F> void bindm(F f) {}
+template<class F> void bindm(F f) {}	// { dg-error "note" }
+					// { dg-error "note" "" { target *-*-* } 14 }
 template<class F, class T> void bindm(F (T::*f)(void)) {} // { dg-error "note" }
+					// { dg-error "note" "" { target *-*-* } 16 }
 
 template<class F> void bindn(F f) {}
 template<class F, class T> void bindn(F (*f)(T)) {}
 
 template<class F> void bindb(F f) {}
 template<class F, class T> void bindb(F (*f)(T)) {} // { dg-error "note" }
+					// { dg-error "note" "" { target *-*-* } 23 }
+					// { dg-error "note" "" { target *-*-* } 23 }
 template<class F, class T> void bindb(F (T::*f)(void)) {} // { dg-error "note" }
+					// { dg-error "note" "" { target *-*-* } 26 }
+					// { dg-error "note" "" { target *-*-* } 26 }
 
-struct foo {
+struct foo {	// { dg-error "note" }
   static int baist;
   int bait;
   void barf ();

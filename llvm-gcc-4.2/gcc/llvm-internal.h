@@ -190,6 +190,10 @@ bool isInt64(tree_node *t, bool Unsigned);
 /// overflowed constants.  These conditions can be checked by calling isInt64.
 uint64_t getInt64(tree_node *t, bool Unsigned);
 
+/// getPointerAlignment - Return the alignment in bytes of exp, a pointer valued
+/// expression, or 1 if the alignment is not known.
+unsigned int getPointerAlignment(tree_node *exp);
+
 /// isPassedByInvisibleReference - Return true if the specified type should be
 /// passed by 'invisible reference'. In other words, instead of passing the
 /// thing by value, pass the address of a temporary.

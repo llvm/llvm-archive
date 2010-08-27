@@ -140,7 +140,7 @@ uint64_t getInt64(tree t, bool Unsigned) {
 
 /// getPointerAlignment - Return the alignment in bytes of exp, a pointer valued
 /// expression, or 1 if the alignment is not known.
-static unsigned int getPointerAlignment(tree exp) {
+unsigned int getPointerAlignment(tree exp) {
   assert(POINTER_TYPE_P (TREE_TYPE (exp)) && "Expected a pointer type!");
   unsigned int align = get_pointer_alignment(exp, BIGGEST_ALIGNMENT) / 8;
   return align ? align : 1;

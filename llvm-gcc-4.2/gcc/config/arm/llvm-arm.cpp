@@ -2010,7 +2010,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     intID = Intrinsic::arm_neon_vld1;
     intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
-    Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
+                                 getInt32Const(Align));
     break;
   }
 
@@ -2028,7 +2030,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
-    Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
+                                 getInt32Const(Align));
     Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
@@ -2074,6 +2078,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
     Args.push_back(Ops[2]); // lane number
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Args.push_back(getInt32Const(Align));
     Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
     Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
@@ -2103,7 +2109,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
       intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
       Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
-      Result = Builder.CreateCall(intFn, BitCastToType(Ops[0], VPTy));
+      unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+      Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
+                                   getInt32Const(Align));
       Builder.CreateStore(Result, DestLoc->Ptr);
       Result = 0;
       break;
@@ -2131,6 +2139,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Args.push_back(UndefValue::get(VTy));
     }
     Args.push_back(getInt32Const(0));
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Args.push_back(getInt32Const(Align));
     Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
 
     // Now splat the values in lane 0 to the rest of the elements.
@@ -2150,7 +2160,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     intID = Intrinsic::arm_neon_vst1;
     intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
-    Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy), Ops[1]);
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Builder.CreateCall3(intFn, BitCastToType(Ops[0], VPTy), Ops[1],
+                        getInt32Const(Align));
     Result = 0;
     break;
   }
@@ -2181,6 +2193,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     for (unsigned n = 0; n != NumVecs; ++n) {
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Args.push_back(getInt32Const(Align));
     Builder.CreateCall(intFn, Args.begin(), Args.end());
     Result = 0;
     break;
@@ -2226,6 +2240,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Args.push_back(Builder.CreateExtractValue(Ops[1], n));
     }
     Args.push_back(Ops[2]); // lane number
+    unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
+    Args.push_back(getInt32Const(Align));
     Builder.CreateCall(intFn, Args.begin(), Args.end());
     Result = 0;
     break;

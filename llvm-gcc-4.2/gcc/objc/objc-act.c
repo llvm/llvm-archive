@@ -1935,6 +1935,14 @@ objc_resolve_build_property_setter_name (tree receiver, tree property_ident)
                 && CLASS_SUPER_NAME (implementation_template))
 	    class = lookup_interface (CLASS_SUPER_NAME (implementation_template));
 	}
+      /* APPLE LOCAL begin radar 8351204 */
+      if (!class) {
+        error ("expression is not assignable - type of receiver is unknown");
+        /* recover */
+        return objc_build_property_setter_name (property_ident, true);
+      }
+      /* APPLE LOCAL end radar 8351204 */
+
       /* APPLE LOCAL begin radar 8290584 */
       else {
         /* receiver could be of type id<protocol,...> find property in 

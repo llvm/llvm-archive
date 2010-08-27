@@ -1,3 +1,10 @@
+2010-08-26 Fariborz Jahanian <fjahanian@apple.com>
+
+	Radar 8351204
+	* objc-act.c (objc_resolve_build_property_setter_name): Issue error
+	if receiver type cannot be resolved to a known class type.
+	* objc.dg/property-receiver-id-type.m: New
+
 2010-07-10 Fariborz Jahanian <fjahanian@apple.com>
 
 	Radar 8290584

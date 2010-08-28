@@ -873,6 +873,9 @@ AC_ARG_ENABLE(llvm,
  elif test -x "$LLVMBASEPATH/Release+Asserts+Checks/bin/llc$EXEEXT"; then
      echo Found Release+Asserts+Checks LLVM Tree in $LLVMBASEPATH
      LLVMBUILDMODE="Release+Asserts+Checks"
+ elif test -x "$LLVMBASEPATH/Release+Debug+Asserts/bin/llc$EXEEXT"; then
+     echo Found Release+Debug+Asserts LLVM Tree in $LLVMBASEPATH
+     LLVMBUILDMODE="Release+Debug+Asserts"
  elif test -x "$LLVMBASEPATH/Debug+Asserts+Checks/bin/llc$EXEEXT"; then
      echo Found Debug+Asserts+Checks LLVM Tree in $LLVMBASEPATH
      LLVMBUILDMODE="Debug+Asserts+Checks"

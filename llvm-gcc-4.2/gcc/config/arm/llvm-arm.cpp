@@ -788,27 +788,27 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
 
   case NEON_BUILTIN_vaddl:
-    if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vaddls;
-    else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vaddlu;
-    else
+    if (datatype == neon_datatype_signed) {
+      Ops[0] = Builder.CreateSExt(Ops[0], ResultType);
+      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
+    } else if (datatype == neon_datatype_unsigned) {
+      Ops[0] = Builder.CreateZExt(Ops[0], ResultType);
+      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
+    } else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Result = Builder.CreateAdd(Ops[0], Ops[1]);
     break;
 
   case NEON_BUILTIN_vaddw:
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vaddws;
+      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vaddwu;
+      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Result = Builder.CreateAdd(Ops[0], Ops[1]);
     break;
 
   case NEON_BUILTIN_vhadd:
@@ -1251,27 +1251,27 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     break;
 
   case NEON_BUILTIN_vsubl:
-    if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vsubls;
-    else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vsublu;
-    else
+    if (datatype == neon_datatype_signed) {
+      Ops[0] = Builder.CreateSExt(Ops[0], ResultType);
+      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
+    } else if (datatype == neon_datatype_unsigned) {
+      Ops[0] = Builder.CreateZExt(Ops[0], ResultType);
+      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
+    } else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Result = Builder.CreateSub(Ops[0], Ops[1]);
     break;
 
   case NEON_BUILTIN_vsubw:
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vsubws;
+      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vsubwu;
+      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Result = Builder.CreateSub(Ops[0], Ops[1]);
     break;
 
   case NEON_BUILTIN_vqsub:

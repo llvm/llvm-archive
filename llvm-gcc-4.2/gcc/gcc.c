@@ -721,6 +721,7 @@ proper position among the other output files.  */
     %{use-gold-plugin: \
      -plugin %(gold_plugin_file) \
      -plugin-opt=as=%(gold_plugin_as) \
+     %{m32:-plugin-opt=as-arg=--32} %{m64:-plugin-opt=as-arg=--64} \
     } \
     %l " LINK_PIE_SPEC "%X %{o*} %{A} %{d} %<emit-llvm %{e*}\
     %{m} %{N} %{n} %{r}\

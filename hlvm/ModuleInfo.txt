@@ -1,4 +1,0 @@
-DepModule: llvm llvm-gcc-4.0
-BuildCmd: make build-for-llvm-top 
-CleanCmd: make clean
-InstallCmd: make install

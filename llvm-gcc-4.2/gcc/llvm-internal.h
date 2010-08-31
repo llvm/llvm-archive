@@ -540,6 +540,7 @@ private:
   Value *EmitASM_EXPR(tree_node *exp);
   Value *EmitReadOfRegisterVariable(tree_node *vardecl, const MemRef *DestLoc);
   void EmitModifyOfRegisterVariable(tree_node *vardecl, Value *RHS);
+  Value *EmitMoveOfRegVariableToRightReg(Instruction *I, tree_node *decl);
 
   // Helpers for Builtin Function Expansion.
   void EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss, bool device);

@@ -2444,20 +2444,33 @@ void TreeToLLVM::EmitUnwindBlock() {
 //                           ... Expressions ...
 //===----------------------------------------------------------------------===//
 
-static bool canEmitRegisterVariable(tree exp) {
+static bool canEmitLocalRegisterVariable(tree exp) {
   // Only variables can be marked as 'register'.
   if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
     return false;
 
-  // We can emit inline assembler for access to global register variables.
+  // Global register variables are not accepted here.
   if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
-    return true;
+    return false;
 
   // Emit inline asm if this is local variable with assembler name on it.
   if (DECL_ASSEMBLER_NAME_SET_P(exp))
     return true;
 
   // Otherwise - it's normal automatic variable.
+  return false;
+}
+
+static bool canEmitGlobalRegisterVariable(tree exp) {
+  // Only variables can be marked as 'register'.
+  if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
+    return false;
+
+  // Local register variables are not accepted here.
+  if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
+    return true;
+
+  // Otherwise - it's normal automatic variable, or local register variable.
   return false;
 }
 
@@ -2478,10 +2491,10 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
     DECL_GIMPLE_FORMAL_TEMP_P(exp) = 0;
     EmitAutomaticVariableDecl(exp);
     // Fall through.
-  } else if (canEmitRegisterVariable(exp)) {
-    // If this is a register variable, EmitLV can't handle it (there is no
-    // l-value of a register variable).  Emit an inline asm node that copies the
-    // value out of the specified register.
+  } else if (canEmitGlobalRegisterVariable(exp)) {
+    // If this is a global register variable, EmitLV can't handle it (there is
+    // no l-value of a global register variable).  Emit an inline asm node that
+    // copies the value out of the specified register.
     return EmitReadOfRegisterVariable(exp, DestLoc);
   }
 
@@ -2496,7 +2509,11 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
       Value *Ptr = BitCastToType(LV.Ptr, Ty->getPointerTo());
       LoadInst *LI = Builder.CreateLoad(Ptr, isVolatile);
       LI->setAlignment(Alignment);
-      return LI;
+      if (canEmitLocalRegisterVariable(exp)) {
+        // For register variable, move the loaded variable into the right reg.
+        return EmitMoveOfRegVariableToRightReg(LI, exp);
+      } else
+        return LI;
     } else {
       EmitAggregateCopy(*DestLoc, MemRef(LV.Ptr, Alignment, isVolatile),
                         TREE_TYPE(exp));
@@ -3283,10 +3300,10 @@ Value *TreeToLLVM::EmitMODIFY_EXPR(tree exp, const MemRef *DestLoc) {
     Builder.Insert(Cast);
     SET_DECL_LLVM(lhs, Cast);
     return Cast;
-  } else if (canEmitRegisterVariable(lhs)) {
-    // If this is a store to a register variable, EmitLV can't handle the dest
-    // (there is no l-value of a register variable).  Emit an inline asm node
-    // that copies the value into the specified register.
+  } else if (canEmitGlobalRegisterVariable(lhs)) {
+    // If this is a store to a global register variable, EmitLV can't handle the
+    // dest (there is no l-value of a global register variable).  Emit an inline
+    // asm node that copies the value into the specified register.
     Value *RHS = Emit(rhs, 0);
     RHS = CastToAnyType(RHS, RHSSigned, ConvertType(TREE_TYPE(lhs)), LHSSigned);
     EmitModifyOfRegisterVariable(lhs, RHS);
@@ -4301,8 +4318,8 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 #define LLVM_CANONICAL_ADDRESS_CONSTRAINTS "r"
 #endif
 
-/// Reads from register variables are handled by emitting an inline asm node
-/// that copies the value out of the specified register.
+ /// Reads from global register variables are handled by emitting an inline
+ /// asm node that copies the value out of the specified register.
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
                                               const MemRef *DestLoc) {
   const Type *Ty = ConvertType(TREE_TYPE(decl));
@@ -4327,8 +4344,43 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   return Call;
 }
 
-/// Stores to register variables are handled by emitting an inline asm node
-/// that copies the value into the specified register.
+/// Reads from register variables are handled by emitting an inline asm node
+/// that copies the value out of the specified register.
+Value *TreeToLLVM::EmitMoveOfRegVariableToRightReg(Instruction *I, tree var) {
+  // Create a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
+  const Type *Ty = I->getType();
+
+  // If there was an error, return something bogus.
+  if (ValidateRegisterVariable(var)) {
+    if (Ty->isSingleValueType())
+      return UndefValue::get(Ty);
+    return 0;   // Just don't copy something into DestLoc.
+  }
+
+  std::vector<const Type*> ArgTys;
+  ArgTys.push_back(Ty);
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context), 
+                                        ArgTys, false);
+  const char *Name = extractRegisterName(var);
+  int RegNum = decode_reg_name(Name);
+  Name = LLVM_GET_REG_NAME(Name, RegNum);
+  InlineAsm *IA = InlineAsm::get(FTy, "", "{"+std::string(Name)+"}", 
+                                    true);
+  CallInst *Call = Builder.CreateCall(IA, I);
+  Call->setDoesNotThrow();
+  // Create another asm with the same reg, this time producing an output.
+  // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
+  FunctionType *FTy2 = FunctionType::get(Ty, std::vector<const Type*>(),
+                                        false);
+  InlineAsm *IA2 = InlineAsm::get(FTy2, "", "={"+std::string(Name)+"}",
+                                 true);
+  CallInst *Call2 = Builder.CreateCall(IA2);
+  Call2->setDoesNotThrow();
+  return Call2;
+}
+
+/// Stores to global register variables are handled by emitting an inline asm
+/// node that copies the value into the specified register.
 void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
   // If there was an error, bail out.
   if (ValidateRegisterVariable(decl))

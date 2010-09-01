@@ -22,6 +22,6 @@ typedef Element array[2];
 int main() {
     array *x;
     x = new array[3];
-    delete x;
+    delete[] x;
     printf ("PASS\n");
 }

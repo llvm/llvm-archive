@@ -90,6 +90,7 @@ void dummy_function() {
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);
   llvm::createPromoteMemoryToRegisterPass();
+  llvm::createCorrelatedValuePropagationPass();
   
   llvm::Type::getInt8Ty(llvm::getGlobalContext());
 

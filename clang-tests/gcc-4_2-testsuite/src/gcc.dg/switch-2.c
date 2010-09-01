@@ -7,4 +7,5 @@ int foo(int i)
   switch (i)
     case 3:
       return 1,
-}  /* { dg-error "parse error|syntax error|expected" } */
+}  /* { dg-error "expected" } */
+   /* { dg-error "expected" } */

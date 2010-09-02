@@ -3,7 +3,7 @@
 /* { dg-do compile } */
 
 int foo(int i)
-{
+{	/* { dg-error "note" } */
   switch (i)
     case 3:
       return 1,

@@ -851,6 +851,9 @@ Function *TreeToLLVM::FinishFunctionBody() {
   }
   UniquedValues.clear();
 
+#if !defined(TARGET_ARM)
+  // ARM supports VLAs + dynamic realignment. Others don't.
+
   // If we've seen a vla in this function and we'll possibly need to
   // either dynamically realign or this is greater than the maximum stack
   // alignment, output a warning.  This is here so we don't warn every time
@@ -859,6 +862,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
       GreatestAlignment > TheTarget->getFrameInfo()->getStackAlignment())
       warning (0, "alignment for %q+D conflicts with a dynamically realigned "
                   "stack", SeenVLA);
+#endif
   return Fn;
 }
 

@@ -4,5 +4,5 @@ template <typename T> void foo() {}
 
 int main () {
   struct S {};
-  foo<S> (); // { dg-error "match" } 
+  foo<S> (); // { dg-warning "" { xfail *-*-* } } currently eaten by SFINAE.
 }

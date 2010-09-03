@@ -1412,41 +1412,53 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
-  case NEON_BUILTIN_vabdl:
+  case NEON_BUILTIN_vabdl: {
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vabdls;
+      intID = Intrinsic::arm_neon_vabds;
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vabdlu;
+      intID = Intrinsic::arm_neon_vabdu;
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+    assert(VTy && "expected a vector type for vabdl result");
+    const llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
+    Ops[0] = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
+    Result = Builder.CreateZExt(Ops[0], ResultType);
     break;
+  }
 
   case NEON_BUILTIN_vaba:
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vabas;
+      intID = Intrinsic::arm_neon_vabds;
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vabau;
+      intID = Intrinsic::arm_neon_vabdu;
     else
       return BadImmediateError(exp, Result);
 
     intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
+    Ops[1] = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
+    Result = Builder.CreateAdd(Ops[0], Ops[1]);
     break;
 
-  case NEON_BUILTIN_vabal:
+  case NEON_BUILTIN_vabal: {
     if (datatype == neon_datatype_signed)
-      intID = Intrinsic::arm_neon_vabals;
+      intID = Intrinsic::arm_neon_vabds;
     else if (datatype == neon_datatype_unsigned)
-      intID = Intrinsic::arm_neon_vabalu;
+      intID = Intrinsic::arm_neon_vabdu;
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-    Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
+    const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+    assert(VTy && "expected a vector type for vabal result");
+    const llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
+    Ops[1] = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
+    Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
+    Result = Builder.CreateAdd(Ops[0], Ops[1]);
     break;
+  }
 
   case NEON_BUILTIN_vmax:
     if (datatype == neon_datatype_float ||

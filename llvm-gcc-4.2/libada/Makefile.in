@@ -55,7 +55,8 @@ GCC_DIR=../../$(host_subdir)/gcc
 include $(GCC_DIR)/libada-mk
 
 TARGET_LIBGCC2_CFLAGS=
-GNATLIBCFLAGS= -g -O2
+# LLVM LOCAL pass -disable-physical-join as a temporary workaround for PR8051
+GNATLIBCFLAGS= -g -O2 -mllvm -disable-physical-join
 # Get target-specific overrides for TARGET_LIBGCC2_CFLAGS
 # and possibly GNATLIBCFLAGS.  Currently this uses files
 # in gcc/config.  The 'subst' call is used to rerelativize them

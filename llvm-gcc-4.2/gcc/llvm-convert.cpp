@@ -8480,7 +8480,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     // Zero-sized bitfields upset the type converter.  If it's not a
     // bit-field, or it is a bit-field but it has a non-zero precision
     // type, go ahead and convert it.
-    if (!DECL_BIT_FIELD_TYPE(Field) || TYPE_PRECISION(TREE_TYPE(Field)))
+    if (!isBitfield(Field) || TYPE_PRECISION(TREE_TYPE(Field)))
       Val = Convert(FieldValue);        // Decode the field's value.
 
     if (DECL_SIZE(Field)) {

@@ -2168,6 +2168,7 @@ void TreeToLLVM::CreateExceptionValues() {
                                   GlobalVariable::LinkOnceAnyLinkage,
                                   Init, "llvm.eh.catch.all.value");
     CatchAll->setSection("llvm.metadata");
+    AttributeUsedGlobals.insert(CatchAll);
   }
 }
 

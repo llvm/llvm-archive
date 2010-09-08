@@ -320,6 +320,9 @@ class TreeToLLVM {
   /// PostPads - The post landing pad for a given EH region.
   IndexedMap<BasicBlock *> PostPads;
 
+  /// CatchAll - Language specific catch-all object.
+  GlobalVariable *CatchAll;
+
   /// ExceptionValue - Is the local to receive the current exception.
   Value *ExceptionValue;
 

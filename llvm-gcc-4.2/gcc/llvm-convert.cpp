@@ -2160,7 +2160,7 @@ void TreeToLLVM::EmitLandingPads() {
 
             CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
                                           GlobalVariable::LinkOnceAnyLinkage,
-                                          Init, ".llvm.eh.catch.all.value");
+                                          Init, "llvm.eh.catch.all.value");
             CatchAll->setSection("llvm.metadata");
           }
 
@@ -2203,7 +2203,7 @@ void TreeToLLVM::EmitLandingPads() {
 
             CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
                                           GlobalVariable::LinkOnceAnyLinkage,
-                                          Init, ".llvm.eh.catch.all.value");
+                                          Init, "llvm.eh.catch.all.value");
             CatchAll->setSection("llvm.metadata");
           }
 

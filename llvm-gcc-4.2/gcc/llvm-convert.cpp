@@ -188,6 +188,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   GreatestAlignment = TheTarget->getFrameInfo()->getStackAlignment();
   SeenVLA = NULL;
 
+  CatchAll = 0;
   ExceptionValue = 0;
   ExceptionSelectorValue = 0;
   FuncEHException = 0;
@@ -2151,6 +2152,24 @@ void TreeToLLVM::CreateExceptionValues() {
                                               Intrinsic::eh_selector);
   FuncEHGetTypeID = Intrinsic::getDeclaration(TheModule,
                                               Intrinsic::eh_typeid_for);
+
+  CatchAll = TheModule->getGlobalVariable("llvm.eh.catch.all.value");
+  if (!CatchAll && lang_eh_catch_all) {
+    Constant *Init = 0;
+    tree catch_all_type = lang_eh_catch_all();
+    if (catch_all_type == NULL_TREE)
+      // Use a C++ style null catch-all object.
+      Init = Constant::getNullValue(Type::getInt8PtrTy(Context));
+    else
+      // This language has a type that catches all others.
+      Init = cast<Constant>(Emit(catch_all_type, 0));
+
+    CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
+                                  GlobalVariable::LinkOnceAnyLinkage,
+                                  Init, "llvm.eh.catch.all.value");
+    CatchAll->setSection("llvm.metadata");
+    AttributeUsedGlobals.insert(CatchAll);
+  }
 }
 
 /// getPostPad - Return the post landing pad for the given exception handling
@@ -2204,7 +2223,6 @@ void TreeToLLVM::EmitLandingPads() {
 
     bool HasCleanup = false;
     bool HasCatchAll = false;
-    static GlobalVariable *CatchAll = 0;
 
     for (std::vector<struct eh_region *>::iterator I = Handlers.begin(),
          E = Handlers.end(); I != E; ++I) {
@@ -2231,17 +2249,8 @@ void TreeToLLVM::EmitLandingPads() {
         tree TypeList = get_eh_type_list(region);
 
         if (!TypeList) {
-          // Catch-all - push a null pointer.
-          if (!CatchAll) {
-            Constant *Init =
-              Constant::getNullValue(Type::getInt8PtrTy(Context));
-
-            CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
-                                          GlobalVariable::LinkOnceAnyLinkage,
-                                          Init, "llvm.eh.catch.all.value");
-            CatchAll->setSection("llvm.metadata");
-          }
-
+          // Catch-all - push the catch-all object.
+          assert(CatchAll && "Language did not define lang_eh_catch_all?");
           Args.push_back(CatchAll);
           HasCatchAll = true;
         } else {
@@ -2268,23 +2277,7 @@ void TreeToLLVM::EmitLandingPads() {
           // Some exceptions from this region may not be caught by any handler.
           // Since invokes are required to branch to the unwind label no matter
           // what exception is being unwound, append a catch-all.
-
-          if (!CatchAll) {
-            Constant *Init = 0;
-            tree catch_all_type = lang_eh_catch_all();
-            if (catch_all_type == NULL_TREE)
-              // Use a C++ style null catch-all object.
-              Init = Constant::getNullValue(Type::getInt8PtrTy(Context));
-            else
-              // This language has a type that catches all others.
-              Init = cast<Constant>(Emit(catch_all_type, 0));
-
-            CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
-                                          GlobalVariable::LinkOnceAnyLinkage,
-                                          Init, "llvm.eh.catch.all.value");
-            CatchAll->setSection("llvm.metadata");
-          }
-
+          assert(CatchAll && "Language did not define lang_eh_catch_all?");
           Args.push_back(CatchAll);
         }
       }

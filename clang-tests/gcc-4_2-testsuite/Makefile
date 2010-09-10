@@ -55,6 +55,7 @@ save-results:
 	  echo "usage: make $@ VERSION=107"; \
 	  exit 1; \
 	fi
+	mkdir -p results
 	rm -f results/clang-$(VERSION).sum
 	for i in gcc g++ objc obj-c++; do \
 	  cat obj/$$i/$$i.sum >> results/clang-$(VERSION).sum; \

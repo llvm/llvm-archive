@@ -673,17 +673,19 @@ void TreeToLLVM::StartFunctionBody() {
   FunctionPrologArgumentConversion Client(FnDecl, AI, Builder, CallingConv);
   DefaultABI ABIConverter(Client);
 
+  // Scalar arguments processed so far.
+  std::vector<const Type*> ScalarArgs;
+
   // Handle the DECL_RESULT.
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
-                                DECL_BUILT_IN(FnDecl));
+                                DECL_BUILT_IN(FnDecl),
+                                ScalarArgs);
   // Remember this for use by FinishFunctionBody.
   ReturnOffset = Client.Offset;
 
   // Prepend the static chain (if any) to the list of arguments.
   tree Args = static_chain ? static_chain : DECL_ARGUMENTS(FnDecl);
 
-  // Scalar arguments processed so far.
-  std::vector<const Type*> ScalarArgs;
   while (Args) {
     const char *Name = "unnamed_arg";
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
@@ -3012,16 +3014,17 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   DefaultABI ABIConverter(Client);
 
   // Handle the result, including struct returns.
+  std::vector<const Type*> ScalarArgs;
   ABIConverter.HandleReturnType(TREE_TYPE(exp),
                                 fndecl ? fndecl : exp,
-                                fndecl ? DECL_BUILT_IN(fndecl) : false);
+                                fndecl ? DECL_BUILT_IN(fndecl) : false,
+                                ScalarArgs);
 
   // Pass the static chain, if any, as the first parameter.
   if (TREE_OPERAND(exp, 2))
     CallOperands.push_back(Emit(TREE_OPERAND(exp, 2), 0));
 
   // Loop over the arguments, expanding them and adding them to the op list.
-  std::vector<const Type*> ScalarArgs;
   for (tree arg = TREE_OPERAND(exp, 1); arg; arg = TREE_CHAIN(arg)) {
     tree type = TREE_TYPE(TREE_VALUE(arg));
     const Type *ArgTy = ConvertType(type);

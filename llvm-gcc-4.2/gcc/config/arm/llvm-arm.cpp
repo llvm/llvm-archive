@@ -2557,6 +2557,91 @@ static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
   }
 }
 
+static unsigned count_num_words(std::vector<const Type*> &ScalarElts) {
+  unsigned NumWords = 0;
+  for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
+    const Type *Ty = ScalarElts[i];
+    if (Ty->isPointerTy()) {
+      NumWords++;
+    } else if (Ty->isIntegerTy()) {
+      const unsigned TypeSize = Ty->getPrimitiveSizeInBits();
+      const unsigned NumWordsForType = (TypeSize + 31) / 32;
+
+      NumWords += NumWordsForType;
+    } else {
+      assert (0 && "Unexpected type.");
+    }
+  }
+  return NumWords;
+}
+
+// This function is used only on AAPCS. The difference from the generic
+// handling of arguments is that arguments larger than 32 bits are split
+// and padding arguments are added as necessary for alignment. This makes
+// the IL a bit more explicit about how arguments are handled.
+extern bool
+llvm_arm_try_pass_aggregate_custom(tree type,
+                                   std::vector<const Type*>& ScalarElts,
+				   CallingConv::ID& CC,
+				   struct DefaultABIClient* C) {
+  if (CC != CallingConv::ARM_AAPCS && CC != CallingConv::C)
+    return false;
+
+  if (CC == CallingConv::C && !TARGET_AAPCS_BASED)
+    return false;
+
+  if (TARGET_HARD_FLOAT_ABI)
+    return false;
+  const Type *Ty = ConvertType(type);
+  if (Ty->isPointerTy())
+    return false;
+
+  const unsigned Size = TREE_INT_CST_LOW(TYPE_SIZE(type))/8;
+  const unsigned Alignment = TYPE_ALIGN(type)/8;
+  const unsigned NumWords = count_num_words(ScalarElts);
+  const bool AddPad = Alignment >= 8 && (NumWords % 2);
+
+  // First, build a type that will be bitcast to the original one and
+  // from where elements will be extracted.
+  std::vector<const Type*> Elts;
+  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
+  const unsigned NumRegularArgs = Size / 4;
+  for (unsigned i = 0; i < NumRegularArgs; ++i) {
+    Elts.push_back(Int32Ty);
+  }
+  const unsigned RestSize = Size % 4;
+  const llvm::Type *RestType = NULL;
+  if (RestSize> 2) {
+    RestType = Type::getInt32Ty(getGlobalContext());
+  } else if (RestSize > 1) {
+    RestType = Type::getInt16Ty(getGlobalContext());
+  } else if (RestSize > 0) {
+    RestType = Type::getInt8Ty(getGlobalContext());
+  }
+  if (RestType)
+    Elts.push_back(RestType);
+  const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
+
+  if (AddPad) {
+    ScalarElts.push_back(Int32Ty);
+    C->HandlePad(Int32Ty);
+  }
+
+  for (unsigned i = 0; i < NumRegularArgs; ++i) {
+    C->EnterField(i, STy);
+    C->HandleScalarArgument(Int32Ty, 0);
+    ScalarElts.push_back(Int32Ty);
+    C->ExitField();
+  }
+  if (RestType) {
+    C->EnterField(NumRegularArgs, STy);
+    C->HandleScalarArgument(RestType, 0, RestSize);
+    ScalarElts.push_back(RestType);
+    C->ExitField();
+  }
+  return true;
+}
+
 // Target hook for llvm-abi.h. It returns true if an aggregate of the
 // specified type should be passed in a number of registers of mixed types.
 // It also returns a vector of types that correspond to the registers used

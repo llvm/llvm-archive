@@ -396,7 +396,8 @@ public:
   /// return type. It potentially breaks down the argument and invokes methods
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
-  void HandleReturnType(tree type, tree fn, bool isBuiltin);
+  void HandleReturnType(tree type, tree fn, bool isBuiltin,
+                        std::vector<const Type*> &ScalarElts);
 
   /// HandleArgument - This is invoked by the target-independent code for each
   /// argument type passed into the function.  It potentially breaks down the

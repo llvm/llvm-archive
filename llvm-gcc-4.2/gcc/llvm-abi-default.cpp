@@ -8,8 +8,7 @@ bool DefaultABI::isShadowReturn() const { return C.isShadowReturn(); }
 /// return type. It potentially breaks down the argument and invokes methods
 /// on the client that indicate how its pieces should be handled.  This
 /// handles things like returning structures via hidden parameters.
-void DefaultABI::HandleReturnType(tree type, tree fn, bool isBuiltin,
-                                  std::vector<const Type*> &ScalarElts) {
+void DefaultABI::HandleReturnType(tree type, tree fn, bool isBuiltin) {
   unsigned Offset = 0;
   const Type *Ty = ConvertType(type);
   if (Ty->isVectorTy()) {
@@ -53,9 +52,7 @@ void DefaultABI::HandleReturnType(tree type, tree fn, bool isBuiltin,
 
     // FIXME: should return the hidden first argument for some targets
     // (e.g. ELF i386).
-    const PointerType *PTy = Ty->getPointerTo();
-    C.HandleAggregateShadowResult(PTy, false);
-    ScalarElts.push_back(PTy);
+    C.HandleAggregateShadowResult(Ty->getPointerTo(), false);
   }
 }
 

@@ -1082,10 +1082,8 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
   
-  std::vector<const Type*> ScalarArgs;
   // Builtins are always prototyped, so this isn't one.
-  ABIConverter.HandleReturnType(ReturnType, current_function_decl, false,
-                                ScalarArgs);
+  ABIConverter.HandleReturnType(ReturnType, current_function_decl, false);
 
   SmallVector<AttributeWithIndex, 8> Attrs;
 
@@ -1112,6 +1110,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
     Attrs.push_back(AttributeWithIndex::get(ArgTys.size(),
                                     Attribute::StructRet));
 
+  std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);
@@ -1153,10 +1152,8 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
 
-  std::vector<const Type*> ScalarArgs;
   ABIConverter.HandleReturnType(TREE_TYPE(type), current_function_decl,
-                                decl ? DECL_BUILT_IN(decl) : false,
-                                ScalarArgs);
+                                decl ? DECL_BUILT_IN(decl) : false);
   
   // Compute attributes for return type (and function attributes).
   SmallVector<AttributeWithIndex, 8> Attrs;
@@ -1221,6 +1218,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
     Attrs.push_back(AttributeWithIndex::get(ArgTypes.size(),
                                     Attribute::StructRet | Attribute::NoAlias));
 
+  std::vector<const Type*> ScalarArgs;
   if (static_chain) {
     // Pass the static chain as the first parameter.
     ABIConverter.HandleArgument(TREE_TYPE(static_chain), ScalarArgs);

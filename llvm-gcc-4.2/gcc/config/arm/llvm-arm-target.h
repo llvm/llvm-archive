@@ -55,13 +55,22 @@ llvm_arm_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E)    \
    llvm_arm_should_pass_aggregate_in_mixed_regs((T), (TY), (CC), (E))
 
+struct DefaultABIClient;
+extern bool
+llvm_arm_try_pass_aggregate_custom(tree, std::vector<const Type*>&,
+				   CallingConv::ID&,
+				   struct DefaultABIClient*);
+
+#define LLVM_TRY_PASS_AGGREGATE_CUSTOM(T, E, CC, C)	\
+  llvm_arm_try_pass_aggregate_custom((T), (E), (CC), (C))
+
 extern
 bool llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
                                                  std::vector<const Type*>&,
-                                                 bool, CallingConv::ID&);
+                                                 CallingConv::ID&);
 
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC)   \
-   llvm_arm_aggregate_partially_passed_in_regs((E), (SE), (ISR), (CC))
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, CC)   \
+   llvm_arm_aggregate_partially_passed_in_regs((E), (SE), (CC))
 
 extern const Type *llvm_arm_aggr_type_for_struct_return(tree type,
                                                         CallingConv::ID &CC);

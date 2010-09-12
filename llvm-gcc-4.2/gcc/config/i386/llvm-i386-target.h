@@ -219,12 +219,11 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree, const Type *Ty,
 
 extern
 bool llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*>&,
-                                                    std::vector<const Type*>&,
-                                                    bool);
+                                                    std::vector<const Type*>&);
 
-#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, ISR, CC)       \
+#define LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(E, SE, CC)       \
   (TARGET_64BIT ?                                                     \
-   llvm_x86_64_aggregate_partially_passed_in_regs((E), (SE), (ISR)) : \
+   llvm_x86_64_aggregate_partially_passed_in_regs((E), (SE)) : \
    false)
 
 #endif /* LLVM_ABI_H */

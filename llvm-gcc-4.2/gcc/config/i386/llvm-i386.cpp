@@ -869,8 +869,7 @@ static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
    be passed in memory. */
 bool
 llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
-                                         std::vector<const Type*> &ScalarElts,
-                                         bool isShadowReturn) {
+                                         std::vector<const Type*> &ScalarElts) {
   // Counting number of GPRs and XMMs used so far. According to AMD64 ABI
   // document: "If there are no registers available for any eightbyte of an
   // argument, the whole  argument is passed on the stack." X86-64 uses 6
@@ -879,7 +878,7 @@ llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
   // both parts will be in memory.
   // FIXME: This is a temporary solution. To be removed when llvm has first
   // class aggregate values.
-  unsigned NumGPRs = isShadowReturn ? 1 : 0;
+  unsigned NumGPRs = 0;
   unsigned NumXMMs = 0;
   count_num_registers_uses(ScalarElts, NumGPRs, NumXMMs);
 

@@ -62,7 +62,7 @@ NSString *Vector3D::description()
 	Vector3D position;
 }
 
-@property (assign) Vector3D position;
+@property (assign, nonatomic) Vector3D position;
 @end
 
 static int count;

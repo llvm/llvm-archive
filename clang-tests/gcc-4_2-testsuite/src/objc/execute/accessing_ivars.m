@@ -17,9 +17,6 @@
 @end
 
 @implementation TestClass : Object
-{
-  int value;
-}
 - (int) value
 { 
   return value;

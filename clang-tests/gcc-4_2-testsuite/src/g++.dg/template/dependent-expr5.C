@@ -17,7 +17,7 @@ template<class F> void bindm(F f) {}	// { dg-error "note" }
 					// { dg-error "note" "" { target *-*-* } 16 }
 					// { dg-error "note" "" { target *-*-* } 16 }
 					// { dg-error "note" "" { target *-*-* } 16 }
-					// { dg-error "note" "" { target *-*-* } 16 }
+
 template<class F, class T> void bindm(F (T::*f)(void)) {} // { dg-error "note" }
 					// { dg-error "note" "" { target *-*-* } 21 }
 					// { dg-error "note" "" { target *-*-* } 21 }

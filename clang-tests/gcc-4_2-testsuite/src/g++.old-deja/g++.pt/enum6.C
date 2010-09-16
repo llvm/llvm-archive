@@ -8,7 +8,7 @@ void fn(T)
 {
   enum tern { H, L, X, U };
 
-  vector<tern> ternvec; // { dg-warning "" } composed from a local type
+  vector<tern> ternvec; // { dg-warning "template argument uses" } composed from a local type
 }
 
-template void fn(int);
+template void fn(int); // { dg-error "note" }

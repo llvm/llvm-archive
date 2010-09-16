@@ -11,6 +11,10 @@ ALT_CC_UNDER_TEST := /Developer/usr/bin/gcc
 ALT_CXX_UNDER_TEST := /Developer/usr/bin/g++
 COMPAT_OPTIONS := [list [list {-m64} {-m64}] [list {-m32} {-m32}]]
 
+# You can override RUNTESTFLAGS to pass options to 'runtest', as in the GCC make
+# check configurations.
+RUNTESTFLAGS :=
+
 TESTSUITEDIR := src
 
 site.exp:
@@ -64,7 +68,7 @@ save-results:
 check-%: obj/.dir obj/%/.dir site.exp
 	@cp site.exp ${objdir}/$*
 	(cd ${objdir}/$* && \
-	 env CCC_ADD_ARGS=$(CCC_ADD_ARGS) runtest --tool $*)
+	 env CCC_ADD_ARGS=$(CCC_ADD_ARGS) runtest --tool $* $(RUNTESTFLAGS))
 .PHONY: check-%
 
 %/.dir:

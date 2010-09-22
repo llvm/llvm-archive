@@ -32,7 +32,7 @@ extern int bogonic (int, int, int) ;
 @end
 
 /* { dg-final { scan-assembler-not "\(bl|call\)\[ \t\]+_objc_msgSend\n" } } */
-/* { dg-final { scan-assembler     "\(bl|call\)\[ \t\]+L_objc_msgSend\\\$stub\n" } } */
+/* { dg-final { scan-assembler     "\(bl|calll\)\[ \t\]+L_objc_msgSend\\\$stub\n" } } */
 /* { dg-final { scan-assembler-not "\(bl|call\)\[ \t\]+_bogonic\n" } } */
-/* { dg-final { scan-assembler     "\(bl|call\)\[ \t\]+L_bogonic\\\$stub\n" } } */
+/* { dg-final { scan-assembler     "\(bl|calll\)\[ \t\]+L_bogonic\\\$stub\n" } } */
 /* { dg-final { scan-assembler-not "\\\$non_lazy_ptr" } } */

@@ -45,4 +45,4 @@ main (int argc, char *argv[])
   exit (0);
 }
 /* { dg-final { scan-assembler-times "cmpsb" "2"} } */
-/* { dg-final { scan-assembler-times "call\\s*\\w*memcmp" "2"} } */
+/* { dg-final { scan-assembler-times "calll\\s*\\w*memcmp" "2"} } */

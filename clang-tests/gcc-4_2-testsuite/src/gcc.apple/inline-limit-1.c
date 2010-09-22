@@ -4,7 +4,7 @@
 /* Call to inlinex25 should be inlined.  */
 /* { dg-final { scan-assembler-not "(\tbl|\tcall)\[ 	\]*_?inlinex25" } } */
 /* Call to calleex25 should be called, not inlined.  */
-/* { dg-final { scan-assembler "(\tcalll|\tbl)\[	 \]*_?calleex25" } } */
+/* { dg-final { scan-assembler "(\tcall|\tcalll|\tcallq|\tbl)\[	 \]*_?calleex25" } } */
 
 /* Insure non-trivial callees (between 30 and 450 "estimated insns")
    are inlined only if marked 'inline' in C/Obj-C.  It's unfortunate,

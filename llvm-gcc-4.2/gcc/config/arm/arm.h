@@ -3567,8 +3567,10 @@ enum neon_builtins
     argvec.push_back("-soft-float");                   \
   if (TARGET_HARD_FLOAT_ABI)                           \
     argvec.push_back("-float-abi=hard");               \
-  if (flag_mkernel || flag_apple_kext) \
-    argvec.push_back("-arm-long-calls");
+  if (flag_mkernel || flag_apple_kext) {               \
+    argvec.push_back("-arm-long-calls");               \
+    argvec.push_back("-arm-strict-align");             \
+  }
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4

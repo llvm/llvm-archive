@@ -14,16 +14,12 @@ int foo(int n)
   sizeof (b[i++ + sizeof(j++)]);	/* Outer sizeof is evaluated for vla, but not the inner one.  */
   if (i != 1 || j != 0)
     return 1;
-#ifdef radar8476159
   __typeof__(b[i++]) c1;		/* typeof is evauluated when given a vm */
   if (i != 2)
     return 1;
   __typeof__(t + (i++,0)) c2;		/* typeof is evauluated when given a vm */
   if (i != 3)
     return 1;
-#else
-  i = 3;
-#endif
   __typeof__(i + (i++,0)) c3;		/* typeof is not evauluated when not given a vm */
   if (i != 3)
     return 1;

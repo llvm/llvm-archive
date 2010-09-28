@@ -1,3 +1,10 @@
+2010-09-27  Bob Wilson  <bob.wilson@apple.com>
+
+	Radar 8392704
+	* doc/cppopts.texi: Fix description of -isysroot for Apple's GCC.
+	* doc/invoke.texi (Directory Options): Update --sysroot description to
+	refer Apple users to -isysroot.
+
 2010-08-13  Bob Wilson  <bob.wilson@apple.com>
 
 	Radar 8307333

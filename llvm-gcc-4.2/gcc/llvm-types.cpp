@@ -1021,6 +1021,7 @@ namespace {
                  LLVMTy->isIntegerTy(1))
           LLVMTy = Type::getInt32Ty(Context);
       }
+      LLVMTy = LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy);
       ArgTypes.push_back(LLVMTy);
     }
 

@@ -17046,7 +17046,8 @@ ix86_init_mmx_sse_builtins (void)
   /* Merom New Instructions.  */
   def_builtin (MASK_SSSE3, "__builtin_ia32_palignr128",
 	       v2di_ftype_v2di_v2di_int, IX86_BUILTIN_PALIGNR128);
-  def_builtin (MASK_SSSE3, "__builtin_ia32_palignr", v1di_ftype_v1di_v1di_int,
+  /* LLVM LOCAL - This is an MMX builtin */
+  def_builtin (MASK_MMX, "__builtin_ia32_palignr", v1di_ftype_v1di_v1di_int,
 	       IX86_BUILTIN_PALIGNR);
 
   /* APPLE LOCAL end 4656532 */
@@ -18170,7 +18171,6 @@ ix86_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
     case IX86_BUILTIN_MOVNTQ:
       /* APPLE LOCAL 4656532 use V1DImode for _m64 */
       return ix86_expand_store_builtin (CODE_FOR_sse_movntv1di, arglist);
-
     case IX86_BUILTIN_LDMXCSR:
       op0 = expand_normal (TREE_VALUE (arglist));
       target = assign_386_stack_local (SImode, SLOT_VIRTUAL);

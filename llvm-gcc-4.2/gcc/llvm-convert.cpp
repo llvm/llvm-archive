@@ -344,6 +344,7 @@ namespace {
     void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
                               unsigned RealSize = 0) {
       Value *ArgVal = AI;
+      LLVMTy = LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy);
       if (ArgVal->getType() != LLVMTy) {
         if (ArgVal->getType()->isPointerTy() && LLVMTy->isPointerTy()) {
           // If this is GCC being sloppy about pointer types, insert a bitcast.
@@ -1319,7 +1320,9 @@ LValue TreeToLLVM::EmitLV(tree exp) {
   // node.  This may not hold for bitfields because the type of a bitfield need
   // not match the type of the value being loaded out of it.  Since LLVM has no
   // void* type, don't insist that void* be converted to a specific LLVM type.
+  // For MMX registers, we deliberately changed the type to x86mmx here.
   assert((LV.isBitfield() || VOID_TYPE_P(TREE_TYPE(exp)) ||
+          LLVM_IS_DECL_MMX_REGISTER(exp) ||
           LV.Ptr->getType() == ConvertType(TREE_TYPE(exp))->getPointerTo()) &&
          "LValue has wrong type!");
 
@@ -1858,6 +1861,9 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
       Ty = Type::getInt8Ty(Context);
     }
   }
+
+  if (LLVM_IS_DECL_MMX_REGISTER(decl))
+    Ty = Type::getX86_MMXTy(Context);
 
   unsigned Alignment = 0; // Alignment in bytes.
 
@@ -2500,6 +2506,8 @@ Value *TreeToLLVM::EmitLoadOfLValue(tree exp, const MemRef *DestLoc) {
   LValue LV = EmitLV(exp);
   bool isVolatile = TREE_THIS_VOLATILE(exp);
   const Type *Ty = ConvertType(TREE_TYPE(exp));
+  if (LLVM_IS_DECL_MMX_REGISTER(exp))
+    Ty = Type::getX86_MMXTy(Context);
   unsigned Alignment = LV.getAlignment();
 
   if (!LV.isBitfield()) {
@@ -4948,6 +4956,8 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       const Type *LLVMTy = ConvertType(type);
 
       Value *Op = 0;
+      if (LLVM_IS_DECL_MMX_REGISTER(Val))
+        LLVMTy = Type::getX86_MMXTy(Context);
       const Type *OpTy = LLVMTy;
       if (LLVMTy->isSingleValueType()) {
         if (TREE_CODE(Val)==ADDR_EXPR &&
@@ -7519,6 +7529,8 @@ LValue TreeToLLVM::EmitLV_DECL(tree exp) {
   // If we have "extern void foo", make the global have type {} instead of
   // type void.
   if (Ty->isVoidTy()) Ty = StructType::get(Context);
+  if (LLVM_IS_DECL_MMX_REGISTER(exp))
+    Ty = Type::getX86_MMXTy(Context);
   const PointerType *PTy = Ty->getPointerTo();
   unsigned Alignment = Ty->isSized() ? TD.getABITypeAlignment(Ty) : 1;
   if (DECL_ALIGN(exp)) {

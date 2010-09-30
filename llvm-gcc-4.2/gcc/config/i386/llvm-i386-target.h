@@ -24,6 +24,25 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #ifndef LLVM_I386_TARGET_H
 #define LLVM_I386_TARGET_H
 
+/* Detect MMX register variables.  We use this to generate an x86mmx LLVM type
+   for these rather than <2 x i32>.  This is an utter hack, but
+   there is no counterpart to x86mmx in the gcc type system, and trying to
+   add it is a can of worms. */
+#define LLVM_IS_DECL_MMX_REGISTER(decl) \
+  (TARGET_MMX && \
+   TREE_CODE(decl) == VAR_DECL && DECL_REGISTER(decl) && DECL_NAME(decl) && \
+   strncmp("%mm", IDENTIFIER_POINTER(DECL_NAME(decl)), 3)==0)
+
+/* Similarly, parameters of MMX vector type <2 x i32>, <4 x i16>, <2 x i32>
+   must be changed to m86mmx at the last minute.  <2 x f32> is unsupported;
+   it is filtered out here to avoid crashes in the gcc testsuite. */
+#define LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy) \
+   ((TARGET_MMX && \
+      LLVMTy->isVectorTy() && LLVMTy->getPrimitiveSizeInBits()==64 && \
+      dyn_cast<VectorType>(LLVMTy)->getElementType()->isIntegerTy() && \
+      LLVMTy->getScalarSizeInBits() !=64) ? \
+    Type::getX86_MMXTy(Context) : LLVMTy)
+
 /* LLVM specific stuff for supporting calling convention output */
 #define TARGET_ADJUST_LLVM_CC(CC, type)                         \
   {                                                             \

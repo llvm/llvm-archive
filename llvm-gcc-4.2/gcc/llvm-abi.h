@@ -380,6 +380,14 @@ void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
   assert (0 && "LLVM_EXTRACT_MULTIPLE_RETURN_VALUE is not implemented!");
 }
 
+#ifndef LLVM_IS_DECL_MMX_REGISTER
+#define LLVM_IS_DECL_MMX_REGISTER(decl) false
+#endif
+
+#ifndef LLVM_ADJUST_MMX_PARAMETER_TYPE
+#define LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy) LLVMTy
+#endif
+
 /// DefaultABI - This class implements the default LLVM ABI where structures are
 /// passed by decimating them into individual components and unions are passed
 /// by passing the largest member of the union.

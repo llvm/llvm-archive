@@ -40,6 +40,53 @@ extern "C" {
 
 static LLVMContext &Context = getGlobalContext();
 
+/* ConvertToX86_MMXTy - Convert a value from an "old" MMX type to the new x86mmx
+ * type.
+ */
+static Value *ConvertToX86_MMXTy(Value *Val, LLVMBuilder &Builder) {
+  static const Type *MMXTy = Type::getX86_MMXTy(Context);
+  if (Val->getType() == MMXTy) return Val;
+  return Builder.CreateBitCast(Val, MMXTy, "mmx_var");
+}
+
+namespace Encode {
+  enum {
+    Return = 0x01,
+    Arg0   = 0x02,
+    Arg1   = 0x04
+  };
+}
+
+/* CreateMMXIntrinsicCall - Create an intrinsic call to an MMX intrinsic.
+ */
+static void CreateMMXIntrinsicCall(Intrinsic::ID IntID, Value *&Result,
+                                   std::vector<Value*> &Ops,
+                                   unsigned EncodePattern,
+                                   LLVMBuilder &Builder) {
+  unsigned NumOps = Ops.size();
+  static const Type *MMXTy = Type::getX86_MMXTy(Context);
+  Function *Func = Intrinsic::getDeclaration(TheModule, IntID);
+
+  Value *Arg0 = 0, *Arg1 = 0;
+  if (NumOps >= 1)
+    Arg0 = EncodePattern & Encode::Arg0 ?
+      ConvertToX86_MMXTy(Ops[0], Builder) : Ops[0];
+
+  if (NumOps >= 2)
+    Arg1 = EncodePattern & Encode::Arg1 ?
+      ConvertToX86_MMXTy(Ops[1], Builder) : Ops[1];
+
+  Value *CallOps[10] = { Arg0, Arg1 };
+
+  for (unsigned I = 2; I < NumOps && I < 10; ++I)
+    CallOps[I] = Ops[I];
+
+  Result = Builder.CreateCall(Func, CallOps, CallOps + NumOps);
+
+  if (EncodePattern & Encode::Return)
+    Result = Builder.CreateBitCast(Result, MMXTy);
+}
+
 /* TargetIntrinsicLower - For builtins that we want to expand to normal LLVM
  * code, emit the code now.  If we can handle the code, this macro should emit
  * the code, return true.
@@ -52,14 +99,406 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       std::vector<Value*> &Ops) {
   switch (FnCode) {
   default: break;
+
+  /* MMX Builtins */
+  case IX86_BUILTIN_PADDB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padd_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padd_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padd_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padd_q, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDSB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padds_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_padds_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDUSB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_paddus_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PADDUSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_paddus_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psub_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psub_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psub_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psub_q, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBSB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psubs_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psubs_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBUSB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psubus_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSUBUSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psubus_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMULHW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmulh_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMULLW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmull_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMULHUW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmulhu_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMULUDQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmulu_dq, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMADDWD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmadd_wd, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PAND:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pand, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PANDN:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pandn, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_POR:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_por, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PXOR:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pxor, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PAVGB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pavg_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PAVGW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pavg_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMAXUB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmaxu_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMAXSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmaxs_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMINUB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pminu_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMINSW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmins_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSADBW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psad_bw, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psll_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psll_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psll_q, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrl_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrl_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrl_q, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRAW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psra_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRAD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psra_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLWI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pslli_w, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLDI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pslli_d, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSLLQI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pslli_q, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLWI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrli_w, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLDI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrli_d, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRLQI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrli_q, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRAWI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrai_w, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PSRADI:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_psrai_d, Result, Ops,
+                           Encode::Return | Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PACKSSWB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_packsswb, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PACKSSDW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_packssdw, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PACKUSWB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_packuswb, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKHBW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpckhbw, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKHWD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpckhwd, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKHDQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpckhdq, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKLBW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpcklbw, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKLWD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpcklwd, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PUNPCKLDQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_punpckldq, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+
+  case IX86_BUILTIN_PCMPEQB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpeq_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PCMPEQW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpeq_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PCMPEQD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpeq_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PCMPGTB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpgt_b, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PCMPGTW:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpgt_w, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PCMPGTD:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pcmpgt_d, Result, Ops,
+                           Encode::Return | Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+
+  /* FIXME: MMX extract, insert, and convert built-ins? */
+
+  case IX86_BUILTIN_MASKMOVQ:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_maskmovq, Result, Ops,
+                           Encode::Arg0 | Encode::Arg1,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_PMOVMSKB:
+    CreateMMXIntrinsicCall(Intrinsic::x86_mmx_pmovmskb, Result, Ops,
+                           Encode::Arg0,
+                           Builder);
+    return true;
+  case IX86_BUILTIN_MOVNTQ: {
+    static const Type *MMXTy = Type::getX86_MMXTy(Context);
+    Function *Func = Intrinsic::getDeclaration(TheModule,
+                                               Intrinsic::x86_mmx_movnt_dq);
+    const PointerType *PTy = cast<PointerType>(Ops[0]->getType());
+    Value *Arg0 = 0;
+    if (PTy->getElementType() == MMXTy)
+      Arg0 = Ops[0];
+    else
+      Arg0 = Builder.CreateBitCast(Ops[0],
+                                   Type::getX86_MMXPtrTy(Context),
+                                   "mmx_ptr_var");
+
+    Value *Arg1 = ConvertToX86_MMXTy(Ops[1], Builder);
+    Value *CallOps[2] = { Arg0, Arg1 };
+    Result = Builder.CreateCall(Func, CallOps, CallOps + 2);
+    return true;
+  }
+  case IX86_BUILTIN_PALIGNR: {
+    static const Type *MMXTy = Type::getX86_MMXTy(Context);
+    Function *Func = Intrinsic::getDeclaration(TheModule,
+                                               Intrinsic::x86_mmx_palignr_b);
+    Value *Arg0 = ConvertToX86_MMXTy(Ops[0], Builder);
+    Value *Arg1 = ConvertToX86_MMXTy(Ops[1], Builder);
+    Value *Arg2 = Builder.CreateTrunc(Ops[2], Type::getInt8Ty(Context),
+                                      "i32_to_i8");
+
+    Value *CallOps[3] = { Arg0, Arg1, Arg2 };
+    Result = Builder.CreateCall(Func, CallOps, CallOps + 3);
+    Result = Builder.CreateBitCast(Result, MMXTy);
+    return true;
+  }
+  case IX86_BUILTIN_VEC_INIT_V8QI: {
+    // The operands to this vector init are helpfully turned into i32. Truncate
+    // them to i8, which is what's expected.
+    for (unsigned I = 0, E = Ops.size(); I != E; ++I)
+      Ops[I] = Builder.CreateTrunc(Ops[I], Type::getInt8Ty(Context),
+                                   "i32_to_i8");
+
+    Value *V = BuildVector(Ops);
+    Result = Builder.CreateBitCast(V, Type::getX86_MMXTy(Context));
+    return true;
+  }
+  case IX86_BUILTIN_VEC_INIT_V4HI: {
+    // The operands to this vector init are helpfully turned into i32. Truncate
+    // them to i16, which is what's expected.
+    for (unsigned I = 0, E = Ops.size(); I != E; ++I)
+      Ops[I] = Builder.CreateTrunc(Ops[I], Type::getInt16Ty(Context),
+                                     "i32_to_i16");
+
+    Value *V = BuildVector(Ops);
+    Result = Builder.CreateBitCast(V, Type::getX86_MMXTy(Context));
+    return true;
+  }
+  case IX86_BUILTIN_VEC_INIT_V2SI: {
+    Value *V = BuildVector(Ops);
+    Result = Builder.CreateBitCast(V, Type::getX86_MMXTy(Context));
+    return true;
+  }
+  case IX86_BUILTIN_VEC_EXT_V2SI:
+    Result = Builder.CreateBitCast(Ops[0], 
+              VectorType::get(Type::getInt32Ty(Context), 2));
+    Result = Builder.CreateExtractElement(Result,
+              ConstantInt::get(Type::getInt32Ty(Context), 0));
+    return true;
   case IX86_BUILTIN_ADDPS:
   case IX86_BUILTIN_ADDPD:
     Result = Builder.CreateFAdd(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PADDB:
-  case IX86_BUILTIN_PADDW:
-  case IX86_BUILTIN_PADDD:
-  case IX86_BUILTIN_PADDQ:
   case IX86_BUILTIN_PADDB128:
   case IX86_BUILTIN_PADDW128:
   case IX86_BUILTIN_PADDD128:
@@ -70,10 +509,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_SUBPD:
     Result = Builder.CreateFSub(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PSUBB:
-  case IX86_BUILTIN_PSUBW:
-  case IX86_BUILTIN_PSUBD:
-  case IX86_BUILTIN_PSUBQ:
   case IX86_BUILTIN_PSUBB128:
   case IX86_BUILTIN_PSUBW128:
   case IX86_BUILTIN_PSUBD128:
@@ -84,7 +519,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_MULPD:
     Result = Builder.CreateFMul(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PMULLW:
   case IX86_BUILTIN_PMULLW128:
   case IX86_BUILTIN_PMULLD128:
     Result = Builder.CreateMul(Ops[0], Ops[1]);
@@ -93,20 +527,16 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_DIVPD:
     Result = Builder.CreateFDiv(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PAND:
   case IX86_BUILTIN_PAND128:
     Result = Builder.CreateAnd(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PANDN:
   case IX86_BUILTIN_PANDN128:
     Ops[0] = Builder.CreateNot(Ops[0]);
     Result = Builder.CreateAnd(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_POR:
   case IX86_BUILTIN_POR128:
     Result = Builder.CreateOr(Ops[0], Ops[1]);
     return true;
-  case IX86_BUILTIN_PXOR:
   case IX86_BUILTIN_PXOR128:
     Result = Builder.CreateXor(Ops[0], Ops[1]);
     return true;
@@ -204,26 +634,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = Ops[0];
     }
     
-    return true;
-  case IX86_BUILTIN_PUNPCKHBW:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 4, 12, 5, 13,
-                                                6, 14, 7, 15);
-    return true;
-  case IX86_BUILTIN_PUNPCKHWD:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 2, 6, 3, 7);
-    return true;
-  case IX86_BUILTIN_PUNPCKHDQ:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 1, 3);
-    return true;
-  case IX86_BUILTIN_PUNPCKLBW:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 0,  8, 1,  9,
-                                                2, 10, 3, 11);
-    return true;
-  case IX86_BUILTIN_PUNPCKLWD:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 4, 1, 5);
-    return true;
-  case IX86_BUILTIN_PUNPCKLDQ:
-    Result = BuildVectorShuffle(Ops[0], Ops[1], 0, 2);
     return true;
   case IX86_BUILTIN_PUNPCKHBW128:
     Result = BuildVectorShuffle(Ops[0], Ops[1],  8, 24,  9, 25,
@@ -409,23 +819,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case IX86_BUILTIN_MOVSLDUP:
     Result = BuildVectorShuffle(Ops[0], Ops[0], 0, 0, 2, 2);
     return true;
-  case IX86_BUILTIN_VEC_INIT_V2SI:
-    Result = BuildVector(Ops[0], Ops[1], NULL);
-    return true;
-  case IX86_BUILTIN_VEC_INIT_V4HI:
-    // Sometimes G++ promotes arguments to int.
-    for (unsigned i = 0; i != 4; ++i)
-      Ops[i] = Builder.CreateIntCast(Ops[i], Type::getInt16Ty(Context), false);
-    Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3], NULL);
-    return true;
-  case IX86_BUILTIN_VEC_INIT_V8QI:
-    // Sometimes G++ promotes arguments to int.
-    for (unsigned i = 0; i != 8; ++i)
-      Ops[i] = Builder.CreateIntCast(Ops[i], Type::getInt8Ty(Context), false);
-    Result = BuildVector(Ops[0], Ops[1], Ops[2], Ops[3],
-                         Ops[4], Ops[5], Ops[6], Ops[7], NULL);
-    return true;
-  case IX86_BUILTIN_VEC_EXT_V2SI:
   case IX86_BUILTIN_VEC_EXT_V4HI:
   case IX86_BUILTIN_VEC_EXT_V2DF:
   case IX86_BUILTIN_VEC_EXT_V2DI:
@@ -609,58 +1002,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     
     Result = Builder.CreateLoad(Ptr);
     return true;
-  }
-  case IX86_BUILTIN_PALIGNR: {
-    if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {
-
-      // In the header we multiply by 8, correct that back now.
-      unsigned shiftVal = (cast<ConstantInt>(Ops[2])->getZExtValue())/8;
-    
-      // If palignr is shifting the pair of input vectors less than 9 bytes,
-      // emit a shuffle instruction.
-      if (shiftVal <= 8) {
-        const llvm::Type *IntTy = Type::getInt32Ty(Context);
-        const llvm::Type *EltTy = Type::getInt8Ty(Context);
-        const llvm::Type *VecTy = VectorType::get(EltTy, 8);
-        
-        Ops[1] = Builder.CreateBitCast(Ops[1], VecTy);
-        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy);
-
-        SmallVector<Constant*, 8> Indices;
-        for (unsigned i = 0; i != 8; ++i)
-          Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
-      
-        Value* SV = ConstantVector::get(Indices.begin(), Indices.size());
-        Result = Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
-        return true;
-      }
-    
-      // If palignr is shifting the pair of input vectors more than 8 but less
-      // than 16 bytes, emit a logical right shift of the destination.
-      if (shiftVal < 16) {
-        // MMX has these as 1 x i64 vectors for some odd optimization reasons.
-        const llvm::Type *EltTy = Type::getInt64Ty(Context);
-        const llvm::Type *VecTy = VectorType::get(EltTy, 1);
-      
-        Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-        Ops[1] = ConstantInt::get(VecTy, (shiftVal-8) * 8);
-      
-        // create i32 constant
-        Function *F = Intrinsic::getDeclaration(TheModule,
-                                                Intrinsic::x86_mmx_psrl_q);
-        Result = Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "palignr");
-        return true;
-      }
-    
-      // If palignr is shifting the pair of vectors more than 32 bytes,
-      // emit zero.
-      Result = Constant::getNullValue(ResultType);
-      return true;
-    } else {
-      error("%Hmask must be an immediate", &EXPR_LOCATION(exp));
-      Result = Ops[0];
-      return true;
-    }
   }
   case IX86_BUILTIN_PALIGNR128: {
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[2])) {

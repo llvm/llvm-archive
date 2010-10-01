@@ -1065,9 +1065,8 @@ DIType DebugInfo::createStructType(tree type) {
       DIType DTy = 
         DebugFactory.CreateDerivedType(DW_TAG_inheritance, 
                                        findRegion(TYPE_CONTEXT(type)), StringRef(),
-                                       llvm::DIFile(), 0,0,0, 
-                                       Offset,
-                                       BFlags, BaseClass);
+                                       getOrCreateFile(Loc.file), 0, 0, 0,
+                                       Offset, BFlags, BaseClass);
       EltTys.push_back(DTy);
     }
   }

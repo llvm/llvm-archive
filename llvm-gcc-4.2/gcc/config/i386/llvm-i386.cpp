@@ -417,9 +417,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                            Encode::Return | Encode::Arg0 | Encode::Arg1,
                            Builder);
     return true;
-
-  /* FIXME: MMX extract, insert, and convert built-ins? */
-
   case IX86_BUILTIN_MASKMOVQ:
     CreateMMXIntrinsicCall(Intrinsic::x86_mmx_maskmovq, Result, Ops,
                            Encode::Arg0 | Encode::Arg1,
@@ -600,7 +597,6 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       Result = Ops[0];
     }
     return true;
-  case IX86_BUILTIN_PSHUFW:
   case IX86_BUILTIN_PSHUFD:
     if (ConstantInt *Elt = dyn_cast<ConstantInt>(Ops[1])) {
       int EV = Elt->getZExtValue();

@@ -71,6 +71,10 @@ check-%: obj/.dir obj/%/.dir site.exp
 	 env CCC_ADD_ARGS=$(CCC_ADD_ARGS) runtest --tool $* $(RUNTESTFLAGS))
 .PHONY: check-%
 
+clean:
+	rm -rf obj site.exp site.bak
+.PHONY: clean
+
 %/.dir:
 	@mkdir -p $* > /dev/null
 	@echo "Created." > $@

@@ -88,3 +88,8 @@ check-%:
 check: $(NT_CONFIGS:%=check-%)
 	true
 .PHONY: check
+
+clean:
+	rm -rf obj.*
+.PHONY: clean
+

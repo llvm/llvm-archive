@@ -69,7 +69,6 @@ void dummy_function() {
   llvm::createLoopUnrollPass();
   llvm::createReassociatePass();
   llvm::createLoopUnswitchPass();
-  llvm::createLoopIndexSplitPass();
   llvm::createAggressiveDCEPass();
   llvm::createConstantMergePass();
   llvm::createIndVarSimplifyPass();

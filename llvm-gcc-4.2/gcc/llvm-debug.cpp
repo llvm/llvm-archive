@@ -290,6 +290,13 @@ void DebugInfo::change_regions(tree desired, tree grand) {
   setCurrentLexicalBlock(desired);
 }
 
+/// functionPrototyped - Return true if function is prototyped.
+static bool functionPrototyped(tree FnDecl, unsigned Lang) {
+  if ((Lang == DW_LANG_C89 || Lang == DW_LANG_ObjC)
+      || TYPE_ARG_TYPES (TREE_TYPE (FnDecl)) != NULL)
+    return true;
+  return false;
+}
 /// CreateSubprogramFromFnDecl - Constructs the debug code for
 /// entering a function - "llvm.dbg.func.start."
 DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
@@ -373,6 +380,12 @@ DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
     if (Fn)
       hasInternalLinkage = Fn->hasInternalLinkage();
   }
+  unsigned Flags = 0;
+  if (DECL_ARTIFICIAL (FnDecl))
+    Flags |= llvm::DIDescriptor::FlagArtificial;
+  else if (functionPrototyped(FnDecl, TheCU.getLanguage()))
+    Flags |= llvm::DIDescriptor::FlagPrototyped;
+
   DISubprogram SP = 
     DebugFactory.CreateSubprogram(SPContext,
                                   FnName, FnName,
@@ -382,8 +395,7 @@ DISubprogram DebugInfo::CreateSubprogramFromFnDecl(tree FnDecl) {
                                   hasInternalLinkage,
                                   definition,
                                   Virtuality, VIndex, ContainingType,
-                                  DECL_ARTIFICIAL (FnDecl), optimize,
-                                  Fn);
+                                  Flags, optimize, Fn);
 
   SPCache[FnDecl] = WeakVH(SP);
   RegionMap[FnDecl] = WeakVH(SP);
@@ -1149,10 +1161,12 @@ DIType DebugInfo::createStructType(tree type) {
       if (DECL_ARTIFICIAL (Member))
         Flags |= llvm::DIDescriptor::FlagArtificial;
       if (TREE_PROTECTED(Member))
-        Flags = llvm::DIDescriptor::FlagProtected;
+        Flags |= llvm::DIDescriptor::FlagProtected;
       else if (TREE_PRIVATE(Member))
-        Flags = llvm::DIDescriptor::FlagPrivate;
-      
+        Flags |= llvm::DIDescriptor::FlagPrivate;
+      else if (functionPrototyped(Member, TheCU.getLanguage()))
+        Flags |= llvm::DIDescriptor::FlagPrototyped;
+
       DISubprogram SP = 
         DebugFactory.CreateSubprogram(findRegion(DECL_CONTEXT(Member)), 
                                       MemberName, MemberName,

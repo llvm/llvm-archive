@@ -4,14 +4,14 @@
 
 struct B { };
 
-struct A {
-  A (const B&);
+struct A {   // { dg-error "note" }
+  A (const B&);   // { dg-error "note" }
 };
 
 struct C {
-  operator B ();
+  operator B ();   // { dg-error "note" }
 };
 
 C c;
 
-const A& ref (c);		// { dg-error "" } requires two UDCs
+const A& ref (c);	// { dg-error "no viable conversion from" }

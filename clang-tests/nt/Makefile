@@ -35,6 +35,7 @@ endif
 ###
 # Predefined Nightly Test Configurations
 
+# X86 Configurations
 NT.FLAGS.i386		:= --arch i386 --small
 NT.FLAGS.x86_64		:= --arch x86_64 --small
 
@@ -58,6 +59,59 @@ NT_CONFIGS = \
 	i386.O0.g x86_64.O0.g \
 	i386.Os.flto x86_64.Os.flto \
 	i386.O3.g.flto x86_64.O3.g.flto
+# ARM Configurations
+
+ARM_SDK_NAME := iphoneos
+ARM_PLATFORM = $(shell /Developer/usr/bin/xcodebuild -version -sdk $(ARM_SDK_NAME) PlatformPath)
+ARM_SYSROOT = $(shell /Developer/usr/bin/xcodebuild -version -sdk $(ARM_SDK_NAME) Path)
+
+NT.ARM_COMMON_FLAGS = \
+	--isysroot $(ARM_SYSROOT) \
+	--cflag -miphoneos-version-min=4.0 --cflag -Wl,--no-demangle \
+	--remote --remote-host=localhost --remote-user=mobile --remote-port=2022 \
+	--disable-cxx
+
+NT.FLAGS.armv7.thumb = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv7 --small \
+	--cflag -mthumb
+NT.FLAGS.armv6.thumb	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv6 --small \
+	--cflag -mthumb
+
+NT.FLAGS.armv7.no-thumb	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv7 --small \
+	--cflag -mno-thumb
+NT.FLAGS.armv6.no-thumb	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv6 --small \
+	--cflag -mno-thumb
+
+NT.FLAGS.armv7.O0.g	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv7 --small \
+	--optimize-option -O0 --cflag -g
+NT.FLAGS.armv6.O0.g	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv6 --small \
+	--optimize-option -O0 --cflag -g
+
+NT.FLAGS.armv7.Os.flto = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv7 --small \
+	--optimize-option -Os --cflag -flto
+NT.FLAGS.armv6.Os.flto	 = \
+	$(NT.ARM_COMMON_FLAGS) \
+	--arch armv6 --small \
+	--optimize-option -Os --cflag -flto
+
+NT_ARM_CONFIGS = \
+	armv7.thumb armv6.no-thumb \
+	armv7.O0.g armv6.O0.g \
+	armv7.no-thumb armv6.thumb \
+	armv7.Os.flto armv6.Os.flto
 
 ###
 # Derived Options
@@ -88,6 +142,10 @@ check-%:
 check: $(NT_CONFIGS:%=check-%)
 	true
 .PHONY: check
+
+check-arm: $(NT_ARM_CONFIGS:%=check-%)
+	true
+.PHONY: check-arm
 
 clean:
 	rm -rf obj.*

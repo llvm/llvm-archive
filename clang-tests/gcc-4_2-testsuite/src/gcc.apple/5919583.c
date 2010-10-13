@@ -27,7 +27,7 @@ int main( void )
   vectype v;
 
   ref.vec = (const __m128i) { 0x32100123456789ABULL, 0xFEDCBA987654ULL };
-  v.vec = _mm_srli_si128( (const __m128i) { 0x0123456789ABCDEFULL, 0xFEDCBA9876543210ULL }, 2 );
+  v.vec = _mm_srli_si128(( (const __m128i) { 0x0123456789ABCDEFULL, 0xFEDCBA9876543210ULL }), 2 );
   /*
   {
     int i;

@@ -6,5 +6,5 @@ void bar()
 {
   int i;
   int A[i][i]; 
-  foo(A); // { dg-error "cannot initialize a parameter of type" } 
+  foo(A); // { dg-error "no matching function for call to" } 
 }

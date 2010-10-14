@@ -2,7 +2,7 @@
 /* { dg-do compile { target "i?86-*-darwin*" } } */
 /* { dg-options "-O2" } */
 /* LLVM LOCAL disable test for optimizing MMX */
-/* { dg-require-fdump "" } */
+/* { dg-skip-if "" { *-*-* } { "*" } { "" } } */
 #include <mmintrin.h>
 __m64 x, y;
 void t1(int n) {

@@ -2,9 +2,9 @@
 void f ()
 {
   struct A {
-    friend void g ();
+    friend void g (); // {dg-error "no matching function found in local scope"}
   };
 }
 void h () {
-  g ();				// { dg-error "" } no g in scope
+  g ();				// { dg-error "use of undeclared identifier"}
 }

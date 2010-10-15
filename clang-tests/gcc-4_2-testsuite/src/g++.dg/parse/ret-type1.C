@@ -7,4 +7,5 @@ template <int i> class A
     class C { C(); };
 };
 
-template <int i> void A<i>::C::C () {} // { dg-error "return type" }
+template <int i> void A<i>::C::C () {}  // {dg-error "member 'C' has the same name as its class" }
+					// { dg-error "return type" "" { target *-*-* } 10 }

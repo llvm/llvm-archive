@@ -2,7 +2,7 @@
 void f ()
 {
   struct A {
-    friend void g (); // {dg-error "no matching function found in local scope"}
+    friend void g (); // { dg-error "no matching function found in local scope"}
   };
 }
 void h () {

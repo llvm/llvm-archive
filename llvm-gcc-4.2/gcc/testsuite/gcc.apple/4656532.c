@@ -1,8 +1,6 @@
 /* APPLE LOCAL file 4656532 */
 /* { dg-do compile { target "i?86-*-darwin*" } } */
 /* { dg-options "-O2" } */
-/* LLVM LOCAL disable test for optimizing MMX */
-/* { dg-skip-if "" { *-*-* } { "*" } { "" } } */
 #include <mmintrin.h>
 __m64 x, y;
 void t1(int n) {
@@ -19,4 +17,4 @@ void t4() {
 }
 
 /* { dg-final { scan-assembler-not "cltd" } } */
-/* { dg-final { scan-assembler-not "\\\-16\\\(\\\%ebp\\\)" } } */
+/* LLVM LOCAL remove scan-assembler-not test for optimizing MMX */

@@ -5,9 +5,8 @@
 /* APPLE LOCAL begin radar 4875125 */
 /* { dg-options "-O3 -msse -mtune=generic" } */
 /* APPLE LOCAL end radar 4875125 */
-/* { dg-final { scan-assembler-times "movq" 4 } } */
 /* LLVM LOCAL disable test for optimizing MMX */
-/* { dg-skip-if "" { *-*-* } { "*" } { "" } } */
+/* { DISABLE { scan-assembler-times "movq" 4 } } */
 
 /* PR target/23630 */
 /* PR middle-end/23517 */

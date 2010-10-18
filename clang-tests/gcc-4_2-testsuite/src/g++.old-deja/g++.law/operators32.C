@@ -1,4 +1,4 @@
-// { dg-do assemble  }
+// { dg-do compile  }
 // GROUPS passed operators
 #include <iostream>
 
@@ -23,11 +23,11 @@ return array = new T[size];
 template <class T>
 T** allocate2d(long d1, long d2, T**& array)
 {
-if( allocate1d(d1, array) != 0 ) // { dg-warning "template argument uses local type 'foo'"}
+if( allocate1d(d1, array) != 0 ) // { dg-warning "template argument uses local type 'foo'" }
   {
   for( long i = 0; i < d1; i++ )
     {
-    if( allocate1d(d2, array[i]) == 0 ) // { dg-warning "template argument uses local type 'foo'"}
+    if( allocate1d(d2, array[i]) == 0 ) // { dg-warning "template argument uses local type 'foo'" }
       {
       ffree(i,array);
       return array;
@@ -49,8 +49,8 @@ foo() {std::cout << "foo created" << std::endl; }
 };
 
 foo **f2;
-allocate2d(d1, d2, f2); // { dg-warning "template argument uses local type 'foo'"}
+allocate2d(d1, d2, f2); // { dg-warning "template argument uses local type 'foo'" }
                         // { dg-error "note" "" { target *-*-* } 52 }
-ffree(d1, f2); // { dg-warning "template argument uses local type 'foo'"}
+ffree(d1, f2); // { dg-warning "template argument uses local type 'foo'" }
 
 }

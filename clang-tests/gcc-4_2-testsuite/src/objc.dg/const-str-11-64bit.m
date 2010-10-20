@@ -2,7 +2,7 @@
 /* Test if ObjC constant string layout is checked properly, regardless of how
    constant string classes get derived.  */
 /* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=XStr -m64 -fobjc-abi-version=1" } */
-/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-do compile { i?86*-*-darwin* } } */
 
 #include <objc/Object.h>
 
@@ -28,5 +28,5 @@ extern struct objc_class _XStrClassReference;
 
 const XStr *appKey = @"MyApp";
 
-/* { dg-final { scan-assembler ".section __OBJC, __cstring_object" } } */
-/* { dg-final { scan-assembler ".quad\t__XStrClassReference\n\t.quad\t.*\n\t.long\t5\n\t.space 4\n\t.data" } } */
+/* { dg-final { scan-assembler ".section\t__OBJC,__cstring_object" } } */
+/* { dg-final { scan-assembler ".quad\t__XStrClassReference\n\t.quad\t.*\n\t.long\t5" } } */

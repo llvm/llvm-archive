@@ -1,4 +1,5 @@
 // { dg-do compile }
+/* { dg-options "-Wno-empty-body" } */
 // Origin: Dirk Mueller <dmuell@gmx.net>
 
 // PR c++/2739
@@ -6,7 +7,7 @@
 
 class Base {
 private:
-  static int fooprivate;
+  static int fooprivate;	// { dg-error "note" }
 protected:
   static int fooprotected;
 public:
@@ -18,12 +19,12 @@ public:
   void test();
 };
 
-int Base::fooprivate=42;	// { dg-error "private" }
+int Base::fooprivate=42;
 int Base::fooprotected=42;
 int Base::foopublic=42;
 
 void Derived::test() {
-  if ( fooprivate );		// { dg-error "context" }
+  if ( fooprivate );		// { dg-error "'fooprivate' is a private member of 'Base'" }
   if ( fooprotected );
   if ( foopublic );
 }

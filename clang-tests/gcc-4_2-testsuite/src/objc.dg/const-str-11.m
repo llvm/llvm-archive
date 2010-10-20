@@ -3,9 +3,8 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com>  */
 
 /* APPLE LOCAL file 4149909 */
-/* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=XStr" } */
-/* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-require-effective-target ilp32 } */
+/* { dg-options "-m32 -fnext-runtime -fno-constant-cfstrings -fconstant-string-class=XStr" } */
+/* { dg-do compile { i?86*-*-darwin* } } */
 
 #include <objc/Object.h>
 
@@ -31,5 +30,5 @@ extern struct objc_class _XStrClassReference;
 
 const XStr *appKey = @"MyApp";
 
-/* { dg-final { scan-assembler ".section __OBJC, __cstring_object" } } */
-/* { dg-final { scan-assembler ".long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5\n\t.data" } } */
+/* { dg-final { scan-assembler ".section\t__OBJC,__cstring_object" } } */
+/* { dg-final { scan-assembler ".long\t__XStrClassReference\n\t.long\t.*\n\t.long\t5" } } */

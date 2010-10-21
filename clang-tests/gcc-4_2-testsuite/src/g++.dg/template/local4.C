@@ -4,5 +4,5 @@ template <typename T> void foo() {}
 
 int main () {
   struct S {};
-  foo<S> (); // Should warn, but eaten by SFINAE.
+  foo<S> (); // { dg-warning "template argument uses local type" }
 }

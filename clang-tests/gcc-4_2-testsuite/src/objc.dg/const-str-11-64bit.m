@@ -2,7 +2,7 @@
 /* Test if ObjC constant string layout is checked properly, regardless of how
    constant string classes get derived.  */
 /* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=XStr -m64 -fobjc-abi-version=1" } */
-/* { dg-do compile { i?86*-*-darwin* } } */
+/* { dg-do compile { target i?86*-*-darwin* } } */
 
 #include <objc/Object.h>
 

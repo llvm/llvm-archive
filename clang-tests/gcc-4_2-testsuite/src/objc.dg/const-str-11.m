@@ -4,7 +4,6 @@
 
 /* APPLE LOCAL file 4149909 */
 /* { dg-options "-m32 -fnext-runtime -fno-constant-cfstrings -fconstant-string-class=XStr" } */
-/* { dg-do compile { i?86*-*-darwin* } } */
 
 #include <objc/Object.h>
 

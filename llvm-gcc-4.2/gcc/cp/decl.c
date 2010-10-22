@@ -11364,7 +11364,8 @@ start_preparsed_function (tree decl1, tree attrs, int flags)
   /* Build the return declaration for the function.  */
   restype = TREE_TYPE (fntype);
   /* Promote the value to int before returning it.  */
-  if (c_promoting_integer_type_p (restype))
+  /* APPLE LOCAL radar 8503773 */
+  if (!cur_block && c_promoting_integer_type_p (restype))
     restype = type_promotes_to (restype);
   if (DECL_RESULT (decl1) == NULL_TREE)
     {

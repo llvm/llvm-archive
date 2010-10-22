@@ -39,4 +39,11 @@ int main() {
    return 0;
 }
 
+/* APPLE LOCAL begin radar 8503773 */
+typedef char (^B) ();
+void foo (B);
 
+void MyFunc() {
+	^ bool () { return true; };
+}
+/* APPLE LOCAL end radar 8503773 */

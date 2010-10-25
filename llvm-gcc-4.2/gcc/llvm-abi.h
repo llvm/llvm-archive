@@ -102,9 +102,7 @@ struct DefaultABIClient {
 
   /// HandleFCAArgument - This callback is invoked if the aggregate function
   /// argument is passed by value as a first class aggregate.
-  virtual void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
-    (void)LLVMTy; (void)type; // Unused.
-  }
+  virtual void HandleFCAArgument(const llvm::Type * /*LLVMTy*/, tree /*type*/){}
 
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the

@@ -402,8 +402,8 @@ namespace {
       ++AI;
     }
 
-    void HandleFCAArgument(const llvm::Type *LLVMTy,
-                           tree type ATTRIBUTE_UNUSED) {
+    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+      (void)type; // Unused.
       // Store the FCA argument into alloca.
       assert(!LocStack.empty());
       Value *Loc = LocStack.back();
@@ -2940,8 +2940,8 @@ namespace {
 
     /// HandleFCAArgument - This callback is invoked if the aggregate function
     /// argument is passed as a first class aggregate.
-    void HandleFCAArgument(const llvm::Type *LLVMTy,
-                           tree type ATTRIBUTE_UNUSED) {
+    void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+      (void)type; // Unused.
       Value *Loc = getAddress();
       assert(LLVMTy->getPointerTo() == Loc->getType());
       CallOperands.push_back(Builder.CreateLoad(Loc));
@@ -6413,8 +6413,8 @@ bool TreeToLLVM::EmitBuiltinMemSet(tree exp, Value *&Result, bool SizeCheck) {
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinBZero(tree exp,
-                                  Value *&Result ATTRIBUTE_UNUSED) {
+bool TreeToLLVM::EmitBuiltinBZero(tree exp, Value *&Result) {
+  (void)Result; // Unused.
   tree arglist = TREE_OPERAND(exp, 1);
   if (!validate_arglist(arglist, POINTER_TYPE, INTEGER_TYPE, VOID_TYPE))
     return false;
@@ -6656,8 +6656,8 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   return true;
 }
 
-bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp,
-                                              Value *&Result ATTRIBUTE_UNUSED) {
+bool TreeToLLVM::EmitBuiltinInitDwarfRegSizes(tree exp, Value *&Result) {
+  (void)Result; // Unused.
 #ifdef DWARF2_UNWIND_INFO
   unsigned int i;
   bool wrote_return_column = false;

@@ -37,7 +37,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Support/Compiler.h"
 
 namespace llvm {
   class BasicBlock;
@@ -103,8 +102,9 @@ struct DefaultABIClient {
 
   /// HandleFCAArgument - This callback is invoked if the aggregate function
   /// argument is passed by value as a first class aggregate.
-  virtual void HandleFCAArgument(const llvm::Type *LLVMTy,
-                         tree type ATTRIBUTE_UNUSED) {}
+  virtual void HandleFCAArgument(const llvm::Type *LLVMTy, tree type) {
+    (void)LLVMTy; (void)type; // Unused.
+  }
 
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the

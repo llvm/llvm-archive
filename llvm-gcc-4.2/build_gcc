@@ -578,18 +578,7 @@ for t in $LIBGOMP_TARGETS ; do
 done
 # APPLE LOCAL end native compiler support
 
-if [ $BUILD_CXX -eq 1 ]; then
-for t in $TARGETS ; do
-    if [ "$t" == 'arm' ] ; then
-        cp -p $ARM_SYSROOT/usr/lib/libstdc++.6.dylib \
-            .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib \
-            || exit 1
-        # LLVM LOCAL remove libstdc++ copying for non-ARM targets
-    fi
-# LLVM LOCAL
-#  strip -x -c .$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS/libstdc++.dylib || exit 1
-done
-fi
+# LLVM LOCAL remove libstdc++ copying
 
 # Add extra man page symlinks for 'c++' and for arch-specific names.
 MDIR=$DEST_DIR$DEST_ROOT/share/man/man1

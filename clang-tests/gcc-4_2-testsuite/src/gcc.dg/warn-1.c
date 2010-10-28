@@ -12,5 +12,5 @@ void bar (void)
 {
   void *vp;
 
-  foo (vp);	/* { dg-warning "incompatible pointer to integer conversion passing 'void *' to parameter of type 'int'" } */
+  foo (vp);	/* { dg-warning "incompatible pointer to integer conversion" } */
 }

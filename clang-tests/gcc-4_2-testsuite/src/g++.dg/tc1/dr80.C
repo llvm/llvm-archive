@@ -42,7 +42,7 @@ template <class>
 struct B3
 {
   B3();
-  int B3;  // { dg-error "same name as" "this error should appear at parsing time" { xfail *-*-* } }
+  int B3;  // { dg-error "same name as" "this error should appear at parsing time" }
 };
 
 template <class>

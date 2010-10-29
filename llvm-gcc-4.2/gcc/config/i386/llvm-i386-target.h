@@ -43,6 +43,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
     LLVMTy->getScalarSizeInBits() !=64) ?                              \
    Type::getX86_MMXTy(Context) : LLVMTy)
 
+/* For parameters to an asm, check the constraint and use X86_mmx if an MMX
+   register is called for.  "y" means an MMX register. */
+#define LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(Constraint, LLVMTy) \
+  ((TARGET_MMX &&                                                 \
+    StringRef(Constraint).equals(StringRef(std::string("y")))) ?  \
+    Type::getX86_MMXTy(Context) : LLVMTy)
+
 /* LLVM specific stuff for supporting calling convention output */
 #define TARGET_ADJUST_LLVM_CC(CC, type)                         \
   {                                                             \

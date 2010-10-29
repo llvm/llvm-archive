@@ -383,7 +383,11 @@ void llvm_default_extract_multiple_return_value(Value *Src, Value *Dest,
 #endif
 
 #ifndef LLVM_ADJUST_MMX_PARAMETER_TYPE
-#define LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy) LLVMTy
+#define LLVM_ADJUST_MMX_PARAMETER_TYPE(LLVMTy) (LLVMTy)
+#endif
+
+#ifndef LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE
+#define LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(Constraint, LLVMTy) (LLVMTy)
 #endif
 
 /// DefaultABI - This class implements the default LLVM ABI where structures are

@@ -4922,14 +4922,16 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       StoreCallResultAddrs.push_back(Dest.Ptr);
       ConstraintStr += ",=";
       ConstraintStr += SimplifiedConstraint;
-      CallResultTypes.push_back(DestValTy);
+      CallResultTypes.push_back(LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(
+                                SimplifiedConstraint, DestValTy));
       CallResultIsSigned.push_back(!TYPE_UNSIGNED(TREE_TYPE(Operand)));
       OutputLocations.push_back(std::make_pair(true, CallResultTypes.size()-1));
     } else {
       ConstraintStr += ",=*";
       ConstraintStr += SimplifiedConstraint;
       CallOps.push_back(Dest.Ptr);
-      CallArgTypes.push_back(Dest.Ptr->getType());
+      CallArgTypes.push_back(LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(
+                                SimplifiedConstraint, Dest.Ptr->getType()));
       OutputLocations.push_back(std::make_pair(false, CallArgTypes.size()-1));
     }
   }
@@ -5051,8 +5053,12 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         }
       }
 
+      const Type* AdjTy = LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(
+                              Constraint, Op->getType());
+      if (AdjTy != Op->getType())
+        Op = BitCastToType(Op, AdjTy);
       CallOps.push_back(Op);
-      CallArgTypes.push_back(Op->getType());
+      CallArgTypes.push_back(AdjTy);
     } else {                          // Memory operand.
       lang_hooks.mark_addressable(TREE_VALUE(Input));
       isIndirect = true;
@@ -5156,11 +5162,20 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   CV->setDoesNotThrow();
 
   // If the call produces a value, store it into the destination.
-  if (StoreCallResultAddrs.size() == 1)
-    Builder.CreateStore(CV, StoreCallResultAddrs[0]);
-  else if (unsigned NumResults = StoreCallResultAddrs.size()) {
+  if (StoreCallResultAddrs.size() == 1) {
+    Value *V = CV;
+    const Type *DestValTy =
+      cast<PointerType>(StoreCallResultAddrs[0]->getType())->getElementType();
+    if (CV->getType() != DestValTy)
+      V = BitCastToType(CV, DestValTy);
+    Builder.CreateStore(V, StoreCallResultAddrs[0]);
+  } else if (unsigned NumResults = StoreCallResultAddrs.size()) {
     for (unsigned i = 0; i != NumResults; ++i) {
+      const Type *DestValTy =
+        cast<PointerType>(StoreCallResultAddrs[i]->getType())->getElementType();
       Value *ValI = Builder.CreateExtractValue(CV, i, "asmresult");
+      if (ValI->getType() != DestValTy)
+        ValI = BitCastToType(ValI, DestValTy);
       Builder.CreateStore(ValI, StoreCallResultAddrs[i]);
     }
   }

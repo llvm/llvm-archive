@@ -5343,7 +5343,7 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(true, true, true, true, false);
+  EmitMemoryBarrier(false, false, true, true, false);
 #else
   EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -5386,7 +5386,7 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(true, true, true, true, false);
+  EmitMemoryBarrier(false, false, true, true, false);
 #else
   EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -5919,7 +5919,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -5966,7 +5966,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -6013,7 +6013,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -6060,7 +6060,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -6107,7 +6107,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif
@@ -6154,7 +6154,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
 #if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
+    EmitMemoryBarrier(false, false, true, true, false);
 #else
     EmitMemoryBarrier(true, true, true, true, true);
 #endif

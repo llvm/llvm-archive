@@ -5,11 +5,15 @@
 /* Verify that none of the type_info structures for the fundamental
    types are emitted as weak on Darwin.  */
 
-#include <cxxabi.h>
 
 namespace __cxxabiv1 {
 
 using namespace std;
+
+
+class __fundamental_type_info {
+	virtual ~__fundamental_type_info();
+};
 
 // This has special meaning to the compiler, and will cause it
 // to emit the type_info structures for the fundamental types which are

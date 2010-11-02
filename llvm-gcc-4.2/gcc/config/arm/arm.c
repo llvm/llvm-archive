@@ -24499,9 +24499,12 @@ arm_darwin_subtarget_conditional_register_usage (void)
 /* APPLE LOCAL end 5571707 Allow R9 as caller-saved register */
 
 /* APPLE LOCAL begin 6902792 Q register clobbers in inline asm */
+/* LLVM LOCAL begin 8602365 */
 /* Worker function for TARGET_MD_ASM_CLOBBERS.
-   We do this to translate references to Qn registers into the equivalent
-   D(2n)/D(2n+1) register pairs. */
+   Some fancy footwork is needed to represent clobbers of D and Q registers.
+   LLVM_REG_NAME, used by EmitASM_EXPR,  will only emit S0..S31 and D16..D31.
+   Thus D0..D15 and all Q registers are reduced here to some combination of
+   these. */
 static tree
 arm_md_asm_clobbers (tree outputs ATTRIBUTE_UNUSED,
 		      tree inputs ATTRIBUTE_UNUSED,
@@ -24511,20 +24514,51 @@ arm_md_asm_clobbers (tree outputs ATTRIBUTE_UNUSED,
 
   for (tail = clobbers; tail; tail = TREE_CHAIN (tail))
     {
-      const char *clobber_name;
-      clobber_name = TREE_STRING_POINTER (TREE_VALUE (tail));
-      if (TOLOWER (clobber_name[0]) == 'q' && ISDIGIT (clobber_name[1])
+      const char *clobber_name = TREE_STRING_POINTER (TREE_VALUE (tail));
+      char regkind = TOLOWER (clobber_name[0]);
+      if ((regkind == 'q' || regkind == 'd') && ISDIGIT (clobber_name[1])
           && (ISDIGIT (clobber_name[2]) || clobber_name[2] == '\0'))
         {
-          char regname[4] = "dXX";
-          /* found a Q register in the clobber list, so add the D reference
-             to the upper dword of it. The existing clobber for the Q
-             register will automatically translate to the low dword. */
-          int regno = atoi (clobber_name + 1) * 2 + 1;
-          snprintf (regname + 1, 3, "%d", regno);
-          clobbers =
-            tree_cons (NULL_TREE, build_string (strlen(regname), regname),
-                       clobbers);
+          int regno = atoi (clobber_name + 1);
+          if (regkind == 'q' && (regno >= 8 && regno < 16))
+            {
+            char regname[4] = "dXX";
+            /* The existing clobber will automatically translate to the low
+               D register. */
+            snprintf (regname + 1, 3, "%d", regno * 2 + 1);
+            clobbers =
+              tree_cons (NULL_TREE, build_string (strlen(regname), regname),
+                         clobbers);
+            }
+          else if (regkind == 'q' && (regno >=0 && regno < 8))
+            {
+            char regname[4] = "sXX";
+            /* The existing clobber will automatically translate to the low
+               S register. */
+            snprintf (regname + 1, 3, "%d", regno * 4 + 1);
+            clobbers =
+              tree_cons (NULL_TREE, build_string (strlen(regname), regname),
+                         clobbers);
+            snprintf (regname + 1, 3, "%d", regno * 4 + 2);
+            clobbers =
+              tree_cons (NULL_TREE, build_string (strlen(regname), regname),
+                         clobbers);
+            snprintf (regname + 1, 3, "%d", regno * 4 + 3);
+            clobbers =
+              tree_cons (NULL_TREE, build_string (strlen(regname), regname),
+                         clobbers);
+            }
+          else if (regkind == 'd' && (regno >= 0 && regno < 16))
+            {
+            char regname[4] = "sXX";
+            /* The existing clobber will automatically translate to the low
+               S register.  */
+            snprintf (regname + 1, 3, "%d", regno * 2 + 1);
+            clobbers =
+              tree_cons (NULL_TREE, build_string (strlen(regname), regname),
+                         clobbers);
+            }
+/* LLVM LOCAL end 8602365 */
         }
     }
   return clobbers;

@@ -306,9 +306,14 @@ done
 
 _AC_COMPUTE_INT([sizeof (omp_lock_t)], [OMP_LOCK_SIZE],,
   [AC_MSG_ERROR([unsupported system, cannot find sizeof (omp_lock_t)])])
-_AC_COMPUTE_INT([__alignof (omp_lock_t)], [OMP_LOCK_ALIGN])
-_AC_COMPUTE_INT([sizeof (omp_nest_lock_t)], [OMP_NEST_LOCK_SIZE])
-_AC_COMPUTE_INT([__alignof (omp_nest_lock_t)], [OMP_NEST_LOCK_ALIGN])
+# LLVM LOCAL begin Add error messages.
+_AC_COMPUTE_INT([__alignof (omp_lock_t)], [OMP_LOCK_ALIGN],,
+  [AC_MSG_ERROR([unsupported system, cannot find __alignof (omp_lock_t)])])
+_AC_COMPUTE_INT([sizeof (omp_nest_lock_t)], [OMP_NEST_LOCK_SIZE],,
+  [AC_MSG_ERROR([unsupported system, cannot find sizeof (omp_nest_lock_t)])])
+_AC_COMPUTE_INT([__alignof (omp_nest_lock_t)], [OMP_NEST_LOCK_ALIGN],,
+  [AC_MSG_ERROR([unsupported system, cannot find __alignof (omp_nest_lock_t)])])
+# LLVM LOCAL end Add error messages.
 
 # If the lock fits in an integer, then arrange for Fortran to use that
 # integer.  If it doesn't, then arrange for Fortran to use a pointer.

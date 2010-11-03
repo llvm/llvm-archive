@@ -718,13 +718,13 @@ echo X"$0" |
   	  /^X\(\/\).*/{ s//\1/; q; }
   	  s/.*/./; q'`
   srcdir=$ac_confdir
-  if test ! -r "$srcdir/$ac_unique_file"; then
+  if test ! -r $srcdir/$ac_unique_file; then
     srcdir=..
   fi
 else
   ac_srcdir_defaulted=no
 fi
-if test ! -r "$srcdir/$ac_unique_file"; then
+if test ! -r $srcdir/$ac_unique_file; then
   if test "$ac_srcdir_defaulted" = yes; then
     { echo "$as_me: error: cannot find sources ($ac_unique_file) in $ac_confdir or .." >&2
    { (exit 1); exit 1; }; }
@@ -733,7 +733,7 @@ if test ! -r "$srcdir/$ac_unique_file"; then
    { (exit 1); exit 1; }; }
   fi
 fi
-(cd $srcdir && test -r "./$ac_unique_file") 2>/dev/null ||
+(cd $srcdir && test -r ./$ac_unique_file) 2>/dev/null ||
   { echo "$as_me: error: sources are in $srcdir, but \`cd $srcdir' does not work" >&2
    { (exit 1); exit 1; }; }
 srcdir=`echo "$srcdir" | sed 's%\([^\\/]\)[\\/]*$%\1%'`
@@ -10112,6 +10112,7 @@ rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftes
 fi
 fi
 rm -f conftest.val
+# LLVM LOCAL begin Add error messages.
 if test "$cross_compiling" = yes; then
   # Depending upon the size, compute the lo and hi bounds.
 cat >conftest.$ac_ext <<_ACEOF
@@ -10368,7 +10369,9 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 done
 case $ac_lo in
 ?*) OMP_LOCK_ALIGN=$ac_lo;;
-'')  ;;
+'') { { echo "$as_me:$LINENO: error: unsupported system, cannot find __alignof (omp_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find __alignof (omp_lock_t)" >&2;}
+   { (exit 1); exit 1; }; } ;;
 esac
 else
   if test "$cross_compiling" = yes; then
@@ -10433,6 +10436,10 @@ else
 echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+( exit $ac_status )
+{ { echo "$as_me:$LINENO: error: unsupported system, cannot find __alignof (omp_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find __alignof (omp_lock_t)" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
@@ -10694,7 +10701,9 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 done
 case $ac_lo in
 ?*) OMP_NEST_LOCK_SIZE=$ac_lo;;
-'')  ;;
+'') { { echo "$as_me:$LINENO: error: unsupported system, cannot find sizeof (omp_nest_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find sizeof (omp_nest_lock_t)" >&2;}
+   { (exit 1); exit 1; }; } ;;
 esac
 else
   if test "$cross_compiling" = yes; then
@@ -10759,6 +10768,10 @@ else
 echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+( exit $ac_status )
+{ { echo "$as_me:$LINENO: error: unsupported system, cannot find sizeof (omp_nest_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find sizeof (omp_nest_lock_t)" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
@@ -11020,7 +11033,9 @@ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 done
 case $ac_lo in
 ?*) OMP_NEST_LOCK_ALIGN=$ac_lo;;
-'')  ;;
+'') { { echo "$as_me:$LINENO: error: unsupported system, cannot find __alignof (omp_nest_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find __alignof (omp_nest_lock_t)" >&2;}
+   { (exit 1); exit 1; }; } ;;
 esac
 else
   if test "$cross_compiling" = yes; then
@@ -11085,11 +11100,16 @@ else
 echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+( exit $ac_status )
+{ { echo "$as_me:$LINENO: error: unsupported system, cannot find __alignof (omp_nest_lock_t)" >&5
+echo "$as_me: error: unsupported system, cannot find __alignof (omp_nest_lock_t)" >&2;}
+   { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
 fi
 rm -f conftest.val
+# LLVM LOCAL end Add error messages.
 
 # If the lock fits in an integer, then arrange for Fortran to use that
 # integer.  If it doesn't, then arrange for Fortran to use a pointer.

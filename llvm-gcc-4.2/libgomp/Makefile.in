@@ -457,6 +457,15 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 
+# LLVM LOCAL begin
+# Avoid a race condition: On systems where "mv" is implemented as "rm+cp",
+# even when not crossing a file system boundary, the files in $(DEPDIR) will
+# be momentarily absent when they are updated.  If the recursive make for
+# multilibs starts up when one of those files is missing, it will fail.
+# Add a dependency to prevent that.
+all-multi: $(LTLIBRARIES)
+# LLVM LOCAL end
+
 # GNU Make needs to see an explicit $(MAKE) variable in the command it
 # runs to enable its job server during parallel builds.  Hence the
 # comments below.

@@ -551,6 +551,9 @@ rtx arm_compare_op0, arm_compare_op1;
 /* The processor for which instructions should be scheduled.  */
 enum processor_type arm_tune = arm_none;
 
+/* LLVM LOCAL global arch value */
+enum processor_type target_arch_cpu = arm_none;
+
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 /* The default processor used if not overriden by commandline.  */
 static enum processor_type arm_default_cpu = arm_none;
@@ -1289,12 +1292,13 @@ arm_override_options (void)
   unsigned i;
 /* APPLE LOCAL v7 support. Merge from Codesourcery */
   int len;
-  enum processor_type target_arch_cpu = arm_none;
+  /* LLVM LOCAL global arch value */
+  /* Moved target_arch_cpu to arm.h */
 
   /* Set up the flags based on the cpu/architecture selected by the user.  */
   for (i = ARRAY_SIZE (arm_select); i--;)
     {
-      struct arm_cpu_select * ptr = arm_select + i;
+      struct arm_cpu_select * ptr = &arm_select[i];
 
       if (ptr->string != NULL && ptr->string[0] != '\0')
         {

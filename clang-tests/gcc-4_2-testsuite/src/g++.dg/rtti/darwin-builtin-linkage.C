@@ -8,7 +8,7 @@
 
 namespace __cxxabiv1 {
 
-using namespace std;
+namespace std {
 
 
 class __fundamental_type_info {
@@ -21,5 +21,7 @@ class __fundamental_type_info {
 __fundamental_type_info::
 ~__fundamental_type_info ()
 {}
+
+}
  
 }

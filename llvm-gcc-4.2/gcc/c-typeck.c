@@ -3418,7 +3418,8 @@ build_unary_op (enum tree_code code, tree xarg, int flag)
 	 when we have proper support for integer constant expressions.  */
       val = get_base_address (arg);
       if (val && TREE_CODE (val) == INDIRECT_REF
-          && TREE_CONSTANT (TREE_OPERAND (val, 0)))
+      /* LLVM LOCAL treat only constant deref as pseudo-offsetof 8629268 */
+          && TREE_CODE (TREE_OPERAND (val, 0)) == INTEGER_CST)
 	{
 	  tree op0 = fold_convert (argtype, fold_offsetof (arg, val)), op1;
 

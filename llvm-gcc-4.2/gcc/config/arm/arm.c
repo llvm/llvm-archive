@@ -551,6 +551,10 @@ rtx arm_compare_op0, arm_compare_op1;
 /* The processor for which instructions should be scheduled.  */
 enum processor_type arm_tune = arm_none;
 
+/* LLVM LOCAL global arch value */
+enum processor_type arm_arch = arm_none;
+enum processor_type arm_cpu = arm_none;
+
 /* APPLE LOCAL begin v7 support. Merge from mainline */
 /* The default processor used if not overriden by commandline.  */
 static enum processor_type arm_default_cpu = arm_none;
@@ -1289,12 +1293,13 @@ arm_override_options (void)
   unsigned i;
 /* APPLE LOCAL v7 support. Merge from Codesourcery */
   int len;
-  enum processor_type target_arch_cpu = arm_none;
+  /* LLVM LOCAL global arch value */
+  /* Moved arm_arch to arm.h as arm_arch and arm_cpu */
 
   /* Set up the flags based on the cpu/architecture selected by the user.  */
   for (i = ARRAY_SIZE (arm_select); i--;)
     {
-      struct arm_cpu_select * ptr = arm_select + i;
+      struct arm_cpu_select * ptr = &arm_select[i];
 
       if (ptr->string != NULL && ptr->string[0] != '\0')
         {
@@ -1325,8 +1330,14 @@ arm_override_options (void)
 		   If no other option is used to set the CPU type,
 		   we'll use this to guess the most suitable tuning
 		   options.  */
-		if (i == ARM_OPT_SET_ARCH)
-		  target_arch_cpu = sel->core;
+		if (/* -mcpu is a sensible default.  */
+		    i == ARM_OPT_SET_CPU
+		    /* But -march= overrides -mcpu.  */
+		    || i == ARM_OPT_SET_ARCH)
+		  arm_arch = (enum processor_type) (sel - ptr->processors);
+
+		if (i == ARM_OPT_SET_CPU)
+		  arm_cpu = (enum processor_type) (sel - ptr->processors);
 
 		if (i != ARM_OPT_SET_TUNE)
 		  {
@@ -1360,7 +1371,7 @@ arm_override_options (void)
 
   /* Guess the tuning options from the architecture if necessary.  */
   if (arm_tune == arm_none)
-    arm_tune = target_arch_cpu;
+    arm_tune = arm_arch;
 
   /* If the user did not specify a processor, choose one for them.  */
   if (insn_flags == 0)
@@ -1454,6 +1465,8 @@ arm_override_options (void)
       arm_default_cpu = (enum processor_type) (sel - all_cores);
       if (arm_tune == arm_none)
 	arm_tune = arm_default_cpu;
+      if (arm_cpu == arm_none)
+	arm_cpu = arm_default_cpu;
 /* APPLE LOCAL end v7 support. Merge from Codesourcery */
     }
 

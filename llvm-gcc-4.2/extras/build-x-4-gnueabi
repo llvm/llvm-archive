@@ -105,13 +105,15 @@ if [ "$do_clean" == "yes" ] ; then
 fi
 
 #------------------------------------------------------------------------------
-# Step: Copy cross-tools.
+# Step: Copy cross-tools and newlib
 #------------------------------------------------------------------------------
 if [ "$do_copy_cross_tools" == "yes" ] ; then
 
    # We need a local copy of binutils, system libraries and headers,
    # since we will be installing there.
-   cp -RL /opt/codesourcery/* ${PRIVATE_INSTALL}
+   cp -Ru /opt/cross-tools/*        ${PRIVATE_INSTALL}
+   cp -Ru /opt/newlib-src/newlib/   ${BUILD_ROOT}/${LLVM_GCC_src}
+   cp -Ru /opt/newlib-src/libgloss/ ${BUILD_ROOT}/${LLVM_GCC_src}
 
 fi
 
@@ -125,18 +127,10 @@ if [ "$do_configure_llvm" == "yes" ] ; then
    mkdir -p ${BUILD_ROOT}/${LLVM_obj}
    chmod a+rx ${BUILD_ROOT}/${LLVM_obj}
    cd ${BUILD_ROOT}/${LLVM_obj}
-   
+
    ../${LLVM_src}/configure --prefix=${PRIVATE_INSTALL}  \
-      --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu \
-      --target=arm-none-linux-gnueabi                    \
-      --enable-shared     \
-      --disable-multilib  \
-      --disable-nls       \
-      --disable-bootstrap \
-      --without-llvmgcc   \
-      --without-llvmgxx   \
-      --enable-optimized  \
-      --enable-assertions \
+      --enable-optimized       \
+      --enable-targets=cbe,arm \
       $@  # Extra args if any
 
 fi
@@ -188,15 +182,18 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
 
    ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL} \
-      --build=i686-pc-linux-gnu --host=i686-pc-linux-gnu    \
-      --target=arm-none-linux-gnueabi                       \
-      --enable-shared     \
-      --disable-nls       \
-      --disable-bootstrap \
-      --with-sysroot=${PRIVATE_INSTALL}/arm-none-linux-gnueabi/libc \
-      --enable-languages=c,c++ \
-      --program-prefix=llvm-   \
+      --target=arm-eabi         \
+      --enable-languages=c,c++  \
+      --disable-nls             \
+      --prefix=/opt/cross-tools \
+      --program-prefix=llvm-    \
+      --with-newlib             \
+      --with-headers=yes        \
       --enable-llvm=${BUILD_ROOT}/${LLVM_obj} \
+      --with-cpu=cortex-a8      \
+      --with-fpu=neon           \
+      --with-float=hard         \
+      --with-abi=aapcs          \
       $@  # Extra args if any
 fi
 

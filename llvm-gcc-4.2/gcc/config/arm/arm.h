@@ -149,10 +149,6 @@ enum target_cpus
 /* The processor for which instructions should be scheduled.  */
 extern enum processor_type arm_tune;
 
-/* LLVM LOCAL global arch value */
-extern enum processor_type arm_arch;
-extern enum processor_type arm_cpu;
-
 typedef enum arm_cond_code
 {
   ARM_EQ = 0, ARM_NE, ARM_CS, ARM_CC, ARM_MI, ARM_PL, ARM_VS, ARM_VC,
@@ -3460,7 +3456,7 @@ enum neon_builtins
 /* Turn -march=xx into a CPU type.
  */
 #define LLVM_SET_SUBTARGET_FEATURES(F) \
-  { switch (arm_cpu) { \
+  { switch (arm_tune) { \
     case arm8:          F.setCPU("arm8"); break;\
     case arm810:        F.setCPU("arm810"); break;\
     case strongarm:     F.setCPU("strongarm"); break;\

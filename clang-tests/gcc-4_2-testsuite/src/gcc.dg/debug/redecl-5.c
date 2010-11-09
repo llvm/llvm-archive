@@ -3,7 +3,7 @@
    test.  */
 /* Origin: Joseph Myers <jsm@polyomino.org.uk> */
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options "-Wno-unused-value" } */
 
 int x[];
 

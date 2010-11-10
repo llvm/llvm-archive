@@ -1,4 +1,4 @@
-// { dg-do assemble }
+// { dg-options "-Wno-unused-value -ferror-limit=27" }
 
 // Copyright (C) 1999 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 5 Sep 1999 <nathan@acm.org>
@@ -32,16 +32,16 @@ int main (int argc, char **argv)
   void (*vptr) ();
   
   (ovl) (1);                // ok
-  (&ovl) (1);               // { dg-error "" } not suitable for overload resolution
-  (ovl) ();                 // { dg-error "" } no matching candidates
-  (&ovl) ();                // { dg-error "" } not suitable for overload resolution
+  (&ovl) (1);               // { dg-error "called object type" }
+  (ovl) ();                 // { dg-error "no matching function" }
+  (&ovl) ();                // { dg-error "called object type" }
   
   // 13.3.1.1 indicates that the following are errors -- the primary expression
   // is not the name of a function.
-  (0, ovl) (1);             // { dg-error "" } not suitable for overload resolution
-  (0, &ovl) (1);            // { dg-error "" } not suitable for overload resolution
-  (argc ? ovl : ovl) (1);   // { dg-error "" } not suitable for overload resolution
-  (argc ? &ovl : &ovl) (1); // { dg-error "" } not suitable for overload resolution
+  (0, ovl) (1);             // { dg-error "cannot resolve overloaded function from context" }
+  (0, &ovl) (1);            // { dg-error "cannot resolve overloaded function from context" }
+  (argc ? ovl : ovl) (1);   // { dg-error "cannot resolve overloaded function from context" }
+  (argc ? &ovl : &ovl) (1); // { dg-error "cannot resolve overloaded function from context" }
   
   (fn) (1);                 // ok
   (&fn) (1);                // ok (no overload resolution)
@@ -53,17 +53,17 @@ int main (int argc, char **argv)
   ptr = (ovl);              // ok
   ptr = (&ovl);             // ok
   // 13.4 indicates these are ok.
-  ptr = (0, ovl);           // ok { dg-bogus "" "" { xfail *-*-* } }
-  ptr = (0, &ovl);          // ok { dg-bogus "" "" { xfail *-*-* } }
-  ptr = (argc ? ovl : ovl); // ok { dg-bogus "" "" { xfail *-*-* } }
-  ptr = (argc ? &ovl : &ovl);// ok { dg-bogus "" "" { xfail *-*-* } }
+  ptr = (0, ovl);           // { dg-error "cannot resolve overloaded function from context" }
+  ptr = (0, &ovl); // { dg-error "cannot resolve overloaded function from context" }
+  ptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded function from context" }
+  ptr = (argc ? &ovl : &ovl); // { dg-error "cannot resolve overloaded function from context" }
   
-  vptr = (ovl);              // { dg-error "" } no matching candidates
-  vptr = (&ovl);             // { dg-error "" } no matching candidates
-  vptr = (0, ovl);           // { dg-error "" } no matching candidates
-  vptr = (0, &ovl);          // { dg-error "" } no matching candidates
-  vptr = (argc ? ovl : ovl); // { dg-error "" } no matching candidates
-  vptr = (argc ? &ovl : &ovl);// { dg-error "" } no matching candidates
+  vptr = (ovl);              // { dg-error "assigning to 'void (*)()' from incompatible type" }
+  vptr = (&ovl);             // { dg-error "assigning to 'void (*)()' from incompatible type" } 
+  vptr = (0, ovl);           // { dg-error "cannot resolve overloaded function from context" } 
+  vptr = (0, &ovl);          // { dg-error "cannot resolve overloaded function from context" } 
+  vptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded function from context" } 
+  vptr = (argc ? &ovl : &ovl);// { dg-error "cannot resolve overloaded function from context" } 
   
   ptr = (fn);
   ptr = (&fn);
@@ -72,7 +72,7 @@ int main (int argc, char **argv)
   ptr = (argc ? fna : fn);
   ptr = (argc ? &fna : &fn);
   
-  f;                // { dg-warning "" } not a call
+  f;                // { dg-error "use of undeclared identifier" }
   ovl;              // { dg-error "" } not suitable for overload
   &ovl;             // { dg-error "" } not suitable for overload
   (void)f;          // ok

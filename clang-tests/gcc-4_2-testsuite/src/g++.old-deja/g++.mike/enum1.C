@@ -4,8 +4,8 @@
 enum TypeKind { ATK, BTK, CTK, DTK } ;
 
 struct Type {
-  enum TypeKind kind : 1;		// { dg-warning "" } 
+  enum TypeKind kind : 1;
   void setBTK();
 };
 
-void Type::setBTK() { kind = DTK; }
+void Type::setBTK() { kind = DTK; } // { dg-warning "implicit truncation from" }

@@ -27,5 +27,5 @@ void f(double) {}
 int main()
 {
   D2<int> d2i;
-  f(d2i.i); // { dg-error "" } no member i
+  f(d2i.i); // Template is already deemed invalid. No need for this warning
 }

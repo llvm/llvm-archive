@@ -736,7 +736,8 @@ decode_options (unsigned int argc, const char **argv)
      generating unwind info.  If flag_exceptions is turned on we need to
      turn off the partitioning optimization.  */
 
-  if (flag_exceptions && flag_reorder_blocks_and_partition)
+  /* LLVM LOCAL 6635085 */
+  if (flag_exceptions > 0 && flag_reorder_blocks_and_partition)
     {
       inform 
 	    ("-freorder-blocks-and-partition does not work with exceptions");

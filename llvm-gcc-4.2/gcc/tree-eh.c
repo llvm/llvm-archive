@@ -1355,6 +1355,11 @@ lower_try_finally (struct leh_state *state, tree *tp)
   struct leh_state this_state;
   int ndests;
 
+  /* LLVM LOCAL begin 6635085 */
+  /* if ( ! flag_exceptions)
+     fatal_error("try/catch constructs require -fexceptions"); */
+  /* LLVM LOCAL end 6635085 */
+
   /* Process the try block.  */
 
   memset (&this_tf, 0, sizeof (this_tf));

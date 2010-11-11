@@ -237,7 +237,10 @@ c_common_init_options (unsigned int argc, const char **argv)
 #endif
   /* APPLE LOCAL end -Wfour-char-constants  */
 
-  flag_exceptions = c_dialect_cxx ();
+  /* LLVM LOCAL begin 6635085 */
+  if (c_dialect_cxx() && flag_exceptions < 0)
+    flag_exceptions = 1;
+  /* LLVM LOCAL end 6635085 */
   /* LLVM local begin One Definition Rule */
 #ifdef ENABLE_LLVM
   flag_odr = c_dialect_cxx ();
@@ -1153,7 +1156,10 @@ c_common_post_options (const char **pfilename)
   /* Default to ObjC sjlj exception handling if NeXT runtime.  */
   if (flag_objc_sjlj_exceptions < 0)
     flag_objc_sjlj_exceptions = flag_next_runtime;
-  if (flag_objc_exceptions && !flag_objc_sjlj_exceptions)
+  /* LLVM LOCAL begin 6635085 */
+  if ((flag_objc_exceptions && !flag_objc_sjlj_exceptions)
+      || flag_exceptions < 0)
+  /* LLVM LOCAL end 6635085 */
     flag_exceptions = 1;
 
   /* -Wextra implies -Wsign-compare, -Wmissing-field-initializers and

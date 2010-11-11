@@ -382,7 +382,9 @@ do {									\
 
 #define OBJC_TARGET_FLAG_OBJC_ABI		\
   do {						\
-    if (flag_objc_abi == -1)			\
+    /* LLVM LOCAL 6635085 */                    \
+    if (flag_objc_abi == -1                     \
+        && flag_exceptions == -1)		\
       flag_objc_abi = 2;			\
     if (flag_objc_legacy_dispatch == -1)	\
       flag_objc_legacy_dispatch = 1;		\

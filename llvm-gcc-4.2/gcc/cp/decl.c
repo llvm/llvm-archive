@@ -1104,6 +1104,8 @@ check_redeclaration_exception_specification (tree new_decl,
      all declarations, including the definition and an explicit
      specialization, of that function shall have an
      exception-specification with the same set of type-ids.  */
+  /* LLVM LOCAL 6635085 */
+  gcc_assert(flag_exceptions >= 0);
   if ((pedantic || ! DECL_IN_SYSTEM_HEADER (old_decl))
       && ! DECL_IS_BUILTIN (old_decl)
       && flag_exceptions
@@ -3393,7 +3395,8 @@ cxx_init_decl_processing (void)
   init_class_processing ();
   init_rtti_processing ();
 
-  if (flag_exceptions)
+  /* LLVM LOCAL 6635085 */
+  if (flag_exceptions > 0)
     init_exception_processing ();
 
   if (! supports_one_only ())
@@ -11736,6 +11739,8 @@ start_function (cp_decl_specifier_seq *declspecs,
 static bool
 use_eh_spec_block (tree fn)
 {
+  /* LLVM LOCAL 6635085 */
+  gcc_assert(flag_exceptions >= 0);
   return (flag_exceptions && flag_enforce_eh_specs
 	  && !processing_template_decl
 	  && TYPE_RAISES_EXCEPTIONS (TREE_TYPE (fn))

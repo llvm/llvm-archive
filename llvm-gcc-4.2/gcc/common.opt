@@ -519,7 +519,7 @@ Common Report Var(flag_emit_class_debug_always) Init(1)
 Do not suppress C++ class debug information.
 
 fexceptions
-Common Report Var(flag_exceptions) Init(-1)
+Common Report Var(flag_exceptions)
 Enable exception handling
 
 ; APPLE LOCAL begin optimization pragmas 3124235/3420242

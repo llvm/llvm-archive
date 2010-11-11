@@ -123,8 +123,7 @@ dwarf2out_do_frame (void)
 #ifdef DWARF2_UNWIND_INFO
 	  || (DWARF2_UNWIND_INFO
 	      && (flag_unwind_tables
-                  /* LLVM LOCAL 6635085 */
-		  || (flag_exceptions > 0 && ! USING_SJLJ_EXCEPTIONS)))
+		  || (flag_exceptions && ! USING_SJLJ_EXCEPTIONS)))
 #endif
 	  );
 }
@@ -2208,8 +2207,6 @@ output_call_frame_info (int for_eh)
      discarded.  Example where this matters: a primary function
      template in C++ requires EH information, but an explicit
      specialization doesn't.  */
-  /* LLVM LOCAL 6635085 */
-  gcc_assert(flag_exceptions >= 0);
   if (TARGET_USES_WEAK_UNWIND_INFO
       && ! flag_asynchronous_unwind_tables
 /* APPLE LOCAL begin for-fsf-4_4 5480287 */ \
@@ -2383,8 +2380,6 @@ output_call_frame_info (int for_eh)
 		    floor_log2 (for_eh ? PTR_SIZE : DWARF2_ADDR_SIZE));
   ASM_OUTPUT_LABEL (asm_out_file, l2);
 
-  /* LLVM LOCAL 6635085 */
-  gcc_assert(flag_exceptions >= 0);
   /* Loop through all of the FDE's.  */
   for (i = 0; i < fde_table_in_use; i++)
     {
@@ -2669,8 +2664,7 @@ dwarf2out_frame_finish (void)
 
 #ifndef TARGET_UNWIND_INFO
   /* Output another copy for the unwinder.  */
-  /* LLVM LOCAL 6635085 */
-  if (! USING_SJLJ_EXCEPTIONS && (flag_unwind_tables || flag_exceptions > 0))
+  if (! USING_SJLJ_EXCEPTIONS && (flag_unwind_tables || flag_exceptions))
     output_call_frame_info (1);
 #endif
 }

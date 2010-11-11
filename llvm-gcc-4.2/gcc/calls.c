@@ -2384,8 +2384,6 @@ expand_call (tree exp, rtx target, int ignore)
 	 with stack pointer depressed.
 	 Also do the adjustments before a throwing call, otherwise
 	 exception handling can fail; PR 19225. */
-      /* LLVM LOCAL 6635085 */
-      gcc_assert(flag_exceptions > 0);
       if (pending_stack_adjust >= 32
 	  || (pending_stack_adjust > 0
 	      && (flags & (ECF_MAY_BE_ALLOCA | ECF_SP_DEPRESSED)))

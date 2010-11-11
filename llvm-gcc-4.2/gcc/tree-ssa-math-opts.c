@@ -259,8 +259,6 @@ compute_merit (struct occurrence *occ)
       if (occ_child->children)
         compute_merit (occ_child);
 
-      /* LLVM LOCAL 6635085 */
-      gcc_assert(flag_exceptions >= 0);
       if (flag_exceptions)
 	bb = single_noncomplex_succ (dom);
       else

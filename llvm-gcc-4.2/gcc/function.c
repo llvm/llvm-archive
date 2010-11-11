@@ -4475,8 +4475,6 @@ expand_function_end (void)
   /* Output the label for the actual return from the function.  */
   emit_label (return_label);
 
-  /* LLVM LOCAL 6635085 */
-  gcc_assert(flag_exceptions > 0);
   if (USING_SJLJ_EXCEPTIONS)
     {
       /* Let except.c know where it should emit the call to unregister

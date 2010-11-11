@@ -1957,8 +1957,6 @@ build_new_1 (tree placement, tree type, tree nelts, tree init,
 	 unambiguous matching deallocation function can be found,
 	 propagating the exception does not cause the object's memory to be
 	 freed.  */
-      /* LLVM LOCAL 6635085 */
-      gcc_assert(flag_exceptions >= 0);
       if (flag_exceptions && ! use_java_new)
 	{
 	  enum tree_code dcode = array_p ? VEC_DELETE_EXPR : DELETE_EXPR;
@@ -2497,8 +2495,6 @@ build_vec_init (tree base, tree maxindex, tree init,
   /* Protect the entire array initialization so that we can destroy
      the partially constructed array if an exception is thrown.
      But don't do this if we're assigning.  */
-  /* LLVM LOCAL 6635085 */
-  gcc_assert(flag_exceptions >= 0);
   if (flag_exceptions && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type)
       && from_array != 2)
     {
@@ -2633,8 +2629,6 @@ build_vec_init (tree base, tree maxindex, tree init,
     }
 
   /* Make sure to cleanup any partially constructed elements.  */
-  /* LLVM LOCAL 6635085 */
-  gcc_assert(flag_exceptions >= 0);
   if (flag_exceptions && TYPE_HAS_NONTRIVIAL_DESTRUCTOR (type)
       && from_array != 2)
     {

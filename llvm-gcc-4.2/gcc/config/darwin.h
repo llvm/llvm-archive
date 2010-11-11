@@ -863,10 +863,7 @@ do {					\
           flag_objc_zerocost_exceptions = 1;                            \
         if (flag_objc_zerocost_exceptions)                              \
           {                                                             \
-            /* APPLE LOCAL begin 6635085 */                             \
-            if (flag_exceptions == -1)                                  \
-              flag_exceptions = 1;                                      \
-            /* APPLE LOCAL end 6635085 */                               \
+            flag_exceptions = 1;                                        \
             flag_objc_sjlj_exceptions = 0;                              \
           }                                                             \
         /* APPLE LOCAL end radar 5023725 */                             \

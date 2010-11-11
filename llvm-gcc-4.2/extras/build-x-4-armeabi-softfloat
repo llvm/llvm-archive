@@ -5,18 +5,18 @@ set -o pipefail            # Return the first non-zero pipe command error.
 set -x                     # Print commands as they are executed
 
 # This script performs an automated build on i686-pc-linux-gnu of
-# cross llvm-gcc for arm-eabi-hard-float. It assumes the valid native
+# cross llvm-gcc for arm-eabi-soft-float. It assumes the valid native
 # compiler for i686-pc-linux-gnu is in place and available as well as
-# cross libraries and headers for arm-eabi.
+# cross libraries and headers for arm-softfloat-eabi.
 
 # --build=i686-pc-linux-gnu
 # --host=i686-pc-linux-gnu
-# --target=arm-eabi
+# --target=arm-softfloat-eabi
 #
 
 # The usage:
 # Run this build from the build from the build root directory as
-# build-x-4-armeabi-hardfloat [<step>] [<extra args>]
+# build-x-4-armeabi-softfloat [<step>] [<extra args>]
 
 # Expected project tree structure:
 # <build root>
@@ -182,17 +182,17 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
 
    ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL} \
-      --target=arm-eabi         \
-      --enable-languages=c,c++  \
-      --disable-nls             \
-      --program-prefix=llvm-    \
-      --with-newlib             \
-      --with-headers=yes        \
+      --target=arm-softfloat-eabi \
+      --enable-languages=c,c++    \
+      --disable-nls               \
+      --program-prefix=llvm-      \
+      --with-newlib               \
+      --with-headers=yes          \
       --enable-llvm=${BUILD_ROOT}/${LLVM_obj} \
-      --with-cpu=cortex-a8      \
-      --with-fpu=neon           \
-      --with-float=hard         \
-      --with-abi=aapcs          \
+      --with-cpu=cortex-a8        \
+      --with-fpu=neon             \
+      --with-float=soft           \
+      --with-abi=aapcs            \
       $@  # Extra args if any
 fi
 

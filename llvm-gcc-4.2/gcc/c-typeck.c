@@ -4976,7 +4976,27 @@ store_init_value (tree decl, tree init)
     warning (OPT_Wtraditional, "traditional C rejects automatic "
 	     "aggregate initialization");
 
-  DECL_INITIAL (decl) = value;
+  /* LLVM LOCAL begin 8521187 */
+  {
+    bool was_error_mark = (DECL_INITIAL(decl) == error_mark_node);
+    extern void * TheTreeToLLVM;        /* llvm-internal.h is not available here.  Ugh.  */
+
+    DECL_INITIAL (decl) = value;
+
+    /*
+     * If we're updating the initialization of a variable or function decl,
+     * and we're inside a function body (not initializing a global or static),
+     * and the previous value was the placeholder 'error_mark_node',
+     * then tell LLVM we updated the initialization.
+     */
+    if ((TREE_CODE(decl) == VAR_DECL || TREE_CODE(decl) == FUNCTION_DECL)
+        && TREE_STATIC(decl) && was_error_mark && TheTreeToLLVM)
+      {
+        extern void reset_type_and_initializer_llvm(tree);
+        reset_type_and_initializer_llvm(decl);
+      }
+  }
+  /* LLVM LOCAL end 8521187 */
 
   /* ANSI wants warnings about out-of-range constant initializers.  */
   STRIP_TYPE_NOPS (value);

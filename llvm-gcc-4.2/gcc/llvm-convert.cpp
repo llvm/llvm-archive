@@ -2457,6 +2457,10 @@ static bool canEmitLocalRegisterVariable(tree exp) {
   if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
     return false;
 
+  // Asm block register usage is not accepted here.
+  if (DECL_ASM_BLOCK_REGISTER (exp))
+    return false;
+
   // Emit inline asm if this is local variable with assembler name on it.
   if (DECL_ASSEMBLER_NAME_SET_P(exp))
     return true;
@@ -2469,6 +2473,10 @@ static bool canEmitGlobalRegisterVariable(tree exp) {
   // Only variables can be marked as 'register'.
   if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
     return false;
+
+  // Treat register usage in asm blocks as global.
+  if (DECL_ASM_BLOCK_REGISTER (exp))
+    return true;
 
   // Local register variables are not accepted here.
   if (TREE_STATIC(exp) || DECL_EXTERNAL(exp) || TREE_PUBLIC(exp))
@@ -4329,6 +4337,8 @@ Value *TreeToLLVM::EmitRESX_EXPR(tree exp) {
 Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
                                               const MemRef *DestLoc) {
   const Type *Ty = ConvertType(TREE_TYPE(decl));
+  if (LLVM_IS_DECL_MMX_REGISTER(decl))
+    Ty = Type::getX86_MMXTy(Context);
 
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(decl)) {
@@ -4394,7 +4404,10 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
 
   // Turn this into a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
   std::vector<const Type*> ArgTys;
-  ArgTys.push_back(ConvertType(TREE_TYPE(decl)));
+  const Type* Ty = ConvertType(TREE_TYPE(decl));
+  if (LLVM_IS_DECL_MMX_REGISTER(decl))
+    Ty = Type::getX86_MMXTy(Context);
+  ArgTys.push_back(Ty);
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context), ArgTys, false);
 
   const char *Name = extractRegisterName(decl);

@@ -22161,7 +22161,7 @@ iasm_raise_reg (tree arg)
       decl = lookup_name (arg);
       if (decl == error_mark_node)
 	decl = 0;
-      if (decl == 0)
+      if (decl == 0 || !DECL_ASM_BLOCK_REGISTER (decl))
 	{
 	  tree type = iasm_type_for (arg);
 	  if (type)
@@ -22171,6 +22171,7 @@ iasm_raise_reg (tree arg)
 	      DECL_REGISTER (decl) = 1;
 	      C_DECL_REGISTER (decl) = 1;
 	      DECL_HARD_REGISTER (decl) = 1;
+              DECL_ASM_BLOCK_REGISTER (decl) = 1;
 	      set_user_assembler_name (decl, IDENTIFIER_POINTER (arg));
 	      decl = lang_hooks.decls.pushdecl (decl);
 	    }

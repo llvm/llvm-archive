@@ -2450,7 +2450,7 @@ void TreeToLLVM::EmitUnwindBlock() {
 
 static bool canEmitLocalRegisterVariable(tree exp) {
   // Only variables can be marked as 'register'.
-  if (TREE_CODE(exp) != VAR_DECL || !DECL_HARD_REGISTER(exp))
+  if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
     return false;
 
   // Global register variables are not accepted here.
@@ -2467,7 +2467,7 @@ static bool canEmitLocalRegisterVariable(tree exp) {
 
 static bool canEmitGlobalRegisterVariable(tree exp) {
   // Only variables can be marked as 'register'.
-  if (TREE_CODE(exp) != VAR_DECL || !DECL_HARD_REGISTER(exp))
+  if (TREE_CODE(exp) != VAR_DECL || !DECL_REGISTER(exp))
     return false;
 
   // Local register variables are not accepted here.
@@ -4776,7 +4776,6 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   unsigned NumInputs = list_length(ASM_INPUTS(exp));
   unsigned NumOutputs = list_length(ASM_OUTPUTS(exp));
   unsigned NumInOut = 0;
-  bool isAsmBlock = ASM_ASM_BLOCK(exp);
 
   // Look for multiple alternative constraints: multiple alternatives separated
   // by commas.
@@ -5157,7 +5156,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   }
 
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
-                              HasSideEffects, isAsmBlock);
+                              HasSideEffects, ASM_ASM_BLOCK(exp));
   CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
                                     CallResultTypes.empty() ? "" : "asmtmp");
   CV->setDoesNotThrow();

@@ -2623,6 +2623,8 @@ struct tree_decl_common GTY(())
      In VAR_DECL and PARM_DECL, this is DECL_REGISTER.  */
   unsigned decl_flag_0 : 1;
   /* In FIELD_DECL, this is DECL_PACKED.  */
+  /* LLVM LOCAL */
+  /* In VAR_DECL, this is DECL_ASM_BLOCK_REGISTER. */
   unsigned decl_flag_1 : 1;
   /* In FIELD_DECL, this is DECL_BIT_FIELD
      In VAR_DECL and FUNCTION_DECL, this is DECL_EXTERNAL.
@@ -2702,6 +2704,9 @@ extern void decl_value_expr_insert (tree, tree);
 
 /* In VAR_DECL and PARM_DECL nodes, nonzero means declared `register'.  */
 #define DECL_REGISTER(NODE) (DECL_WRTL_CHECK (NODE)->decl_common.decl_flag_0)
+
+/* In VAR_DECL, nonzero means a register used by asm block code. */
+#define DECL_ASM_BLOCK_REGISTER(NODE) (DECL_WRTL_CHECK (NODE)->decl_common.decl_flag_1)
 
 struct tree_decl_with_rtl GTY(())
 {

@@ -2,6 +2,8 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options "-std=gnu99 -msse2 -mstackrealign" } */
 #include <emmintrin.h>
+/* LLVM LOCAL emmintrin no longer defines abort */
+#include <stdlib.h>
 __m128i __attribute__ ((__noinline__))
 vector_using_function ()
 {

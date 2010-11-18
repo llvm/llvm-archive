@@ -6,6 +6,8 @@
 #error "expected -m64 to enable -msse3 by default"
 #endif
 #include <pmmintrin.h>
+/* LLVM LOCAL pmmintrin no longer declares exit */
+#include <stdlib.h>
 main ()
 {
   static __m128 x, y, z;

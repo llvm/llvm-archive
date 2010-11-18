@@ -3,6 +3,8 @@
 /* { dg-options "-O3 -mssse3" } */
 #include <stdio.h>
 #include <tmmintrin.h>
+/* LLVM LOCAL tmmintrin.h no longer declares abort */
+#include <stdlib.h>
 #include "../gcc.dg/i386-cpuid.h"
 void foo(__m128i *a, __m128i *b, __m128i c, __m128i d, __m128i e)
 {

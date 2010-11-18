@@ -6,6 +6,8 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-final { scan-rtl-dump "deleted 5 dead insns" "csa" } }*/
 #include <emmintrin.h>
+/* LLVM LOCAL emmintrin no longer defines uintptr_t */
+#include <stdint.h>
 typedef __SIZE_TYPE__ size_t;
 typedef float vFloat __attribute__ ((__vector_size__ (16)));
 typedef double vDouble __attribute__ ((__vector_size__ (16)));

@@ -531,6 +531,7 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 
   TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
+  TheTarget->setMCUseLoc(false);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
 
   TheFolder = new TargetFolder(TheTarget->getTargetData());

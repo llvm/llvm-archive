@@ -49,7 +49,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/System/Program.h"
+#include "llvm/Support/Program.h"
 
 #include <cassert>
 extern "C" {

@@ -10,9 +10,10 @@
 
 int GotCalled = 0;
 
-void objc_assign_weak(id value, id * location) {
+id objc_assign_weak(id value, id * location) {
     ++GotCalled;
     *location = value;
+    return value; 
 }
 
 int recovered = 0;

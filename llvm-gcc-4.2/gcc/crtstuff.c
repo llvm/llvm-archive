@@ -175,7 +175,15 @@ CTOR_LIST_BEGIN;
 #elif defined(CTORS_SECTION_ASM_OP)
 /* Hack: force cc1 to switch to .data section early, so that assembling
    __CTOR_LIST__ does not undo our behind-the-back change to .ctors.  */
-static func_ptr force_to_data[1] __attribute__ ((__unused__)) = { };
+static func_ptr force_to_data[1] 
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+__attribute__ ((__used__)) 
+#else
+__attribute__ ((__unused__)) 
+#endif
+/* LLVM LOCAL end */  
+= { };
 asm (CTORS_SECTION_ASM_OP);
 STATIC func_ptr __CTOR_LIST__[1]
 /* LLVM LOCAL begin */
@@ -241,7 +249,13 @@ STATIC EH_FRAME_SECTION_CONST char __EH_FRAME_BEGIN__[]
 /* Stick a label at the beginning of the java class registration info
    so we can register them properly.  */
 STATIC void *__JCR_LIST__[]
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+  __attribute__ ((used, section(JCR_SECTION_NAME), aligned(sizeof(void*))))
+#else
   __attribute__ ((unused, section(JCR_SECTION_NAME), aligned(sizeof(void*))))
+#endif
+/* LLVM LOCAL end */
   = { };
 #endif /* JCR_SECTION_NAME */
 
@@ -338,7 +352,13 @@ __do_global_dtors_aux (void)
 CRT_CALL_STATIC_FUNCTION (FINI_SECTION_ASM_OP, __do_global_dtors_aux)
 #else /* !defined(FINI_SECTION_ASM_OP) */
 static func_ptr __do_global_dtors_aux_fini_array_entry[]
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+  __attribute__ ((__used__, section(".fini_array")))
+#else
   __attribute__ ((__unused__, section(".fini_array")))
+#endif
+/* LLVM LOCAL end */
   = { __do_global_dtors_aux };
 #endif /* !defined(FINI_SECTION_ASM_OP) */
 
@@ -378,7 +398,13 @@ frame_dummy (void)
 CRT_CALL_STATIC_FUNCTION (INIT_SECTION_ASM_OP, frame_dummy)
 #else /* defined(INIT_SECTION_ASM_OP) */
 static func_ptr __frame_dummy_init_array_entry[]
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+  __attribute__ ((__used__, section(".init_array")))
+#else
   __attribute__ ((__unused__, section(".init_array")))
+#endif  
+/* LLVM LOCAL end */
   = { frame_dummy };
 #endif /* !defined(INIT_SECTION_ASM_OP) */
 #endif /* USE_EH_FRAME_REGISTRY || JCR_SECTION_NAME */
@@ -486,7 +512,16 @@ CTOR_LIST_END;
 #elif defined(CTORS_SECTION_ASM_OP)
 /* Hack: force cc1 to switch to .data section early, so that assembling
    __CTOR_LIST__ does not undo our behind-the-back change to .ctors.  */
-static func_ptr force_to_data[1] __attribute__ ((__unused__)) = { };
+static func_ptr force_to_data[1] 
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+__attribute__ ((__used__)) 
+#else
+__attribute__ ((__unused__)) 
+#endif  
+/* LLVM LOCAL end */
+= { };
+
 asm (CTORS_SECTION_ASM_OP);
 STATIC func_ptr __CTOR_END__[1]
 /* LLVM LOCAL begin */
@@ -548,16 +583,30 @@ typedef short int32;
 #  error "Missing a 4 byte integer"
 # endif
 STATIC EH_FRAME_SECTION_CONST int32 __FRAME_END__[]
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+     __attribute__ ((used, section(EH_FRAME_SECTION_NAME),
+		     aligned(sizeof(int32))))
+#else
      __attribute__ ((unused, section(EH_FRAME_SECTION_NAME),
 		     aligned(sizeof(int32))))
+#endif  
+/* LLVM LOCAL end */
      = { 0 };
 #endif /* EH_FRAME_SECTION_NAME */
 
 #ifdef JCR_SECTION_NAME
 /* Null terminate the .jcr section array.  */
 STATIC void *__JCR_END__[1] 
+/* LLVM LOCAL begin */
+#ifdef __llvm__
+   __attribute__ ((used, section(JCR_SECTION_NAME),
+		   aligned(sizeof(void *))))
+#else
    __attribute__ ((unused, section(JCR_SECTION_NAME),
 		   aligned(sizeof(void *))))
+#endif
+/* LLVM LOCAL end */  
    = { 0 };
 #endif /* JCR_SECTION_NAME */
 

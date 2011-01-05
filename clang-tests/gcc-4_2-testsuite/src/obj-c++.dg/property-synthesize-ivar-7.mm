@@ -18,7 +18,7 @@
 @interface Test7Sub : Test7 @end
 
 @implementation Test7Sub
--(int)method { return prop; } /* { dg-error "instance variable \\'prop\\' is declared private" } */
+-(int)method { return prop; } /* { dg-error "instance variable \\'prop\\' is private" } */
 @end
 
 #endif

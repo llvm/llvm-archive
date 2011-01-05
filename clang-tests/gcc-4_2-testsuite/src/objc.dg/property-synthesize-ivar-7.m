@@ -18,9 +18,7 @@
 @interface Test7Sub : Test7 @end
 
 @implementation Test7Sub
--(int)method { return prop; } /* { dg-error "instance variable \\'prop\\' is declared private" } */
-			      /* { dg-error "\\(Each undeclared identifier is reported only once" "" { target *-*-* } 21 } */
-			      /* { dg-error "for each function it appears in.\\)" "" { target *-*-* } 21 } */
+-(int)method { return prop; } /* { dg-error "instance variable \\'prop\\' is private" } */
 @end
 
 #endif

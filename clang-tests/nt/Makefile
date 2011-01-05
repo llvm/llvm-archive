@@ -68,7 +68,7 @@ ARM_SYSROOT = $(shell /Developer/usr/bin/xcodebuild -version -sdk $(ARM_SDK_NAME
 NT.ARM_COMMON_FLAGS = \
 	--isysroot $(ARM_SYSROOT) \
 	--cflag -miphoneos-version-min=4.0 --cflag -Wl,--no-demangle \
-	--remote --remote-host=localhost --remote-user=mobile --remote-port=2022 \
+	--remote --remote-host=localhost --remote-user=mobile --remote-port=3022 \
 	--disable-cxx
 
 NT.FLAGS.armv7.thumb = \

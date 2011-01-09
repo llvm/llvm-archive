@@ -205,6 +205,14 @@ extern "C" {
 	_Unwind_Control_Block *, struct _Unwind_Context *, void *);
   _Unwind_Reason_Code _Unwind_ForcedUnwind (_Unwind_Control_Block *,
 					    _Unwind_Stop_Fn, void *);
+  /* LLVM LOCAL begin mainline */
+  /* @@@ Use unwind data to perform a stack backtrace.  The trace callback
+     is called for every stack frame in the call chain, but no cleanup
+     actions are performed.  */
+  typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn) (_Unwind_Context *, void *);
+  _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn,
+					void*);
+/* LLVM LOCAL end mainline */
   _Unwind_Word _Unwind_GetCFA (struct _Unwind_Context *);
   void _Unwind_Complete(_Unwind_Control_Block *ucbp);
   void _Unwind_DeleteException (_Unwind_Exception *);

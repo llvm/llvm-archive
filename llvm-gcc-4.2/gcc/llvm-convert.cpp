@@ -39,7 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -185,7 +185,7 @@ TreeToLLVM::TreeToLLVM(tree fndecl) :
   }
 
   AllocaInsertionPoint = 0;
-  GreatestAlignment = TheTarget->getFrameInfo()->getStackAlignment();
+  GreatestAlignment = TheTarget->getFrameLowering()->getStackAlignment();
   SeenVLA = NULL;
 
   CatchAll = 0;
@@ -862,7 +862,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
   // alignment, output a warning.  This is here so we don't warn every time
   // we see a variable.
   if (SeenVLA &&
-      GreatestAlignment > TheTarget->getFrameInfo()->getStackAlignment())
+      GreatestAlignment > TheTarget->getFrameLowering()->getStackAlignment())
       warning (0, "alignment for %q+D conflicts with a dynamically realigned "
                   "stack", SeenVLA);
 #endif

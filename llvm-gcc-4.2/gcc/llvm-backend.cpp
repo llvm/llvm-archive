@@ -311,10 +311,11 @@ void writeLLVMValues() {
   Constant *LLVMValuesTable = ConstantStruct::get(Context, ValuesForPCH, false);
 
   // Create variable to hold this string table.
-  new GlobalVariable(*TheModule, LLVMValuesTable->getType(), true,
-                     GlobalValue::ExternalLinkage,
-                     LLVMValuesTable,
-                     "llvm.pch.values");
+  GlobalVariable *GV = new GlobalVariable(*TheModule, LLVMValuesTable->getType(),
+					  true, GlobalValue::ExternalLinkage,
+					  LLVMValuesTable,
+					  "llvm.pch.values");
+  GV->setUnnamedAddr(true);
 
   if (TheDebugInfo && TheDebugInfo->getCU().Verify()) {
     NamedMDNode *NMD = TheModule->getOrInsertNamedMetadata("llvm.dbg.pch.cu");
@@ -866,9 +867,10 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   }
   Constant *Array = ConstantArray::get(
     ArrayType::get(InitList[0]->getType(), InitList.size()), InitList);
-  new GlobalVariable(*TheModule, Array->getType(), false,
-                     GlobalValue::AppendingLinkage,
-                     Array, Name);
+  GlobalVariable *GV = new GlobalVariable(*TheModule, Array->getType(), false,
+					  GlobalValue::AppendingLinkage,
+					  Array, Name);
+  GV->setUnnamedAddr(true);
 }
 
 /// llvm_asm_file_end - Finish the .s file.
@@ -948,6 +950,7 @@ void llvm_asm_file_end(void) {
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
                                          GlobalValue::AppendingLinkage, Init,
                                          "llvm.used");
+    gv->setUnnamedAddr(true);
     gv->setSection("llvm.metadata");
     AttributeUsedGlobals.clear();
   }
@@ -967,6 +970,7 @@ void llvm_asm_file_end(void) {
     GlobalValue *gv = new GlobalVariable(*TheModule, AT, false,
                                          GlobalValue::AppendingLinkage, Init,
                                          "llvm.compiler.used");
+    gv->setUnnamedAddr(true);
     gv->setSection("llvm.metadata");
     AttributeCompilerUsedGlobals.clear();
   }
@@ -980,6 +984,7 @@ void llvm_asm_file_end(void) {
     GlobalValue *gv = new GlobalVariable(*TheModule, Array->getType(), false,
                                          GlobalValue::AppendingLinkage, Array,
                                          "llvm.global.annotations");
+    gv->setUnnamedAddr(true);
     gv->setSection("llvm.metadata");
     AttributeAnnotateGlobals.clear();
   }
@@ -1235,6 +1240,7 @@ Constant* ConvertMetadataStringToGV(const char *str) {
                                           GlobalVariable::PrivateLinkage,
                                           Init, ".str");
   GV->setSection("llvm.metadata");
+  GV->setUnnamedAddr(true);
   Slot = GV;
   return GV;
   
@@ -1313,6 +1319,7 @@ void reset_initializer_llvm(tree decl) {
 
   // Set the initializer.
   GV->setInitializer(Init);
+  GV->setUnnamedAddr(true);
 }
   
 /// reset_type_and_initializer_llvm - Change the type and initializer for 
@@ -1333,6 +1340,7 @@ void reset_type_and_initializer_llvm(tree decl) {
 
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
   GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
+  GV->setUnnamedAddr(true);
 
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
@@ -1347,6 +1355,7 @@ void reset_type_and_initializer_llvm(tree decl) {
                                              GV->isConstant(),
                                              GV->getLinkage(), 0,
                                              GV->getName());
+    NGV->setUnnamedAddr(true);
     NGV->setVisibility(GV->getVisibility());
     NGV->setSection(GV->getSection());
     NGV->setAlignment(GV->getAlignment());
@@ -1360,6 +1369,7 @@ void reset_type_and_initializer_llvm(tree decl) {
 
   // Set the initializer.
   GV->setInitializer(Init);
+  GV->setUnnamedAddr(true);
 }
   
 /// emit_global_to_llvm - Emit the specified VAR_DECL or aggregate CONST_DECL to
@@ -1411,6 +1421,7 @@ void emit_global_to_llvm(tree decl) {
     // this can happen for things like void *G = &G;
     //
     GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
+    GV->setUnnamedAddr(true);
     Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
   }
 
@@ -1424,6 +1435,7 @@ void emit_global_to_llvm(tree decl) {
                                              GV->isConstant(),
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName());
+    NGV->setUnnamedAddr(true);
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
     changeLLVMConstant(GV, NGV);
     delete GV;
@@ -1433,6 +1445,7 @@ void emit_global_to_llvm(tree decl) {
  
   // Set the initializer.
   GV->setInitializer(Init);
+  GV->setUnnamedAddr(true);
 
   // Set thread local (TLS)
   if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL_P(decl))
@@ -1734,6 +1747,7 @@ void make_decl_llvm(tree decl) {
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 
                               GlobalValue::ExternalLinkage, 0, "");
+      GV->setUnnamedAddr(true);
 
       // Check for external weak linkage.
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))

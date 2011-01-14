@@ -208,6 +208,7 @@ void writeLLVMTypesStringTable() {
                                           GlobalValue::ExternalLinkage, 
                                           LTypesNameTable,
                                           "llvm.pch.types");
+  GV->setUnnamedAddr(true);
 }
 
 //===----------------------------------------------------------------------===//

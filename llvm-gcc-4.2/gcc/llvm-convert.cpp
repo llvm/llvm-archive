@@ -2174,6 +2174,7 @@ void TreeToLLVM::CreateExceptionValues() {
     CatchAll = new GlobalVariable(*TheModule, Init->getType(), true,
                                   GlobalVariable::LinkOnceAnyLinkage,
                                   Init, "llvm.eh.catch.all.value");
+    CatchAll->setUnnamedAddr(true);
     CatchAll->setSection("llvm.metadata");
     AttributeUsedGlobals.insert(CatchAll);
   }
@@ -8747,6 +8748,7 @@ Constant *TreeConstantToLLVM::EmitLV_COMPLEX_CST(tree exp) {
   // Create a new complex global.
   Slot = new GlobalVariable(*TheModule, Init->getType(), true,
                             GlobalVariable::PrivateLinkage, Init, ".cpx");
+  Slot->setUnnamedAddr(true);
   return Slot;
 }
 
@@ -8781,6 +8783,7 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
   GlobalVariable *GV = new GlobalVariable(*TheModule, Init->getType(),
                                           StringIsConstant, Linkage, Init,
                                           ".str");
+  GV->setUnnamedAddr(true);
   GV->setAlignment(get_constant_alignment(exp) / 8);
 
   if (SlotP) *SlotP = GV;

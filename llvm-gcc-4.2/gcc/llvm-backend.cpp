@@ -1169,6 +1169,7 @@ void emit_alias_to_llvm(tree decl, tree target, tree target_decl) {
                                      AliaseeName, TheModule);
         else
           assert(0 && "Unsuported global value");
+        Aliasee->setUnnamedAddr(true);
       } else {
         error ("%J%qD aliased to undefined symbol %qs", decl, decl, AliaseeName);
         timevar_pop(TV_LLVM_GLOBALS);
@@ -1767,6 +1768,7 @@ void make_decl_llvm(tree decl) {
         GV = new GlobalVariable(*TheModule, Ty, false,
                                 GlobalValue::ExternalLinkage, 0, Name);
 
+        GV->setUnnamedAddr(true);
         // Check for external weak linkage.
         if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
           GV->setLinkage(GlobalValue::ExternalWeakLinkage);

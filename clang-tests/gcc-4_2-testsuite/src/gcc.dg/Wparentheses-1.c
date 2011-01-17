@@ -9,7 +9,7 @@
 int foo (int a, int b)
 {
   int c = (a && b) || 0;	/* { dg-bogus "suggest parentheses" }  */
-  c = a && b || 0;		/* { dg-warning "suggest parentheses" }  */
+  c = a && b || 0;		/* { dg-error "note" } */
 
   return (a && b && 1) || 0;	/* { dg-bogus "suggest parentheses" }  */
 }

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2" } */
+/* { dg-options "-O2 -fno-strict-aliasing" } */
 /* { dg-final { scan-assembler "dont_delete" } } */
 
 typedef struct { int x; } __attribute__((may_alias)) S;

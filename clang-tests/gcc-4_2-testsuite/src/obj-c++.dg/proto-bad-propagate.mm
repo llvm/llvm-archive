@@ -3,7 +3,7 @@
    in a declaration results in inability to cast a Foo-derived classes to Foo (due to 
    warning) afterwards.
 */
-/* { dg-options "-Wall -Werror" } */
+/* { dg-options "-Wall -Werror -Wno-self-assign" } */
 /* { dg-do compile } */
 
 #import <Foundation/Foundation.h>

@@ -9,7 +9,7 @@ void nonweakfofo() {
 }
 
 void weakfofo() {
-  __block __weak void (^weakSelf)();
+  __block void (__weak ^weakSelf)();
 }
 
 /* { dg-final { scan-assembler "151" } } */

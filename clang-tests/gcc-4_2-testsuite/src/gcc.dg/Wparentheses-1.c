@@ -8,8 +8,8 @@
 
 int foo (int a, int b)
 {
-  int c = (a && b) || 0;	/* { dg-bogus "suggest parentheses" }  */
-  c = a && b || 0;		/* { dg-error "note" } */
+  int c = (a && b) || 0;	
+  c = a && b || 0;
 
-  return (a && b && 1) || 0;	/* { dg-bogus "suggest parentheses" }  */
+  return (a && b && 1) || 0;
 }

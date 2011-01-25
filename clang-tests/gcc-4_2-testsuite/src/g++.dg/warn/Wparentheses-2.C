@@ -34,7 +34,7 @@ bar (void)
   do foo (9); while (a &= a);
   for (;c ^= b;)
     foo (10);
-  for (;c |= c;)
+  for (;(c |= c);)
     foo (11);
   d = a += b;
   foo (12);

@@ -424,6 +424,15 @@ void llvm_initialize_backend(void) {
     ArgStrings.push_back(Arg);
   }
 
+  // LLVM doesn't implement -freorder-blocks, but we can make tail-dup more
+  // aggressive as a poor man's block reordering.
+  // Tail-merge-size should always be at least one above tail-dup-size so they
+  // won't pull in opposite directions.
+  if (flag_reorder_blocks) {
+    ArgStrings.push_back("--tail-dup-size=5");
+    ArgStrings.push_back("--tail-merge-size=6");
+  }
+
   if (flag_limited_precision > 0) {
     std::string Arg("--limit-float-precision="+utostr(flag_limited_precision));
     ArgStrings.push_back(Arg);

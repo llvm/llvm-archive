@@ -510,7 +510,12 @@ void set_flags_from_O (unsigned int cmdline)
       if (cmdline) flag_strict_aliasing = 1;
       flag_strict_overflow = 1;
       flag_delete_null_pointer_checks = 1;
+      /* LLVM LOCAL begin */
+#ifndef ENABLE_LLVM
+      /* Don't enable -freorder-blocks by default for LLVM. 8935026 */
       flag_reorder_blocks = 1;
+#endif
+      /* LLVM LOCAL end */
       /* APPLE LOCAL optimization pragmas 3124235/3420242 */
       if (cmdline) flag_reorder_functions = 1;
       flag_tree_store_ccp = 1;

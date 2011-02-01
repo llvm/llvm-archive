@@ -35,6 +35,9 @@ INSTALL=install            # Where the result will be installed.
 unset CFLAGS
 unset CXXFLAGS
 
+export PATH=/opt/local/bin:/opt/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH=$PATH:/mingw_build_tools/install_with_gcc/bin
+
 BUILD_ROOT=$PWD                           # Where build happens.
 PRIVATE_INSTALL=${BUILD_ROOT}/${INSTALL}  # Where the result will be installed.
 
@@ -46,7 +49,6 @@ PRIVATE_INSTALL=${BUILD_ROOT}/${INSTALL}  # Where the result will be installed.
 do_clean=no                # Clean up the build directory.
 do_configure_llvm=no       # Configure LLVM.
 do_make_llvm=no            # Make LLVM.
-do_test_llvm=no            # Test LLVM.
 do_configure_llvmgcc=no    # Configure LLVM-GCC.
 do_make_llvmgcc=no         # Make LLVM-GCC.
 do_install_llvmgcc=no      # Install LLVM-GCC.
@@ -63,7 +65,6 @@ if (( ! $# == 0 )) ; then
       clean             |  \
       configure_llvm    |  \
       make_llvm         |  \
-      test_llvm         |  \
       configure_llvmgcc |  \
       make_llvmgcc      |  \
       install_llvmgcc   |  \
@@ -83,7 +84,6 @@ if [ "$do_all" == "yes" ] ; then
    do_clean=yes
    do_configure_llvm=yes
    do_make_llvm=yes
-   do_test_llvm=yes
    do_configure_llvmgcc=yes
    do_make_llvmgcc=yes
    do_install_llvmgcc=yes
@@ -127,17 +127,6 @@ if [ "$do_make_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
    nice -n 20 make VERBOSE=1 \
-      $@  # Extra args if any, like -j16 for example.
-
-fi
-
-#------------------------------------------------------------------------------
-# Step: Test LLVM.
-#------------------------------------------------------------------------------
-if [ "$do_test_llvm" == "yes" ] ; then
-
-   cd ${BUILD_ROOT}/${LLVM_obj}
-   make check-lit VERBOSE=1  \
       $@  # Extra args if any, like -j16 for example.
 
 fi

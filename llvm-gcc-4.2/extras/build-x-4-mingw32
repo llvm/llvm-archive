@@ -38,6 +38,9 @@ unset CXXFLAGS
 BUILD_ROOT=$PWD                           # Where build happens.
 PRIVATE_INSTALL=${BUILD_ROOT}/${INSTALL}  # Where the result will be installed.
 
+export PATH=/opt/local/bin:/opt/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH=$PATH:/mingw_build_tools/install_with_gcc/bin
+
 #------------------------------------------------------------------------------
 # Define build steps, parse and validate input parameters
 #------------------------------------------------------------------------------
@@ -48,7 +51,6 @@ do_copy_cross_tools=no     # Copy cross-tools.
 do_configure_llvm=no       # Configure LLVM.
 do_make_llvm=no            # Make LLVM.
 do_test_llvm=no            # Test LLVM.
-do_cross_tools=no          # Copy cross-tools. Deprecated. Use copy_cross_tools instead.
 do_configure_llvmgcc=no    # Configure LLVM-GCC.
 do_make_llvmgcc=no         # Make LLVM-GCC.
 do_install_llvmgcc=no      # Install LLVM-GCC.
@@ -67,13 +69,12 @@ if (( ! $# == 0 )) ; then
       configure_llvm    |  \
       make_llvm         |  \
       test_llvm         |  \
-      cross_tools       |  \
       configure_llvmgcc |  \
       make_llvmgcc      |  \
       install_llvmgcc   |  \
       all)
          eval do_$1=yes    # Set the flag for the requested step .
-         shift             # Remove it since is is ours and already precessed.
+         shift             # Remove it since it is ours and already precessed.
          ;;
 
       *)
@@ -92,11 +93,6 @@ if [ "$do_all" == "yes" ] ; then
    do_configure_llvmgcc=yes
    do_make_llvmgcc=yes
    do_install_llvmgcc=yes
-fi
-
-# Handle deprecated steps.
-if [ "$do_cross_tools" == "yes" ] ; then
-   do_copy_cross_tools=yes
 fi
 
 #------------------------------------------------------------------------------
@@ -118,7 +114,7 @@ if [ "$do_copy_cross_tools" == "yes" ] ; then
 
    # We need a local copy of binutils, system libraries and headers,
    # since we will be installing there.
-   cp -RL /cross-tools/ ${PRIVATE_INSTALL}
+   cp -RL /mingw_build_tools/install_with_gcc/ ${PRIVATE_INSTALL}
 
 fi
 

@@ -3,8 +3,8 @@
 // 981203 bkoz
 // g++/15309
 
-class bermuda {  // { dg-warning "" } // WARNING -
+class bermuda {
 public:
   virtual int func1(int); 
-  ~bermuda();
+  ~bermuda();	// { dg-warning "'bermuda' has virtual functions but non-virtual destructor" }
 };

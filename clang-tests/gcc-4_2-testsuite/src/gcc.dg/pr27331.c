@@ -36,7 +36,7 @@ constrain_operands (insn_code_num, strict)
       while (*p && (c = *p++) != ',')
 	funny_match[funny_match_index++].other = c - '0';
 
-      if ((((recog_operand[opno])->code) == 12))
+      if (((recog_operand[opno])->code) == 12)
 	lose = 1;
 
       if (!lose)

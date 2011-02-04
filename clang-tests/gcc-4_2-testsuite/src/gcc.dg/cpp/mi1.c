@@ -16,20 +16,14 @@
    { dg-error "mi1c\.h\n\[^\n\]*mi1cc\.h\n\[^\n\]*mi1nd\.h\n\[^\n\]*mi1ndp\.h\n\[^\n\]*mi1x\.h" "redundant include check" { target *-*-* } 0 } */
 
 #include "mi1c.h"
-#include "mi1c.h"
-#include "mi1c.h"
 
-#include "mi1cc.h"
 #include "mi1cc.h"
 
 #include "mi1nd.h"
-#include "mi1nd.h"
 
-#include "mi1ndp.h"
 #include "mi1ndp.h"
 
 #define MIX_H
-#include "mi1x.h"
 #include "mi1x.h"
 
 int

@@ -1,4 +1,4 @@
-// { dg-do assemble  }
+// { dg-options "-Wno-empty-body" }
 // GROUPS passed rtti
 // Negative testcase for decls in conditions.
 
@@ -6,31 +6,32 @@ int main()
 {
   float i;
   
-  if (int i = 1)		// { dg-error "" "" { xfail *-*-* } } , 
+  if (int i = 1)		// { dg-error "previous definition is here" } 
+                                // { dg-error "" "" { target *-*-* } 9 }
     {
-      char i;			// { dg-error "" "" { xfail *-*-* } } , 
+      char i;			// { dg-error "" } 
       char j;
     }
   else
     {
-      short i;			// { dg-error "" "" { xfail *-*-* } } , 
+      short i;			// { dg-error "" } 
       char j;
     }
 
-  while (int i = 0)		// { dg-error "" }
+  while (int i = 0)		// { dg-error "previous definition is here" }
     {
       int i;			// { dg-error "" }
     }
 
-  for (; int i = 0; )		// { dg-error "" }
+  for (; int i = 0; )		// { dg-error "previous definition is here" }
     {
       int i;			// { dg-error "" }
     }
 
-  switch (int i = 0)		// { dg-error "" "" { xfail *-*-* } } 
+  switch (int i = 0)		// { dg-error "previous definition is here" } 
     {
     default:
-      int i;			// { dg-error "" "" { xfail *-*-* } } 
+      int i;			// { dg-error "redefinition of 'i'" } 
     }
 
   if (struct A { operator int () { return 1; } } *foo = new A) // { dg-error "" } 
@@ -50,6 +51,9 @@ int main()
     ;
   
   if (int a[2] = {1, 2})	// { dg-error "" } 
+                                // { dg-error "" "" { target *-*-* } 53 }
+                                // { dg-error "" "" { target *-*-* } 53 }
+                                // { dg-error "" "" { target *-*-* } 53 }
     ;
 
 }

@@ -9,4 +9,4 @@
 // invalid operands `foo' and `int' to binary `operator !='
 
 class foo {} bar;
-int i = void(bar) ? 1 : 0; // { dg-bogus "" "" { xfail *-*-* } }  - operator!= - 
+int i = void(bar) ? 1 : 0; // { dg-error "value of type 'void' is not contextually convertible to 'bool'" }

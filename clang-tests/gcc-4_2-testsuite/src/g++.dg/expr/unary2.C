@@ -8,13 +8,13 @@ int n;
 
 void f(void)
 {
-  -n = 0;        // { dg-error "lvalue" }
-  +n = 0;        // { dg-error "lvalue" }
+  -n = 0;        // { dg-error "expression is not assignable" }
+  +n = 0;        // { dg-error "expression is not assignable" }
 }
 
 template <int>
 void g(void)
 {
-  -n = 0;        // { dg-error "lvalue" "" { xfail *-*-* } }
-  +n = 0;        // { dg-error "lvalue" "" { xfail *-*-* } }
+  -n = 0;        // { dg-error "expression is not assignable" }
+  +n = 0;        // { dg-error "expression is not assignable" }
 }

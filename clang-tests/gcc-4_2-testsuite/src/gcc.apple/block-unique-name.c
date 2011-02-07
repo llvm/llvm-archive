@@ -20,8 +20,8 @@ int main(void)
         return 0;
 }
 /* { dg-final { scan-assembler "___main_block_invoke_0" } } */
-/* { dg-final { scan-assembler "___main_block_invoke_06" } } */
+/* { dg-final { scan-assembler "___main_block_invoke_010" } } */
 /* { dg-final { scan-assembler "___DOO_block_invoke_0" } } */
-/* { dg-final { scan-assembler "___DOO_block_invoke_02" } } */
+/* { dg-final { scan-assembler "___DOO_block_invoke_03" } } */
 
 

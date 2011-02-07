@@ -7,14 +7,14 @@ struct moo_t {
   struct cow_t {};
 };
 
-template<class T> void foo(typename moo_t<T>::cow_t) {}
+template<class T> void foo(typename moo_t<T>::cow_t) {} // { dg-error "candidate template ignored: couldn't infer" }
 
-template<class T> void foo(moo_t<T>) {
+template<class T> void foo(moo_t<T>) { // { dg-error "candidate template ignored: failed template argument deduction" }
   typename moo_t<T>::cow_t p;
-  foo(p); // { dg-bogus "" "" { xfail *-*-* } }  - no matching function for call - 
+  foo(p); // { dg-error "no matching function for call to 'foo'" }
 }
 
 int main() {
   moo_t<int> x;
-  foo(x); // { dg-bogus "" "" { xfail *-*-* } }  - instantiated from here - 
+  foo(x); // { dg-error "in instantiation of function template specialization" }
 }

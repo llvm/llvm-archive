@@ -8,20 +8,20 @@
 template <class T> struct A : T {
   void h(T t) {
     f(t);
-    g(t);     // { dg-error "" "" { xfail *-*-* } }
+    g(t);     // { dg-error "use of undeclared identifier" }
   }
 };
 
 struct B {
   void f(B);
-  void g(B) {};
+  void g(B) {}; // { dg-error "must qualify identifier to find this declaration in dependent base class" }
 };
 
 void f(B) {}
 
 int main()
 {
-  A<B> ab;   // { dg-error "" "" { xfail *-*-* } }
+  A<B> ab;
   B b;
-  ab.h(b);
+  ab.h(b); // { dg-error "in instantiation of member function" }
 }

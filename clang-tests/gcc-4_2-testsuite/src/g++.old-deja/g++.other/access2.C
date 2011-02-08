@@ -4,9 +4,9 @@
 class Outer {
   typedef int T;
   struct Inner {
-    T i; // { dg-error "" "" { xfail *-*-* } } not accessible - 
+    T i; 
     void f() {
-      T j; // { dg-error "" "" { xfail *-*-* } } not accessible - 
+      T j; 
     }
   };
 };

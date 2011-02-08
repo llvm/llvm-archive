@@ -39,7 +39,7 @@ int main()
 
   A bar;			// { dg-error "" } 
   
-  if (enum A { one, two, three } foo = one) // { dg-error "" } 
+  if (enum A { one, two, three } foo = one) // { dg-error "types may not be defined in conditions" } 
     ;
 
   struct B { operator int () { return 2; } };
@@ -50,7 +50,7 @@ int main()
   if (int f () = 1)		// { dg-error "" } 
     ;
   
-  if (int a[2] = {1, 2})	// { dg-error "" } 
+  if (int a[2] = {1, 2})	// { dg-error "expected expression" } 
                                 // { dg-error "" "" { target *-*-* } 53 }
                                 // { dg-error "" "" { target *-*-* } 53 }
                                 // { dg-error "" "" { target *-*-* } 53 }

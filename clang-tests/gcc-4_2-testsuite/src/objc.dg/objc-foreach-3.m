@@ -10,6 +10,7 @@ typedef struct objc_object {
  Class isa;
 } *id;
 
+struct __objcFastEnumerationState;
 
 @interface MyList 
 @end

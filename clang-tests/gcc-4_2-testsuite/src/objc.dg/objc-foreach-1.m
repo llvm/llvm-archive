@@ -11,6 +11,8 @@ typedef struct objc_object {
 } *id;
 
 
+struct __objcFastEnumerationState;
+
 @interface MyList 
 @end
 

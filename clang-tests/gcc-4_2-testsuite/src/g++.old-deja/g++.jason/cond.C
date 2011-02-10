@@ -7,7 +7,6 @@ int main()
   float i;
   
   if (int i = 1)		// { dg-error "previous definition is here" } 
-                                // { dg-error "" "" { target *-*-* } 9 }
     {
       char i;			// { dg-error "" } 
       char j;
@@ -51,8 +50,6 @@ int main()
     ;
   
   if (int a[2] = {1, 2})	// { dg-error "expected expression" } 
-                                // { dg-error "" "" { target *-*-* } 53 }
-                                // { dg-error "" "" { target *-*-* } 53 }
                                 // { dg-error "" "" { target *-*-* } 53 }
     ;
 

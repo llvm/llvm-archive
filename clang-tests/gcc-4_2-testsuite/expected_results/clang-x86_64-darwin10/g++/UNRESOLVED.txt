@@ -6,7 +6,4 @@ g++.dg/ext/align2.C: error executing dg-final: couldn't open "align2.s": no such
 g++.dg/ext/align3.C: error executing dg-final: couldn't open "align3.s": no such file or directory
 g++.dg/ext/align4.C: error executing dg-final: couldn't open "align4.s": no such file or directory
 g++.dg/ext/asm1.C: error executing dg-final: couldn't open "asm1.s": no such file or directory
-g++.dg/ext/attrib10.C
-g++.dg/ext/weak1.C
 g++.dg/opt/nothrow1.C: error executing dg-final: no files matched glob pattern "nothrow1.C.[0-9][0-9][0-9][ti].optimized"
-g++.old-deja/g++.ext/attrib5.C

@@ -1,0 +1,51 @@
+objc.dg/dwarf-1.m: error executing dg-final: couldn't open "dwarf-1.s": no such file or directory
+objc.dg/dwarf-prototypes.m: error executing dg-final: couldn't open "dwarf-prototypes.s": no such file or directory
+objc.dg/objc-fpret-64bit-1.m: error executing dg-final: couldn't open "objc-fpret-64bit-1.s": no such file or directory
+objc/execute/nested-1.m execution,  -O0  -fnext-runtime
+objc/execute/nested-1.m execution,  -O1  -fnext-runtime
+objc/execute/nested-1.m execution,  -O2  -fnext-runtime
+objc/execute/nested-1.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/nested-1.m execution,  -O3 -g  -fnext-runtime
+objc/execute/nested-1.m execution,  -Os  -fnext-runtime
+objc/execute/nested-2.m execution,  -O0  -fnext-runtime
+objc/execute/nested-2.m execution,  -O1  -fnext-runtime
+objc/execute/nested-2.m execution,  -O2  -fnext-runtime
+objc/execute/nested-2.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/nested-2.m execution,  -O3 -g  -fnext-runtime
+objc/execute/nested-2.m execution,  -Os  -fnext-runtime
+objc/execute/nested-3.m execution,  -O0  -fnext-runtime
+objc/execute/nested-3.m execution,  -O1  -fnext-runtime
+objc/execute/nested-3.m execution,  -O2  -fnext-runtime
+objc/execute/nested-3.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/nested-3.m execution,  -O3 -g  -fnext-runtime
+objc/execute/nested-3.m execution,  -Os  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -O0  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -O1  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -O2  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -O3 -g  -fnext-runtime
+objc/execute/nested-func-1.m execution,  -Os  -fnext-runtime
+objc/execute/string1.m execution,  -O0  -fnext-runtime
+objc/execute/string1.m execution,  -O1  -fnext-runtime
+objc/execute/string1.m execution,  -O2  -fnext-runtime
+objc/execute/string1.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/string1.m execution,  -O3 -g  -fnext-runtime
+objc/execute/string1.m execution,  -Os  -fnext-runtime
+objc/execute/string2.m execution,  -O0  -fnext-runtime
+objc/execute/string2.m execution,  -O1  -fnext-runtime
+objc/execute/string2.m execution,  -O2  -fnext-runtime
+objc/execute/string2.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/string2.m execution,  -O3 -g  -fnext-runtime
+objc/execute/string2.m execution,  -Os  -fnext-runtime
+objc/execute/string3.m execution,  -O0  -fnext-runtime
+objc/execute/string3.m execution,  -O1  -fnext-runtime
+objc/execute/string3.m execution,  -O2  -fnext-runtime
+objc/execute/string3.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/string3.m execution,  -O3 -g  -fnext-runtime
+objc/execute/string3.m execution,  -Os  -fnext-runtime
+objc/execute/string4.m execution,  -O0  -fnext-runtime
+objc/execute/string4.m execution,  -O1  -fnext-runtime
+objc/execute/string4.m execution,  -O2  -fnext-runtime
+objc/execute/string4.m execution,  -O3 -fomit-frame-pointer  -fnext-runtime
+objc/execute/string4.m execution,  -O3 -g  -fnext-runtime
+objc/execute/string4.m execution,  -Os  -fnext-runtime

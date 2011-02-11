@@ -1,0 +1,485 @@
+gcc.apple/4172200.c: error executing dg-final: couldn't open "4172200.s": no such file or directory
+gcc.apple/asm-block-53.c: error executing dg-final: couldn't open "asm-block-53.s": no such file or directory
+gcc.apple/asm-block-60.c: error executing dg-final: couldn't open "asm-block-60.s": no such file or directory
+gcc.apple/asm-block-66.c: error executing dg-final: couldn't open "asm-block-66.s": no such file or directory
+gcc.apple/i386-builtin-shufps.c: error executing dg-final: couldn't open "i386-builtin-shufps.s": no such file or directory
+gcc.apple/r6292557.c: error executing dg-final: couldn't open "r6292557.s": no such file or directory
+gcc.apple/ucn-1.c: error executing dg-final: couldn't open "ucn-1.s": no such file or directory
+gcc.c-torture/execute/20000822-1.c execution,  -O0 
+gcc.c-torture/execute/20000822-1.c execution,  -O1 
+gcc.c-torture/execute/20000822-1.c execution,  -O2 
+gcc.c-torture/execute/20000822-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20000822-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20000822-1.c execution,  -Os 
+gcc.c-torture/execute/20010209-1.c execution,  -O0 
+gcc.c-torture/execute/20010209-1.c execution,  -O1 
+gcc.c-torture/execute/20010209-1.c execution,  -O2 
+gcc.c-torture/execute/20010209-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20010209-1.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/20010209-1.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/20010209-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20010209-1.c execution,  -Os 
+gcc.c-torture/execute/20010605-1.c execution,  -O0 
+gcc.c-torture/execute/20010605-1.c execution,  -O1 
+gcc.c-torture/execute/20010605-1.c execution,  -O2 
+gcc.c-torture/execute/20010605-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20010605-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20010605-1.c execution,  -Os 
+gcc.c-torture/execute/20020412-1.c execution,  -O0 
+gcc.c-torture/execute/20020412-1.c execution,  -O1 
+gcc.c-torture/execute/20020412-1.c execution,  -O2 
+gcc.c-torture/execute/20020412-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20020412-1.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/20020412-1.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/20020412-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20020412-1.c execution,  -Os 
+gcc.c-torture/execute/20020720-1.c execution,  -O1 
+gcc.c-torture/execute/20020720-1.c execution,  -O2 
+gcc.c-torture/execute/20020720-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20020720-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20020720-1.c execution,  -Os 
+gcc.c-torture/execute/20030501-1.c execution,  -O0 
+gcc.c-torture/execute/20030501-1.c execution,  -O1 
+gcc.c-torture/execute/20030501-1.c execution,  -O2 
+gcc.c-torture/execute/20030501-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20030501-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20030501-1.c execution,  -Os 
+gcc.c-torture/execute/20040308-1.c execution,  -O0 
+gcc.c-torture/execute/20040308-1.c execution,  -O1 
+gcc.c-torture/execute/20040308-1.c execution,  -O2 
+gcc.c-torture/execute/20040308-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20040308-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20040308-1.c execution,  -Os 
+gcc.c-torture/execute/20040423-1.c execution,  -O0 
+gcc.c-torture/execute/20040423-1.c execution,  -O1 
+gcc.c-torture/execute/20040423-1.c execution,  -O2 
+gcc.c-torture/execute/20040423-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20040423-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20040423-1.c execution,  -Os 
+gcc.c-torture/execute/20040520-1.c execution,  -O0 
+gcc.c-torture/execute/20040520-1.c execution,  -O1 
+gcc.c-torture/execute/20040520-1.c execution,  -O2 
+gcc.c-torture/execute/20040520-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20040520-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20040520-1.c execution,  -Os 
+gcc.c-torture/execute/20041218-2.c execution,  -O0 
+gcc.c-torture/execute/20041218-2.c execution,  -O1 
+gcc.c-torture/execute/20041218-2.c execution,  -O2 
+gcc.c-torture/execute/20041218-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20041218-2.c execution,  -O3 -g 
+gcc.c-torture/execute/20041218-2.c execution,  -Os 
+gcc.c-torture/execute/20050107-1.c execution,  -O0 
+gcc.c-torture/execute/20050107-1.c execution,  -O1 
+gcc.c-torture/execute/20050107-1.c execution,  -O2 
+gcc.c-torture/execute/20050107-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20050107-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20050107-1.c execution,  -Os 
+gcc.c-torture/execute/20050119-1.c execution,  -O0 
+gcc.c-torture/execute/20050119-1.c execution,  -O1 
+gcc.c-torture/execute/20050119-1.c execution,  -O2 
+gcc.c-torture/execute/20050119-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20050119-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20050119-1.c execution,  -Os 
+gcc.c-torture/execute/20050119-2.c execution,  -O0 
+gcc.c-torture/execute/20050119-2.c execution,  -O1 
+gcc.c-torture/execute/20050119-2.c execution,  -O2 
+gcc.c-torture/execute/20050119-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20050119-2.c execution,  -O3 -g 
+gcc.c-torture/execute/20050119-2.c execution,  -Os 
+gcc.c-torture/execute/20051012-1.c execution,  -O1 
+gcc.c-torture/execute/20051012-1.c execution,  -O2 
+gcc.c-torture/execute/20051012-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20051012-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20051012-1.c execution,  -Os 
+gcc.c-torture/execute/20061220-1.c execution,  -O0 
+gcc.c-torture/execute/20061220-1.c execution,  -O1 
+gcc.c-torture/execute/20061220-1.c execution,  -O2 
+gcc.c-torture/execute/20061220-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/20061220-1.c execution,  -O3 -g 
+gcc.c-torture/execute/20061220-1.c execution,  -Os 
+gcc.c-torture/execute/920415-1.c execution,  -O0 
+gcc.c-torture/execute/920415-1.c execution,  -O1 
+gcc.c-torture/execute/920415-1.c execution,  -O2 
+gcc.c-torture/execute/920415-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920415-1.c execution,  -O3 -g 
+gcc.c-torture/execute/920415-1.c execution,  -Os 
+gcc.c-torture/execute/920428-2.c execution,  -O0 
+gcc.c-torture/execute/920428-2.c execution,  -O1 
+gcc.c-torture/execute/920428-2.c execution,  -O2 
+gcc.c-torture/execute/920428-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920428-2.c execution,  -O3 -g 
+gcc.c-torture/execute/920428-2.c execution,  -Os 
+gcc.c-torture/execute/920501-1.c execution,  -O1 
+gcc.c-torture/execute/920501-1.c execution,  -O2 
+gcc.c-torture/execute/920501-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920501-1.c execution,  -O3 -g 
+gcc.c-torture/execute/920501-1.c execution,  -Os 
+gcc.c-torture/execute/920501-7.c execution,  -O0 
+gcc.c-torture/execute/920501-7.c execution,  -O1 
+gcc.c-torture/execute/920501-7.c execution,  -O2 
+gcc.c-torture/execute/920501-7.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920501-7.c execution,  -O3 -g 
+gcc.c-torture/execute/920501-7.c execution,  -Os 
+gcc.c-torture/execute/920612-2.c execution,  -O0 
+gcc.c-torture/execute/920612-2.c execution,  -O1 
+gcc.c-torture/execute/920612-2.c execution,  -O2 
+gcc.c-torture/execute/920612-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920612-2.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/920612-2.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/920612-2.c execution,  -O3 -g 
+gcc.c-torture/execute/920612-2.c execution,  -Os 
+gcc.c-torture/execute/920721-4.c execution,  -O0 
+gcc.c-torture/execute/920721-4.c execution,  -O1 
+gcc.c-torture/execute/920721-4.c execution,  -O2 
+gcc.c-torture/execute/920721-4.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/920721-4.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/920721-4.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/920721-4.c execution,  -O3 -g 
+gcc.c-torture/execute/920721-4.c execution,  -Os 
+gcc.c-torture/execute/921017-1.c execution,  -O0 
+gcc.c-torture/execute/921017-1.c execution,  -O1 
+gcc.c-torture/execute/921017-1.c execution,  -O2 
+gcc.c-torture/execute/921017-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/921017-1.c execution,  -O3 -g 
+gcc.c-torture/execute/921017-1.c execution,  -Os 
+gcc.c-torture/execute/921208-2.c execution,  -O1 
+gcc.c-torture/execute/921208-2.c execution,  -O2 
+gcc.c-torture/execute/921208-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/921208-2.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/921208-2.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/921208-2.c execution,  -O3 -g 
+gcc.c-torture/execute/921208-2.c execution,  -Os 
+gcc.c-torture/execute/921215-1.c execution,  -O0 
+gcc.c-torture/execute/921215-1.c execution,  -O1 
+gcc.c-torture/execute/921215-1.c execution,  -O2 
+gcc.c-torture/execute/921215-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/921215-1.c execution,  -O3 -g 
+gcc.c-torture/execute/921215-1.c execution,  -Os 
+gcc.c-torture/execute/930406-1.c execution,  -O0 
+gcc.c-torture/execute/930406-1.c execution,  -O1 
+gcc.c-torture/execute/930406-1.c execution,  -O2 
+gcc.c-torture/execute/930406-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/930406-1.c execution,  -O3 -g 
+gcc.c-torture/execute/930406-1.c execution,  -Os 
+gcc.c-torture/execute/931002-1.c execution,  -O0 
+gcc.c-torture/execute/931002-1.c execution,  -O1 
+gcc.c-torture/execute/931002-1.c execution,  -O2 
+gcc.c-torture/execute/931002-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/931002-1.c execution,  -O3 -g 
+gcc.c-torture/execute/931002-1.c execution,  -Os 
+gcc.c-torture/execute/980526-1.c execution,  -O0 
+gcc.c-torture/execute/980526-1.c execution,  -O1 
+gcc.c-torture/execute/980526-1.c execution,  -O2 
+gcc.c-torture/execute/980526-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/980526-1.c execution,  -O3 -g 
+gcc.c-torture/execute/980526-1.c execution,  -Os 
+gcc.c-torture/execute/builtins/abs-2.c execution,  -O1 
+gcc.c-torture/execute/builtins/abs-2.c execution,  -O2 
+gcc.c-torture/execute/builtins/abs-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/abs-2.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/abs-2.c execution,  -Os 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -O0 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -O1 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -O2 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/abs-3.c execution,  -Os 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -O0 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -O1 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -O2 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/fprintf.c execution,  -Os 
+gcc.c-torture/execute/builtins/fputs.c execution,  -O0 
+gcc.c-torture/execute/builtins/fputs.c execution,  -O1 
+gcc.c-torture/execute/builtins/fputs.c execution,  -O2 
+gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/fputs.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/fputs.c execution,  -Os 
+gcc.c-torture/execute/builtins/memmove.c execution,  -O0 
+gcc.c-torture/execute/builtins/memmove.c execution,  -O1 
+gcc.c-torture/execute/builtins/memmove.c execution,  -O2 
+gcc.c-torture/execute/builtins/memmove.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/memmove.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/memmove.c execution,  -Os 
+gcc.c-torture/execute/builtins/printf.c execution,  -O0 
+gcc.c-torture/execute/builtins/printf.c execution,  -O1 
+gcc.c-torture/execute/builtins/printf.c execution,  -O2 
+gcc.c-torture/execute/builtins/printf.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/builtins/printf.c execution,  -O3 -g 
+gcc.c-torture/execute/builtins/printf.c execution,  -Os 
+gcc.c-torture/execute/comp-goto-2.c execution,  -O0 
+gcc.c-torture/execute/comp-goto-2.c execution,  -O1 
+gcc.c-torture/execute/comp-goto-2.c execution,  -O2 
+gcc.c-torture/execute/comp-goto-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/comp-goto-2.c execution,  -O3 -g 
+gcc.c-torture/execute/comp-goto-2.c execution,  -Os 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -O0 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -O1 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -O2 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -O3 -g 
+gcc.c-torture/execute/ieee/builtin-nan-1.c execution,  -Os 
+gcc.c-torture/execute/ieee/compare-fp-3.c execution,  -O1 
+gcc.c-torture/execute/ieee/compare-fp-3.c execution,  -O2 
+gcc.c-torture/execute/ieee/compare-fp-3.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/ieee/compare-fp-3.c execution,  -O3 -g 
+gcc.c-torture/execute/ieee/compare-fp-3.c execution,  -Os 
+gcc.c-torture/execute/ieee/fp-cmp-7.c execution,  -O0 
+gcc.c-torture/execute/medce-1.c execution,  -O0 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -O0 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -O1 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -O2 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -O3 -g 
+gcc.c-torture/execute/nest-stdar-1.c execution,  -Os 
+gcc.c-torture/execute/nestfunc-1.c execution,  -O0 
+gcc.c-torture/execute/nestfunc-1.c execution,  -O1 
+gcc.c-torture/execute/nestfunc-1.c execution,  -O2 
+gcc.c-torture/execute/nestfunc-1.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nestfunc-1.c execution,  -O3 -g 
+gcc.c-torture/execute/nestfunc-1.c execution,  -Os 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O0 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O1 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O2 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/nestfunc-2.c execution,  -O3 -g 
+gcc.c-torture/execute/nestfunc-2.c execution,  -Os 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O0 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O1 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O2 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/nestfunc-3.c execution,  -O3 -g 
+gcc.c-torture/execute/nestfunc-3.c execution,  -Os 
+gcc.c-torture/execute/nestfunc-5.c execution,  -O0 
+gcc.c-torture/execute/nestfunc-5.c execution,  -O1 
+gcc.c-torture/execute/nestfunc-5.c execution,  -O2 
+gcc.c-torture/execute/nestfunc-5.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nestfunc-5.c execution,  -O3 -g 
+gcc.c-torture/execute/nestfunc-5.c execution,  -Os 
+gcc.c-torture/execute/nestfunc-6.c execution,  -O0 
+gcc.c-torture/execute/nestfunc-6.c execution,  -O1 
+gcc.c-torture/execute/nestfunc-6.c execution,  -O2 
+gcc.c-torture/execute/nestfunc-6.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/nestfunc-6.c execution,  -O3 -g 
+gcc.c-torture/execute/nestfunc-6.c execution,  -Os 
+gcc.c-torture/execute/pr22061-3.c execution,  -O0 
+gcc.c-torture/execute/pr22061-3.c execution,  -O1 
+gcc.c-torture/execute/pr22061-3.c execution,  -O2 
+gcc.c-torture/execute/pr22061-3.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/pr22061-3.c execution,  -O3 -g 
+gcc.c-torture/execute/pr22061-3.c execution,  -Os 
+gcc.c-torture/execute/pr22061-4.c execution,  -O0 
+gcc.c-torture/execute/pr22061-4.c execution,  -O1 
+gcc.c-torture/execute/pr22061-4.c execution,  -O2 
+gcc.c-torture/execute/pr22061-4.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/pr22061-4.c execution,  -O3 -g 
+gcc.c-torture/execute/pr22061-4.c execution,  -Os 
+gcc.c-torture/execute/pr24135.c execution,  -O0 
+gcc.c-torture/execute/pr24135.c execution,  -O1 
+gcc.c-torture/execute/pr24135.c execution,  -O2 
+gcc.c-torture/execute/pr24135.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/pr24135.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
+gcc.c-torture/execute/pr24135.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
+gcc.c-torture/execute/pr24135.c execution,  -O3 -g 
+gcc.c-torture/execute/pr24135.c execution,  -Os 
+gcc.c-torture/execute/string-opt-18.c execution,  -O0 
+gcc.c-torture/execute/string-opt-18.c execution,  -O1 
+gcc.c-torture/execute/string-opt-18.c execution,  -O2 
+gcc.c-torture/execute/string-opt-18.c execution,  -O3 -fomit-frame-pointer 
+gcc.c-torture/execute/string-opt-18.c execution,  -O3 -g 
+gcc.c-torture/execute/string-opt-18.c execution,  -Os 
+gcc.dg/align-4.c: error executing dg-final: couldn't open "align-4.s": no such file or directory
+gcc.dg/align-5.c: error executing dg-final: couldn't open "align-5.s": no such file or directory
+gcc.dg/align-6.c: error executing dg-final: couldn't open "align-6.s": no such file or directory
+gcc.dg/array-quals-1.c: error executing dg-final: couldn't open "array-quals-1.s": no such file or directory
+gcc.dg/builtins-1.c: error executing dg-final: couldn't open "builtins-1.s": no such file or directory
+gcc.dg/builtins-12.c: error executing dg-final: couldn't open "builtins-12.s": no such file or directory
+gcc.dg/builtins-43.c: error executing dg-final: no files matched glob pattern "builtins-43.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/builtins-44.c: error executing dg-final: no files matched glob pattern "builtins-44.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/builtins-45.c: error executing dg-final: no files matched glob pattern "builtins-45.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/builtins-47.c: error executing dg-final: no files matched glob pattern "builtins-47.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/compat/struct-by-value-12 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-12 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-12 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-12 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-12 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-12 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-13 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-14 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-16 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+gcc.dg/compat/struct-by-value-22 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_alt.o-c_compat_y_tst.o link "-m64","-m64"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_alt.o link "-m64","-m64"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"
+gcc.dg/compat/struct-by-value-22 c_compat_x_tst.o-c_compat_y_tst.o link "-m64","-m64"
+gcc.dg/cpp/avoidpaste2.c: error executing dg-final: couldn't open "avoidpaste2.i": no such file or directory
+gcc.dg/cpp/maccom2.c: error executing dg-final: couldn't open "maccom2.i": no such file or directory
+gcc.dg/cpp/maccom3.c: error executing dg-final: couldn't open "maccom3.i": no such file or directory
+gcc.dg/cpp/multiline.c: error executing dg-final: couldn't open "multiline.i": no such file or directory
+gcc.dg/cpp/trad/cmdlne-C2.c: error executing dg-final: couldn't open "cmdlne-C2.i": no such file or directory
+gcc.dg/cpp/trad/maccom1.c: error executing dg-final: couldn't open "maccom1.i": no such file or directory
+gcc.dg/cpp/trad/maccom2.c: error executing dg-final: couldn't open "maccom2.i": no such file or directory
+gcc.dg/cpp/trad/maccom3.c: error executing dg-final: couldn't open "maccom3.i": no such file or directory
+gcc.dg/cpp/trad/maccom4.c: error executing dg-final: couldn't open "maccom4.i": no such file or directory
+gcc.dg/cpp/trad/maccom6.c: error executing dg-final: couldn't open "maccom6.i": no such file or directory
+gcc.dg/cpp/trad/xwin1.c: error executing dg-final: couldn't open "xwin1.i": no such file or directory
+gcc.dg/fold-abs-3.c: error executing dg-final: no files matched glob pattern "fold-abs-3.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-abs-4.c: error executing dg-final: no files matched glob pattern "fold-abs-4.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-alloca-1.c: error executing dg-final: no files matched glob pattern "fold-alloca-1.c.[0-9][0-9][0-9][ti].useless"
+gcc.dg/fold-andxor-1.c: error executing dg-final: no files matched glob pattern "fold-andxor-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-cond-1.c: error executing dg-final: no files matched glob pattern "fold-cond-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-convnotconv-1.c: error executing dg-final: no files matched glob pattern "fold-convnotconv-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-convround-1.c: error executing dg-final: no files matched glob pattern "fold-convround-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-div-1.c: error executing dg-final: no files matched glob pattern "fold-div-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-div-2.c: error executing dg-final: no files matched glob pattern "fold-div-2.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-eqandnot-1.c: error executing dg-final: no files matched glob pattern "fold-eqandnot-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqandshift-1.c: error executing dg-final: no files matched glob pattern "fold-eqandshift-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqandshift-2.c: error executing dg-final: no files matched glob pattern "fold-eqandshift-2.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqandshift-3.c: error executing dg-final: no files matched glob pattern "fold-eqandshift-3.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqxor-1.c: error executing dg-final: no files matched glob pattern "fold-eqxor-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqxor-2.c: error executing dg-final: no files matched glob pattern "fold-eqxor-2.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-eqxor-3.c: error executing dg-final: no files matched glob pattern "fold-eqxor-3.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-even-1.c: error executing dg-final: no files matched glob pattern "fold-even-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/fold-mod-1.c: error executing dg-final: no files matched glob pattern "fold-mod-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-mulconj-1.c: error executing dg-final: no files matched glob pattern "fold-mulconj-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-xor-1.c: error executing dg-final: no files matched glob pattern "fold-xor-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-xor-2.c: error executing dg-final: no files matched glob pattern "fold-xor-2.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/fold-xorand-1.c: error executing dg-final: no files matched glob pattern "fold-xorand-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/gnu89-init-2.c: error executing dg-final: couldn't open "gnu89-init-2.s": no such file or directory
+gcc.dg/gomp/atomic-10.c: error executing dg-final: no files matched glob pattern "atomic-10.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/atomic-3.c: error executing dg-final: no files matched glob pattern "atomic-3.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/atomic-9.c: error executing dg-final: no files matched glob pattern "atomic-9.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/barrier-1.c: error executing dg-final: no files matched glob pattern "barrier-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/critical-1.c: error executing dg-final: no files matched glob pattern "critical-1.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/critical-3.c: error executing dg-final: no files matched glob pattern "critical-3.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/empty.c: error executing dg-final: no files matched glob pattern "empty.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/flush-1.c: error executing dg-final: no files matched glob pattern "flush-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/for-10.c: error executing dg-final: no files matched glob pattern "for-10.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-13.c: error executing dg-final: no files matched glob pattern "for-13.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-18.c: error executing dg-final: no files matched glob pattern "for-18.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-19.c: error executing dg-final: no files matched glob pattern "for-19.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/gomp/for-4.c: error executing dg-final: no files matched glob pattern "for-4.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-5.c: error executing dg-final: no files matched glob pattern "for-5.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-6.c: error executing dg-final: no files matched glob pattern "for-6.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-7.c: error executing dg-final: no files matched glob pattern "for-7.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-8.c: error executing dg-final: no files matched glob pattern "for-8.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/for-9.c: error executing dg-final: no files matched glob pattern "for-9.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/macro-3.c: error executing dg-final: no files matched glob pattern "macro-3.c.[0-9][0-9][0-9][ti].omplower"
+gcc.dg/gomp/master-3.c: error executing dg-final: no files matched glob pattern "master-3.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/ordered-1.c: error executing dg-final: no files matched glob pattern "ordered-1.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/gomp/pr27388-1.c: error executing dg-final: no files matched glob pattern "pr27388-1.c.[0-9][0-9][0-9][ti].omplower"
+gcc.dg/gomp/pr27388-2.c: error executing dg-final: no files matched glob pattern "pr27388-2.c.[0-9][0-9][0-9][ti].omplower"
+gcc.dg/gomp/pr27388-3.c: error executing dg-final: no files matched glob pattern "pr27388-3.c.[0-9][0-9][0-9][ti].omplower"
+gcc.dg/gomp/pr32468-1.c: error executing dg-final: no files matched glob pattern "pr32468-1.c.[0-9][0-9][0-9][ti].ompexp"
+gcc.dg/inline-17.c: error executing dg-final: couldn't open "inline-17.s": no such file or directory
+gcc.dg/inline-18.c: error executing dg-final: couldn't open "inline-18.s": no such file or directory
+gcc.dg/ipa/ipa-1.c: error executing dg-final: no files matched glob pattern "ipa-1.c.[0-9][0-9][0-9]i.cp"
+gcc.dg/ipa/ipa-2.c: error executing dg-final: no files matched glob pattern "ipa-2.c.[0-9][0-9][0-9]i.cp"
+gcc.dg/ipa/ipa-3.c: error executing dg-final: no files matched glob pattern "ipa-3.c.[0-9][0-9][0-9]i.cp"
+gcc.dg/ipa/ipa-4.c: error executing dg-final: no files matched glob pattern "ipa-4.c.[0-9][0-9][0-9]i.cp"
+gcc.dg/ipa/ipa-5.c: error executing dg-final: no files matched glob pattern "ipa-5.c.[0-9][0-9][0-9]i.cp"
+gcc.dg/minmax-1.c: error executing dg-final: no files matched glob pattern "minmax-1.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/no-strict-overflow-1.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-1.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/no-strict-overflow-2.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-2.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/no-strict-overflow-3.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-3.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/no-strict-overflow-4.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-4.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/no-strict-overflow-5.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-5.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/no-strict-overflow-6.c: error executing dg-final: no files matched glob pattern "no-strict-overflow-6.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/nrv3.c: error executing dg-final: no files matched glob pattern "nrv3.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/nrv4.c: error executing dg-final: no files matched glob pattern "nrv4.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/nrv5.c: error executing dg-final: no files matched glob pattern "nrv5.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/opt-diary-3.c: error executing dg-final: no files matched glob pattern "opt-diary-3.c.[0-9][0-9][0-9][ti].vect"
+gcc.dg/pr14796-1.c: error executing dg-final: no files matched glob pattern "pr14796-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr14796-2.c: error executing dg-final: no files matched glob pattern "pr14796-2.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr15784-1.c: error executing dg-final: no files matched glob pattern "pr15784-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr15784-2.c: error executing dg-final: no files matched glob pattern "pr15784-2.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr15784-3.c: error executing dg-final: no files matched glob pattern "pr15784-3.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr15784-4.c: error executing dg-final: no files matched glob pattern "pr15784-4.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/pr20115-1.c: error executing dg-final: no files matched glob pattern "pr20115-1.c.[0-9][0-9][0-9][ti].dom1"
+gcc.dg/pr20130-1.c: error executing dg-final: no files matched glob pattern "pr20130-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-1.c: error executing dg-final: no files matched glob pattern "pr20922-1.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-2.c: error executing dg-final: no files matched glob pattern "pr20922-2.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-3.c: error executing dg-final: no files matched glob pattern "pr20922-3.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-4.c: error executing dg-final: no files matched glob pattern "pr20922-4.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-5.c: error executing dg-final: no files matched glob pattern "pr20922-5.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr20922-6.c: error executing dg-final: no files matched glob pattern "pr20922-6.c.[0-9][0-9][0-9][ti].gimple"
+gcc.dg/pr21032.c: error executing dg-final: no files matched glob pattern "pr21032.c.[0-9][0-9][0-9][ti].optimized"
+gcc.dg/pr23584.c: error executing dg-final: no files matched glob pattern "pr23584.c.[0-9][0-9][0-9]i.pure-const"
+gcc.dg/pr23911.c: error executing dg-final: no files matched glob pattern "pr23911.c.[0-9][0-9][0-9][ti].store_ccp"
+gcc.dg/pure-1.c: error executing dg-final: no files matched glob pattern "pure-1.c.[0-9][0-9][0-9]i.pure-const"
+gcc.dg/stabs-4223137.c: error executing dg-final: couldn't open "stabs-4223137.s": no such file or directory
+gcc.dg/strict-overflow-1.c: error executing dg-final: no files matched glob pattern "strict-overflow-1.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/strict-overflow-2.c: error executing dg-final: no files matched glob pattern "strict-overflow-2.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/strict-overflow-4.c: error executing dg-final: no files matched glob pattern "strict-overflow-4.c.[0-9][0-9][0-9][ti].final_cleanup"
+gcc.dg/tls/opt-4.c: error executing dg-final: couldn't open "opt-4.s": no such file or directory
+gcc.dg/tls/opt-7.c: error executing dg-final: couldn't open "opt-7.s": no such file or directory
+gcc.dg/torture/builtin-convert-4.c  -O0 : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O1 : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O2 : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O3 -fomit-frame-pointer -funroll-loops : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O3 -fomit-frame-pointer : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -O3 -g : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/builtin-convert-4.c  -Os : error executing dg-final: no files matched glob pattern "builtin-convert-4.c.[0-9][0-9][0-9][ti].original"
+gcc.dg/torture/nested-fn-1.c  -O0 : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.dg/torture/nested-fn-1.c  -O1 : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.dg/torture/nested-fn-1.c  -O2 : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.dg/torture/nested-fn-1.c  -O3 -fomit-frame-pointer : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.dg/torture/nested-fn-1.c  -O3 -g : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.dg/torture/nested-fn-1.c  -Os : error executing dg-final: couldn't open "nested-fn-1.s": no such file or directory
+gcc.misc-tests/bprob-2.c compilation,  -O0  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -O1  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -O2 -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -O3 -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -O3 -g -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -Os  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c compilation,  -g  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O0  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O0  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -O1  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O1  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -O2 -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O2 -DPERFTIME  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -O3 -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O3 -DPERFTIME  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -O3 -g -DPERFTIME  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -O3 -g -DPERFTIME  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -Os  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -Os  -fprofile-arcs
+gcc.misc-tests/bprob-2.c execution,    -g  -fbranch-probabilities
+gcc.misc-tests/bprob-2.c execution,    -g  -fprofile-arcs
+gcc.target/i386/abi-1.c: error executing dg-final: couldn't open "abi-1.s": no such file or directory
+gcc.target/i386/vectorize1.c: error executing dg-final: no files matched glob pattern "vectorize1.c.[0-9][0-9][0-9][ti].vect"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_alt.o-c_compat_y_tst.o link "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_alt.o link "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_tst.o link "-m32","-m32"

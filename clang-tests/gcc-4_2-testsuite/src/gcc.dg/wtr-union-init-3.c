@@ -41,10 +41,10 @@ void
 testfunc ()
 {
   /* Note we only warn for nonzero initializers.  Xfail on substructures. */
-  static union foo f1 = {{0,0}}; /* { dg-bogus "traditional C rejects initialization of unions" "initialization of unions" { xfail *-*-* } } */
+  static union foo f1 = {{0,0}}; /* { dg-bogus "traditional C rejects initialization of unions" "initialization of unions" } */
   static union foo f2 = {{1,1}}; /* { dg-warning "traditional C rejects initialization of unions" "initialization of unions" } */
 
-  static struct baz f3 = { 1, 2, {{0,0}} }; /* { dg-bogus "traditional C rejects initialization of unions" "initialization of unions" { xfail *-*-* } } */
+  static struct baz f3 = { 1, 2, {{0,0}} }; /* { dg-bogus "traditional C rejects initialization of unions" "initialization of unions" } */
   static struct baz f4 = { 1, 2, {{1,1}} }; /* { dg-warning "traditional C rejects initialization of unions" "initialization of unions" } */
 
   static struct baz2 f5 = { 1, 2, {0} };

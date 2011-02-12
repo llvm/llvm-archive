@@ -370,6 +370,9 @@ gcc.c-torture/compile/20031011-1.c  -O2  (test for excess errors)
 gcc.c-torture/compile/20031011-1.c  -O3 -fomit-frame-pointer  (test for excess errors)
 gcc.c-torture/compile/20031011-1.c  -O3 -g  (test for excess errors)
 gcc.c-torture/compile/20031011-1.c  -Os  (test for excess errors)
+gcc.c-torture/compile/20031023-1.c  -O3 -g  (test for excess errors)
+gcc.c-torture/compile/20031023-2.c  -O3 -g  (test for excess errors)
+gcc.c-torture/compile/20031023-3.c  -O3 -g  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O0  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O1  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O2  (test for excess errors)
@@ -1067,6 +1070,11 @@ gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-
 gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
 gcc.c-torture/execute/pr24135.c compilation,  -O3 -g 
 gcc.c-torture/execute/pr24135.c compilation,  -Os 
+gcc.c-torture/execute/printf-chk-1.c execution,  -O1
+gcc.c-torture/execute/printf-chk-1.c execution,  -O2
+gcc.c-torture/execute/printf-chk-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/printf-chk-1.c execution,  -O3 -g
+gcc.c-torture/execute/printf-chk-1.c execution,  -Os
 gcc.c-torture/execute/string-opt-18.c compilation,  -O0 
 gcc.c-torture/execute/string-opt-18.c compilation,  -O1 
 gcc.c-torture/execute/string-opt-18.c compilation,  -O2 
@@ -1078,6 +1086,11 @@ gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O2
 gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -fomit-frame-pointer 
 gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -g 
 gcc.c-torture/execute/vfprintf-chk-1.c execution,  -Os 
+gcc.c-torture/execute/vprintf-chk-1.c execution,  -O1
+gcc.c-torture/execute/vprintf-chk-1.c execution,  -O2
+gcc.c-torture/execute/vprintf-chk-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/vprintf-chk-1.c execution,  -O3 -g
+gcc.c-torture/execute/vprintf-chk-1.c execution,  -Os
 gcc.c-torture/execute/wchar_t-1.c execution,  -O0 
 gcc.c-torture/execute/wchar_t-1.c execution,  -O1 
 gcc.c-torture/execute/wchar_t-1.c execution,  -O2 
@@ -9617,22 +9630,28 @@ largefile.c  -Os  (test for excess errors)
 largefile.c -O0 -g (test for excess errors)
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t001 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t001 c_compat_y_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t002 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t002 c_compat_y_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t003 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t003 c_compat_y_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t004 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t004 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t004 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
@@ -9755,6 +9774,7 @@ tmpdir-gcc.dg-struct-layout-1/t023 c_compat_x_tst.o-c_compat_y_tst.o execute "-m
 tmpdir-gcc.dg-struct-layout-1/t023 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o compile, "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o compile, "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t024 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t024 c_compat_y_tst.o compile, "-m32","-m32"
@@ -9772,12 +9792,17 @@ tmpdir-gcc.dg-struct-layout-1/t026 c_compat_x_tst.o-c_compat_y_tst.o execute "-m
 tmpdir-gcc.dg-struct-layout-1/t026 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o compile, "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o compile, "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t027 c_compat_x_tst.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t027 c_compat_y_tst.o compile, "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_alt.o-c_compat_y_tst.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_alt.o-c_compat_y_tst.o execute "-m64","-m64"
+tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_tst.o compile, "-m32","-m32"
+tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_tst.o compile, "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_tst.o-c_compat_y_alt.o execute "-m32","-m32"
 tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_tst.o-c_compat_y_alt.o execute "-m64","-m64"
 tmpdir-gcc.dg-struct-layout-1/t028 c_compat_x_tst.o-c_compat_y_tst.o execute "-m32","-m32"

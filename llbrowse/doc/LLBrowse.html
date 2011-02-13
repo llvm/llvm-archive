@@ -1,0 +1,99 @@
+<html>
+<head>
+  <title>LLBrowse - a graphical browser for LLVM modules.</title>
+  <link rel="stylesheet" href="http://llvm.org/docs/llvm.css" type="text/css"> 
+</head>
+<body>
+<div class="doc_title"> 
+  LLBrowse - A graphical browser for LLVM modules.
+</div> 
+
+<ul> 
+  <li><a href="#requirements">Requirements</a> 
+  <li><a href="#building">Building</a> 
+  <li><a href="#running">Running</a> 
+</ul>
+
+<div class="doc_section"> 
+  <a name="requirements"><b>Requirements</b></a> 
+</div> 
+
+<div class="doc_text"> 
+<p>LLBrowse requires the following packages to be installed:
+<ul> 
+  <li><b>LLVM 2.8</b> or higher.
+  <li><b>wxWidgets</b> (See <a href="http://www.wxwidgets.org">www.wxwidgets.org</a>. Any recent version should work.)
+  <li><b>CMake 2.8</b> or higher.(See <a href="http://www.cmake.org">http://www.cmake.org/</a>.)
+</ul>
+</div>
+  
+<div class="doc_section"> 
+  <a name="building"><b>Building</b></a> 
+</div> 
+
+<div class="doc_text">
+<p>LLBrowse uses CMake to generate the Makefiles for the project.
+<ol> 
+  <li><p>Create a directory for containing the build. It is not
+      supported to build LLBrowse on the source directory. cd to this
+      directory:</p>
+    <div class="doc_code"> 
+      <p><tt>mkdir <i>mybuilddir</i></tt></p> 
+      <p><tt>cd <i>mybuilddir</i></tt></p> 
+    </div> 
+
+  <li><p>Execute this command on the shell
+      replacing <i>path/to/llbrowse/source/root</i> with the path to the
+      root of your LLBrowse source tree:</p> 
+    <div class="doc_code"> 
+      <p><tt>cmake <i>path/to/llbrowse/source/root</i></tt></p> 
+    </div> 
+    
+    <p>If your installation of 'llvm-config' is not in one of the standard
+    places, you may need to add it to your path in order for CMake to find it.
+ 
+  <li><p>If CMake was successful, you can now build the executable by running
+     'make':
+    <div class="doc_code"> 
+      <p><tt>make</tt></p> 
+    </div> 
+    
+ </ol>
+Of course, if you prefer to build using Eclipse, KDevelop or another IDE,
+you can have CMake generate the appropriate project files for those
+environments. Consult the CMake documentation or run <tt>cmake --help</tt> for
+instructions how to do this.
+</div>
+  
+<div class="doc_section"> 
+  <a name="running"><b>Running</b></a> 
+</div> 
+
+<div class="doc_text"> 
+<p>You can run the <tt>llbrowse</tt> program from the shell:
+
+  <div class="doc_code"> 
+    <p><tt>cd <i>mybuilddir</i></tt></p> 
+    <p><tt>./llbrowse</tt></p> 
+  </div> 
+
+<p>The program should open a new, blank window:
+
+<p><img src="llbrowse1.png">
+
+<p>To open an LLVM module, select the <b>File -> Open</b> menu. A file dialog should
+appear. Select the module file (either a .bc or .ll file) and click "Open"
+in the dialog box.
+
+<p>You should now see an outline of the module contents:
+
+<p><img src="llbrowse2.png">
+
+<p>At this point, you can explore the contents of the module by expanding
+the nodes of the tree view. The pane on the right side shows additional
+details about the currently selected item.
+
+</div>
+  
+</body>
+</html>

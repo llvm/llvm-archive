@@ -1,0 +1,11 @@
+Coding Style: The rule for coding style shall be as follows:
+
+   1) Use the LLVM style conventions for the most part.
+   2) In cases where the LLVM conventions are ambiguous, inconsistent, or
+      underspecified, use the wxWidgets conventions.
+      
+   In particular:
+     *  80-column lines.
+     *  Method names begin with an uppercase letter (wxWidgets convention).
+     *  Pointer and reference types will be spelled Type* and Type& (space
+        after the operator, not before.)

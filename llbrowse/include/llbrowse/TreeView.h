@@ -30,7 +30,7 @@ public:
   DECLARE_DYNAMIC_CLASS(TreeView)
 
   /** Re-create all tree nodes, using 'module' as the root. */
-  void SetModule(llvm::Module* module, const wxString& name);
+  void SetModule(const llvm::Module* module, const wxString& name);
 
 private:
   ModuleItem* rootItem_;
@@ -70,7 +70,7 @@ protected:
 
 class ModuleItem : public TreeItemBase {
 public:
-  ModuleItem(llvm::Module* module) : module_(module) {}
+  ModuleItem(const llvm::Module* module) : module_(module) {}
 
   // Overrides
 
@@ -81,7 +81,7 @@ public:
   void ShowDetails(DetailsView* detailsView);
 
 private:
-  llvm::Module* const module_;
+  const llvm::Module* const module_;
 };
 
 /// Tree item representing a list of elements within a module.
@@ -309,7 +309,7 @@ private:
 
 class DebugSymbolsRootItem : public ListItem {
 public:
-  DebugSymbolsRootItem(llvm::Module* module);
+  DebugSymbolsRootItem(const llvm::Module* module);
 
   // Overrides
 

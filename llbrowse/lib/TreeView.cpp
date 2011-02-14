@@ -72,7 +72,7 @@ wxString GetDITagName(unsigned tag) {
 
 IMPLEMENT_DYNAMIC_CLASS(TreeView, wxTreeCtrl)
 
-void TreeView::SetModule(Module* module, const wxString& rootName) {
+void TreeView::SetModule(const Module* module, const wxString& rootName) {
   DeleteAllItems();
   rootItem_ = new ModuleItem(module);
   wxTreeItemId rootId = AddRoot(rootName, 0, -1, rootItem_);
@@ -523,10 +523,10 @@ void MetadataNodeItem::ShowDetails(DetailsView* detailsView) {
 //===----------------------------------------------------------------------===//
 
 DebugSymbolsRootItem::DebugSymbolsRootItem(
-    llvm::Module* module)
+    const llvm::Module* module)
   : ListItem(module)
 {
-  diFinder_.processModule(*module);
+  diFinder_.processModule(*const_cast<Module *>(module));
 }
 
 void DebugSymbolsRootItem::CreateChildren(
@@ -702,10 +702,63 @@ wxString DIEItem::GetCaption() const {
   return strm.GetString();
 }
 
-void DIEItem::CreateChildren(
-    wxTreeCtrl *tree, const wxTreeItemId& id) {
+void DIEItem::CreateChildren(wxTreeCtrl *tree, const wxTreeItemId& id) {
   DIDescriptor diDesc(node_);
-  if (diDesc.isSubprogram()) {
+  if (diDesc.isCompileUnit()) {
+    // It's expensive to rescan the entire module, but it's only done lazily.
+    DebugInfoFinder diFinder;
+    diFinder.processModule(*const_cast<Module *>(module_));
+
+    // CU-specific Types
+    if (diFinder.type_count() > 0) {
+      llvm::SmallVector<llvm::MDNode*, 32> cuTypes;
+      for (DebugInfoFinder::iterator it = diFinder.type_begin(),
+          itEnd = diFinder.type_end(); it != itEnd; ++it) {
+        DIType diType(*it);
+        if (diType.getCompileUnit() == node_) {
+          cuTypes.push_back(*it);
+        }
+      }
+      if (!cuTypes.empty()) {
+        CreateChild(tree, id, new DIETypeListItem(
+            module_, _("Types"), cuTypes.begin(), cuTypes.end()));
+      }
+    }
+
+    // CU-specific Global variables
+    if (diFinder.global_variable_count() > 0) {
+      llvm::SmallVector<llvm::MDNode*, 32> cuVariables;
+      for (DebugInfoFinder::iterator it = diFinder.global_variable_begin(),
+          itEnd = diFinder.global_variable_end(); it != itEnd; ++it) {
+        DIGlobalVariable diVar(*it);
+        if (diVar.getCompileUnit() == node_) {
+          cuVariables.push_back(*it);
+        }
+      }
+      if (!cuVariables.empty()) {
+        CreateChild(tree, id, new DIEListItem(
+            module_, _("Global Variables"),
+            cuVariables.begin(), cuVariables.end()));
+      }
+    }
+
+    // CU-specific Subprograms
+    if (diFinder.subprogram_count() > 0) {
+      llvm::SmallVector<llvm::MDNode*, 32> cuSubprograms;
+      for (DebugInfoFinder::iterator it = diFinder.subprogram_begin(),
+          itEnd = diFinder.subprogram_end(); it != itEnd; ++it) {
+        DISubprogram diSubprogram(*it);
+        if (diSubprogram.getCompileUnit() == node_) {
+          cuSubprograms.push_back(*it);
+        }
+      }
+      if (!cuSubprograms.empty()) {
+        CreateChild(tree, id, new DIEListItem(
+            module_, _("Subprograms"),
+            cuSubprograms.begin(), cuSubprograms.end()));
+      }
+    }
+  } else if (diDesc.isSubprogram()) {
     DISubprogram diSubprogram(node_);
     CreateChild(tree, id, new DIEItem(module_, diSubprogram.getType()));
   } else if (diDesc.isGlobalVariable()) {
@@ -727,7 +780,8 @@ void DIEItem::CreateChildren(
 
 bool DIEItem::CanCreateChildren() const {
   DIDescriptor diDesc(node_);
-  if (diDesc.isVariable() ||
+  if (diDesc.isCompileUnit() ||
+      diDesc.isVariable() ||
       diDesc.isGlobalVariable() ||
       diDesc.isSubprogram() ||
       diDesc.isDerivedType()) {
@@ -762,8 +816,8 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     detailsView->Add(_("Line"), diVar.getLineNumber());
     ShowContext(detailsView, diVar.getContext());
     // Type
-    detailsView->Add(_("IsLocalToUnit"), diVar.isLocalToUnit());
-    detailsView->Add(_("IsDefinition"), diVar.isDefinition());
+    detailsView->Add(_("IsLocalToUnit"), (bool) diVar.isLocalToUnit());
+    detailsView->Add(_("IsDefinition"), (bool) diVar.isDefinition());
   } else if (diDesc.isSubprogram()) {
     DISubprogram diSubprogram(node_);
     detailsView->Add(_("DescriptorType"), _("DISubprogram"));
@@ -779,7 +833,7 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     detailsView->Add(_("IsDefinition"), diSubprogram.isDefinition());
     // Virtuality
     // Virtual index
-    detailsView->Add(_("Artificial"), diSubprogram.isArtificial());
+    detailsView->Add(_("Artificial"), (bool) diSubprogram.isArtificial());
     detailsView->Add(_("Private"), diSubprogram.isPrivate());
     detailsView->Add(_("Protected"), diSubprogram.isProtected());
     detailsView->Add(_("Explicit"), diSubprogram.isExplicit());
@@ -825,20 +879,22 @@ void DIEItem::ShowCompileUnit(DetailsView* detailsView, DICompileUnit cu) {
 }
 
 void DIEItem::ShowContext(DetailsView* detailsView, DIScope scope) {
+  // TODO: Fill out these cases.
   if (scope.isCompileUnit()) {
-    detailsView->Add(_("Context"), _("CompileUnit"));
+    detailsView->Add(_("Context"), _("?CompileUnit"));
   } else if (scope.isFile()) {
-    detailsView->Add(_("Context"), _("File"));
+    detailsView->Add(_("Context"), _("?File"));
   } else if (scope.isNameSpace()) {
-    detailsView->Add(_("Context"), _("namespace"));
+    detailsView->Add(_("Context"), _("?namespace"));
   } else if (scope.isSubprogram()) {
-    detailsView->Add(_("Context"), _("SP"));
+    detailsView->Add(_("Context"), _("?SP"));
   } else if (scope.isLexicalBlock()) {
-    detailsView->Add(_("Context"), _("{}"));
-  } else if (scope.isCompositeType()) {
-    detailsView->Add(_("Context"), _("CompositeType"));
+    detailsView->Add(_("Context"), _("?{}"));
   } else if (scope.isType()) {
-    detailsView->Add(_("Context"), _("Type"));
+    wxStringOutputStream strm;
+    wxTextOutputStream tstrm(strm);
+    FormatDIType(tstrm, DIType(scope));
+    detailsView->Add(_("Context"), strm.GetString());
   } else {
     detailsView->Add(_("Context"), _("Unknown scope type"));
   }

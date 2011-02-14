@@ -2,4 +2,11 @@
  * Compiler Configuration
  * ================================================================== */
 
-#cmakedefine HAVE_NEW 1
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#cmakedefine HAVE_ASSERT_H 1
+#cmakedefine HAVE_AUTO_PTR_H 1
+#cmakedefine HAVE_MEMORY 1
+
+#endif // CONFIG_H

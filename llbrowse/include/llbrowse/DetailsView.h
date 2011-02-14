@@ -5,7 +5,13 @@
 #ifndef LLBROWSE_DETAILSVIEW_H
 #define LLBROWSE_DETAILSVIEW_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
+#ifndef _WX_LISTCTRL_H_BASE_
 #include "wx/listctrl.h"
+#endif
 
 namespace llvm {
 class StringRef;

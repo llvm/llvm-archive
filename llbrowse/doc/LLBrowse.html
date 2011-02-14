@@ -50,7 +50,11 @@
     </div> 
     
     <p>If your installation of 'llvm-config' is not in one of the standard
-    places, you may need to add it to your path in order for CMake to find it.
+    places, you can tell CMake where to find it by defining <tt>LLVM_CONFIG_EXECUTABLE</tt> on the command line.
+ 
+      <div class="doc_code"> 
+        <p><tt>cmake <i>path/to/llbrowse/source/root</i> -D LLVM_CONFIG_EXECUTABLE="<i>path/to/llvm-config</i>"</tt></p> 
+      </div> 
  
   <li><p>If CMake was successful, you can now build the executable by running
      'make':

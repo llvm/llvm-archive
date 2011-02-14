@@ -9,6 +9,12 @@
 
 find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config DOC "llvm-config executable")
 
+if (LLVM_CONFIG_EXECUTABLE)
+  message(STATUS "LLVM llvm-config found at: ${LLVM_CONFIG_EXECUTABLE}")
+else (LLVM_CONFIG_EXECUTABLE)
+  message(FATAL_ERROR "Could NOT find LLVM executable")
+endif (LLVM_CONFIG_EXECUTABLE)
+
 execute_process(
   COMMAND ${LLVM_CONFIG_EXECUTABLE} --includedir
   OUTPUT_VARIABLE LLVM_INCLUDE_DIR

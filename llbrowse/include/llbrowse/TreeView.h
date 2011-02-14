@@ -5,9 +5,15 @@
 #ifndef LLBROWSE_TREEVIEW_H
 #define LLBROWSE_TREEVIEW_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
 #include "llvm/Analysis/DebugInfo.h"
 
+#ifndef _WX_TREECTRL_H_BASE_
 #include "wx/treectrl.h"
+#endif
 
 // Forward declarations
 

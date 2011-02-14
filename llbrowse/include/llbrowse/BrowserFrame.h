@@ -5,6 +5,10 @@
 #ifndef LLBROWSE_BROWSERFRAME_H
 #define LLBROWSE_BROWSERFRAME_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WX_WX_H_
 #include "wx/wx.h"
 #endif
@@ -25,7 +29,11 @@
 #include "wx/html/htmlwin.h"
 #endif
 
+#if HAVE_MEMORY
+#include <memory>
+#elif HAVE_AUTO_PTR_H
 #include <auto_ptr.h>
+#endif
 
 namespace llvm {
 class LLVMContext;

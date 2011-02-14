@@ -5,6 +5,10 @@
 #ifndef LLBROWSE_BROWSERAPP_H
 #define LLBROWSE_BROWSERAPP_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WX_WX_H_
 #include "wx/wx.h"
 #endif

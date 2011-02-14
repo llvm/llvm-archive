@@ -5,6 +5,10 @@
 #ifndef LLBROWSE_FORMATTING_H
 #define LLBROWSE_FORMATTING_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef LLVM_ADT_STRINGREF_H
 #include "llvm/ADT/StringRef.h"
 #endif

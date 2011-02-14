@@ -5,8 +5,16 @@
 #ifndef LLBROWSE_RESOURCES_H
 #define LLBROWSE_RESOURCES_H
 
+#ifndef CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _WX_WX_H_
 #include "wx/wx.h"
+#endif
+
+#ifndef _WX_IMAGELIST_H_
+#include <wx/imaglist.h>
 #endif
 
 class Resources {

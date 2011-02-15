@@ -54,8 +54,17 @@
  
       <div class="doc_code"> 
         <p><tt>cmake <i>path/to/llbrowse/source/root</i> -D LLVM_CONFIG_EXECUTABLE="<i>path/to/llvm-config</i>"</tt></p> 
-      </div> 
- 
+      </div>
+      
+    <p><b>Note for Mac OS X</b>: If you are trying to build under OS X 10.6 ("Snow Leopard") you will
+      need to tell CMake to build the project as a 32-bit executable, rather than 64-bits which is the default.
+      The reason for this is because wxWidgets uses the Carbon APIs, and there's no 64-bit version of Carbon.
+      You will also need a 32-bit version of the LLVM libraries.
+
+      <div class="doc_code">
+        <p><tt>cmake <i>path/to/llbrowse/source/root</i> -D CMAKE_OSX_ARCHITECTURES="i386;ppc"</tt></p>
+      </div>
+
   <li><p>If CMake was successful, you can now build the executable by running
      'make':
     <div class="doc_code"> 

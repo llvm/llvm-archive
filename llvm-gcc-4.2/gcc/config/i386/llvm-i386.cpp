@@ -1019,7 +1019,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         for (unsigned i = 0; i != 16; ++i)
           Indices.push_back(ConstantInt::get(IntTy, shiftVal + i));
 
-        Value* SV = ConstantVector::get(Indices.begin(), Indices.size());
+        Value* SV = ConstantVector::get(Indices);
         Result = Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
         return true;
       }

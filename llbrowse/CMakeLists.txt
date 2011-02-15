@@ -66,7 +66,7 @@ foreach(IN_FILE ${PNG_RESOURCES})
 endforeach(IN_FILE)
 
 # Declare the llbrowse executable
-add_executable(llbrowse ${LLBROWSE_SOURCES} ${LLBROWSE_HEADERS} ${RESOURCES})
+add_executable(llbrowse MACOSX_BUNDLE ${LLBROWSE_SOURCES} ${LLBROWSE_HEADERS} ${RESOURCES})
 target_link_libraries(llbrowse ${wxWidgets_LIBRARIES} ${LLVM_MODULE_LIBS})
 set_target_properties(llbrowse PROPERTIES
     COMPILE_FLAGS ${LLVM_CFLAGS}

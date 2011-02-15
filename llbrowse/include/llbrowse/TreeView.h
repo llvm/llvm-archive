@@ -398,9 +398,12 @@ private:
   const llvm::Module* const module_;
   const llvm::MDNode*  node_;
 
+  void CreateCompileUnitChildren(wxTreeCtrl *tree, const wxTreeItemId& id);
+  void CreateSubprogramChildren(wxTreeCtrl *tree, const wxTreeItemId& id);
   void ShowCompileUnit(DetailsView* detailsView, llvm::DICompileUnit cu);
   void ShowContext(DetailsView* detailsView, llvm::DIScope scope);
   void FormatDIType(wxTextOutputStream& out, llvm::DIType type) const;
+  wxString DITypeToString(llvm::DIType type) const;
 };
 
 #endif // LLBROWSE_TREEVIEW_H

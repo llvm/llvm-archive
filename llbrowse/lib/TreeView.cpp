@@ -61,7 +61,7 @@ wxString GetLinkageName(GlobalValue::LinkageTypes linkage) {
 }
 
 wxString GetDITagName(unsigned tag) {
-  return wxString::From8BitData(llvm::dwarf::TagString(tag));
+  return wxString::From8BitData(dwarf::TagString(tag));
 }
 
 }
@@ -599,25 +599,25 @@ void DIETypeListItem::CreateChildren(
       ++it) {
     DIType diType(*it);
     switch (diType.getTag()) {
-      case llvm::dwarf::DW_TAG_class_type:
+      case dwarf::DW_TAG_class_type:
         classTypes.push_back(*it);
         break;
 
-      case llvm::dwarf::DW_TAG_enumeration_type:
+      case dwarf::DW_TAG_enumeration_type:
         enumTypes.push_back(*it);
         break;
 
-      case llvm::dwarf::DW_TAG_structure_type:
+      case dwarf::DW_TAG_structure_type:
         structTypes.push_back(*it);
         break;
 
-      case llvm::dwarf::DW_TAG_base_type:
-      case llvm::dwarf::DW_TAG_inheritance:
-      case llvm::dwarf::DW_TAG_member:
-      case llvm::dwarf::DW_TAG_subroutine_type:
-      case llvm::dwarf::DW_TAG_union_type:
-      case llvm::dwarf::DW_TAG_array_type:
-      case llvm::dwarf::DW_TAG_pointer_type:
+      case dwarf::DW_TAG_base_type:
+      case dwarf::DW_TAG_inheritance:
+      case dwarf::DW_TAG_member:
+      case dwarf::DW_TAG_subroutine_type:
+      case dwarf::DW_TAG_union_type:
+      case dwarf::DW_TAG_array_type:
+      case dwarf::DW_TAG_pointer_type:
         break;
 
       default:
@@ -667,7 +667,7 @@ int DIEItem::GetIcon() const {
 }
 
 wxString DIEItem::GetCaption() const {
-  using namespace llvm::dwarf;
+  using namespace dwarf;
   wxStringOutputStream strm;
   wxTextOutputStream tstrm(strm);
   DIDescriptor diDesc(node_);
@@ -705,62 +705,9 @@ wxString DIEItem::GetCaption() const {
 void DIEItem::CreateChildren(wxTreeCtrl *tree, const wxTreeItemId& id) {
   DIDescriptor diDesc(node_);
   if (diDesc.isCompileUnit()) {
-    // It's expensive to rescan the entire module, but it's only done lazily.
-    DebugInfoFinder diFinder;
-    diFinder.processModule(*const_cast<Module *>(module_));
-
-    // CU-specific Types
-    if (diFinder.type_count() > 0) {
-      llvm::SmallVector<llvm::MDNode*, 32> cuTypes;
-      for (DebugInfoFinder::iterator it = diFinder.type_begin(),
-          itEnd = diFinder.type_end(); it != itEnd; ++it) {
-        DIType diType(*it);
-        if (diType.getCompileUnit() == node_) {
-          cuTypes.push_back(*it);
-        }
-      }
-      if (!cuTypes.empty()) {
-        CreateChild(tree, id, new DIETypeListItem(
-            module_, _("Types"), cuTypes.begin(), cuTypes.end()));
-      }
-    }
-
-    // CU-specific Global variables
-    if (diFinder.global_variable_count() > 0) {
-      llvm::SmallVector<llvm::MDNode*, 32> cuVariables;
-      for (DebugInfoFinder::iterator it = diFinder.global_variable_begin(),
-          itEnd = diFinder.global_variable_end(); it != itEnd; ++it) {
-        DIGlobalVariable diVar(*it);
-        if (diVar.getCompileUnit() == node_) {
-          cuVariables.push_back(*it);
-        }
-      }
-      if (!cuVariables.empty()) {
-        CreateChild(tree, id, new DIEListItem(
-            module_, _("Global Variables"),
-            cuVariables.begin(), cuVariables.end()));
-      }
-    }
-
-    // CU-specific Subprograms
-    if (diFinder.subprogram_count() > 0) {
-      llvm::SmallVector<llvm::MDNode*, 32> cuSubprograms;
-      for (DebugInfoFinder::iterator it = diFinder.subprogram_begin(),
-          itEnd = diFinder.subprogram_end(); it != itEnd; ++it) {
-        DISubprogram diSubprogram(*it);
-        if (diSubprogram.getCompileUnit() == node_) {
-          cuSubprograms.push_back(*it);
-        }
-      }
-      if (!cuSubprograms.empty()) {
-        CreateChild(tree, id, new DIEListItem(
-            module_, _("Subprograms"),
-            cuSubprograms.begin(), cuSubprograms.end()));
-      }
-    }
+    CreateCompileUnitChildren(tree, id);
   } else if (diDesc.isSubprogram()) {
-    DISubprogram diSubprogram(node_);
-    CreateChild(tree, id, new DIEItem(module_, diSubprogram.getType()));
+    CreateSubprogramChildren(tree, id);
   } else if (diDesc.isGlobalVariable()) {
     DIGlobalVariable diVar(node_);
     CreateChild(tree, id, new DIEItem(module_, diVar.getType()));
@@ -776,6 +723,70 @@ void DIEItem::CreateChildren(wxTreeCtrl *tree, const wxTreeItemId& id) {
     CreateChild(tree, id,
         new DIEItem(module_, diDerivedType.getTypeDerivedFrom()));
   }
+}
+
+void DIEItem::CreateCompileUnitChildren(wxTreeCtrl *tree,
+    const wxTreeItemId& id) {
+  // It's expensive to rescan the entire module, but it's only done lazily.
+  DebugInfoFinder diFinder;
+  diFinder.processModule(*const_cast<Module *>(module_));
+
+  // CU-specific Types
+  if (diFinder.type_count() > 0) {
+    llvm::SmallVector<llvm::MDNode*, 32> cuTypes;
+    for (DebugInfoFinder::iterator it = diFinder.type_begin(),
+        itEnd = diFinder.type_end(); it != itEnd; ++it) {
+      DIType diType(*it);
+      if (diType.getCompileUnit() == node_) {
+        cuTypes.push_back(*it);
+      }
+    }
+    if (!cuTypes.empty()) {
+      CreateChild(tree, id, new DIETypeListItem(
+          module_, _("Types"), cuTypes.begin(), cuTypes.end()));
+    }
+  }
+
+  // CU-specific Global variables
+  if (diFinder.global_variable_count() > 0) {
+    llvm::SmallVector<llvm::MDNode*, 32> cuVariables;
+    for (DebugInfoFinder::iterator it = diFinder.global_variable_begin(),
+        itEnd = diFinder.global_variable_end(); it != itEnd; ++it) {
+      DIGlobalVariable diVar(*it);
+      if (diVar.getCompileUnit() == node_) {
+        cuVariables.push_back(*it);
+      }
+    }
+    if (!cuVariables.empty()) {
+      CreateChild(tree, id, new DIEListItem(
+          module_, _("Global Variables"),
+          cuVariables.begin(), cuVariables.end()));
+    }
+  }
+
+  // CU-specific Subprograms
+  if (diFinder.subprogram_count() > 0) {
+    llvm::SmallVector<llvm::MDNode*, 32> cuSubprograms;
+    for (DebugInfoFinder::iterator it = diFinder.subprogram_begin(),
+        itEnd = diFinder.subprogram_end(); it != itEnd; ++it) {
+      DISubprogram diSubprogram(*it);
+      if (diSubprogram.getCompileUnit() == node_) {
+        cuSubprograms.push_back(*it);
+      }
+    }
+    if (!cuSubprograms.empty()) {
+      CreateChild(tree, id, new DIEListItem(
+          module_, _("Subprograms"),
+          cuSubprograms.begin(), cuSubprograms.end()));
+    }
+  }
+}
+
+void DIEItem::CreateSubprogramChildren(wxTreeCtrl *tree,
+    const wxTreeItemId& id) {
+  DISubprogram diSubprogram(node_);
+  CreateChild(tree, id, new DIEItem(module_, diSubprogram.getType()));
+  // We want to know lexical blocks and such.
 }
 
 bool DIEItem::CanCreateChildren() const {
@@ -815,7 +826,7 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     ShowCompileUnit(detailsView, diVar.getCompileUnit());
     detailsView->Add(_("Line"), diVar.getLineNumber());
     ShowContext(detailsView, diVar.getContext());
-    // Type
+    detailsView->Add(_("Type"), DITypeToString(diVar.getType()));
     detailsView->Add(_("IsLocalToUnit"), (bool) diVar.isLocalToUnit());
     detailsView->Add(_("IsDefinition"), (bool) diVar.isDefinition());
   } else if (diDesc.isSubprogram()) {
@@ -827,12 +838,11 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     ShowCompileUnit(detailsView, diSubprogram.getCompileUnit());
     detailsView->Add(_("Line"), diSubprogram.getLineNumber());
     ShowContext(detailsView, diSubprogram.getContext());
-    // Type
-    // Return typename
+    detailsView->Add(_("Type"), DITypeToString(diSubprogram.getType()));
     detailsView->Add(_("IsLocalToUnit"), diSubprogram.isLocalToUnit());
     detailsView->Add(_("IsDefinition"), diSubprogram.isDefinition());
-    // Virtuality
-    // Virtual index
+    // TODO: Virtuality
+    // TODO: Virtual index
     detailsView->Add(_("Artificial"), (bool) diSubprogram.isArtificial());
     detailsView->Add(_("Private"), diSubprogram.isPrivate());
     detailsView->Add(_("Protected"), diSubprogram.isProtected());
@@ -842,6 +852,7 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     DIEnumerator diEnum(node_);
     detailsView->Add(_("DescriptorType"), _("DIEnumerator"));
     detailsView->Add(_("Name"), diEnum.getName());
+    // TODO: Enum value
   } else if (diDesc.isCompositeType()) {
     DICompositeType diCompType(node_);
     detailsView->Add(_("DescriptorType"), _("DICompositeType"));
@@ -860,8 +871,28 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     uint64_t getAlignInBits() const     { return getUInt64Field(6); }
  */
   } else if (diDesc.isDerivedType()) {
-    //DIDerivedType diDerivedType(node_);
+    DIDerivedType diDerivedType(node_);
+    DIType diBase(diDerivedType.getTypeDerivedFrom());
     detailsView->Add(_("DescriptorType"), _("DIDerivedType"));
+    switch (diDerivedType.getTag()) {
+      case dwarf::DW_TAG_inheritance:
+        detailsView->Add(_("Type"), DITypeToString(diBase));
+        break;
+
+      case dwarf::DW_TAG_pointer_type:
+      case dwarf::DW_TAG_reference_type:
+      case dwarf::DW_TAG_const_type:
+      case dwarf::DW_TAG_volatile_type:
+      case dwarf::DW_TAG_restrict_type:
+      case dwarf::DW_TAG_typedef:
+        detailsView->Add(_("Type"), DITypeToString(diDerivedType));
+        break;
+
+      case dwarf::DW_TAG_member:
+        detailsView->Add(_("Name"), diDerivedType.getName());
+        detailsView->Add(_("Type"), DITypeToString(diBase));
+        break;
+    }
   } else if (diDesc.isBasicType()) {
     DIBasicType diBasicType(node_);
     detailsView->Add(_("DescriptorType"), _("DIBasicType"));
@@ -881,43 +912,91 @@ void DIEItem::ShowCompileUnit(DetailsView* detailsView, DICompileUnit cu) {
 void DIEItem::ShowContext(DetailsView* detailsView, DIScope scope) {
   // TODO: Fill out these cases.
   if (scope.isCompileUnit()) {
-    detailsView->Add(_("Context"), _("?CompileUnit"));
+    DICompileUnit diCompileUnit(scope);
+    detailsView->Add(_("ContextType"), _("DICompileUnit"));
+    detailsView->Add(_("Context"),
+        toWxStr(diCompileUnit.getDirectory()) + _("/") +
+        toWxStr(diCompileUnit.getFilename()));
   } else if (scope.isFile()) {
-    detailsView->Add(_("Context"), _("?File"));
+    DIFile diFile(scope);
+    detailsView->Add(_("ContextType"), _("DIFile"));
+    detailsView->Add(_("Context"),
+        toWxStr(diFile.getDirectory()) + _("/") +
+        toWxStr(diFile.getFilename()));
   } else if (scope.isNameSpace()) {
-    detailsView->Add(_("Context"), _("?namespace"));
+    DINameSpace diNameSpace(scope);
+    detailsView->Add(_("ContextType"), _("DINameSpace"));
+    detailsView->Add(_("Context"), diNameSpace.getName());
   } else if (scope.isSubprogram()) {
-    detailsView->Add(_("Context"), _("?SP"));
+    DISubprogram diSubprogram(scope);
+    detailsView->Add(_("ContextType"), _("DISubprogram"));
+    detailsView->Add(_("Context"), diSubprogram.getName());
   } else if (scope.isLexicalBlock()) {
+    detailsView->Add(_("ContextType"), _("DILexicalBlock"));
+    // TODO: Implement context name.
     detailsView->Add(_("Context"), _("?{}"));
   } else if (scope.isType()) {
-    wxStringOutputStream strm;
-    wxTextOutputStream tstrm(strm);
-    FormatDIType(tstrm, DIType(scope));
-    detailsView->Add(_("Context"), strm.GetString());
+    detailsView->Add(_("ContextType"), _("DIType"));
+    detailsView->Add(_("Context"), DITypeToString(DIType(scope)));
   } else {
-    detailsView->Add(_("Context"), _("Unknown scope type"));
+    detailsView->Add(_("Context"), _("??? [Unknown]"));
   }
+}
+
+wxString DIEItem::DITypeToString(DIType type) const {
+  wxStringOutputStream strm;
+  wxTextOutputStream tstrm(strm);
+  FormatDIType(tstrm, type);
+  return strm.GetString();
 }
 
 void DIEItem::FormatDIType(wxTextOutputStream& out, DIType type) const {
   if (type.isCompositeType()) {
     DICompositeType diCompType(type);
-    out << toWxStr(type.getName());
+    if (!type.getName().empty()) {
+      out << toWxStr(type.getName());
+    } else {
+      out << _("?Implement unnamed composite");
+      // TODO: Implement:
+      // DW_TAG_array_type
+      // DW_TAG_enumeration_type
+      // DW_TAG_structure_type
+      // DW_TAG_union_type
+      // DW_TAG_vector_type
+      // DW_TAG_subroutine_type
+      // DW_TAG_inheritance
+    }
   } else if (type.isDerivedType()) {
     DIDerivedType diDerivedType(type);
     DIType diBase = diDerivedType.getTypeDerivedFrom();
     switch (diDerivedType.getTag()) {
-      case llvm::dwarf::DW_TAG_inheritance:
+      case dwarf::DW_TAG_inheritance:
         FormatDIType(out, diBase);
         break;
 
-      case llvm::dwarf::DW_TAG_pointer_type:
+      case dwarf::DW_TAG_pointer_type:
         FormatDIType(out, diBase);
         out << _("*");
         break;
+
+      case dwarf::DW_TAG_array_type:
+        FormatDIType(out, diBase);
+        // TODO: Get the array size, use LLVM array notation.
+        out << _("[]");
+        break;
+
+      case dwarf::DW_TAG_member:
+        out << toWxStr(diDerivedType.getName());
+        break;
+
+      case dwarf::DW_TAG_reference_type:
+      case dwarf::DW_TAG_const_type:
+      case dwarf::DW_TAG_volatile_type:
+      case dwarf::DW_TAG_restrict_type:
+      case dwarf::DW_TAG_typedef:
+        // TODO: Implement
+        break;
     }
-    (void) diBase;
   } else if (type.isBasicType()) {
     DIBasicType diBasicType(type);
     const char * encodingName =

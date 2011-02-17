@@ -8,13 +8,14 @@
 {
     int ivar;
 }
-@property int ivar;
+@property int ivar;  /* { dg-warning "property 'ivar' requires method '-ivar' to be defined" } */
+                     /* { dg-warning "property 'ivar' requires the method 'setIvar:' to be defined" "" { target *-*-* } 11 } */
 @end
 
-@implementation Subclass
+@implementation Subclass /* { dg-error "" } */
+                         /* { dg-error "" "" { target *-*-* } 15 } */
 
-@end /* { dg-warning "property 'ivar' requires method '-ivar' to be defined" } */
-     /* { dg-warning "property 'ivar' requires the method 'setIvar:' to be defined" "" { target *-*-* } 16 } */
+@end 
 
 int main (void) {
   return 0;

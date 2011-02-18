@@ -1,7 +1,7 @@
 /* PR tree-optimization/18792 */
 /* { dg-do compile } */
 /* { dg-options "-O1 -ftree-loop-linear" } */
-void put_atoms_in_triclinic_unitcell(float x[][3])
+void put_atoms_in_triclinic_unitcell(float x[][4])
 {
 	int i=0,d;
 

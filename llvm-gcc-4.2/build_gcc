@@ -397,14 +397,25 @@ for t in $CROSS_TARGETS ; do
   # LLVM LOCAL Support for non /usr $DEST_ROOT
   D=`echo $DT/$DEST_ROOT/lib/gcc/$t-apple-darwin$DARWIN_VERS/$VERS`
   mv $D/static/libgcc.a $D/libgcc_static.a || exit 1
-  mv $D/kext/libgcc.a $D/libcc_kext.a || exit 1
-  rm -r $D/static $D/kext || exit 1
+  # LLVM LOCAL begin ARM slice-specific kext libraries
+  rm -r $D/static || exit 1
+  if [ -e $D/kext/libgcc.a ]; then 
+    mv $D/kext/libgcc.a $D/libcc_kext.a || exit 1
+    rm -r $D/kext || exit 1
+  fi
+  # LLVM LOCAL end ARM slice-specific kext libraries
   # glue together kext64 stuff
   if [ -e $D/kext64/libgcc.a ]; then
     libtool -static $D/{kext64/libgcc.a,libcc_kext.a} -o $D/libcc_kext1.a 2>&1 | grep -v 'has no symbols'
     mv $D/libcc_kext1.a $D/libcc_kext.a
     rm -rf $D/kext64
   fi
+  # LLVM LOCAL begin ARM slice-specific kext libraries
+  if [ $t = 'arm' ]; then
+    libtool -static $D/kext*/libgcc.a -o $D/libcc_kext.a 2>&1 | grep -v 'has no symbols'
+    rm -rf $D/kext* || exit 1
+  fi
+  # LLVM LOCAL end ARM slice-specific kext libraries
 done
 
 # Build the cross-hosted compilers.

@@ -827,7 +827,13 @@ EOF
 
   # Shared libraries.
   # APPLE LOCAL libcc_kext
-  if [ "$libgcc_s_so" -a  "$dir" != "static" -a "$dir" != "kext" -a "$dir" != "kext64" ]; then
+  # LLVM LOCAL begin ARM slice-specific kext libraries
+  kextdir=
+  if echo "$dir" | grep kext > /dev/null 2>&1; then
+    kextdir=1
+  fi
+  # LLVM LOCAL end ARM slice-specific kext libraries
+  if [ "$libgcc_s_so" -a  "$dir" != "static" -a "X$kextdir" = "X" ]; then
     echo ""
     echo "$libgcc_s_so: stmp-dirs $libunwind_so"
     echo "	$SHLIB_LINK" \
@@ -908,7 +914,13 @@ for ml in $MULTILIBS; do
       shlib_slibdir_qual="/$os_multilib_dir"
     fi
   # APPLE LOCAL libcc_kext
-  if [ "$dir" != "static" -a "$dir" != "kext" -a "$dir" != "kext64" ]; then
+  # LLVM LOCAL begin ARM slice-specific kext libraries
+  kextdir=
+  if echo "$dir" | grep kext > /dev/null 2>&1; then
+    kextdir=1
+  fi
+  # LLVM LOCAL end ARM slice-specific kext libraries
+  if [ "$dir" != "static" -a "X$kextdir" = "X" ]; then
     echo "	$SHLIB_INSTALL" \
       | sed -e "s%@multilib_dir@%$dir%g" \
 	    -e "s%@shlib_base_name@%libgcc_s%g" \

@@ -1,7 +1,7 @@
 // { dg-do assemble  }
-static void f ();		// { dg-error "" } used but not defined
+static void f ();		// { dg-error "has internal linkage but is not defined" }
 
 void g ()
 {
-  f ();
+  f (); /* { dg-error "note: used here" } */
 }

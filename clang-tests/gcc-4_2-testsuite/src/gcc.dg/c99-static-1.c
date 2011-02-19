@@ -7,16 +7,16 @@
 /* { dg-options "-O2 -std=iso9899:1999 -pedantic-errors" } */
 
 /* Constraint violation (trivial case, where function is used).  */
-static void f0(void); /* { dg-error "used but never defined" } */
-void g0(void) { f0(); }
+static void f0(void); /* { dg-error "has internal linkage but is not defined" } */
+void g0(void) { f0(); } /* { dg-error "note: used here" } */
 
 /* Constraint violation.  */
-static void f1(void); /* { dg-error "used but never defined" } */
-void g1(void) { if (0) { f1(); } }
+static void f1(void); /* { dg-error "has internal linkage but is not defined" } */
+void g1(void) { if (0) { f1(); } } /* { dg-error "note: used here" } */
 
 /* Constraint violation.  */
-static int f2(void); /* { dg-error "used but never defined" } */
-void g2(void) { 0 ? f2() : 0; }
+static int f2(void); /* { dg-error "has internal linkage but is not defined" } */
+void g2(void) { 0 ? f2() : 0; } /* { dg-error "note: used here" } */
 
 /* OK.  */
 static int f3(void);

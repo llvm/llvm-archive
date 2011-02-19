@@ -5,7 +5,10 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/TypeSymbolTable.h"
 
@@ -697,6 +700,9 @@ wxString DIEItem::GetCaption() const {
   } else if (diDesc.isEnumerator()) {
     DIEnumerator diEnum(node_);
     tstrm << _(" ") << toWxStr(diEnum.getName());
+  } else if (diDesc.isVariable()) {
+    DIVariable diVar(node_);
+    tstrm << _(" ") << toWxStr(diVar.getName());
   }
 
   return strm.GetString();
@@ -722,6 +728,9 @@ void DIEItem::CreateChildren(wxTreeCtrl *tree, const wxTreeItemId& id) {
     DIDerivedType diDerivedType(node_);
     CreateChild(tree, id,
         new DIEItem(module_, diDerivedType.getTypeDerivedFrom()));
+  } else if (diDesc.isVariable()) {
+    DIVariable diVar(node_);
+    CreateChild(tree, id, new DIEItem(module_, diVar.getType()));
   }
 }
 
@@ -785,8 +794,65 @@ void DIEItem::CreateCompileUnitChildren(wxTreeCtrl *tree,
 void DIEItem::CreateSubprogramChildren(wxTreeCtrl *tree,
     const wxTreeItemId& id) {
   DISubprogram diSubprogram(node_);
+
+  // Subroutine type
   CreateChild(tree, id, new DIEItem(module_, diSubprogram.getType()));
-  // We want to know lexical blocks and such.
+
+  // Lexical block search.
+  CreateLocalScopeChildren(tree, id, diSubprogram.getFunction(),
+      diSubprogram);
+}
+
+void DIEItem::CreateLocalScopeChildren(wxTreeCtrl *tree,
+    const wxTreeItemId& id,
+    const llvm::Function * fn, llvm::DIScope parent) {
+  // Walk all of the instructions of function fn, and find all lexical
+  // blocks whose parent is 'parent'.
+  llvm::SetVector<DILexicalBlock> blocks;
+  if (fn != NULL) {
+    for (Function::const_iterator it = fn->begin(), itEnd = fn->end();
+        it != itEnd; ++it) {
+      const BasicBlock & bb = *it;
+      for (BasicBlock::const_iterator j = bb.begin(), jEnd = bb.end();
+          j != jEnd; ++j) {
+        const Instruction & inst = *j;
+
+        // Get the debug location and find the lexical scope which is
+        // a child of 'parent'.
+        const DebugLoc& loc = inst.getDebugLoc();
+        DIScope diLocalScope(loc.getScope(module_->getContext()));
+
+        // If the instruction is in scope 'parent', then see if it's
+        // a variable.
+        if (const DbgDeclareInst* dd = dyn_cast<DbgDeclareInst>(&inst)) {
+          if (diLocalScope == parent) {
+            CreateChild(tree, id, new DIEItem(module_, dd->getVariable()));
+          }
+        } else if (const DbgValueInst* dv = dyn_cast<DbgValueInst>(&inst)) {
+          (void) dv;
+          //DIVariable diVar(di->getVariable());
+        }
+
+        // Walk up the chain of lexical blocks until we find one whose
+        // parent is 'parent', and then add it to the set.
+        while (diLocalScope.isLexicalBlock()) {
+          DILexicalBlock diBlock(diLocalScope);
+          DIScope context = diBlock.getContext();
+          if (context == parent) {
+            blocks.insert(diBlock);
+            break;
+          }
+          diLocalScope = context;
+        }
+      }
+    }
+  }
+
+  // Add all the lexical blocks we found as child items.
+  for (llvm::SetVector<DILexicalBlock>::const_iterator it = blocks.begin(),
+      itEnd = blocks.end(); it != itEnd; ++it) {
+    CreateChild(tree, id, new DIELexicalBlockItem(module_, *it, fn));
+  }
 }
 
 bool DIEItem::CanCreateChildren() const {
@@ -901,6 +967,14 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     if (encodingName != NULL) {
       detailsView->Add(_("Encoding"), wxString::From8BitData(encodingName));
     }
+  } else if (diDesc.isVariable()) {
+    DIVariable diVar(node_);
+    detailsView->Add(_("DescriptorType"), _("DIVariable"));
+    detailsView->Add(_("Name"), diVar.getName());
+    ShowCompileUnit(detailsView, diVar.getCompileUnit());
+    detailsView->Add(_("Line"), diVar.getLineNumber());
+    ShowContext(detailsView, diVar.getContext());
+    detailsView->Add(_("Type"), DITypeToString(diVar.getType()));
   }
 }
 
@@ -1005,4 +1079,23 @@ void DIEItem::FormatDIType(wxTextOutputStream& out, DIType type) const {
       out << toWxStr(encodingName);
     }
   }
+}
+
+//===----------------------------------------------------------------------===//
+// DIELexicalBlockItem Implementation
+//===----------------------------------------------------------------------===//
+
+wxString DIELexicalBlockItem::GetCaption() const {
+  return _("LexicalBlock");
+}
+
+void DIELexicalBlockItem::CreateChildren(wxTreeCtrl* tree,
+    const wxTreeItemId& id) {
+}
+
+bool DIELexicalBlockItem::CanCreateChildren() const {
+  return false;
+}
+
+void DIELexicalBlockItem::ShowDetails(DetailsView* detailsView) {
 }

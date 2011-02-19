@@ -394,16 +394,42 @@ public:
   bool CanCreateChildren() const;
   void ShowDetails(DetailsView* detailsView);
 
-private:
+protected:
   const llvm::Module* const module_;
-  const llvm::MDNode*  node_;
+  const llvm::MDNode* node_;
 
   void CreateCompileUnitChildren(wxTreeCtrl *tree, const wxTreeItemId& id);
   void CreateSubprogramChildren(wxTreeCtrl *tree, const wxTreeItemId& id);
+  void CreateLocalScopeChildren(wxTreeCtrl *tree, const wxTreeItemId& id,
+      const llvm::Function * fn, llvm::DIScope parent);
   void ShowCompileUnit(DetailsView* detailsView, llvm::DICompileUnit cu);
   void ShowContext(DetailsView* detailsView, llvm::DIScope scope);
   void FormatDIType(wxTextOutputStream& out, llvm::DIType type) const;
   wxString DITypeToString(llvm::DIType type) const;
+};
+
+/// Tree item representing a lexical block
+
+class DIELexicalBlockItem : public DIEItem {
+public:
+  DIELexicalBlockItem(
+      const llvm::Module* module,
+      const llvm::MDNode* node,
+      const llvm::Function* function)
+    : DIEItem(module, node)
+    , function_(function)
+  {}
+
+  // Overrides
+
+  //int GetIcon() const;
+  wxString GetCaption() const;
+  void CreateChildren(wxTreeCtrl* tree, const wxTreeItemId& id);
+  bool CanCreateChildren() const;
+  void ShowDetails(DetailsView* detailsView);
+
+private:
+  const llvm::Function* const function_;
 };
 
 #endif // LLBROWSE_TREEVIEW_H

@@ -22,7 +22,13 @@ You can run an individual test with, e.g.:
 
     make check-gcc RUNTESTFLAGS=dg.exp=local4.C
 
-You need to supply the right `testsuite.exp` filename and test name.
+You need to supply the right `testsuite.exp` filename and test name. Generally,
+you want the .exp file which is in the same directory as the individual test you
+are trying to run.
+
+You can override the compiler under test using, e.g.:
+
+    make check-gcc RUNTESTFLAGS=dg.exp=local4.C CC_UNDER_TEST=$(which clang) CXX_UNDER_TEST=$(which clang++)
 
 
 TODO

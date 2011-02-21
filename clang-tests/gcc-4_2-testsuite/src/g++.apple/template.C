@@ -4,8 +4,8 @@
 namespace {
   template<int>
   struct ElfSizes {
-    static const int sym_size = 5;  /* { dg-error "has internal linkage but is not defined" } */
-    static const int ehdr_size = 5;  /* { dg-error "has internal linkage but is not defined" } */
+    static const int sym_size = 5;
+    static const int ehdr_size = 5;
   };
 
   template<int>
@@ -17,12 +17,12 @@ namespace {
 
   template<int Size>
   SizedElfFileData<Size>::SizedElfFileData() {
-    ElfSizes<Size>::ehdr_size; /* { dg-error "note: used here" } */
+    ElfSizes<Size>::ehdr_size;
   }
 
   template<int Size>
   void SizedElfFileData<Size>::ReadSymbols() {
-    ElfSizes<Size>::sym_size; /* { dg-error "note: used here" } */
+    ElfSizes<Size>::sym_size;
   }
 
   void Open() {

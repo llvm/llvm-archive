@@ -30,7 +30,9 @@ void printTypeExpansion(wxTextOutputStream & out, const Module* module,
     case Type::X86_FP80TyID: out << _("x86_fp80"); break;
     case Type::FP128TyID: out << _("fp128"); break;
     case Type::PPC_FP128TyID: out << _("ppc_fp128"); break;
-    case Type::X86_MMXTyID: out << _("x86mmx"); break;
+    #if HAVE_LLVM_TYPE_X86_FP80TY_ID
+      case Type::X86_MMXTyID: out << _("x86mmx"); break;
+    #endif
     case Type::MetadataTyID: out << _("metadata"); break;
     case Type::LabelTyID: out << _("label"); break;
 

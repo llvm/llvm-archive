@@ -6,7 +6,9 @@
 #include "llbrowse/BrowserFrame.h"
 
 #include "llvm/Support/ManagedStatic.h"
+#if HAVE_LLVM_SUPPORT_SIGNALS_H
 #include "llvm/Support/Signals.h"
+#endif
 
 #include "wx/config.h"
 
@@ -26,7 +28,9 @@ static const wxString CGROUP_PATHS = wxString::FromAscii("/Paths");
 static const wxString CKEY_CURRENTDIR = wxString::FromAscii("currentdir");
 
 bool BrowserApp::OnInit() {
-  sys::PrintStackTraceOnErrorSignal();
+  #if HAVE_LLVM_SUPPORT_SIGNALS_H
+    sys::PrintStackTraceOnErrorSignal();
+  #endif
 
   wxImage::AddHandler(new wxPNGHandler);
 

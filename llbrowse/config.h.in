@@ -9,4 +9,8 @@
 #cmakedefine HAVE_AUTO_PTR_H 1
 #cmakedefine HAVE_MEMORY 1
 
+#cmakedefine HAVE_LLVM_SUPPORT_SIGNALS_H 1
+
+#cmakedefine HAVE_LLVM_TYPE_X86_FP80TY_ID 1
+
 #endif // CONFIG_H

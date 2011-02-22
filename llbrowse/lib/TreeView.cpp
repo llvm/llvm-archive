@@ -910,10 +910,12 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     // TODO: Virtuality
     // TODO: Virtual index
     detailsView->Add(_("Artificial"), (bool) diSubprogram.isArtificial());
-    detailsView->Add(_("Private"), diSubprogram.isPrivate());
-    detailsView->Add(_("Protected"), diSubprogram.isProtected());
-    detailsView->Add(_("Explicit"), diSubprogram.isExplicit());
-    detailsView->Add(_("Prototyped"), diSubprogram.isPrototyped());
+    #if HAVE_LLVM_DISUBPROGRAM_IS_PRIVATE
+      detailsView->Add(_("Private"), diSubprogram.isPrivate());
+      detailsView->Add(_("Protected"), diSubprogram.isProtected());
+      detailsView->Add(_("Explicit"), diSubprogram.isExplicit());
+      detailsView->Add(_("Prototyped"), diSubprogram.isPrototyped());
+    #endif
   } else if (diDesc.isEnumerator()) {
     DIEnumerator diEnum(node_);
     detailsView->Add(_("DescriptorType"), _("DIEnumerator"));

@@ -7,11 +7,13 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules/")
 include(FindwxWidgets)
 include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
+include(CheckCXXSourceCompiles)
 
 # Check for the existence of include files.
 check_include_file(assert.h HAVE_ASSERT_H)
 check_include_file(auto_ptr.h HAVE_AUTO_PTR_H)
 check_include_file_cxx(memory HAVE_MEMORY)
+check_include_file_cxx(llvm/Support/Signals.h HAVE_LLVM_SUPPORT_SIGNALS_H)
 
 # Find WxWidgets
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
@@ -36,6 +38,22 @@ endif (NOT ${COMPILE_DEFINITIONS} MATCHES ".*__STDC_LIMIT_MACROS.*")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${LLBROWSE_SOURCE_DIR}/include)
 include_directories(${LLVM_INCLUDE_DIR})
+
+# Check for LLVM 2.9 features
+check_cxx_source_compiles("
+  #include <llvm/Type.h>
+  int main() {
+    llvm::Type::TypeID id = llvm::Type::X86_FP80TyID;
+    return 0;
+  }"
+  HAVE_LLVM_TYPE_X86_FP80TY_ID)
+check_cxx_source_compiles("
+  #include <llvm/Analysis/DebugInfo.h>
+  int main() {
+    llvm::DISubprogram sp;
+    return sp.isPrivate() ? 0 : 1;
+  }"
+  HAVE_LLVM_DISUBPROGRAM_IS_PRIVATE)
 
 # Generate the config.h file
 configure_file(
@@ -71,3 +89,5 @@ target_link_libraries(llbrowse ${wxWidgets_LIBRARIES} ${LLVM_MODULE_LIBS})
 set_target_properties(llbrowse PROPERTIES
     COMPILE_FLAGS ${LLVM_CFLAGS}
     LINK_FLAGS ${LLVM_LFLAGS})
+
+install(TARGETS llbrowse RUNTIME DESTINATION bin)

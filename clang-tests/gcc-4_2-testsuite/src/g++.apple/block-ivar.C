@@ -25,7 +25,7 @@
     return refcount + 1;
 }
 
-- (void) release {
+- (oneway void) release {
    if (refcount == 0) [self dealloc];
    else --refcount;
 }

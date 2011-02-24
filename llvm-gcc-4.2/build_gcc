@@ -803,6 +803,9 @@ if [ "$INSTALL_LIBLTO" == yes ]; then
     ln -s ../../Developer/usr/lib/libLTO.dylib ./libLTO.dylib
 fi
 
+# Remove lto.h from the install directory; clang will supply.
+find $DEST_DIR -name lto.h -print | xargs rm || exit 1
+
 # LLVM LOCAL end
 
 find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1

@@ -19,8 +19,8 @@ struct B
   template <typename T>
   struct Template
   {
-    typedef typename A<A<TP>::Template>  // { dg-error "mismatch|class template" }
-      ::template Template<T>::Type Type; // { dg-error "" }
+    typedef typename A<A<TP>::Template>  // { dg-error "class template" }
+      ::template Template<T>::Type Type; // { dg-error "qualified name|at end of declaration" }
   };
 };
 template <typename T>
@@ -30,5 +30,5 @@ struct C
 };
 int main()
 {
-  typedef B<C>::Template<void>::Type Type; // { dg-error "does not name a type" }
+  typedef B<C>::Template<void>::Type Type;
 }

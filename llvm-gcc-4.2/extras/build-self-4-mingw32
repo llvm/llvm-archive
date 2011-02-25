@@ -40,8 +40,8 @@ LLVM_src=llvm.src             # The LLVM source code root directory name.
 LLVM_GCC_src=llvm-gcc.src     # The LLVM-GCC source code root directory name.
 LLVM_obj_1=llvm-1.obj         # The LLVM build root directory name.
 LLVM_GCC_obj_1=llvm-gcc-1.obj # The LLVM-GCC build root directory name.
-LLVM_obj_2=llvm-2.obj         # The LLVM build root directory name for Stage2.
-LLVM_GCC_obj_2=llvm-gcc-2.obj # The LLVM-GCC build root directory name for Stage2.
+LLVM_obj_2=llvm-2.obj         # The LLVM build directory name for Stage2.
+LLVM_GCC_obj_2=llvm-gcc-2.obj # The LLVM-GCC build directory name for Stage2.
 INSTALL=install               # Where the result will be installed.
 
 # CFLAGS and CXXFLAGS must not be set during the building of cross-tools.
@@ -50,6 +50,12 @@ unset CXXFLAGS
 
 BUILD_ROOT=$PWD                           # Where build happens.
 PRIVATE_INSTALL=${BUILD_ROOT}/${INSTALL}  # Where the result will be installed.
+
+export PATH=/opt/local/bin:/opt/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH=$PATH:/mingw_build_tools/install_with_gcc/bin
+
+# Make sure our just built tools will be selected first.
+export PATH=${PRIVATE_INSTALL}/bin:$PATH
 
 #------------------------------------------------------------------------------
 # Define build steps, parse and validate input parameters
@@ -66,7 +72,6 @@ do_make_llvmgcc_1=no        # Make LLVM-GCC.
 do_install_llvmgcc_1=no     # Install LLVM-GCC.
 do_configure_llvm_2=no      # Configure LLVM for Stage2.
 do_make_llvm_2=no           # Make LLVM for Stage2.
-do_test_llvm_2=no           # Test LLVM for Stage2.
 do_configure_llvmgcc_2=no   # Configure LLVM-GCC for Stage2.
 do_make_llvmgcc_2=no        # Make LLVM-GCC for Stage2.
 do_install_llvmgcc_2=no     # Install LLVM-GCC for Stage2.
@@ -91,7 +96,6 @@ if (( ! $# == 0 )) ; then
       install_llvmgcc_1   |  \
       configure_llvm_2    |  \
       make_llvm_2         |  \
-      test_llvm_2         |  \
       configure_llvmgcc_2 |  \
       make_llvmgcc_2      |  \
       install_llvmgcc_2   |  \
@@ -118,7 +122,6 @@ if [ "$do_all" == "yes" ] ; then
    do_install_llvmgcc_1=yes  
    do_configure_llvm_2=yes
    do_make_llvm_2=yes
-   do_test_llvm_2=yes
    do_configure_llvmgcc_2=yes
    do_make_llvmgcc_2=yes
    do_install_llvmgcc_2=yes
@@ -143,7 +146,8 @@ if [ "$do_copy_cross_tools" == "yes" ] ; then
 
    # We need a local copy of binutils, system libraries and headers,
    # since we will be installing there.
-   cp -RL /cross-tools/ ${PRIVATE_INSTALL}
+   
+   cp -RL /mingw_build_tools/install_with_gcc/ ${PRIVATE_INSTALL}
 
 fi
 
@@ -249,10 +253,6 @@ fi
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvm_2" == "yes" ] ; then
 
-   # Make sure our just built tools will be selected first.
-   # Note: Always set this, even when do_all has been requested.
-   export PATH=${PRIVATE_INSTALL}/bin:${PATH}
-
    # Remove previous build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_obj_2}
    mkdir -p ${BUILD_ROOT}/${LLVM_obj_2}
@@ -273,11 +273,6 @@ fi
 #------------------------------------------------------------------------------
 if [ "$do_make_llvm_2" == "yes" ] ; then
 
-   if [ "$do_all" == "no" ] ; then
-      # Make sure our just built tools will be selected first.
-      export PATH=${PRIVATE_INSTALL}/bin:${PATH}
-   fi
-
    cd ${BUILD_ROOT}/${LLVM_obj_2}
    # NOTE: Do not use make ENABLE_OPTIMIZED=1. Some tests fail because of that.
    nice -n 20 make VERBOSE=1 \
@@ -286,30 +281,9 @@ if [ "$do_make_llvm_2" == "yes" ] ; then
 fi
 
 #------------------------------------------------------------------------------
-# Step: Stage2. Test LLVM.
-#------------------------------------------------------------------------------ 
-if [ "$do_test_llvm_2" == "yes" ] ; then
-
-   if [ "$do_all" == "no" ] ; then
-      # Make sure our just built tools will be selected first.
-      export PATH=${PRIVATE_INSTALL}/bin:${PATH}
-   fi
-
-   cd ${BUILD_ROOT}/${LLVM_obj_2}
-   make check-lit VERBOSE=1  \
-      $@  # Extra args if any
-
-fi
-
-#------------------------------------------------------------------------------
 # Step: Stage2. Configure LLVM-GCC.
 #------------------------------------------------------------------------------
 if [ "$do_configure_llvmgcc_2" == "yes" ] ; then
-
-   if [ "$do_all" == "no" ] ; then
-      # Make sure our just built tools will be selected first.
-      export PATH=${PRIVATE_INSTALL}/bin:${PATH}
-   fi
 
    # Remove previous build files if any.
    rm -rf ${BUILD_ROOT}/${LLVM_GCC_obj_2}
@@ -334,11 +308,6 @@ fi
 #------------------------------------------------------------------------------
 if [ "$do_make_llvmgcc_2" == "yes" ] ; then
 
-   if [ "$do_all" == "no" ] ; then
-      # Make sure our just built tools will be selected first.
-      export PATH=${PRIVATE_INSTALL}/bin:${PATH}
-   fi
-
    cd ${BUILD_ROOT}/${LLVM_GCC_obj_2}
    nice -n 20 make          \
       $@  # Extra args if any
@@ -349,11 +318,6 @@ fi
 # Step: Install LLVM-GCC.
 #------------------------------------------------------------------------------
 if [ "$do_install_llvmgcc_2" == "yes" ] ; then
-
-   if [ "$do_all" == "no" ] ; then
-      # Make sure our just built tools will be selected first.
-      export PATH=${PRIVATE_INSTALL}/bin:${PATH} 
-   fi
 
    cd ${BUILD_ROOT}/${LLVM_GCC_obj_2}
    nice -n 20 make install  \

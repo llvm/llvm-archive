@@ -4,6 +4,7 @@ target := i386-apple-darwin10
 srcdir := $(shell pwd)/src
 objdir := $(shell pwd)/obj
 
+CCC_ADD_ARGS := -Qunused-arguments,-no-integrated-as,-std-default=gnu89,-fblocks,-Wno-return-type,-Wno-unused-value,-Wno-switch-enum,-Wno-implicit-int
 CC_UNDER_TEST := /Developer/usr/bin/clang
 CXX_UNDER_TEST := /Developer/usr/bin/clang++
 CC_UNDER_TEST_FLAGS :=
@@ -11,6 +12,7 @@ CXX_UNDER_TEST_FLAGS :=
 
 RUNTEST = $(srcdir)/dejagnu/runtest
 ENV_FLAGS := \
+	CCC_ADD_ARGS=$(CCC_ADD_ARGS) \
 	CC_UNDER_TEST=$(CC_UNDER_TEST) \
 	CXX_UNDER_TEST=$(CXX_UNDER_TEST) \
 	CC_UNDER_TEST_FLAGS=$(CC_UNDER_TEST_FLAGS) \

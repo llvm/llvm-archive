@@ -1,0 +1,380 @@
+gdb.apple/bigenum.exp: print myvar with enum value of b
+gdb.apple/blocks.exp: invoke-block returning an int
+gdb.apple/blocks.exp: invoke-block returning a struct
+gdb.apple/blocks.exp: continue to breakpoint: continue into int return block
+gdb.apple/blocks.exp: Print by_ref in int return block
+gdb.apple/blocks.exp: Print by_value in int return block
+gdb.apple/blocks.exp: Print local_var in int return block
+gdb.apple/blocks.exp: Print self in int return block
+gdb.apple/blocks.exp: continue to breakpoint: continue into struct return block
+gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, no values
+gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, no values
+gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, no values
+gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, simple values
+gdb.apple/file-statics.exp: -file-list-globals: all files, supply shlib, no values
+gdb.apple/file-statics.exp: -file-list-statics: c++ - supply file and shlib, simple values
+gdb.apple/file-statics.exp: -file-list-statics: c++ - supply file and shlib, make varobjs
+small-c/mi-fix-small-c.exp: finish out of static_printer, look for correct strings (picbase register setup test)
+gdb.apple/global-blocks-lines.exp: Next to main
+gdb.apple/global-blocks-lines2.exp: Next from first Block function
+gdb.apple/global-blocks-lines2.exp: Next from second Block function
+gdb.apple/global-blocks-lines2.exp: Next from third Block function
+gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib no addr specified) (dynamic prog)
+gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x0) (dynamic prog)
+gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x20c49ba5c72000) (dynamic prog)
+gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib maybe without a slide) (dynamic prog)
+ld-r/ld-r.exp: Break at bar: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Break at baz: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at fooFunc: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Finish from fooFunc: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at barFunc: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at bazFunc: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Break at foo-2: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Break at baz-2: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at fooFunc2: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at bazFunc2: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Got warnings for mismatched timestamp1: ld-r testing - ar - debug info in .o files
+ld-r/ld-r.exp: Break at bar: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Break at baz: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at fooFunc: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Finish from fooFunc: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at barFunc: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at bazFunc: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Break at foo-2: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Break at baz-2: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at fooFunc2: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Hit breakpoint at bazFunc2: ld-r testing - debug info in .o files
+ld-r/ld-r.exp: Got warnings for mismatched timestamp2: ld-r testing - debug info in .o files
+gdb.apple/mi1-varobj.exp: 144 var-create for outer where file:line is objc-prog.m:0 (invalid line number of zero)
+gdb.apple/mi1-varobj.exp: 145 var-evaluate-expression for outer where file:line is objc-prog.m:0
+gdb.apple/mi1-varobj.exp: 146 var-create for outer where file:line is objc-prog.m:999999 (invalid line number of 999999)
+gdb.apple/mi1-varobj.exp: 147 var-evaluate-expression for outer where file:line is objc-prog.m:999999
+gdb.apple/objc-rbreak.exp: Run to first rbreak-set bp (timeout)
+gdb.apple/pc-verify.exp: p/x $fp returns the same as info frame's $fp
+gdb.apple/po.exp: p (int)CFShow($9)
+gdb.apple/r5414488.exp: continue to breakpoint (timeout)
+gdb.apple/scoped-typedefs.exp: print myvar with int element in foo
+gdb.apple/slipnslide.exp: get libSystem pre-startup load address
+gdb.apple/slipnslide.exp: (timeout) default libSystem didn't slide
+gdb.apple/struct-in-struct.exp: ptype outer::inner before expanding psymtab (rdar://problem/4223302)
+gdb.apple/weak.exp: test running weak program
+xcode/stack-list-frames-lite-sigtramp.exp: -stack-list-frames-lite -limit 500 works
+xcode/stack-list-frames-lite-sigtramp.exp: check stack depth is as expected
+xcode/stack-list-frames-lite-sigtramp.exp: get values from stack-list-frames-lite
+gdb.arch/i386-sse.exp: check contents of %xmm0
+gdb.arch/i386-sse.exp: check contents of %xmm1
+gdb.arch/i386-sse.exp: check contents of %xmm2
+gdb.arch/i386-sse.exp: check contents of %xmm3
+gdb.arch/i386-sse.exp: check contents of %xmm4
+gdb.arch/i386-sse.exp: check contents of %xmm5
+gdb.arch/i386-sse.exp: check contents of %xmm6
+gdb.arch/i386-sse.exp: check contents of %xmm7
+gdb.arch/i386-sse.exp: check contents of data[0]
+gdb.arch/i386-sse.exp: check contents of data[1]
+gdb.arch/i386-sse.exp: check contents of data[2]
+gdb.arch/i386-sse.exp: check contents of data[3]
+gdb.arch/i386-sse.exp: check contents of data[4]
+gdb.arch/i386-sse.exp: check contents of data[5]
+gdb.arch/i386-sse.exp: check contents of data[6]
+gdb.arch/i386-sse.exp: check contents of data[7]
+gdb.arch/i386-unwind.exp: backtrace past gdb1435
+gdb.base/annota1.exp: breakpoint info (PRMS 1270)
+gdb.base/annota1.exp: run until main breakpoint
+gdb.base/annota1.exp: backtrace from shlibrary (PRMS 1270)
+gdb.base/annota1.exp: send SIGUSR1 (rdar://problem/3061801)
+gdb.base/annota1.exp: backtrace @ signal handler (rdar://problem/3061801)
+gdb.base/annota1.exp: break at 28 (PRMS 1270)
+gdb.base/annota1.exp: signal sent (rdar://problem/3061801)
+gdb.base/annota3.exp: send SIGUSR1 (pattern 5) (rdar://problem/3061801)
+gdb.base/annota3.exp: send SIGUSR1 (pattern 5) (rdar://problem/3061801)
+gdb.base/annota3.exp: backtrace @ signal handler (pattern 1) (rdar://problem/3061801)
+gdb.base/annota3.exp: signal sent (pattern 6) (rdar://problem/3061801)
+gdb.base/auxv.exp: info auxv on live process
+gdb.base/auxv.exp: generate native core dump
+gdb.base/break.exp: clear line has no breakpoint disallowed (rdar://problem/3052470)
+gdb.base/break.exp: called user-defined function on breakpoint in called function (rdar://problem/3313204)
+gdb.base/call-ar-st.exp: print print_char_array(char_array) (pattern 1)
+gdb.base/call-ar-st.exp: print print_small_structs (pattern 9)
+gdb.base/call-ar-st.exp: step into print_long_arg_list
+gdb.base/call-ar-st.exp: print print_small_structs from print_long_arg_list (pattern 9)
+gdb.base/call-ar-st.exp: print print_long_arg_list (pattern 10)
+gdb.base/chng-syms.exp: running with invalidated bpt condition after executable changes (rdar://problem/4527080)
+gdb.base/commands.exp: breakpoint in bp_deleted_in_command_test
+gdb.base/commands.exp: breakpoint in temporary_breakpoint_commands
+gdb.base/completion.exp: complete 'p "break1.'
+gdb.base/completion.exp: (timeout) complete 'file ./Make'
+gdb.base/corefile.exp: args: -core=corefile (rdar://problem/4111966)
+gdb.base/corefile.exp: args: execfile -core=corefile (rdar://problem/4111966)
+gdb.base/corefile.exp: core-file command (rdar://problem/4111966)
+gdb.base/corefile.exp: print func2::coremaker_local (rdar://problem/4121959)
+gdb.base/dbx.exp: file average.c:1 (rdar://problem/4526968)
+gdb.base/dbx.exp: func sum
+gdb.base/dbx.exp: func print_average
+gdb.base/default.exp: show convenience (APPLE LOCAL) (rdar://problem/3105493)
+gdb.base/default.exp: show convenience (rdar://problem/3105493)
+gdb.base/dump.exp: reload array as value, srec; value restored ok
+gdb.base/dump.exp: reload struct as value, srec; value restored ok
+gdb.base/dump.exp: reload array as memory, srec; value restored ok
+gdb.base/dump.exp: reload struct as memory, srec; value restored ok
+gdb.base/dump.exp: reload array as value, intel hex; value restored ok
+gdb.base/dump.exp: reload struct as value, intel hex; value restored ok
+gdb.base/dump.exp: reload array as memory, intel hex; value restored ok
+gdb.base/dump.exp: reload struct as memory, intel hex; value restored ok
+gdb.base/dump.exp: reload array as value, tekhex; value restored ok
+gdb.base/dump.exp: reload struct as value, tekhex; value restored ok
+gdb.base/dump.exp: reload array as memory, tekhex; value restored ok
+gdb.base/dump.exp: reload struct as memory, tekhex; value restored ok
+gdb.base/dump.exp: array as value, srec; value restored ok
+gdb.base/dump.exp: struct as value, srec; value restored ok
+gdb.base/dump.exp: array as memory, srec; value restored ok
+gdb.base/dump.exp: struct as memory, srec; value restored ok
+gdb.base/dump.exp: array as value, ihex; file restored ok
+gdb.base/dump.exp: array as value, ihex; value restored ok
+gdb.base/dump.exp: struct as value, ihex; file restored ok
+gdb.base/dump.exp: struct as value, ihex; value restored ok
+gdb.base/dump.exp: array as memory, ihex; file restored ok
+gdb.base/dump.exp: array as memory, ihex; value restored ok
+gdb.base/dump.exp: struct as memory, ihex; file restored ok
+gdb.base/dump.exp: struct as memory, ihex; value restored ok
+gdb.base/dump.exp: array as value, tekhex; value restored ok
+gdb.base/dump.exp: struct as value, tekhex; value restored ok
+gdb.base/dump.exp: array as memory, tekhex; value restored ok
+gdb.base/dump.exp: struct as memory, tekhex; value restored ok
+gdb.base/dump.exp: array copy, srec; value restored ok
+gdb.base/dump.exp: struct copy, srec; value restored ok
+gdb.base/dump.exp: array copy, ihex; file restored ok
+gdb.base/dump.exp: array copy, ihex; value restored ok
+gdb.base/dump.exp: struct copy, ihex; file restored ok
+gdb.base/dump.exp: struct copy, ihex; value restored ok
+gdb.base/dump.exp: array copy, tekhex; value restored ok
+gdb.base/dump.exp: struct copy, tekhex; value restored ok
+gdb.base/dump.exp: array partial, srec; file restored ok
+gdb.base/dump.exp: array partial, srec; value restored ok
+gdb.base/dump.exp: array partial, ihex; file restored ok
+gdb.base/dump.exp: array partial, ihex; value restored ok
+gdb.base/dump.exp: array partial, tekhex; file restored ok
+gdb.base/dump.exp: array partial, tekhex; value restored ok
+gdb.base/dump.exp: array partial with expressions; file restored ok
+gdb.base/dump.exp: array partial with expressions; value restored ok
+gdb.base/ena-dis-br.exp: continue to auto-deleted break marker3
+gdb.base/ena-dis-br.exp: info auto-deleted break marker3
+gdb.base/ending-run.exp: r
+gdb.base/ending-run.exp: Only cleared 1 by line (rdar://problem/3052470)
+gdb.base/ending-run.exp: Clear 2 by address
+gdb.base/ending-run.exp: c
+gdb.base/ending-run.exp: cont
+gdb.base/ending-run.exp: step to end of run
+gdb.base/exprs.exp: truncate (void*) 0x00000000ffffffff + 1
+gdb.base/exprs.exp: truncate (void*) 0xffffffff00000000 - 1
+gdb.base/help.exp: help watch
+gdb.base/list.exp: list line 1 with unlimited listsize
+gdb.base/list.exp: list line 1 in include file (rdar://problem/4526968)
+gdb.base/list.exp: list list1.c:1 (rdar://problem/4526968)
+gdb.base/list.exp: list range; filename:line1,filename:line2 (rdar://problem/4526968)
+gdb.base/list.exp: list list0.c:unused
+gdb.base/list.exp: list list1.c:unused
+gdb.base/list.exp: list filename:function; wrong filename rejected
+gdb.base/macscp.exp: executable includes no macro debugging information
+gdb.base/maint.exp: maint print psymbols
+gdb.base/maint.exp: maint print symbols
+gdb.base/maint.exp: maint info sections CODE (rdar://problem/3054660)
+gdb.base/maint.exp: maint info sections DATA (rdar://problem/3054660)
+gdb.base/mips_pro.exp: running to middle in runto
+gdb.base/nodebug.exp: ptype top
+gdb.base/nodebug.exp: ptype middle
+gdb.base/nodebug.exp: p dataglobal
+gdb.base/nodebug.exp: ptype dataglobal
+gdb.base/nodebug.exp: p datalocal
+gdb.base/nodebug.exp: ptype datalocal
+gdb.base/nodebug.exp: p bssglobal
+gdb.base/nodebug.exp: ptype bssglobal
+gdb.base/nodebug.exp: p bsslocal
+gdb.base/nodebug.exp: ptype bsslocal
+gdb.base/pending.exp: set pending breakpoint
+gdb.base/pending.exp: single pending breakpoint info
+gdb.base/pending.exp: pending plus real breakpoint info
+gdb.base/pending.exp: pending plus condition
+gdb.base/pending.exp: pending disabled
+gdb.base/pending.exp: pending disabled plus commands
+gdb.base/pending.exp: Set pending breakpoint 2
+gdb.base/pending.exp: multiple pending breakpoints
+gdb.base/pending.exp: Set pending breakpoint 3
+gdb.base/pending.exp: multiple pending breakpoints 2
+gdb.base/pending.exp: running to main
+gdb.base/pending.exp: re-enabling pending breakpoint that can resolve instantly
+gdb.base/printcmds.exp: ptype &*"foo" (PRMS: gdb/538)
+gdb.base/ptype.exp: ptype unnamed enumeration member (APPLE LOCAL: read-type-psyms==0)
+gdb.base/ptype.exp: ptype ffptr
+gdb.base/ptype.exp: ptype fffptr
+gdb.base/radix.exp: print 20.; expect 20; input radix 2
+gdb.base/radix.exp: print (int) 20.; expect 20; input radix 2
+gdb.base/radix.exp: print 20.; expect 20; input radix 3
+gdb.base/radix.exp: print (int) 20.; expect 20; input radix 3
+gdb.base/radix.exp: print 20.; expect 20; input radix 8
+gdb.base/radix.exp: print (int) 20.; expect 20; input radix 8
+gdb.base/radix.exp: print 20.; expect 20; input radix 10
+gdb.base/radix.exp: print (int) 20.; expect 20; input radix 10
+gdb.base/radix.exp: print 20.; expect 20; input radix 16
+gdb.base/radix.exp: print (int) 20.; expect 20; input radix 16
+gdb.base/radix.exp: print 20.; expect 24; output radix 8 (PRMS: gdb/1715)
+gdb.base/radix.exp: print (int) 20.; expect 24; output radix 8
+gdb.base/radix.exp: print 20.; expect 20; output radix 10
+gdb.base/radix.exp: print (int) 20.; expect 20; output radix 10
+gdb.base/radix.exp: print 20.; expect 14; output radix 16 (PRMS: gdb/1715)
+gdb.base/radix.exp: print (int) 20.; expect 14; output radix 16
+gdb.base/relocate.exp: get address of static_foo (unknown output)
+gdb.base/relocate.exp: get address of static_bar (unknown output)
+gdb.base/relocate.exp: static variables have different addresses
+gdb.base/relocate.exp: add-symbol-file relocate.o $offset (rdar://problem/4111967)
+gdb.base/relocate.exp: function foo has a different address (rdar://problem/4111967)
+gdb.base/relocate.exp: print static_foo
+gdb.base/relocate.exp: print static_bar
+gdb.base/savedregs.exp: advance catcher
+gdb.base/savedregs.exp: Get thrower info frame
+gdb.base/savedregs.exp: Check main info frame; stack contains catcher sigtramp thrower main
+gdb.base/savedregs.exp: Get catcher info frame
+gdb.base/savedregs.exp: Check thrower info frame; stack contains caller dummy catcher sigtramp thrower main
+gdb.base/savedregs.exp: Check thrower info frame; stack contains callee caller dummy catcher sigtramp thrower main
+gdb.base/scope.exp: print foo::funclocal_ro
+gdb.base/scope.exp: print 'scope1.c'::foo::funclocal_ro
+gdb.base/scope.exp: print funclocal_ro at foo
+gdb.base/scope.exp: print foo::funclocal_ro at foo
+gdb.base/scope.exp: print 'scope1.c'::foo::funclocal_ro at foo
+gdb.base/scope.exp: print foo::funclocal_ro at bar
+gdb.base/scope.exp: print 'scope1.c'::foo::funclocal_ro at bar
+gdb.base/setshow.exp: show complaints (0)
+gdb.base/shlib-call.exp: step inside shr2 (shlib func)
+gdb.base/shlib-call.exp: step out of shr2 to main
+gdb.base/shlib-call.exp: step into mainshr1
+gdb.base/sigaltstack.exp: finish from catch INNER
+gdb.base/sigaltstack.exp: finish to OUTER
+gdb.base/sigaltstack.exp: finish to catch MAIN
+gdb.base/sigaltstack.exp: finish to MAIN
+gdb.base/siginfo.exp: step out of handler
+gdb.base/signals.exp: override SIGINT (PRMS: gdb/1707)
+gdb.base/signals.exp: signal SIGUSR1 (the program exited) (rdar://problem/4527097)
+gdb.base/signals.exp: backtrace for SIGUSR1 (rdar://problem/3061801)
+gdb.base/sigstep.exp: step from handler; leave handler
+gdb.base/sigstep.exp: stepi from handleri; leave signal trampoline (stepped)
+gdb.base/sigstep.exp: next from handler; leave handler
+gdb.base/sigstep.exp: nexti from handleri; leave signal trampoline (stepped)
+gdb.base/sigstep.exp: step on breakpoint, to handler; performing step (PRMS: gdb/1738)
+gdb.base/sigstep.exp: next on breakpoint, to handler; performing next (PRMS: gdb/1738)
+gdb.base/sigstep.exp: continue on breakpoint, to handler; performing continue (PRMS: gdb/1738)
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; performing step (PRMS: gdb/1738)
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; performing next (PRMS: gdb/1738)
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; performing continue (PRMS: gdb/1738)
+gdb.base/so-impl-ld.exp: step in solib call
+gdb.base/so-impl-ld.exp: step out of solib call
+gdb.base/volatile.exp: ptype video
+gdb.base/watchpoint.exp: next after watch x (PRMS: gdb/38)
+gdb.cp/annota2.exp: watch triggered on a.x (PRMS: gdb/38)
+gdb.cp/annota3.exp: watch triggered on a.x (PRMS: gdb/38)
+gdb.cp/classes.exp: ptype class Static // parse failed
+gdb.cp/classes.exp: ptype obj_with_enum // unrecognized line type 1: PrivEnum priv_enum; (PRMS: gdb/57)
+gdb.cp/classes.exp: print (ClassWithEnum::PrivEnum) 42 (PRMS: gdb/1588)
+gdb.cp/classes.exp: print ('ClassWithEnum::PrivEnum') 42 (PRMS: gdb/57)
+gdb.cp/cp-blocks-linetables.exp: Fifth next
+gdb.cp/cp-blocks-linetables.exp: Sixth next
+gdb.cp/demangle.exp: lucid: __vtbl__3foo__vt_cc_main_ (PRMS: gdb/945)
+gdb.cp/gdb1355.exp: ptype s1
+gdb.cp/inherit.exp: print g_D.A::a (PRMS: gdb/68)
+gdb.cp/inherit.exp: print g_D.A::x (PRMS: gdb/68)
+gdb.cp/inherit.exp: print g_E.A::a (PRMS: gdb/68)
+gdb.cp/inherit.exp: print g_E.A::x (PRMS: gdb/68)
+gdb.cp/local.exp: ptype InnerLocal::NestedInnerLocal (PRMS: gdb/482)
+gdb.cp/m-static.exp: static const int initialized elsewhere
+gdb.cp/m-static.exp: static const int initialized nowhere
+gdb.cp/namespace.exp: ptype ::C::CClass (PRMS: gdb/1448)
+gdb.cp/namespace.exp: ptype ::C::CClass::NestedClass (PRMS: gdb/1448)
+gdb.cp/namespace.exp: ptype ::C::NestedClass (PRMS: gdb/1448)
+gdb.cp/namespace.exp: ptype ::C::OtherFileClass (PRMS: gdb/1448)
+gdb.cp/pr-574.exp: PR gdb/574
+gdb.cp/templates.exp: ptype T5<int>
+gdb.cp/templates.exp: ptype t5i
+gdb.cp/templates.exp: constructor breakpoint (bad menu choices)
+gdb.cp/templates.exp: ptype fvpchar (PRMS: gdb/1512)
+gdb.cp/templates.exp: print Foo<volatile char *>::foo (PRMS: gdb/931)
+gdb.cp/templates.exp: print Foo<volatile char*>::foo (PRMS: gdb/931)
+gdb.cp/templates.exp: ptype quxint
+gdb.cp/virtfunc.exp: print pEe->D::vg() (rdar://problem/3645369)
+gdb.mi/gdb669.exp: -thread-list-ids (at main)
+gdb.mi/gdb669.exp: info threads (at main)
+gdb.mi/gdb669.exp: console and MI have same number of threads (at main)
+gdb.mi/gdb669.exp: -thread-list-ids (try 0)
+gdb.mi/gdb669.exp: info threads (try 0)
+gdb.mi/gdb669.exp: console and MI have same number of threads (try 0)
+gdb.mi/gdb669.exp: -thread-list-ids (try 1)
+gdb.mi/gdb669.exp: info threads (try 1)
+gdb.mi/gdb669.exp: console and MI have same number of threads (try 1)
+gdb.mi/gdb669.exp: -thread-list-ids (try 2)
+gdb.mi/gdb669.exp: info threads (try 2)
+gdb.mi/gdb669.exp: console and MI have same number of threads (try 2)
+gdb.mi/gdb669.exp: -thread-list-ids (try 3)
+gdb.mi/gdb669.exp: info threads (try 3)
+gdb.mi/gdb669.exp: console and MI have same number of threads (try 3)
+gdb.mi/mi-cli.exp: -interpreter-exec console-quoted "list" at basics.c:59
+gdb.mi/mi-file.exp: request path info of current source file (basics.c)
+gdb.mi/mi2-basics.exp: environment-path no-args operation
+gdb.mi/mi2-basics.exp: environment-path dir1 dir2 operation
+gdb.mi/mi2-basics.exp: environment-path -r dir operation
+gdb.mi/mi2-basics.exp: environment-path -r operation
+gdb.mi/mi2-break.exp: insert temp breakpoint at basics.c:37 (callee3) (rdar://problem/4525483)
+gdb.mi/mi2-break.exp: insert temp breakpoint at "<fullfilename>":28 (callee4) (rdar://problem/4525483)
+gdb.mi/mi2-break.exp: break-insert -r operation
+gdb.mi/mi2-break.exp: insert breakpoint with regexp callee2
+gdb.mi/mi2-break.exp: insert breakpoint with regexp callee
+gdb.mi/mi2-break.exp: insert breakpoint with regexp .*llee
+gdb.mi/mi2-break.exp: list of breakpoints
+gdb.mi/mi2-cli.exp: -interpreter-exec console-quoted "list" (rdar://problem/4526968)
+gdb.mi/mi2-cli.exp: -interpreter-exec console-quoted "list" at basics.c:59 (rdar://problem/4526968)
+gdb.mi/mi2-console.exp: Hello message (PRMS: gdb/623)
+gdb.mi/mi2-disassemble.exp: data-disassemble file & line, assembly only
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line assembly mixed
+gdb.mi/mi2-disassemble.exp: data-disassemble range assembly mixed
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number assembly only
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number (zero lines) assembly only
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number (more than main lines) assembly only
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number assembly mixed (rdar://problem/4525530)
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number (zero lines) assembly mixed (rdar://problem/4525530)
+gdb.mi/mi2-disassemble.exp: data-disassemble file, line, number (more than main lines) assembly mixed (rdar://problem/4525530)
+gdb.mi/mi2-file.exp: request path info of current source file (basics.c)
+gdb.mi/mi2-pthreads.exp: -thread_list_ids (in check_mi_thread_command_set)
+gdb.mi/mi2-pthreads.exp: check_mi_thread_command_set: -thread-select 1
+gdb.mi/mi2-simplerun.exp: insert breakpoint at basics.c:37 (callee3) (rdar://problem/4525483)
+gdb.mi/mi2-simplerun.exp: insert breakpoint at "<fullfilename>":28 (callee4) (rdar://problem/4525483)
+gdb.mi/mi2-stack.exp: selected frame listing
+gdb.mi/mi2-stack.exp: next in callee4 loc-check
+gdb.mi/mi2-syn-frame.exp: list stack frames
+gdb.mi/mi2-syn-frame.exp: backtrace from inferior function at exception (rdar://problem/4525524)
+gdb.mi/mi2-var-block.exp: update inner_foo: should be out of scope: KNOWN PROBLEM
+gdb.mi/mi2-var-block.exp: evaluate inner_foo: should be out of scope: KNOWN PROBLEM
+gdb.mi/mi2-var-block.exp: update foo2: should be out of scope: KNOWN PROBLEM
+gdb.mi/mi2-var-block.exp: update foo2 should be out of scope: KNOWN PROBLEM
+gdb.mi/mi2-var-block.exp: update foo should be out of scope: KNOWN PROBLEM
+gdb.mi/mi2-var-child.exp: update all vars psnp->next->long_ptr (and 1.long_ptr) changed
+gdb.mi/mi2-var-cmd.exp: create int (rdar://problem/4525524)
+gdb.mi/mi2-var-cmd.exp: update all vars: changed FIXME
+gdb.mi/mi2-var-display.exp: run to do_children_tests (2)
+gdb.mi/mi2-var-display.exp: eval variable e
+gdb.mi/mi2-var-display.exp: eval variable anone
+gdb.mi/mi2-var-display.exp: create variable a2 in different scope
+gdb.stabs/weird.exp: print struct constant
+gdb.stabs/weird.exp: array0 with strange index
+gdb.stabs/weird.exp: array1 with strange index
+gdb.stabs/weird.exp: whatis pointer_to_int_var
+gdb.stabs/weird.exp: whatis intp_var
+gdb.stabs/weird.exp: p common0var1
+gdb.stabs/weird.exp: p common0var2
+gdb.threads/manythreads.exp: info threads
+gdb.threads/watchthreads.exp: threaded watch loop
+gdb.threads/watchthreads.exp: watchpoint on args[0] hit in thread
+gdb.threads/watchthreads.exp: watchpoint on args[1] hit in thread
+gdb.threads/watchthreads.exp: combination of threaded watchpoints = 30
+gdb.trace/actions.exp: Could not find gdb_recursion_test function
+gdb.trace/deltrace.exp: Could not find gdb_recursion_test function
+gdb.trace/infotrace.exp: 2.1: info tracepoints (all)
+gdb.trace/infotrace.exp: 2.2b: info tracepoint 1 (gdb_asm_test)
+gdb.trace/passcount.exp: Could not find gdb_recursion_test function
+gdb.trace/save-trace.exp: Could not find gdb_recursion_test function
+gdb.trace/tracecmd.exp: Could not find gdb_recursion_test function

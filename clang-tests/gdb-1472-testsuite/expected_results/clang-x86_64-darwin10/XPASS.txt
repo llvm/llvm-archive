@@ -1,0 +1,1 @@
+gdb.stabs/weird.exp: weirdx.o read without error

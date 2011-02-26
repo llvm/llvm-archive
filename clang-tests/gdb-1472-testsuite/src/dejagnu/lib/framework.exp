@@ -1,0 +1,1350 @@
+# Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+# 2001, 2002, 2003 Free Software Foundation, Inc.
+#
+# This file is part of DejaGnu.
+#
+# DejaGnu is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# DejaGnu is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DejaGnu; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# This file was written by Rob Savoye. (rob@welcomehome.org)
+
+# These variables are local to this file.
+# This or more warnings and a test fails.
+set warning_threshold 3
+# This or more errors and a test fails.
+set perror_threshold 1
+
+proc mail_file { file to subject } {
+    if [file readable $file] {
+	catch "exec mail -s \"$subject\" $to < $file"
+    }
+}
+
+#
+# Check for xml output flag or environment variable
+#
+proc check_xml { } {
+    global env
+
+    set x "RUNTESTFLAGS"
+    return [format "%s" $env($x)]
+}
+
+#
+# Insert DTD for xml format checking
+#
+proc insertdtd { } {
+# APPLE LOCAL: Customize the testsuite DTD format for Joe Azure's
+# scripts.
+    xml_output "<!DOCTYPE testsuite \[
+<!-- testsuite.dtd -->
+<!ELEMENT testsuites (config, testsuite+, kpass+)>
+  <!ATTLIST testsuites package CDATA #IMPLIED >
+  <!ELEMENT config (build, host, variations)>
+  <!ELEMENT build              (#PCDATA)>
+  <!ELEMENT host               (#PCDATA)>
+  <!ELEMENT target             (#PCDATA)>
+  <!ELEMENT variations         (#PCDATA)>
+     
+<!ELEMENT testsuite (testcase | summary)+>
+  <!ATTLIST testsuite name CDATA #IMPLIED >
+  <!ATTLIST testsuite package CDATA #IMPLIED >
+<!ELEMENT kpass (name, prms_id)+>
+<!ELEMENT testcase (input, output, result, name, prms_id, time, failure, pass )>
+  <!ELEMENT input              (#PCDATA)>
+  <!ELEMENT output             (#PCDATA)>
+  <!ELEMENT result             (#PCDATA)>
+  <!ELEMENT name               (#PCDATA)>
+  <!ELEMENT prms_id            (#PCDATA)>
+  <!ELEMENT summary 	(result, description, total)>
+  <!ELEMENT description        (#PCDATA)>
+  <!ELEMENT total              (#PCDATA)>
+  <!ELEMENT time		  	   (#PCDATA)>
+  <!ELEMENT failure		  	   (#PCDATA)>
+  <!ELEMENT pass	  	   (#PCDATA)>
+  <!ATTLIST failure type CDATA #IMPLIED >
+  <!ATTLIST failure message CDATA #IMPLIED >
+  <!ATTLIST pass type CDATA #IMPLIED >
+  <!ATTLIST pass message CDATA #IMPLIED >
+
+\]>"
+}
+
+#
+# Open the output logs
+#
+proc open_logs { } {
+    global outdir
+    global tool
+    global sum_file
+    global xml_file
+    global xml
+# APPLE LOCAL: For Joe's testsuite framework
+    global cmdline_dir_to_run
+
+    if { ${tool} ==  "" } {
+	set tool testrun
+    }
+    catch "exec rm -f $outdir/$tool.sum"
+    set sum_file [open "$outdir/$tool.sum" w]
+    if { $xml } {
+        catch "exec rm -f $outdir/$tool.xml"
+# APPLE LOCAL begin: For Joe's testsuite framework
+        set xml_file [open "$outdir/$tool.xml" w]
+        xml_output "<?xml version=\"1.0\"?>"
+        insertdtd
+        xml_output "<testsuites package=\"$cmdline_dir_to_run\">"
+       # xml_output "<testsuite>"
+# APPLE LOCAL end
+    }
+    catch "exec rm -f $outdir/$tool.log"
+    log_file -a "$outdir/$tool.log"
+    verbose "Opening log files in $outdir"
+    if { ${tool} ==  "testrun" } {
+	set tool ""
+    }
+}
+
+
+#
+# Close the output logs
+#
+proc close_logs { } {
+    global sum_file
+    global xml
+    global xml_file
+# APPLE LOCAL begin: For Joe Azure's processing scripts
+    global target_triplet
+    global host_triplet
+    global build_triplet
+    global compiler_flags
+    global current_target
+# APPLE LOCAL end
+
+    if { $xml } {
+# APPLE LOCAL begin: For Joe's testsuite framework
+        xml_output "  <config>"
+	xml_output "    <build>$build_triplet</build>"
+	xml_output "    <host>$host_triplet</host>"
+	xml_output "    <target>$target_triplet</target>"
+	xml_output "    <variations>$current_target</variations>"
+	xml_output "  </config>"
+        xml_output "</testsuites>"
+# APPLE LOCAL end
+        catch "close $xml_file"
+    }
+
+    catch "close $sum_file"
+}
+
+# APPLE LOCAL proc:  For Joe's testsuite framework
+proc xml_start_suite { suiteName } {
+	global xml
+	
+	if {$xml} {
+		xml_output "<testsuite package=\"\" name=\"$suiteName\">"
+	}
+}
+
+# APPLE LOCAL proc:  For Joe's testsuite framework
+proc xml_stop_suite { time } {
+	global xml
+	if {$xml} {		
+		xml_output "</testsuite>"
+	}
+
+}
+
+#
+# Check build host triplet for pattern
+#
+# With no arguments it returns the triplet string.
+#
+proc isbuild { pattern } {
+    global build_triplet
+    global host_triplet
+
+    if ![info exists build_triplet] {
+	set build_triplet ${host_triplet}
+    }
+    if [string match "" $pattern] {
+	return $build_triplet
+    }
+    verbose "Checking pattern \"$pattern\" with $build_triplet" 2
+
+    if [string match "$pattern" $build_triplet] {
+	return 1
+    } else {
+	return 0
+    }
+}
+
+#
+# Is $board remote? Return a non-zero value if so.
+#
+proc is_remote { board } {
+    global host_board
+    global target_list
+
+    verbose "calling is_remote $board" 3
+    # Remove any target variant specifications from the name.
+    set board [lindex [split $board "/"] 0]
+
+    # Map the host or build back into their short form.
+    if { [board_info build name] == $board } {
+	set board "build"
+    } elseif { [board_info host name] == $board } {
+	set board "host"
+    }
+
+    # We're on the "build". The check for the empty string is just for
+    # paranoia's sake--we shouldn't ever get one. "unix" is a magic
+    # string that should really go away someday.
+# APPLE LOCAL: Recognize "macosx"
+    if { $board == "build" || $board == "unix" || $board == "macosx" || $board == "" } {
+	verbose "board is $board, not remote" 3
+	return 0
+    }
+
+    if { $board == "host" } {
+	if { [info exists host_board] && $host_board != "" } {
+	    verbose "board is $board, is remote" 3
+	    return 1
+	} else {
+	    verbose "board is $board, host is local" 3
+	    return 0
+	}
+    }
+
+    if { $board == "target" } {
+	global current_target_name
+
+	if [info exists current_target_name] {
+	    # This shouldn't happen, but we'll be paranoid anyway.
+	    if { $current_target_name != "target" } {
+		return [is_remote $current_target_name]
+	    }
+	}
+	return 0
+    }
+    if [board_info $board exists isremote] {
+	verbose "board is $board, isremote is [board_info $board isremote]" 3
+	return [board_info $board isremote]
+    }
+    return 1
+}
+#
+# If this is a canadian (3 way) cross. This means the tools are
+# being built with a cross compiler for another host.
+#
+proc is3way {} {
+    global host_triplet
+    global build_triplet
+
+    if ![info exists build_triplet] {
+	set build_triplet ${host_triplet}
+    }
+    verbose "Checking $host_triplet against $build_triplet" 2
+    if { "$build_triplet" == "$host_triplet" } {
+	return 0
+    }
+    return 1
+}
+
+#
+# Check host triplet for pattern
+#
+# With no arguments it returns the triplet string.
+#
+proc ishost { pattern } {
+    global host_triplet
+
+    if [string match "" $pattern] {
+	return $host_triplet
+    }
+    verbose "Checking pattern \"$pattern\" with $host_triplet" 2
+
+    if [string match "$pattern" $host_triplet] {
+	return 1
+    } else {
+	return 0
+    }
+}
+
+#
+# Check target triplet for pattern
+#
+# With no arguments it returns the triplet string.
+# Returns 1 if the target looked for, or 0 if not.
+#
+proc istarget { args } {
+    global target_triplet
+
+    # if no arg, return the config string
+    if [string match "" $args] {
+	if [info exists target_triplet] {
+	    return $target_triplet
+	} else {
+	    perror "No target configuration names found."
+	}
+    }
+
+    set triplet [lindex $args 0]
+
+    # now check against the cannonical name
+    if [info exists target_triplet] {
+	verbose "Checking \"$triplet\" against \"$target_triplet\"" 2
+	if [string match $triplet $target_triplet] {
+	    return 1
+	}
+    }
+
+    # nope, no match
+    return 0
+}
+
+#
+# Check to see if we're running the tests in a native environment
+#
+# Returns 1 if running native, 0 if on a target.
+#
+proc isnative { } {
+    global target_triplet
+    global build_triplet
+
+    if [string match $build_triplet $target_triplet] {
+	return 1
+    }
+    return 0
+}
+
+set in_exit 0
+#
+# unknown -- called by expect if a proc is called that doesn't exist
+#
+proc unknown { args } {
+    global errorCode
+    global errorInfo
+    global exit_status
+    global in_exit
+
+    set in_exit 1
+
+    if $in_exit {
+	clone_output "ERROR: (DejaGnu) proc \"$args\" does not exist."
+	return
+    }
+
+    clone_output "ERROR: (DejaGnu) proc \"$args\" does not exist."
+    if [info exists errorCode] {
+        send_error "The error code is $errorCode\n"
+    }
+    if [info exists errorInfo] {
+        send_error "The info on the error is:\n$errorInfo\n"
+    }
+
+    set exit_status 1
+    log_and_exit
+}
+
+#
+# Print output to stdout (or stderr) and to log file
+#
+# If the --all flag (-a) option was used then all messages go the the screen.
+# Without this, all messages that start with a keyword are written only to the
+# detail log file.  All messages that go to the screen will also appear in the
+# detail log.  This should only be used by the framework itself using pass,
+# fail, xpass, xfail, kpass, kfail, warning, perror, note, untested, unresolved,
+# or unsupported procedures.
+#
+proc clone_output { message } {
+    global sum_file
+    global all_flag
+
+    if { $sum_file != "" } {
+	puts $sum_file "$message"
+    }
+
+    regsub "^\[ \t\]*(\[^ \t\]+).*$" "$message" "\\1" firstword
+# APPLE LOCAL: Add XPASS, KFAIL
+    case "$firstword" in {
+	{"PASS:" "XFAIL:" "KFAIL:" "UNRESOLVED:" "UNSUPPORTED:" "UNTESTED:" "XPASS:" "KFAIL:"} {
+	    if $all_flag {
+		send_user "$message\n"
+		return "$message"
+	    } else {
+		send_log "$message\n"
+	    }
+	}
+	{"ERROR:" "WARNING:" "NOTE:"} {
+	    send_error "$message\n"
+	    return "$message"
+	}
+	default {
+	    send_user "$message\n"
+	    return "$message"
+	}
+    }
+}
+
+#
+# Reset a few counters.
+#
+proc reset_vars {} {
+    global test_names test_counts
+    global warncnt errcnt
+
+    # other miscellaneous variables
+    global prms_id
+    global bug_id
+    global site_bug_id
+
+    # reset them all
+    set prms_id	0
+    set bug_id	0
+    set warncnt 0
+    set errcnt  0
+    set site_bug_id 0;
+    foreach x $test_names {
+	set test_counts($x,count) 0
+    }
+
+    # Variables local to this file.
+    global warning_threshold perror_threshold
+    set warning_threshold 3
+    set perror_threshold 1
+}
+
+proc log_and_exit {} {
+    global exit_status
+    global tool mail_logs outdir mailing_list
+
+    log_summary total
+    # extract version number
+    if {[info procs ${tool}_version] != ""} {
+	if {[catch "${tool}_version" output]} {
+	    warning "${tool}_version failed:\n$output"
+	}
+    }
+    close_logs
+    cleanup
+    verbose -log "runtest completed at [timestamp -format %c]"
+    if $mail_logs {
+	mail_file $outdir/$tool.sum $mailing_list "Dejagnu Summary Log"
+    }
+    remote_close host
+    remote_close target
+    exit $exit_status
+}
+
+proc xml_output { message } {
+    global xml_file
+    if { $xml_file != "" } {
+	puts $xml_file "$message"
+    }
+}
+
+#
+# Print summary of all pass/fail counts
+#
+proc log_summary { args } {
+    global tool
+    global sum_file
+    global xml_file
+    global xml
+    global exit_status
+    global mail_logs
+    global outdir
+    global mailing_list
+    global current_target_name
+    global test_counts
+    global testcnt
+    global site_fails seen_files site_fail site_pass;
+    global pf_prefix;
+
+    if [ info exists site_fails ] {
+      set searchid [ array startsearch site_fails ]
+      for { set key [ array nextelement site_fails $searchid ] } \
+          { $key != "" } \
+          { set key [ array nextelement site_fails $searchid ] } \
+          {
+              set xtuple $site_fails($key);
+              set xarch [ lindex $xtuple 0 ];
+              set xfile [ lindex $xtuple 1 ];
+              set xmessage [ lindex $xtuple 2 ];
+              set xbugid [ lindex $xtuple 3 ];
+              set xtype [ lindex $xtuple 4 ];
+              set xseen [ lindex $xtuple 5 ];
+
+              if { $xseen == 0 } {
+                  if { [ istarget $xarch ] } {
+                      if [ info exists seen_files($xfile) ] {
+                          set bug_id $xbugid
+                          set pf_prefix "$xfile:"
+                          record_test $site_pass $xmessage
+                      }
+                  }
+              }
+          }
+    }
+
+    if { [llength $args] == 0 } {
+	set which "count"
+    } else {
+	set which [lindex $args 0]
+    }
+
+    if { [llength $args] == 0 } {
+	clone_output "\n\t\t=== $tool Summary for $current_target_name ===\n"
+    } else {
+	clone_output "\n\t\t=== $tool Summary ===\n"
+    }
+
+    # If the tool set `testcnt', it wants us to do a sanity check on the
+    # total count, so compare the reported number of testcases with the
+    # expected number.  Maintaining an accurate count in `testcnt' isn't easy
+    # so it's not clear how often this will be used.
+    if [info exists testcnt] {
+	if { $testcnt > 0 } {
+	    set totlcnt 0
+	    # total all the testcases reported
+	    foreach x { FAIL PASS XFAIL KFAIL XPASS KPASS UNTESTED UNRESOLVED UNSUPPORTED } {
+		incr totlcnt test_counts($x,$which)
+	    }
+	    set testcnt test_counts(total,$which)
+
+	    if { $testcnt>$totlcnt || $testcnt<$totlcnt } {
+		if { $testcnt > $totlcnt } {
+		    set mismatch "unreported  [expr $testcnt-$totlcnt]"
+		}
+		if { $testcnt < $totlcnt } {
+		    set mismatch "misreported [expr $totlcnt-$testcnt]"
+		}
+	    } else {
+		verbose "# of testcases run         $testcnt"
+	    }
+
+	    if [info exists mismatch] {
+		clone_output "### ERROR: totals do not equal number of testcases run"
+		clone_output "### ERROR: # of testcases expected    $testcnt"
+		clone_output "### ERROR: # of testcases reported    $totlcnt"
+		clone_output "### ERROR: # of testcases $mismatch\n"
+	    }
+	}
+    }
+    foreach x { PASS FAIL XPASS XFAIL KPASS KFAIL UNRESOLVED UNTESTED UNSUPPORTED } {
+	set val $test_counts($x,$which)
+	if { $val > 0 } {
+	    set mess "# of $test_counts($x,name)"
+            if { $xml } {
+                xml_output "  <summary>"
+                xml_output "    <result>$x</result>"
+                xml_output "    <description>$mess</description>"
+                xml_output "    <total>$val</total>"
+                xml_output "  </summary>"
+            }
+	    if { [string length $mess] < 24 } {
+		append mess "\t"
+	    }
+	    clone_output "$mess\t$val"
+	}
+    }
+}
+
+#
+# Close all open files, remove temp file and core files
+#
+proc cleanup {} {
+    global sum_file
+    global exit_status
+    global done_list
+    global subdir
+
+    #catch "exec rm -f [glob xgdb core *.x *.o *_soc a.out]"
+    #catch "exec rm -f [glob -nocomplain $subdir/*.o $subdir/*.x $subdir/*_soc]"
+}
+
+#
+# Setup a flag to control whether a failure is expected or not
+#
+# Multiple target triplet patterns can be specified for targets
+# for which the test fails.  A bug report ID can be specified,
+# which is a string without '-'.
+#
+proc setup_xfail { args } {
+    global xfail_flag
+    global xfail_prms
+
+    set xfail_prms 0
+    set argc [ llength $args ]
+    for { set i 0 } { $i < $argc } { incr i } {
+	set sub_arg [ lindex $args $i ]
+	# is a prms number. we assume this is a string with no '-' characters
+	if [regexp "^\[^\-\]+$" $sub_arg] {
+	    set xfail_prms $sub_arg
+	    continue
+	}
+	if [istarget $sub_arg] {
+	    set xfail_flag 1
+	    continue
+	}
+    }
+}
+
+
+#
+# Setup a flag to control whether it is a known failure
+#
+# A bug report ID _MUST_ be specified, and is the first argument.
+# It still must be a string without '-' so we can be sure someone
+# did not just forget it and we end-up using a taget triple as
+# bug id.
+#
+# Multiple target triplet patterns can be specified for targets
+# for which the test is known to fail.
+#
+#
+proc setup_kfail { args } {
+    global kfail_flag
+    global kfail_prms
+
+    set kfail_prms 0
+    set argc [ llength $args ]
+    for { set i 0 } { $i < $argc } { incr i } {
+	set sub_arg [ lindex $args $i ]
+	# is a prms number. we assume this is a string with no '-' characters
+	if [regexp "^\[^\-\]+$" $sub_arg] {
+	    set kfail_prms $sub_arg
+	    continue
+	}
+	if [istarget $sub_arg] {
+	    set kfail_flag 1
+	    continue
+	}
+    }
+
+    if {$kfail_prms == 0} {
+	perror "Attempt to set a kfail without specifying bug tracking id"
+    }
+}
+
+
+# check to see if a conditional xfail is triggered
+#	message {targets} {include} {exclude}
+#
+#
+proc check_conditional_xfail { args } {
+    global compiler_flags
+
+    set all_args [lindex $args 0]
+
+    set message [lindex $all_args 0]
+
+    set target_list [lindex $all_args 1]
+    verbose "Limited to targets: $target_list" 3
+
+    # get the list of flags to look for
+    set includes [lindex $all_args 2]
+    verbose "Will search for options $includes" 3
+
+    # get the list of flags to exclude
+    if { [llength $all_args] > 3 } {
+	set excludes [lindex $all_args 3]
+	verbose "Will exclude for options $excludes" 3
+    } else {
+	set excludes ""
+    }
+
+    # loop through all the targets, checking the options for each one
+    verbose "Compiler flags are: $compiler_flags" 2
+
+    set incl_hit 0
+    set excl_hit 0
+    foreach targ $target_list {
+	if [istarget $targ] {
+	    # look through the compiler options for flags we want to see
+	    # this is really messy cause each set of options to look for
+	    # may also be a list. We also want to find each element of the
+	    # list, regardless of order to make sure they're found.
+	    # So we look for lists in side of lists, and make sure all
+	    # the elements match before we decide this is legit.
+	    # Se we 'incl_hit' to 1 before the loop so that if the 'includes'
+	    # list is empty, this test will report a hit.  (This can be
+	    # useful if a target will always fail unless certain flags,
+	    # specified in the 'excludes' list, are used.)
+	    set incl_hit 1
+	    for { set i 0 } { $i < [llength $includes] } { incr i } {
+		set incl_hit 0
+		set opt [lindex $includes $i]
+		verbose "Looking for $opt to include in the compiler flags" 2
+		foreach j "$opt" {
+		    if [string match "* $j *" $compiler_flags] {
+			verbose "Found $j to include in the compiler flags" 2
+			incr incl_hit
+		    }
+		}
+		# if the number of hits we get is the same as the number of
+		# specified options, then we got a match
+		if {$incl_hit == [llength $opt]} {
+		    break
+		} else {
+		    set incl_hit 0
+		}
+	    }
+	    # look through the compiler options for flags we don't
+	    # want to see
+	    for { set i 0 } { $i < [llength $excludes] } { incr i } {
+		set excl_hit 0
+		set opt [lindex $excludes $i]
+		verbose "Looking for $opt to exclude in the compiler flags" 2
+		foreach j "$opt" {
+		    if [string match "* $j *" $compiler_flags] {
+			verbose "Found $j to exclude in the compiler flags" 2
+			incr excl_hit
+		    }
+		}
+		# if the number of hits we get is the same as the number of
+		# specified options, then we got a match
+		if {$excl_hit == [llength $opt]} {
+		    break
+		} else {
+		    set excl_hit 0
+		}
+	    }
+
+	    # if we got a match for what to include, but didn't find any reasons
+	    # to exclude this, then we got a match! So return one to turn this into
+	    # an expected failure.
+	    if {$incl_hit && ! $excl_hit } {
+		verbose "This is a conditional match" 2
+		return 1
+	    } else {
+		verbose "This is not a conditional match" 2
+		return 0
+	    }
+	}
+    }
+    return 0
+}
+
+#
+# Clear the xfail flag for a particular target
+#
+proc clear_xfail { args } {
+    global xfail_flag
+    global xfail_prms
+
+    set argc [ llength $args ]
+    for { set i 0 } { $i < $argc } { incr i } {
+	set sub_arg [ lindex $args $i ]
+	case $sub_arg in {
+	    "*-*-*" {			# is a configuration triplet
+		if [istarget $sub_arg] {
+		    set xfail_flag 0
+		    set xfail_prms 0
+		}
+		continue
+	    }
+	}
+    }
+}
+
+#
+# Clear the kfail flag for a particular target
+#
+proc clear_kfail { args } {
+    global kfail_flag
+    global kfail_prms
+
+    set argc [ llength $args ]
+    for { set i 0 } { $i < $argc } { incr i } {
+	set sub_arg [ lindex $args $i ]
+	case $sub_arg in {
+	    "*-*-*" {			# is a configuration triplet
+		if [istarget $sub_arg] {
+		    set kfail_flag 0
+		    set kfail_prms 0
+		}
+		continue
+	    }
+	}
+    }
+}
+
+# APPLE LOCAL proc:  For Joe's testsuite framework
+proc sub_eof {str} {
+	if [string match "^D*" $str] {
+		return "EOF"	
+	} elseif [string match "\032*" $str] {
+		return "ctrl-z"
+	} else {
+		return $str
+	}	
+}
+
+
+#
+# Record that a test has passed or failed (perhaps unexpectedly)
+#
+# This is an internal procedure, only used in this file.
+#
+proc record_test { type message args } {
+    global exit_status
+    global xml
+    global prms_id bug_id
+    global xfail_flag xfail_prms
+    global kfail_flag kfail_prms
+    global errcnt warncnt
+    global warning_threshold perror_threshold
+    global pf_prefix
+    global site_bug_id
+    global seen_files
+
+    if { [llength $args] > 0 } {
+	set count [lindex $args 0]
+    } else {
+	set count 1
+    }
+    if [info exists pf_prefix] {
+        set file [ string trimright [ string trim "$pf_prefix" ] ":" ]
+        array set seen_files [ list $file 1 ]
+# APPLE LOCAL: For Joe's testsuite framework set m2
+        set m2 $message
+        set message [concat $pf_prefix " " $message]
+    }
+
+    # If we have too many warnings or errors,
+    # the output of the test can't be considered correct.
+    if { $warning_threshold > 0 && $warncnt >= $warning_threshold
+	 || $perror_threshold > 0 && $errcnt >= $perror_threshold } {
+        verbose "Error/Warning threshold exceeded: \
+                 $errcnt $warncnt (max. $perror_threshold $warning_threshold)"
+        set type UNRESOLVED
+    }
+
+    incr_count $type
+
+    if { $xml } {
+		global errorInfo
+        set error ""
+        if [info exists errorInfo] {
+	    	set error $errorInfo
+        }
+        global expect_out
+	set rio { "" "" }
+	if { [catch { set rio [split $expect_out(buffer) "\n"] } result]} {
+    	#do nothing - leave as { "" "" }
+	}
+	
+        set output ""
+	set output "expect_out(buffer)"
+# APPLE LOCAL begin: For Joe's test framework
+# Note: the way KPASS is handled at the end means don't output them as testcases.  They have
+# already been recorded as a PASS.
+        if { ![string match "KPASS" $type]} {
+            xml_output "  <testcase>"
+            xml_output "    <input><!\[CDATA\[[sub_eof [string trimright [lindex $rio 0]] ]\]\]></input>"
+            xml_output "    <output><!\[CDATA\[[sub_eof [string trimright [lindex $rio 1]] ]\]\]></output>"
+            xml_output "    <result>$type</result>"
+            xml_output "    <name><!\[CDATA\[$m2 \]\]></name>"
+            xml_output "    <prms_id>$prms_id</prms_id>"
+        	if [string match "FAIL" $type] {
+        		xml_output "    <failure type=\"UNKNOWN\" message=\"Unknown failure\"></failure>"	
+        	} 
+        	if [string match "KFAIL" $type] {
+        		xml_output "    <failure type=\"KNOWN\" message=\"$kfail_prms\"></failure>"
+        	} 
+        #	if {[string match "XPASS" $type] || [string match "KPASS" $type]} {
+        #		xml_output "    <pass type=\"UNKNOWN\" message=\"Unknown pass\">xpass</pass>"
+        #	} 
+            xml_output "  </testcase>"
+        } else {
+            # Record the KPASS as a <kpass> element
+             xml_output "  <kpass>"
+             xml_output "    <name><!\[CDATA\[$m2 \]\]></name>"
+             xml_output "    <prms_id>$prms_id</prms_id>"
+             xml_output "  </kpass>"
+        }
+# APPLE LOCAL end
+    }
+
+    switch $type {
+	PASS {
+	    if $prms_id {
+		set message [concat $message "\t(PRMS $prms_id)"]
+	    }
+	}
+	FAIL {
+	    set exit_status 1
+	    if $prms_id {
+		set message [concat $message "\t(PRMS $prms_id)"]
+	    }
+	}
+	XPASS {
+	    set exit_status 1
+	    if { $xfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $xfail_prms)"]
+	    }
+	}
+	XFAIL {
+	    if { $xfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $xfail_prms)"]
+	    }
+	}
+	KPASS {
+	    set exit_status 1
+	    if { $kfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $kfail_prms)"]
+	    }
+	}
+	KFAIL {
+	    if { $kfail_prms != 0 } {
+		set message [concat $message "\t(PRMS: $kfail_prms)"]
+	    }
+	}
+	UNTESTED {
+	    # The only reason we look at the xfail/kfail stuff is to pick up
+	    # `xfail_prms'.
+	    if { $kfail_flag && $kfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $kfail_prms)"]
+	    } elseif { $xfail_flag && $xfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $xfail_prms)"]
+	    } elseif $prms_id {
+		set message [concat $message "\t(PRMS $prms_id)"]
+	    }
+	}
+	UNRESOLVED {
+	    set exit_status 1
+	    # The only reason we look at the xfail/kfail stuff is to pick up
+	    # `xfail_prms'.
+	    if { $kfail_flag && $kfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $kfail_prms)"]
+	    } elseif { $xfail_flag && $xfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $xfail_prms)"]
+	    } elseif $prms_id {
+		set message [concat $message "\t(PRMS $prms_id)"]
+	    }
+	}
+	UNSUPPORTED {
+	    # The only reason we look at the xfail/kfail stuff is to pick up
+	    # `xfail_prms'.
+	    if { $kfail_flag && $kfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $kfail_prms)"]
+	    } elseif { $xfail_flag && $xfail_prms != 0 } {
+		set message [concat $message "\t(PRMS $xfail_prms)"]
+	    } elseif $prms_id {
+		set message [concat $message "\t(PRMS $prms_id)"]
+	    }
+	}
+	default {
+	    perror "record_test called with bad type `$type'"
+	    set errcnt 0
+	    return
+	}
+    }
+
+    if $bug_id {
+	set message [concat $message "\t(BUG $bug_id)"]
+    }
+
+    if $site_bug_id {
+	set message [concat $message "\t(rdar://problem/$site_bug_id)"]
+	set site_bug_id 0
+    }
+
+    global multipass_name
+    if { $multipass_name != "" } {
+	set message [format "$type: %s: $message" "$multipass_name"]
+    } else {
+	set message "$type: $message"
+    }
+    clone_output "$message"
+
+    # If a command name exists in the $local_record_procs associative
+    # array for this type of result, then invoke it.
+
+    set lowcase_type [string tolower $type]
+    global local_record_procs
+    if {[info exists local_record_procs($lowcase_type)]} {
+	$local_record_procs($lowcase_type) "$message"
+    }
+
+    # Reset these so they're ready for the next test case.  We don't reset
+    # prms_id or bug_id here.  There may be multiple tests for them.  Instead
+    # they are reset in the main loop after each test.  It is also the
+    # testsuite driver's responsibility to reset them after each testcase.
+    set warncnt 0
+    set errcnt 0
+    set xfail_flag 0
+    set kfail_flag 0
+    set xfail_prms 0
+    set kfail_prms 0
+}
+
+#
+# Record that a test has passed
+#
+proc pass { message } {
+    global xfail_flag kfail_flag compiler_conditional_xfail_data
+
+    # if we have a conditional xfail setup, then see if our compiler flags match
+    if [ info exists compiler_conditional_xfail_data ] {
+	if [check_conditional_xfail $compiler_conditional_xfail_data] {
+	    set xfail_flag 1
+	}
+	unset compiler_conditional_xfail_data
+    }
+
+    if $kfail_flag {
+	record_test KPASS $message
+    } elseif $xfail_flag {
+	record_test XPASS $message
+    } else {
+	record_test PASS $message
+    }
+}
+
+# APPLE LOCAL: Mark a set of tests as a "site specific" failure.
+# Basically it's the same as a KFAIL, but can be configured in a
+# single file, rather than strewn througout the test suite.
+#
+# The test suite will mark any tests specified by setup_site_xfail as
+# KFAIL if they fail, and KPASS if they pass.
+#
+# We really should integrate the whole KPASS thing into the generic
+# test-suite a little better, rather than making a pass at the end,
+# and we should really set up a parallell setup_intermittent_fail or
+# whatever to match setup_xfail and etc.  But we really don't need
+# that stuff now, so it can wait until if and when we ever decide to
+# try to push this back to the FSF.
+#
+# file: the name of the dejagnu test file
+# arch: the GNU-style name of the architeture (i.e., i386-linux-gnu).
+#	wildcards ('*') may be used.
+# message: the name for the specific test
+# bugid: the uniqueid of the bug in the appropriate bug tracking system
+# args: if --sometimes is speficied, the failure is considered 'intermittent',
+#	and no KPASS will be generated if the test passes.
+#	if --regex is specified, the message will be matched against
+#	the failure message using regex semantics.
+#	if --glob is specified, the message will be matched against
+#	the failure message using string globbing semantics.
+
+proc setup_site_fail { file arch message bugid args } {
+
+    global site_fails site_fail
+
+    set seen 0
+    set type "text"
+
+    if { $args == "--sometimes" } {
+	set seen 1
+    } elseif { $args == "--regex" } {
+	set type "regex"
+    } elseif { $args == "--glob" } {
+	set type "glob"
+    } elseif { $args == "" } {
+    } else {
+	perror "invalid argument $args"
+    }
+
+    if { $site_fail != "" } {
+	array set site_fails [ list "$file:$message" [ list $arch $file $message $bugid $type $seen ] ]
+    }
+}
+
+#
+# Record that a test has failed
+#
+proc fail { message } {
+
+    global xfail_flag kfail_flag compiler_conditional_xfail_data
+    global pf_prefix prms_id bug_id site_bug_id
+    global site_fails site_fail site_pass;
+    
+    set cfile [ string trimright [ string trim "$pf_prefix" ] ":" ]
+
+    set entries [ array names site_fails -glob "$cfile:*" ]
+
+    foreach entry $entries {
+
+	set xtuple $site_fails($entry)
+	set xarch [ lindex $xtuple 0 ]
+	set xfile [ lindex $xtuple 1 ]
+	set xmessage [ lindex $xtuple 2 ]
+	set xbugid [ lindex $xtuple 3 ]
+	set xtype [ lindex $xtuple 4 ]
+
+	set match 0
+	if { ($cfile == $xfile) && [ istarget $xarch ] } {
+	    if { $xtype == "regex" } {
+		if [ regexp $xmessage $message ] { set match 1 }
+	    } elseif { $xtype == "glob" } {
+		if [ string match $xmessage $message ] { set match 1 }
+	    } elseif { $xtype == "text" } {
+		if { $message == $xmessage } { set match 1 }
+	    } else {
+		perror "invalid argument $xtype"
+	    }
+	}
+
+	if { $match } {
+	    set site_fails($entry) [ list $xarch $xfile $xmessage $xbugid $xtype 1 ]
+	    if { $xbugid != "" } { set site_bug_id $xbugid } { }
+	    switch -- $site_fail {
+		"KFAIL" { set kfail_flag 1 }
+		"XFAIL" { set xfail_flag 1 }
+		"FAIL" { }
+		default { }
+	    }
+	}
+    }
+    
+    # if we have a conditional xfail setup, then see if our compiler flags match
+    if [ info exists compiler_conditional_xfail_data ] {
+	if [check_conditional_xfail $compiler_conditional_xfail_data] {
+	    set xfail_flag 1
+	}
+	unset compiler_conditional_xfail_data
+    }
+
+    if $kfail_flag {
+	record_test KFAIL $message
+    } elseif $xfail_flag {
+	record_test XFAIL $message
+    } else {
+	record_test FAIL $message
+    }
+    
+    if [regexp ".*\(timeout\).*" $message] {
+	remote_close host;
+    }
+}
+
+#
+# Record that a test that was expected to fail has passed unexpectedly
+#
+proc xpass { message } {
+    record_test XPASS $message
+}
+
+#
+# Record that a test that was expected to fail did indeed fail
+#
+proc xfail { message } {
+    record_test XFAIL $message
+}
+
+#
+# Record that a test for a known bug has passed unexpectedly
+#
+proc kpass { bugid message } {
+    global kfail_flag kfail_prms
+    set kfail_flag 1
+    set kfail_prms $bugid
+    record_test KPASS $message
+}
+
+#
+# Record that a test has failed due to a known bug
+#
+proc kfail { bugid message } {
+    global kfail_flag kfail_prms
+    set kfail_flag 1
+    set kfail_prms $bugid
+    record_test KFAIL $message
+}
+
+#
+# Set warning threshold
+#
+proc set_warning_threshold { threshold } {
+    set warning_threshold $threshold
+}
+
+#
+# Get warning threshold
+#
+proc get_warning_threshold { } {
+    return $warning_threshold
+}
+
+#
+# Prints warning messages
+# These are warnings from the framework, not from the tools being tested.
+# It takes a string, and an optional number and returns nothing.
+#
+proc warning { args } {
+    global warncnt
+
+    if { [llength $args] > 1 } {
+	set warncnt [lindex $args 1]
+    } else {
+	incr warncnt
+    }
+    set message [lindex $args 0]
+
+    clone_output "WARNING: $message"
+
+    global errorInfo
+    if [info exists errorInfo] {
+	unset errorInfo
+    }
+}
+
+#
+# Print the current TCL evaluator stack.
+#
+
+proc printstack {} {
+    set nolevels [info level]
+    set level    [info level]
+
+    while { $level > 0 } {
+      puts "$level: [info level $level]"
+      incr level -1
+    }
+    puts "0: (global level)"
+}
+
+#
+# Prints error messages
+# These are errors from the framework, not from the tools being tested.
+# It takes a string, and an optional number and returns nothing.
+#
+proc perror { args } {
+    global errcnt
+
+    if { [llength $args] > 1 } {
+	set errcnt [lindex $args 1]
+    } else {
+	incr errcnt
+    }
+    set message [lindex $args 0]
+
+    clone_output "ERROR: $message"
+
+# APPLE LOCAL: This is an interesting addition that Klee did but it's
+# a lot of noise generally so I'm commenting it out by default.
+#    printstack
+
+    global errorInfo
+    if [info exists errorInfo] {
+	unset errorInfo
+    }
+}
+
+#
+# Prints informational messages
+#
+# These are messages from the framework, not from the tools being tested.
+# This means that it is currently illegal to call this proc outside
+# of dejagnu proper.
+#
+proc note { message } {
+    clone_output "NOTE: $message"
+
+    # ??? It's not clear whether we should do this.  Let's not, and only do
+    # so if we find a real need for it.
+    #global errorInfo
+    #if [info exists errorInfo] {
+    #	unset errorInfo
+    #}
+}
+
+#
+# untested -- mark the test case as untested
+#
+proc untested { message } {
+    record_test UNTESTED $message
+}
+
+#
+# Mark the test case as unresolved
+#
+proc unresolved { message } {
+    record_test UNRESOLVED $message
+}
+
+#
+# Mark the test case as unsupported
+#
+# Usually this is used for a test that is missing OS support.
+#
+proc unsupported { message } {
+    record_test UNSUPPORTED $message
+}
+
+#
+# Set up the values in the test_counts array (name and initial totals).
+#
+proc init_testcounts { } {
+    global test_counts test_names
+    set test_counts(TOTAL,name) "testcases run"
+    set test_counts(PASS,name) "expected passes"
+    set test_counts(FAIL,name) "unexpected failures"
+    set test_counts(XFAIL,name) "expected failures"
+    set test_counts(XPASS,name) "unexpected successes"
+    set test_counts(KFAIL,name) "known failures"
+    set test_counts(KPASS,name) "unexpected successes"
+    set test_counts(WARNING,name) "warnings"
+    set test_counts(ERROR,name) "errors"
+    set test_counts(UNSUPPORTED,name) "unsupported tests"
+    set test_counts(UNRESOLVED,name) "unresolved testcases"
+    set test_counts(UNTESTED,name) "untested testcases"
+    set j ""
+
+    foreach i [lsort [array names test_counts]] {
+	regsub ",.*$" "$i" "" i
+	if { $i == $j } {
+	    continue
+	}
+	set test_counts($i,total) 0
+	lappend test_names $i
+	set j $i
+    }
+}
+
+#
+# Increment NAME in the test_counts array; the amount to increment can be
+# is optional (defaults to 1).
+#
+proc incr_count { name args } {
+    global test_counts
+
+    if { [llength $args] == 0 } {
+	set count 1
+    } else {
+	set count [lindex $args 0]
+    }
+    if [info exists test_counts($name,count)] {
+	incr test_counts($name,count) $count
+	incr test_counts($name,total) $count
+    } else {
+	perror "$name doesn't exist in incr_count"
+    }
+}
+
+
+#
+# Create an exp_continue proc if it doesn't exist
+#
+# For compatablity with old versions.
+#
+global argv0
+if ![info exists argv0] {
+    proc exp_continue { } {
+	continue -expect
+    }
+}

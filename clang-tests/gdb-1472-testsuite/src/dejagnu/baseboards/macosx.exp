@@ -1,0 +1,309 @@
+load_generic_config "unix";
+
+set_board_info compiler $env(CC_UNDER_TEST)
+set_board_info c++compiler $env(CXX_UNDER_TEST)
+
+set misc_cflags "$env(CC_UNDER_TEST_FLAGS) -Wno-deprecated-declarations -mmacosx-version-min=10.5"
+#set misc_cflags "-Wno-deprecated-declarations -mmacosx-version-min=10.5 -fasynchronous-unwind-tables -fomit-frame-pointer"
+set misc_cxxflags "$env(CXX_UNDER_TEST_FLAGS)"
+
+set arch_option ""
+
+set timeout 10
+# By default debugging option for compiler is "-gdwarf-2".
+set debug_option "-g --save-temps -dA"
+
+global debug_default_format_is_dwarf
+global debug_default_format_is_stabs
+set debug_default_format_is_dwarf 1
+set debug_default_format_is_stabs 0
+
+
+# The testsuite doesn't work correctly if it can find debug symbols
+# for libc functions - so purposefully turn off automatic dSYM searching
+# in case the current user has a libsystem etc dSYM around.
+
+set_board_info gdb_init_command "set locate-dsym 0"
+
+global gdb_test_apple_dsym
+set gdb_test_apple_dsym		0
+
+# To use board variants, use --target_boards to runtest:
+#  "--target_boards=macosx/32" runs 32-bit tests
+#  "--target_boards=macosx/64" runs 64-bit tests
+#  "--target_boards=macosx{,64}{gfull,gused}" does four runs with
+#   all combinations of 32-bit, 64-bit, -gused, and -gfull
+
+verbose "board variant list is $board_variant_list"
+
+# This is an argument that will be passed to gdb via the "gdb_opts"
+# variable once we've settled on a correct definition.
+set gdb_arch_flag "--arch=x86_64"
+set arch_option "-arch x86_64"
+
+set bits_requested 64
+
+if [istarget "powerpc-apple-darwin*"] {
+  set gdb_arch_flag "--arch=ppc"
+}
+
+foreach x $board_variant_list {
+    if { $x == "" } {
+	continue
+    }
+    case $x in {
+	{ 32 } {
+            set bits_requested 32
+            if [istarget "powerpc-apple-darwin*"] {
+	      set arch_option "-arch ppc"
+              set gdb_arch_flag "--arch=ppc"
+            } else {
+	      set arch_option "-arch i386"
+              set gdb_arch_flag "--arch=i386"
+            }
+            # Use this to skip tests not 64-bit ready yet
+	}
+	{ 64 } {
+            set bits_requested 64
+            if [istarget "powerpc-apple-darwin*"] {
+	      set arch_option "-arch ppc64"
+              set gdb_arch_flag "--arch=ppc64"
+            } else {
+	      set arch_option "-arch x86_64"
+              set gdb_arch_flag "--arch=x86_64"
+            }
+	}
+	{ gused } {
+	    set debug_option "-gstabs+ -feliminate-unused-debug-symbols"
+            set debug_default_format_is_dwarf 0
+            set debug_default_format_is_stabs 1
+	}
+	{ gfull } {
+	    set debug_option "-gstabs+"
+            set debug_default_format_is_dwarf 0
+            set debug_default_format_is_stabs 1
+	}
+	{ gdwarf } {
+	    set debug_option "-gdwarf-2 --save-temps -dA"
+            set debug_default_format_is_dwarf 1
+            set debug_default_format_is_stabs 0
+	}
+	{ dsym } {
+	    set debug_option "-gdwarf-2 --save-temps -dA"
+	    set gdb_test_apple_dsym 1
+            set debug_default_format_is_dwarf 1
+            set debug_default_format_is_stabs 0
+	}
+	{ dsym_strip } {
+	    set debug_option "-gdwarf-2 --save-temps -dA"
+	    set gdb_test_apple_dsym 2
+            set debug_default_format_is_dwarf 1
+            set debug_default_format_is_stabs 0
+	}
+    }
+}
+
+if { $bits_requested == 64 } {
+  set_board_info darwin64 1
+}
+
+set_board_info cflags "$arch_option $misc_cflags"
+set_board_info cxxflags "$arch_option $misc_cxxflags"
+
+# Uncomment this line to use environment variable to override debugging option:
+# set debug_option $env(DEBUG_OPTION)
+
+set_board_info debug_flags $debug_option
+set_board_info mathlib ""
+set_board_info gdb_opts $gdb_arch_flag
+
+
+# Radar templates ... 
+# setup_site_fail "" "*" "" 
+# setup_site_fail "" "powerpc*-apple-darwin*" "" 
+# setup_site_fail "" "i386*-apple-darwin*" ""
+
+# 3105493 - should have been carried over from Turmeric
+setup_site_fail "gdb.base/default.exp" "*" "show convenience (APPLE LOCAL)" 3105493
+
+# 4527097
+setup_site_fail "gdb.base/signals.exp" "*" "signal SIGUSR1 (the program exited)" 4527097
+
+# 4527080 - gdb should complain about invalid breakpoint conditions.  
+setup_site_fail "gdb.base/chng-syms.exp" "*" "running with invalidated bpt condition after executable changes" 4527080
+
+# 4526968 - gdb list command is broken
+setup_site_fail "gdb.base/dbx.exp" "*" "file average.c:1" 4526968
+setup_site_fail "gdb.base/list.exp" "*" "list line 1 in include file" 4526968
+setup_site_fail "gdb.base/list.exp" "*" "list list1.c:1" 4526968
+setup_site_fail "gdb.base/list.exp" "*" "list range; filename:line1,filename:line2" 4526968
+setup_site_fail "gdb.mi/mi2-cli.exp" "*" "-interpreter-exec console-quoted \"list\"" 4526968
+setup_site_fail "gdb.mi/mi2-cli.exp" "*" "-interpreter-exec console-quoted \"list\" at basics.c:59" 4526968
+
+# 4526906 - frame pointer should be the same - no matter how we ask for it. 
+setup_site_fail "gdb.apple/pc-verify.exp" "powerpc*-apple-darwin*" "p/x \$fp returns the same as info frame's \$fp" 4526906
+
+# 4525530 - probably test case bugs - output looks ok, but test case fails.  
+setup_site_fail "gdb.mi/mi2-disassemble.exp" "*" "data-disassemble file, line, number assembly mixed" 4525530
+setup_site_fail "gdb.mi/mi2-disassemble.exp" "*" "data-disassemble file, line, number (zero lines) assembly mixed" 4525530
+setup_site_fail "gdb.mi/mi2-disassemble.exp" "*" "data-disassemble file, line, number (more than main lines) assembly mixed" 4525530
+
+# 4525524 - probably test case bugs - output looks ok, but test case fails.  
+setup_site_fail "gdb.mi/mi2-syn-frame.exp" "*" "backtrace from inferior function at exception" 4525524
+setup_site_fail "gdb.mi/mi2-var-cmd.exp" "*" "create int" 4525524
+
+# 4525483 - mi breakpoint line numbers off by 1.
+setup_site_fail "gdb.mi/mi2-break.exp" "*" "insert temp breakpoint at basics.c:37 (callee3)" 4525483
+setup_site_fail "gdb.mi/mi2-break.exp" "*" "insert temp breakpoint at \"<fullfilename>\":28 \(callee4\)" 4525483
+setup_site_fail "gdb.mi/mi2-simplerun.exp" "*" "insert breakpoint at basics.c:37 (callee3)" 4525483
+setup_site_fail "gdb.mi/mi2-simplerun.exp" "*" "insert breakpoint at \"<fullfilename>\":28 (callee4)" 4525483
+
+# 4223302 - gdb's stab name parser can't handle inner classes
+setup_site_fail "gdb.apple/struct-in-struct.exp" "*" "ptype outer::inner before expanding psymtab" 4223302
+
+# 4223137 - qualifications of type occur in PSYM stab but should not be emitted in-line
+setup_site_fail "gused/psym-type-defn.exp" "*" "ptype argv" 4223137
+
+# 4184583 - gdb can't parse enum types for decimal enum values > 0xffffffff/10
+setup_site_fail "gdb.apple/bigenum.exp" "powerpc*-apple-darwin*" "print myvar with enum value of b" 4184583
+
+# 2152043 - debugger has problems with local typedefs
+setup_site_fail "gdb.apple/scoped-typedefs.exp" "powerpc*-apple-darwin*" "print myvar with int element in foo" 2152043
+
+# 4130322 - new picbase test fails on ppc/ppc64
+setup_site_fail "small-c/mi-fix-small-c.exp" "powerpc*-apple-darwin*" "finish out of static_printer, look for correct strings (picbase register setup test)" "4130322"
+setup_site_fail "small-c/mi-fix-small-c.exp" "powerpc*-apple-darwin*" "finish out of static_printer, look for correct strings (picbase register setup test)" "4130322"
+
+# 3689431 - some c++ local variables not showing up at the right times
+setup_site_fail "gdb.apple/cplusplus-local-vars.exp" "*" "print acidDivision" 3689431
+setup_site_fail "gdb.apple/cplusplus-local-vars.exp" "*" "print my_i" 3689431
+
+# 4378372 [x86] gdb thinks sizeof long double == 12; gcc says 16
+setup_site_fail "gdb.base/sizeof.exp" "i386-apple-darwin*" "check sizeof long double == 12" 4378372
+
+# 4111967 - add-symbol-file <address> doesn't properly relocate .o files
+setup_site_fail "gdb.base/relocate.exp" "*" "add-symbol-file relocate.o \$offset" 4111967
+setup_site_fail "gdb.base/relocate.exp" "*" "function foo has a different address" 4111967
+
+# 3052470 - clear command clears too aggressively
+setup_site_fail "gdb.base/break.exp" "*" "clear line has no breakpoint disallowed" "3052470"
+
+# 3061801 - gdb doesn't deliver signals to inferior proccess
+setup_site_fail "gdb.base/signals.exp" "*" "signal SIGUSR1" "3061801"
+setup_site_fail "gdb.base/signals.exp" "*" "backtrace for SIGUSR1" "3061801"
+setup_site_fail "gdb.base/annota1.exp" "*" "send SIGUSR1" "3061801"
+setup_site_fail "gdb.base/annota1.exp" "*" "signal sent" "3061801"
+setup_site_fail "gdb.base/annota1.exp" "*" "backtrace @ signal handler" "3061801"
+setup_site_fail "gdb.base/annota3.exp" "*" "send SIGUSR1 (pattern 5)" "3061801"
+setup_site_fail "gdb.base/annota3.exp" "*" "backtrace @ signal handler (pattern 1)" "3061801"
+setup_site_fail "gdb.base/annota3.exp" "*" "signal sent (pattern 6)" "3061801"
+
+# 3067308 - Unable to fetch XMM registers or set float registers.
+setup_site_fail "gdb.base/return.exp" "i386-apple-darwin*" "correct value returned double test (known problem with sparc solaris)" "3067308"
+setup_site_fail "gdb.base/return2.exp" "i386-apple-darwin*" "float value returned successfully" "3067308"
+
+# 3085329 - gcc doesn't emit const qualifier for struct members in stabs data
+# setup_site_fail "gdb.base/constvars.exp" "powerpc*-apple-darwin*" "ptype crass" "3085329"
+
+# 3054660 - maint info sections CODE/DATA don't list the correct info
+setup_site_fail "gdb.base/maint.exp" "*" "maint info sections CODE" "3054660"
+setup_site_fail "gdb.base/maint.exp" "*" "maint info sections DATA" "3054660"
+
+# 3105493 - 'file' command should clear convenience variables
+# setup_site_fail "gdb.base/default.exp" "*" "show convenience (APPLE LOCAL)" "3105493"
+setup_site_fail "gdb.base/default.exp" "*" "show convenience" "3105493"
+
+# 3061878 - gdb gets confused by signal and breakpoint happening simultaneously
+# setup_site_fail "gdb.base/signals.exp" "*" "continue to func1 (probably kernel bug)" "3061878"
+
+# 3052470 - clear command clears too aggressively
+setup_site_fail "gdb.base/ending-run.exp" "*" "Only cleared 1 by line" "3052470"
+
+# 4107430 - gcc 4 doesn't emit symbols for anonymous union members
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print w 1" "4107430"
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print z 1" "4107430"
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print w 2" "4107430"
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print z 2" "4107430"
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print w 3" "4107430"
+setup_site_fail "gdb.cp/anon-union.exp" "*" "print z 3" "4107430"
+setup_site_fail "gdb.cp/inherit.exp" "*" "print type of anonymous union // unrecognized line type 1: class_with_anon_union::\$_;" "4107430"
+
+# 3611190 - We lose namespace info in class names
+setup_site_fail "gdb.cp/rtti.exp" "*" "print *obj" "3611190"
+
+# 3605418 - MERGE: MI - varobj has wrong values in testsuite:mi2-var-display
+# setup_site_fail gdb.mi/mi2-var-display.exp "*" "eval variable bar" 3605418
+# setup_site_fail gdb.mi/mi2-var-display.exp "*" "eval variable bar with new format" 3605418
+
+# 4108212 - 'until' misbehaves when source lines have multiple disjoint address ranges
+setup_site_fail gdb.mi/mi2-until.exp "*" "until after while loop loc-check" 4108212
+
+# 3121250 - gcc should emit vector qualifiers in debug infomation
+setup_site_fail "gdb.arch/altivec-regs.exp" "powerpc-apple-darwin*" "finish returned correct value" "3121250"
+setup_site_fail "gdb.arch/altivec-abi.exp" "powerpc-apple-darwin*" "call inferior function with vectors (1)" "3121250"
+setup_site_fail "gdb.arch/altivec-abi.exp" "powerpc-apple-darwin*" "call inferior function with vectors (2)" "3121250"
+
+# 3124396 - gcc generates bogus debug offsets for char locals
+# setup_site_fail "gdb.base/store.exp" "powerpc*-apple-darwin*" "print add  - charest" "3124396"
+# setup_site_fail "gdb.base/store.exp" "powerpc*-apple-darwin*" "print add  - short" "3124396"
+# setup_site_fail "gdb.base/store.exp" "powerpc*-apple-darwin*" "print old r - float" "3124396"
+# setup_site_fail "gdb.base/store.exp" "powerpc*-apple-darwin*" "up print old r - float" "3124396"
+
+# 3313204 - Breakpoint doesn't invoke breakpoint commands if the function is called from gdb
+setup_site_fail "gdb.base/break.exp" "*" "called user-defined function on breakpoint in called function" "3313204"
+
+# 4121135 - bfd has trouble with huge corefiles
+setup_site_fail "gdb.base/bigcore.exp" "*" "load corefile" "4121135" --sometimes
+setup_site_fail "gdb.base/bigcore.exp" "*" "check next heap (address 0x2a000)" "4121135" --sometimes
+
+# 4121959 - i386 corefiles appear truncated
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "print func2::coremaker_local" "4121959"
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "backtrace in corefile.exp" "4121959"
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "up in corefile.exp" "4121959"
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "accessing original mmap data in core file" "4121959"
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "accessing mmapped data in core file" "4121959"
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "up in corefile.exp (reinit)" "4121959"
+setup_site_fail "gdb.base/bigcore.exp" "i386-apple-darwin*" "check next heap" "4121959" --sometimes
+setup_site_fail "gdb.base/bigcore.exp" "i386-apple-darwin*" "check next heap (address 0x28000)" "4121959" --sometimes
+setup_site_fail "gdb.base/bigcore.exp" "i386-apple-darwin*" "check next heap (address 0x3ffff0)" "4121959" --sometimes
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "args: -core=corefile" 4111966
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "args: execfile -core=corefile" 4111966
+setup_site_fail "gdb.base/corefile.exp" "i386-apple-darwin*" "core-file command" 4111966
+
+# 4122695 - gcc emits odd stabs for volatile unsigned char arguments
+setup_site_fail "gdb.base/volatile.exp" "i386-apple-darwin*" "ptype qux2" "4122695"
+setup_site_fail "gdb.base/constvars.exp" "i386-apple-darwin*" "ptype qux1" "4122695"
+setup_site_fail "small-c/fix-small-c.exp" "i386-apple-darwin*" "Reject changing funtion arg type (char to int)." "4122695"
+setup_site_fail "small-c/fix-small-c.exp" "i386-apple-darwin*" "Reject changing funtion arg type (char to ptr to struct)." "4122695"
+
+# 4123092 - gdb mauls inferior when hand-calling std::string::substring
+setup_site_fail "gdb.cp/bs15503.exp" "i386-apple-darwin*" "print (const char *) s.substr(0,4)" "4123092"
+setup_site_fail "gdb.cp/bs15503.exp" "i386-apple-darwin*" "print (const char *) (s=s.substr(0,4))" "4123092"
+
+# 3645369 - [c++] we crash the target calling pEe->D::vg()
+setup_site_fail "gdb.cp/virtfunc.exp" "*" "print pEe->D::vg()" "3645369"
+
+# 3271737 - gdb handles breakpoints hit by multiple threads poorly
+setup_site_fail "gdb.threads/print-threads.exp" "i386-apple-darwin*" "Running threads (fast) (unknown output)" "3271737"
+setup_site_fail "gdb.threads/print-threads.exp" "i386-apple-darwin*" "Running threads (slow) (unknown output)" "3271737"
+setup_site_fail "gdb.threads/print-threads.exp" "i386-apple-darwin*" "Running threads (slow with kill breakpoint) (unknown output)" "3271737"
+
+# 4123903 - gdb mauls stack while handling breakpoint with multiple threads
+setup_site_fail "gdb.threads/pthreads.exp" "i386-apple-darwin*" "continue to bkpt at common_routine in thread 2" "4123903"
+setup_site_fail "gdb.threads/pthreads.exp" "i386-apple-darwin*" "stopped before calling common_routine 15 times" "4123903"
+
+# 4123986 - gcc 4.0 confuses "class with all members public" with "struct"
+# setup_site_fail "gdb.cp/classes.exp" "*" "ptype obj_with_enum" "4123986"
+
+# 4211178 - scheduler lock broken
+setup_site_fail "gdb.threads/schedlock.exp" "*" "continue with lock does not change thread (switched to thread *)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "current thread ran (didn't run)" "4211178"
+setup_site_fail "gdb.threads/schedlock.exp" "*" "current thread stepped (wrong amount)" "4211178"
+setup_site_fail "gdb.threads/schedlock.exp" "*" "current thread stepped locked (didn't run)" "4211178"
+setup_site_fail "gdb.threads/schedlock.exp" "*" "other thread * didn't run (ran)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "other thread * didn't run (stepping) (ran)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "step to increment (unlocked *)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "step with lock does not change thread (switched to thread *)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "step without lock does not change thread (switched to thread *)" "4211178" --glob
+setup_site_fail "gdb.threads/schedlock.exp" "*" "stop all threads (with lock) (gdb's signal handler was still in place)" "4211178"
+

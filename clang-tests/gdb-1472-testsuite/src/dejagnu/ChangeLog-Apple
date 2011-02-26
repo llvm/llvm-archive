@@ -1,0 +1,980 @@
+2010-03-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Don't pass the clang no-warnings flags
+	in to the C++ compiler.
+
+2010-03-04  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Explicitly turn off diagnostic warnings
+	that clang generates for the test files so we don't flag the
+	compiles as failing.
+
+2010-03-03  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: The default compiler is gcc/c++ but you
+	can specify gcc / clang / llvm-gcc in the --target_baseboards to
+	force the use of a specific compiler in the tests.
+
+2008-09-24  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Always add -mmacosx-version-min=10.5 to
+	the cflags.
+
+2008-09-17  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Correct setting of darwin64 in the board
+	info so it only happens when we're doing 64-bit test runs.
+
+2008-09-12  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Default is now to debug 64-bit inferiors.
+
+2008-06-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Fix setting of the gdb_opts var so
+	64 bit variants work again.
+
+2008-06-04  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp (misc_cflags): I didn't mean to commit
+	the addition of -fasynchronous-unwind-tables and -fomit-frame-pointer.
+
+2008-06-04  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Use the gdb_opts variable to force gdb into
+	a specific architecture via a --arch command line opt.  When we're
+	running in 32-bit mode we don't want to pick up the 64-bit fork of
+	some universal binary by accident.
+
+2007-11-15  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboard/macosx.exp: Set locate-dsym to 0 so we don't pick up
+	debug info for system libraries.  Add the contents of macosx-radars.exp.
+	* baseboard/macosx-radars.exp: Removed.
+
+2007-02-26  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboard/macosx.exp (64 bit modes): Pass -mmacosx-version-min=10.5
+	as the objc2 runtime will soon require.
+
+2007-02-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove Essential Symbols mode.
+	(64 bit modes): Don't disable ObjC and Carbon tests.  These are
+	supported in 64 bit modes now.
+
+2007-01-22  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Used -feliminate-unused-debug-symbols instead
+	of -gused for stabs variants.
+
+2006-10-27  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Add "-gstabs+" to -gused/-gfull
+	to get stabs mode instead of a variation on DWARF.  gcc may
+	be changing to interpreting the command line arguments this
+	way.
+
+2006-08-15  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Set debug_default_format_is_dwarf exclusive-or
+	debug_default_format_is_stabs to 1 based on which general type of
+	debugging we're using by default.
+
+2006-07-18  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx_dsym.exp baseboards/macosx_dwarf.exp 
+        baseboards/macosx_es.exp baseboards/macosx_icc.exp 
+	baseboards/macosx_repository.exp baseboards/macosx_stabs.exp 
+	baseboards/macosx_stabs_gfull.exp baseboards/macosx_test.exp: Removed.
+	The --target_boards setting is the way to control variations.
+
+2006-05-26  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macos.exp: For now, for x86-64, force the compiler to
+	maintain a frame pointer.
+
+2006-05-23  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Handle both x86-64 and ppc64.  For ppc64,
+	assume Carbon and ObjC work.
+
+2006-04-26  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx-radars.exp:  Remove 4107469 site_fails again.
+	And the 3647939 site fail - it is only failing for dsymutil test runs
+	so is unlikely to be the same problem as originally reported in
+	3647939.
+
+2006-04-25  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx-radars.exp: Remove 4107469 site_fails again.
+	These tests will fail for stabs - and it is correct that they
+	fail for stabs.
+
+2006-04-24 Stacey Pang  (stacey_pang@apple.com)
+        Adding site-failures to macosx-radars.exp
+        Tired of seeing meaningless failures due to duplicate constructors
+        in ptype info ... Some of these radars were present for Turmeric.
+        Just carrying them over to CurryWeed.  
+
+2006-04-18  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx-radars.exp: Remove expected fails for
+	radars 3452966, 4107469, 3169193, 3611108.
+	* lib/framework.exp (record_test): Whitespace.
+
+2006-04-03 Stacey Pang (stacey_pang@apple.com)
+
+	Turning on ppc64 dSYM testing because it works now.  
+	* gdb/bin/ppc_flavors.txt
+
+2006-04-03 Stacey Pang (stacey_pang@apple.com)
+
+	Separating radars from compile/link flags so QA and developers
+	can share an up-to-date radar list and have their own baseboards
+	for testing.  
+	* baseboards/macosx.exp
+	* baseboards/macosx-radars.exp
+	* baseboards/macosx_test.exp
+	
+2006-03-16  Jason Molenda  (jmolenda@apple.com)
+
+	* example/hello/Makefile.in, 
+        example/hello/aclocal.m4, 
+        example/hello/configure, 
+	example/hello/testsuite/Makefile.in: Regenerate autoconf/automake files
+	to remove incorrect acinclude.m4 dependency in the Makefile.
+
+2006-03-09 Stacey Pang <stacey_pang@apple.com>
+
+        Checking in baseboards for official macosx testing to share them
+	with others eventhough they'll probably be removed or modified
+	once I get around to implementing Stan's nice new solution.  
+	For now these are valuable because they're being used by other
+	automated scripts.  
+	* baseboards/macosx_dsym.exp
+	* baseboards/macosx_dwarf.exp
+	* baseboards/macosx_es.exp
+	* baseboards/macosx_icc.exp
+	* baseboards/macosx_repository.exp
+	* baseboards/macosx_stabs.exp
+	* baseboards/macosx_stabs_gfull.exp
+	* baseboards/macosx_test.exp
+
+2006-03-02  Jason Molenda  (jmolenda@apple.com)
+
+	* runtest.exp: Add APPLE LOCAL markers to Joe's added
+	calls.
+	* lib/framework.exp: Add APPLE LOCAL markers to Joe's changes;
+	clean up code to follow dejagnu coding conventions a bit better.
+
+2006-03-01  Jason Molenda  (jmolenda@apple.com)
+
+	* macosx.exp: Remove old-style debug type settings at top of
+	file.  Change default debug style from -gfull to -gdwarf-2.
+
+2006-03-01  Jason Molenda  (jmolenda@apple.com)
+
+	* macosx.exp: Add "es" target_boards configuration for
+	testing Essential Symbols.  Add -dA to all dwarf variants so
+	the .s files are more readable.  Remove unnecessary ldflags
+	settings.
+
+2006-02-24  Greg Clayton  (gclayton@apple.com)
+        
+        * macosx.exp : added 'gdb_test_apple_dsym' global to allow  
+        dsymutil to be called in gdb.exp. If the value of
+        'gdb_test_apple_dsym' is set to 0, dsymutil will not be  
+        run, a value of 1 will run dsymutil on any gcc compile but
+        won't strip the debug map, and a value of 2 will run dsymtil
+        and strip the debug map after backing it up. Added two new
+        target board configurations named "dsym" and "dsym_strip" 
+        to allow testing with dSYM files.
+
+2006-02-08  Stan Shebs  <shebs@apple.com>
+
+	* baseboards/macosx.exp: Use board variants to do 64-bit
+	and different debug flag testing.
+
+2006-02-01  Jason Molenda  (jmolenda@apple.com)
+
+	* lib/framework.exp (perror): Don't call printstack - too much
+	information for general use.
+
+2006-01-31  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp (debug_option): Uncomment the default -gfull.
+
+2006-01-31  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Add command line options for dwarf testing,
+	commented out.
+
+2006-01-31  Stan Shebs  <shebs@apple.com>
+
+	* baseboards/macosx.exp: Expect additional failures due to
+	synthetic C++ members (4107469).
+
+2005-12-13  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove 4111432 xfail, add 4378372.
+
+2005-12-12  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: <rdar://problem/4127661> was fixed; remove
+	site_fails.
+
+2005-11-29  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Clean out site_fail's that are no
+	longer failing with gcc 4 and the TOT gdb.
+
+2005-11-29  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: 3061801 is still causing failures
+	in signals.exp.
+
+2005-11-14  Jason Molenda  (jmolenda@apple.com)
+
+	* lib/framework.exp (clone_output): Move comment out of Bad Place.
+	* baseboards/macosx.exp: Don't test ES mode by default.  Use just
+	'gcc', don't bother with 'gcc-4.0'.
+
+2005-11-14  Jason Molenda  (jmolenda@apple.com)
+
+	* runtest.exp, lib/framework.exp, lib/remote.exp, lib/target.exp: Bring
+	forward all of Klee's Apple Local changes to the new dejagnu-1.4.4
+	source base.
+
+2005-08-26  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: add known fail for 4223302.
+
+2005-08-18  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboard/macosx.exp: add known fail for 4223137.
+
+2005-08-09  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: add known fail for testcase in r. 4209318.
+
+2005-08-08  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: 4182972 was fixed in gcc-5218.
+
+2005-08-03  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Add failure note for 4127661/coalesced2.exp.
+
+2005-07-18  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Add entry for big enum bug.
+
+2005-07-15  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Add entries for 2 new test cases that
+        are currently failing.
+
+2005-08-10  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Add radar # to setup_site_fail calls.
+
+2005-08-09  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove a ton of test failures fixed in TOT:
+
+	gdb.apple/objc-rbreak.exp - step into ObjC member function
+	gdb.apple/var-path-expr.exp - Create varobj for IntContainerfooVar.private.contents.IntContainer
+	gdb.apple/var-path-expr.exp - Create varobj for fooVar.private.contents.IntContainer.SomeOtherStuff
+	gdb.apple/var-path-expr.exp - Create varobj for fooVar.private.contents.IntContainer.SomeOtherStuff.private
+	gdb.apple/var-path-expr.exp - Create varobj for fooVar.private.contents.IntContainer.SomeOtherStuff.private.myDouble expression
+	gdb.apple/var-path-expr.exp - Create varobj for fooVar.private.contents.private.multiplier expression
+	gdb.apple/var-path-expr.exp - Get value for fooVar.private.contents.IntContainer.SomeOtherStuff.private.myDouble expression
+	gdb.apple/var-path-expr.exp - Get value for fooVar.private.contents.private.multiplier expression
+	gdb.apple/var-path-expr.exp - get path expression for fooVar.private.contents.IntContainer.SomeOtherStuff.private.myDouble
+	gdb.apple/var-path-expr.exp - get path expression for fooVar.private.contents.private.multiplier
+	gdb.apple/var-path-expr.exp - get the value of fooVar.private.contents.IntContainer.SomeOtherStuff.private.myDouble
+	gdb.apple/var-path-expr.exp - get the value of fooVar.private.contents.private.multiplier
+	gdb.apple/var-path-expr.exp - list children of fooVar.private
+	gdb.apple/var-path-expr.exp - list children of fooVar.private.contents
+	gdb.apple/var-path-expr.exp - list children of fooVar.private.contents.private
+	gdb.base/annota1.exp - backtrace from shlibrary
+	gdb.base/annota3.exp - backtrace from shlibrary (pattern 3 + sentinel)
+	gdb.base/bigcore.exp - signal SIGABRT
+	gdb.base/corefile.exp - backtrace in corefile.exp
+	gdb.base/corefile.exp - print func2::coremaker_local
+	gdb.base/gdb1250.exp - backtrace from abort
+	gdb.base/gdb1555.exp - Next while in a shared lib function
+	gdb.base/gdb1555.exp - Step into shared lib function
+	gdb.base/so-impl-ld.exp - step in solib call
+	gdb.base/so-impl-ld.exp - step into solib call
+	gdb.base/so-impl-ld.exp - step out of solib call
+	gdb.mi/gdb669.exp - console and MI have same number of threads (at main)
+	gdb.mi/gdb669.exp - console and MI have same number of threads (try 0)
+	gdb.mi/gdb669.exp - console and MI have same number of threads (try 1)
+	gdb.mi/gdb669.exp - console and MI have same number of threads (try 2)
+	gdb.mi/gdb669.exp - console and MI have same number of threads (try 3)
+	gdb.mi/gdb669.exp - info threads (at main)
+	gdb.mi/gdb669.exp - info threads (try 0)
+	gdb.mi/gdb669.exp - info threads (try 1)
+	gdb.mi/gdb669.exp - info threads (try 2)
+	gdb.mi/gdb669.exp - info threads (try 3)
+	gdb.mi/mi-syn-frame.exp - 407-stack-list-frames
+	gdb.mi/mi2-file.exp - request path info of current source file (basics.c)
+	gdb.mi/mi2-hack-cli.exp - 47show architecture
+	gdb.mi/mi2-hack-cli.exp - show architecture
+	gdb.mi/mi2-stepi.exp - next-instruction at main loc-check
+	gdb.mi/mi2-stepi.exp - step-instruction at main loc-check
+	gdb.mi/mi2-syn-frame.exp - 407-stack-list-frames
+	gdb.mi/mi2-var-display.exp - break-insert operation
+	gdb.threads/manythreads.exp - info threads
+	gdb.threads/pthread_cond_wait.exp - backtrace in blocked thread
+	gdb.threads/pthreads.exp - apply backtrace command to all three threads
+	gdb.threads/pthreads.exp - check backtrace from main thread
+	small-c/mi-fix-small-c.exp - Bring in fixed b.c version 21
+	small-c/mi-fix-small-c.exp - Bring in fixed b.c version 22
+	small-c/mi-fix-small-c.exp - Bring in fixed b.c version 3
+	small-c/mi-fix-small-c.exp - Set \$pc to the new slurry
+	small-c/mi-fix-small-c.exp - Set \$pc to the new static_printer
+	small-c/mi-fix-small-c.exp - set breakpoint in static_printer #1
+	small-c/mi-fix-small-c.exp - verify that we're in fred()
+	small-c/mi-fix-small-c.exp - verify that we're in slurry()
+	xcode/var-list-children.exp - create children via var-list-children
+	xcode/var-list-children.exp - get children of origin, Xcode-style
+
+2005-08-09  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: add known fail for testcase in r. 4209318.
+
+2005-08-08  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: 4182972 was fixed in gcc-5218.
+
+2005-08-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboard/macosx.exp: Remove a couple of expected fails
+	for coalesced1.exp.
+
+2005-08-04  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove the following failures:
+	- gdb.base/corefile.exp - args: -core=corefile
+	- gdb.base/corefile.exp - args: execfile -core=corefile
+	- gdb.base/corefile.exp - backtrace in corefile.exp
+
+2005-08-04  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (log_summary): Update to handle the new
+	regex-style matches.
+
+2005-08-04  Klee Dienes  <kdienes@apple.com>
+	
+	* baseboards/macosx.exp: Add the other failures for 4127661/coalesced*.exp.
+	Add wildcard entries for the various thread failures.  Cleanup
+	--sometimes entries using wildcard matches.
+
+2005-08-04  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (setup_site_fail): Add support for regex and
+	globbing-style string matches on failure messages.
+	(fail): Ditto.
+	
+2005-08-03  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Add failure note for 4127661/coalesced2.exp.
+
+2005-08-02  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove some MI2 fails that were fixed
+	in the test-suite.
+
+2005-08-02  Klee Dienes  <kdienes@mithril.dienesfamily.org>
+
+	* baseboards/macosx.exp: Update site-specific fails to reflect
+	merge.
+
+2005-07-18  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Add entry for big enum bug.
+
+2005-07-15  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Add entries for 2 new test cases that
+        are currently failing.
+
+2005-07-14  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (printstack): New function.  Prints the TCL
+	stack.
+	(perror): Print the error stack.
+	
+2005-05-27  Klee Dienes  <kdienes@apple.com>
+	
+	* baseboards/macosx.exp: Add entries for 4130322 - new picbase
+	test fails on ppc/ppc64.  Convert many powerpc-apple-darwin
+	entries to powerpc*-apple-darwin.  Add all the uncategorized
+	site-fails --- we'll need to go back through these very soon, but
+	at least for now it means we can run the test-suite usefully.
+
+2005-05-27  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Set the CFLAGS for ppc64.
+
+2005-05-27  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp: Set the string for KPASS to "unexpected
+	successes", because "unknown successes" is just plain confusing.
+
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove obsolete MI test site-failure
+	(it's likely been orphaned for a while).
+
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove non-analyzed failure for
+	"gdb.cp/annnota2.exp: watch triggered on a.x", since it already
+	has an FSF kfail as gdb/544.
+
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add 4123986 - gcc 4.0 confuses "class
+	with all members public" with "struct".
+
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add a previously un-analyzed
+	gdb.base/constvars.exp failiure to 4122695 - gcc emits odd stabs
+	for volatile unsigned char arguments.
+
+2005-05-18 Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add 3271737 - gdb handles breakpoints hit
+	by multiple threads poorly.  Add 4123903 - gdb mauls stack while
+	handling breakpoint with multiple threads.
+	
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove entries for 4122695 - gcc emits
+	odd stabs for volatile unsigned char arguments.  For i386, move
+	them to 4122695 - gcc emits odd stabs for volatile unsigned char
+	arguments.
+
+2005-05-18  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: 
+	- Modify the expected failure for 4111432 - gdb thinks sizeof
+	(long double) to match on i386 (long double is 12 bytes there).
+	- Remove some entries for 3067308 - unable to fetch XMM registers
+	or set float registers (we still need to resolve why the rest of
+	them are still failing).
+	- Mark 3085329 - gcc doesn't emit const qualifier for struct
+	members in stabs data as powerpc-only.
+	- Add i386-specific failures for 4107469 - gcc 4.0 synthetic c++
+	members confuse test suite.
+	- Move the test for "print cc" out of the other fails in
+	namespace.exp, and mark it as powerpc-only --- it's actually a
+	problem that GDB wants a "no such symbol" error, but
+	libSystem.dylib is providing 'cc' on powerpc.
+	- Remove 3126806 - gcc generates incorrect line number information
+	on i386 (it's fixed).
+	- Mark the failures for 4121135 - bfd has trouble with huge
+	corefiles as transient.
+	- Add 4122318 - i386 has $fp off by 8 from "frame at" in info
+	frame.  It's correct behavior, but this is the easiest way to make
+	the test-suite happy.
+	- Add 4121959 - i386 corefiles appear truncated.
+	- Mark 3313204 - Breakpoint doesn't invoke breakpoint commands if
+	the function is called from gdb as multi-platform.
+	- Add 4122695 - gcc emits odd stabs for volatile unsigned char
+	arguments.
+	- Add 4123092 - gdb mauls inferior when hand-calling
+	std::string::substring.
+	- Add various thread test failures, yet to be analyzed.
+	- Move all "non-analyzed" test failures to the end of the file, so
+	they can be more visible.
+	
+2005-05-16  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add tests for 4121135 - bfd has trouble
+	with huge corefiles
+
+2005-05-15  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp: Add support for an optional --sometimes
+	argument to setup_site_fail, so that the test-suite can be told to
+	handle "intermittent" failures.
+
+2005-05-11  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove site-fails for 4111406 - gdb
+	shouldn't print warning messages for missing weak libraries.
+
+2005-05-08  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove commented-out tests:
+	3602339 - MERGE: MI environment-directory: we seem to be making paths absolute.
+	3223691 - gdb TOT stopped supporting corefiles
+	3361020 - gdb can't parse prologue of printf() well enough to set breakpoint in function body.
+	3602283 - MERGE: backtrace through signal handlers incorrect.
+	3605977 - MERGE: stack parser botches alloca
+	3605984 - MERGE: mis-parses structure returns
+	3689412 - MERGE: metrowerks-address-to-name broken for addresses not in ordered section list
+	3647920 - MERGE: breakpoint in dylib w/ cond is not honored
+	3223691 - gdb TOT stopped supporting corefiles altogether.
+	3056074 - expression parser misunderstands array typedef
+	3361206 - With cached symfiles, gdb has invalid obstack chunk pointers in ncurses/libSystem objfiles
+	"stack pointer is showing up as heinous offset from dyld_func_lookup_pointer".
+	Add tests:
+	4111966 - bfd can't get arguments from core file
+	4111967 - add-symbol-file <address> doesn't properly relocate .o files
+	Remove fixed tests:
+	3602331 - MERGE: MI - thread changed hooks are broken
+	3606854 - MERGE: Our whiny insistence on not using a default return type got dropped on inferior func calls
+	gdb.base/ena-dis-br.exp:continue with ignore count, not stopped at bpt
+
+	* gdb.base/callfuncs.exp: Replace \r\r\n with \r\n in the
+	output of "info all-registers", to work around 4112177 - expect
+	somehow gets \r\r\n at the end of a line.
+
+	* gdb.base/ena-dis-br.exp: Swap the entries around in the
+	final test so that the XFAIL actually gets noticed.
+
+2005-05-06  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add 4111432 - gdb thinks sizeof (long
+	double) == 8.
+
+2005-05-06  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add 4111406 - gdb shouldn't print
+	warning messages for missing weak libraries.
+
+2005-05-06  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Remove un-filed annota1.exp failure that
+	was fixed by gcc 4.0.  Add 4108212 - misbehaves when source lines
+	have multiple disjoint address ranges.  Update the
+	gdb.cp/nnamespace.exp list to reflect fixes in gcc-4.0.  Ditto for
+	gdb.cp/inherit.exp.
+
+2005-05-03  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add fails for 4107469 - gcc 4.0
+	synthetic c++ members confuse gdb test suite
+
+2005-05-03  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add fails for 4107430 - gcc 4 doesn't
+	emit symbols for anonymous union members.
+
+2005-04-08  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Set CFLAGS to -Wno-deprecated-declarations
+        to work around slipnslide.c, dylib-loader.c, and ivars-dynamic.m's
+	use of the old NSAddLibrary() etc functions.
+
+2005-03-31  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Force usage of gcc 4.0 when running the
+	testsuite - it's time to rebase all our testing to the new compiler.
+
+2005-03-24  Jason Molenda  (jmolenda@apple.com)
+
+	* missing: Replaced with newer one from automake-1.6 (Tiger
+	installed automake).
+
+2004-11-29  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Update to remove a slipnslide
+	kfail.
+
+2004-10-11  Jim Ingham  <jingham@apple.com>
+
+	* lib/target.exp (prune_warnings): Prune warnings about
+	"incompatible implicit declarations:.
+	
+2004-10-10  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add a few local test fails.
+
+2004-10-08  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: -no-cpp-precomp isn't necessary any longer.
+
+2004-06-15  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add entries for 3689431, ptype
+	obj_with_enum.  Comment out entries for 3647920, some of the
+	self-test entries, 3605977, 3602283, some of 3052470, 3061579,
+	3602339, some of 3121250, some of the pthreads.exp entries.
+
+2004-05-26  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp (clfags): Drop -bind_at_launch.
+	It causes warning output in different contexts and dejagnu
+	doesn't abide by warnings from the compiler/linker when building
+	test cases.
+
+2004-05-25  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp(cflags): Add -bind_at_launch
+	to work around temporary system library problem.
+
+2004-05-11  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Update ptype.exp radar.
+
+2004-05-10  Jim Ingham  <jingham@apple.com>
+
+	* I fixed 3605936, 3094426 and 3647920.  Updating the fails
+	for these.
+
+2004-05-07  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp:  Remove MERGE radars kfails for
+	radars in nominate; for those in nom that are still failing
+	and using that radar as a kfail, either re-set to a more
+	correct radar or remove from macosx.exp for now.
+
+2004-05-07  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove enum failure 3604338 KFAILs,
+	add a new KFAIL for ptype t_char_array which is a compiler problem.
+
+2004-05-07  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove some incorrect xfails,
+	add two xfails against new 3647920 radar.
+
+2004-05-06  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Comment out the fails for
+	3605984, 3602277, 3602827, 3603683, 3361020 (will remove once
+	I have time to process the associated Radars).
+
+2004-05-06  Jim Ingham  <jingham@apple.com>
+
+	* baseboards/macosx.exp: Remove the site-setup
+	fails for 3610733.
+
+2004-05-06  Jim Ingham  <jingham@apple.com>
+
+	* baseboards/macosx.exp: Remove the site-setup
+	fails for 3610733.
+	
+2004-05-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Accidentally dropped
+	annota1.exp test failures.
+
+2004-05-05  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Update annota3.exp signal
+	failures to point to older non-MERGE radar.
+
+2004-04-14  Jim Ingham <jingham@apple.com>
+	* baseboards/macosx.exp: Remove two failure entries for
+	bug 3621537.
+	
+2004-04-02  Jim Ingham  (jingham@apple.com)
+
+	* baseboards/macosx.exp: Add entries for gdb.cp/classes.exp
+	merge failures.
+	
+2004-03-31  Jim Ingham  (jingham@apple.com)
+
+	* baseboards/macosx.exp: Add entries for gdb.cp/classes.exp
+	merge failures.
+	
+2004-03-30  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Add entries for gdb.apple's new merge
+	failures.
+
+2004-03-30  Klee Dienes  <kdienes@apple.com>
+
+        * baseboards/macosx.exp: Continue to clean up gdb.base/*.exp
+	for most recent merge.
+
+2004-03-29  Jim Ingham  <jingham@apple.com>
+
+	* baseboards/macosx.exp: Update the macosx.exp for the gdb.mi
+	failures/radars for the most recent merge.
+	
+2004-03-29  Klee Dienes  <kdienes@apple.com>
+
+        * baseboards/macosx.exp: Update gdb.base/*.exp for most recent merge.
+
+2003-10-01  Igor Likhatchev (igor@apple.com)
+
+        * baseboards/macosx.exp: 
+        Added setup_site_fail for  "backtrace @ signal handler", Radar 3061801
+
+2003-09-24  Igor Likhatchev (igor@apple.com)
+
+	* baseboards/macosx.exp: added 'set debug_option $env(DEBUG_OPTION)'
+	for use of environment variable;
+	Added setup_site_fail for Radar 3361206; removed 3096429
+
+2003-08-06  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Update annota1.exp fail to mention
+	3361020.
+
+2003-07-02  Igor Likhatchev (igor@apple.com)
+        * baseboards/macosx.exp: added setup_site_fail for Radars 3313204,3313491; removed 3223691.
+
+2003-07-01  Igor Likhatchev (igor@apple.com)
+	* baseboards/macosx.exp: added setup_site_fail for Radars 3310715,3311730
+
+2003-06-16  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove site_xfail for test that was now
+	invalid.
+
+2003-06-13  Igor Likhatchev  (igor@apple.com)
+
+	* baseboards/macosx.exp: Test updates.
+
+2003-04-09  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Test updates.
+
+2003-02-17  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Remove old-style annotation from test names.
+	Remove unnecessary exceptions for gdb792.exp.
+
+2003-02-16  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-02-10  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-02-03  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-12-17  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-12-16  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-12-15  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-12-11  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp: Use site_bug_id to store the bug-id for a
+	site-specific bug, instead of overloading prms_id.  For now, assume
+	that all site-specific bugs are specified by a Radar ID.
+
+2002-12-11  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-12-07  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Altivec test updates.
+
+2002-11-23  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-11-21  Klee Dienes  <kdienes@apple.com>
+
+	* Makefile.in: Revert to FSF sources.
+	* aclocal.m4: Revert to FSF sources.
+	* configure: Revert to FSF sources.
+	* doc/Makefile.in: Revert to FSF sources.
+	* doc/configure: Revert to FSF sources.
+	* example/Makefile.in: Revert to FSF sources.
+	* example/calc/aclocal.m4: Revert to FSF sources.
+	* example/calc/configure: Revert to FSF sources.
+	* testsuite/Makefile.in: Revert to FSF sources.
+	* testsuite/libdejagnu/Makefile.in: Revert to FSF sources.
+
+2002-11-21  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-11-19  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Test updates.
+
+2002-11-08  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: More test updates.
+
+2002-11-08  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Mark tests for 3094426 - gdb
+	future-break on selector doesn't work with hand-loaded shlib.
+
+2002-11-07  Klee Dienes  <kdienes@apple.com>
+
+	* runtest.exp: Rename --site-specific-xfail to --site-fail.
+	Clean up the argument processing:  --site-fail is now the same
+	as --site-fail=KFAIL; --site-fail= disables site-specific
+	failure-handling support.
+
+2002-11-07  Klee Dienes  <kdienes@apple.com>
+
+	* runtest.exp: New variables, site_xfail and site_pass,
+	control the default reporting values for triggered and un-triggered
+	site_fails.  Remove entry for '--si' in the optarg list, it
+	was not being hit before because of a missing '*' and shouldn't have
+	been there anyway (we use --site= syntax).  Allow the user to
+	specify 'site_xfail' with the '--site-specific-fail=' command-line
+	argument.
+	* lib/frameworks.exp: Convert to use site_xfail and site_pass.
+	* baseboards/macosx.exp: Lots of cleanup, reorganization.
+
+2002-11-06  Klee Dienes  <kdienes@apple.com>
+
+	* framework.exp (setup_site_xfail): Swap the order of the filename
+	and the architecture in the setup_site_xfail arguments.
+	(log_summary): Use 'info exists' instead of 'catch' to check for
+	the existence of the key.
+	* baseboards/macosx.exp: Update site-fail list; remove obsolete entries.
+	
+2002-10-31  Jason Molenda  (jmolenda@apple.com)
+
+        * baseboards/macosx.exp: Update altivec test case names.
+
+2002-10-28  Klee Dienes  <kdienes@apple.com>
+
+	* Makefile.in: Regenerate.
+	* aclocal.m4: Regenerate.
+	* doc/Makefile.in: Regenerate.
+	* example/Makefile.in: Regenerate.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/libdejagnu/Makefile.in: Regenerate.
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework (fail): Fix syntax error in set array($key).
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (log_summary): Use $array($key) syntax instead
+	of 'array get', to avoid unfortunate glob behavior for test names
+	containing '['.
+	(fail): Ditto.
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Site-specific kfail updates.
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (fail): Declare global pf_prefix, to avoid
+	record_test using the last-set value of the global.  Store the
+	file as well as the test name in the array key.  Generate a KFAIL
+	instead of an XFAIL, to lessen confusion with the rest of the
+	dejagnu output.
+	(setup_site_xfail): Store the file as well as the test name in the
+	array key.
+	(log_summary): Generate KPASS instead of XPASS, to lessen
+	confusion with the rest of the dejagnu output.
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (log_summary): Check for site_xfails
+	before starting output, in case we weren't run with
+	--site-specific-xfails (or in case none were defined).
+	* baseboards/macosx.exp: Update site-fail for printcmds.exp to
+	use a1_0 instead of a1[0].
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add i386 and gdb.apple/mi1-varobj.exp
+	site-specific failures.
+
+2002-10-23  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (unknown): Add new flag 'in_exit'; don't try
+	to do log_and_exit, if unknown was called from within exit, as
+	this leads to an infinite recursion.
+	(log_summary): Add XPASS entries for all site-specific XFAILS for
+	which the appropriate test file has been run, but which were not
+	triggered by any FAILs in the test-run.
+	(record_test): Store an array of 'seen' files, so we know which
+	site-specific tests to generate XFAILs for.
+	(setup_site_xfail): Store site_xfails as an array, not a list.
+	Add a field to store the architectures for which the XFAIL is
+	appropriate; also store a 'seen' flag to mark if the XFAIL has
+	been triggered.
+	(fail): Convert to use the new array.  Also check for the file and
+	the target to match the ones specified by setup_site_xfail.  Mark
+	the XFAIL as 'seen'.  Move the remote_close on timeout to the end
+	of the function.
+	
+2002-10-17  Klee Dienes  <kdienes@apple.com>
+	
+	* baseboards/rhapsody.exp: Remove.
+	* baseboards/macosx.exp: Remove obsolete setup_site_xfails.
+	Fill in bug-id fields for many existing setup_site_xfails.
+
+2002-10-16  Klee Dienes  <kdienes@apple.com>
+	
+	* lib/remote.exp: Add new global do_site_xfail, defaulting to
+	zero.  Match '--si' with do_site_xfail when processing arguments.
+	* lib/framework.exp: Disable setup_site_xfail if do_site_xfail
+	is not set.
+	* baseboards/macosx.exp: Add radar numbers for many
+	setup_site_xfail entries; remove many obsolete entries.
+
+2002-10-14  Klee Dienes  <kdienes@apple.com>
+	
+	* lib/remote.exp (remote_expect): Add 0.1-second sleep to
+	prevent random hangs.
+	* baseboards/macosx.exp: Add setup_site_xfail commands for
+	current failures.
+
+2002-10-14  Klee Dienes  <kdienes@apple.com>
+
+	* lib/framework.exp (setup_site_xfail): New command.
+	(clone_output): Suppress output of XPASS messages to the terminal.
+
+2002-09-30  Jason Molenda  (jmolenda@apple.com)
+
+	* lib/framework.exp (is_remote):  Add 'macosx' as a hardcoded native
+	host type.
+
+2002-09-19  Klee Dienes  (kdienes@apple.com)
+
+	* baseboards/macosx.exp: Update to use set_board_info() to set
+	all variables.
+
+2002-09-19  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Declare -gfull cmd line parameter in the
+	correct place so tests that don't want debug info don't get it.
+
+2002-09-15  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Pass -gfull to compiler to suppress some
+	edge case failures.
+
+2002-09-12  Jason Molenda  (jmolenda@apple.com)
+
+	* baseboards/macosx.exp: Drop -DPROTOTYPES and -traditional-cpp, add
+	-no-cpp-precomp.
+
+2002-08-30  Klee Dienes  <kdienes@apple.com>
+
+	* baseboards/macosx.exp: Add -DPROTOTYPES to the build flags. 
+
+2001-09-13  Jason Molenda  (jmolenda@apple.com)
+
+       * runtest.exp:  Hackjob to change default target from "unix" 
+        to "macosx".  An expedient, not correct, fix.  APPLE LOCAL.

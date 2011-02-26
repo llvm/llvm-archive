@@ -63,3 +63,5 @@ licenses, and/or restrictions:
 Program             Directory
 -------             ---------
 GCC-4.2 Test Suite  gcc-4_2-testsuite/src/COPYING
+GDB DejaGNU         gdb-1472-testsuite/src/dejagnu/COPYING
+GDB Test Suite      gdb-1472-testsuite/src/gdb/COPYING

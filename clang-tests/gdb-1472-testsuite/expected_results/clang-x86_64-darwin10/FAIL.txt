@@ -1,3 +1,11 @@
+debug-in-ofile/debug-in-ofile.exp: continue to my_five
+debug-in-ofile/debug-in-ofile.exp: continue to my_four
+debug-in-ofile/debug-in-ofile.exp: continue to my_one
+debug-in-ofile/debug-in-ofile.exp: continue to my_three
+debug-in-ofile/debug-in-ofile.exp: continue to my_two
+debug-in-ofile/debug-in-ofile.exp: missing one.o four.o - Setting bpt at my_one
+debug-in-ofile/debug-in-ofile.exp: missing one.o four.o: Continue to my_six
+gdb.threads/watchthreads.exp: first watchpoint on args[1] hit
 gdb.apple/bigenum.exp: print myvar with enum value of b
 gdb.apple/blocks.exp: invoke-block returning an int
 gdb.apple/blocks.exp: invoke-block returning a struct

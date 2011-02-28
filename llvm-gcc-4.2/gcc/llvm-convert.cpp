@@ -8582,10 +8582,10 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
   // Convert the constant itself.
   Constant *Val = Convert(VEC_index(constructor_elt, elt, 0)->value);
 
-  // Unions are initialized using the first member field.  Find it.
+  // Unions are initialized using the first non-anonymous member field.  Find it.
   tree Field = TYPE_FIELDS(TREE_TYPE(exp));
   assert(Field && "cannot initialize union with no fields");
-  while (TREE_CODE(Field) != FIELD_DECL) {
+  while (TREE_CODE(Field) != FIELD_DECL || DECL_NAME(Field) == NULL_TREE) {
     Field = TREE_CHAIN(Field);
     assert(Field && "cannot initialize union with no fields");
   }

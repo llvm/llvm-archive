@@ -98,13 +98,6 @@ bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
 #define LLVM_SHOULD_NOT_USE_SHADOW_RETURN(X, CC) \
     llvm_arm_should_pass_or_return_aggregate_in_regs((X), (CC))
 
-extern
-bool llvm_arm_should_pass_aggregate_in_memory(tree, const Type *);
-
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)            \
-   (llvm_arm_should_pass_aggregate_in_memory((X), (TY)))
-
-
 /* Vectors bigger than 128 are returned using sret.  */
 #define LLVM_SHOULD_RETURN_VECTOR_AS_SHADOW(X, isBuiltin) \
   (TREE_INT_CST_LOW(TYPE_SIZE(X)) > 128)

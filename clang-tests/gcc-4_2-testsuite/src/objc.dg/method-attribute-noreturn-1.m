@@ -11,8 +11,8 @@ extern void exit (int);
 @end
 
 @implementation INTF
-- (void) noret {}   /* { dg-warning "\'noreturn\' function does return" } */
-+ (void) c_noret {} /* { dg-warning "\'noreturn\' function does return" } */
+- (void) noret {}   /* { dg-warning "function declared \'noreturn\' should not return" } */
++ (void) c_noret {} /* { dg-warning "function declared \'noreturn\' should not return" } */
 + (void) c_noretok { exit(0); } // ok
 - (void) noretok { exit (0); } // ok
 @end

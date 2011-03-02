@@ -96,7 +96,6 @@ void dummy_function() {
   llvm::Type::getInt8Ty(llvm::getGlobalContext());
 
   llvm::PrettyStackTraceProgram(0, 0);
-  llvm::DIFactory(*static_cast<llvm::Module *>(0));
   std::string Err;
   llvm::TargetRegistry::lookupTarget("", Err);
 

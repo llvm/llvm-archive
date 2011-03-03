@@ -8757,10 +8757,12 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
 
   // Support -fwritable-strings.
   bool StringIsConstant = !flag_writable_strings;
+  bool IsConstCFString = false;
 #ifdef CONFIG_DARWIN_H
   // However, ignores it if exp is a CFString and
   // -fconstant-cfstring (default) is set.
-  StringIsConstant |= darwin_constant_cfstring_p(exp);
+  IsConstCFString = darwin_constant_cfstring_p(exp);
+  StringIsConstant |= IsConstCFString;
 #endif
 
   // Literal cstrings in data section needs a label the linker can
@@ -8784,7 +8786,14 @@ Constant *TreeConstantToLLVM::EmitLV_STRING_CST(tree exp) {
                                           StringIsConstant, Linkage, Init,
                                           ".str");
   GV->setUnnamedAddr(true);
-  GV->setAlignment(get_constant_alignment(exp) / 8);
+  if (!IsConstCFString) {
+    GV->setAlignment(get_constant_alignment(exp) / 8);
+  } else {
+    // CFStrings don't need to be over-aligned. Align them to 1.
+    // <rdar://problem/8961909>
+    GV->setAlignment(1);
+    GV->setSection("__TEXT,__cstring,cstring_literals");
+  }
 
   if (SlotP) *SlotP = GV;
   return GV;

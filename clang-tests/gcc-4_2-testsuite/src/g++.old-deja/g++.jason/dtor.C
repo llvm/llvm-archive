@@ -3,12 +3,12 @@ struct A {
   ~A();
 };
 
-struct B {
+struct B { // { dg-error "declared here" }
   ~B();
 };
 
 int main()
 {
   A a;
-  a.~B();			// { dg-error "" } wrong name
+  a.~B();			// { dg-error "does not match the type" }
 }

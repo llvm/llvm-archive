@@ -45,10 +45,9 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 /* For parameters to an asm, check the constraint and use X86_mmx if an MMX
    register is called for.  "y" means an MMX register. */
-#define LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(Constraint, LLVMTy)       \
-  ((TARGET_MMX &&                                                       \
-    (StringRef(Constraint).equals(StringRef(std::string("y"))) ||       \
-     StringRef(Constraint).equals(StringRef(std::string("&y"))))) ?     \
+#define LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(Constraint, LLVMTy)      \
+  ((TARGET_MMX &&                                                      \
+    (StringRef(Constraint) == "y" || StringRef(Constraint) == "&y")) ? \
    Type::getX86_MMXTy(Context) : LLVMTy)
 
 /* LLVM specific stuff for supporting calling convention output */

@@ -4,8 +4,8 @@ struct S {
   void f();
 };
 
-void g(int);
-void g(double);
+void g(int); // { dg-error "candidate function"}
+void g(double); // { dg-error "candidate function"}
 
 void h () {
   S s;

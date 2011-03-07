@@ -6,9 +6,9 @@
 // PR 5123. ICE
 
 struct C {
-  template<class T> void f(T);
-  void g ();
-  void g (int);
+  template<class T> void f(T); // { dg-error "candidate function"}
+  void g (); // { dg-error "candidate function"}
+  void g (int); // { dg-error "candidate function"}
 };
 
 void Foo () {
@@ -19,9 +19,9 @@ void Foo () {
   
   (c.f<int>) (2);
 
-  c.g;			// { dg-error "statement cannot resolve" "" }
-  c.f;		        // { dg-error "statement cannot resolve" "" }
-  c.f<int>;		// { dg-error "statement cannot resolve" "" }
+  c.g;			// { dg-error "address of overloaded" "" }
+  c.f;		        // { dg-error "address of overloaded" "" }
+  c.f<int>;		// { dg-warning "expression result unused" "" }
   
   c.g == 1;		// { dg-error "invalid" "" }
   c.f == 1;		// { dg-error "invalid" "" }

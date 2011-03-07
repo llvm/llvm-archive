@@ -3,8 +3,8 @@
 // member function.
 
 struct A {
-  void f ();
-  void f (int);
+  void f (); // { dg-error "candidate function" }
+  void f (int); // { dg-error "candidate function" }
   void g ();
 };
 

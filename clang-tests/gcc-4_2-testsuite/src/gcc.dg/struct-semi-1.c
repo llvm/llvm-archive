@@ -12,8 +12,8 @@ struct s1 {
 };
 struct s2 {
   ;
-  int c /* { dg-warning "expected ';' at end of declaration" } */
+  int c /* { dg-warning "expected" } */
 }; 
 struct s3 {
-  int d /* { dg-warning "expected ';' at end of declaration" } */
+  int d /* { dg-warning "expected" } */
 }; 

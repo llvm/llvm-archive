@@ -12,8 +12,8 @@ struct s1 {
 };
 struct s2 {
   ;
-  int c
-}; /* { dg-warning "warning: no semicolon at end of struct or union" } */
+  int c /* { dg-warning "expected ';' at end of declaration" } */
+}; 
 struct s3 {
-  int d
-}; /* { dg-warning "warning: no semicolon at end of struct or union" } */
+  int d /* { dg-warning "expected ';' at end of declaration" } */
+}; 

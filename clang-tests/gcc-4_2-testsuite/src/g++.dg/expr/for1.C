@@ -4,11 +4,11 @@ struct S {
   void f();
 };
 
-void g(int); // { dg-error "candidate function"}
-void g(double); // { dg-error "candidate function"}
+void g(int); // { dg-error "candidate" }
+void g(double); // { dg-error "candidate" }
 
 void h () {
   S s;
-  for (;;s.f); // { dg-error "" }
-  for (;;g); // { dg-error "" }
+  for (;;s.f); // { dg-error "bound member function" }
+  for (;;g); // { dg-error "address of overloaded" }
 }

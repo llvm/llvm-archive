@@ -21,7 +21,7 @@ void Foo () {
 
   c.g;			// { dg-error "address of overloaded" "" }
   c.f;		        // { dg-error "address of overloaded" "" }
-  c.f<int>;	
+  c.f<int>;		// { dg-warning "expression result unused" "" }
   
   c.g == 1;		// { dg-error "invalid" "" }
   c.f == 1;		// { dg-error "invalid" "" }

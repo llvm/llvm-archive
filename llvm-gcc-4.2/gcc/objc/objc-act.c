@@ -15414,7 +15414,13 @@ static tree
 is_ivar (tree decl_chain, tree ident)
 {
   for ( ; decl_chain; decl_chain = TREE_CHAIN (decl_chain))
-    if (DECL_NAME (decl_chain) == ident)
+/* APPLE LOCAL begin radar 6383121 */
+    if (DECL_NAME (decl_chain) == ident
+#ifdef OBJCPLUS
+        && TREE_CODE (decl_chain) != TYPE_DECL
+#endif
+       )
+/* APPLE LOCAL end radar 6383121 */
       return decl_chain;
   return NULL_TREE;
 }
@@ -19673,6 +19679,13 @@ objc_lookup_ivar (tree other, tree id)
 
   /* Look up the ivar, but do not use it if it is not accessible.  */
   ivar = is_ivar (objc_ivar_chain, id);
+  /* APPLE LOCAL begin radar 6383121 */
+  if (!ivar && objc_implementation_context) {
+    tree class = lookup_interface (CLASS_NAME (objc_implementation_context));
+    if (class) 
+      ivar = nested_ivar_lookup(class, id);
+  }
+  /* APPLE LOCAL end radar 6383121 */
 
   if (!ivar || is_private (ivar))
     return other;

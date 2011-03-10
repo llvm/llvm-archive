@@ -29,9 +29,3 @@ are trying to run.
 You can override the compiler under test using, e.g.:
 
     make check-gcc RUNTESTFLAGS=dg.exp=local4.C CC_UNDER_TEST=$(which clang) CXX_UNDER_TEST=$(which clang++)
-
-
-TODO
------
-
-large-size-array.c is forcibly disabled, clang goes memory crazy on it.

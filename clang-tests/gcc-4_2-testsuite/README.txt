@@ -17,6 +17,10 @@ This is a convenience target which runs:
 
 which test the C, C++, Objective-C, and Objective-C++ languages in that order.
 
+Note that by default these also use the CCC_ADD_ARGS environment variable to
+override a variety of Clang defaults which otherwise tend to confuse the GCC
+test suite's expectations. See the Makefile for more details.
+
 
 You can run an individual test with, e.g.:
 
@@ -29,3 +33,4 @@ are trying to run.
 You can override the compiler under test using, e.g.:
 
     make check-gcc RUNTESTFLAGS=dg.exp=local4.C CC_UNDER_TEST=$(which clang) CXX_UNDER_TEST=$(which clang++)
+

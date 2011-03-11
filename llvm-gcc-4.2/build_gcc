@@ -804,7 +804,8 @@ if [ "$INSTALL_LIBLTO" == yes ]; then
 fi
 
 # Remove lto.h from the install directory; clang will supply.
-find $DEST_DIR -name lto.h -print | xargs rm || exit 1
+# Also remove ppc_intrinsics.h.  Note that this breaks PPC support.
+find $DEST_DIR \( -name lto.h -o -name ppc_intrinsics.h \) -delete -print || exit 1
 
 # LLVM LOCAL end
 

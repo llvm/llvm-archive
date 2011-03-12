@@ -403,6 +403,7 @@ protected:
   void CreateLocalScopeChildren(wxTreeCtrl *tree, const wxTreeItemId& id,
       const llvm::Function * fn, llvm::DIScope parent);
   void ShowCompileUnit(DetailsView* detailsView, llvm::DICompileUnit cu);
+  void ShowFile(DetailsView* detailsView, llvm::DIFile file);
   void ShowContext(DetailsView* detailsView, llvm::DIScope scope);
   void FormatDIType(wxTextOutputStream& out, llvm::DIType type) const;
   wxString DITypeToString(llvm::DIType type) const;

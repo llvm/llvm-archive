@@ -926,6 +926,7 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
     detailsView->Add(_("DescriptorType"), _("DICompositeType"));
     detailsView->Add(_("Name"), diCompType.getName());
     ShowCompileUnit(detailsView, diCompType.getCompileUnit());
+    ShowFile(detailsView, diCompType.getFile());
     detailsView->Add(_("Line"), diCompType.getLineNumber());
     ShowContext(detailsView, diCompType.getContext());
     detailsView->Add(_("Private"), diCompType.isPrivate());
@@ -983,6 +984,11 @@ void DIEItem::ShowDetails(DetailsView* detailsView) {
 void DIEItem::ShowCompileUnit(DetailsView* detailsView, DICompileUnit cu) {
   detailsView->Add(_("CompileUnit"),
       toWxStr(cu.getDirectory()) + _("/") + toWxStr(cu.getFilename()));
+}
+
+void DIEItem::ShowFile(DetailsView* detailsView, DIFile file) {
+  detailsView->Add(_("File"),
+      toWxStr(file.getDirectory()) + _("/") + toWxStr(file.getFilename()));
 }
 
 void DIEItem::ShowContext(DetailsView* detailsView, DIScope scope) {

@@ -203,7 +203,7 @@ void printConstantList(wxTextOutputStream & out, const llvm::Module* module,
 void printMetadata(wxTextOutputStream & out, const llvm::Value* nodeVal,
     uint32_t maxDepth) {
   if (const MDString* ms = dyn_cast<MDString>(nodeVal)) {
-    out << _("\"") << toWxStr(ms->getName()) << _("\"");
+    out << _("\"") << toWxStr(ms->getString()) << _("\"");
   } else if (const MDNode* m = dyn_cast<MDNode>(nodeVal)) {
     if (maxDepth > 0) {
       out << _("{");

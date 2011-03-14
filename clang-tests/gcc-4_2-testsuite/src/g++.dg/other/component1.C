@@ -25,5 +25,5 @@ void Foo () {
   
   c.g == 1;		// { dg-error "invalid" "" }
   c.f == 1;		// { dg-error "invalid" "" }
-  c.f<int> == 1;	// { dg-error "invalid" "" }
+  c.f<int> == 1;	// { dg-error "comparison between pointer and integer" }
 }

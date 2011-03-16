@@ -1,3 +1,0 @@
-load_lib identity.exp
-
-hlvm-identity-tests hlvm-xml2xml "*.hlx"

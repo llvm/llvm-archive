@@ -2,18 +2,18 @@
 // prms-id: 9068
 
 struct ostream {
-  void operator<< (int);	// { dg-error "" } fn ref in err msg
+  void operator<< (int);	// { dg-error "candidate function not viable" }
 };
 
 class C {
 public:
-  static int& i ();
-  static int& i (int signatureDummy);
+  static int& i (); // { dg-error "note" }
+  static int& i (int signatureDummy); // { dg-error "note" }
 };
 
 void foo (ostream& lhs, const C& rhs)
 {
-  lhs << rhs.i;		// { dg-error "" } no such i for any opr << ()
+  lhs << rhs.i;		// { dg-error "invalid operands" }
 }
 
 int& C::i () {

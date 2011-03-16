@@ -11,8 +11,8 @@ struct X
   void operator << (float);
 };
 
-void OVL1 (int);
-void OVL1 (float);
+void OVL1 (int); // { dg-error "note" }
+void OVL1 (float); // { dg-error "note" }
 
 void OVL2 (int);
 void OVL2 (float);

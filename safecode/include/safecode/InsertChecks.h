@@ -30,6 +30,7 @@
 
 #include "SafeDynMemAlloc.h"
 #include "poolalloc/PoolAllocate.h"
+#include "capsaicin/abc.h"
 
 extern bool isSVAEnabled();
 
@@ -53,6 +54,7 @@ struct InsertLSChecks : public FunctionPass, InstVisitor<InsertLSChecks> {
 
       // Preserved passes
       AU.addPreserved<InsertSCIntrinsic>();
+      AU.addPreserved<capsaicin::LocalABC>();
       AU.addPreserved<EQTDDataStructures>();
       AU.setPreservesCFG();
     };
@@ -89,7 +91,9 @@ struct InsertGEPChecks : public FunctionPass, InstVisitor<InsertGEPChecks> {
       AU.addPreserved<InsertSCIntrinsic>();
       AU.addPreserved<EQTDDataStructures>();
       AU.addRequired<ArrayBoundsCheckGroup>();
+      AU.addRequired<capsaicin::LocalABC>();
       AU.setPreservesCFG();
+      AU.addPreserved<capsaicin::LocalABC>();
     };
 
     // Visitor methods
@@ -99,6 +103,7 @@ struct InsertGEPChecks : public FunctionPass, InstVisitor<InsertGEPChecks> {
     // Pointers to required passes
     TargetData * TD;
     ArrayBoundsCheckGroup * abcPass;
+    capsaicin::LocalABC * smtPass;
 
     // Pointer to GEP run-time check function
     Function * PoolCheckArrayUI;
@@ -124,6 +129,7 @@ struct AlignmentChecks : public FunctionPass, InstVisitor<AlignmentChecks> {
 
       // Preserved passes
       AU.addPreserved<InsertSCIntrinsic>();
+      AU.addPreserved<capsaicin::LocalABC>();
       AU.setPreservesCFG();
     };
 
@@ -152,11 +158,13 @@ struct InsertPoolChecks : public FunctionPass {
     virtual bool runOnFunction(Function &F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<ArrayBoundsCheckGroup>();
+      AU.addRequired<capsaicin::LocalABC>();
       AU.addRequired<TargetData>();
       AU.addRequired<InsertSCIntrinsic>();
       AU.addRequired<EQTDDataStructures>();
 
       AU.addPreserved<InsertSCIntrinsic>();
+      AU.addPreserved<capsaicin::LocalABC>();
       AU.addPreserved<EQTDDataStructures>();
       AU.setPreservesCFG();
     };
@@ -164,6 +172,7 @@ struct InsertPoolChecks : public FunctionPass {
   private:
     InsertSCIntrinsic * intrinsic;
     ArrayBoundsCheckGroup * abcPass;
+    capsaicin::LocalABC * smtPass;
     TargetData * TD;
     EQTDDataStructures * dsaPass;
 
@@ -230,6 +239,7 @@ struct RegisterStackObjPass : public FunctionPass {
       AU.addRequired<InsertSCIntrinsic>();
 
       AU.addPreserved<InsertSCIntrinsic>();
+      AU.addPreserved<capsaicin::LocalABC>();
       AU.setPreservesAll();
     };
 

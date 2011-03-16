@@ -239,6 +239,7 @@ InsertPoolChecks::runOnFunction(Function &F) {
 
   TD      = &getAnalysis<TargetData>();
   abcPass = &getAnalysis<ArrayBoundsCheckGroup>();
+  smtPass = &getAnalysis<capsaicin::LocalABC>();
   dsaPass = &getAnalysis<EQTDDataStructures>();
 
   //

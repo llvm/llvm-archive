@@ -23,10 +23,11 @@ USEDLIBS := CStdLib.a oob.a optchecks.a \
 						convert.a addchecks.a dpchecks.a speculativechecking.a \
 						baggyboundscheck.a arrayboundcheck.a stackcheck.a \
 						debuginstr.a sc-support.a scutility.a \
-						LLVMDataStructure.a poolalloc.a
+						LLVMDataStructure.a poolalloc.a capsaicin.a
 
 
 include $(LEVEL)/Makefile.common
+LDFLAGS += -lcvc3 -lstdc++
 
 #
 # These rules create symbolic links from the poolalloc object tree to the
@@ -39,3 +40,5 @@ $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/libpoolalloc.a: $(POOLALLOC_OBJDIR)/$(BuildMod
 $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/libLLVMDataStructure.a: $(POOLALLOC_OBJDIR)/$(BuildMode)/lib/libLLVMDataStructure.a
 	$(VERB) ln -fs $< $@
 
+$(PROJ_OBJ_ROOT)/$(BuildMode)/lib/libcapsaicin.a: $(CAPSAICIN_OBJDIR)/$(BuildMode)/lib/libcapsaicin.a
+	$(VERB) ln -fs $< $@

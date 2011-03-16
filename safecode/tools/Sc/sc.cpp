@@ -277,7 +277,8 @@ int main(int argc, char **argv) {
     // GEP checking pass away.
     //
     Passes.add (new EQTDDataStructures());
-    Passes.add(new InsertPoolChecks());
+    Passes.add (new capsaicin::LocalABC());
+    Passes.add (new InsertPoolChecks());
 
     if (!DisableLSChecks)  Passes.add(new InsertLSChecks());
     if (!DisableGEPChecks) {

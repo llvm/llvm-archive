@@ -58,6 +58,10 @@ InsertGEPChecks::visitGetElementPtrInst (GetElementPtrInst & GEP) {
     ++SafeGEP;
     return;
   }
+  if (smtPass->checkGEPSafe(&GEP)) {
+    ++SafeGEP;
+    return;
+  }
 
   //
   // If this only indexes into a structure, ignore it.
@@ -108,6 +112,7 @@ InsertGEPChecks::runOnFunction (Function & F) {
   //
   TD      = &getAnalysis<TargetData>();
   abcPass = &getAnalysis<ArrayBoundsCheckGroup>();
+  smtPass = &getAnalysis<capsaicin::LocalABC>();
 
   //
   // Get a pointer to the run-time check function.

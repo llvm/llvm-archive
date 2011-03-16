@@ -72,7 +72,7 @@ extern const unsigned int  logregs;
 using namespace NAMESPACE_SC;
 
 extern "C" {
-  size_t strnlen(const char *s, size_t maxlen) {
+  size_t strnlen(const char *s, size_t maxlen) throw() {
     size_t i;
     for (i = 0; i < maxlen && s[i]; ++i)
       ;

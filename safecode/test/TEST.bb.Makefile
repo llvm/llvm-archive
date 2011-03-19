@@ -130,6 +130,13 @@ Output/%.bb.bc: Output/%.presc.bc $(LOPT) $(BB_RT_BC)
 	-$(LLVMLD) $(LLVMLDFLAGS) -o $@.bb.ld $@.bb $(BB_RT_BC) 2>&1 > $@.out
 	-$(LOPT) $(OPTZN_PASSES) $@.bb.ld.bc -o $@ -f 2>&1    >> $@.out
 
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.bc): \
+Output/%.bb1.bc: Output/%.presc.bc $(LOPT) $(BB_RT_BC)
+	-@rm -f $(CURDIR)/$@.info
+	-$(SC_STATS) $(SCOPTS) $(SCOPTS2) -runtime=RUNTIME_BB -disable-cap $< -f -o $@.bb1 2>&1 > $@.out
+	-$(LLVMLD) $(LLVMLDFLAGS) -o $@.bb1.ld $@.bb1 $(BB_RT_BC) 2>&1 > $@.out
+	-$(LOPT) $(OPTZN_PASSES) $@.bb1.ld.bc -o $@ -f 2>&1    >> $@.out
+
 #
 # These rules compile the new .bc file into a .c file using llc
 #
@@ -139,6 +146,10 @@ Output/%.safecode.s: Output/%.safecode.bc $(LLC)
 
 $(PROGRAMS_TO_TEST:%=Output/%.bb.s): \
 Output/%.bb.s: Output/%.bb.bc $(LLC)
+	-$(LLC) $(LLCFLAGS) -f $< -o $@
+
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.s): \
+Output/%.bb1.s: Output/%.bb1.bc $(LLC)
 	-$(LLC) $(LLCFLAGS) -f $< -o $@
 
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB.s): \
@@ -151,6 +162,10 @@ Output/%.safecode.cbe.c: Output/%.safecode.bc $(LLC)
 
 $(PROGRAMS_TO_TEST:%=Output/%.bb.cbe.c): \
 Output/%.bb.cbe.c: Output/%.bb.bc $(LLC)
+	-$(LLC) -march=c $(LLCFLAGS) -f $< -o $@
+
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.cbe.c): \
+Output/%.bb1.cbe.c: Output/%.bb1.bc $(LLC)
 	-$(LLC) -march=c $(LLCFLAGS) -f $< -o $@
 
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB.cbe.c): \
@@ -169,6 +184,10 @@ $(PROGRAMS_TO_TEST:%=Output/%.bb): \
 Output/%.bb: Output/%.bb.cbe.c $(BB_RT_O)
 	-$(LLVMGCC) $(CBECFLAGS) $(CFLAGS) $< $(LLCLIBS) $(BB_RT_O) $(LDFLAGS) -o $@ $(STATICFLAGS) -lstdc++
 
+$(PROGRAMS_TO_TEST:%=Output/%.bb1): \
+Output/%.bb1: Output/%.bb1.cbe.c $(BB_RT_O)
+	-$(LLVMGCC) $(CBECFLAGS) $(CFLAGS) $< $(LLCLIBS) $(BB_RT_O) $(LDFLAGS) -o $@ $(STATICFLAGS) -lstdc++
+
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB): \
 Output/%.noOOB: Output/%.noOOB.cbe.c
 	-$(LLVMGCC) $(CBECFLAGS) $(CFLAGS) $< $(LLCLIBS) $(LDFLAGS) -o $@ $(STATICFLAGS) -lstdc++
@@ -179,6 +198,10 @@ Output/%.safecode: Output/%.safecode.s $(PA_RT_O)
 
 $(PROGRAMS_TO_TEST:%=Output/%.bb): \
 Output/%.bb: Output/%.bb.s $(BB_RT_O)
+	-$(LLVMGCC) $(CFLAGS) $< $(LLCLIBS) $(BB_RT_O) $(LDFLAGS) -o $@ $(STATICFLAGS) -lstdc++
+
+$(PROGRAMS_TO_TEST:%=Output/%.bb1): \
+Output/%.bb1: Output/%.bb1.s $(BB_RT_O)
 	-$(LLVMGCC) $(CFLAGS) $< $(LLCLIBS) $(BB_RT_O) $(LDFLAGS) -o $@ $(STATICFLAGS) -lstdc++
 
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB): \
@@ -202,6 +225,10 @@ Output/%.safecode.out-llc: Output/%.safecode
 
 $(PROGRAMS_TO_TEST:%=Output/%.bb.out-llc): \
 Output/%.bb.out-llc: Output/%.bb
+	-$(RUNSAFELY) $(STDIN_FILENAME) $@ $(WATCHDOG) $< $(RUN_OPTIONS)
+
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.out-llc): \
+Output/%.bb1.out-llc: Output/%.bb1
 	-$(RUNSAFELY) $(STDIN_FILENAME) $@ $(WATCHDOG) $< $(RUN_OPTIONS)
 
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB.out-llc): \
@@ -230,6 +257,14 @@ Output/%.bb.out-llc: Output/%.bb
 	-(cd Output/bbcbe-$(RUN_TYPE); cat $(LOCAL_OUTPUTS)) > $@
 	-cp Output/bbcbe-$(RUN_TYPE)/$(STDOUT_FILENAME).time $@.time
 
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.out-llc): \
+Output/%.bb1.out-llc: Output/%.bb1
+	-$(SPEC_SANDBOX) bb1cbe-$(RUN_TYPE) $@ $(REF_IN_DIR) \
+             $(RUNSAFELY) $(STDIN_FILENAME) $(STDOUT_FILENAME) \
+                  $(WATCHDOG) ../../$< $(RUN_OPTIONS)
+	-(cd Output/bb1cbe-$(RUN_TYPE); cat $(LOCAL_OUTPUTS)) > $@
+	-cp Output/bb1cbe-$(RUN_TYPE)/$(STDOUT_FILENAME).time $@.time
+
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB.out-llc): \
 Output/%.noOOB.out-llc: Output/%.noOOB
 	-$(SPEC_SANDBOX) noOOBcbe-$(RUN_TYPE) $@ $(REF_IN_DIR) \
@@ -253,6 +288,11 @@ Output/%.bb.diff-llc: Output/%.out-nat Output/%.bb.out-llc
 	@cp Output/$*.out-nat Output/$*.bb.out-nat
 	-$(DIFFPROG) llc $*.bb $(HIDEDIFF)
 
+$(PROGRAMS_TO_TEST:%=Output/%.bb1.diff-llc): \
+Output/%.bb1.diff-llc: Output/%.out-nat Output/%.bb1.out-llc
+	@cp Output/$*.out-nat Output/$*.bb1.out-nat
+	-$(DIFFPROG) llc $*.bb1 $(HIDEDIFF)
+
 $(PROGRAMS_TO_TEST:%=Output/%.noOOB.diff-llc): \
 Output/%.noOOB.diff-llc: Output/%.out-nat Output/%.noOOB.out-llc
 	@cp Output/$*.out-nat Output/$*.noOOB.out-nat
@@ -262,10 +302,9 @@ Output/%.noOOB.diff-llc: Output/%.out-nat Output/%.noOOB.out-llc
 # This rule wraps everything together to build the actual output the report is
 # generated from.
 $(PROGRAMS_TO_TEST:%=Output/%.$(TEST).report.txt): \
-Output/%.$(TEST).report.txt: Output/%.out-nat                \
-                             Output/%.noOOB.diff-llc     \
-                             Output/%.safecode.diff-llc     \
-                             Output/%.bb.diff-llc     \
+Output/%.$(TEST).report.txt: Output/%.out-nat      \
+                             Output/%.bb.diff-llc  \
+                             Output/%.bb1.diff-llc \
                              Output/%.LOC.txt
 	@echo > $@
 	@echo ">>> ========= " \'$*\' Program >> $@
@@ -284,6 +323,10 @@ Output/%.$(TEST).report.txt: Output/%.out-nat                \
 	@-if test -f Output/$*.bb.diff-llc; then \
 	  printf "CBE-RUN-TIME-BB: " >> $@;\
 	  grep "^user" Output/$*.bb.out-llc.time >> $@;\
+	fi
+	@-if test -f Output/$*.bb1.diff-llc; then \
+	  printf "CBE-RUN-TIME-BB1: " >> $@;\
+	  grep "^user" Output/$*.bb1.out-llc.time >> $@;\
 	fi
 	printf "LOC: " >> $@
 	cat Output/$*.LOC.txt >> $@

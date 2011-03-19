@@ -51,6 +51,8 @@ my $PTRDIST   = 'MultiSource/Benchmarks/Ptrdist';
  ["SC + Multi-PA", 'CBE-RUN-TIME-SAFECODE: user\s*([.0-9m:]+)', \&FormatTime],
  [],
  ["SC + BB",       'CBE-RUN-TIME-BB: user\s*([.0-9m:]+)', \&FormatTime],
+ [],
+ ["SC + BB1",       'CBE-RUN-TIME-BB1: user\s*([.0-9m:]+)', \&FormatTime],
 # ["NumPools",      '([0-9]+).*Number of pools allocated'],
 # ["Typesafe",      '([0-9]+).*Number of typesafe pools'],
 # ["BumpPtr",       '([0-9]+).*Number of bump pointer pools'],

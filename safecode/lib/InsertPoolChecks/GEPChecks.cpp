@@ -35,6 +35,9 @@ X ("gepchecks", "Insert GEP run-time checks");
 cl::opt<bool> DisableStructChecks ("disable-structgepchecks", cl::Hidden,
                                    cl::init(false),
                                    cl::desc("Disable Struct GEP Checks"));
+cl::opt<bool> DisableCapsaicin ("disable-cap", cl::Hidden,
+                                   cl::init(false),
+                                   cl::desc("Disable Struct GEP Checks"));
 
 // Pass Statistics
 namespace {
@@ -54,14 +57,19 @@ InsertGEPChecks::visitGetElementPtrInst (GetElementPtrInst & GEP) {
   //
   // Determine if the GEP is safe.  If it is, then don't do anything.
   //
-  if (abcPass->isGEPSafe(&GEP)) {
-    ++SafeGEP;
-    return;
-  }
+  if(!DisableCapsaicin)
   if (smtPass->checkGEPSafe(&GEP)) {
+    errs() << "Safe1 " ;
+    GEP.dump();
     ++SafeGEP;
     return;
   }
+  /*if (abcPass->isGEPSafe(&GEP)) {
+    errs() << "Safe2 " ;
+    GEP.dump();
+    ++SafeGEP;
+    return;
+  }*/
 
   //
   // If this only indexes into a structure, ignore it.

@@ -10,9 +10,9 @@ HASH
 #error bad	/* { dg-error "bad" } */
 
 /* Directives with their #s indented are not recognized.  */
- #if 0	/* { dg-bogus "unterminated" } */
+ #if 0	/* { dg-bogus "unterminated" "" { xfail *-*-* } } */
 
-#wrong	/* { dg-error "invalid" } */
+#wrong	/* { dg-error "invalid" "" { xfail *-*-* } } */
 
 #define foo 2
 #define bar + 3

@@ -10,4 +10,4 @@
 passed
 /**/#endif
 
-/* { dg-final { scan-file xwin1.i "(^|\n)#if 0" } } */
+/* { dg-final { scan-file xwin1.i "(^|\n)#if 0" { xfail *-*-* } } } */

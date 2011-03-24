@@ -3287,7 +3287,9 @@ gimplify_parameters (void)
 		  DECL_IGNORED_P (addr) = 0;
 		  local = build_fold_indirect_ref (addr);
 
-		  args = tree_cons (NULL, DECL_SIZE_UNIT (parm), NULL);
+      /* LLVM local add alloca alignment */
+      args = tree_cons(NULL, integer_one_node, NULL);
+		  args = tree_cons (NULL, DECL_SIZE_UNIT (parm), args);
 		  t = built_in_decls[BUILT_IN_ALLOCA];
 		  t = build_function_call_expr (t, args);
 		  t = fold_convert (ptr_type, t);

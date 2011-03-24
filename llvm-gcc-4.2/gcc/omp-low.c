@@ -1679,7 +1679,9 @@ lower_rec_input_clauses (tree clauses, tree *ilist, tree *dlist,
 	      gcc_assert (DECL_P (ptr));
 
 	      x = TYPE_SIZE_UNIT (TREE_TYPE (new_var));
-	      args = tree_cons (NULL, x, NULL);
+        /* LLVM local add alloca align */
+        args = tree_cons (NULL, integer_one_node, NULL);
+	      args = tree_cons (NULL, x, args);
 	      x = built_in_decls[BUILT_IN_ALLOCA];
 	      x = build_function_call_expr (x, args);
 	      x = fold_convert (TREE_TYPE (ptr), x);
@@ -1713,7 +1715,8 @@ lower_rec_input_clauses (tree clauses, tree *ilist, tree *dlist,
 		}
 	      else
 		{
-		  args = tree_cons (NULL, x, NULL);
+      args = tree_cons (NULL, integer_one_node, NULL);
+		  args = tree_cons (NULL, x, args);
 		  x = built_in_decls[BUILT_IN_ALLOCA];
 		  x = build_function_call_expr (x, args);
 		  x = fold_convert (TREE_TYPE (new_var), x);

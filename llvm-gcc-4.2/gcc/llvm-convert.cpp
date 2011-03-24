@@ -6772,15 +6772,21 @@ bool TreeToLLVM::EmitBuiltinStackRestore(tree exp) {
 
 bool TreeToLLVM::EmitBuiltinAlloca(tree exp, Value *&Result) {
   tree arglist = TREE_OPERAND(exp, 1);
-  if (!validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+  tree align_arg = NULL_TREE;
+  if (validate_arglist(arglist, INTEGER_TYPE, INTEGER_TYPE, VOID_TYPE))
+    // Grab the alignment arg - no need to emit this.
+    align_arg = TREE_VALUE (TREE_CHAIN (arglist));
+  // We may just have a single arg call to __builtin_alloca that we couldn't
+  // interpose. Check.
+  else if (validate_arglist(arglist, INTEGER_TYPE, VOID_TYPE))
+    align_arg = integer_one_node;
+  else
     return false;
+
   Value *Amt = Emit(TREE_VALUE(arglist), 0);
   AllocaInst *AI = Builder.CreateAlloca(Type::getInt8Ty(Context), Amt);
   
-  // If this was originally a vla alloca find the alignment and set it
-  // on our alloca.
-  tree fndecl = get_callee_fndecl(exp);
-  unsigned align = DECL_ALIGN(fndecl) ? DECL_ALIGN(fndecl)/8 : 1;
+  unsigned align = TREE_INT_CST_LOW(align_arg);
   AI->setAlignment(align);
   Result = AI;
 

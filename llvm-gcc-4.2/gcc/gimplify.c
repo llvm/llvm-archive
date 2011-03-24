@@ -1239,7 +1239,7 @@ gimplify_decl_expr (tree *stmt_p)
 	  /* This is a variable-sized decl.  Simplify its size and mark it
 	     for deferred expansion.  Note that mudflap depends on the format
 	     of the emitted code: see mx_register_decls().  */
-	  tree t, args, addr, ptr_type;
+	  tree t, args, addr, ptr_type, align;
 
 	  gimplify_one_sizepos (&DECL_SIZE (decl), stmt_p);
 	  gimplify_one_sizepos (&DECL_SIZE_UNIT (decl), stmt_p);
@@ -1256,14 +1256,15 @@ gimplify_decl_expr (tree *stmt_p)
 	  SET_DECL_VALUE_EXPR (decl, t);
 	  DECL_HAS_VALUE_EXPR_P (decl) = 1;
 
-	  args = tree_cons (NULL, DECL_SIZE_UNIT (decl), NULL);
+    /* LLVM LOCAL begin add alloca alignment */
+    /* We're adding an extra arg with the alignment to the end of the builtin
+       call and making up for it on the other end by not emitting the arg.  */
+    align = build_int_cst(TREE_TYPE(DECL_SIZE_UNIT(decl)),
+                          DECL_ALIGN(decl)/BITS_PER_UNIT);
+    args = tree_cons (NULL, align, NULL);
+    args = tree_cons (NULL,  DECL_SIZE_UNIT (decl), args);
+    /* LLVM LOCAL end add alloca alignment */
 	  t = built_in_decls[BUILT_IN_ALLOCA];
-	  /* LLVM LOCAL begin add alloca alignment */
-    /* We may have specified an alignment on the alloca - store it on the
-       function call so that we can emit this later and not lose it.  */
-    DECL_USER_ALIGN (t) = DECL_USER_ALIGN (decl);
-    DECL_ALIGN(t) = DECL_ALIGN(decl);
-	  /* LLVM LOCAL end add alloca alignment */
 	  
 	  t = build_function_call_expr (t, args);
 	  t = fold_convert (ptr_type, t);

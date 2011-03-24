@@ -8,13 +8,13 @@
 
 #define ATTR __attribute__ ((deprecated))
 @interface INTF
-- (void) foo __attribute__ ((deprecated)) __attribute__ ((unavailable));
+- (void) foo __attribute__ ((deprecated)) __attribute__ ((unavailable)); /* { dg-error "" } */
 
 - (int) variarg : (int)anchor, ... ATTR;
 
 - (void) fun1 : (int)arg1 : (int)arg2 __attribute__ ((deprecated));
 
-- bar ATTR __attribute__ ((unavailable));
+- bar ATTR __attribute__ ((unavailable)); /* { dg-error "" } */
 
 - (int) final EMPTY ATTR;
 
@@ -28,12 +28,10 @@ int main()
 	INTF *p;
 	id pid;
 
-	[p foo];	/* { dg-warning "\\'foo\\' is deprecated" } */
-			/* { dg-warning "\\'foo\\' is unavailable" "" { target *-*-* } 31 } */
+	[p foo];	/* { dg-error "\\'foo\\' is unavailable" } */
 	[p variarg:1,2]; /* { dg-warning "\\'variarg:\\' is deprecated" } */
 	[p fun1:1:2]; /* { dg-warning "\\'fun1::\\' is deprecated" } */
-	[p bar];	/* { dg-warning "\\'bar\\' is deprecated" } */
-			/* { dg-warning "\\'bar\\' is unavailable" "" { target *-*-* } 35 } */
+	[p bar];	/* { dg-error "\\'bar\\' is unavailable" } */
 
 	[pid foo];	// OK
 	[pid variarg:1,2]; // OK	

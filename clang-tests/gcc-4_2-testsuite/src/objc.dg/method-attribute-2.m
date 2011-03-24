@@ -7,7 +7,7 @@
 
 - (int) foo: (int)arg1;	
 
-- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable));
+- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)); /* { dg-error "" } */
 @end
 
 @implementation INTF
@@ -28,8 +28,7 @@ int main()
 {
 	INTF *p;
 	[p foo1:2];	/* { dg-warning "\\'foo1:\\' is deprecated" } */
-	[p foo2:2];	/* { dg-warning "\\'foo2:\\' is deprecated" } */
-			/* { dg-error "\\'foo2:\\' is unavailable" "" { target *-*-* } 31 } */
+	[p foo2:2];	/* { dg-error "\\'foo2:\\' is unavailable" } */
 	return [p foo:1];
 }
 

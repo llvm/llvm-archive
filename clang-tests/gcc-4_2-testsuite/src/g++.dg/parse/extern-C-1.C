@@ -5,7 +5,7 @@
 
 extern "C"
 {
-    extern "C" struct Test
+    extern "C" struct Test /* { dg-warning "ignored on this declaration" } */
     {
         int i;
     };

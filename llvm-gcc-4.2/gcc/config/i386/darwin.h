@@ -169,7 +169,8 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL begin prefer -lSystem 6645902 */
 #undef LINK_GCC_C_SEQUENCE_SPEC
 #define LINK_GCC_C_SEQUENCE_SPEC					\
-  "%{miphoneos-version-min=*: %G %L}					\
+  "%{miphoneos-version-min=*:						\
+     %{!static:%:version-compare(>= 4.3 miphoneos-version-min= -lSystem)} %G %L} \
    %{!miphoneos-version-min=*:						\
      %{!static:%:version-compare(>= 10.6 mmacosx-version-min= -lSystem)} %G %L}"
 /* APPLE LOCAL end prefer -lSystem 6645902 */

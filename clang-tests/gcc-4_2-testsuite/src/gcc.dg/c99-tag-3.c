@@ -25,15 +25,15 @@ extern struct s1; /* { dg-warning "ignored on this declaration" } */
    the members of an enumeration, it is a constraint violation.  */
 
 struct s2 { char x; };
-const struct s2; /* { dg-error "error: empty declaration with type qualifier does not redeclare tag" } */
+const struct s2; /* { dg-error "error: empty declaration with type qualifier does not redeclare tag" "" { xfail *-*-* } } */
 /* { dg-warning "ignored on this declaration" "" { target *-*-* } 28 } */
 
 union u1;
-extern union u1; /* { dg-error "error: empty declaration with storage class specifier does not redeclare tag" } */
+extern union u1; /* { dg-error "error: empty declaration with storage class specifier does not redeclare tag" "" { xfail *-*-* } } */
 /* { dg-warning "ignored on this declaration" "" { target *-*-* } 32 } */
 
 union u2 { long b; };
-void g(void) { const union u2; } /* { dg-error "error: empty declaration with type qualifier does not redeclare tag" } */
+void g(void) { const union u2; } /* { dg-error "error: empty declaration with type qualifier does not redeclare tag" "" { xfail *-*-* } } */
 /* { dg-warning "ignored on this declaration" "" { target *-*-* } 36 } */
 
 /* And it does not redeclare the tag either if the outer tag is the
@@ -42,8 +42,8 @@ void g(void) { const union u2; } /* { dg-error "error: empty declaration with ty
    declaration.  */
 
 union u3 { float v; };
-void h(void) { const struct u3; } /* { dg-error "'u3' defined as wrong kind of tag" } */
-/* { dg-error "error: empty declaration with type qualifier does not redeclare tag" "wrong tag empty" { target *-*-* } 45 } */
+void h(void) { const struct u3; } /* { dg-error "'u3' defined as wrong kind of tag" "" { xfail *-*-* } } */
+/* { dg-error "error: empty declaration with type qualifier does not redeclare tag" "wrong tag empty" { xfail *-*-* } 45 } */
 /* { dg-warning "ignored on this declaration" "" { target *-*-* } 45 } */
 
 /* However, such useless specifiers are OK if the contents of the tag

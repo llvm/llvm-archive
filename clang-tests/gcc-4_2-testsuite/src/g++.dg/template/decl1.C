@@ -1,6 +1,7 @@
 // PR c++/3882
 // Verify that variable initialization can be
 // self-referencing inside a template function.
+/* { dg-options "-Wno-uninitialized" } */
 
 int foo(int);
 

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 5543378 */
 /* { dg-do compile { target i?86-*-* } } */
 /* { dg-skip-if "" { i?86-*-* } { "" } { "" } } */
-/* { dg-options "-msse2" } */
+/* { dg-options "-msse2 -Wno-uninitialized" } */
 #include <xmmintrin.h>
 void foo1 (int n)
 {

@@ -89,5 +89,13 @@ Boston, MA 02110-1301, USA.  */
 /* LLVM LOCAL begin */
 #ifdef ENABLE_LLVM
 #define HANDLE_PRAGMA_PACK_PUSH_POP
+
+/* Yes, we're supporting PIC codegen for FreeBSD targets! */
+#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+  if (flag_pic)                                      \
+    argvec.push_back ("--relocation-model=pic");     \
+  else                                               \
+    argvec.push_back ("--relocation-model=static")
+
 #endif
 /* LLVM LOCAL end */

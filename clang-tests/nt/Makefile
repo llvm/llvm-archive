@@ -29,6 +29,10 @@ ifneq ($(ONLY_TEST),)
 NT.COMMON_FLAGS += --only-test $(ONLY_TEST)
 endif
 
+ifneq ($(MULTISAMPLE),)
+NT.COMMON_FLAGS += --multisample=$(MULTISAMPLE)
+endif
+
 ###
 # Predefined Nightly Test Configurations
 

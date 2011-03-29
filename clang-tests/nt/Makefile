@@ -5,7 +5,7 @@ CXX_UNDER_TEST := /Developer/usr/bin/clang++
 # General Config
 
 LLVM_TEST_SUITE := $(shell echo ~/llvm-test-suite)
-LLVM_EXTERNALS := $(shell echo ~/llvm/projects/test-suite-externals)
+LLVM_EXTERNALS := $(shell echo ~/test-suite-externals)
 
 ###
 # Nightly Test Options

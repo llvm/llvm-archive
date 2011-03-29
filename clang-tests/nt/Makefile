@@ -4,9 +4,6 @@ CXX_UNDER_TEST := /Developer/usr/bin/clang++
 ###
 # General Config
 
-# FIXME: We shouldn't require an LLVM directory.
-LLVM_SRCDIR := $(shell echo ~/llvm)
-LLVM_OBJDIR := $(shell echo ~/llvm.obj.64)
 LLVM_TEST_SUITE := $(shell echo ~/llvm-test-suite)
 LLVM_EXTERNALS := $(shell echo ~/llvm/projects/test-suite-externals)
 
@@ -130,8 +127,7 @@ check-%:
 	  --sandbox $(NT_BASE_DIR)/obj.$* \
 	  --cc $(CC_UNDER_TEST) \
 	  --cxx $(CXX_UNDER_TEST) \
-	  --llvm-src $(LLVM_SRCDIR) \
-	  --llvm-obj $(LLVM_OBJDIR) \
+	  --without-llvm \
 	  --test-suite $(LLVM_TEST_SUITE) \
 	  --test-externals $(LLVM_EXTERNALS) \
 	  -j $(NT_THREADS) --no-auto-name $(NT_NICKNAME)-$* \

@@ -929,17 +929,16 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         return UnexpectedError("%Hinvalid lane number", exp, Result);
       Ops[2] = BuildDupLane(Ops[2], LaneVal, NUnits, Builder);
     }
-    if (datatype == neon_datatype_signed) {
-      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
-      Ops[2] = Builder.CreateSExt(Ops[2], ResultType);
-    } else if (datatype == neon_datatype_unsigned) {
-      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
-      Ops[2] = Builder.CreateZExt(Ops[2], ResultType);
-    } else
+    if (datatype == neon_datatype_signed)
+      intID = Intrinsic::arm_neon_vmulls;
+    else if (datatype == neon_datatype_unsigned)
+      intID = Intrinsic::arm_neon_vmullu;
+    else
       return BadImmediateError(exp, Result);
 
-    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
-    Result = Builder.CreateAdd(Ops[0], Ops[1]);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    Result = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
+    Result = Builder.CreateAdd(Ops[0], Result);
     break;
 
   case NEON_BUILTIN_vmlsl_lane:
@@ -954,17 +953,16 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         return UnexpectedError("%Hinvalid lane number", exp, Result);
       Ops[2] = BuildDupLane(Ops[2], LaneVal, NUnits, Builder);
     }
-    if (datatype == neon_datatype_signed) {
-      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
-      Ops[2] = Builder.CreateSExt(Ops[2], ResultType);
-    } else if (datatype == neon_datatype_unsigned) {
-      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
-      Ops[2] = Builder.CreateZExt(Ops[2], ResultType);
-    } else
+    if (datatype == neon_datatype_signed)
+      intID = Intrinsic::arm_neon_vmulls;
+    else if (datatype == neon_datatype_unsigned)
+      intID = Intrinsic::arm_neon_vmullu;
+    else
       return BadImmediateError(exp, Result);
 
-    Ops[1] = Builder.CreateMul(Ops[1], Ops[2]);
-    Result = Builder.CreateSub(Ops[0], Ops[1]);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    Result = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
+    Result = Builder.CreateSub(Ops[0], Result);
     break;
 
   case NEON_BUILTIN_vqdmulh_lane:
@@ -1044,22 +1042,17 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         return UnexpectedError("%Hinvalid lane number", exp, Result);
       Ops[1] = BuildDupLane(Ops[1], LaneVal, NUnits, Builder);
     }
-    if (datatype == neon_datatype_polynomial) {
+    if (datatype == neon_datatype_polynomial)
       intID = Intrinsic::arm_neon_vmullp;
-      intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
-      Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
-      break;
-    }
-    if (datatype == neon_datatype_signed) {
-      Ops[0] = Builder.CreateSExt(Ops[0], ResultType);
-      Ops[1] = Builder.CreateSExt(Ops[1], ResultType);
-    } else if (datatype == neon_datatype_unsigned) {
-      Ops[0] = Builder.CreateZExt(Ops[0], ResultType);
-      Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
-    } else
+    else if (datatype == neon_datatype_signed)
+      intID = Intrinsic::arm_neon_vmulls;
+    else if (datatype == neon_datatype_unsigned)
+      intID = Intrinsic::arm_neon_vmullu;
+    else
       return BadImmediateError(exp, Result);
 
-    Result = Builder.CreateMul(Ops[0], Ops[1]);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
   case NEON_BUILTIN_vqdmull_n:

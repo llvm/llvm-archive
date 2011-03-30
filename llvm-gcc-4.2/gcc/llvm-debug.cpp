@@ -1389,18 +1389,20 @@ void DebugInfo::Initialize() {
 /// create a new one if necessary.
 DICompileUnit DebugInfo::getOrCreateCompileUnit(const char *FullPath,
                                                 bool isMain) {
+  // Get source file information.
+  std::string Directory = get_src_pwd();
+  std::string FileName;
   if (!FullPath) {
     if (!strcmp (main_input_filename, ""))
-      FullPath = "<stdin>";
+      FileName = "<stdin>";
     else
-      FullPath = main_input_filename;
-  }
-
-  // Get source file information.
-  std::string Directory;
-  std::string FileName;
-  DirectoryAndFile(FullPath, Directory, FileName);
+      FileName = main_input_filename;
+  } else
+    FileName = FullPath;
   
+  if (FileName[0] != '/' && FullPath)
+    FileName = std::string(get_src_pwd()) + "/" + FileName;
+
   // Set up Language number.
   unsigned LangTag;
   const std::string LanguageName(lang_hooks.name);

@@ -90,4 +90,4 @@ set_target_properties(llbrowse PROPERTIES
     COMPILE_FLAGS ${LLVM_CFLAGS}
     LINK_FLAGS ${LLVM_LFLAGS})
 
-install(TARGETS llbrowse RUNTIME DESTINATION bin)
+install(TARGETS llbrowse RUNTIME DESTINATION bin BUNDLE DESTINATION lib)

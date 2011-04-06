@@ -303,7 +303,9 @@ if [ x$forcedCXX != x ] ; then unset CXX forcedCXX ; fi
 # LLVM LOCAL begin Support for non /usr $DEST_ROOT
 D=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin
 ln -f $D/llvm-gcc $D/gcc || exit 1
+ln -f $D/llvm-g++ $D/g++ || exit 1
 ln -f $D/gcc $D/$BUILD-apple-darwin$DARWIN_VERS-gcc || exit 1
+ln -f $D/g++ $D/$BUILD-apple-darwin$DARWIN_VERS-g++ || exit 1
 PATH=$DIR/dst-$BUILD-$BUILD$DEST_ROOT/bin:$PATH
 # LLVM LOCAL end Support for non /usr $DEST_ROOT
 

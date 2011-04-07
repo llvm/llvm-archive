@@ -7,8 +7,8 @@ struct ostream {
 
 class C {
 public:
-  static int& i (); // {dg-error "candidate function" }
-  static int& i (int signatureDummy); // {dg-error "candidate function" }
+  static int& i (); // { dg-error "candidate function" }
+  static int& i (int signatureDummy); // { dg-error "candidate function" }
 };
 
 void foo (ostream& lhs, const C& rhs)

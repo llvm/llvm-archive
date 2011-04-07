@@ -7,13 +7,13 @@ struct ostream {
 
 class C {
 public:
-  static int& i ();
-  static int& i (int signatureDummy);
+  static int& i (); // {dg-error "candidate function" }
+  static int& i (int signatureDummy); // {dg-error "candidate function" }
 };
 
 void foo (ostream& lhs, const C& rhs)
 {
-  lhs << rhs.i;		// { dg-error "invalid operands" }
+  lhs << rhs.i;		// { dg-error "cannot resolve overloaded function" }
 }
 
 int& C::i () {

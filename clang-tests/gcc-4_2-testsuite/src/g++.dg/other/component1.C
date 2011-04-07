@@ -23,7 +23,7 @@ void Foo () {
   c.f;		        // { dg-error "address of overloaded" "" }
   c.f<int>;		// { dg-error "a bound member function may only be called" }
   
-  c.g == 1;		// { dg-error "invalid" "" }
-  c.f == 1;		// { dg-error "invalid" "" }
+  c.g == 1;		// { dg-error "cannot resolve overloaded function" "" }
+  c.f == 1;		// { dg-error "cannot resolve overloaded function" "" }
   c.f<int> == 1;	// { dg-error "comparison between pointer and integer" }
 }

@@ -921,6 +921,10 @@ DIType DebugInfo::createArrayType(tree type) {
         Low = getINTEGER_CSTVal(MinValue);
       if (MaxValue && isInt64(MaxValue, 0))
         Hi = getINTEGER_CSTVal(MaxValue);
+      else
+        // If upper bound is not known then this is an unbounded array.
+        // Use Low = 1, Hi = 0 to express such arrays.
+        Low = 1;
       Subscripts.push_back(DebugFactory.GetOrCreateSubrange(Low, Hi));
     }
     EltTy = TREE_TYPE(atype);

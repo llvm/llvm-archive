@@ -3570,13 +3570,7 @@ enum neon_builtins
   if (flag_mkernel || flag_apple_kext) {               \
     argvec.push_back("-arm-long-calls");               \
     argvec.push_back("-arm-strict-align");             \
-  }                                                    \
-  if (arm_trap_funcname_string) {                      \
-    char *arg = (char*)alloca(strlen(arm_trap_funcname_string) + 16); \
-    sprintf(arg, "-arm-trap-func=%s", arm_trap_funcname_string); \
-    argvec.push_back(arg);                             \
   }
-    
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4

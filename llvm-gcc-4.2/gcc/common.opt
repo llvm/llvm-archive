@@ -1113,6 +1113,12 @@ Common Report Var(flag_trapv) PerFunc
 Trap for signed overflow in addition, subtraction and multiplication
 ; APPLE LOCAL end optimization pragmas 3124235/3420242
 
+; APPLE LOCAL begin 9249183
+ftrap-function=
+Target RejectNegative Joined Var(flag_trap_funcname_string)
+Emit a call to the specified 'trap' function rather than a trap instruction
+; APPLE LOCAL end 9249183
+
 ; APPLE LOCAL begin optimization pragmas 3124235/3420242
 ftree-ccp
 Common Report Var(flag_tree_ccp) PerFunc

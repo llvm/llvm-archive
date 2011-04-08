@@ -465,6 +465,12 @@ void llvm_initialize_backend(void) {
     ArgStrings.push_back(Arg);
   }
 
+  if (flag_trap_funcname_string) {
+    std::string Arg("-trap-func=");
+    Arg += flag_trap_funcname_string;
+    ArgStrings.push_back(Arg);
+  }
+
   for (unsigned i = 0, e = ArgStrings.size(); i != e; ++i)
     Args.push_back(ArgStrings[i].c_str());
 

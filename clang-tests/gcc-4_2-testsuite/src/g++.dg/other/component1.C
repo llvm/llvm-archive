@@ -19,8 +19,8 @@ void Foo () {
   
   (c.f<int>) (2);
 
-  c.g;			// { dg-error "address of overloaded" "" }
-  c.f;		        // { dg-error "address of overloaded" "" }
+  c.g;			// { dg-error "cannot resolve overloaded function" "" }
+  c.f;		        // { dg-error "cannot resolve overloaded function" "" }
   c.f<int>;		// { dg-error "a bound member function may only be called" }
   
   c.g == 1;		// { dg-error "cannot resolve overloaded function" "" }

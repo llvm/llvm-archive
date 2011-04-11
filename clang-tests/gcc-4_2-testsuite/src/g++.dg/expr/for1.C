@@ -10,5 +10,5 @@ void g(double); // { dg-error "candidate" }
 void h () {
   S s;
   for (;;s.f); // { dg-error "a bound member function" }
-  for (;;g); // { dg-error "address of overloaded" }
+  for (;;g); // { dg-error "cannot resolve overloaded function" }
 }

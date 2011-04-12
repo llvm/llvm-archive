@@ -678,9 +678,9 @@ static void createPerFunctionOptimizationPasses() {
   if (flag_no_builtin)
     TLI->disableAllFunctions();
   else {
-    if (builtin_function_disabled_p("__builtin_memset"))
+    if (builtin_function_disabled_p("memset"))
       TLI->setUnavailable(LibFunc::memset);
-    if (builtin_function_disabled_p("__builtin_memcpy"))
+    if (builtin_function_disabled_p("memcpy"))
       TLI->setUnavailable(LibFunc::memcpy);
   }
   PerFunctionPasses->add(TLI);
@@ -762,9 +762,9 @@ static void createPerModuleOptimizationPasses() {
   if (flag_no_builtin)
     TLI->disableAllFunctions();
   else {
-    if (builtin_function_disabled_p("__builtin_memset"))
+    if (builtin_function_disabled_p("memset"))
       TLI->setUnavailable(LibFunc::memset);
-    if (builtin_function_disabled_p("__builtin_memcpy"))
+    if (builtin_function_disabled_p("memcpy"))
       TLI->setUnavailable(LibFunc::memcpy);
   }
   PerModulePasses->add(TLI);

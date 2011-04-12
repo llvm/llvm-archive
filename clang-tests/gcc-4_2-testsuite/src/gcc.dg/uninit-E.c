@@ -4,6 +4,6 @@
 
 int f()
 {
-  int i = i; /* { dg-warning "i" "uninitialized variable warning" }  */
-  return i;
+  int i = i; /* { dg-error "" } */
+  return i; /* { dg-warning "variable 'i' is uninitialized when used here" }  */
 }

@@ -37,6 +37,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -70,6 +71,7 @@ extern "C" {
 #include "langhooks.h"
 #include "cgraph.h"
 #include "params.h"
+#include "c-common.h"
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -670,6 +672,19 @@ static void createPerFunctionOptimizationPasses() {
     new FunctionPassManager(TheModule);
   PerFunctionPasses->add(new TargetData(*TheTarget->getTargetData()));
 
+  // Disable (partially) loop idiom pass with -fno-builtin*.
+  TargetLibraryInfo *TLI =
+    new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  if (flag_no_builtin)
+    TLI->disableAllFunctions();
+  else {
+    if (builtin_function_disabled_p("__builtin_memset"))
+      TLI->setUnavailable(LibFunc::memset);
+    if (builtin_function_disabled_p("__builtin_memcpy"))
+      TLI->setUnavailable(LibFunc::memcpy);
+  }
+  PerFunctionPasses->add(TLI);
+
   // In -O0 if checking is disabled, we don't even have per-function passes.
   bool HasPerFunctionPasses = false;
 #ifdef ENABLE_CHECKING
@@ -740,8 +755,21 @@ static void createPerModuleOptimizationPasses() {
   // FIXME: AT -O0/O1, we should stream out functions at a time.
   PerModulePasses = new PassManager();
   PerModulePasses->add(new TargetData(*TheTarget->getTargetData()));
-  bool HasPerModulePasses = false;
 
+  // Disable (partially) loop idiom pass with -fno-builtin*.
+  TargetLibraryInfo *TLI =
+    new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  if (flag_no_builtin)
+    TLI->disableAllFunctions();
+  else {
+    if (builtin_function_disabled_p("__builtin_memset"))
+      TLI->setUnavailable(LibFunc::memset);
+    if (builtin_function_disabled_p("__builtin_memcpy"))
+      TLI->setUnavailable(LibFunc::memcpy);
+  }
+  PerModulePasses->add(TLI);
+
+  bool HasPerModulePasses = false;
   if (!DisableLLVMOptimizations) {
     bool NeedAlwaysInliner = false;
     llvm::Pass *InliningPass = 0;

@@ -71,7 +71,12 @@ extern "C" {
 #include "langhooks.h"
 #include "cgraph.h"
 #include "params.h"
-#include "c-common.h"
+
+// These are defined in c-common.c. The weak symbols are for linking non-c
+// compilers.
+int flag_no_builtin __attribute__ ((__weak__)) = 0;
+int builtin_function_disabled_p(const char *name) __attribute__ ((__weak__));
+int builtin_function_disabled_p(const char *name) { return 0; }
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -661,6 +666,7 @@ static void destroyOptimizationPasses() {
   PerModulePasses   = 0;
   CodeGenPasses     = 0;
 }
+
 
 static void createPerFunctionOptimizationPasses() {
   if (PerFunctionPasses) 

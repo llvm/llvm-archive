@@ -35,13 +35,12 @@ make_something(int a, int b, int c)
 {
     struct tree *rv;
     struct tree *field; /* { dg-error "variable" } */
-                        /* { dg-error "add" { target *-*-* } 37 } */
+                        /* { dg-error "add" "" { target *-*-* } 37 } */
 
     rv = malloc (sizeof (struct tree));
     rv->car = 0;
 
-    APPEND(rv, field, INTEGER_T, a);  /* { dg-warning "variable 'field' is uninitialized when used here " } */
-                                      /* { dg-error "" { target *-*-* } 43 } */
+    APPEND(rv, field, INTEGER_T, a);  /* { dg-warning "variable 'field' is uninitialized when used here" } */
     APPEND(rv, field, PTR_T, b);
     APPEND(rv, field, INTEGER_T, c);
 

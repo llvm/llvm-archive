@@ -9,7 +9,7 @@ void
 baz (void)
 {
   int i; /* { dg-error "variable" } */
-         /* { dg-error "add" { target *-*-* } 11 } */
+         /* { dg-error "add" "" { target *-*-* } 11 } */
   if (i) /* { dg-warning "variable 'i' is uninitialized when used here" } */
     bar (i);
   foo (&i);

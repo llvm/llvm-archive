@@ -74,9 +74,11 @@ extern "C" {
 
 // These are defined in c-common.c. The weak symbols are for linking non-c
 // compilers.
+#ifndef __MINGW32__
 int flag_no_builtin __attribute__ ((__weak__)) = 0;
 int builtin_function_disabled_p(const char *name) __attribute__ ((__weak__));
 int builtin_function_disabled_p(const char *name) { return 0; }
+#endif
 }
 
 // Non-zero if bytecode from PCH is successfully read.
@@ -681,6 +683,7 @@ static void createPerFunctionOptimizationPasses() {
   // Disable (partially) loop idiom pass with -fno-builtin*.
   TargetLibraryInfo *TLI =
     new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+#ifndef __MINGW32__
   if (flag_no_builtin)
     TLI->disableAllFunctions();
   else {
@@ -688,6 +691,9 @@ static void createPerFunctionOptimizationPasses() {
       TLI->setUnavailable(LibFunc::memset);
     if (builtin_function_disabled_p("memcpy"))
       TLI->setUnavailable(LibFunc::memcpy);
+#else
+    TLI->disableAllFunctions();
+#endif
   }
   PerFunctionPasses->add(TLI);
 
@@ -765,6 +771,7 @@ static void createPerModuleOptimizationPasses() {
   // Disable (partially) loop idiom pass with -fno-builtin*.
   TargetLibraryInfo *TLI =
     new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+#ifndef __MINGW32__
   if (flag_no_builtin)
     TLI->disableAllFunctions();
   else {
@@ -773,6 +780,9 @@ static void createPerModuleOptimizationPasses() {
     if (builtin_function_disabled_p("memcpy"))
       TLI->setUnavailable(LibFunc::memcpy);
   }
+#else
+    TLI->disableAllFunctions();
+#endif
   PerModulePasses->add(TLI);
 
   bool HasPerModulePasses = false;

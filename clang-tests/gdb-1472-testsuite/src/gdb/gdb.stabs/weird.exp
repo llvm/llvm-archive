@@ -25,6 +25,8 @@ if $tracelevel then {
 	strace $tracelevel
 }
 
+return 0
+
 # If the test directory was not created by configure then skip
 # this test.
 if ![file isdirectory ${objdir}/${subdir}] then {

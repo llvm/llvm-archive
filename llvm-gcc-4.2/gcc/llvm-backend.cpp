@@ -691,10 +691,10 @@ static void createPerFunctionOptimizationPasses() {
       TLI->setUnavailable(LibFunc::memset);
     if (builtin_function_disabled_p("memcpy"))
       TLI->setUnavailable(LibFunc::memcpy);
+  }
 #else
     TLI->disableAllFunctions();
 #endif
-  }
   PerFunctionPasses->add(TLI);
 
   // In -O0 if checking is disabled, we don't even have per-function passes.

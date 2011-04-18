@@ -18,7 +18,10 @@ foo (void)
   cva[0] = __builtin_ia32_loaddqu (ca);
   cva[0] = __builtin_ia32_lddqu (ca);
 
+  /* LLVM LOCAL begin: <rdar://problem/9287871> - disable for clang */
+#ifndef __clang__
   fva[0] = __builtin_ia32_loadups (fa);
-
   dva[0] = __builtin_ia32_loadupd (da);
+#endif
+  /* LLVM LOCAL end: <rdar://problem/9287871> - disable for clang */
 }

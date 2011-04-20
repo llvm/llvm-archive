@@ -2789,59 +2789,50 @@ darwin_cfstring_type_node (tree type_node)
 
 /* LLVM LOCAL begin radar 6230142 */
 unsigned darwin_llvm_override_target_version(const char *triple, char **new_triple) {
-  int len = 0, pad1 = 0, pad2 = 0, version = 0;
+  int os_len = 0, base_len = 0, version = 0;
+  int isDarwin = 0, isIOS = 0, isOSX = 0;
   char *substr;
-
-  if (!darwin_macosx_version_min)
+    
+  /* Triple string is expected to look something like 'i386-*-darwin?' or
+     'i386-*-darwin9.5.0' or substituting ios or macosx for the darwin.  */
+  if ((substr = strstr (triple, "darwin")) != 0)
+    isDarwin = 1;
+  else if ((substr = strstr (triple, "ios")) != 0)
+    isIOS = 1;
+  else if ((substr = strstr (triple, "macosx")) != 0)
+    isOSX = 1;
+  else
     return 0;
   
-  /* Triple string is expected to look something like 'i386-*-darwin?' or
-     'i386-*-darwin9.5.0'  */
-  substr = strstr(triple, "darwin");
-  if (!substr)
-    return 0;
-  len = substr + 6 - triple;
-
-  /* llvm-gcc doesn't support pre-10.0 systems. */
+  /* llvm-gcc doesn't support pre-10.0 macosx systems. */
   version = strverscmp (darwin_macosx_version_min, "10.0");
   if (version < 0)
     return 0;
 
-  /* 10.0 is darwin4. */
-  version += 4;
-
-  /* Darwin version number will be 2 digits for 10.6 and up.  */
-  if (version >= 10)
-    pad1 = 1;
-
-  /* If darwin_macosx_version_min is something like 10.4.9, we need to append
-     the .9 to the new triple. */
-  substr = strchr(darwin_macosx_version_min, '.');
-  if (!substr)
-    return 0;
-  substr = strchr(substr+1, '.');
-  if (substr)
-    pad2 = strlen(substr);
+  base_len = substr - triple;
+  if ((isIOS || isDarwin) && darwin_iphoneos_version_min) {
+    os_len = strlen(darwin_iphoneos_version_min) + strlen("ios");
+    *new_triple = ggc_alloc(base_len + os_len + 1);
+    strncpy(*new_triple, triple, base_len);
+    strncpy(*new_triple + base_len, "ios", strlen("ios"));
+    strncpy(*new_triple + base_len + strlen ("ios"),
+            darwin_iphoneos_version_min,
+            strlen(darwin_iphoneos_version_min));
+    (*new_triple)[base_len+os_len+1] = '\0';
+    return 1;
+  } else if ((isOSX || isDarwin) && darwin_macosx_version_min) {
+    os_len = strlen(darwin_macosx_version_min) + strlen("macosx");
+    *new_triple = ggc_alloc(base_len + os_len + 1);
+    strncpy(*new_triple, triple, base_len);
+    strncpy(*new_triple + base_len, "macosx", strlen("macosx"));
+    strncpy(*new_triple + base_len + strlen("macosx"),
+            darwin_macosx_version_min,
+            strlen(darwin_macosx_version_min));
+    (*new_triple)[base_len+os_len+1] = '\0';
+    return 1;
+  }
   
-  *new_triple = ggc_alloc (len+pad1+pad2+1);
-  strncpy (*new_triple, triple, len);
-  if (version >= 10)
-    {
-      (*new_triple)[len] = '1';
-      version -= 10;
-      ++len;
-    }
-  (*new_triple)[len] = '0' + version;
-  if (substr)
-    {
-      int i;
-      for (i = 0; i < pad2; ++i)
-        (*new_triple)[len+1+i] = substr[i];
-      len += pad2;
-    }
-  (*new_triple)[len+1] = '\0';
-  
-  return 1;
+  return 0;
 }
 /* LLVM LOCAL end radar 6230142 */
 #include "gt-darwin.h"

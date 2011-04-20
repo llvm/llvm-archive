@@ -17,8 +17,4 @@ foo (void)
 {
   cva[0] = __builtin_ia32_loaddqu (ca);
   cva[0] = __builtin_ia32_lddqu (ca);
-
-  fva[0] = __builtin_ia32_loadups (fa);
-
-  dva[0] = __builtin_ia32_loadupd (da);
 }

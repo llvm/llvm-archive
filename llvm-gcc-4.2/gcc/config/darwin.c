@@ -2789,7 +2789,7 @@ darwin_cfstring_type_node (tree type_node)
 
 /* LLVM LOCAL begin radar 6230142 */
 unsigned darwin_llvm_override_target_version(const char *triple, char **new_triple) {
-  int os_len = 0, base_len = 0, version = 0;
+  int os_len = 0, base_len = 0;
   int isDarwin = 0, isIOS = 0, isOSX = 0;
   char *substr;
     
@@ -2804,11 +2804,6 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
   else
     return 0;
   
-  /* llvm-gcc doesn't support pre-10.0 macosx systems. */
-  version = strverscmp (darwin_macosx_version_min, "10.0");
-  if (version < 0)
-    return 0;
-
   base_len = substr - triple;
   if ((isIOS || isDarwin) && darwin_iphoneos_version_min) {
     os_len = strlen(darwin_iphoneos_version_min) + strlen("ios");
@@ -2821,6 +2816,9 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
     (*new_triple)[base_len+os_len+1] = '\0';
     return 1;
   } else if ((isOSX || isDarwin) && darwin_macosx_version_min) {
+    /* llvm-gcc doesn't support pre-10.0 macosx systems. */
+    if (strverscmp (darwin_macosx_version_min, "10.0") < 0)
+      return 0;
     os_len = strlen(darwin_macosx_version_min) + strlen("macosx");
     *new_triple = ggc_alloc(base_len + os_len + 1);
     strncpy(*new_triple, triple, base_len);

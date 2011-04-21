@@ -261,9 +261,6 @@
   { "darwin_arch", DARWIN_SUBARCH_SPEC },	\
   { "darwin_subarch", DARWIN_SUBARCH_SPEC }
 
-/* This can go away once we can feature test the assembler correctly.  */
-#define ASM_DEBUG_SPEC ""
-
 #define SUBTARGET_OVERRIDE_OPTIONS					\
 do {									\
   if (1)								\

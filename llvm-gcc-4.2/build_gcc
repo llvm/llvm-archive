@@ -614,15 +614,16 @@ for t in $TARGETS ; do
 done
 
 # LLVM LOCAL begin
-# Compress manpages
-gzip -f $MDIR/*
-
 MAN1_DIR=$DEST_DIR/Developer/usr/share/man/man1
 mkdir -p ${MAN1_DIR}
+for i in gcc.1 g++.1 ; do
+    cp $DIR/obj-$BUILD-$BUILD/gcc/doc/$i ${MAN1_DIR}/$i
+done
 cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-gcc.1
+# llvm-g++ manpage is a dup of llvm-gcc manpage
 cp $ORIG_SRC_DIR/gcc/doc/llvm-gcc.1 ${MAN1_DIR}/llvm-g++.1
-gzip -f ${MAN1_DIR}/llvm-gcc.1
-gzip -f ${MAN1_DIR}/llvm-g++.1
+# Compress manpages
+gzip -f $MDIR/* ${MAN1_DIR}/*
 # LLVM LOCAL end
 
 # Build driver-driver using fully-named drivers

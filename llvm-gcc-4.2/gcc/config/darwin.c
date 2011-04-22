@@ -2813,7 +2813,7 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
     strncpy(*new_triple + base_len + strlen ("ios"),
             darwin_iphoneos_version_min,
             strlen(darwin_iphoneos_version_min));
-    (*new_triple)[base_len+os_len+1] = '\0';
+    (*new_triple)[base_len+os_len] = '\0';
     return 1;
   } else if ((isOSX || isDarwin) && darwin_macosx_version_min) {
     /* llvm-gcc doesn't support pre-10.0 macosx systems. */
@@ -2826,7 +2826,7 @@ unsigned darwin_llvm_override_target_version(const char *triple, char **new_trip
     strncpy(*new_triple + base_len + strlen("macosx"),
             darwin_macosx_version_min,
             strlen(darwin_macosx_version_min));
-    (*new_triple)[base_len+os_len+1] = '\0';
+    (*new_triple)[base_len+os_len] = '\0';
     return 1;
   }
   

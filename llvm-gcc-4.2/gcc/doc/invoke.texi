@@ -47,9 +47,8 @@ remainder.  @samp{g++} accepts mostly the same options as @samp{gcc}.
 
 @c APPLE LOCAL begin manual
 In Apple's version of GCC, both @samp{cc} and @samp{gcc} are actually
-symbolic links to a compiler named like llvm-gcc-@var{version}.
-Similarly, @samp{c++} and @samp{g++} are links to a compiler named like
-llvm-g++-@var{version}.
+symbolic links to the @samp{llvm-gcc} compiler.
+Similarly, @samp{c++} and @samp{g++} are links to @samp{llvm-g++}.
 
 Note that Apple's GCC includes a number of extensions to standard GCC
 (flagged below with ``APPLE ONLY''), and that not all generic GCC

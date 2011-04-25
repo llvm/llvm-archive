@@ -43,6 +43,11 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "hashtab.h"
 #include "tree-pass.h"
 
+#ifdef ENABLE_LLVM
+/* Non-zero if -Oz is specified. */
+unsigned int optimize_size_z;
+#endif  
+
 /* Value of the -G xx switch, and whether it was passed or not.  */
 unsigned HOST_WIDE_INT g_switch_value;
 bool g_switch_set;
@@ -590,9 +595,15 @@ decode_options (unsigned int argc, const char **argv)
 {
   unsigned int i, lang_mask;
   /* APPLE LOCAL 4231773 */
+#ifndef ENABLE_LLVM
   unsigned int optimize_size_z = 0;
+#endif  
   /* APPLE LOCAL AV 3846092 */
   int saved_flag_strict_aliasing;
+
+#ifdef ENABLE_LLVM
+  optimize_size_z = 0;
+#endif
 
   /* Perform language-specific options initialization.  */
   lang_mask = lang_hooks.init_options (argc, argv);

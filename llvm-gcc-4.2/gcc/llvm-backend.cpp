@@ -81,6 +81,9 @@ int builtin_function_disabled_p(const char *name) { return 0; }
 #endif
 }
 
+// Non-zero if -Oz is set.
+extern "C" unsigned int optimize_size_z;
+
 // Non-zero if bytecode from PCH is successfully read.
 int flag_llvm_pch_read;
 
@@ -387,7 +390,7 @@ namespace llvm {
 static unsigned GuessAtInliningThreshold() {
   if (optimize_size)
     // Reduce inline limit.
-    return 75;
+    return optimize_size_z ? 25 : 75;
   
   if (optimize >= 3)
     return 275;

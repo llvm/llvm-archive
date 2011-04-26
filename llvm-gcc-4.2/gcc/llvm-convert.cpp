@@ -804,6 +804,9 @@ Function *TreeToLLVM::FinishFunctionBody() {
           Value *E = Builder.CreateLoad(GEP, "mrv");
           RetVals.push_back(E);
         }
+        // If the return type specifies an empty struct then return one.
+        if (RetVals.empty())
+          RetVals.push_back(UndefValue::get(Fn->getReturnType()));
       } else {
         // Otherwise, this aggregate result must be something that is returned
         // in a scalar register for this target.  We must bit convert the
@@ -828,10 +831,9 @@ Function *TreeToLLVM::FinishFunctionBody() {
   }
   if (RetVals.empty())
     Builder.CreateRetVoid();
-  else if (!Fn->getReturnType()->isAggregateType()) {
-    assert(RetVals.size() == 1 && "Non-aggregate return has multiple values!");
+  else if (RetVals.size() == 1 && RetVals[0]->getType() == Fn->getReturnType())
     Builder.CreateRet(RetVals[0]);
-  } else
+  else
     Builder.CreateAggregateRet(RetVals.data(), RetVals.size());
 
   // Emit pending exception handling code.

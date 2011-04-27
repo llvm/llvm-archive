@@ -8,5 +8,4 @@ struct B;
 template <class A>
 struct Foo {};
 
-Foo<::B> foo;   // { dg-bogus "error" "error in place of warning" }
-// { dg-error "" "" { target *-*-* } 11 }
+Foo<::B> foo; // { dg-error "" }

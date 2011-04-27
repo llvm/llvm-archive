@@ -6,9 +6,9 @@
 // PR 5123. ICE
 
 struct C {
-  template<class T> void f(T); // { dg-error "candidate function" "" }
-  void g (); // { dg-error "candidate function" "" }
-  void g (int); // { dg-error "candidate function" "" }
+  template<class T> void f(T);
+  void g ();
+  void g (int);
 };
 
 void Foo () {
@@ -19,11 +19,11 @@ void Foo () {
   
   (c.f<int>) (2);
 
-  c.g;			// { dg-error "cannot resolve overloaded function" "" }
-  c.f;		        // { dg-error "cannot resolve overloaded function" "" }
+  c.g;			// { dg-error "a bound member function may only be called" }
+  c.f;		        // { dg-error "a bound member function may only be called" }
   c.f<int>;		// { dg-error "a bound member function may only be called" }
   
-  c.g == 1;		// { dg-error "cannot resolve overloaded function" "" }
-  c.f == 1;		// { dg-error "cannot resolve overloaded function" "" }
-  c.f<int> == 1;	// { dg-error "comparison between pointer and integer" }
+  c.g == 1;		// { dg-error "a bound member function may only be called" }
+  c.f == 1;		// { dg-error "a bound member function may only be called" }
+  c.f<int> == 1;	// { dg-error "a bound member function may only be called" }
 }

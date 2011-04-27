@@ -3,14 +3,14 @@
 // member function.
 
 struct A {
-  void f (); // { dg-error "candidate function" }
-  void f (int); // { dg-error "candidate function" }
+  void f ();
+  void f (int);
   void g ();
 };
 
 int main ()
 {
   A a;
-  &a.f;				// { dg-error "" } overloaded
-  &a.g;				// { dg-error "" } can't write a pmf like this
+  &a.f;				// { dg-error "cannot create a non-constant" }
+  &a.g;				// { dg-error "cannot create a non-constant" }
 }

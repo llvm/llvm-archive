@@ -4,9 +4,9 @@
 void f (char *);
 void f (int);
 struct A {
-  void f ();			// { dg-error "" } candidate
-  void f (int);			// { dg-error "" } candidate
+  void f ();
+  void f (int);
   void g () {
-    void (*p)(char *) = f;	// { dg-error "" } no matching function in scope
+    void (*p)(char *) = f;	// { dg-error "cannot initialize" }
   }
 };

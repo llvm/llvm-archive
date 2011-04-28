@@ -2883,7 +2883,7 @@ bool llvm_arm_should_pass_aggregate_using_byval_attr(tree TreeType,
     HOST_WIDE_INT Bytes =
       (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
 
-    return Bytes > 32;
+    return Bytes > 64;
   } else
     return false;
 }

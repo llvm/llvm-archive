@@ -12,7 +12,7 @@ namespace N1 {
   template <class T> struct Derived: public Base<T> {
     Base* p;     // { dg-bogus "" "injected class name in derived classes" { xfail *-*-* } }
     Base<T*>* p2;
-    typename Derived::Base* p3;   // { dg-bogus "" "injected class name in derived classes" { xfail *-*-* } }
+    typename Derived::Base* p3;
   };
 
   template struct Derived<void>;  // { dg-bogus "instantiated from here" "everything should be looked up at parsing time (after DR224)" { xfail *-*-* } }

@@ -437,7 +437,7 @@ namespace {
 static bool isPassedByVal(tree type, const Type *Ty,
                           std::vector<const Type*> &ScalarArgs,
                           CallingConv::ID &CC) {
-  if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty))
+  if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty, CC))
     return true;
 
   std::vector<const Type*> Args;

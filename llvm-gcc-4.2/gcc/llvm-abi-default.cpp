@@ -117,7 +117,7 @@ void DefaultABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 	  Attribute::constructAlignmentFromInt(LLVM_BYVAL_ALIGNMENT(type));
       }
     }
-  } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty)) {
+  } else if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty, C.getCallingConv())) {
     C.HandleByValArgument(Ty, type);
     if (Attributes) {
       *Attributes |= Attribute::ByVal;
@@ -144,7 +144,7 @@ void DefaultABI::HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
 	// (We know there currently are no other such cases active because
 	// they would hit the assert in FunctionPrologArgumentConversion::
 	// HandleByValArgument.)
-	if (!LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(Ftype, FTy)) {
+	if (!LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(Ftype, FTy, C.getCallingConv())) {
 	  C.EnterField(FNo, Ty);
 	  HandleArgument(getDeclaredType(Field), ScalarElts);
 	  C.ExitField();

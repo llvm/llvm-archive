@@ -2488,7 +2488,7 @@ extern int sparc_indent_opcode;
  */
 #define LLVM_TARGET_NAME Sparc
 
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY) \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
   true
 
 #endif /* ENABLE_LLVM */

@@ -2873,4 +2873,19 @@ bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
   return result && !TREE_ADDRESSABLE(TreeType);
 }
 
+/* Target hook for llvm-abi.h. It returns true if an aggregate of the
+   specified type should be passed with the 'byval' attribute. */
+bool llvm_arm_should_pass_aggregate_using_byval_attr(tree TreeType,
+                                                     const Type *Ty,
+                                                     CallingConv::ID &CC) {
+  if (CC == CallingConv::ARM_APCS) {
+    enum machine_mode Mode = TYPE_MODE(TreeType);
+    HOST_WIDE_INT Bytes =
+      (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
+
+    return Bytes > 32;
+  } else
+    return false;
+}
+
 /* LLVM LOCAL end (ENTIRE FILE!)  */

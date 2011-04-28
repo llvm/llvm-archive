@@ -3499,7 +3499,7 @@ extern bool llvm_rs6000_try_pass_aggregate_custom(tree,
 
 extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
 
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
   llvm_rs6000_should_pass_aggregate_byval((X), (TY))
 
 extern bool llvm_rs6000_should_pass_vector_in_integer_regs(tree);

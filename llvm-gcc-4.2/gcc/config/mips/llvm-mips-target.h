@@ -27,7 +27,7 @@ extern bool llvm_mips_should_pass_aggregate_in_memory(tree, const Type *);
 /* LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
    value should be passed by value, i.e. passing its address with the byval
    attribute bit set. The default is false.  */
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY) \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
   llvm_mips_should_pass_aggregate_in_memory(X, TY)
 
 extern bool

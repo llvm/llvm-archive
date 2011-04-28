@@ -274,7 +274,7 @@ static inline const Type* getLLVMAggregateTypeForStructReturn(tree type) {
 // value should be passed by value, i.e. passing its address with the byval
 // attribute bit set. The default is false.
 #ifndef LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY) \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
     false
 #endif
 

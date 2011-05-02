@@ -67,7 +67,8 @@ endif
 ifneq (,$(findstring armv7,$(ARM_MULTILIB_ARCHS)))
 MULTILIB_MATCHES += \
   march?armv7a=march?armv7-a \
-  march?armv7a=mcpu?cortex-a8
+  march?armv7a=mcpu?cortex-a8 \
+  march?armv7a=mcpu?cortex-a9
 endif
 
 # APPLE LOCAL end 6611402 configurable multilib architectures

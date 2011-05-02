@@ -21,6 +21,7 @@ MULTILIB_MATCHES     =
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-a8
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-r4
 #MULTILIB_MATCHES      += march?armv7=mcpu?cortex-m3
+#MULTILIB_MATCHES      += march?armv7=mcpu?cortex-a9
 # APPLE LOCAL end v7 support. Merge from mainline
 
 # MULTILIB_OPTIONS    += mcpu=ep9312

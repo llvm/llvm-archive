@@ -236,6 +236,8 @@
    mcpu=cortex-a8:armv7;			\
    mcpu=cortex-r4:armv7;			\
    mcpu=cortex-m3:armv7;			\
+   mcpu=cortex-a9:armv7;			\
+   mcpu=cortex-a9-mp:armv7;			\
    :arm -force_cpusubtype_ALL}"
 
 #define DARWIN_MINVERSION_SPEC "3.0"

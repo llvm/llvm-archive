@@ -3498,6 +3498,7 @@ enum neon_builtins
     case arm1156t2fs:   F.setCPU("arm1156t2f-s"); break; \
     case cortexa8:      F.setCPU("cortex-a8"); break; \
     case cortexa9:      F.setCPU("cortex-a9"); break; \
+    case cortexa9mp:    F.setCPU("cortex-a9-mp"); break; \
     case cortexr4:      F.setCPU("cortex-r4"); break; \
     case cortexm3:      F.setCPU("cortex-m3"); break; \
     case cortexm4:      F.setCPU("cortex-m4"); break; \

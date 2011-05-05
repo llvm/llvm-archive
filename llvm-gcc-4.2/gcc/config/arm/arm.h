@@ -646,10 +646,15 @@ extern int arm_function_boundary (void);
 /* Make strings word-aligned so strcpy from constants will be faster.  */
 #define CONSTANT_ALIGNMENT_FACTOR (TARGET_THUMB || ! arm_tune_xscale ? 1 : 2)
 
-#define CONSTANT_ALIGNMENT(EXP, ALIGN)				\
-   ((TREE_CODE (EXP) == STRING_CST				\
-     && (ALIGN) < BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR)	\
-    ? BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR : (ALIGN))
+/* LLVM LOCAL begin - <rdar://problem/8961909> */
+#define CONSTANT_ALIGNMENT(EXP, ALIGN)                                 \
+  (TARGET_MACHO &&  TREE_CODE (EXP) == STRING_CST ?                    \
+   (ALIGN) :                                                           \
+   (TREE_CODE (EXP) == STRING_CST                                      \
+    && (ALIGN) < BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR) ?          \
+   BITS_PER_WORD * CONSTANT_ALIGNMENT_FACTOR :                         \
+   (ALIGN))
+/* LLVM LOCAL end - <rdar://problem/8961909> */
 
 /* Setting STRUCTURE_SIZE_BOUNDARY to 32 produces more efficient code, but the
    value set in previous versions of this toolchain was 8, which produces more

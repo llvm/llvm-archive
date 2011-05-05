@@ -48,9 +48,10 @@
 
 #define REGISTER_PREFIX 	""
 
-/* The assembler's names for the registers.  Note that the ?xx registers are * there so that VFPv3/NEON registers D16-D31 have the same spacing as D0-D15
- * (each of which is overlaid on two S registers), although there are no
- * actual single-precision registers which correspond to D16-D31.  */
+/* The assembler's names for the registers.  Note that the ?xx registers are 
+   there so that VFPv3/NEON registers D16-D31 have the same spacing as D0-D15
+   (each of which is overlaid on two S registers), although there are no
+   actual single-precision registers which correspond to D16-D31.  */
 #ifndef REGISTER_NAMES
 #define REGISTER_NAMES				   \
 {				                   \

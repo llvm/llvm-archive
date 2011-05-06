@@ -7725,6 +7725,14 @@ objc_v2_component_ref_field_offset (tree exp)
      by the front-end. Otherwise, FE asserts when attempting to do futher
      math on the tree whose one operand is one of these offsets. */
   offset = create_extern_decl (TREE_TYPE (size_zero_node), var_offset_name);
+
+  /* APPLE LOCAL begin - radar 9393640 */
+  {
+    const char string[] = "__DATA,__objc_ivar";
+    DECL_SECTION_NAME (offset) = build_string (strlen(string), string);
+  }
+  /* APPLE LOCAL end - radar 9393640 */
+
   return offset;
 }
 
@@ -7801,6 +7809,13 @@ objc_v2_build_ivar_ref (tree datum, tree component)
 			   field);
   /* APPLE LOCAL radar 4441049 */
   offset = create_extern_decl (TREE_TYPE (size_zero_node), var_offset_name);
+
+  /* APPLE LOCAL begin - radar 9393640 */
+  {
+    const char string[] = "__DATA,__objc_ivar";
+    DECL_SECTION_NAME (offset) = build_string (strlen(string), string);
+  }
+  /* APPLE LOCAL end - radar 9393640 */
 
   ftype = TREE_TYPE (field);
 
@@ -11148,6 +11163,13 @@ ivar_offset_ref (tree class_name, tree field_decl)
   /* APPLE LOCAL begin radar 4441049 */
   *chain = tree_cons (decl, byte_position (field_decl), NULL_TREE);
   /* APPLE LOCAL end radar 4441049 */
+
+  /* APPLE LOCAL begin - radar 9393640 */
+  {
+    const char string[] = "__DATA,__objc_ivar";
+    DECL_SECTION_NAME (decl) = build_string (strlen(string), string);
+  }
+  /* APPLE LOCAL end - radar 9393640 */
   
   return decl;
 }

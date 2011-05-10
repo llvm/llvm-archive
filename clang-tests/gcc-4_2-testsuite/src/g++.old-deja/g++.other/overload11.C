@@ -1,4 +1,4 @@
-// { dg-options "-Wno-unused-value -ferror-limit=27" }
+// { dg-options "-Wno-unused-value -ferror-limit=0" }
 
 // Copyright (C) 1999 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 5 Sep 1999 <nathan@acm.org>
@@ -38,10 +38,10 @@ int main (int argc, char **argv)
   
   // 13.3.1.1 indicates that the following are errors -- the primary expression
   // is not the name of a function.
-  (0, ovl) (1);             // { dg-error "cannot resolve overloaded function from context" }
-  (0, &ovl) (1);            // { dg-error "cannot resolve overloaded function from context" }
-  (argc ? ovl : ovl) (1);   // { dg-error "cannot resolve overloaded function from context" }
-  (argc ? &ovl : &ovl) (1); // { dg-error "cannot resolve overloaded function from context" }
+  (0, ovl) (1);             // { dg-error "cannot resolve overloaded" }
+  (0, &ovl) (1);            // { dg-error "cannot resolve overloaded" }
+  (argc ? ovl : ovl) (1);   // { dg-error "cannot resolve overloaded" }
+  (argc ? &ovl : &ovl) (1); // { dg-error "cannot resolve overloaded" }
   
   (fn) (1);                 // ok
   (&fn) (1);                // ok (no overload resolution)
@@ -53,17 +53,17 @@ int main (int argc, char **argv)
   ptr = (ovl);              // ok
   ptr = (&ovl);             // ok
   // 13.4 indicates these are ok.
-  ptr = (0, ovl);           // { dg-error "cannot resolve overloaded function from context" }
-  ptr = (0, &ovl); // { dg-error "cannot resolve overloaded function from context" }
-  ptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded function from context" }
-  ptr = (argc ? &ovl : &ovl); // { dg-error "cannot resolve overloaded function from context" }
+  ptr = (0, ovl);           // { dg-error "cannot resolve overloaded" }
+  ptr = (0, &ovl); // { dg-error "cannot resolve overloaded" }
+  ptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded" }
+  ptr = (argc ? &ovl : &ovl); // { dg-error "cannot resolve overloaded" }
   
   vptr = (ovl);              // { dg-error "assigning to 'void (*)()' from incompatible type" }
   vptr = (&ovl);             // { dg-error "assigning to 'void (*)()' from incompatible type" } 
-  vptr = (0, ovl);           // { dg-error "cannot resolve overloaded function from context" } 
-  vptr = (0, &ovl);          // { dg-error "cannot resolve overloaded function from context" } 
-  vptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded function from context" } 
-  vptr = (argc ? &ovl : &ovl);// { dg-error "cannot resolve overloaded function from context" } 
+  vptr = (0, ovl);           // { dg-error "cannot resolve overloaded" } 
+  vptr = (0, &ovl);          // { dg-error "cannot resolve overloaded" } 
+  vptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded" } 
+  vptr = (argc ? &ovl : &ovl);// { dg-error "cannot resolve overloaded" } 
   
   ptr = (fn);
   ptr = (&fn);
@@ -73,20 +73,20 @@ int main (int argc, char **argv)
   ptr = (argc ? &fna : &fn);
   
   f;                // { dg-error "use of undeclared identifier" }
-  ovl;              // { dg-error "" } not suitable for overload
-  &ovl;             // { dg-error "" } not suitable for overload
-  (void)f;          // ok
-  (void)ovl;        // { dg-error "" } not suitable for overload
-  (void)&ovl;       // { dg-error "" } not suitable for overload
-  static_cast<void>(f);          // ok
-  static_cast<void>(ovl);        // { dg-error "" } not suitable for overload
-  static_cast<void>(&ovl);       // { dg-error "" } not suitable for overload
-  ((void)1, f);             // { dg-warning "" "" { xfail *-*-* } } not a call
-  ((void)1, ovl);           // { dg-error "" } not suitable for overload
-  ((void)1, &ovl);          // { dg-error "" } not suitable for overload
-  (void)((void)1, f);           // ok
-  (void)((void)1, ovl);         // { dg-error "" } not suitable for overload
-  (void)((void)1, &ovl);        // { dg-error "" } not suitable for overload
+  ovl;              // { dg-error "cannot resolve overloaded function 'ovl' from context" }
+  &ovl;             // { dg-error "cannot resolve overloaded function 'ovl' from context" }
+  (void)f;          // { dg-error "use of undeclared identifier" }
+  (void)ovl;        // { dg-error "address of overloaded function 'ovl' cannot be cast to type 'void'" }
+  (void)&ovl;       // { dg-error "address of overloaded function 'ovl' cannot be cast to type 'void'" }
+  static_cast<void>(f);          // { dg-error "use of undeclared identifier 'f'" }
+  static_cast<void>(ovl);        // { dg-error "address of overloaded function 'ovl' cannot be static_cast to type 'void'" }
+  static_cast<void>(&ovl);       // { dg-error "address of overloaded function 'ovl' cannot be static_cast to type 'void'" }
+  ((void)1, f);             // { dg-error "use of undeclared identifier 'f'" }
+  ((void)1, ovl);           // { dg-error "cannot resolve overloaded function 'ovl' from context" } 
+  ((void)1, &ovl);          // { dg-error "cannot resolve overloaded function 'ovl' from context" } 
+  (void)((void)1, f);           // { dg-error "use of undeclared identifier 'f'" }
+  (void)((void)1, ovl);         // { dg-error "cannot resolve overloaded function 'ovl' from context" }
+  (void)((void)1, &ovl);        // { dg-error "cannot resolve overloaded function 'ovl' from context" }
 
   return 0;
 }

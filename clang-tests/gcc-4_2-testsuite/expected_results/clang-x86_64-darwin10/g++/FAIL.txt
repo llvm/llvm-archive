@@ -2246,8 +2246,6 @@ g++.old-deja/g++.martin/ambig1.C  (test for errors, line 21)
 g++.old-deja/g++.martin/conv1.C (test for excess errors)
 g++.old-deja/g++.martin/new1.C execution test
 g++.old-deja/g++.martin/pmf2.C (test for excess errors)
-g++.old-deja/g++.martin/pure1.C  (test for errors, line 6)
-g++.old-deja/g++.martin/pure1.C  (test for errors, line 7)
 g++.old-deja/g++.martin/typedef2.C (test for excess errors)
 g++.old-deja/g++.mike/ambig1.C (test for excess errors)
 g++.old-deja/g++.mike/bool2.C (test for excess errors)

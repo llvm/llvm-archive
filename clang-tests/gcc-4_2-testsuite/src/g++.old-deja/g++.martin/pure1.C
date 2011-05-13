@@ -2,7 +2,7 @@
 class A
 {
   public:
-    virtual void f(void) = 0; // pure virtual function.
-     A() {f();}               // { dg-error "" } called in a constructor
-    ~A() {f();}               // { dg-error "" } called in a destructor
+    virtual void f(void) = 0; // { dg-error "note" }
+     A() {f();}               // { dg-warning "call to pure virtual member" } 
+    ~A() {f();}               // { dg-warning "call to pure virtual member" } 
 };

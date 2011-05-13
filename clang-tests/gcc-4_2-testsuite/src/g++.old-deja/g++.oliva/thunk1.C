@@ -9,7 +9,7 @@
 using namespace std;
 
 struct vbase {
-  virtual int get_a() const = 0;
+  virtual int get_a() const = 0; // { dg-error "note" }
 };
 
 struct base: virtual vbase {
@@ -22,7 +22,7 @@ struct mid: base {
   mid(int bb) : base(bb) {
     // when mid is not in charge of vbase initialization,
     // a derived-aware vtable is needed for vbase
-    if (((vbase*)this)->get_a() != bb)
+    if (((vbase*)this)->get_a() != bb) // { dg-error "call to pure virtual member" }
       abort();
   }
 };

@@ -388,3 +388,12 @@ do {									\
       flag_objc_legacy_dispatch = 1;		\
   } while (0)
 
+/* Radar 8961909 */
+/* Align the C string to 1-bytes on ARM. */
+#undef TARGET_ADJUST_CSTRING_ALIGN
+#define TARGET_ADJUST_CSTRING_ALIGN(GV)                                 \
+  do {                                                                  \
+    if (GV->hasInternalLinkage()) {                                     \
+      GV->setAlignment(1);                                              \
+    }                                                                   \
+  } while (0)

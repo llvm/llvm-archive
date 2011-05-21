@@ -393,7 +393,5 @@ do {									\
 #undef TARGET_ADJUST_CSTRING_ALIGN
 #define TARGET_ADJUST_CSTRING_ALIGN(GV)                                 \
   do {                                                                  \
-    if (GV->hasInternalLinkage()) {                                     \
-      GV->setAlignment(1);                                              \
-    }                                                                   \
+    GV->setAlignment(1);                                                \
   } while (0)

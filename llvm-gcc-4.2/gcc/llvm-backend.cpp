@@ -48,7 +48,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Program.h"
 
@@ -810,11 +810,14 @@ static void createPerModuleOptimizationPasses() {
     }
 
     HasPerModulePasses = true;
-    createStandardModulePasses(PerModulePasses, optimize,
-                               optimize_size,
-                               flag_unit_at_a_time, flag_unroll_loops,
-                               !flag_no_simplify_libcalls, flag_exceptions,
-                               InliningPass);
+    PassManagerBuilder Builder;
+    Builder.OptLevel = optimize;
+    Builder.SizeLevel = optimize_size;
+    Builder.Inliner = InliningPass;
+    Builder.DisableSimplifyLibCalls = flag_no_simplify_libcalls;
+    Builder.DisableUnrollLoops = !flag_unroll_loops;
+    Builder.DisableUnitAtATime = !flag_unit_at_a_time;
+    Builder.populateModulePassManager(*PerModulePasses);
   }
 
   if (emit_llvm_bc) {

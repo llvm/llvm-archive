@@ -652,6 +652,9 @@ void TreeToLLVM::StartFunctionBody() {
   if (!flag_exceptions)
     Fn->setDoesNotThrow();
 
+ if (flag_unwind_tables)
+   Fn->setHasUWTable();
+
   // Create a new basic block for the function.
   Builder.SetInsertPoint(BasicBlock::Create(Context, "entry", Fn));
 

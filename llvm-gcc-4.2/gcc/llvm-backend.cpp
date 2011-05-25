@@ -444,8 +444,6 @@ void llvm_initialize_backend(void) {
     Args.push_back("--debug-pass=Structure");
   if (flag_debug_pass_arguments)
     Args.push_back("--debug-pass=Arguments");
-  if (flag_unwind_tables)
-    Args.push_back("--unwind-tables");
   if (!flag_schedule_insns)
     Args.push_back("--pre-RA-sched=source");
   if (flag_function_sections)

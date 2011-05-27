@@ -3599,14 +3599,16 @@ enum neon_builtins
 
 /* LLVM_GET_REG_NAME - The registers known to llvm as "r10", "r11", and "r12"
    may have different names in GCC.  Register "r12" is called "ip", and on
-   non-Darwin OSs, "r10" is "sl" and "r11" is "fp".  Translate those names,
-   and use incoming register name if it exists otherwise since reg_names doesn't
-   distinguish between the q and d registers.  */
+   non-Darwin OSs, "r10" is "sl" and "r11" is "fp".  Translate those names.
+   For VFP registers, GCC doesn't distinguish between the q and d registers
+   so use the incoming register name if it exists.  Otherwise, use the default
+   register names to match the backend.  */
 #define LLVM_GET_REG_NAME(REG_NAME, REG_NUM) \
   ((REG_NUM) == 10 ? "r10" \
    : (REG_NUM) == 11 ? "r11" \
    : (REG_NUM) == 12 ? "r12" \
-   : (REG_NAME ? REG_NAME : reg_names[REG_NUM]))
+   : (REG_NUM) >= FIRST_VFP_REGNUM && REG_NAME != 0 ? REG_NAME \
+   : reg_names[REG_NUM])
 
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */

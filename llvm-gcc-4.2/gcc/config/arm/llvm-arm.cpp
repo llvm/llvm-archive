@@ -2878,14 +2878,14 @@ bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
 bool llvm_arm_should_pass_aggregate_using_byval_attr(tree TreeType,
                                                      const Type *Ty,
                                                      CallingConv::ID &CC) {
-  if (CC == CallingConv::ARM_APCS) {
+  if (CC == CallingConv::ARM_APCS ||
+      (CC == CallingConv::C && !TARGET_AAPCS_BASED)) {
     enum machine_mode Mode = TYPE_MODE(TreeType);
-    HOST_WIDE_INT Bytes =
-      (Mode == BLKmode) ? int_size_in_bytes(TreeType) : (int) GET_MODE_SIZE(Mode);
-
+    HOST_WIDE_INT Bytes = (Mode == BLKmode) ? int_size_in_bytes(TreeType) :
+      (int) GET_MODE_SIZE(Mode);
     return Bytes > 64;
-  } else
-    return false;
+  }
+  return false;
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

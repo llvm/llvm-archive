@@ -4978,7 +4978,9 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
       if (LLVM_IS_DECL_MMX_REGISTER(Val))
         LLVMTy = Type::getX86_MMXTy(Context);
       const Type *OpTy = LLVMTy;
-      if (LLVMTy->isSingleValueType()) {
+      const StructType *STy = dyn_cast<StructType>(OpTy);
+      if (LLVMTy->isSingleValueType() ||
+          (STy && STy->getNumElements() == 1)) {
         if (TREE_CODE(Val)==ADDR_EXPR &&
             TREE_CODE(TREE_OPERAND(Val,0))==LABEL_DECL) {
           // Emit the label, but do not assume it is going to be the target

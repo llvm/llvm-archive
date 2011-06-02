@@ -1375,7 +1375,9 @@ void reset_initializer_llvm(tree decl) {
 
   // Set the initializer.
   GV->setInitializer(Init);
-  GV->setUnnamedAddr(true);
+  if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+      GV->hasPrivateLinkage())
+    GV->setUnnamedAddr(true);
 }
   
 /// reset_type_and_initializer_llvm - Change the type and initializer for 
@@ -1396,7 +1398,9 @@ void reset_type_and_initializer_llvm(tree decl) {
 
   // Temporary to avoid infinite recursion (see comments emit_global_to_llvm)
   GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
-  GV->setUnnamedAddr(true);
+  if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+      GV->hasPrivateLinkage())
+    GV->setUnnamedAddr(true);
 
   // Convert the initializer over.
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
@@ -1411,7 +1415,6 @@ void reset_type_and_initializer_llvm(tree decl) {
                                              GV->isConstant(),
                                              GV->getLinkage(), 0,
                                              GV->getName());
-    NGV->setUnnamedAddr(true);
     NGV->setVisibility(GV->getVisibility());
     NGV->setSection(GV->getSection());
     NGV->setAlignment(GV->getAlignment());
@@ -1420,12 +1423,14 @@ void reset_type_and_initializer_llvm(tree decl) {
     changeLLVMConstant(GV, NGV);
     delete GV;
     SET_DECL_LLVM(decl, NGV);
+    if (NGV->hasHiddenVisibility() || NGV->hasInternalLinkage() ||
+        NGV->hasPrivateLinkage())
+      NGV->setUnnamedAddr(true);
     GV = NGV;
   }
 
   // Set the initializer.
   GV->setInitializer(Init);
-  GV->setUnnamedAddr(true);
 }
   
 /// emit_global_to_llvm - Emit the specified VAR_DECL or aggregate CONST_DECL to
@@ -1477,7 +1482,9 @@ void emit_global_to_llvm(tree decl) {
     // this can happen for things like void *G = &G;
     //
     GV->setInitializer(UndefValue::get(GV->getType()->getElementType()));
-    GV->setUnnamedAddr(true);
+    if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+        GV->hasPrivateLinkage())
+      GV->setUnnamedAddr(true);
     Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
   }
 
@@ -1491,7 +1498,6 @@ void emit_global_to_llvm(tree decl) {
                                              GV->isConstant(),
                                              GlobalValue::ExternalLinkage, 0,
                                              GV->getName());
-    NGV->setUnnamedAddr(true);
     GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
     changeLLVMConstant(GV, NGV);
     delete GV;
@@ -1501,7 +1507,9 @@ void emit_global_to_llvm(tree decl) {
  
   // Set the initializer.
   GV->setInitializer(Init);
-  GV->setUnnamedAddr(true);
+  if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+      GV->hasPrivateLinkage())
+    GV->setUnnamedAddr(true);
 
   // Set thread local (TLS)
   if (TREE_CODE(decl) == VAR_DECL && DECL_THREAD_LOCAL_P(decl))
@@ -1555,6 +1563,9 @@ void emit_global_to_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
   handleVisibility(decl, GV);
+  if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+      GV->hasPrivateLinkage())
+    GV->setUnnamedAddr(true);
 
   // Set the section for the global.
   if (TREE_CODE(decl) == VAR_DECL) {
@@ -1803,7 +1814,6 @@ void make_decl_llvm(tree decl) {
     if (Name[0] == 0) {   // Global has no name.
       GV = new GlobalVariable(*TheModule, Ty, false, 
                               GlobalValue::ExternalLinkage, 0, "");
-      GV->setUnnamedAddr(true);
 
       // Check for external weak linkage.
       if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
@@ -1814,6 +1824,9 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
       handleVisibility(decl, GV);
+      if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+          GV->hasPrivateLinkage())
+        GV->setUnnamedAddr(true);
     } else {
       // If the global has a name, prevent multiple vars with the same name from
       // being created.
@@ -1823,7 +1836,6 @@ void make_decl_llvm(tree decl) {
         GV = new GlobalVariable(*TheModule, Ty, false,
                                 GlobalValue::ExternalLinkage, 0, Name);
 
-        GV->setUnnamedAddr(true);
         // Check for external weak linkage.
         if (DECL_EXTERNAL(decl) && DECL_WEAK(decl))
           GV->setLinkage(GlobalValue::ExternalWeakLinkage);
@@ -1833,6 +1845,10 @@ void make_decl_llvm(tree decl) {
 #endif /* TARGET_ADJUST_LLVM_LINKAGE */
 
 	handleVisibility(decl, GV);
+
+        if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
+            GV->hasPrivateLinkage())
+          GV->setUnnamedAddr(true);
 
         // If GV got renamed, then there is already an object with this name in
         // the symbol table.  If this happens, the old one must be a forward

@@ -445,6 +445,21 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Result = Builder.CreateCall(Func, CallOps, CallOps + 2);
     return true;
   }
+  case IX86_BUILTIN_MOVNTPS:
+  case IX86_BUILTIN_MOVNTPD:
+  case IX86_BUILTIN_MOVNTDQ:
+  case IX86_BUILTIN_MOVNTI: {
+    MDNode *Node = MDNode::get(Context, Builder.getInt32(1));
+
+    // Convert the type of the pointer to a pointer to the stored type.
+    Value *BC = Builder.CreateBitCast(Ops[0],
+                                      PointerType::getUnqual(Ops[1]->getType()),
+                                      "cast");
+    StoreInst *SI = Builder.CreateStore(Ops[1], BC);
+    SI->setMetadata(TheModule->getMDKindID("nontemporal"), Node);
+    SI->setAlignment(16);
+    return SI;
+  }
   case IX86_BUILTIN_PALIGNR: {
     static const Type *MMXTy = Type::getX86_MMXTy(Context);
     Function *Func = Intrinsic::getDeclaration(TheModule,

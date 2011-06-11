@@ -47,7 +47,7 @@ if $tracelevel then {
 # Load support procs.
 load_lib profopt.exp
 
-set profile_options "-fprofile-arcs"
+set profile_options "-fprofile-arcs -ftest-coverage"
 set feedback_options "-fbranch-probabilities"
 
 foreach profile_option $profile_options feedback_option $feedback_options {

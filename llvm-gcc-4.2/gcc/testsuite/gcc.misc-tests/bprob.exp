@@ -56,9 +56,6 @@ foreach profile_option $profile_options feedback_option $feedback_options {
         if ![runtest_file_p $runtests $src] then {
             continue
         }
-        if {[string compare $src bprob-2.c]} then {
-            continue
-        }
         profopt-execute $src
     }
 }

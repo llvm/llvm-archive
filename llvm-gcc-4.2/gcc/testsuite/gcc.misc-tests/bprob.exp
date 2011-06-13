@@ -47,17 +47,18 @@ if $tracelevel then {
 # Load support procs.
 load_lib profopt.exp
 
-#set profile_options "-fprofile-arcs -ftest-coverage"
-#set feedback_options "-fbranch-probabilities"
-set profile_option "-fprofile-arcs -ftest-coverage"
-set feedback_option "-fbranch-probabilities"
+set profile_options "-fprofile-arcs -ftest-coverage"
+set feedback_options "-fbranch-probabilities"
 
-#foreach profile_option $profile_options feedback_option $feedback_options {
+foreach profile_option $profile_options feedback_option $feedback_options {
     foreach src [lsort [glob -nocomplain $srcdir/$subdir/bprob-*.c]] {
         # If we're only testing specific files and this isn't one of them, skip it.
         if ![runtest_file_p $runtests $src] then {
             continue
         }
+        if {[string compare $src bprob-2.c]} then {
+            continue
+        }
         profopt-execute $src
     }
-#}
+}

@@ -36,7 +36,7 @@ int main (int argc, const char * argv[]) {
     [fooAttribute setAttributeType:NSStringAttributeType];
     [fooEntity setProperties:[NSArray arrayWithObject:fooAttribute]];
     
-    testObject = [[NSManagedObject alloc] initWithEntity:fooEntity insertIntoManagedObjectContext:nil];
+    testObject = [[Parent alloc] initWithEntity:fooEntity insertIntoManagedObjectContext:nil];
     
     objc_property_t propMetaData = class_getProperty([Parent class], "foo");
 

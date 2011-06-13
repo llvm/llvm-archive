@@ -12,26 +12,26 @@ int global_int;
 
 class class0 {
 public:
-  int class0_member_0 = 99;			/* { dg-error "" }  */
-  static int class0_member_1 = 99;		/* { dg-error "" }  */
-  int &class0_member_2 = global_int;		/* { dg-error "" }  */
+  int class0_member_0 = 99;			/* { dg-warning "extension" }  */
+  static int class0_member_1 = 99;		/* { dg-error "out of line" }  */
+  int &class0_member_2 = global_int;		/* { dg-warning "extension" }  */
 
-  class0 () : class0_member_2 (global_int) { }  /* { dg-error "" }  */
+  class0 () : class0_member_2 (global_int) { }
 };
 
 
 struct struct0 {
-  int struct0_member_0 = 99;			/* { dg-error "" }  */
-  static int struct0_member_1 = 99;		/* { dg-error "" }  */
-  int &struct0_member_2 = global_int;		/* { dg-error "" }  */
+  int struct0_member_0 = 99;			/* { dg-warning "extension" }  */
+  static int struct0_member_1 = 99;		/* { dg-error "out of line" }  */
+  int &struct0_member_2 = global_int;		/* { dg-warning "extension" }  */
 
-  struct0 () : struct0_member_2 (global_int) { } /* { dg-error "" }  */
+  struct0 () : struct0_member_2 (global_int) { }
 };
 
 // g++ does not allow unions to have more than one member with an initializer
 
 union union0 {
-  int union0_member_0 = 99;			/* { dg-error "" }  */
+  int union0_member_0 = 99;			/* { dg-warning "extension" }  */
 };
 
 union union1 {
@@ -39,9 +39,10 @@ union union1 {
 };
 
 union union2 {
-  int &union2_member_0 = global_int;		/* { dg-error "" }  */
+  int &union2_member_0 /* { dg-error "reference type" } */
+    = global_int;      /* { dg-warning "extension" }  */
 
-  union2 () : union2_member_0 (global_int) { }  /* { dg-error "" }  */
+  union2 () : union2_member_0 (global_int) { }  
 };
 
 int main () { return 0; }

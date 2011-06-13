@@ -46,7 +46,7 @@ void testRR() {
     // there could be a Block that references "testObject" and that block could have been copied to the
     // heap and the Block_byref forwarding pointer aims at the heap object.
     // Assigning to it should trigger, under GC, the objc_assign_weak call
-    testObject = [NSObject new];    // won't last long :-)
+    testObject = [TestObject new];    // won't last long :-)
 }
 
 int main(int argc, char *argv[]) {

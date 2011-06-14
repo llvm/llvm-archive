@@ -6513,9 +6513,10 @@ bool TreeToLLVM::EmitBuiltinPrefetch(tree exp) {
 
   Ptr = BitCastToType(Ptr, Type::getInt8PtrTy(Context));
 
-  Value *Ops[3] = { Ptr, ReadWrite, Locality };
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::prefetch),
-                     Ops, Ops+3);
+  Value *Data = ConstantInt::get(Type::getInt32Ty(Context), 1);
+
+  Builder.CreateCall4(Intrinsic::getDeclaration(TheModule, Intrinsic::prefetch),
+                      Ptr, ReadWrite, Locality, Data);
   return true;
 }
 

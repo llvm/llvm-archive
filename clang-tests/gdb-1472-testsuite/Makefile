@@ -4,7 +4,7 @@ target := i386-apple-darwin10
 srcdir := $(shell pwd)/src
 objdir := $(shell pwd)/obj
 
-CCC_ADD_ARGS := -Qunused-arguments,-std-default=gnu89,-fblocks,-Wno-return-type,-Wno-unused-value,-Wno-switch-enum,-Wno-implicit-int
+CCC_ADD_ARGS := -Qunused-arguments,-std-default=gnu89,-fblocks,-Wno-return-type,-Wno-unused-value,-Wno-switch-enum,-Wno-implicit-int,-Wno-incompatible-pointer-types
 CC_UNDER_TEST := /Developer/usr/bin/clang
 CXX_UNDER_TEST := /Developer/usr/bin/clang++
 CC_UNDER_TEST_FLAGS :=

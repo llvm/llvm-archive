@@ -20,7 +20,7 @@
     [obj takeArg: arg];
     return obj;
   }
-  return self;
+  return (id)self;
 }
 
 - takeArg: arg

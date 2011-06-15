@@ -4,6 +4,7 @@
    testcase.  */
 /* { dg-do compile } */
 /* { dg-options "" } */
+/* { dg-options { -std=c99 } } */
 
 const int i = 1;
 void foo() { char a[][i] = {""}; } /* { dg-error "error: variable-sized object may not be initialized" } */

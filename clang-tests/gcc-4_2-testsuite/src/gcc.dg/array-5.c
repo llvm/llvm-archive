@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options { -std=c99 } } */
 
 /* Check compatibility of array declarations.  */
 

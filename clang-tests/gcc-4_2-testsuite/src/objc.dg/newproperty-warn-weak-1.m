@@ -11,8 +11,7 @@
    __weak id z;
 }
 @property (assign) __weak id y;
-@property (copy) __weak id x;
-@property (retain) __weak id z;
+@property (copy) __weak id x; /* { dg-error "property attributes 'copy' and 'weak' are mutually exclusive" } */
+@property (retain) __weak id z; /* { dg-error "property attributes 'retain' and 'weak' are mutually exclusive" } */
 
-@end /* { dg-error "property \'z\' with \'retain\' attribute cannot be used with __weak storage specifier" } */
-/* { dg-error "property \'x\' with \'copy\' attribute cannot be used with __weak storage specifier" "" { target *-*-* } 17 } */
+@end

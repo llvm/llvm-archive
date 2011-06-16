@@ -1,4 +1,4 @@
-/* { dg-options "-std=c99 -pedantic-errors" } */
+/* { dg-options "-std=c99 -pedantic-errors -Wno-sizeof-array-argument" } */
 
 void foo1(int (*o)(int p[*])) { }
 

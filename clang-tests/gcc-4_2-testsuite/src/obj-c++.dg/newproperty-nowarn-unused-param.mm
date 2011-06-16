@@ -7,14 +7,14 @@
 {
 @private
         id retainValue;
-        id copyValue;
+        id copiedValue;
         id assignValue;
         id readOnlyValue;
         int foo;
 }
 @property(readwrite, retain) id retainValue;
 @property(readwrite, assign) id assignValue;
-@property(readwrite, copy) id copyValue;
+@property(readwrite, copy) id copiedValue;
 @property(readonly) id readOnlyValue;
 
 @property(readwrite) int foo;
@@ -24,7 +24,7 @@
 @implementation MyClass
 @synthesize retainValue;
 @synthesize assignValue;
-@synthesize copyValue;
+@synthesize copiedValue;
 @synthesize readOnlyValue;
 
 @synthesize foo;

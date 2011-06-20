@@ -320,7 +320,8 @@ void writeLLVMValues() {
   }
 
   // Create string table.
-  Constant *LLVMValuesTable = ConstantStruct::get(Context, ValuesForPCH, false);
+  Constant *LLVMValuesTable =
+    ConstantStruct::getAnon(Context, ValuesForPCH, false);
 
   // Create variable to hold this string table.
   GlobalVariable *GV = new GlobalVariable(*TheModule, LLVMValuesTable->getType(),
@@ -918,7 +919,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
     // __attribute__(constructor) can be on a function with any type.  Make sure
     // the pointer is void()*.
     StructInit[1] = TheFolder->CreateBitCast(Tors[i].first, FPTy);
-    InitList.push_back(ConstantStruct::get(Context, StructInit, false));
+    InitList.push_back(ConstantStruct::getAnon(StructInit));
   }
   Constant *Array = ConstantArray::get(
     ArrayType::get(InitList[0]->getType(), InitList.size()), InitList);
@@ -1345,7 +1346,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
       };
  
       AttributeAnnotateGlobals.push_back(
-        ConstantStruct::get(Context, Element, 4, false));
+        ConstantStruct::getAnon(Context, Element));
     }
       
     // Get next annotate attribute.

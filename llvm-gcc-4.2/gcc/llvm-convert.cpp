@@ -7953,7 +7953,7 @@ Constant *TreeConstantToLLVM::ConvertCOMPLEX_CST(tree exp) {
   std::vector<Constant*> Elts;
   Elts.push_back(Convert(TREE_REALPART(exp)));
   Elts.push_back(Convert(TREE_IMAGPART(exp)));
-  return ConstantStruct::get(Context, Elts, false);
+  return ConstantStruct::getAnon(Elts);
 }
 
 Constant *TreeConstantToLLVM::ConvertNOP_EXPR(tree exp) {
@@ -8139,7 +8139,7 @@ Constant *TreeConstantToLLVM::ConvertArrayCONSTRUCTOR(tree exp) {
   if (AllEltsSameType)
     return ConstantArray::get(
       ArrayType::get(ElTy, ResultElts.size()), ResultElts);
-  return ConstantStruct::get(Context, ResultElts, false);
+  return ConstantStruct::getAnon(Context, ResultElts);
 }
 
 
@@ -8582,8 +8582,8 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     LayoutInfo.HandleTailPadding(getInt64(StructTypeSizeTree, true));
 
   // Okay, we're done, return the computed elements.
-  return ConstantStruct::get(Context, LayoutInfo.ResultElts,
-                             LayoutInfo.StructIsPacked);
+  return ConstantStruct::getAnon(Context, LayoutInfo.ResultElts,
+                                 LayoutInfo.StructIsPacked);
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
@@ -8651,8 +8651,8 @@ Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {
   if (UnionTypeSizeTree && TREE_CODE(UnionTypeSizeTree) == INTEGER_CST)
     LayoutInfo.HandleTailPadding(getInt64(UnionTypeSizeTree, true));
 
-  return ConstantStruct::get(Context, LayoutInfo.ResultElts,
-                             LayoutInfo.StructIsPacked);
+  return ConstantStruct::getAnon(Context, LayoutInfo.ResultElts,
+                                 LayoutInfo.StructIsPacked);
 }
 
 //===----------------------------------------------------------------------===//

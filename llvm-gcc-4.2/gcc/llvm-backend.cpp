@@ -633,6 +633,11 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
   flag_llvm_pch_read = 1;
 }
 
+// Initialize remainign llvm specific data structures after pch is loaded.
+void llvm_post_pch_read() {
+  readLLVMTypeUsers();
+}
+
 /// llvm_pch_write_init - Initialize PCH writing. 
 void llvm_pch_write_init(void) {
   timevar_push(TV_LLVM_INIT);
@@ -1121,17 +1126,6 @@ void llvm_emit_code_for_current_function(tree fndecl) {
   if (errorcount || sorrycount) {
     TREE_ASM_WRITTEN(fndecl) = 1;
     return;  // Do not process broken code.
-  }
-
-  // Initial fill of TypeRefinementDatabase::TypeUsers[] if we're
-  // using a PCH.  Won't work until the GCC PCH has been read in and
-  // digested.
-  {
-    static bool done = false;
-    if (!done && flag_llvm_pch_read) {
-      readLLVMTypeUsers();
-      done = true;
-    }
   }
 
   timevar_push(TV_LLVM_FUNCS);

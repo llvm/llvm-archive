@@ -7,7 +7,7 @@
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"
 
-@class MyWpModule;
+@class MyWpModule; /* { dg-error "forward class is declared here" } */
 
 @compatibility_alias MyObject Object;
 @compatibility_alias FictitiousModule MyWpModule;
@@ -20,11 +20,11 @@
 - (id) meth2;
 @end
 
-@interface FunnyModule: FictitiousModule <Img> /* { dg-error ".MyWpModule., superclass of .FunnyModule." } */
+@interface FunnyModule: FictitiousModule <Img> /* { dg-error "attempting to use the forward class 'MyWpModule' as superclass of 'FunnyModule'" } */
 - (id) meth2;
 @end
 
-@interface MyProjWpModule : MyWpModule <MySelTarget, Img> /* { dg-error ".MyWpModule., superclass of .MyProjWpModule." } */ {
+@interface MyProjWpModule : MyWpModule <MySelTarget, Img> /* { dg-error "attempting to use the forward class 'MyWpModule' as superclass of 'MyProjWpModule'" } */ {
   id i1, i2;
 }
 - (id) meth1;

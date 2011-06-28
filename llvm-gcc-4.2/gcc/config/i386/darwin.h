@@ -141,6 +141,14 @@ Boston, MA 02110-1301, USA.  */
 /* APPLE LOCAL ARM 5681645 8307333 */
 #define DARWIN_IPHONEOS_LIBGCC_SPEC "-lgcc"
 
+/* APPLE LOCAL begin use crt3.o for x86 and ppc only 9385990 */
+#undef  STARTFILE_SPEC
+#define STARTFILE_SPEC DARWIN_STARTFILE_SPEC				    \
+  "%{shared-libgcc:							    \
+    %{!miphoneos-version-min=*:						    \
+      %:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}}"
+/* APPLE LOCAL end use crt3.o for x86 and ppc only 9385990 */
+
 /* APPLE LOCAL begin link optimizations 6499452 */
 #undef DARWIN_CRT1_SPEC
 #define DARWIN_CRT1_SPEC						\

@@ -137,6 +137,14 @@
    mcpu=G5:ppc970;				\
    :ppc}}"
 
+/* APPLE LOCAL begin use crt3.o for x86 and ppc only 9385990 */
+#undef  STARTFILE_SPEC
+#define STARTFILE_SPEC DARWIN_STARTFILE_SPEC				    \
+  "%{shared-libgcc:							    \
+    %{!miphoneos-version-min=*:						    \
+      %:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}}"
+/* APPLE LOCAL end use crt3.o for x86 and ppc only 9385990 */
+
 /* crt2.o is at least partially required for 10.3.x and earlier.  */
 /* APPLE LOCAL begin ARM 5683689 */
 #define DARWIN_CRT2_SPEC \

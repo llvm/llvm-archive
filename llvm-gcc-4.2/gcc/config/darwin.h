@@ -525,8 +525,7 @@ do {					\
    powerpc program built.  */
 
 /* APPLE LOCAL begin mainline */
-#undef  STARTFILE_SPEC
-#define STARTFILE_SPEC							    \
+#define DARWIN_STARTFILE_SPEC						    \
   "%{Zdynamiclib: %(darwin_dylib1) }					    \
    "/* APPLE LOCAL link optimizations 6499452 */"			    \
    %{!Zdynamiclib:%{Zbundle:%{!static: %(darwin_bundle1)}}		    \
@@ -538,10 +537,7 @@ do {					\
                       %{!static:%{object:-lcrt0.o}			    \
                                 %{!object:%{preload:-lcrt0.o}		    \
                                   %{!preload: %(darwin_crt1)		    \
-					      %(darwin_crt2)}}}}}}	    \
-  %{shared-libgcc:							    \
-    %{!miphoneos-version-min=*:						    \
-      %:version-compare(< 10.5 mmacosx-version-min= crt3.o%s)}}"
+					      %(darwin_crt2)}}}}}}"
 /* APPLE LOCAL end mainline  */
 
 /* The native Darwin linker doesn't necessarily place files in the order

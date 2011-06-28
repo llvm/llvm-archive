@@ -256,6 +256,11 @@
 #define DARWIN_DEFAULT_VERSION_TYPE  DARWIN_VERSION_IPHONEOS
 #endif
 
+/* APPLE LOCAL begin use crt3.o for x86 and ppc only 9385990 */
+#undef  STARTFILE_SPEC
+#define STARTFILE_SPEC DARWIN_STARTFILE_SPEC
+/* APPLE LOCAL end use crt3.o for x86 and ppc only 9385990 */
+
 #define DARWIN_IPHONEOS_LIBGCC_SPEC "-lgcc_s.1 -lgcc"
 
 #undef SUBTARGET_EXTRA_SPECS

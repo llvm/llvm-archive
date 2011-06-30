@@ -3879,11 +3879,11 @@ enum ix86_builtins
 
 /* Turn -march=xx into a CPU type.
  */
-#define LLVM_SET_SUBTARGET_FEATURES(F) \
+#define LLVM_SET_SUBTARGET_FEATURES(C, F)                     \
   { if (TARGET_MACHO && ! strcmp (ix86_arch_string, "apple")) \
-      F.setCPU(TARGET_64BIT ? "core2" : "yonah");             \
+      C = (TARGET_64BIT ? "core2" : "yonah");                 \
     else                                                      \
-      F.setCPU(ix86_arch_string);                             \
+      C = (ix86_arch_string);                                 \
     if (TARGET_64BIT)   F.AddFeature("64bit");                \
     if (TARGET_MMX)     F.AddFeature("mmx");                  \
     else if (target_flags_explicit & MASK_MMX) F.AddFeature("mmx", false); \

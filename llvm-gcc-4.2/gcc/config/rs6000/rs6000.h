@@ -3459,11 +3459,11 @@ enum rs6000_builtins
 
 /* Turn -march=xx into a CPU type.
  */
-#define LLVM_SET_SUBTARGET_FEATURES(F) \
+#define LLVM_SET_SUBTARGET_FEATURES(C, F)    \
   { \
-    F.setCPU(rs6000_cpu_target); \
+    C = (rs6000_cpu_target);                 \
     F.AddFeature("altivec", TARGET_ALTIVEC); \
-    F.AddFeature("gpul", TARGET_MFCRF); \
+    F.AddFeature("gpul", TARGET_MFCRF);      \
     F.AddFeature("fsqrt", TARGET_PPC_GPOPT); \
     F.AddFeature("64bit", TARGET_POWERPC64); \
   }

@@ -537,10 +537,12 @@ void llvm_initialize_backend(void) {
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
   SubtargetFeatures Features;
+
   // The target can set LLVM_SET_SUBTARGET_FEATURES to configure the LLVM
   // backend.
+  std::string CPU;
 #ifdef LLVM_SET_SUBTARGET_FEATURES
-  LLVM_SET_SUBTARGET_FEATURES(Features);
+  LLVM_SET_SUBTARGET_FEATURES(CPU, Features);
 #endif
   
   // Handle -mattr options passed into llvm
@@ -548,7 +550,7 @@ void llvm_initialize_backend(void) {
     Features.AddFeature(MAttrs[i]);
   FeatureStr = Features.getString();
 
-  TheTarget = TME->createTargetMachine(TargetTriple, FeatureStr);
+  TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr);
   TheTarget->setMCUseLoc(false);
   TheTarget->setMCUseCFI(false);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);

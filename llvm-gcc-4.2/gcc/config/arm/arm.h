@@ -3460,56 +3460,56 @@ enum neon_builtins
 
 /* Turn -march=xx into a CPU type.
  */
-#define LLVM_SET_SUBTARGET_FEATURES(F) \
+#define LLVM_SET_SUBTARGET_FEATURES(C, F)        \
   { switch (arm_tune) { \
-    case arm8:          F.setCPU("arm8"); break;\
-    case arm810:        F.setCPU("arm810"); break;\
-    case strongarm:     F.setCPU("strongarm"); break;\
-    case strongarm110:  F.setCPU("strongarm110"); break;\
-    case strongarm1100: F.setCPU("strongarm1100"); break;\
-    case strongarm1110: F.setCPU("strongarm1110"); break;\
-    case arm7tdmi:      F.setCPU("arm7tdmi"); break;\
-    case arm7tdmis:     F.setCPU("arm7tdmi-s"); break;\
-    case arm710t:       F.setCPU("arm710t"); break;\
-    case arm720t:       F.setCPU("arm720t"); break;\
-    case arm740t:       F.setCPU("arm740t"); break;\
-    case arm9:          F.setCPU("arm9"); break;\
-    case arm9tdmi:      F.setCPU("arm9tdmi"); break;\
-    case arm920:        F.setCPU("arm920"); break;\
-    case arm920t:       F.setCPU("arm920t"); break;\
-    case arm922t:       F.setCPU("arm922t"); break;\
-    case arm940t:       F.setCPU("arm940t"); break;\
-    case ep9312:        F.setCPU("ep9312"); break;\
-    case arm10tdmi:     F.setCPU("arm10tdmi"); break;\
-    case arm1020t:      F.setCPU("arm1020t"); break;\
-    case arm9e:         F.setCPU("arm9e"); break;\
-    case arm946es:      F.setCPU("arm946e-s"); break;\
-    case arm966es:      F.setCPU("arm966e-s"); break;\
-    case arm968es:      F.setCPU("arm968e-s"); break;\
-    case arm10e:        F.setCPU("arm10e"); break;\
-    case arm1020e:      F.setCPU("arm1020e"); break;\
-    case arm1022e:      F.setCPU("arm1022e"); break;\
-    case xscale:        F.setCPU("xscale"); break;\
-    case iwmmxt:        F.setCPU("iwmmxt"); break;\
-    case arm926ejs:     F.setCPU("arm926ej-s"); break;\
-    case arm1026ejs:    F.setCPU("arm1026ej-s"); break;\
-    case arm1136js:     F.setCPU("arm1136j-s"); break;\
-    case arm1136jfs:    F.setCPU("arm1136jf-s"); break;\
-    case arm1176jzs:    F.setCPU("arm1176jz-s"); break;\
-    case arm1176jzfs:   F.setCPU("arm1176jzf-s"); break;\
-    case mpcorenovfp:   F.setCPU("mpcorenovfp"); break;\
-    case mpcore:        F.setCPU("mpcore"); break;\
-    case arm1156t2s:    F.setCPU("arm1156t2-s"); break;	\
-    case arm1156t2fs:   F.setCPU("arm1156t2f-s"); break; \
-    case cortexa8:      F.setCPU("cortex-a8"); break; \
-    case cortexa9:      F.setCPU("cortex-a9"); break; \
-    case cortexa9mp:    F.setCPU("cortex-a9-mp"); break; \
-    case cortexr4:      F.setCPU("cortex-r4"); break; \
-    case cortexm3:      F.setCPU("cortex-m3"); break; \
-    case cortexm4:      F.setCPU("cortex-m4"); break; \
-    case cortexm0:      F.setCPU("cortex-m0"); break; \
+    case arm8:          C = ("arm8"); break;\
+    case arm810:        C = ("arm810"); break;\
+    case strongarm:     C = ("strongarm"); break;\
+    case strongarm110:  C = ("strongarm110"); break;\
+    case strongarm1100: C = ("strongarm1100"); break;\
+    case strongarm1110: C = ("strongarm1110"); break;\
+    case arm7tdmi:      C = ("arm7tdmi"); break;\
+    case arm7tdmis:     C = ("arm7tdmi-s"); break;\
+    case arm710t:       C = ("arm710t"); break;\
+    case arm720t:       C = ("arm720t"); break;\
+    case arm740t:       C = ("arm740t"); break;\
+    case arm9:          C = ("arm9"); break;\
+    case arm9tdmi:      C = ("arm9tdmi"); break;\
+    case arm920:        C = ("arm920"); break;\
+    case arm920t:       C = ("arm920t"); break;\
+    case arm922t:       C = ("arm922t"); break;\
+    case arm940t:       C = ("arm940t"); break;\
+    case ep9312:        C = ("ep9312"); break;\
+    case arm10tdmi:     C = ("arm10tdmi"); break;\
+    case arm1020t:      C = ("arm1020t"); break;\
+    case arm9e:         C = ("arm9e"); break;\
+    case arm946es:      C = ("arm946e-s"); break;\
+    case arm966es:      C = ("arm966e-s"); break;\
+    case arm968es:      C = ("arm968e-s"); break;\
+    case arm10e:        C = ("arm10e"); break;\
+    case arm1020e:      C = ("arm1020e"); break;\
+    case arm1022e:      C = ("arm1022e"); break;\
+    case xscale:        C = ("xscale"); break;\
+    case iwmmxt:        C = ("iwmmxt"); break;\
+    case arm926ejs:     C = ("arm926ej-s"); break;\
+    case arm1026ejs:    C = ("arm1026ej-s"); break;\
+    case arm1136js:     C = ("arm1136j-s"); break;\
+    case arm1136jfs:    C = ("arm1136jf-s"); break;\
+    case arm1176jzs:    C = ("arm1176jz-s"); break;\
+    case arm1176jzfs:   C = ("arm1176jzf-s"); break;\
+    case mpcorenovfp:   C = ("mpcorenovfp"); break;\
+    case mpcore:        C = ("mpcore"); break;\
+    case arm1156t2s:    C = ("arm1156t2-s"); break;	\
+    case arm1156t2fs:   C = ("arm1156t2f-s"); break; \
+    case cortexa8:      C = ("cortex-a8"); break; \
+    case cortexa9:      C = ("cortex-a9"); break; \
+    case cortexa9mp:    C = ("cortex-a9-mp"); break; \
+    case cortexr4:      C = ("cortex-r4"); break; \
+    case cortexm3:      C = ("cortex-m3"); break; \
+    case cortexm4:      C = ("cortex-m4"); break; \
+    case cortexm0:      C = ("cortex-m0"); break; \
     default:						\
-      F.setCPU("arm7tdmi"); \
+      C = ("arm7tdmi"); \
       break; \
     } \
     if (TARGET_VFP3)						\

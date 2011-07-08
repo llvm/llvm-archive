@@ -139,7 +139,11 @@ void readLLVMTypesStringTable() {
 
   const StructType *STy = cast<StructType>(V->getType()->getElementType());
 
-  LTypes.insert(LTypes.end(), STy->subtype_begin(), STy->subtype_end());
+  for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+    if (const PointerType *PTy = dyn_cast<PointerType>(STy->getElementType(i)))
+      LTypes.push_back(PTy->getElementType());
+    else
+      LTypes.push_back(Type::getVoidTy(Context));
   
   // Now, llvm.pch.types value is not required so remove it from the symbol
   // table.
@@ -153,10 +157,18 @@ void writeLLVMTypesStringTable() {
   if (LTypes.empty()) 
     return;
 
-  const StructType *AggregateTy = StructType::get(Context, LTypes);
+  // Convert the LTypes list to a list of pointers.
+  std::vector<const Type*> PTys;
+  for (unsigned i = 0, e = LTypes.size(); i != e; ++i) {
+    // Cannot form pointer to void.  Use i8 as a sentinel.
+    if (LTypes[i]->isVoidTy())
+      PTys.push_back(Type::getInt8Ty(Context));
+    else
+      PTys.push_back(LTypes[i]->getPointerTo());
+  }
   
   // Create variable to hold this string table.
-  (void)new GlobalVariable(*TheModule, AggregateTy, true,
+  (void)new GlobalVariable(*TheModule, StructType::get(Context, PTys), true,
                            GlobalValue::ExternalLinkage, 
                            /*noinit*/0, "llvm.pch.types");
 }

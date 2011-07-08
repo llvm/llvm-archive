@@ -29,7 +29,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Assembly/Writer.h"
@@ -122,94 +121,44 @@ extern "C" const Type *llvm_get_type(unsigned Index) {
 
 // Erase type from LTypes vector
 static void llvmEraseLType(const Type *Ty) {
-
   LTypesMapTy::iterator I = LTypesMap.find(Ty);
 
   if (I != LTypesMap.end()) {
     // It is OK to clear this entry instead of removing this entry
     // to avoid re-indexing of other entries.
-    LTypes[ LTypesMap[Ty] - 1] = NULL;
+    LTypes[LTypesMap[Ty] - 1] = NULL;
     LTypesMap.erase(I);
   }
 }
 
 // Read LLVM Types string table
 void readLLVMTypesStringTable() {
-
   GlobalValue *V = TheModule->getNamedGlobal("llvm.pch.types");
   if (!V)
     return;
 
-  //  Value *GV = TheModule->getValueSymbolTable().lookup("llvm.pch.types");
-  GlobalVariable *GV = cast<GlobalVariable>(V);
-  ConstantStruct *LTypesNames = cast<ConstantStruct>(GV->getOperand(0));
+  const StructType *STy = cast<StructType>(V->getType()->getElementType());
 
-  for (unsigned i = 0; i < LTypesNames->getNumOperands(); ++i) {
-    const Type *Ty = NULL;
-
-    if (ConstantArray *CA = 
-        dyn_cast<ConstantArray>(LTypesNames->getOperand(i))) {
-      std::string Str = CA->getAsString();
-      Ty = TheModule->getTypeByName(Str);
-      assert (Ty != NULL && "Invalid Type in LTypes string table");
-    } 
-    // If V is not a string then it is empty. Insert NULL to represent 
-    // empty entries.
-    LTypes.push_back(Ty);
-  }
-
+  LTypes.insert(LTypes.end(), STy->subtype_begin(), STy->subtype_end());
+  
   // Now, llvm.pch.types value is not required so remove it from the symbol
   // table.
-  GV->eraseFromParent();
+  V->eraseFromParent();
 }
 
 
 // GCC tree's uses LTypes vector's index to reach LLVM types.
-// Create a string table to hold these LLVM types' names. This string
-// table will be used to recreate LTypes vector after loading PCH.
+// Create a global variable with struct type that contains each of these.
 void writeLLVMTypesStringTable() {
-  
   if (LTypes.empty()) 
     return;
 
-  std::vector<Constant *> LTypesNames;
-  std::map < const Type *, std::string > TypeNameMap;
-
-  // Collect Type Names in advance.
-  const TypeSymbolTable &ST = TheModule->getTypeSymbolTable();
-  TypeSymbolTable::const_iterator TI = ST.begin();
-  for (; TI != ST.end(); ++TI) {
-    TypeNameMap[TI->second] = TI->first;
-  }
-
-  // Populate LTypesNames vector.
-  for (std::vector<const Type *>::iterator I = LTypes.begin(),
-         E = LTypes.end(); I != E; ++I)  {
-    const Type *Ty = *I;
-
-    // Give names to nameless types.
-    if (Ty && TypeNameMap[Ty].empty()) {
-      std::string NewName =
-        TheModule->getTypeSymbolTable().getUniqueName("llvm.fe.ty");
-      TheModule->addTypeName(NewName, Ty);
-      TypeNameMap[*I] = NewName;
-    }
-
-    const std::string &TypeName = TypeNameMap[*I];
-    LTypesNames.push_back(ConstantArray::get(Context, TypeName, false));
-  }
-
-  // Create string table.
-  Constant *LTypesNameTable =
-    ConstantStruct::getAnon(Context, LTypesNames, false);
-
+  const StructType *AggregateTy = StructType::get(Context, LTypes);
+  
   // Create variable to hold this string table.
-  GlobalVariable *GV = new GlobalVariable(*TheModule,   
-                                          LTypesNameTable->getType(), true,
-                                          GlobalValue::ExternalLinkage, 
-                                          LTypesNameTable,
-                                          "llvm.pch.types");
-  GV->setUnnamedAddr(true);
+  (void)new GlobalVariable(*TheModule, AggregateTy, true,
+                           GlobalValue::ExternalLinkage, 
+                           /*noinit*/0, "llvm.pch.types");
 }
 
 //===----------------------------------------------------------------------===//

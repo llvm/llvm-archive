@@ -115,10 +115,6 @@ void llvm_asm_file_end(void);
 /* llvm_call_llvm_shutdown - Release LLVM global state. */
 void llvm_call_llvm_shutdown(void);
 
-/* refine_type_to - Cause all users of the opaque type old_type to switch
- * to the more concrete type new_type.
- */
-void refine_type_to (union tree_node*, union tree_node*);
 #endif /* ENABLE_LLVM */
 
 #endif

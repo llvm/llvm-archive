@@ -25,6 +25,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 //===----------------------------------------------------------------------===//
 
 #include "llvm-internal.h"
+#include "llvm/Support/Host.h"
+
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -75,7 +77,8 @@ static const Type * llvm_set_type(tree Tr, const Type *Ty) {
   // For x86 long double, llvm records the size of the data (80) while
   // gcc's TYPE_SIZE including alignment padding.  getTypeAllocSizeInBits
   // is used to compensate for this.
-  if (TYPE_SIZE(Tr) && Ty->isSized() && isInt64(TYPE_SIZE(Tr), true)) {
+  if (TYPE_SIZE(Tr) && Ty->isSized() && isInt64(TYPE_SIZE(Tr), true) &&
+      (!isa<StructType>(Ty) || !cast<StructType>(Ty)->isOpaque())) {
     uint64_t LLVMSize = getTargetData().getTypeAllocSizeInBits(Ty);
     if (getInt64(TYPE_SIZE(Tr), true) != LLVMSize) {
       errs() << "GCC: ";
@@ -171,30 +174,6 @@ void writeLLVMTypesStringTable() {
   (void)new GlobalVariable(*TheModule, StructType::get(Context, PTys), true,
                            GlobalValue::ExternalLinkage, 
                            /*noinit*/0, "llvm.pch.types");
-}
-
-//===----------------------------------------------------------------------===//
-//                   Recursive Type Handling Code and Data
-//===----------------------------------------------------------------------===//
-
-// Recursive types are a major pain to handle for a couple of reasons.  Because
-// of this, when we start parsing a struct or a union, we globally change how
-// POINTER_TYPE and REFERENCE_TYPE are handled.  In particular, instead of
-// actually recursing and computing the type they point to, they will return an
-// opaque*, and remember that they did this in PointersToReresolve.
-
-
-/// GetFunctionType - This is just a helper like FunctionType::get but that
-/// takes PATypeHolders.
-static FunctionType *GetFunctionType(const PATypeHolder &Res,
-                                     std::vector<PATypeHolder> &ArgTys,
-                                     bool isVarArg) {
-  std::vector<const Type*> ArgTysP;
-  ArgTysP.reserve(ArgTys.size());
-  for (unsigned i = 0, e = ArgTys.size(); i != e; ++i)
-    ArgTysP.push_back(ArgTys[i]);
-  
-  return FunctionType::get(Res, ArgTysP, isVarArg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -323,154 +302,6 @@ tree getDeclaredType(tree_node *field_decl) {
     DECL_BIT_FIELD_TYPE(field_decl) : TREE_TYPE (field_decl);
 }
 
-//===----------------------------------------------------------------------===//
-//                     Abstract Type Refinement Helpers
-//===----------------------------------------------------------------------===//
-//
-// This code is built to make sure that the TYPE_LLVM field on tree types are
-// updated when LLVM types are refined.  This prevents dangling pointers from
-// occuring due to type coallescing.
-//
-namespace {
-  class TypeRefinementDatabase : public AbstractTypeUser {
-    virtual void refineAbstractType(const DerivedType *OldTy,
-                                    const Type *NewTy);
-    virtual void typeBecameConcrete(const DerivedType *AbsTy);
-    
-  public:
-    // TypeUsers - For each abstract LLVM type, we keep track of all of the GCC
-    // types that point to it.
-    std::map<const Type*, std::vector<tree> > TypeUsers;
-    /// setType - call SET_TYPE_LLVM(type, Ty), associating the type with the
-    /// specified tree type.  In addition, if the LLVM type is an abstract type,
-    /// we add it to our data structure to track it.
-    inline const Type *setType(tree type, const Type *Ty) {
-      if (GET_TYPE_LLVM(type))
-        RemoveTypeFromTable(type);
-
-      if (Ty->isAbstract()) {
-        std::vector<tree> &Users = TypeUsers[Ty];
-        if (Users.empty()) Ty->addAbstractTypeUser(this);
-        Users.push_back(type);
-      }
-      return SET_TYPE_LLVM(type, Ty);
-    }
-
-    void friend readLLVMTypeUsers();
-    void friend writeLLVMTypeUsers();
-    void RemoveTypeFromTable(tree type);
-    void dump() const;
-  };
-  
-  /// TypeDB - The main global type database.
-  TypeRefinementDatabase TypeDB;
-}
-
-/// RemoveTypeFromTable - We're about to change the LLVM type of 'type'
-///
-void TypeRefinementDatabase::RemoveTypeFromTable(tree type) {
-  const Type *Ty = GET_TYPE_LLVM(type);
-  if (!Ty->isAbstract()) return;
-  std::map<const Type*, std::vector<tree> >::iterator I = TypeUsers.find(Ty);
-  assert(I != TypeUsers.end() && "Using an abstract type but not in table?");
-  
-  bool FoundIt = false;
-  for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-    if (I->second[i] == type) {
-      FoundIt = true;
-      std::swap(I->second[i], I->second.back());
-      I->second.pop_back();
-      break;
-    }
-  assert(FoundIt && "Using an abstract type but not in table?");
-  
-  // If the type plane is now empty, nuke it.
-  if (I->second.empty()) {
-    TypeUsers.erase(I);
-    Ty->removeAbstractTypeUser(this);
-  }
-}
-
-/// refineAbstractType - The callback method invoked when an abstract type is
-/// resolved to another type.  An object must override this method to update
-/// its internal state to reference NewType instead of OldType.
-///
-void TypeRefinementDatabase::refineAbstractType(const DerivedType *OldTy,
-                                                const Type *NewTy) {
-  if (OldTy == NewTy && OldTy->isAbstract()) return; // Nothing to do.
-  
-  std::map<const Type*, std::vector<tree> >::iterator I = TypeUsers.find(OldTy);
-  assert(I != TypeUsers.end() && "Using an abstract type but not in table?");
-
-  if (!NewTy->isAbstract()) {
-    // If the type became concrete, update everything pointing to it, and remove
-    // all of our entries from the map.
-    if (OldTy != NewTy)
-      for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-        SET_TYPE_LLVM(I->second[i], NewTy);
-  } else {
-    // Otherwise, it was refined to another instance of an abstract type.  Move
-    // everything over and stop monitoring OldTy.
-    std::vector<tree> &NewSlot = TypeUsers[NewTy];
-    if (NewSlot.empty()) NewTy->addAbstractTypeUser(this);
-    
-    for (unsigned i = 0, e = I->second.size(); i != e; ++i) {
-      NewSlot.push_back(I->second[i]);
-      SET_TYPE_LLVM(I->second[i], NewTy);
-    }
-  }
-  
-  llvmEraseLType(OldTy);
-  TypeUsers.erase(I);
-  
-  // Next, remove OldTy's entry in the TargetData object if it has one.
-  if (const StructType *STy = dyn_cast<StructType>(OldTy))
-    getTargetData().InvalidateStructLayoutInfo(STy);
-  
-  OldTy->removeAbstractTypeUser(this);
-}
-
-/// The other case which AbstractTypeUsers must be aware of is when a type
-/// makes the transition from being abstract (where it has clients on it's
-/// AbstractTypeUsers list) to concrete (where it does not).  This method
-/// notifies ATU's when this occurs for a type.
-///
-void TypeRefinementDatabase::typeBecameConcrete(const DerivedType *AbsTy) {
-  assert(TypeUsers.count(AbsTy) && "Not using this type!");
-  // Remove the type from our collection of tracked types.
-  TypeUsers.erase(AbsTy);
-  AbsTy->removeAbstractTypeUser(this);
-}
-void TypeRefinementDatabase::dump() const {
-  outs() << "TypeRefinementDatabase\n";
-  outs().flush();
-}
-
-/// readLLVMTypeUsers - We've just read in a PCH; retrieve the set of
-/// GCC types that were known to TypeUsers[], and re-populate it.
-/// Intended to be called once, but harmless if called multiple times,
-/// or if no PCH is present.
-void readLLVMTypeUsers() {
-  tree ty;
-  while ((ty = llvm_pop_TypeUsers())) {
-    const Type *NewTy = GET_TYPE_LLVM(ty);
-    std::vector<tree> &NewSlot = TypeDB.TypeUsers[NewTy];
-    if (NewSlot.empty()) NewTy->addAbstractTypeUser(&TypeDB);
-    NewSlot.push_back(ty);
-  }
-}
-
-/// writeLLVMTypeUSers - Record the set of GCC types currently known
-/// to TypeUsers[] inside GCC so they will be preserved in a PCH.
-/// Intended to be called once, just before the PCH is written.
-void writeLLVMTypeUsers() {
-  std::map<const Type*, std::vector<tree> >::iterator
-    I = TypeDB.TypeUsers.begin(),
-    E = TypeDB.TypeUsers.end();
-  for (; I != E; ++I)
-    for (unsigned i = 0, e = I->second.size(); i != e; ++i)
-      llvm_push_TypeUsers(I->second[i]);
-}
 
 //===----------------------------------------------------------------------===//
 //                              Helper Routines
@@ -685,9 +516,10 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       if (const Type *Ty = GET_TYPE_LLVM(orig_type))
         return Ty;
 
-      const Type *Ty = OpaqueType::get(Context);
-      TheModule->addTypeName(GetTypeName("enum.", orig_type), Ty);
-      return TypeDB.setType(orig_type, Ty);
+      // Just mark it as a named type for now.
+      const Type *Ty = StructType::createNamed(Context, 
+                                               GetTypeName("enum.", orig_type));
+      return SET_TYPE_LLVM(orig_type, Ty);
     }
     // FALL THROUGH.
     type = orig_type;
@@ -727,89 +559,31 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
   case COMPLEX_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
-    assert(!Ty->isAbstract() && "should use TypeDB.setType()");
     return SET_TYPE_LLVM(type, StructType::get(Ty, Ty, NULL));
   }
   case VECTOR_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     const Type *Ty = ConvertType(TREE_TYPE(type));
-    assert(!Ty->isAbstract() && "should use TypeDB.setType()");
     Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
     return SET_TYPE_LLVM(type, Ty);
   }
     
   case POINTER_TYPE:
   case REFERENCE_TYPE:
-  case BLOCK_POINTER_TYPE:
-    if (const PointerType *PTy = cast_or_null<PointerType>(GET_TYPE_LLVM(type))){
-      // We already converted this type.  If this isn't a case where we have to
-      // reparse it, just return it.
-      if (PointersToReresolve.empty() || PointersToReresolve.back() != type ||
-          ConvertingStruct)
-        return PTy;
-      
-      // Okay, we know that we're !ConvertingStruct and that type is on the end
-      // of the vector.  Remove this entry from the PointersToReresolve list and
-      // get the pointee type.  Note that this order is important in case the
-      // pointee type uses this pointer.
-      assert(PTy->getElementType()->isOpaqueTy() && "Not a deferred ref!");
-      
-      // We are actively resolving this pointer.  We want to pop this value from
-      // the stack, as we are no longer resolving it.  However, we don't want to
-      // make it look like we are now resolving the previous pointer on the
-      // stack, so pop this value and push a null.
-      PointersToReresolve.back() = 0;
-      
-      
-      // Do not do any nested resolution.  We know that there is a higher-level
-      // loop processing deferred pointers, let it handle anything new.
-      ConvertingStruct = true;
-      
-      // Note that we know that Ty cannot be resolved or invalidated here.
-      const Type *Actual = ConvertType(TREE_TYPE(type));
-      assert(GET_TYPE_LLVM(type) == PTy && "Pointer invalidated!");
-
-      // Restore ConvertingStruct for the caller.
-      ConvertingStruct = false;
-      
-      if (Actual->isVoidTy())
-        Actual = Type::getInt8Ty(Context);  // void* -> sbyte*
-      
-      // Update the type, potentially updating TYPE_LLVM(type).
-      const OpaqueType *OT = cast<OpaqueType>(PTy->getElementType());
-      const_cast<OpaqueType*>(OT)->refineAbstractTypeTo(Actual);
-      return GET_TYPE_LLVM(type);
-    } else {
-      const Type *Ty;
-
-      // If we are converting a struct, and if we haven't converted the pointee
-      // type, add this pointer to PointersToReresolve and return an opaque*.
-      if (ConvertingStruct) {
-        // If the pointee type has not already been converted to LLVM, create 
-        // a new opaque type and remember it in the database.
-        Ty = GET_TYPE_LLVM(TYPE_MAIN_VARIANT(TREE_TYPE(type)));
-        if (Ty == 0) {
-          PointersToReresolve.push_back(type);
-          return TypeDB.setType(type, OpaqueType::get(Context)->getPointerTo());
-        }
-
-        // A type has already been computed.  However, this may be some sort of 
-        // recursive struct.  We don't want to call ConvertType on it, because 
-        // this will try to resolve it, and not adding the type to the 
-        // PointerToReresolve collection is just an optimization.  Instead, 
-        // we'll use the type returned by GET_TYPE_LLVM directly, even if this 
-        // may be resolved further in the future.
-      } else {
-        // If we're not in a struct, just call ConvertType.  If it has already 
-        // been converted, this will return the precomputed value, otherwise 
-        // this will compute and return the new type.
-        Ty = ConvertType(TREE_TYPE(type));
-      }
+  case BLOCK_POINTER_TYPE: {
+    // Disable recursive struct conversion.
+    ConversionStatus SavedCS = RecursionStatus;
+    if (RecursionStatus == CS_Struct)
+      RecursionStatus = CS_StructPtr;
     
-      if (Ty->isVoidTy())
-        Ty = Type::getInt8Ty(Context);  // void* -> sbyte*
-      return TypeDB.setType(type, Ty->getPointerTo());
-    }
+    const Type *Ty = ConvertType(TREE_TYPE(type));
+    
+    RecursionStatus = SavedCS;
+    
+    if (Ty->isVoidTy())
+      Ty = Type::getInt8Ty(Context);  // void* -> i8*
+    return SET_TYPE_LLVM(type, Ty->getPointerTo());
+  }
    
   case METHOD_TYPE:
   case FUNCTION_TYPE: {
@@ -819,8 +593,8 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
     // No declaration to pass through, passing NULL.
     CallingConv::ID CallingConv;
     AttrListPtr PAL;
-    return TypeDB.setType(type, ConvertFunctionType(type, NULL, NULL,
-                                                    CallingConv, PAL));
+    return SET_TYPE_LLVM(type, ConvertFunctionType(type, NULL, NULL,
+                                                   CallingConv, PAL));
   }
   case ARRAY_TYPE: {
     if (const Type *Ty = GET_TYPE_LLVM(type))
@@ -870,7 +644,7 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
       NumElements /= ElementSize;
     }
 
-    return TypeDB.setType(type, ArrayType::get(ElementTy, NumElements));
+    return SET_TYPE_LLVM(type, ArrayType::get(ElementTy, NumElements));
   }
   case OFFSET_TYPE:
     // Handle OFFSET_TYPE specially.  This is used for pointers to members,
@@ -890,14 +664,14 @@ const Type *TypeConverter::ConvertType(tree orig_type) {
 
 namespace {
   class FunctionTypeConversion : public DefaultABIClient {
-    PATypeHolder &RetTy;
-    std::vector<PATypeHolder> &ArgTypes;
+    const Type *&RetTy;
+    std::vector<const Type*> &ArgTypes;
     CallingConv::ID &CallingConv;
     bool isShadowRet;
     bool KNRPromotion;
     unsigned Offset;
   public:
-    FunctionTypeConversion(PATypeHolder &retty, std::vector<PATypeHolder> &AT,
+    FunctionTypeConversion(const Type *&retty, std::vector<const Type*> &AT,
                            CallingConv::ID &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR), Offset(0) {
       CallingConv = CallingConv::C;
@@ -905,7 +679,7 @@ namespace {
     }
 
     /// getCallingConv - This provides the desired CallingConv for the function.
-    CallingConv::ID& getCallingConv(void) { return CallingConv; }
+    CallingConv::ID &getCallingConv(void) { return CallingConv; }
 
     bool isShadowReturn() const { return isShadowRet; }
 
@@ -1024,8 +798,8 @@ const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree type, tree Args, tree static_chain,
                        CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   tree ReturnType = TREE_TYPE(type);
-  std::vector<PATypeHolder> ArgTys;
-  PATypeHolder RetTy(Type::getVoidTy(Context));
+  std::vector<const Type*> ArgTys;
+  const Type *RetTy = Type::getVoidTy(Context);
 
   FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
   DefaultABI ABIConverter(Client);
@@ -1088,14 +862,14 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
   }
 
   PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
-  return GetFunctionType(RetTy, ArgTys, false);
+  return FunctionType::get(RetTy, ArgTys, false);
 }
 
 const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
                     CallingConv::ID &CallingConv, AttrListPtr &PAL) {
-  PATypeHolder RetTy = Type::getVoidTy(Context);
-  std::vector<PATypeHolder> ArgTypes;
+  const Type *RetTy = Type::getVoidTy(Context);
+  std::vector<const Type *> ArgTypes;
   bool isVarArg = false;
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
   DefaultABI ABIConverter(Client);
@@ -1198,19 +972,20 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   tree Args = TYPE_ARG_TYPES(type);
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
     tree ArgTy = TREE_VALUE(Args);
-    if (!isPassedByInvisibleReference(ArgTy) &&
-        ConvertType(ArgTy)->isOpaqueTy()) {
-      // If we are passing an opaque struct by value, we don't know how many
-      // arguments it will turn into.  Because we can't handle this yet,
-      // codegen the prototype as (...).
-      if (CallingConv == CallingConv::C)
-        ArgTypes.clear();
-      else
-        // Don't nuke last argument.
-        ArgTypes.erase(ArgTypes.begin()+1, ArgTypes.end());
-      Args = 0;
-      break;        
-    }
+    if (!isPassedByInvisibleReference(ArgTy))
+      if (const StructType *STy = dyn_cast<StructType>(ConvertType(ArgTy)))
+        if (STy->isOpaque()) {
+          // If we are passing an opaque struct by value, we don't know how many
+          // arguments it will turn into.  Because we can't handle this yet,
+          // codegen the prototype as (...).
+          if (CallingConv == CallingConv::C)
+            ArgTypes.clear();
+          else
+            // Don't nuke last argument.
+            ArgTypes.erase(ArgTypes.begin()+1, ArgTypes.end());
+          Args = 0;
+          break;        
+        }
     
     // Determine if there are any attributes for this param.
     Attributes PAttributes = Attribute::None;
@@ -1273,7 +1048,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 
   // Finally, make the function type and result attributes.
   PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
-  return GetFunctionType(RetTy, ArgTypes, isVarArg);
+  return FunctionType::get(RetTy, ArgTypes, isVarArg);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1283,7 +1058,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
 /// StructTypeConversionInfo - A temporary structure that is used when
 /// translating a RECORD_TYPE to an LLVM type.
 struct StructTypeConversionInfo {
-  std::vector<const Type*> Elements;
+  std::vector<Type*> Elements;
   std::vector<uint64_t> ElementOffsetInBytes;
   std::vector<uint64_t> ElementSizeInBytes;
   std::vector<bool> PaddingElement; // True if field is used for padding
@@ -1336,13 +1111,12 @@ struct StructTypeConversionInfo {
     return TD.getTypeAllocSize(Ty);
   }
   
-  /// getLLVMType - Return the LLVM type for the specified object.
+  /// fillInLLVMType - Return the LLVM type for the specified object.
   ///
-  const Type *getLLVMType() const {
+  void fillInLLVMType(StructType *STy) const {
     // Use Packed type if Packed is set or all struct fields are bitfields.
     // Empty struct is not packed unless packed is set.
-    return StructType::get(Context, Elements,
-                           Packed || (!Elements.empty() && AllBitFields));
+    STy->setBody(Elements, Packed || (!Elements.empty() && AllBitFields));
   }
   
   /// getAlignmentAsLLVMStruct - Return the alignment of this struct if it were
@@ -1394,7 +1168,7 @@ struct StructTypeConversionInfo {
     assert (PadBytes > 0 && "Unable to remove extra bytes");
 
     // Update last element type and size, element offset is unchanged.
-    const Type *Pad =  ArrayType::get(Type::getInt8Ty(Context), PadBytes);
+    Type *Pad = ArrayType::get(Type::getInt8Ty(Context), PadBytes);
     unsigned OriginalSize = ElementSizeInBytes.back();
     Elements.pop_back();
     Elements.push_back(Pad);
@@ -1409,7 +1183,7 @@ struct StructTypeConversionInfo {
   /// In this case caller should redo this struct as a packed structure.
   bool ResizeLastElementIfOverlapsWith(uint64_t ByteOffset, tree Field,
                                        const Type *Ty) {
-    const Type *SavedTy = NULL;
+    Type *SavedTy = NULL;
 
     if (!Elements.empty()) {
       assert(ElementOffsetInBytes.back() <= ByteOffset &&
@@ -1429,7 +1203,7 @@ struct StructTypeConversionInfo {
           // field we just popped.  Otherwise we might end up with a
           // gcc non-bitfield being mapped to an LLVM field with a
           // different offset.
-          const Type *Pad = Type::getInt8Ty(Context);
+          Type *Pad = Type::getInt8Ty(Context);
           if (PoppedOffset != EndOffset + 1)
             Pad = ArrayType::get(Pad, PoppedOffset - EndOffset);
           addElement(Pad, EndOffset, PoppedOffset - EndOffset);
@@ -1452,7 +1226,7 @@ struct StructTypeConversionInfo {
     // padding.
     if (NextByteOffset < ByteOffset) {
       uint64_t CurOffset = getNewElementByteOffset(1);
-      const Type *Pad = Type::getInt8Ty(Context);
+      Type *Pad = Type::getInt8Ty(Context);
       if (SavedTy && LastFieldStartsAtNonByteBoundry) 
         // We want to reuse SavedType to access this bit field.
         // e.g. struct __attribute__((packed)) { 
@@ -1495,7 +1269,7 @@ struct StructTypeConversionInfo {
   /// offset and size.
   void addElement(const Type *Ty, uint64_t Offset, uint64_t Size,
                   bool ExtraPadding = false) {
-    Elements.push_back(Ty);
+    Elements.push_back((Type*)Ty);
     ElementOffsetInBytes.push_back(Offset);
     ElementSizeInBytes.push_back(Size);
     PaddingElement.push_back(ExtraPadding);
@@ -1589,7 +1363,7 @@ void StructTypeConversionInfo::addNewBitField(uint64_t Size, uint64_t Extra,
   // Figure out the LLVM type that we will use for the new field.
   // Note, Size is not necessarily size of the new field. It indicates
   // additional bits required after FirstunallocatedByte to cover new field.
-  const Type *NewFieldTy = 0;
+  Type *NewFieldTy = 0;
 
   // First try an ABI-aligned field including (some of) the Extra bits.
   // This field must satisfy Size <= w && w <= XSize.
@@ -1782,9 +1556,8 @@ static tree FixBaseClassField(tree Field) {
 // tail padding as a Field that they get elsewhere. To handle these additional
 // cases the size and alignment of the field are used as parts of the index
 // into the map of base classes already created.
-
 static void FixUpFields(tree type) {
-  if (TREE_CODE(type)!=RECORD_TYPE)
+  if (TREE_CODE(type) != RECORD_TYPE)
     return;
   for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
     if (TREE_CODE(Field)==FIELD_DECL && 
@@ -1851,6 +1624,7 @@ static void RestoreOriginalFields(tree type) {
   }
 }
 
+
 /// DecodeStructFields - This method decodes the specified field, if it is a
 /// FIELD_DECL, adding or updating the specified StructTypeConversionInfo to
 /// reflect it.  Return true if field is decoded correctly. Otherwise return
@@ -1860,7 +1634,7 @@ bool TypeConverter::DecodeStructFields(tree Field,
   if (TREE_CODE(Field) != FIELD_DECL ||
       TREE_CODE(DECL_FIELD_OFFSET(Field)) != INTEGER_CST)
     return true;
-
+  
   // Handle bit-fields specially.
   if (isBitfield(Field)) {
     // If this field is forcing packed llvm struct then retry entire struct
@@ -2167,26 +1941,32 @@ void TypeConverter::SelectUnionMember(tree type,
 //
 // For LLVM purposes, we build a new type for B-within-D that 
 // has the correct size and layout for that usage.
-
 const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
-  if (const Type *Ty = GET_TYPE_LLVM(type)) {
+  bool IsStruct = TREE_CODE(type) == RECORD_TYPE;
+  if (const StructType *Ty = cast_or_null<StructType>(GET_TYPE_LLVM(type))) {
     // If we already compiled this type, and if it was not a forward
     // definition that is now defined, use the old type.
-    if (!Ty->isOpaqueTy() || TYPE_SIZE(type) == 0)
+    if (!Ty->isOpaque() || TYPE_SIZE(type) == 0)
       return Ty;
+  } else {
+    // If we have no type for this, set it as an opaque named struct and
+    // continue.
+    SET_TYPE_LLVM(type, StructType::createNamed(Context,
+                    GetTypeName(IsStruct ? "struct." : "union.", orig_type)));
   }
 
-  bool IsStruct = (TREE_CODE(type) == RECORD_TYPE);
-  if (TYPE_SIZE(type) == 0) {   // Forward declaration?
-    const Type *Ty = OpaqueType::get(Context);
-    TheModule->addTypeName(GetTypeName(IsStruct ? "struct." : "union.",
-                                       orig_type), Ty);
-    return TypeDB.setType(type, Ty);
+  // If we have a forward declaration, we're done.  Return the opaque type.
+  if (TYPE_SIZE(type) == 0)
+    return GET_TYPE_LLVM(type);
+
+  // If we're under a pointer under a struct, defer conversion of this type.
+  if (RecursionStatus == CS_StructPtr) {
+    StructsDeferred.push_back(type);
+    return GET_TYPE_LLVM(type);
   }
 
-  // Note that we are compiling a struct now.
-  bool OldConvertingStruct = ConvertingStruct;
-  ConvertingStruct = true;
+  ConversionStatus OldRecursionStatus = RecursionStatus;
+  RecursionStatus = CS_Struct;
   
   StructTypeConversionInfo *Info = 
     new StructTypeConversionInfo(*TheTarget, TYPE_ALIGN(type) / 8,
@@ -2323,42 +2103,20 @@ const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   if (IsStruct)
     RestoreOriginalFields(type);
 
-  const Type *ResultTy = Info->getLLVMType();
+  const StructType *ResultTy = cast<StructType>(GET_TYPE_LLVM(type));
+  Info->fillInLLVMType((StructType*)ResultTy);
   StructTypeInfoMap[type] = Info;
-
-  const OpaqueType *OldTy = cast_or_null<OpaqueType>(GET_TYPE_LLVM(type));
-  TypeDB.setType(type, ResultTy);
-
-  // If there was a forward declaration for this type that is now resolved,
-  // refine anything that used it to the new type.
-  if (OldTy)
-    const_cast<OpaqueType*>(OldTy)->refineAbstractTypeTo(ResultTy);
-
-  // Finally, set the name for the type.
-  TheModule->addTypeName(GetTypeName(IsStruct ? "struct." : "union.",
-                                     orig_type), GET_TYPE_LLVM(type));
-
-  // We have finished converting this struct.  See if the is the outer-most
-  // struct or union being converted by ConvertType.
-  ConvertingStruct = OldConvertingStruct;
-  if (!ConvertingStruct) {
-
-    // If this is the outer-most level of structness, resolve any pointers
-    // that were deferred.
-    while (!PointersToReresolve.empty()) {
-      if (tree PtrTy = PointersToReresolve.back()) {
-        ConvertType(PtrTy);   // Reresolve this pointer type.
-        assert((PointersToReresolve.empty() ||
-                PointersToReresolve.back() != PtrTy) &&
-               "Something went wrong with pointer resolution!");
-      } else {
-        // Null marker element.
-        PointersToReresolve.pop_back();
-      }
-    }
+  
+  RecursionStatus = OldRecursionStatus;
+  
+  // If we're popping back to a non-nested context, go ahead and convert any
+  // deferred record types.
+  if (RecursionStatus == CS_Normal) {
+    while (!StructsDeferred.empty())
+      ConvertType(StructsDeferred.pop_back_val());
   }
-
-  return GET_TYPE_LLVM(type);
+  
+  return ResultTy;
 }
 
 /* LLVM LOCAL end (ENTIRE FILE!)  */

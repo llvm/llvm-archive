@@ -86,7 +86,6 @@ void dummy_function() {
   llvm::createIPConstantPropagationPass();
   llvm::createStripDeadPrototypesPass();
   llvm::createMemCpyOptPass();
-  llvm::createDeadTypeEliminationPass();
   llvm::createLoopDeletionPass();
   llvm::createFunctionAttrsPass();
   llvm::createPrintModulePass(0);

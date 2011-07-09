@@ -8582,8 +8582,15 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
     LayoutInfo.HandleTailPadding(getInt64(StructTypeSizeTree, true));
 
   // Okay, we're done, return the computed elements.
-  return ConstantStruct::getAnon(Context, LayoutInfo.ResultElts,
-                                 LayoutInfo.StructIsPacked);
+  Constant *Result = ConstantStruct::getAnon(Context, LayoutInfo.ResultElts,
+                                             LayoutInfo.StructIsPacked);
+
+  // This is a hack for brokenness in the objc frontend.
+  const StructType *LLVMTy = dyn_cast<StructType>(ConvertType(TREE_TYPE(exp)));
+  if (LLVMTy && !LLVMTy->isAnonymous() &&
+      cast<StructType>(Result->getType())->isLayoutIdentical(LLVMTy))
+    Result = ConstantStruct::get(LLVMTy, LayoutInfo.ResultElts);
+  return Result;
 }
 
 Constant *TreeConstantToLLVM::ConvertUnionCONSTRUCTOR(tree exp) {

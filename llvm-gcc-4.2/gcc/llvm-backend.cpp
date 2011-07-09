@@ -637,7 +637,6 @@ void llvm_pch_read(const unsigned char *Buffer, unsigned Size) {
 
 // Initialize remainign llvm specific data structures after pch is loaded.
 void llvm_post_pch_read() {
-  readLLVMTypeUsers();
 }
 
 /// llvm_pch_write_init - Initialize PCH writing. 
@@ -988,7 +987,6 @@ void llvm_asm_file_end(void) {
   if (flag_pch_file) {
     writeLLVMTypesStringTable();
     writeLLVMValues();
-    writeLLVMTypeUsers();
   }
 
   // Add an llvm.global_ctors global if needed.

@@ -1414,9 +1414,7 @@ void StructTypeConversionInfo::dump() const {
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     OS << "  Offset = " << ElementOffsetInBytes[i]
        << " Size = " << ElementSizeInBytes[i]
-       << " Type = ";
-    WriteTypeSymbolic(OS, Elements[i], TheModule);
-    OS << "\n";
+       << " Type = " << *Elements[i] << "\n";
   }
   OS.flush();
 }

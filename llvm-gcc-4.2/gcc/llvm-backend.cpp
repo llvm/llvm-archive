@@ -1989,7 +1989,7 @@ void print_llvm_type(FILE *file, void *LLVM) {
   // adaptor which would be simpler and more efficient.  In the meantime, just
   // adapt the adaptor.
   raw_os_ostream RO(FS);
-  WriteTypeSymbolic(RO, (const Type*)LLVM, TheModule);
+  RO << *(const Type*)LLVM;
 }
 
 /// extractRegisterName - Get a register name given its decl. In 4.2 unlike 4.0

@@ -2525,7 +2525,7 @@ static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
 {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
-    const Type *STy = I->get();
+    const Type *STy = *I;
     if (const VectorType *VTy = dyn_cast<VectorType>(STy)) {
       switch (VTy->getBitWidth())
       {

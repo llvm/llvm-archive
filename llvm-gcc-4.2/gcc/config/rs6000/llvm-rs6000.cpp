@@ -391,7 +391,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   return false;
 }
 
-static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
+static unsigned count_num_registers_uses(std::vector<Type*> &ScalarElts) {
   unsigned NumGPRs = 0;
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
     if (NumGPRs >= 8)
@@ -423,7 +423,7 @@ static unsigned count_num_registers_uses(std::vector<const Type*> &ScalarElts) {
 /// arguments are always passed in general purpose registers, never in
 /// Floating-point registers or vector registers.
 bool llvm_rs6000_try_pass_aggregate_custom(tree type,
-					   std::vector<const Type*> &ScalarElts,
+					   std::vector<Type*> &ScalarElts,
 					   const CallingConv::ID &CC,
 					   struct DefaultABIClient* C) {
   if (!isSVR4ABI())
@@ -432,8 +432,8 @@ bool llvm_rs6000_try_pass_aggregate_custom(tree type,
   // Eight GPR's are availabe for parameter passing.
   const unsigned NumArgRegs = 8;
   unsigned NumGPR = count_num_registers_uses(ScalarElts);
-  const Type *Ty = ConvertType(type);
-  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
+  Type *Ty = ConvertType(type);
+  Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
   if (Ty->isSingleValueType()) {
     if (Ty->isIntegerTy()) {
       unsigned TypeSize = Ty->getPrimitiveSizeInBits();
@@ -469,7 +469,7 @@ bool llvm_rs6000_try_pass_aggregate_custom(tree type,
   if (TREE_CODE(type) == COMPLEX_TYPE) {
     unsigned SrcSize = int_size_in_bytes(type);
     unsigned NumRegs = (SrcSize + 3) / 4;
-    std::vector<const Type*> Elts;
+    std::vector<Type*> Elts;
 
     // This looks very strange, but matches the old code.
     if (SrcSize == 8) {
@@ -505,7 +505,7 @@ bool llvm_rs6000_try_pass_aggregate_custom(tree type,
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed using the byval mechanism. */
-bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
+bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, Type *Ty) {
   /* FIXME byval not implemented for ppc64. */
   if (TARGET_64BIT)
     return false;

@@ -915,8 +915,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   LLVMContext &Context = getGlobalContext();
   
   const Type *FPTy =
-    FunctionType::get(Type::getVoidTy(Context),
-                      std::vector<const Type*>(), false);
+    FunctionType::get(Type::getVoidTy(Context), std::vector<Type*>(), false);
   FPTy = FPTy->getPointerTo();
   
   for (unsigned i = 0, e = Tors.size(); i != e; ++i) {

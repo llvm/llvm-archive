@@ -381,8 +381,8 @@ namespace {
         // bytes, but only 10 are copied.  If the object is really a union
         // we might need the other bytes.  We must also be careful to use
         // the smaller alignment.
-        const Type *SBP = Type::getInt8PtrTy(Context);
-        const Type *IntPtr = getTargetData().getIntPtrType(Context);
+        Type *SBP = Type::getInt8PtrTy(Context);
+        Type *IntPtr = getTargetData().getIntPtrType(Context);
         Value *Ops[5] = {
           Builder.CreateCast(Instruction::BitCast, Loc, SBP),
           Builder.CreateCast(Instruction::BitCast, AI, SBP),
@@ -392,7 +392,7 @@ namespace {
                            LLVM_BYVAL_ALIGNMENT(type)),
           ConstantInt::get(Type::getInt1Ty(Context), false)
         };
-        const Type *ArgTypes[3] = {SBP, SBP, IntPtr };
+        Type *ArgTypes[3] = {SBP, SBP, IntPtr };
         Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                      Intrinsic::memcpy,
                                                      ArgTypes, 3), Ops, Ops+5);
@@ -434,13 +434,13 @@ namespace {
 
 // isPassedByVal - Return true if an aggregate of the specified type will be
 // passed in memory byval.
-static bool isPassedByVal(tree type, const Type *Ty,
-                          std::vector<const Type*> &ScalarArgs,
+static bool isPassedByVal(tree type, Type *Ty,
+                          std::vector<Type*> &ScalarArgs,
                           CallingConv::ID &CC) {
   if (LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(type, Ty, CC))
     return true;
 
-  std::vector<const Type*> Args;
+  std::vector<Type*> Args;
   if (LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(type, Ty, CC, Args) &&
       LLVM_AGGREGATE_PARTIALLY_PASSED_IN_REGS(Args, ScalarArgs,
                                               CC))
@@ -677,7 +677,7 @@ void TreeToLLVM::StartFunctionBody() {
   DefaultABI ABIConverter(Client);
 
   // Scalar arguments processed so far.
-  std::vector<const Type*> ScalarArgs;
+  std::vector<Type*> ScalarArgs;
 
   // Handle the DECL_RESULT.
   ABIConverter.HandleReturnType(TREE_TYPE(TREE_TYPE(FnDecl)), FnDecl,
@@ -693,7 +693,7 @@ void TreeToLLVM::StartFunctionBody() {
     const char *Name = "unnamed_arg";
     if (DECL_NAME(Args)) Name = IDENTIFIER_POINTER(DECL_NAME(Args));
 
-    const Type *ArgTy = ConvertType(TREE_TYPE(Args));
+    Type *ArgTy = ConvertType(TREE_TYPE(Args));
     bool isInvRef = isPassedByInvisibleReference(TREE_TYPE(Args));
     if (isInvRef ||
         (ArgTy->isVectorTy() &&
@@ -1655,8 +1655,8 @@ void TreeToLLVM::EmitAggregateZero(MemRef DestLoc, tree type) {
 
 Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
                               unsigned Align) {
-  const Type *SBP = Type::getInt8PtrTy(Context);
-  const Type *IntPtr = TD.getIntPtrType(Context);
+  Type *SBP = Type::getInt8PtrTy(Context);
+  Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[5] = {
     BitCastToType(DestPtr, SBP),
     BitCastToType(SrcPtr, SBP),
@@ -1665,7 +1665,7 @@ Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::getInt1Ty(Context), false)
   };
 
-  const Type *ArgTypes[3] = {SBP, SBP, IntPtr };
+  Type *ArgTypes[3] = {SBP, SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memcpy,
                                                ArgTypes, 3), Ops, Ops+5);
   return Ops[0];
@@ -1673,8 +1673,8 @@ Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
 Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
                                unsigned Align) {
-  const Type *SBP = Type::getInt8PtrTy(Context);
-  const Type *IntPtr = TD.getIntPtrType(Context);
+  Type *SBP = Type::getInt8PtrTy(Context);
+  Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[5] = {
     BitCastToType(DestPtr, SBP),
     BitCastToType(SrcPtr, SBP),
@@ -1682,7 +1682,7 @@ Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
     ConstantInt::get(Type::getInt32Ty(Context), Align),
     ConstantInt::get(Type::getInt1Ty(Context), false)
   };
-  const Type *ArgTypes[3] = {SBP, SBP, IntPtr };
+  Type *ArgTypes[3] = {SBP, SBP, IntPtr };
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memmove,
                                                ArgTypes, 3), Ops, Ops+5);
@@ -1691,8 +1691,8 @@ Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
 
 Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
                               unsigned Align) {
-  const Type *SBP = Type::getInt8PtrTy(Context);
-  const Type *IntPtr = TD.getIntPtrType(Context);
+  Type *SBP = Type::getInt8PtrTy(Context);
+  Type *IntPtr = TD.getIntPtrType(Context);
   Value *Ops[5] = {
     BitCastToType(DestPtr, SBP),
     CastToSIntType(SrcVal, Type::getInt8Ty(Context)),
@@ -1701,7 +1701,7 @@ Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
     ConstantInt::get(Type::getInt1Ty(Context), false)
   };
 
-  const Type *ArgTypes[2] = {SBP, IntPtr };
+  Type *ArgTypes[2] = {SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memset,
                                                ArgTypes, 2), Ops, Ops+5);
   return Ops[0];
@@ -3034,7 +3034,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
   DefaultABI ABIConverter(Client);
 
   // Handle the result, including struct returns.
-  std::vector<const Type*> ScalarArgs;
+  std::vector<Type*> ScalarArgs;
   ABIConverter.HandleReturnType(TREE_TYPE(exp),
                                 fndecl ? fndecl : exp,
                                 fndecl ? DECL_BUILT_IN(fndecl) : false,
@@ -4354,7 +4354,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
   }
 
   // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
-  FunctionType *FTy = FunctionType::get(Ty, std::vector<const Type*>(),false);
+  FunctionType *FTy = FunctionType::get(Ty, std::vector<Type*>(),false);
 
   const char *Name = extractRegisterName(decl);
   int RegNum = decode_reg_name(Name);
@@ -4370,7 +4370,7 @@ Value *TreeToLLVM::EmitReadOfRegisterVariable(tree decl,
 /// that copies the value out of the specified register.
 Value *TreeToLLVM::EmitMoveOfRegVariableToRightReg(Instruction *I, tree var) {
   // Create a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
-  const Type *Ty = I->getType();
+  Type *Ty = I->getType();
 
   // If there was an error, return something bogus.
   if (ValidateRegisterVariable(var)) {
@@ -4379,7 +4379,7 @@ Value *TreeToLLVM::EmitMoveOfRegVariableToRightReg(Instruction *I, tree var) {
     return 0;   // Just don't copy something into DestLoc.
   }
 
-  std::vector<const Type*> ArgTys;
+  std::vector<Type*> ArgTys;
   ArgTys.push_back(Ty);
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context), 
                                         ArgTys, false);
@@ -4392,7 +4392,7 @@ Value *TreeToLLVM::EmitMoveOfRegVariableToRightReg(Instruction *I, tree var) {
   Call->setDoesNotThrow();
   // Create another asm with the same reg, this time producing an output.
   // Turn this into a 'tmp = call Ty asm "", "={reg}"()'.
-  FunctionType *FTy2 = FunctionType::get(Ty, std::vector<const Type*>(),
+  FunctionType *FTy2 = FunctionType::get(Ty, std::vector<Type*>(),
                                         false);
   InlineAsm *IA2 = InlineAsm::get(FTy2, "", "={"+std::string(Name)+"}",
                                  true);
@@ -4409,8 +4409,8 @@ void TreeToLLVM::EmitModifyOfRegisterVariable(tree decl, Value *RHS) {
     return;
 
   // Turn this into a 'call void asm sideeffect "", "{reg}"(Ty %RHS)'.
-  std::vector<const Type*> ArgTys;
-  const Type* Ty = ConvertType(TREE_TYPE(decl));
+  std::vector<Type*> ArgTys;
+  Type* Ty = ConvertType(TREE_TYPE(decl));
   if (LLVM_IS_DECL_MMX_REGISTER(decl))
     Ty = Type::getX86_MMXTy(Context);
   ArgTys.push_back(Ty);
@@ -4869,14 +4869,14 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   }
 
   std::vector<Value*> CallOps;
-  std::vector<const Type*> CallArgTypes;
+  std::vector<Type*> CallArgTypes;
   std::string NewAsmStr = ConvertInlineAsmStr(exp, NumOutputs+NumInputs);
   std::string ConstraintStr;
   bool HasSideEffects = ASM_VOLATILE_P(exp) || !ASM_OUTPUTS(exp);
 
   // StoreCallResultAddr - The pointer to store the result of the call through.
   SmallVector<Value *, 4> StoreCallResultAddrs;
-  SmallVector<const Type *, 4> CallResultTypes;
+  SmallVector<Type *, 4> CallResultTypes;
   SmallVector<bool, 4> CallResultIsSigned;
   SmallVector<std::pair<bool, unsigned>, 4> OutputLocations;
 
@@ -4936,8 +4936,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
     }
 
     LValue Dest = EmitLV(Operand);
-    const Type *DestValTy =
-      cast<PointerType>(Dest.Ptr->getType())->getElementType();
+    Type *DestValTy = cast<PointerType>(Dest.Ptr->getType())->getElementType();
 
     assert(!Dest.isBitfield() && "Cannot assign into a bitfield!");
     if (!AllowsMem && DestValTy->isSingleValueType()) {// Reg dest -> asm return
@@ -5077,7 +5076,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
         }
       }
 
-      const Type* AdjTy = LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(
+      Type* AdjTy = LLVM_ADJUST_MMX_INLINE_PARAMETER_TYPE(
                               Constraint, Op->getType());
       if (AdjTy != Op->getType())
         Op = BitCastToType(Op, AdjTy);
@@ -5158,9 +5157,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
   case 0: CallResultType = Type::getVoidTy(Context); break;
   case 1: CallResultType = CallResultTypes[0]; break;
   default:
-    std::vector<const Type*> TmpVec(CallResultTypes.begin(),
-                                    CallResultTypes.end());
-    CallResultType = StructType::get(Context, TmpVec);
+    CallResultType = StructType::get(Context, CallResultTypes);
     break;
   }
 
@@ -5308,7 +5305,7 @@ bool TreeToLLVM::EmitFrontendExpandedBuiltinCall(tree exp, tree fndecl,
                                                  Value *&Result) {
 #ifdef LLVM_TARGET_INTRINSIC_LOWER
   // Get the result type and operand line in an easy to consume format.
-  const Type *ResultType = ConvertType(TREE_TYPE(TREE_TYPE(fndecl)));
+  Type *ResultType = ConvertType(TREE_TYPE(TREE_TYPE(fndecl)));
   std::vector<Value*> Operands;
   for (tree Op = TREE_OPERAND(exp, 1); Op; Op = TREE_CHAIN(Op)) {
     tree OpVal = TREE_VALUE(Op);
@@ -5352,13 +5349,13 @@ void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss,
 
 Value *
 TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
-  const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+  Type *ResultTy = ConvertType(TREE_TYPE(exp));
   tree arglist = TREE_OPERAND(exp, 1);
   Value* C[2] = {
     Emit(TREE_VALUE(arglist), 0),
     Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
   };
-  const Type* Ty[2];
+  Type* Ty[2];
   Ty[0] = ResultTy;
   Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -5391,14 +5388,14 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
 
 Value *
 TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
-  const Type *ResultTy = ConvertType(type);
+  Type *ResultTy = ConvertType(type);
   tree arglist = TREE_OPERAND(exp, 1);
   Value* C[3] = {
     Emit(TREE_VALUE(arglist), 0),
     Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0),
     Emit(TREE_VALUE(TREE_CHAIN(TREE_CHAIN(arglist))), 0)
   };
-  const Type* Ty[2];
+  Type* Ty[2];
   Ty[0] = ResultTy;
   Ty[1] = ResultTy->getPointerTo();
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -5571,7 +5568,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     };
 
     // Grab the current return type.
-    const Type* Ty;
+    Type* Ty;
     Ty = ConvertType(TREE_TYPE(exp));
 
     // Manually coerce the arg to the correct pointer type.
@@ -5767,7 +5764,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // Get arguments.
     tree arglist = TREE_OPERAND(exp, 1);
     Value *ExprVal = Emit(TREE_VALUE(arglist), 0);
-    const Type *Ty = ExprVal->getType();
+    Type *Ty = ExprVal->getType();
     Value *StrVal = Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0);
 
     SmallVector<Value *, 4> Args;
@@ -5927,13 +5924,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_ADD_AND_FETCH_1:
   case BUILT_IN_ADD_AND_FETCH_2:
   case BUILT_IN_ADD_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -5974,13 +5971,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_SUB_AND_FETCH_1:
   case BUILT_IN_SUB_AND_FETCH_2:
   case BUILT_IN_SUB_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -6021,13 +6018,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_OR_AND_FETCH_1:
   case BUILT_IN_OR_AND_FETCH_2:
   case BUILT_IN_OR_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -6068,13 +6065,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_AND_AND_FETCH_1:
   case BUILT_IN_AND_AND_FETCH_2:
   case BUILT_IN_AND_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -6115,13 +6112,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_XOR_AND_FETCH_1:
   case BUILT_IN_XOR_AND_FETCH_2:
   case BUILT_IN_XOR_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -6162,13 +6159,13 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_NAND_AND_FETCH_1:
   case BUILT_IN_NAND_AND_FETCH_2:
   case BUILT_IN_NAND_AND_FETCH_4: {
-    const Type *ResultTy = ConvertType(TREE_TYPE(exp));
+    Type *ResultTy = ConvertType(TREE_TYPE(exp));
     tree arglist = TREE_OPERAND(exp, 1);
     Value* C[2] = {
       Emit(TREE_VALUE(arglist), 0),
       Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
     };
-    const Type* Ty[2];
+    Type* Ty[2];
     Ty[0] = ResultTy;
     Ty[1] = ResultTy->getPointerTo();
     C[0] = Builder.CreateBitCast(C[0], Ty[1]);
@@ -6293,7 +6290,7 @@ bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
   // varying type. Make sure that we specify the actual type for "iAny"
   // by passing it as the 3rd and 4th parameters. This isn't needed for
   // most intrinsics, but is needed for ctpop, cttz, ctlz.
-  const Type *Ty = InVal->getType();
+  Type *Ty = InVal->getType();
   Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
                               InVal);
   return true;
@@ -6301,7 +6298,7 @@ bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
 
 Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-  const Type* Ty = Amt->getType();
+  Type* Ty = Amt->getType();
 
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                       Intrinsic::sqrt, &Ty, 1),
@@ -6315,7 +6312,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
   Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
-  const Type *Ty = Val->getType();
+  Type *Ty = Val->getType();
   Pow = CastToSIntType(Pow, Type::getInt32Ty(Context));
 
   SmallVector<Value *,2> Args;
@@ -6333,7 +6330,7 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
 
   Value *Val = Emit(TREE_VALUE(ArgList), 0);
   Value *Pow = Emit(TREE_VALUE(TREE_CHAIN(ArgList)), 0);
-  const Type *Ty = Val->getType();
+  Type *Ty = Val->getType();
 
   SmallVector<Value *,2> Args;
   Args.push_back(Val);
@@ -7079,7 +7076,7 @@ static unsigned getComponentRefOffsetInBits(tree exp) {
 Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
   tree AnnotateAttr = lookup_attribute("annotate", DECL_ATTRIBUTES(FieldDecl));
 
-  const Type *SBP = Type::getInt8PtrTy(Context);
+  Type *SBP = Type::getInt8PtrTy(Context);
 
   Function *Fn = Intrinsic::getDeclaration(TheModule,
                                            Intrinsic::ptr_annotation,

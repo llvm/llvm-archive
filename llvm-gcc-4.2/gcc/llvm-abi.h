@@ -407,31 +407,31 @@ public:
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
   void HandleReturnType(tree type, tree fn, bool isBuiltin,
-                        std::vector<const Type*> &ScalarElts);
+                        std::vector<Type*> &ScalarElts);
 
   /// HandleArgument - This is invoked by the target-independent code for each
   /// argument type passed into the function.  It potentially breaks down the
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
+  void HandleArgument(tree type, std::vector<Type*> &ScalarElts,
                       Attributes *Attributes = NULL);
 
   /// HandleUnion - Handle a UNION_TYPE or QUAL_UNION_TYPE tree.
   ///
-  void HandleUnion(tree type, std::vector<const Type*> &ScalarElts);
+  void HandleUnion(tree type, std::vector<Type*> &ScalarElts);
 
   /// PassInIntegerRegisters - Given an aggregate value that should be passed in
   /// integer registers, convert it to a structure containing ints and pass all
   /// of the struct elements in.  If Size is set we pass only that many bytes.
-  void PassInIntegerRegisters(tree type, std::vector<const Type*> &ScalarElts,
+  void PassInIntegerRegisters(tree type, std::vector<Type*> &ScalarElts,
                               unsigned origSize, bool DontCheckAlignment);
 
   /// PassInMixedRegisters - Given an aggregate value that should be passed in
   /// mixed integer, floating point, and vector registers, convert it to a
   /// structure containing the specified struct elements in.
-  void PassInMixedRegisters(const Type *Ty, std::vector<const Type*> &OrigElts,
-                            std::vector<const Type*> &ScalarElts);
+  void PassInMixedRegisters(const Type *Ty, std::vector<Type*> &OrigElts,
+                            std::vector<Type*> &ScalarElts);
 };
 
 #endif /* LLVM_ABI_H */

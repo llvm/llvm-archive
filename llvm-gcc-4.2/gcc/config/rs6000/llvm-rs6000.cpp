@@ -94,7 +94,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
                                       const MemRef *DestLoc,
                                       Value *&Result,
-                                      const Type *ResultType,
+                                      Type *ResultType,
                                       std::vector<Value*> &Ops) {
   switch (FnCode) {
   default: break;
@@ -554,8 +554,8 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, const Type *Ty) {
    It also returns a vector of types that correspond to the registers used
    for parameter passing. */
 bool 
-llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type* Ty,
-                                              std::vector<const Type*>&Elts) {
+llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, Type* Ty,
+                                              std::vector<Type*>&Elts) {
   // FIXME there are plenty of ppc64 cases that need this.
   if (TARGET_64BIT)
     return false;

@@ -129,7 +129,7 @@ class TypeConverter {
 public:
   TypeConverter() : RecursionStatus(CS_Normal) {}
   
-  const Type *ConvertType(tree_node *type);
+  Type *ConvertType(tree_node *type);
 
   /// GCCTypeOverlapsWithLLVMTypePadding - Return true if the specified GCC type
   /// has any data that overlaps with structure padding in the specified LLVM
@@ -140,11 +140,11 @@ public:
   /// ConvertFunctionType - Convert the specified FUNCTION_TYPE or METHOD_TYPE
   /// tree to an LLVM type.  This does the same thing that ConvertType does, but
   /// it also returns the function's LLVM calling convention and attributes.
-  const FunctionType *ConvertFunctionType(tree_node *type,
-                                          tree_node *decl,
-                                          tree_node *static_chain,
-                                          CallingConv::ID &CallingConv,
-                                          AttrListPtr &PAL);
+  FunctionType *ConvertFunctionType(tree_node *type,
+                                    tree_node *decl,
+                                    tree_node *static_chain,
+                                    CallingConv::ID &CallingConv,
+                                    AttrListPtr &PAL);
   
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
   /// return the LLVM type corresponding to the function.  This is useful for
@@ -156,8 +156,8 @@ public:
                                              AttrListPtr &PAL);
   
 private:
-  const Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
-  const Type *ConvertUNION(tree_node *type, tree_node *orig_type);
+  Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
+  Type *ConvertUNION(tree_node *type, tree_node *orig_type);
   bool DecodeStructFields(tree_node *Field, StructTypeConversionInfo &Info);
   void DecodeStructBitField(tree_node *Field, StructTypeConversionInfo &Info);
   void SelectUnionMember(tree_node *type, StructTypeConversionInfo &Info);
@@ -167,7 +167,7 @@ extern TypeConverter *TheTypeConverter;
 
 /// ConvertType - Convert the specified tree type to an LLVM type.
 ///
-inline const Type *ConvertType(tree_node *type) {
+inline Type *ConvertType(tree_node *type) {
   return TheTypeConverter->ConvertType(type);
 }
 
@@ -615,7 +615,7 @@ private:
                             unsigned FnCode,
                             const MemRef *DestLoc,
                             Value *&Result,
-                            const Type *ResultType,
+                            Type *ResultType,
                             std::vector<Value*> &Ops);
 
 public:

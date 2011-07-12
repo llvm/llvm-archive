@@ -59,8 +59,8 @@ extern "C" {
 // a map.
 
 // Collection of LLVM Types
-static std::vector<Type *> LTypes;
-typedef DenseMap<Type *, unsigned> LTypesMapTy;
+static std::vector<const Type *> LTypes;
+typedef DenseMap<const Type *, unsigned> LTypesMapTy;
 static LTypesMapTy LTypesMap;
 
 static LLVMContext &Context = getGlobalContext();
@@ -72,7 +72,7 @@ static LLVMContext &Context = getGlobalContext();
   (TYPE_CHECK (NODE)->type.symtab.llvm = index)
 
 // Note down LLVM type for GCC tree node.
-static Type * llvm_set_type(tree Tr, Type *Ty) {
+static const Type * llvm_set_type(tree Tr, const Type *Ty) {
 #ifndef NDEBUG
   // For x86 long double, llvm records the size of the data (80) while
   // gcc's TYPE_SIZE including alignment padding.  getTypeAllocSizeInBits
@@ -107,12 +107,12 @@ static Type * llvm_set_type(tree Tr, Type *Ty) {
   return Ty;
 }
 
-#define SET_TYPE_LLVM(NODE, TYPE) llvm_set_type(NODE, TYPE)
+#define SET_TYPE_LLVM(NODE, TYPE) (const Type *)llvm_set_type(NODE, TYPE)
 
 // Get LLVM Type for the GCC tree node based on LTypes vector index.
 // When GCC tree node is initialized, it has 0 as the index value. This is
 // why all recorded indexes are offset by 1. 
-extern "C" Type *llvm_get_type(unsigned Index) {
+extern "C" const Type *llvm_get_type(unsigned Index) {
   if (Index == 0)
     return NULL;
   assert ((Index - 1) < LTypes.size() && "Invalid LLVM Type index");
@@ -120,10 +120,10 @@ extern "C" Type *llvm_get_type(unsigned Index) {
 }
 
 #define GET_TYPE_LLVM(NODE) \
-  llvm_get_type( TYPE_CHECK (NODE)->type.symtab.llvm)
+  (const Type *)llvm_get_type( TYPE_CHECK (NODE)->type.symtab.llvm)
 
 // Erase type from LTypes vector
-static void llvmEraseLType(Type *Ty) {
+static void llvmEraseLType(const Type *Ty) {
   LTypesMapTy::iterator I = LTypesMap.find(Ty);
 
   if (I != LTypesMap.end()) {
@@ -161,7 +161,7 @@ void writeLLVMTypesStringTable() {
     return;
 
   // Convert the LTypes list to a list of pointers.
-  std::vector<Type*> PTys;
+  std::vector<const Type*> PTys;
   for (unsigned i = 0, e = LTypes.size(); i != e; ++i) {
     // Cannot form pointer to void.  Use i8 as a sentinel.
     if (LTypes[i]->isVoidTy())
@@ -488,7 +488,7 @@ bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type,
 //                      Main Type Conversion Routines
 //===----------------------------------------------------------------------===//
 
-Type *TypeConverter::ConvertType(tree orig_type) {
+const Type *TypeConverter::ConvertType(tree orig_type) {
   if (orig_type == error_mark_node) return Type::getInt32Ty(Context);
   
   // LLVM doesn't care about variants such as const, volatile, or restrict.
@@ -504,7 +504,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
   case QUAL_UNION_TYPE:
   case UNION_TYPE:  return ConvertRECORD(type, orig_type);
   case BOOLEAN_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type))
+    if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
     return SET_TYPE_LLVM(type,
                      IntegerType::get(Context, TREE_INT_CST_LOW(TYPE_SIZE(type))));
@@ -513,25 +513,25 @@ Type *TypeConverter::ConvertType(tree orig_type) {
     // Use of an enum that is implicitly declared?
     if (TYPE_SIZE(orig_type) == 0) {
       // If we already compiled this type, use the old type.
-      if (Type *Ty = GET_TYPE_LLVM(orig_type))
+      if (const Type *Ty = GET_TYPE_LLVM(orig_type))
         return Ty;
 
       // Just mark it as a named type for now.
-      Type *Ty = StructType::createNamed(Context, 
-                                         GetTypeName("enum.", orig_type));
+      const Type *Ty = StructType::createNamed(Context, 
+                                               GetTypeName("enum.", orig_type));
       return SET_TYPE_LLVM(orig_type, Ty);
     }
     // FALL THROUGH.
     type = orig_type;
   case INTEGER_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     // The ARM port defines __builtin_neon_xi as a 511-bit type because GCC's
     // type precision field has only 9 bits.  Treat this as a special case.
     int precision = TYPE_PRECISION(type) == 511 ? 512 : TYPE_PRECISION(type);
     return SET_TYPE_LLVM(type, IntegerType::get(Context, precision));
   }
   case REAL_TYPE:
-    if (Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     switch (TYPE_PRECISION(type)) {
     default:
       fprintf(stderr, "Unknown FP type!\n");
@@ -557,13 +557,13 @@ Type *TypeConverter::ConvertType(tree orig_type) {
     }
     
   case COMPLEX_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    Type *Ty = ConvertType(TREE_TYPE(type));
+    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    const Type *Ty = ConvertType(TREE_TYPE(type));
     return SET_TYPE_LLVM(type, StructType::get(Ty, Ty, NULL));
   }
   case VECTOR_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type)) return Ty;
-    Type *Ty = ConvertType(TREE_TYPE(type));
+    if (const Type *Ty = GET_TYPE_LLVM(type)) return Ty;
+    const Type *Ty = ConvertType(TREE_TYPE(type));
     Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
     return SET_TYPE_LLVM(type, Ty);
   }
@@ -576,7 +576,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
     if (RecursionStatus == CS_Struct)
       RecursionStatus = CS_StructPtr;
     
-    Type *Ty = ConvertType(TREE_TYPE(type));
+    const Type *Ty = ConvertType(TREE_TYPE(type));
     
     RecursionStatus = SavedCS;
     
@@ -587,7 +587,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
    
   case METHOD_TYPE:
   case FUNCTION_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type))
+    if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
       
     // No declaration to pass through, passing NULL.
@@ -597,7 +597,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
                                                    CallingConv, PAL));
   }
   case ARRAY_TYPE: {
-    if (Type *Ty = GET_TYPE_LLVM(type))
+    if (const Type *Ty = GET_TYPE_LLVM(type))
       return Ty;
 
     uint64_t ElementSize;
@@ -665,13 +665,13 @@ Type *TypeConverter::ConvertType(tree orig_type) {
 namespace {
   class FunctionTypeConversion : public DefaultABIClient {
     const Type *&RetTy;
-    std::vector<Type*> &ArgTypes;
+    std::vector<const Type*> &ArgTypes;
     CallingConv::ID &CallingConv;
     bool isShadowRet;
     bool KNRPromotion;
     unsigned Offset;
   public:
-    FunctionTypeConversion(const Type *&retty, std::vector<Type*> &AT,
+    FunctionTypeConversion(const Type *&retty, std::vector<const Type*> &AT,
                            CallingConv::ID &CC, bool KNR)
       : RetTy(retty), ArgTypes(AT), CallingConv(CC), KNRPromotion(KNR), Offset(0) {
       CallingConv = CallingConv::C;
@@ -704,7 +704,7 @@ namespace {
     }
 
     /// HandleShadowResult - Handle an aggregate or scalar shadow argument.
-    void HandleShadowResult(PointerType *PtrArgTy, bool RetPtr) {
+    void HandleShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       // This function either returns void or the shadow argument,
       // depending on the target.
       RetTy = RetPtr ? PtrArgTy : Type::getVoidTy(Context);
@@ -720,7 +720,8 @@ namespace {
     /// returns an aggregate value by using a "shadow" first parameter, which is
     /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
     /// the pointer argument itself is returned from the function.
-    void HandleAggregateShadowResult(PointerType *PtrArgTy, bool RetPtr) {
+    void HandleAggregateShadowResult(const PointerType *PtrArgTy,
+                                       bool RetPtr) {
       HandleShadowResult(PtrArgTy, RetPtr);
     }
 
@@ -728,15 +729,15 @@ namespace {
     /// returns a scalar value by using a "shadow" first parameter, which is a
     /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
     /// the pointer argument itself is returned from the function.
-    void HandleScalarShadowResult(PointerType *PtrArgTy, bool RetPtr) {
+    void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {
       HandleShadowResult(PtrArgTy, RetPtr);
     }
 
-    void HandlePad(llvm::Type *LLVMTy) {
+    void HandlePad(const llvm::Type *LLVMTy) {
       HandleScalarArgument(LLVMTy, 0, 0);
     }
 
-    void HandleScalarArgument(llvm::Type *LLVMTy, tree type,
+    void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
                               unsigned RealSize = 0) {
       if (KNRPromotion) {
         if (type == float_type_node)
@@ -751,7 +752,7 @@ namespace {
 
     /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
     /// (of type PtrTy) to the argument is passed rather than the argument itself.
-    void HandleByInvisibleReferenceArgument(llvm::Type *PtrTy, tree type) {
+    void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type) {
       ArgTypes.push_back(PtrTy);
     }
 
@@ -764,7 +765,7 @@ namespace {
 
     /// HandleFCAArgument - This callback is invoked if the aggregate function
     /// argument is a first class aggregate passed by value.
-    void HandleFCAArgument(llvm::Type *LLVMTy,
+    void HandleFCAArgument(const llvm::Type *LLVMTy,
                            tree type ATTRIBUTE_UNUSED) {
       ArgTypes.push_back(LLVMTy);
     }
@@ -797,7 +798,7 @@ const FunctionType *TypeConverter::
 ConvertArgListToFnType(tree type, tree Args, tree static_chain,
                        CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   tree ReturnType = TREE_TYPE(type);
-  std::vector<Type*> ArgTys;
+  std::vector<const Type*> ArgTys;
   const Type *RetTy = Type::getVoidTy(Context);
 
   FunctionTypeConversion Client(RetTy, ArgTys, CallingConv, true /*K&R*/);
@@ -807,7 +808,7 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
   
-  std::vector<Type*> ScalarArgs;
+  std::vector<const Type*> ScalarArgs;
   // Builtins are always prototyped, so this isn't one.
   ABIConverter.HandleReturnType(ReturnType, current_function_decl, false,
                                 ScalarArgs);
@@ -864,11 +865,11 @@ ConvertArgListToFnType(tree type, tree Args, tree static_chain,
   return FunctionType::get(RetTy, ArgTys, false);
 }
 
-FunctionType *TypeConverter::
+const FunctionType *TypeConverter::
 ConvertFunctionType(tree type, tree decl, tree static_chain,
                     CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   const Type *RetTy = Type::getVoidTy(Context);
-  std::vector<Type *> ArgTypes;
+  std::vector<const Type *> ArgTypes;
   bool isVarArg = false;
   FunctionTypeConversion Client(RetTy, ArgTypes, CallingConv, false/*not K&R*/);
   DefaultABI ABIConverter(Client);
@@ -878,7 +879,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   TARGET_ADJUST_LLVM_CC(CallingConv, type);
 #endif
 
-  std::vector<Type*> ScalarArgs;
+  std::vector<const Type*> ScalarArgs;
   ABIConverter.HandleReturnType(TREE_TYPE(type), current_function_decl,
                                 decl ? DECL_BUILT_IN(decl) : false,
                                 ScalarArgs);
@@ -972,7 +973,7 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   for (; Args && TREE_VALUE(Args) != void_type_node; Args = TREE_CHAIN(Args)){
     tree ArgTy = TREE_VALUE(Args);
     if (!isPassedByInvisibleReference(ArgTy))
-      if (StructType *STy = dyn_cast<StructType>(ConvertType(ArgTy)))
+      if (const StructType *STy = dyn_cast<StructType>(ConvertType(ArgTy)))
         if (STy->isOpaque()) {
           // If we are passing an opaque struct by value, we don't know how many
           // arguments it will turn into.  Because we can't handle this yet,
@@ -1648,7 +1649,7 @@ bool TypeConverter::DecodeStructFields(tree Field,
       // If Field has user defined alignment and it does not match Ty alignment
       // then convert to a packed struct and try again.
       if (TYPE_USER_ALIGN(DECL_BIT_FIELD_TYPE(Field))) {
-        Type *Ty = ConvertType(getDeclaredType(Field));
+        const Type *Ty = ConvertType(getDeclaredType(Field));
         if (TYPE_ALIGN(DECL_BIT_FIELD_TYPE(Field)) !=
             8 * Info.getTypeAlignment(Ty))
           return false;
@@ -1665,7 +1666,7 @@ bool TypeConverter::DecodeStructFields(tree Field,
   assert((StartOffsetInBits & 7) == 0 && "Non-bit-field has non-byte offset!");
   uint64_t StartOffsetInBytes = StartOffsetInBits/8;
 
-  Type *Ty = ConvertType(getDeclaredType(Field));
+  const Type *Ty = ConvertType(getDeclaredType(Field));
 
   // If this field is packed then the struct may need padding fields
   // before this field.
@@ -1874,7 +1875,7 @@ void TypeConverter::SelectUnionMember(tree type,
         TREE_INT_CST_LOW(DECL_SIZE(Field)) == 0)
       continue;
 
-    Type *TheTy = ConvertType(TheGccTy);
+    const Type *TheTy = ConvertType(TheGccTy);
     unsigned Size  = Info.getTypeSize(TheTy);
     unsigned Align = Info.getTypeAlignment(TheTy);
 
@@ -1938,9 +1939,9 @@ void TypeConverter::SelectUnionMember(tree type,
 //
 // For LLVM purposes, we build a new type for B-within-D that 
 // has the correct size and layout for that usage.
-Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
+const Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   bool IsStruct = TREE_CODE(type) == RECORD_TYPE;
-  if (StructType *Ty = cast_or_null<StructType>(GET_TYPE_LLVM(type))) {
+  if (const StructType *Ty = cast_or_null<StructType>(GET_TYPE_LLVM(type))) {
     // If we already compiled this type, and if it was not a forward
     // definition that is now defined, use the old type.
     if (!Ty->isOpaque() || TYPE_SIZE(type) == 0)
@@ -2059,7 +2060,7 @@ Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
       } else {
         uint64_t FieldOffsetInBits = getFieldOffsetInBits(Field);
         tree FieldType = getDeclaredType(Field);
-        Type *FieldTy = ConvertType(FieldType);
+        const Type *FieldTy = ConvertType(FieldType);
 
         // If this is a bitfield, we may want to adjust the FieldOffsetInBits
         // to produce safe code.  In particular, bitfields will be
@@ -2100,7 +2101,7 @@ Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   if (IsStruct)
     RestoreOriginalFields(type);
 
-  StructType *ResultTy = cast<StructType>(GET_TYPE_LLVM(type));
+  const StructType *ResultTy = cast<StructType>(GET_TYPE_LLVM(type));
   Info->fillInLLVMType((StructType*)ResultTy);
   StructTypeInfoMap[type] = Info;
   

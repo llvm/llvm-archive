@@ -102,7 +102,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
                                       const MemRef *DestLoc,
                                       Value *&Result,
-                                      Type *ResultType,
+                                      const Type *ResultType,
                                       std::vector<Value*> &Ops) {
   switch (FnCode) {
   case ALPHA_BUILTIN_UMULH: {

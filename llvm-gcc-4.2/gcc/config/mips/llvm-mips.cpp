@@ -67,7 +67,7 @@ const Type *llvm_mips_aggr_type_for_struct_return(tree type) {
   const Type *Ty = ConvertType(type);
 
   const StructType *STy = cast<StructType>(Ty);
-  std::vector<Type *> ElementTypes;
+  std::vector<const Type *> ElementTypes;
 
   // Special handling for _Complex.
   if (llvm_mips_should_not_return_complex_in_memory(type)) {

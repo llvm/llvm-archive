@@ -3490,14 +3490,14 @@ enum rs6000_builtins
 #ifdef LLVM_ABI_H
 
 extern bool llvm_rs6000_try_pass_aggregate_custom(tree,
-						  std::vector<const Type*>&,
+						  std::vector<Type*>&,
 						  const CallingConv::ID &,
 						  struct DefaultABIClient*);
 
 #define LLVM_TRY_PASS_AGGREGATE_CUSTOM(T, E, CC, C)	\
   llvm_rs6000_try_pass_aggregate_custom((T), (E), (CC), (C))
 
-extern bool llvm_rs6000_should_pass_aggregate_byval(tree, const Type *);
+extern bool llvm_rs6000_should_pass_aggregate_byval(tree, Type *);
 
 #define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
   llvm_rs6000_should_pass_aggregate_byval((X), (TY))
@@ -3508,8 +3508,8 @@ extern bool llvm_rs6000_should_pass_vector_in_integer_regs(tree);
 #define LLVM_SHOULD_PASS_VECTOR_IN_INTEGER_REGS(X)            \
   llvm_rs6000_should_pass_vector_in_integer_regs((X))
 
-extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, const Type*, 
-                                              std::vector<const Type*>&);
+extern bool llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree, Type*, 
+                                              std::vector<Type*>&);
 
 /* FIXME this is needed for 64-bit  */
 #define LLVM_SHOULD_PASS_AGGREGATE_IN_MIXED_REGS(T, TY, CC, E) \

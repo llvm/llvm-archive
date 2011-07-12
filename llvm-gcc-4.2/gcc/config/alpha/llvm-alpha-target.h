@@ -25,7 +25,7 @@
 
 #ifdef LLVM_ABI_H
 
-extern bool llvm_alpha_should_return_scalar_as_shadow(const Type* Ty);
+extern bool llvm_alpha_should_return_scalar_as_shadow(Type* Ty);
 
 /* check if i128 should be a shadow return */
 #define LLVM_SHOULD_RETURN_SCALAR_AS_SHADOW(X) \

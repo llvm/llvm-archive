@@ -22,7 +22,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 #ifdef LLVM_ABI_H
 
-extern bool llvm_mips_should_pass_aggregate_in_memory(tree, const Type *);
+extern bool llvm_mips_should_pass_aggregate_in_memory(tree, Type *);
 
 /* LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR - Return true if this aggregate
    value should be passed by value, i.e. passing its address with the byval
@@ -39,7 +39,7 @@ llvm_mips_should_not_return_complex_in_memory(tree type);
 #define LLVM_SHOULD_NOT_RETURN_COMPLEX_IN_MEMORY(X) \
   llvm_mips_should_not_return_complex_in_memory((X))
 
-extern const Type *llvm_mips_aggr_type_for_struct_return(tree type);
+extern Type *llvm_mips_aggr_type_for_struct_return(tree type);
 
 /* LLVM_AGGR_TYPE_FOR_STRUCT_RETURN - Return LLVM Type if X can be 
    returned as an aggregate, otherwise return NULL. */

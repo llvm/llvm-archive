@@ -95,7 +95,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
                                       const MemRef *DestLoc,
                                       Value *&Result,
-                                      const Type *ResultType,
+                                      Type *ResultType,
                                       std::vector<Value*> &Ops) {
   switch (FnCode) {
   default: break;
@@ -1108,8 +1108,8 @@ static bool llvm_x86_is_all_integer_types(const Type *Ty) {
    It also returns a vector of types that correspond to the registers used
    for parameter passing. This is only called for x86-32. */
 bool
-llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
-                                                std::vector<const Type*> &Elts){
+llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
+                                                std::vector<Type*> &Elts){
   // If this is a small fixed size type, investigate it.
   HOST_WIDE_INT SrcSize = int_size_in_bytes(TreeType);
   if (SrcSize <= 0 || SrcSize > 16)
@@ -1125,7 +1125,7 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
   if (!STy || STy->isPacked()) return false;
 
   for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-    const Type *EltTy = STy->getElementType(i);
+    Type *EltTy = STy->getElementType(i);
     // 32 and 64-bit integers are fine, as are float and double.  Long double
     // (which can be picked as the type for a union of 16 bytes) is not fine, 
     // as loads and stores of it get only 10 bytes.
@@ -1147,7 +1147,7 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
 
 /* It returns true if an aggregate of the specified type should be passed as a
    first class aggregate. */
-bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
+bool llvm_x86_should_pass_aggregate_as_fca(tree type, Type *Ty) {
   if (TREE_CODE(type) != COMPLEX_TYPE)
     return false;
   const StructType *STy = dyn_cast<StructType>(Ty);
@@ -1165,7 +1165,7 @@ bool llvm_x86_should_pass_aggregate_as_fca(tree type, const Type *Ty) {
 
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. */
-bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
+bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, Type *Ty) {
   if (llvm_x86_should_pass_aggregate_as_fca(TreeType, Ty))
     return false;
 
@@ -1178,7 +1178,7 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
     return false;
 
   if (!TARGET_64BIT) {
-    std::vector<const Type*> Elts;
+    std::vector<Type*> Elts;
     return !llvm_x86_32_should_pass_aggregate_in_mixed_regs(TreeType, Ty, Elts);
   }
   return llvm_x86_64_should_pass_aggregate_in_memory(TreeType, Mode);
@@ -1186,7 +1186,7 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
 
 /* count_num_registers_uses - Return the number of GPRs and XMMs parameter
    register used so far.  Caller is responsible for initializing outputs. */
-static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
+static void count_num_registers_uses(std::vector<Type*> &ScalarElts,
                                      unsigned &NumGPRs, unsigned &NumXMMs) {
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
     const Type *Ty = ScalarElts[i];
@@ -1220,8 +1220,8 @@ static void count_num_registers_uses(std::vector<const Type*> &ScalarElts,
    part of the aggregate, return true. That means the aggregate should instead
    be passed in memory. */
 bool
-llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
-                                         std::vector<const Type*> &ScalarElts) {
+llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<Type*> &Elts,
+                                               std::vector<Type*> &ScalarElts) {
   // Counting number of GPRs and XMMs used so far. According to AMD64 ABI
   // document: "If there are no registers available for any eightbyte of an
   // argument, the whole  argument is passed on the stack." X86-64 uses 6
@@ -1266,8 +1266,8 @@ llvm_x86_64_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
    It also returns a vector of types that correspond to the registers used
    for parameter passing. This is only called for x86-64. */
 bool
-llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
-                                                std::vector<const Type*> &Elts){
+llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
+                                                std::vector<Type*> &Elts){
   if (llvm_x86_should_pass_aggregate_as_fca(TreeType, Ty))
     return false;
 
@@ -1544,7 +1544,7 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
 
 // llvm_x86_scalar_type_for_struct_return - Return LLVM type if TYPE
 // can be returned as a scalar, otherwise return NULL.
-const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
+Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
   *Offset = 0;
   const Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
@@ -1633,7 +1633,7 @@ const Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) 
 /// llvm_x86_64_should_pass_aggregate_in_mixed_regs code.
 void
 llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
-                                            std::vector<const Type*> &Elts){
+                                            std::vector<Type*> &Elts){
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
   HOST_WIDE_INT Bytes =
@@ -1768,13 +1768,13 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
 
 // Return LLVM Type if TYPE can be returned as an aggregate, 
 // otherwise return NULL.
-const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
+Type *llvm_x86_aggr_type_for_struct_return(tree type) {
   const Type *Ty = ConvertType(type);
   if (!llvm_suitable_multiple_ret_value_type(Ty, type))
     return NULL;
 
   const StructType *STy = cast<StructType>(Ty);
-  std::vector<const Type *> ElementTypes;
+  std::vector<Type *> ElementTypes;
 
   // Special handling for _Complex.
   if (llvm_x86_should_not_return_complex_in_memory(type)) {
@@ -1783,7 +1783,7 @@ const Type *llvm_x86_aggr_type_for_struct_return(tree type) {
     return StructType::get(Context, ElementTypes, STy->isPacked());
   } 
 
-  std::vector<const Type*> GCCElts;
+  std::vector<Type*> GCCElts;
   llvm_x86_64_get_multiple_return_reg_classes(type, Ty, GCCElts);
   return StructType::get(Context, GCCElts, false);
 }

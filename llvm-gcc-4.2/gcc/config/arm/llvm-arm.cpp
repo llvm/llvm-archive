@@ -58,7 +58,7 @@ static bool UnexpectedError(const char *msg, tree exp, Value *&Result) {
   error(msg, &EXPR_LOCATION(exp));
 
   // Set the Result to an undefined value.
-  const Type *ResTy = ConvertType(TREE_TYPE(exp));
+  Type *ResTy = ConvertType(TREE_TYPE(exp));
   if (ResTy->isSingleValueType())
     Result = UndefValue::get(ResTy);
 
@@ -246,13 +246,13 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       unsigned FnCode,
                                       const MemRef *DestLoc,
                                       Value *&Result,
-                                      const Type *ResultType,
+                                      Type *ResultType,
                                       std::vector<Value*> &Ops) {
   neon_datatype datatype = neon_datatype_unspecified;
   bool isRounded = false;
   Intrinsic::ID intID = Intrinsic::not_intrinsic;
   Function *intFn;
-  const Type* intOpTypes[2];
+  Type* intOpTypes[2];
 
   if (FnCode < ARM_BUILTIN_NEON_BASE)
     return false;
@@ -1415,7 +1415,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabdl result");
-    const llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
+    llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
     intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
     Ops[0] = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     Result = Builder.CreateZExt(Ops[0], ResultType);
@@ -1445,7 +1445,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabal result");
-    const llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
+    llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
     intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
     Ops[1] = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
@@ -2033,7 +2033,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld4: {
     const StructType *STy = dyn_cast<const StructType>(ResultType);
     assert(STy && "expected a struct type");
-    const Type *VTy = STy->getElementType(0);
+    Type *VTy = STy->getElementType(0);
     switch (neon_code) {
     case NEON_BUILTIN_vld2: intID = Intrinsic::arm_neon_vld2; break;
     case NEON_BUILTIN_vld3: intID = Intrinsic::arm_neon_vld3; break;
@@ -2062,9 +2062,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld2_lane:
   case NEON_BUILTIN_vld3_lane:
   case NEON_BUILTIN_vld4_lane: {
-    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    StructType *STy = dyn_cast<StructType>(ResultType);
     assert(STy && "expected a struct type");
-    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    VectorType *VTy = dyn_cast<VectorType>(STy->getElementType(0));
     assert(VTy && "expected a vector type");
     if (!isValidLane(Ops[2], VTy->getNumElements()))
       return UnexpectedError("%Hinvalid lane number", exp, Result);
@@ -2105,9 +2105,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vld2_dup:
   case NEON_BUILTIN_vld3_dup:
   case NEON_BUILTIN_vld4_dup: {
-    const StructType *STy = dyn_cast<const StructType>(ResultType);
+    StructType *STy = dyn_cast<StructType>(ResultType);
     assert(STy && "expected a struct type");
-    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    VectorType *VTy = dyn_cast<VectorType>(STy->getElementType(0));
     assert(VTy && "expected a vector type");
     intOpTypes[0] = VTy;
 
@@ -2168,7 +2168,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
 
   case NEON_BUILTIN_vst1: {
-    const Type *VTy = Ops[1]->getType();
+    Type *VTy = Ops[1]->getType();
     intID = Intrinsic::arm_neon_vst1;
     intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
@@ -2184,7 +2184,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vst4: {
     const StructType *STy = dyn_cast<const StructType>(Ops[1]->getType());
     assert(STy && "expected a struct type");
-    const Type *VTy = STy->getElementType(0);
+    Type *VTy = STy->getElementType(0);
     switch (neon_code) {
     case NEON_BUILTIN_vst2: intID = Intrinsic::arm_neon_vst2; break;
     case NEON_BUILTIN_vst3: intID = Intrinsic::arm_neon_vst3; break;
@@ -2224,9 +2224,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vst2_lane:
   case NEON_BUILTIN_vst3_lane:
   case NEON_BUILTIN_vst4_lane: {
-    const StructType *STy = dyn_cast<const StructType>(Ops[1]->getType());
+    StructType *STy = dyn_cast<StructType>(Ops[1]->getType());
     assert(STy && "expected a struct type");
-    const VectorType *VTy = dyn_cast<const VectorType>(STy->getElementType(0));
+    VectorType *VTy = dyn_cast<VectorType>(STy->getElementType(0));
     assert(VTy && "expected a vector type");
     if (!isValidLane(Ops[2], VTy->getNumElements()))
       return UnexpectedError("%Hinvalid lane number", exp, Result);
@@ -2521,11 +2521,11 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
 // Walk over an LLVM Type that we know is a homogeneous aggregate and
 // push the proper LLVM Types that represent the register types to pass
 // that struct member in.
-static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
+static void push_elts(const Type *Ty, std::vector<Type*> &Elts)
 {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
-    const Type *STy = *I;
+    Type *STy = *I;
     if (const VectorType *VTy = dyn_cast<VectorType>(STy)) {
       switch (VTy->getBitWidth())
       {
@@ -2538,8 +2538,8 @@ static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
         default:
           assert (0 && "invalid vector type");
       }
-    } else if (const ArrayType *ATy = dyn_cast<ArrayType>(STy)) {
-      const Type *ETy = ATy->getElementType();
+    } else if (ArrayType *ATy = dyn_cast<ArrayType>(STy)) {
+      Type *ETy = ATy->getElementType();
 
       for (uint64_t i = ATy->getNumElements(); i > 0; --i)
         Elts.push_back(ETy);
@@ -2550,7 +2550,7 @@ static void push_elts(const Type *Ty, std::vector<const Type*> &Elts)
   }
 }
 
-static unsigned count_num_words(std::vector<const Type*> &ScalarElts) {
+static unsigned count_num_words(std::vector<Type*> &ScalarElts) {
   unsigned NumWords = 0;
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
     const Type *Ty = ScalarElts[i];
@@ -2574,7 +2574,7 @@ static unsigned count_num_words(std::vector<const Type*> &ScalarElts) {
 // the IL a bit more explicit about how arguments are handled.
 extern bool
 llvm_arm_try_pass_aggregate_custom(tree type,
-                                   std::vector<const Type*>& ScalarElts,
+                                   std::vector<Type*>& ScalarElts,
 				   CallingConv::ID& CC,
 				   struct DefaultABIClient* C) {
   if (CC != CallingConv::ARM_AAPCS && CC != CallingConv::C)
@@ -2596,14 +2596,14 @@ llvm_arm_try_pass_aggregate_custom(tree type,
 
   // First, build a type that will be bitcast to the original one and
   // from where elements will be extracted.
-  std::vector<const Type*> Elts;
-  const Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
+  std::vector<Type*> Elts;
+  Type* Int32Ty = Type::getInt32Ty(getGlobalContext());
   const unsigned NumRegularArgs = Size / 4;
   for (unsigned i = 0; i < NumRegularArgs; ++i) {
     Elts.push_back(Int32Ty);
   }
   const unsigned RestSize = Size % 4;
-  const llvm::Type *RestType = NULL;
+  llvm::Type *RestType = NULL;
   if (RestSize> 2) {
     RestType = Type::getInt32Ty(getGlobalContext());
   } else if (RestSize > 1) {
@@ -2613,7 +2613,7 @@ llvm_arm_try_pass_aggregate_custom(tree type,
   }
   if (RestType)
     Elts.push_back(RestType);
-  const StructType *STy = StructType::get(getGlobalContext(), Elts, false);
+  StructType *STy = StructType::get(getGlobalContext(), Elts, false);
 
   if (AddPad) {
     ScalarElts.push_back(Int32Ty);
@@ -2641,9 +2641,9 @@ llvm_arm_try_pass_aggregate_custom(tree type,
 // for parameter passing. This only applies to AAPCS-VFP "homogeneous
 // aggregates" as specified in 4.3.5 of the AAPCS spec.
 bool
-llvm_arm_should_pass_aggregate_in_mixed_regs(tree TreeType, const Type *Ty,
+llvm_arm_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
                                              CallingConv::ID &CC,
-                                             std::vector<const Type*> &Elts) {
+                                             std::vector<Type*> &Elts) {
   if (!llvm_arm_should_pass_or_return_aggregate_in_regs(TreeType, CC))
     return false;
 
@@ -2686,7 +2686,7 @@ static bool alloc_next_qpr(bool *SPRs) {
 // count_num_registers_uses - Simulate argument passing reg allocation in SPRs.
 // Caller is expected to zero out SPRs.  Returns true if all of ScalarElts fit
 // in registers.
-static bool count_num_registers_uses(std::vector<const Type*> &ScalarElts,
+static bool count_num_registers_uses(std::vector<Type*> &ScalarElts,
                                      bool *SPRs) {
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
     const Type *Ty = ScalarElts[i];
@@ -2734,8 +2734,8 @@ static bool count_num_registers_uses(std::vector<const Type*> &ScalarElts,
 // part of the aggregate, return true. That means the aggregate should instead
 // be passed in memory.
 bool
-llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
-                                            std::vector<const Type*> &ScalarElts,
+llvm_arm_aggregate_partially_passed_in_regs(std::vector<Type*> &Elts,
+                                            std::vector<Type*> &ScalarElts,
                                             CallingConv::ID &CC) {
   // Homogeneous aggregates are an AAPCS-VFP feature.
   if ((CC != CallingConv::ARM_AAPCS_VFP) ||
@@ -2756,14 +2756,14 @@ llvm_arm_aggregate_partially_passed_in_regs(std::vector<const Type*> &Elts,
 
 // Return LLVM Type if TYPE can be returned as an aggregate,
 // otherwise return NULL.
-const Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
-                                                 CallingConv::ID &CC) {
+Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
+                                           CallingConv::ID &CC) {
   if (!llvm_arm_should_pass_or_return_aggregate_in_regs(TreeType, CC))
     return NULL;
 
   // Walk Ty and push LLVM types corresponding to register types onto
   // Elts.
-  std::vector<const Type*> Elts;
+  std::vector<Type*> Elts;
   const Type *Ty = ConvertType(TreeType);
   push_elts(Ty, Elts);
 
@@ -2876,7 +2876,7 @@ bool llvm_arm_should_pass_or_return_aggregate_in_regs(tree TreeType,
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed with the 'byval' attribute. */
 bool llvm_arm_should_pass_aggregate_using_byval_attr(tree TreeType,
-                                                     const Type *Ty,
+                                                     Type *Ty,
                                                      CallingConv::ID &CC) {
   if (CC == CallingConv::ARM_APCS ||
       (CC == CallingConv::C && !TARGET_AAPCS_BASED)) {

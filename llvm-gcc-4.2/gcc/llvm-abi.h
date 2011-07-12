@@ -59,57 +59,57 @@ struct DefaultABIClient {
 
   /// HandleScalarResult - This callback is invoked if the function returns a
   /// simple scalar result value, which is of type RetTy.
-  virtual void HandleScalarResult(const Type *RetTy) {}
+  virtual void HandleScalarResult(Type *RetTy) {}
 
   /// HandleAggregateResultAsScalar - This callback is invoked if the function
   /// returns an aggregate value by bit converting it to the specified scalar
   /// type and returning that.  The bit conversion should start at byte Offset
   /// within the struct, and ScalarTy is not necessarily big enough to cover
   /// the entire struct.
-  virtual void HandleAggregateResultAsScalar(const Type *ScalarTy, unsigned Offset=0) {}
+  virtual void HandleAggregateResultAsScalar(Type *ScalarTy, unsigned Offset=0) {}
 
   /// HandleAggregateResultAsAggregate - This callback is invoked if the function
   /// returns an aggregate value using multiple return values.
-  virtual void HandleAggregateResultAsAggregate(const Type *AggrTy) {}
+  virtual void HandleAggregateResultAsAggregate(Type *AggrTy) {}
 
   /// HandleAggregateShadowResult - This callback is invoked if the function
   /// returns an aggregate value by using a "shadow" first parameter, which is
   /// a pointer to the aggregate, of type PtrArgTy.  If RetPtr is set to true,
   /// the pointer argument itself is returned from the function.
-  virtual void HandleAggregateShadowResult(const PointerType *PtrArgTy, bool RetPtr){}
+  virtual void HandleAggregateShadowResult(PointerType *PtrArgTy, bool RetPtr){}
 
   /// HandleScalarShadowResult - This callback is invoked if the function
   /// returns a scalar value by using a "shadow" first parameter, which is a
   /// pointer to the scalar, of type PtrArgTy.  If RetPtr is set to true,
   /// the pointer argument itself is returned from the function.
-  virtual void HandleScalarShadowResult(const PointerType *PtrArgTy, bool RetPtr) {}
+  virtual void HandleScalarShadowResult(PointerType *PtrArgTy, bool RetPtr) {}
 
 
   /// HandleScalarArgument - This is the primary callback that specifies an
   /// LLVM argument to pass.  It is only used for first class types.
   /// If RealSize is non Zero then it specifies number of bytes to access
   /// from LLVMTy. 
-  virtual void HandleScalarArgument(const llvm::Type *LLVMTy, tree type,
+  virtual void HandleScalarArgument(llvm::Type *LLVMTy, tree type,
                             unsigned RealSize = 0) {}
 
   /// HandleByInvisibleReferenceArgument - This callback is invoked if a pointer
   /// (of type PtrTy) to the argument is passed rather than the argument itself.
-  virtual void HandleByInvisibleReferenceArgument(const llvm::Type *PtrTy, tree type) {}
+  virtual void HandleByInvisibleReferenceArgument(llvm::Type *PtrTy, tree type) {}
 
   /// HandleByValArgument - This callback is invoked if the aggregate function
   /// argument is passed by value.
-  virtual void HandleByValArgument(const llvm::Type *LLVMTy, tree type) {}
+  virtual void HandleByValArgument(llvm::Type *LLVMTy, tree type) {}
 
   /// HandleFCAArgument - This callback is invoked if the aggregate function
   /// argument is passed by value as a first class aggregate.
-  virtual void HandleFCAArgument(const llvm::Type * /*LLVMTy*/, tree /*type*/){}
+  virtual void HandleFCAArgument(llvm::Type * /*LLVMTy*/, tree /*type*/){}
 
   /// EnterField - Called when we're about the enter the field of a struct
   /// or union.  FieldNo is the number of the element we are entering in the
   /// LLVM Struct, StructTy is the LLVM type of the struct we are entering.
-  virtual void EnterField(unsigned FieldNo, const llvm::Type *StructTy) {}
+  virtual void EnterField(unsigned FieldNo, llvm::Type *StructTy) {}
   virtual void ExitField() {}
-  virtual void HandlePad(const llvm::Type *LLVMTy) {}
+  virtual void HandlePad(llvm::Type *LLVMTy) {}
 };
 
 /// isAggregateTreeType - Return true if the specified GCC type is an aggregate
@@ -200,7 +200,7 @@ tree isSingleElementStructOrArray(tree type, bool ignoreZeroLength,
                                                      ignoreZeroLength, false)
                       : 0;
   case ARRAY_TYPE:
-    const ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
+    ArrayType *Ty = dyn_cast<ArrayType>(ConvertType(type));
     if (!Ty || Ty->getNumElements() != 1)
       return 0;
     return isSingleElementStructOrArray(TREE_TYPE(type), false, false);
@@ -221,8 +221,8 @@ static inline bool isZeroSizedStructOrUnion(tree type) {
 // returned as a scalar, otherwise return NULL. This is the default
 // target independent implementation.
 static inline
-const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
-  const Type *Ty = ConvertType(type);
+Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
+  Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
   *Offset = 0;
   if (Size == 0)
@@ -246,7 +246,7 @@ const Type* getLLVMScalarTypeForStructReturn(tree type, unsigned *Offset) {
 // getLLVMAggregateTypeForStructReturn - Return LLVM type if TY can be
 // returns as multiple values, otherwise return NULL. This is the default
 // target independent implementation.
-static inline const Type* getLLVMAggregateTypeForStructReturn(tree type) {
+static inline Type* getLLVMAggregateTypeForStructReturn(tree type) {
   return NULL;
 }
 
@@ -407,31 +407,31 @@ public:
   /// on the client that indicate how its pieces should be handled.  This
   /// handles things like returning structures via hidden parameters.
   void HandleReturnType(tree type, tree fn, bool isBuiltin,
-                        std::vector<const Type*> &ScalarElts);
+                        std::vector<Type*> &ScalarElts);
 
   /// HandleArgument - This is invoked by the target-independent code for each
   /// argument type passed into the function.  It potentially breaks down the
   /// argument and invokes methods on the client that indicate how its pieces
   /// should be handled.  This handles things like decimating structures into
   /// their fields.
-  void HandleArgument(tree type, std::vector<const Type*> &ScalarElts,
+  void HandleArgument(tree type, std::vector<Type*> &ScalarElts,
                       Attributes *Attributes = NULL);
 
   /// HandleUnion - Handle a UNION_TYPE or QUAL_UNION_TYPE tree.
   ///
-  void HandleUnion(tree type, std::vector<const Type*> &ScalarElts);
+  void HandleUnion(tree type, std::vector<Type*> &ScalarElts);
 
   /// PassInIntegerRegisters - Given an aggregate value that should be passed in
   /// integer registers, convert it to a structure containing ints and pass all
   /// of the struct elements in.  If Size is set we pass only that many bytes.
-  void PassInIntegerRegisters(tree type, std::vector<const Type*> &ScalarElts,
+  void PassInIntegerRegisters(tree type, std::vector<Type*> &ScalarElts,
                               unsigned origSize, bool DontCheckAlignment);
 
   /// PassInMixedRegisters - Given an aggregate value that should be passed in
   /// mixed integer, floating point, and vector registers, convert it to a
   /// structure containing the specified struct elements in.
-  void PassInMixedRegisters(const Type *Ty, std::vector<const Type*> &OrigElts,
-                            std::vector<const Type*> &ScalarElts);
+  void PassInMixedRegisters(Type *Ty, std::vector<Type*> &OrigElts,
+                            std::vector<Type*> &ScalarElts);
 };
 
 #endif /* LLVM_ABI_H */

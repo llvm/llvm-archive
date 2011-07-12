@@ -32,7 +32,7 @@ static LLVMContext &Context = getGlobalContext();
 /* Target hook for llvm-abi.h. It returns true if an aggregate of the
    specified type should be passed in memory. In mips EABI this is 
    true for aggregates with size > 32-bits. */
-bool llvm_mips_should_pass_aggregate_in_memory(tree TreeType, const Type *Ty) {
+bool llvm_mips_should_pass_aggregate_in_memory(tree TreeType, Type *Ty) {
   if (mips_abi == ABI_EABI)
   {
     enum machine_mode mode = TYPE_MODE(TreeType);
@@ -63,11 +63,11 @@ bool llvm_mips_should_not_return_complex_in_memory(tree type) {
 
 // Return LLVM Type if TYPE can be returned as an aggregate, 
 // otherwise return NULL.
-const Type *llvm_mips_aggr_type_for_struct_return(tree type) {
-  const Type *Ty = ConvertType(type);
+Type *llvm_mips_aggr_type_for_struct_return(tree type) {
+  Type *Ty = ConvertType(type);
 
-  const StructType *STy = cast<StructType>(Ty);
-  std::vector<const Type *> ElementTypes;
+  StructType *STy = cast<StructType>(Ty);
+  std::vector<Type *> ElementTypes;
 
   // Special handling for _Complex.
   if (llvm_mips_should_not_return_complex_in_memory(type)) {

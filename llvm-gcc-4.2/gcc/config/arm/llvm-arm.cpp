@@ -823,7 +823,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -835,7 +835,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -848,7 +848,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -869,7 +869,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     if (datatype == neon_datatype_polynomial) {
       intID = Intrinsic::arm_neon_vmulp;
-      intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+      intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
       Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     } else if (datatype == neon_datatype_float)
       Result = Builder.CreateFMul(Ops[0], Ops[1]);
@@ -936,7 +936,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     Result = Builder.CreateAdd(Ops[0], Result);
     break;
@@ -960,7 +960,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     Result = Builder.CreateSub(Ops[0], Result);
     break;
@@ -984,7 +984,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1005,7 +1005,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
     break;
 
@@ -1026,7 +1026,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
     break;
 
@@ -1051,7 +1051,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1072,7 +1072,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1113,7 +1113,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1129,7 +1129,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1150,7 +1150,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1161,7 +1161,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_signed)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vqshiftsu;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1180,7 +1180,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1195,7 +1195,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1210,7 +1210,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1237,7 +1237,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       else
         return BadImmediateError(exp, Result);
 
-      intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+      intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
       Result = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     }
     Result = Builder.CreateAdd(Ops[0], Result);
@@ -1284,7 +1284,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1296,7 +1296,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1309,7 +1309,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1401,7 +1401,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1416,7 +1416,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabdl result");
     llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, DTy);
     Ops[0] = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     Result = Builder.CreateZExt(Ops[0], ResultType);
     break;
@@ -1430,7 +1430,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Ops[1] = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     Result = Builder.CreateAdd(Ops[0], Ops[1]);
     break;
@@ -1446,7 +1446,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabal result");
     llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &DTy, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, DTy);
     Ops[1] = Builder.CreateCall2(intFn, Ops[1], Ops[2]);
     Ops[1] = Builder.CreateZExt(Ops[1], ResultType);
     Result = Builder.CreateAdd(Ops[0], Ops[1]);
@@ -1462,7 +1462,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1475,7 +1475,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1487,7 +1487,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1501,7 +1501,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     intOpTypes[0] = ResultType;
     intOpTypes[1] = Ops[0]->getType();
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 2);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1515,7 +1515,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     intOpTypes[0] = ResultType;
     intOpTypes[1] = Ops[1]->getType();
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 2);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes2);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1528,7 +1528,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1541,7 +1541,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1549,7 +1549,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_float)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vrecps;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1557,7 +1557,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_float)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vrsqrts;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 
@@ -1566,7 +1566,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                CheckRightShiftCount, true))
       return UnexpectedError("%Hinvalid shift count", exp, Result);
     intID = Intrinsic::arm_neon_vshiftins;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
     break;
 
@@ -1575,7 +1575,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                CheckLeftShiftCount, false))
       return UnexpectedError("%Hinvalid shift count", exp, Result);
     intID = Intrinsic::arm_neon_vshiftins;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall3(intFn, Ops[0], Ops[1], Ops[2]);
     break;
 
@@ -1585,7 +1585,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       intID = Intrinsic::arm_neon_vabs;
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1593,7 +1593,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_signed)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vqabs;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1611,7 +1611,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_signed)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vqneg;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1619,7 +1619,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype != neon_datatype_signed)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vcls;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1628,7 +1628,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         datatype != neon_datatype_unsigned)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vclz;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1636,7 +1636,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (datatype == neon_datatype_float)
       return BadImmediateError(exp, Result);
     intID = Intrinsic::arm_neon_vcnt;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1646,7 +1646,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       intID = Intrinsic::arm_neon_vrecpe;
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1656,7 +1656,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       intID = Intrinsic::arm_neon_vrsqrte;
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1744,7 +1744,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       intID = Intrinsic::arm_neon_vqmovnu;
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1753,7 +1753,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       intID = Intrinsic::arm_neon_vqmovnsu;
     else
       return BadImmediateError(exp, Result);
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Result = Builder.CreateCall(intFn, Ops[0]);
     break;
 
@@ -1859,7 +1859,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     intOpTypes[0] = ResultType;
     intOpTypes[1] = Ops[0]->getType();
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 2);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
   }
@@ -2020,7 +2020,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   case NEON_BUILTIN_vld1: {
     intID = Intrinsic::arm_neon_vld1;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &ResultType, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, ResultType);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
@@ -2040,7 +2040,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case NEON_BUILTIN_vld4: intID = Intrinsic::arm_neon_vld4; break;
     default: assert(false);
     }
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, VTy);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
@@ -2075,7 +2075,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     intOpTypes[0] = VTy;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     unsigned NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vld2_lane: NumVecs = 2; break;
@@ -2119,7 +2119,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       case NEON_BUILTIN_vld4_dup: intID = Intrinsic::arm_neon_vld4; break;
       default: assert(false);
       }
-      intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+      intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
       Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
       unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
       Result = Builder.CreateCall2(intFn, BitCastToType(Ops[0], VPTy),
@@ -2136,7 +2136,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case NEON_BUILTIN_vld4_dup: intID = Intrinsic::arm_neon_vld4lane; break;
     default: assert(false);
     }
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     unsigned NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vld2_dup: NumVecs = 2; break;
@@ -2170,7 +2170,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case NEON_BUILTIN_vst1: {
     Type *VTy = Ops[1]->getType();
     intID = Intrinsic::arm_neon_vst1;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, VTy);
     Type *VPTy = PointerType::getUnqual(Type::getInt8Ty(Context));
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Builder.CreateCall3(intFn, BitCastToType(Ops[0], VPTy), Ops[1],
@@ -2191,7 +2191,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     case NEON_BUILTIN_vst4: intID = Intrinsic::arm_neon_vst4; break;
     default: assert(false);
     }
-    intFn = Intrinsic::getDeclaration(TheModule, intID, &VTy, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, VTy);
     unsigned NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vst2: NumVecs = 2; break;
@@ -2237,7 +2237,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     default: assert(false);
     }
     intOpTypes[0] = VTy;
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes, 1);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     unsigned NumVecs = 0;
     switch (neon_code) {
     case NEON_BUILTIN_vst2_lane: NumVecs = 2; break;

@@ -395,7 +395,7 @@ namespace {
         Type *ArgTypes[3] = {SBP, SBP, IntPtr };
         Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                      Intrinsic::memcpy,
-                                                     ArgTypes, 3), Ops, Ops+5);
+                                                     ArgTypes), Ops, Ops+5);
 
         AI->setName(NameStack.back());
       }
@@ -1667,7 +1667,7 @@ Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Type *ArgTypes[3] = {SBP, SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memcpy,
-                                               ArgTypes, 3), Ops, Ops+5);
+                                               ArgTypes), Ops, Ops+5);
   return Ops[0];
 }
 
@@ -1685,7 +1685,7 @@ Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
   Type *ArgTypes[3] = {SBP, SBP, IntPtr };
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memmove,
-                                               ArgTypes, 3), Ops, Ops+5);
+                                               ArgTypes), Ops, Ops+5);
   return Ops[0];
 }
 
@@ -1703,7 +1703,7 @@ Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
 
   Type *ArgTypes[2] = {SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memset,
-                                               ArgTypes, 2), Ops, Ops+5);
+                                               ArgTypes), Ops, Ops+5);
   return Ops[0];
 }
 
@@ -5370,9 +5370,7 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
 #endif
 
   Value *Result =
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule,  id,
-                                                 Ty, 2),
-    C, C + 2);
+    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, id, Ty), C, C + 2);
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5415,7 +5413,7 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   Value *Result =
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                  Intrinsic::atomic_cmp_swap,
-                                                 Ty, 2),
+                                                 Ty),
     C, C + 3);
 
   // The gcc builtins are also full memory barriers.
@@ -5578,8 +5576,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                           Intrinsic::objectsize,
-                                                          &Ty,
-                                                          1),
+                                                          Ty),
                                 Args, Args + 2);
     return true;
   }
@@ -5776,8 +5773,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     assert(Ty && "llvm.annotation arg type may not be null");
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                           Intrinsic::annotation,
-                                                          &Ty,
-                                                          1),
+                                                          Ty),
                                 Args.begin(), Args.end());
     return true;
   }
@@ -5948,7 +5944,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_add,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -5995,7 +5991,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_sub,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -6042,7 +6038,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_or,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -6089,7 +6085,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_and,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -6136,7 +6132,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_xor,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -6183,7 +6179,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_nand,
-                                                   Ty, 2),
+                                                   Ty),
                          C, C + 2);
 
     // The gcc builtins are also full memory barriers.
@@ -6291,7 +6287,7 @@ bool TreeToLLVM::EmitBuiltinUnaryOp(Value *InVal, Value *&Result,
   // by passing it as the 3rd and 4th parameters. This isn't needed for
   // most intrinsics, but is needed for ctpop, cttz, ctlz.
   Type *Ty = InVal->getType();
-  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, &Ty, 1),
+  Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Id, Ty),
                               InVal);
   return true;
 }
@@ -6301,7 +6297,7 @@ Value *TreeToLLVM::EmitBuiltinSQRT(tree exp) {
   Type* Ty = Amt->getType();
 
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                      Intrinsic::sqrt, &Ty, 1),
+                                                      Intrinsic::sqrt, Ty),
                             Amt);
 }
 
@@ -6319,7 +6315,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   Args.push_back(Val);
   Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                      Intrinsic::powi, &Ty, 1),
+                                                      Intrinsic::powi, Ty),
                             Args.begin(), Args.end());
 }
 
@@ -6336,7 +6332,7 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
   Args.push_back(Val);
   Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                      Intrinsic::pow, &Ty, 1),
+                                                      Intrinsic::pow, Ty),
                             Args.begin(), Args.end());
 }
 
@@ -7080,7 +7076,7 @@ Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
 
   Function *Fn = Intrinsic::getDeclaration(TheModule,
                                            Intrinsic::ptr_annotation,
-                                           &SBP, 1);
+                                           SBP);
 
   // Get file and line number.  FIXME: Should this be for the decl or the
   // use.  Is there a location info for the use?

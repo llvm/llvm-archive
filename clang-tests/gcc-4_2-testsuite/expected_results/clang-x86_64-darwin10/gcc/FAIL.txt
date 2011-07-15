@@ -373,6 +373,7 @@ gcc.c-torture/compile/20031011-1.c  -Os  (test for excess errors)
 gcc.c-torture/compile/20031023-1.c  -O3 -g  (test for excess errors)
 gcc.c-torture/compile/20031023-2.c  -O3 -g  (test for excess errors)
 gcc.c-torture/compile/20031023-3.c  -O3 -g  (test for excess errors)
+gcc.c-torture/compile/20031023-4.c  -O0  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O0  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O1  (test for excess errors)
 gcc.c-torture/compile/20040310-1.c  -O2  (test for excess errors)
@@ -550,596 +551,596 @@ gcc.c-torture/compile/simd-5.c  -O2  (test for excess errors)
 gcc.c-torture/compile/simd-5.c  -O3 -fomit-frame-pointer  (test for excess errors)
 gcc.c-torture/compile/simd-5.c  -O3 -g  (test for excess errors)
 gcc.c-torture/compile/simd-5.c  -Os  (test for excess errors)
-gcc.c-torture/execute/20000822-1.c compilation,  -O0 
-gcc.c-torture/execute/20000822-1.c compilation,  -O1 
-gcc.c-torture/execute/20000822-1.c compilation,  -O2 
-gcc.c-torture/execute/20000822-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20000822-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20000822-1.c compilation,  -Os 
-gcc.c-torture/execute/20010209-1.c compilation,  -O0 
-gcc.c-torture/execute/20010209-1.c compilation,  -O1 
-gcc.c-torture/execute/20010209-1.c compilation,  -O2 
-gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/20010209-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20010209-1.c compilation,  -Os 
-gcc.c-torture/execute/20010605-1.c compilation,  -O0 
-gcc.c-torture/execute/20010605-1.c compilation,  -O1 
-gcc.c-torture/execute/20010605-1.c compilation,  -O2 
-gcc.c-torture/execute/20010605-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20010605-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20010605-1.c compilation,  -Os 
-gcc.c-torture/execute/20020412-1.c compilation,  -O0 
-gcc.c-torture/execute/20020412-1.c compilation,  -O1 
-gcc.c-torture/execute/20020412-1.c compilation,  -O2 
-gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/20020412-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20020412-1.c compilation,  -Os 
-gcc.c-torture/execute/20020720-1.c compilation,  -O1 
-gcc.c-torture/execute/20020720-1.c compilation,  -O2 
-gcc.c-torture/execute/20020720-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20020720-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20020720-1.c compilation,  -Os 
-gcc.c-torture/execute/20021127-1.c execution,  -O0 
-gcc.c-torture/execute/20021127-1.c execution,  -O1 
-gcc.c-torture/execute/20021127-1.c execution,  -O2 
-gcc.c-torture/execute/20021127-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20021127-1.c execution,  -O3 -g 
-gcc.c-torture/execute/20021127-1.c execution,  -Os 
-gcc.c-torture/execute/20030501-1.c compilation,  -O0 
-gcc.c-torture/execute/20030501-1.c compilation,  -O1 
-gcc.c-torture/execute/20030501-1.c compilation,  -O2 
-gcc.c-torture/execute/20030501-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20030501-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20030501-1.c compilation,  -Os 
-gcc.c-torture/execute/20040308-1.c compilation,  -O0 
-gcc.c-torture/execute/20040308-1.c compilation,  -O1 
-gcc.c-torture/execute/20040308-1.c compilation,  -O2 
-gcc.c-torture/execute/20040308-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20040308-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20040308-1.c compilation,  -Os 
-gcc.c-torture/execute/20040423-1.c compilation,  -O0 
-gcc.c-torture/execute/20040423-1.c compilation,  -O1 
-gcc.c-torture/execute/20040423-1.c compilation,  -O2 
-gcc.c-torture/execute/20040423-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20040423-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20040423-1.c compilation,  -Os 
-gcc.c-torture/execute/20040520-1.c compilation,  -O0 
-gcc.c-torture/execute/20040520-1.c compilation,  -O1 
-gcc.c-torture/execute/20040520-1.c compilation,  -O2 
-gcc.c-torture/execute/20040520-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20040520-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20040520-1.c compilation,  -Os 
-gcc.c-torture/execute/20041218-2.c compilation,  -O0 
-gcc.c-torture/execute/20041218-2.c compilation,  -O1 
-gcc.c-torture/execute/20041218-2.c compilation,  -O2 
-gcc.c-torture/execute/20041218-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20041218-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/20041218-2.c compilation,  -Os 
-gcc.c-torture/execute/20050107-1.c compilation,  -O0 
-gcc.c-torture/execute/20050107-1.c compilation,  -O1 
-gcc.c-torture/execute/20050107-1.c compilation,  -O2 
-gcc.c-torture/execute/20050107-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20050107-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20050107-1.c compilation,  -Os 
-gcc.c-torture/execute/20050119-1.c compilation,  -O0 
-gcc.c-torture/execute/20050119-1.c compilation,  -O1 
-gcc.c-torture/execute/20050119-1.c compilation,  -O2 
-gcc.c-torture/execute/20050119-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20050119-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20050119-1.c compilation,  -Os 
-gcc.c-torture/execute/20050119-2.c compilation,  -O0 
-gcc.c-torture/execute/20050119-2.c compilation,  -O1 
-gcc.c-torture/execute/20050119-2.c compilation,  -O2 
-gcc.c-torture/execute/20050119-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20050119-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/20050119-2.c compilation,  -Os 
-gcc.c-torture/execute/20051012-1.c compilation,  -O1 
-gcc.c-torture/execute/20051012-1.c compilation,  -O2 
-gcc.c-torture/execute/20051012-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20051012-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20051012-1.c compilation,  -Os 
-gcc.c-torture/execute/20061220-1.c compilation,  -O0 
-gcc.c-torture/execute/20061220-1.c compilation,  -O1 
-gcc.c-torture/execute/20061220-1.c compilation,  -O2 
-gcc.c-torture/execute/20061220-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/20061220-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/20061220-1.c compilation,  -Os 
-gcc.c-torture/execute/920415-1.c compilation,  -O0 
-gcc.c-torture/execute/920415-1.c compilation,  -O1 
-gcc.c-torture/execute/920415-1.c compilation,  -O2 
-gcc.c-torture/execute/920415-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920415-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/920415-1.c compilation,  -Os 
-gcc.c-torture/execute/920428-2.c compilation,  -O0 
-gcc.c-torture/execute/920428-2.c compilation,  -O1 
-gcc.c-torture/execute/920428-2.c compilation,  -O2 
-gcc.c-torture/execute/920428-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920428-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/920428-2.c compilation,  -Os 
-gcc.c-torture/execute/920501-1.c compilation,  -O1 
-gcc.c-torture/execute/920501-1.c compilation,  -O2 
-gcc.c-torture/execute/920501-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920501-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/920501-1.c compilation,  -Os 
-gcc.c-torture/execute/920501-7.c compilation,  -O0 
-gcc.c-torture/execute/920501-7.c compilation,  -O1 
-gcc.c-torture/execute/920501-7.c compilation,  -O2 
-gcc.c-torture/execute/920501-7.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920501-7.c compilation,  -O3 -g 
-gcc.c-torture/execute/920501-7.c compilation,  -Os 
-gcc.c-torture/execute/920612-2.c compilation,  -O0 
-gcc.c-torture/execute/920612-2.c compilation,  -O1 
-gcc.c-torture/execute/920612-2.c compilation,  -O2 
-gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/920612-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/920612-2.c compilation,  -Os 
-gcc.c-torture/execute/920721-4.c compilation,  -O0 
-gcc.c-torture/execute/920721-4.c compilation,  -O1 
-gcc.c-torture/execute/920721-4.c compilation,  -O2 
-gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/920721-4.c compilation,  -O3 -g 
-gcc.c-torture/execute/920721-4.c compilation,  -Os 
-gcc.c-torture/execute/921017-1.c compilation,  -O0 
-gcc.c-torture/execute/921017-1.c compilation,  -O1 
-gcc.c-torture/execute/921017-1.c compilation,  -O2 
-gcc.c-torture/execute/921017-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/921017-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/921017-1.c compilation,  -Os 
-gcc.c-torture/execute/921208-2.c compilation,  -O1 
-gcc.c-torture/execute/921208-2.c compilation,  -O2 
-gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/921208-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/921208-2.c compilation,  -Os 
-gcc.c-torture/execute/921215-1.c compilation,  -O0 
-gcc.c-torture/execute/921215-1.c compilation,  -O1 
-gcc.c-torture/execute/921215-1.c compilation,  -O2 
-gcc.c-torture/execute/921215-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/921215-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/921215-1.c compilation,  -Os 
-gcc.c-torture/execute/930406-1.c compilation,  -O0 
-gcc.c-torture/execute/930406-1.c compilation,  -O1 
-gcc.c-torture/execute/930406-1.c compilation,  -O2 
-gcc.c-torture/execute/930406-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/930406-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/930406-1.c compilation,  -Os 
-gcc.c-torture/execute/931002-1.c compilation,  -O0 
-gcc.c-torture/execute/931002-1.c compilation,  -O1 
-gcc.c-torture/execute/931002-1.c compilation,  -O2 
-gcc.c-torture/execute/931002-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/931002-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/931002-1.c compilation,  -Os 
-gcc.c-torture/execute/970217-1.c execution,  -O0 
-gcc.c-torture/execute/970217-1.c execution,  -O1 
-gcc.c-torture/execute/970217-1.c execution,  -O2 
-gcc.c-torture/execute/970217-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/970217-1.c execution,  -O3 -g 
-gcc.c-torture/execute/970217-1.c execution,  -Os 
-gcc.c-torture/execute/980526-1.c compilation,  -O0 
-gcc.c-torture/execute/980526-1.c compilation,  -O1 
-gcc.c-torture/execute/980526-1.c compilation,  -O2 
-gcc.c-torture/execute/980526-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/980526-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/980526-1.c compilation,  -Os 
-gcc.c-torture/execute/990208-1.c execution,  -O1 
-gcc.c-torture/execute/991014-1.c execution,  -O0 
-gcc.c-torture/execute/991014-1.c execution,  -O1 
-gcc.c-torture/execute/991014-1.c execution,  -O2 
-gcc.c-torture/execute/991014-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/991014-1.c execution,  -O3 -g 
-gcc.c-torture/execute/991014-1.c execution,  -Os 
-gcc.c-torture/execute/alloca-1.c execution,  -O1 
-gcc.c-torture/execute/alloca-1.c execution,  -O2 
-gcc.c-torture/execute/alloca-1.c execution,  -O3 -g 
-gcc.c-torture/execute/alloca-1.c execution,  -Os 
-gcc.c-torture/execute/bcp-1.c execution,  -O0 
-gcc.c-torture/execute/bcp-1.c execution,  -O1 
-gcc.c-torture/execute/bcp-1.c execution,  -O2 
-gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/bcp-1.c execution,  -O3 -g 
-gcc.c-torture/execute/bcp-1.c execution,  -Os 
-gcc.c-torture/execute/bitfld-3.c execution,  -O0 
-gcc.c-torture/execute/bitfld-3.c execution,  -O1 
-gcc.c-torture/execute/bitfld-3.c execution,  -O2 
-gcc.c-torture/execute/bitfld-3.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/bitfld-3.c execution,  -O3 -g 
-gcc.c-torture/execute/bitfld-3.c execution,  -Os 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O0 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O1 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O2 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -g 
-gcc.c-torture/execute/built-in-setjmp.c execution,  -Os 
-gcc.c-torture/execute/builtin-constant.c execution,  -O1 
-gcc.c-torture/execute/builtin-constant.c execution,  -O2 
-gcc.c-torture/execute/builtin-constant.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtin-constant.c execution,  -O3 -g 
-gcc.c-torture/execute/builtin-constant.c execution,  -Os 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -O0 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -O1 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -O2 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/20010124-1.c execution,  -Os 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -O0 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -O1 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -O2 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/abs-1.c execution,  -Os 
-gcc.c-torture/execute/builtins/abs-2.c compilation,  -O1 
-gcc.c-torture/execute/builtins/abs-2.c compilation,  -O2 
-gcc.c-torture/execute/builtins/abs-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/abs-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/abs-2.c compilation,  -Os 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -O0 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -O1 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -O2 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/abs-3.c compilation,  -Os 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -O0 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -O1 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -O2 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/fprintf.c compilation,  -Os 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -O0 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -O1 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -O2 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/fputs.c compilation,  -Os 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/memmove-2.c execution,  -O1 
-gcc.c-torture/execute/builtins/memmove-2.c execution,  -O2 
-gcc.c-torture/execute/builtins/memmove-2.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memmove-2.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/memmove-2.c execution,  -Os 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/memmove-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -O0 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -O1 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -O2 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/memmove.c compilation,  -Os 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -O0 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -O1 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -O2 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/memops-asm.c execution,  -Os 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/mempcpy.c execution,  -O1 
-gcc.c-torture/execute/builtins/mempcpy.c execution,  -O2 
-gcc.c-torture/execute/builtins/mempcpy.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/mempcpy.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/mempcpy.c execution,  -Os 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/memset-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O0 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O1 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O2 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/pr22237.c execution,  -Os 
-gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/printf.c compilation,  -O0 
-gcc.c-torture/execute/builtins/printf.c compilation,  -O1 
-gcc.c-torture/execute/builtins/printf.c compilation,  -O2 
-gcc.c-torture/execute/builtins/printf.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/printf.c compilation,  -O3 -g 
-gcc.c-torture/execute/builtins/printf.c compilation,  -Os 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strcat-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/strchr.c execution,  -O1 
-gcc.c-torture/execute/builtins/strchr.c execution,  -O2 
-gcc.c-torture/execute/builtins/strchr.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strchr.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strchr.c execution,  -Os 
-gcc.c-torture/execute/builtins/strcmp.c execution,  -O1 
-gcc.c-torture/execute/builtins/strcmp.c execution,  -O2 
-gcc.c-torture/execute/builtins/strcmp.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strcmp.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strcmp.c execution,  -Os 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O1 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strlen-3.c execution,  -Os 
-gcc.c-torture/execute/builtins/strlen.c execution,  -O1 
-gcc.c-torture/execute/builtins/strlen.c execution,  -O2 
-gcc.c-torture/execute/builtins/strlen.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strlen.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strlen.c execution,  -Os 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strncat-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O1 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O2 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strncat.c execution,  -Os 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -O0 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -O1 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -O2 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strncmp.c execution,  -Os 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/strpcpy.c execution,  -O1 
-gcc.c-torture/execute/builtins/strpcpy.c execution,  -O2 
-gcc.c-torture/execute/builtins/strpcpy.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strpcpy.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strpcpy.c execution,  -Os 
-gcc.c-torture/execute/builtins/strrchr.c execution,  -O1 
-gcc.c-torture/execute/builtins/strrchr.c execution,  -O2 
-gcc.c-torture/execute/builtins/strrchr.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strrchr.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strrchr.c execution,  -Os 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O0 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O1 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O2 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/strstr-asm.c execution,  -Os 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -Os 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O1 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O2 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -g 
-gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -Os 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -O0 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -O1 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -O2 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/comp-goto-2.c compilation,  -Os 
-gcc.c-torture/execute/fprintf-chk-1.c execution,  -O1 
-gcc.c-torture/execute/fprintf-chk-1.c execution,  -O2 
-gcc.c-torture/execute/fprintf-chk-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/fprintf-chk-1.c execution,  -O3 -g 
-gcc.c-torture/execute/fprintf-chk-1.c execution,  -Os 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O0 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O1 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O2 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -Os 
-gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O1 
-gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O2 
-gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O3 -g 
-gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -Os 
-gcc.c-torture/execute/ieee/fp-cmp-7.c compilation,  -O0 
-gcc.c-torture/execute/medce-1.c compilation,  -O0 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -O0 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -O1 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -O2 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/nest-stdar-1.c compilation,  -Os 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -O0 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -O1 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -O2 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -O3 -g 
-gcc.c-torture/execute/nestfunc-1.c compilation,  -Os 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O0 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O1 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O2 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -g 
-gcc.c-torture/execute/nestfunc-2.c compilation,  -Os 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O0 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O1 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O2 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -g 
-gcc.c-torture/execute/nestfunc-3.c compilation,  -Os 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -O0 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -O1 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -O2 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -O3 -g 
-gcc.c-torture/execute/nestfunc-5.c compilation,  -Os 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -O0 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -O1 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -O2 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -O3 -g 
-gcc.c-torture/execute/nestfunc-6.c compilation,  -Os 
-gcc.c-torture/execute/pr22061-3.c compilation,  -O0 
-gcc.c-torture/execute/pr22061-3.c compilation,  -O1 
-gcc.c-torture/execute/pr22061-3.c compilation,  -O2 
-gcc.c-torture/execute/pr22061-3.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/pr22061-3.c compilation,  -O3 -g 
-gcc.c-torture/execute/pr22061-3.c compilation,  -Os 
-gcc.c-torture/execute/pr22061-4.c compilation,  -O0 
-gcc.c-torture/execute/pr22061-4.c compilation,  -O1 
-gcc.c-torture/execute/pr22061-4.c compilation,  -O2 
-gcc.c-torture/execute/pr22061-4.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/pr22061-4.c compilation,  -O3 -g 
-gcc.c-torture/execute/pr22061-4.c compilation,  -Os 
-gcc.c-torture/execute/pr24135.c compilation,  -O0 
-gcc.c-torture/execute/pr24135.c compilation,  -O1 
-gcc.c-torture/execute/pr24135.c compilation,  -O2 
-gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions 
-gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-loops 
-gcc.c-torture/execute/pr24135.c compilation,  -O3 -g 
-gcc.c-torture/execute/pr24135.c compilation,  -Os 
+gcc.c-torture/execute/20000822-1.c compilation,  -O0
+gcc.c-torture/execute/20000822-1.c compilation,  -O1
+gcc.c-torture/execute/20000822-1.c compilation,  -O2
+gcc.c-torture/execute/20000822-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20000822-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20000822-1.c compilation,  -Os
+gcc.c-torture/execute/20010209-1.c compilation,  -O0
+gcc.c-torture/execute/20010209-1.c compilation,  -O1
+gcc.c-torture/execute/20010209-1.c compilation,  -O2
+gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/20010209-1.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/20010209-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20010209-1.c compilation,  -Os
+gcc.c-torture/execute/20010605-1.c compilation,  -O0
+gcc.c-torture/execute/20010605-1.c compilation,  -O1
+gcc.c-torture/execute/20010605-1.c compilation,  -O2
+gcc.c-torture/execute/20010605-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20010605-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20010605-1.c compilation,  -Os
+gcc.c-torture/execute/20020412-1.c compilation,  -O0
+gcc.c-torture/execute/20020412-1.c compilation,  -O1
+gcc.c-torture/execute/20020412-1.c compilation,  -O2
+gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/20020412-1.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/20020412-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20020412-1.c compilation,  -Os
+gcc.c-torture/execute/20020720-1.c compilation,  -O1
+gcc.c-torture/execute/20020720-1.c compilation,  -O2
+gcc.c-torture/execute/20020720-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20020720-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20020720-1.c compilation,  -Os
+gcc.c-torture/execute/20021127-1.c execution,  -O0
+gcc.c-torture/execute/20021127-1.c execution,  -O1
+gcc.c-torture/execute/20021127-1.c execution,  -O2
+gcc.c-torture/execute/20021127-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20021127-1.c execution,  -O3 -g
+gcc.c-torture/execute/20021127-1.c execution,  -Os
+gcc.c-torture/execute/20030501-1.c compilation,  -O0
+gcc.c-torture/execute/20030501-1.c compilation,  -O1
+gcc.c-torture/execute/20030501-1.c compilation,  -O2
+gcc.c-torture/execute/20030501-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20030501-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20030501-1.c compilation,  -Os
+gcc.c-torture/execute/20040308-1.c compilation,  -O0
+gcc.c-torture/execute/20040308-1.c compilation,  -O1
+gcc.c-torture/execute/20040308-1.c compilation,  -O2
+gcc.c-torture/execute/20040308-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20040308-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20040308-1.c compilation,  -Os
+gcc.c-torture/execute/20040423-1.c compilation,  -O0
+gcc.c-torture/execute/20040423-1.c compilation,  -O1
+gcc.c-torture/execute/20040423-1.c compilation,  -O2
+gcc.c-torture/execute/20040423-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20040423-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20040423-1.c compilation,  -Os
+gcc.c-torture/execute/20040520-1.c compilation,  -O0
+gcc.c-torture/execute/20040520-1.c compilation,  -O1
+gcc.c-torture/execute/20040520-1.c compilation,  -O2
+gcc.c-torture/execute/20040520-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20040520-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20040520-1.c compilation,  -Os
+gcc.c-torture/execute/20041218-2.c compilation,  -O0
+gcc.c-torture/execute/20041218-2.c compilation,  -O1
+gcc.c-torture/execute/20041218-2.c compilation,  -O2
+gcc.c-torture/execute/20041218-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20041218-2.c compilation,  -O3 -g
+gcc.c-torture/execute/20041218-2.c compilation,  -Os
+gcc.c-torture/execute/20050107-1.c compilation,  -O0
+gcc.c-torture/execute/20050107-1.c compilation,  -O1
+gcc.c-torture/execute/20050107-1.c compilation,  -O2
+gcc.c-torture/execute/20050107-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20050107-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20050107-1.c compilation,  -Os
+gcc.c-torture/execute/20050119-1.c compilation,  -O0
+gcc.c-torture/execute/20050119-1.c compilation,  -O1
+gcc.c-torture/execute/20050119-1.c compilation,  -O2
+gcc.c-torture/execute/20050119-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20050119-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20050119-1.c compilation,  -Os
+gcc.c-torture/execute/20050119-2.c compilation,  -O0
+gcc.c-torture/execute/20050119-2.c compilation,  -O1
+gcc.c-torture/execute/20050119-2.c compilation,  -O2
+gcc.c-torture/execute/20050119-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20050119-2.c compilation,  -O3 -g
+gcc.c-torture/execute/20050119-2.c compilation,  -Os
+gcc.c-torture/execute/20051012-1.c compilation,  -O1
+gcc.c-torture/execute/20051012-1.c compilation,  -O2
+gcc.c-torture/execute/20051012-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20051012-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20051012-1.c compilation,  -Os
+gcc.c-torture/execute/20061220-1.c compilation,  -O0
+gcc.c-torture/execute/20061220-1.c compilation,  -O1
+gcc.c-torture/execute/20061220-1.c compilation,  -O2
+gcc.c-torture/execute/20061220-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/20061220-1.c compilation,  -O3 -g
+gcc.c-torture/execute/20061220-1.c compilation,  -Os
+gcc.c-torture/execute/920415-1.c compilation,  -O0
+gcc.c-torture/execute/920415-1.c compilation,  -O1
+gcc.c-torture/execute/920415-1.c compilation,  -O2
+gcc.c-torture/execute/920415-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920415-1.c compilation,  -O3 -g
+gcc.c-torture/execute/920415-1.c compilation,  -Os
+gcc.c-torture/execute/920428-2.c compilation,  -O0
+gcc.c-torture/execute/920428-2.c compilation,  -O1
+gcc.c-torture/execute/920428-2.c compilation,  -O2
+gcc.c-torture/execute/920428-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920428-2.c compilation,  -O3 -g
+gcc.c-torture/execute/920428-2.c compilation,  -Os
+gcc.c-torture/execute/920501-1.c compilation,  -O1
+gcc.c-torture/execute/920501-1.c compilation,  -O2
+gcc.c-torture/execute/920501-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920501-1.c compilation,  -O3 -g
+gcc.c-torture/execute/920501-1.c compilation,  -Os
+gcc.c-torture/execute/920501-7.c compilation,  -O0
+gcc.c-torture/execute/920501-7.c compilation,  -O1
+gcc.c-torture/execute/920501-7.c compilation,  -O2
+gcc.c-torture/execute/920501-7.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920501-7.c compilation,  -O3 -g
+gcc.c-torture/execute/920501-7.c compilation,  -Os
+gcc.c-torture/execute/920612-2.c compilation,  -O0
+gcc.c-torture/execute/920612-2.c compilation,  -O1
+gcc.c-torture/execute/920612-2.c compilation,  -O2
+gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/920612-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/920612-2.c compilation,  -O3 -g
+gcc.c-torture/execute/920612-2.c compilation,  -Os
+gcc.c-torture/execute/920721-4.c compilation,  -O0
+gcc.c-torture/execute/920721-4.c compilation,  -O1
+gcc.c-torture/execute/920721-4.c compilation,  -O2
+gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/920721-4.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/920721-4.c compilation,  -O3 -g
+gcc.c-torture/execute/920721-4.c compilation,  -Os
+gcc.c-torture/execute/921017-1.c compilation,  -O0
+gcc.c-torture/execute/921017-1.c compilation,  -O1
+gcc.c-torture/execute/921017-1.c compilation,  -O2
+gcc.c-torture/execute/921017-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/921017-1.c compilation,  -O3 -g
+gcc.c-torture/execute/921017-1.c compilation,  -Os
+gcc.c-torture/execute/921208-2.c compilation,  -O1
+gcc.c-torture/execute/921208-2.c compilation,  -O2
+gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/921208-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/921208-2.c compilation,  -O3 -g
+gcc.c-torture/execute/921208-2.c compilation,  -Os
+gcc.c-torture/execute/921215-1.c compilation,  -O0
+gcc.c-torture/execute/921215-1.c compilation,  -O1
+gcc.c-torture/execute/921215-1.c compilation,  -O2
+gcc.c-torture/execute/921215-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/921215-1.c compilation,  -O3 -g
+gcc.c-torture/execute/921215-1.c compilation,  -Os
+gcc.c-torture/execute/930406-1.c compilation,  -O0
+gcc.c-torture/execute/930406-1.c compilation,  -O1
+gcc.c-torture/execute/930406-1.c compilation,  -O2
+gcc.c-torture/execute/930406-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/930406-1.c compilation,  -O3 -g
+gcc.c-torture/execute/930406-1.c compilation,  -Os
+gcc.c-torture/execute/931002-1.c compilation,  -O0
+gcc.c-torture/execute/931002-1.c compilation,  -O1
+gcc.c-torture/execute/931002-1.c compilation,  -O2
+gcc.c-torture/execute/931002-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/931002-1.c compilation,  -O3 -g
+gcc.c-torture/execute/931002-1.c compilation,  -Os
+gcc.c-torture/execute/970217-1.c execution,  -O0
+gcc.c-torture/execute/970217-1.c execution,  -O1
+gcc.c-torture/execute/970217-1.c execution,  -O2
+gcc.c-torture/execute/970217-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/970217-1.c execution,  -O3 -g
+gcc.c-torture/execute/970217-1.c execution,  -Os
+gcc.c-torture/execute/980526-1.c compilation,  -O0
+gcc.c-torture/execute/980526-1.c compilation,  -O1
+gcc.c-torture/execute/980526-1.c compilation,  -O2
+gcc.c-torture/execute/980526-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/980526-1.c compilation,  -O3 -g
+gcc.c-torture/execute/980526-1.c compilation,  -Os
+gcc.c-torture/execute/990208-1.c execution,  -O1
+gcc.c-torture/execute/991014-1.c execution,  -O0
+gcc.c-torture/execute/991014-1.c execution,  -O1
+gcc.c-torture/execute/991014-1.c execution,  -O2
+gcc.c-torture/execute/991014-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/991014-1.c execution,  -O3 -g
+gcc.c-torture/execute/991014-1.c execution,  -Os
+gcc.c-torture/execute/alloca-1.c execution,  -O1
+gcc.c-torture/execute/alloca-1.c execution,  -O2
+gcc.c-torture/execute/alloca-1.c execution,  -O3 -g
+gcc.c-torture/execute/alloca-1.c execution,  -Os
+gcc.c-torture/execute/bcp-1.c execution,  -O0
+gcc.c-torture/execute/bcp-1.c execution,  -O1
+gcc.c-torture/execute/bcp-1.c execution,  -O2
+gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/bcp-1.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/bcp-1.c execution,  -O3 -g
+gcc.c-torture/execute/bcp-1.c execution,  -Os
+gcc.c-torture/execute/bitfld-3.c execution,  -O0
+gcc.c-torture/execute/bitfld-3.c execution,  -O1
+gcc.c-torture/execute/bitfld-3.c execution,  -O2
+gcc.c-torture/execute/bitfld-3.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/bitfld-3.c execution,  -O3 -g
+gcc.c-torture/execute/bitfld-3.c execution,  -Os
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O0
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O1
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O2
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/built-in-setjmp.c execution,  -O3 -g
+gcc.c-torture/execute/built-in-setjmp.c execution,  -Os
+gcc.c-torture/execute/builtin-constant.c execution,  -O1
+gcc.c-torture/execute/builtin-constant.c execution,  -O2
+gcc.c-torture/execute/builtin-constant.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtin-constant.c execution,  -O3 -g
+gcc.c-torture/execute/builtin-constant.c execution,  -Os
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -O0
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -O1
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -O2
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/20010124-1.c execution,  -Os
+gcc.c-torture/execute/builtins/abs-1.c execution,  -O0
+gcc.c-torture/execute/builtins/abs-1.c execution,  -O1
+gcc.c-torture/execute/builtins/abs-1.c execution,  -O2
+gcc.c-torture/execute/builtins/abs-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/abs-1.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/abs-1.c execution,  -Os
+gcc.c-torture/execute/builtins/abs-2.c compilation,  -O1
+gcc.c-torture/execute/builtins/abs-2.c compilation,  -O2
+gcc.c-torture/execute/builtins/abs-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/abs-2.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/abs-2.c compilation,  -Os
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -O0
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -O1
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -O2
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/abs-3.c compilation,  -Os
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -O0
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -O1
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -O2
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/fprintf.c compilation,  -Os
+gcc.c-torture/execute/builtins/fputs.c compilation,  -O0
+gcc.c-torture/execute/builtins/fputs.c compilation,  -O1
+gcc.c-torture/execute/builtins/fputs.c compilation,  -O2
+gcc.c-torture/execute/builtins/fputs.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/fputs.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/fputs.c compilation,  -Os
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/memcpy-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/memmove-2.c execution,  -O1
+gcc.c-torture/execute/builtins/memmove-2.c execution,  -O2
+gcc.c-torture/execute/builtins/memmove-2.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memmove-2.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/memmove-2.c execution,  -Os
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/memmove-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/memmove.c compilation,  -O0
+gcc.c-torture/execute/builtins/memmove.c compilation,  -O1
+gcc.c-torture/execute/builtins/memmove.c compilation,  -O2
+gcc.c-torture/execute/builtins/memmove.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memmove.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/memmove.c compilation,  -Os
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -O0
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -O1
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -O2
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/memops-asm.c execution,  -Os
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/mempcpy-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/mempcpy.c execution,  -O1
+gcc.c-torture/execute/builtins/mempcpy.c execution,  -O2
+gcc.c-torture/execute/builtins/mempcpy.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/mempcpy.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/mempcpy.c execution,  -Os
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/memset-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O0
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O1
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O2
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/pr22237.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/pr22237.c execution,  -Os
+gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/pr23484-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/printf.c compilation,  -O0
+gcc.c-torture/execute/builtins/printf.c compilation,  -O1
+gcc.c-torture/execute/builtins/printf.c compilation,  -O2
+gcc.c-torture/execute/builtins/printf.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/printf.c compilation,  -O3 -g
+gcc.c-torture/execute/builtins/printf.c compilation,  -Os
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/snprintf-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/sprintf-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/stpcpy-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strcat-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/strchr.c execution,  -O1
+gcc.c-torture/execute/builtins/strchr.c execution,  -O2
+gcc.c-torture/execute/builtins/strchr.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strchr.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strchr.c execution,  -Os
+gcc.c-torture/execute/builtins/strcmp.c execution,  -O1
+gcc.c-torture/execute/builtins/strcmp.c execution,  -O2
+gcc.c-torture/execute/builtins/strcmp.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strcmp.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strcmp.c execution,  -Os
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strcpy-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O1
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O2
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strlen-3.c execution,  -Os
+gcc.c-torture/execute/builtins/strlen.c execution,  -O1
+gcc.c-torture/execute/builtins/strlen.c execution,  -O2
+gcc.c-torture/execute/builtins/strlen.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strlen.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strlen.c execution,  -Os
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strncat-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/strncat.c execution,  -O1
+gcc.c-torture/execute/builtins/strncat.c execution,  -O2
+gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strncat.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strncat.c execution,  -Os
+gcc.c-torture/execute/builtins/strncmp.c execution,  -O0
+gcc.c-torture/execute/builtins/strncmp.c execution,  -O1
+gcc.c-torture/execute/builtins/strncmp.c execution,  -O2
+gcc.c-torture/execute/builtins/strncmp.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strncmp.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strncmp.c execution,  -Os
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strncpy-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/strpcpy.c execution,  -O1
+gcc.c-torture/execute/builtins/strpcpy.c execution,  -O2
+gcc.c-torture/execute/builtins/strpcpy.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strpcpy.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strpcpy.c execution,  -Os
+gcc.c-torture/execute/builtins/strrchr.c execution,  -O1
+gcc.c-torture/execute/builtins/strrchr.c execution,  -O2
+gcc.c-torture/execute/builtins/strrchr.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strrchr.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strrchr.c execution,  -Os
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O0
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O1
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O2
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/strstr-asm.c execution,  -Os
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/vsnprintf-chk.c execution,  -Os
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O1
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O2
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -O3 -g
+gcc.c-torture/execute/builtins/vsprintf-chk.c execution,  -Os
+gcc.c-torture/execute/comp-goto-2.c compilation,  -O0
+gcc.c-torture/execute/comp-goto-2.c compilation,  -O1
+gcc.c-torture/execute/comp-goto-2.c compilation,  -O2
+gcc.c-torture/execute/comp-goto-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/comp-goto-2.c compilation,  -O3 -g
+gcc.c-torture/execute/comp-goto-2.c compilation,  -Os
+gcc.c-torture/execute/fprintf-chk-1.c execution,  -O1
+gcc.c-torture/execute/fprintf-chk-1.c execution,  -O2
+gcc.c-torture/execute/fprintf-chk-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/fprintf-chk-1.c execution,  -O3 -g
+gcc.c-torture/execute/fprintf-chk-1.c execution,  -Os
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O0
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O1
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O2
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -O3 -g
+gcc.c-torture/execute/ieee/builtin-nan-1.c compilation,  -Os
+gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O1
+gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O2
+gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -O3 -g
+gcc.c-torture/execute/ieee/compare-fp-3.c compilation,  -Os
+gcc.c-torture/execute/ieee/fp-cmp-7.c compilation,  -O0
+gcc.c-torture/execute/medce-1.c compilation,  -O0
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -O0
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -O1
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -O2
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -O3 -g
+gcc.c-torture/execute/nest-stdar-1.c compilation,  -Os
+gcc.c-torture/execute/nestfunc-1.c compilation,  -O0
+gcc.c-torture/execute/nestfunc-1.c compilation,  -O1
+gcc.c-torture/execute/nestfunc-1.c compilation,  -O2
+gcc.c-torture/execute/nestfunc-1.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nestfunc-1.c compilation,  -O3 -g
+gcc.c-torture/execute/nestfunc-1.c compilation,  -Os
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O0
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O1
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O2
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/nestfunc-2.c compilation,  -O3 -g
+gcc.c-torture/execute/nestfunc-2.c compilation,  -Os
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O0
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O1
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O2
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/nestfunc-3.c compilation,  -O3 -g
+gcc.c-torture/execute/nestfunc-3.c compilation,  -Os
+gcc.c-torture/execute/nestfunc-5.c compilation,  -O0
+gcc.c-torture/execute/nestfunc-5.c compilation,  -O1
+gcc.c-torture/execute/nestfunc-5.c compilation,  -O2
+gcc.c-torture/execute/nestfunc-5.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nestfunc-5.c compilation,  -O3 -g
+gcc.c-torture/execute/nestfunc-5.c compilation,  -Os
+gcc.c-torture/execute/nestfunc-6.c compilation,  -O0
+gcc.c-torture/execute/nestfunc-6.c compilation,  -O1
+gcc.c-torture/execute/nestfunc-6.c compilation,  -O2
+gcc.c-torture/execute/nestfunc-6.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/nestfunc-6.c compilation,  -O3 -g
+gcc.c-torture/execute/nestfunc-6.c compilation,  -Os
+gcc.c-torture/execute/pr22061-3.c compilation,  -O0
+gcc.c-torture/execute/pr22061-3.c compilation,  -O1
+gcc.c-torture/execute/pr22061-3.c compilation,  -O2
+gcc.c-torture/execute/pr22061-3.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/pr22061-3.c compilation,  -O3 -g
+gcc.c-torture/execute/pr22061-3.c compilation,  -Os
+gcc.c-torture/execute/pr22061-4.c compilation,  -O0
+gcc.c-torture/execute/pr22061-4.c compilation,  -O1
+gcc.c-torture/execute/pr22061-4.c compilation,  -O2
+gcc.c-torture/execute/pr22061-4.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/pr22061-4.c compilation,  -O3 -g
+gcc.c-torture/execute/pr22061-4.c compilation,  -Os
+gcc.c-torture/execute/pr24135.c compilation,  -O0
+gcc.c-torture/execute/pr24135.c compilation,  -O1
+gcc.c-torture/execute/pr24135.c compilation,  -O2
+gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/execute/pr24135.c compilation,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/execute/pr24135.c compilation,  -O3 -g
+gcc.c-torture/execute/pr24135.c compilation,  -Os
 gcc.c-torture/execute/printf-chk-1.c execution,  -O1
 gcc.c-torture/execute/printf-chk-1.c execution,  -O2
 gcc.c-torture/execute/printf-chk-1.c execution,  -O3 -fomit-frame-pointer
 gcc.c-torture/execute/printf-chk-1.c execution,  -O3 -g
 gcc.c-torture/execute/printf-chk-1.c execution,  -Os
-gcc.c-torture/execute/string-opt-18.c compilation,  -O0 
-gcc.c-torture/execute/string-opt-18.c compilation,  -O1 
-gcc.c-torture/execute/string-opt-18.c compilation,  -O2 
-gcc.c-torture/execute/string-opt-18.c compilation,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/string-opt-18.c compilation,  -O3 -g 
-gcc.c-torture/execute/string-opt-18.c compilation,  -Os 
-gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O1 
-gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O2 
-gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -g 
-gcc.c-torture/execute/vfprintf-chk-1.c execution,  -Os 
+gcc.c-torture/execute/string-opt-18.c compilation,  -O0
+gcc.c-torture/execute/string-opt-18.c compilation,  -O1
+gcc.c-torture/execute/string-opt-18.c compilation,  -O2
+gcc.c-torture/execute/string-opt-18.c compilation,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/string-opt-18.c compilation,  -O3 -g
+gcc.c-torture/execute/string-opt-18.c compilation,  -Os
+gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O1
+gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O2
+gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/vfprintf-chk-1.c execution,  -O3 -g
+gcc.c-torture/execute/vfprintf-chk-1.c execution,  -Os
 gcc.c-torture/execute/vprintf-chk-1.c execution,  -O1
 gcc.c-torture/execute/vprintf-chk-1.c execution,  -O2
 gcc.c-torture/execute/vprintf-chk-1.c execution,  -O3 -fomit-frame-pointer
 gcc.c-torture/execute/vprintf-chk-1.c execution,  -O3 -g
 gcc.c-torture/execute/vprintf-chk-1.c execution,  -Os
-gcc.c-torture/execute/wchar_t-1.c execution,  -O0 
-gcc.c-torture/execute/wchar_t-1.c execution,  -O1 
-gcc.c-torture/execute/wchar_t-1.c execution,  -O2 
-gcc.c-torture/execute/wchar_t-1.c execution,  -O3 -fomit-frame-pointer 
-gcc.c-torture/execute/wchar_t-1.c execution,  -O3 -g 
-gcc.c-torture/execute/wchar_t-1.c execution,  -Os 
-gcc.c-torture/unsorted/BUG12.c,  -O0  
-gcc.c-torture/unsorted/BUG12.c,  -O1  
-gcc.c-torture/unsorted/BUG12.c,  -O2  
-gcc.c-torture/unsorted/BUG12.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/BUG12.c,  -O3 -g  
-gcc.c-torture/unsorted/BUG12.c,  -Os  
-gcc.c-torture/unsorted/call.c,  -O0  
-gcc.c-torture/unsorted/call.c,  -O1  
-gcc.c-torture/unsorted/call.c,  -O2  
-gcc.c-torture/unsorted/call.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/call.c,  -O3 -g  
-gcc.c-torture/unsorted/call.c,  -Os  
-gcc.c-torture/unsorted/dic.c,  -O0  
-gcc.c-torture/unsorted/dic.c,  -O1  
-gcc.c-torture/unsorted/dic.c,  -O2  
-gcc.c-torture/unsorted/dic.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/dic.c,  -O3 -g  
-gcc.c-torture/unsorted/dic.c,  -Os  
-gcc.c-torture/unsorted/foo.c,  -O0  
-gcc.c-torture/unsorted/foo.c,  -O1  
-gcc.c-torture/unsorted/foo.c,  -O2  
-gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions  
-gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer -funroll-loops  
-gcc.c-torture/unsorted/foo.c,  -O3 -g  
-gcc.c-torture/unsorted/foo.c,  -Os  
-gcc.c-torture/unsorted/pass.c,  -O1  
-gcc.c-torture/unsorted/pass.c,  -O2  
-gcc.c-torture/unsorted/pass.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/pass.c,  -O3 -g  
-gcc.c-torture/unsorted/pass.c,  -Os  
-gcc.c-torture/unsorted/poor.c,  -O0  
-gcc.c-torture/unsorted/poor.c,  -O1  
-gcc.c-torture/unsorted/poor.c,  -O2  
-gcc.c-torture/unsorted/poor.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/poor.c,  -O3 -g  
-gcc.c-torture/unsorted/poor.c,  -Os  
-gcc.c-torture/unsorted/v.c,  -O0  
-gcc.c-torture/unsorted/v.c,  -O1  
-gcc.c-torture/unsorted/v.c,  -O2  
-gcc.c-torture/unsorted/v.c,  -O3 -fomit-frame-pointer  
-gcc.c-torture/unsorted/v.c,  -O3 -g  
-gcc.c-torture/unsorted/v.c,  -Os  
+gcc.c-torture/execute/wchar_t-1.c execution,  -O0
+gcc.c-torture/execute/wchar_t-1.c execution,  -O1
+gcc.c-torture/execute/wchar_t-1.c execution,  -O2
+gcc.c-torture/execute/wchar_t-1.c execution,  -O3 -fomit-frame-pointer
+gcc.c-torture/execute/wchar_t-1.c execution,  -O3 -g
+gcc.c-torture/execute/wchar_t-1.c execution,  -Os
+gcc.c-torture/unsorted/BUG12.c,  -O0
+gcc.c-torture/unsorted/BUG12.c,  -O1
+gcc.c-torture/unsorted/BUG12.c,  -O2
+gcc.c-torture/unsorted/BUG12.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/BUG12.c,  -O3 -g
+gcc.c-torture/unsorted/BUG12.c,  -Os
+gcc.c-torture/unsorted/call.c,  -O0
+gcc.c-torture/unsorted/call.c,  -O1
+gcc.c-torture/unsorted/call.c,  -O2
+gcc.c-torture/unsorted/call.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/call.c,  -O3 -g
+gcc.c-torture/unsorted/call.c,  -Os
+gcc.c-torture/unsorted/dic.c,  -O0
+gcc.c-torture/unsorted/dic.c,  -O1
+gcc.c-torture/unsorted/dic.c,  -O2
+gcc.c-torture/unsorted/dic.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/dic.c,  -O3 -g
+gcc.c-torture/unsorted/dic.c,  -Os
+gcc.c-torture/unsorted/foo.c,  -O0
+gcc.c-torture/unsorted/foo.c,  -O1
+gcc.c-torture/unsorted/foo.c,  -O2
+gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer -funroll-all-loops -finline-functions
+gcc.c-torture/unsorted/foo.c,  -O3 -fomit-frame-pointer -funroll-loops
+gcc.c-torture/unsorted/foo.c,  -O3 -g
+gcc.c-torture/unsorted/foo.c,  -Os
+gcc.c-torture/unsorted/pass.c,  -O1
+gcc.c-torture/unsorted/pass.c,  -O2
+gcc.c-torture/unsorted/pass.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/pass.c,  -O3 -g
+gcc.c-torture/unsorted/pass.c,  -Os
+gcc.c-torture/unsorted/poor.c,  -O0
+gcc.c-torture/unsorted/poor.c,  -O1
+gcc.c-torture/unsorted/poor.c,  -O2
+gcc.c-torture/unsorted/poor.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/poor.c,  -O3 -g
+gcc.c-torture/unsorted/poor.c,  -Os
+gcc.c-torture/unsorted/v.c,  -O0
+gcc.c-torture/unsorted/v.c,  -O1
+gcc.c-torture/unsorted/v.c,  -O2
+gcc.c-torture/unsorted/v.c,  -O3 -fomit-frame-pointer
+gcc.c-torture/unsorted/v.c,  -O3 -g
+gcc.c-torture/unsorted/v.c,  -Os
 gcc.dg/20000707-1.c (test for excess errors)
 gcc.dg/20001116-1.c  (test for warnings, line 10)
 gcc.dg/20001116-1.c (test for excess errors)

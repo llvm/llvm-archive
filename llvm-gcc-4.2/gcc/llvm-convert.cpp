@@ -395,7 +395,7 @@ namespace {
         Type *ArgTypes[3] = {SBP, SBP, IntPtr };
         Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                                      Intrinsic::memcpy,
-                                                     ArgTypes), Ops, Ops+5);
+                                                     ArgTypes), Ops);
 
         AI->setName(NameStack.back());
       }
@@ -1667,7 +1667,7 @@ Value *TreeToLLVM::EmitMemCpy(Value *DestPtr, Value *SrcPtr, Value *Size,
 
   Type *ArgTypes[3] = {SBP, SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memcpy,
-                                               ArgTypes), Ops, Ops+5);
+                                               ArgTypes), Ops);
   return Ops[0];
 }
 
@@ -1685,7 +1685,7 @@ Value *TreeToLLVM::EmitMemMove(Value *DestPtr, Value *SrcPtr, Value *Size,
   Type *ArgTypes[3] = {SBP, SBP, IntPtr };
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memmove,
-                                               ArgTypes), Ops, Ops+5);
+                                               ArgTypes), Ops);
   return Ops[0];
 }
 
@@ -1703,7 +1703,7 @@ Value *TreeToLLVM::EmitMemSet(Value *DestPtr, Value *SrcVal, Value *Size,
 
   Type *ArgTypes[2] = {SBP, IntPtr };
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::memset,
-                                               ArgTypes), Ops, Ops+5);
+                                               ArgTypes), Ops);
   return Ops[0];
 }
 
@@ -1726,7 +1726,7 @@ void TreeToLLVM::EmitTypeGcroot(Value *V, tree decl) {
     ConstantPointerNull::get(Ty)
   };
 
-  Builder.CreateCall(gcrootFun, Ops, Ops+2);
+  Builder.CreateCall(gcrootFun, Ops);
 }
 
 // Emits annotate intrinsic if the decl has the annotate attribute set.
@@ -1774,7 +1774,7 @@ void TreeToLLVM::EmitAnnotateIntrinsic(Value *V, tree decl) {
         lineNo
       };
 
-      Builder.CreateCall(annotateFun, Ops, Ops+4);
+      Builder.CreateCall(annotateFun, Ops);
     }
 
     // Get next annotate attribute.
@@ -2297,8 +2297,7 @@ void TreeToLLVM::EmitLandingPads() {
     }
 
     // Emit the selector call.
-    Value *Select = Builder.CreateCall(FuncEHSelector, Args.begin(), Args.end(),
-                                       "eh_select");
+    Value *Select = Builder.CreateCall(FuncEHSelector, Args, "eh_select");
     Builder.CreateStore(Select, ExceptionSelectorValue);
     // Branch to the post landing pad for the first reachable handler.
     assert(!Handlers.empty() && "Landing pad but no handler?");
@@ -3106,7 +3105,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
 
   Value *Call;
   if (!LandingPad) {
-    Call = Builder.CreateCall(Callee, CallOperands.begin(), CallOperands.end());
+    Call = Builder.CreateCall(Callee, CallOperands);
     cast<CallInst>(Call)->setCallingConv(CallingConvention);
     cast<CallInst>(Call)->setAttributes(PAL);
 
@@ -3146,8 +3145,7 @@ Value *TreeToLLVM::EmitCallOf(Value *Callee, tree exp, const MemRef *DestLoc,
     // LLVM LOCAL - end radar 7885482
   } else {
     BasicBlock *NextBlock = BasicBlock::Create(Context, "invcont");
-    Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad,
-                                CallOperands.begin(), CallOperands.end());
+    Call = Builder.CreateInvoke(Callee, NextBlock, LandingPad, CallOperands);
     cast<InvokeInst>(Call)->setCallingConv(CallingConvention);
     cast<InvokeInst>(Call)->setAttributes(PAL);
     EmitBlock(NextBlock);
@@ -3451,15 +3449,15 @@ Value *TreeToLLVM::EmitFP16Conversion(tree fromty, tree toty, Value *V) {
     // HF -> something cast is performed as HF -> SF -> something
     Value *Result =
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-						   Intrinsic::convert_from_fp16),
-			 &V, &V+1);
+                                                   Intrinsic::convert_from_fp16),
+                         V);
     return CastToAnyType(Result, false, ConvertType(toty), ExpIsSigned);
   } else if (SCALAR_FLOAT_TYPE_P (toty) && TYPE_PRECISION (toty) == 16) {
     // something -> HF cast is performed as something -> SF -> HF
     V = CastToAnyType(V, OpIsSigned, Type::getFloatTy(Context), false);
     return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-						Intrinsic::convert_to_fp16),
-			      &V, &V+1);
+                                                Intrinsic::convert_to_fp16),
+                              V);
   }
 
   return 0;
@@ -5178,7 +5176,7 @@ Value *TreeToLLVM::EmitASM_EXPR(tree exp) {
 
   Value *Asm = InlineAsm::get(FTy, NewAsmStr, ConstraintStr,
                               HasSideEffects, ASM_ASM_BLOCK(exp));
-  CallInst *CV = Builder.CreateCall(Asm, CallOps.begin(), CallOps.end(),
+  CallInst *CV = Builder.CreateCall(Asm, CallOps,
                                     CallResultTypes.empty() ? "" : "asmtmp");
   CV->setDoesNotThrow();
 
@@ -5344,7 +5342,7 @@ void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss,
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::memory_barrier),
-                     C, C + 5);
+                     C);
 }
 
 Value *
@@ -5370,7 +5368,7 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
 #endif
 
   Value *Result =
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, id, Ty), C, C + 2);
+    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, id, Ty), C);
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5414,7 +5412,7 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                  Intrinsic::atomic_cmp_swap,
                                                  Ty),
-    C, C + 3);
+                       C);
 
   // The gcc builtins are also full memory barriers.
   // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5577,7 +5575,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                           Intrinsic::objectsize,
                                                           Ty),
-                                Args, Args + 2);
+                                Args);
     return true;
   }
   // Unary bit counting intrinsics.
@@ -5774,7 +5772,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                           Intrinsic::annotation,
                                                           Ty),
-                                Args.begin(), Args.end());
+                                Args);
     return true;
   }
 
@@ -5786,7 +5784,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
     Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                  Intrinsic::memory_barrier),
-                       C, C + 5);
+                       C);
     return true;
   }
 #if defined(TARGET_ALPHA) || defined(TARGET_386) || defined(TARGET_POWERPC) \
@@ -5945,7 +5943,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_add,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -5992,7 +5990,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_sub,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -6039,7 +6037,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_or,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -6086,7 +6084,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_and,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -6133,7 +6131,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_xor,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -6180,7 +6178,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
       Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                    Intrinsic::atomic_load_nand,
                                                    Ty),
-                         C, C + 2);
+                         C);
 
     // The gcc builtins are also full memory barriers.
     // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
@@ -6316,7 +6314,7 @@ Value *TreeToLLVM::EmitBuiltinPOWI(tree exp) {
   Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                       Intrinsic::powi, Ty),
-                            Args.begin(), Args.end());
+                            Args);
 }
 
 Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
@@ -6333,7 +6331,7 @@ Value *TreeToLLVM::EmitBuiltinPOW(tree exp) {
   Args.push_back(Pow);
   return Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
                                                       Intrinsic::pow, Ty),
-                            Args.begin(), Args.end());
+                            Args);
 }
 
 bool TreeToLLVM::EmitBuiltinConstantP(tree exp, Value *&Result) {
@@ -6678,8 +6676,7 @@ bool TreeToLLVM::EmitBuiltinEHReturn(tree exp, Value *&Result) {
   SmallVector<Value *, 2> Args;
   Args.push_back(Offset);
   Args.push_back(Handler);
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID),
-                     Args.begin(), Args.end());
+  Builder.CreateCall(Intrinsic::getDeclaration(TheModule, IID), Args);
   Result = Builder.CreateUnreachable();
   EmitBlock(BasicBlock::Create(Context, ""));
 
@@ -6868,7 +6865,7 @@ bool TreeToLLVM::EmitBuiltinVACopy(tree exp) {
   Args.push_back(BitCastToType(Arg2, VPTy));
 
   Builder.CreateCall(Intrinsic::getDeclaration(TheModule, Intrinsic::vacopy),
-                     Args.begin(), Args.end());
+                     Args);
   return true;
 }
 
@@ -6893,7 +6890,7 @@ bool TreeToLLVM::EmitBuiltinInitTrampoline(tree exp, Value *&Result) {
 
   Function *Intr = Intrinsic::getDeclaration(TheModule,
                                              Intrinsic::init_trampoline);
-  Result = Builder.CreateCall(Intr, Ops, Ops+3, "tramp");
+  Result = Builder.CreateCall(Intr, Ops, "tramp");
   return true;
 }
 
@@ -7119,7 +7116,7 @@ Value *TreeToLLVM::EmitFieldAnnotation(Value *FieldPtr, tree FieldDecl) {
       };
 
       const Type* FieldPtrType = FieldPtr->getType();
-      FieldPtr = Builder.CreateCall(Fn, Ops, Ops+4);
+      FieldPtr = Builder.CreateCall(Fn, Ops);
       FieldPtr = BitCastToType(FieldPtr, FieldPtrType);
     }
 

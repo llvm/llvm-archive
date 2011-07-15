@@ -69,7 +69,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
     
   Ops.erase(Ops.begin() + OpNum);
   Ops[OpNum] = Ptr;
-  Value *V = Builder.CreateCall(IntFn, &Ops[0], &Ops[0]+Ops.size());
+  Value *V = Builder.CreateCall(IntFn, Ops);
   
   if (V->getType() != Type::getVoidTy(Context)) {
     V->setName("tmp");
@@ -324,7 +324,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     unsigned N = GetAltivecTypeNumFromType(PTy->getElementType());
     Function *smax = Intrinsic::getDeclaration(TheModule, smax_iid[N]);
     Value *ActualOps[] = { Ops[0], Result };
-    Result = Builder.CreateCall(smax, ActualOps, ActualOps+2, "tmp");
+    Result = Builder.CreateCall(smax, ActualOps, "tmp");
     return true;
   }
   case ALTIVEC_BUILTIN_ABSS_V4SI:
@@ -349,10 +349,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Function *subss = Intrinsic::getDeclaration(TheModule, subss_iid[N]);
 
     Value *ActualOps[] = {Constant::getNullValue(ResultType), Ops[0] };
-    Result = Builder.CreateCall(subss, ActualOps, ActualOps+2, "tmp");
+    Result = Builder.CreateCall(subss, ActualOps, "tmp");
     ActualOps[0] = Ops[0];
     ActualOps[1] = Result;
-    Result = Builder.CreateCall(smax, ActualOps, ActualOps+2, "tmp");
+    Result = Builder.CreateCall(smax, ActualOps, "tmp");
     return true;
   }
   case ALTIVEC_BUILTIN_VPERM_4SI:
@@ -366,7 +366,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *ActualOps[] = { Op0, Op1, Ops[2]};
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                           Intrinsic::ppc_altivec_vperm), 
-                                ActualOps, ActualOps+3, "tmp");
+                                ActualOps, "tmp");
     Result = CastToType(Instruction::BitCast, Result, Ops[0]->getType());
     return true;
   }
@@ -382,7 +382,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *ActualOps[] = { Op0, Op1, Op2 };
     Result = Builder.CreateCall(Intrinsic::getDeclaration(TheModule, 
                                           Intrinsic::ppc_altivec_vsel), 
-                                ActualOps, ActualOps+3, "tmp");
+                                ActualOps, "tmp");
     Result = CastToType(Instruction::BitCast, Result, Ops[0]->getType());
     return true;
   }

@@ -1907,7 +1907,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
     }
     Args.push_back(Ops[1]);
-    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Result = Builder.CreateCall(intFn, Args);
     break;
   }
 
@@ -1947,7 +1947,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       }
     }
     Args.push_back(Ops[2]);
-    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Result = Builder.CreateCall(intFn, Args);
     break;
   }
 
@@ -2092,7 +2092,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Args.push_back(Ops[2]); // lane number
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Args.push_back(getInt32Const(Align));
-    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Result = Builder.CreateCall(intFn, Args);
     Builder.CreateStore(Result, DestLoc->Ptr);
     Result = 0;
     break;
@@ -2153,7 +2153,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Args.push_back(getInt32Const(0));
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Args.push_back(getInt32Const(Align));
-    Result = Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Result = Builder.CreateCall(intFn, Args);
 
     // Now splat the values in lane 0 to the rest of the elements.
     for (unsigned n = 0; n != NumVecs; ++n) {
@@ -2207,7 +2207,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Args.push_back(getInt32Const(Align));
-    Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Builder.CreateCall(intFn, Args);
     Result = 0;
     break;
   }
@@ -2254,7 +2254,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Args.push_back(Ops[2]); // lane number
     unsigned Align = getPointerAlignment(TREE_VALUE(TREE_OPERAND(exp, 1)));
     Args.push_back(getInt32Const(Align));
-    Builder.CreateCall(intFn, Args.begin(), Args.end());
+    Builder.CreateCall(intFn, Args);
     Result = 0;
     break;
   }

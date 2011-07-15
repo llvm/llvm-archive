@@ -81,7 +81,7 @@ static void CreateMMXIntrinsicCall(Intrinsic::ID IntID, Value *&Result,
   for (unsigned I = 2; I < NumOps && I < 10; ++I)
     CallOps[I] = Ops[I];
 
-  Result = Builder.CreateCall(Func, CallOps, CallOps + NumOps);
+  Result = Builder.CreateCall(Func, ArrayRef<Value *>(CallOps, NumOps));
 
   if (EncodePattern & Encode::Return)
     Result = Builder.CreateBitCast(Result, MMXTy);
@@ -442,7 +442,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     Value *Arg1 = ConvertToX86_MMXTy(Ops[1], Builder);
     Value *CallOps[2] = { Arg0, Arg1 };
-    Result = Builder.CreateCall(Func, CallOps, CallOps + 2);
+    Result = Builder.CreateCall(Func, CallOps);
     return true;
   }
   case IX86_BUILTIN_MOVNTPS:
@@ -470,7 +470,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                                       "i32_to_i8");
 
     Value *CallOps[3] = { Arg0, Arg1, Arg2 };
-    Result = Builder.CreateCall(Func, CallOps, CallOps + 3);
+    Result = Builder.CreateCall(Func, CallOps);
     Result = Builder.CreateBitCast(Result, MMXTy);
     return true;
   }
@@ -892,7 +892,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     Value *Arg1 = Ops[1];
     if (flip) std::swap(Arg0, Arg1);
     Value *CallOps[3] = { Arg0, Arg1, Pred };
-    Result = Builder.CreateCall(cmpps, CallOps, CallOps+3);
+    Result = Builder.CreateCall(cmpps, CallOps);
     Result = Builder.CreateBitCast(Result, ResultType);
     return true;
   }
@@ -922,7 +922,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     Value *Pred = ConstantInt::get(Type::getInt8Ty(Context), PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
-    Result = Builder.CreateCall(cmpss, CallOps, CallOps+3);
+    Result = Builder.CreateCall(cmpss, CallOps);
     Result = Builder.CreateBitCast(Result, ResultType);
     return true;
   }
@@ -963,7 +963,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     if (flip) std::swap(Arg0, Arg1);
 
     Value *CallOps[3] = { Arg0, Arg1, Pred };
-    Result = Builder.CreateCall(cmppd, CallOps, CallOps+3);
+    Result = Builder.CreateCall(cmppd, CallOps);
     Result = Builder.CreateBitCast(Result, ResultType);
     return true;
   }
@@ -991,7 +991,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     Value *Pred = ConstantInt::get(Type::getInt8Ty(Context), PredCode);
     Value *CallOps[3] = { Ops[0], Ops[1], Pred };
-    Result = Builder.CreateCall(cmpsd, CallOps, CallOps+3);
+    Result = Builder.CreateCall(cmpsd, CallOps);
     Result = Builder.CreateBitCast(Result, ResultType);
     return true;
   }
@@ -1052,7 +1052,8 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
         // create i32 constant
         llvm::Function *F = Intrinsic::getDeclaration(TheModule,
                                                   Intrinsic::x86_sse2_psrl_dq);        
-        Result = Builder.CreateCall(F, &Ops[0], &Ops[0] + 2, "palignr");
+        Result = Builder.CreateCall(F, ArrayRef<Value *>(&Ops[0], 2),
+                                    "palignr");
         return true;
       }
 

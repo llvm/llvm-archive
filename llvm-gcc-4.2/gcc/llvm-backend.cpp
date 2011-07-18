@@ -916,7 +916,7 @@ static void CreateStructorsList(std::vector<std::pair<Constant*, int> > &Tors,
   
   LLVMContext &Context = getGlobalContext();
   
-  const Type *FPTy =
+  Type *FPTy =
     FunctionType::get(Type::getVoidTy(Context), std::vector<Type*>(), false);
   FPTy = FPTy->getPointerTo();
   
@@ -999,7 +999,7 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeUsedGlobals.empty()) {
     std::vector<Constant *> AUGs;
-    const Type *SBP= Type::getInt8PtrTy(Context);
+    Type *SBP= Type::getInt8PtrTy(Context);
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeUsedGlobals.begin(),
            AE = AttributeUsedGlobals.end(); AI != AE; ++AI) {
@@ -1019,7 +1019,7 @@ void llvm_asm_file_end(void) {
 
   if (!AttributeCompilerUsedGlobals.empty()) {
     std::vector<Constant *> ACUGs;
-    const Type *SBP= Type::getInt8PtrTy(Context);
+    Type *SBP= Type::getInt8PtrTy(Context);
     for (SmallSetVector<Constant *,32>::iterator
            AI = AttributeCompilerUsedGlobals.begin(),
            AE = AttributeCompilerUsedGlobals.end(); AI != AE; ++AI) {
@@ -1312,7 +1312,7 @@ void AddAnnotateAttrsToGlobal(GlobalValue *GV, tree decl) {
   Constant *lineNo = ConstantInt::get(Type::getInt32Ty(Context),
                                       DECL_SOURCE_LINE(decl));
   Constant *file = ConvertMetadataStringToGV(DECL_SOURCE_FILE(decl));
-  const Type *SBP= Type::getInt8PtrTy(Context);
+  Type *SBP= Type::getInt8PtrTy(Context);
   file = TheFolder->CreateBitCast(file, SBP);
  
   // There may be multiple annotate attributes. Pass return of lookup_attr 
@@ -1642,7 +1642,7 @@ void emit_global_to_llvm(tree decl) {
 /// false.
 bool ValidateRegisterVariable(tree decl) {
   int RegNumber = decode_reg_name(extractRegisterName(decl));
-  const Type *Ty = ConvertType(TREE_TYPE(decl));
+  Type *Ty = ConvertType(TREE_TYPE(decl));
 
   if (errorcount || sorrycount)
     return true;  // Do not process broken code.
@@ -1757,7 +1757,7 @@ void make_decl_llvm(tree decl) {
     if (FnEntry == 0) {
       CallingConv::ID CC;
       AttrListPtr PAL;
-      const FunctionType *Ty = 
+      FunctionType *Ty = 
         TheTypeConverter->ConvertFunctionType(TREE_TYPE(decl), decl, NULL,
                                               CC, PAL);
       FnEntry = Function::Create(Ty, Function::ExternalLinkage, Name, TheModule);
@@ -1799,7 +1799,7 @@ void make_decl_llvm(tree decl) {
   } else {
     assert((TREE_CODE(decl) == VAR_DECL ||
             TREE_CODE(decl) == CONST_DECL) && "Not a function or var decl?");
-    const Type *Ty = ConvertType(TREE_TYPE(decl));
+    Type *Ty = ConvertType(TREE_TYPE(decl));
     GlobalVariable *GV ;
 
     // If we have "extern void foo", make the global have type {} instead of
@@ -1990,7 +1990,7 @@ void print_llvm_type(FILE *file, void *LLVM) {
   // adaptor which would be simpler and more efficient.  In the meantime, just
   // adapt the adaptor.
   raw_os_ostream RO(FS);
-  RO << *(const Type*)LLVM;
+  RO << *(Type*)LLVM;
 }
 
 /// extractRegisterName - Get a register name given its decl. In 4.2 unlike 4.0

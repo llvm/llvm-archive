@@ -134,7 +134,7 @@ public:
   /// GCCTypeOverlapsWithLLVMTypePadding - Return true if the specified GCC type
   /// has any data that overlaps with structure padding in the specified LLVM
   /// type.
-  static bool GCCTypeOverlapsWithLLVMTypePadding(tree_node *t, const Type *Ty);
+  static bool GCCTypeOverlapsWithLLVMTypePadding(tree_node *t, Type *Ty);
   
   
   /// ConvertFunctionType - Convert the specified FUNCTION_TYPE or METHOD_TYPE
@@ -149,11 +149,11 @@ public:
   /// ConvertArgListToFnType - Given a DECL_ARGUMENTS list on an GCC tree,
   /// return the LLVM type corresponding to the function.  This is useful for
   /// turning "T foo(...)" functions into "T foo(void)" functions.
-  const FunctionType *ConvertArgListToFnType(tree_node *type,
-                                             tree_node *arglist,
-                                             tree_node *static_chain,
-                                             CallingConv::ID &CallingConv,
-                                             AttrListPtr &PAL);
+  FunctionType *ConvertArgListToFnType(tree_node *type,
+                                       tree_node *arglist,
+                                       tree_node *static_chain,
+                                       CallingConv::ID &CallingConv,
+                                       AttrListPtr &PAL);
   
 private:
   Type *ConvertRECORD(tree_node *type, tree_node *orig_type);
@@ -359,41 +359,41 @@ public:
   
   /// CastToType - Cast the specified value to the specified type if it is
   /// not already that type.
-  Value *CastToType(unsigned opcode, Value *V, const Type *Ty);
+  Value *CastToType(unsigned opcode, Value *V, Type *Ty);
   Value *CastToType(unsigned opcode, Value *V, tree_node *type) {
     return CastToType(opcode, V, ConvertType(type));
   }
 
   /// CastToAnyType - Cast the specified value to the specified type regardless
   /// of the types involved. This is an inferred cast.
-  Value *CastToAnyType (Value *V, bool VSigned, const Type* Ty, bool TySigned);
+  Value *CastToAnyType (Value *V, bool VSigned, Type* Ty, bool TySigned);
 
   /// CastToUIntType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are integral types. This arbitrates between BitCast,
   /// Trunc and ZExt.
-  Value *CastToUIntType(Value *V, const Type* Ty);
+  Value *CastToUIntType(Value *V, Type* Ty);
 
   /// CastToSIntType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are integral types. This arbitrates between BitCast,
   /// Trunc and SExt.
-  Value *CastToSIntType(Value *V, const Type* Ty);
+  Value *CastToSIntType(Value *V, Type* Ty);
 
   /// CastToFPType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are floating point types. This arbitrates between
   /// BitCast, FPTrunc and FPExt.
-  Value *CastToFPType(Value *V, const Type* Ty);
+  Value *CastToFPType(Value *V, Type* Ty);
 
   /// NOOPCastToType - Insert a BitCast from V to Ty if needed. This is just a
   /// convenience function for CastToType(Instruction::BitCast, V, Ty);
-  Value *BitCastToType(Value *V, const Type *Ty);
+  Value *BitCastToType(Value *V, Type *Ty);
 
   /// CreateTemporary - Create a new alloca instruction of the specified type,
   /// inserting it into the entry block and returning it.  The resulting
   /// instruction's type is a pointer to the specified type.
-  AllocaInst *CreateTemporary(const Type *Ty, unsigned align=0);
+  AllocaInst *CreateTemporary(Type *Ty, unsigned align=0);
 
   /// CreateTempLoc - Like CreateTemporary, but returns a MemRef.
-  MemRef CreateTempLoc(const Type *Ty);
+  MemRef CreateTempLoc(Type *Ty);
 
   /// EmitAggregateCopy - Copy the elements from SrcLoc to DestLoc, using the
   /// GCC type specified by GCCType to know which elements to copy.
@@ -476,7 +476,7 @@ private:
 
   /// isNoopCast - Return true if a cast from V to Ty does not change any bits.
   ///
-  static bool isNoopCast(Value *V, const Type *Ty);
+  static bool isNoopCast(Value *V, Type *Ty);
 
   void HandleMultiplyDefinedGimpleTemporary(tree_node *var);
   
@@ -517,7 +517,7 @@ private:
   Value *EmitTRUTH_NOT_EXPR(tree_node *exp);
   Value *EmitEXACT_DIV_EXPR(tree_node *exp, const MemRef *DestLoc);
   Value *EmitCompare(tree_node *exp, unsigned UIPred, unsigned SIPred, 
-                     unsigned FPPred, const Type *DestTy = 0);
+                     unsigned FPPred, Type *DestTy = 0);
   Value *EmitBinOp(tree_node *exp, const MemRef *DestLoc, unsigned Opc);
   Value *EmitPtrBinOp(tree_node *exp, unsigned Opc);
   Value *EmitTruthOp(tree_node *exp, unsigned Opc);

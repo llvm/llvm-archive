@@ -44,7 +44,7 @@ static LLVMContext &Context = getGlobalContext();
  * type.
  */
 static Value *ConvertToX86_MMXTy(Value *Val, LLVMBuilder &Builder) {
-  static const Type *MMXTy = Type::getX86_MMXTy(Context);
+  static Type *MMXTy = Type::getX86_MMXTy(Context);
   if (Val->getType() == MMXTy) return Val;
   return Builder.CreateBitCast(Val, MMXTy, "mmx_var");
 }
@@ -64,7 +64,7 @@ static void CreateMMXIntrinsicCall(Intrinsic::ID IntID, Value *&Result,
                                    unsigned EncodePattern,
                                    LLVMBuilder &Builder) {
   unsigned NumOps = Ops.size();
-  static const Type *MMXTy = Type::getX86_MMXTy(Context);
+  static Type *MMXTy = Type::getX86_MMXTy(Context);
   Function *Func = Intrinsic::getDeclaration(TheModule, IntID);
 
   Value *Arg0 = 0, *Arg1 = 0;
@@ -428,10 +428,10 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
                            Builder);
     return true;
   case IX86_BUILTIN_MOVNTQ: {
-    static const Type *MMXTy = Type::getX86_MMXTy(Context);
+    static Type *MMXTy = Type::getX86_MMXTy(Context);
     Function *Func = Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::x86_mmx_movnt_dq);
-    const PointerType *PTy = cast<PointerType>(Ops[0]->getType());
+    PointerType *PTy = cast<PointerType>(Ops[0]->getType());
     Value *Arg0 = 0;
     if (PTy->getElementType() == MMXTy)
       Arg0 = Ops[0];
@@ -461,7 +461,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return SI;
   }
   case IX86_BUILTIN_PALIGNR: {
-    static const Type *MMXTy = Type::getX86_MMXTy(Context);
+    static Type *MMXTy = Type::getX86_MMXTy(Context);
     Function *Func = Intrinsic::getDeclaration(TheModule,
                                                Intrinsic::x86_mmx_palignr_b);
     Value *Arg0 = ConvertToX86_MMXTy(Ops[0], Builder);
@@ -707,7 +707,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADQ: {
-    const PointerType *i64Ptr = Type::getInt64PtrTy(Context);
+    PointerType *i64Ptr = Type::getInt64PtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], i64Ptr);
     Ops[0] = Builder.CreateLoad(Ops[0]);
     Value *Zero = ConstantInt::get(Type::getInt64Ty(Context), 0);
@@ -719,7 +719,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADUPS: {
     VectorType *v4f32 = VectorType::get(Type::getFloatTy(Context), 4);
-    const PointerType *v4f32Ptr = v4f32->getPointerTo();
+    PointerType *v4f32Ptr = v4f32->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr);
     LoadInst *LI = Builder.CreateLoad(BC);
     LI->setAlignment(1);
@@ -728,7 +728,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADUPD: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    const PointerType *v2f64Ptr = v2f64->getPointerTo();
+    PointerType *v2f64Ptr = v2f64->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr);
     LoadInst *LI = Builder.CreateLoad(BC);
     LI->setAlignment(1);
@@ -737,7 +737,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_LOADDQU: {
     VectorType *v16i8 = VectorType::get(Type::getInt8Ty(Context), 16);
-    const PointerType *v16i8Ptr = v16i8->getPointerTo();
+    PointerType *v16i8Ptr = v16i8->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr);
     LoadInst *LI = Builder.CreateLoad(BC);
     LI->setAlignment(1);
@@ -746,7 +746,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_STOREUPS: {
     VectorType *v4f32 = VectorType::get(Type::getFloatTy(Context), 4);
-    const PointerType *v4f32Ptr = v4f32->getPointerTo();
+    PointerType *v4f32Ptr = v4f32->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v4f32Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -754,7 +754,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_STOREUPD: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    const PointerType *v2f64Ptr = v2f64->getPointerTo();
+    PointerType *v2f64Ptr = v2f64->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v2f64Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
@@ -762,14 +762,14 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_STOREDQU: {
     VectorType *v16i8 = VectorType::get(Type::getInt8Ty(Context), 16);
-    const PointerType *v16i8Ptr = v16i8->getPointerTo();
+    PointerType *v16i8Ptr = v16i8->getPointerTo();
     Value *BC = Builder.CreateBitCast(Ops[0], v16i8Ptr);
     StoreInst *SI = Builder.CreateStore(Ops[1], BC);
     SI->setAlignment(1);
     return true;
   }
   case IX86_BUILTIN_LOADHPS: {
-    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
+    PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr);
     Value *Load = Builder.CreateLoad(Ops[1]);
     Ops[1] = BuildVector(Load, UndefValue::get(Type::getDoubleTy(Context)), NULL);
@@ -779,7 +779,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     return true;
   }
   case IX86_BUILTIN_LOADLPS: {
-    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
+    PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[1] = Builder.CreateBitCast(Ops[1], f64Ptr);
     Value *Load = Builder.CreateLoad(Ops[1]);
     Ops[1] = BuildVector(Load, UndefValue::get(Type::getDoubleTy(Context)), NULL);
@@ -806,7 +806,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_STOREHPS: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
+    PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr);
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64);
@@ -816,7 +816,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   }
   case IX86_BUILTIN_STORELPS: {
     VectorType *v2f64 = VectorType::get(Type::getDoubleTy(Context), 2);
-    const PointerType *f64Ptr = Type::getDoublePtrTy(Context);
+    PointerType *f64Ptr = Type::getDoublePtrTy(Context);
     Ops[0] = Builder.CreateBitCast(Ops[0], f64Ptr);
     Value *Idx = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Ops[1] = Builder.CreateBitCast(Ops[1], v2f64);
@@ -1023,9 +1023,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       // If palignr is shifting the pair of input vectors less than 17 bytes,
       // emit a shuffle instruction.
       if (shiftVal <= 16) {
-        const llvm::Type *IntTy = Type::getInt32Ty(Context);
-        const llvm::Type *EltTy = Type::getInt8Ty(Context);
-        const llvm::Type *VecTy = VectorType::get(EltTy, 16);
+        Type *IntTy = Type::getInt32Ty(Context);
+        Type *EltTy = Type::getInt8Ty(Context);
+        Type *VecTy = VectorType::get(EltTy, 16);
         
         Ops[1] = Builder.CreateBitCast(Ops[1], VecTy);
         Ops[0] = Builder.CreateBitCast(Ops[0], VecTy);
@@ -1042,9 +1042,9 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
       // If palignr is shifting the pair of input vectors more than 16 but less
       // than 32 bytes, emit a logical right shift of the destination.
       if (shiftVal < 32) {
-        const llvm::Type *EltTy = Type::getInt64Ty(Context);
-        const llvm::Type *VecTy = VectorType::get(EltTy, 2);
-        const llvm::Type *IntTy = Type::getInt32Ty(Context);
+        Type *EltTy = Type::getInt64Ty(Context);
+        Type *VecTy = VectorType::get(EltTy, 2);
+        Type *IntTy = Type::getInt32Ty(Context);
 
         Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
         Ops[1] = ConstantInt::get(IntTy, (shiftVal-16) * 8);
@@ -1094,10 +1094,10 @@ static bool llvm_x86_64_should_pass_aggregate_in_memory(tree TreeType,
 }
 
 /* Returns true if all elements of the type are integer types. */
-static bool llvm_x86_is_all_integer_types(const Type *Ty) {
+static bool llvm_x86_is_all_integer_types(Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
-    const Type *STy = *I;
+    Type *STy = *I;
     if (!STy->isIntOrIntVectorTy() && !STy->isPointerTy())
       return false;
   }
@@ -1122,7 +1122,7 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
   // Note that we can't support passing all structs this way.  For example,
   // {i16, i16} should be passed in on 32-bit unit, which is not how "i16, i16"
   // would be passed as stand-alone arguments.
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return false;
 
   for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
@@ -1151,13 +1151,13 @@ llvm_x86_32_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
 bool llvm_x86_should_pass_aggregate_as_fca(tree type, Type *Ty) {
   if (TREE_CODE(type) != COMPLEX_TYPE)
     return false;
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy || STy->isPacked()) return false;
 
   // FIXME: Currently codegen isn't lowering most _Complex types in a way that
   // makes it ABI compatible for x86-64. Same for _Complex char and _Complex
   // short in 32-bit.
-  const Type *EltTy = STy->getElementType(0);
+  Type *EltTy = STy->getElementType(0);
   return !((TARGET_64BIT && (EltTy->isIntegerTy() ||
                              EltTy->isFloatTy() ||
                              EltTy->isDoubleTy())) ||
@@ -1190,7 +1190,7 @@ bool llvm_x86_should_pass_aggregate_in_memory(tree TreeType, Type *Ty) {
 static void count_num_registers_uses(std::vector<Type*> &ScalarElts,
                                      unsigned &NumGPRs, unsigned &NumXMMs) {
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
-    const Type *Ty = ScalarElts[i];
+    Type *Ty = ScalarElts[i];
     if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
       if (!TARGET_MACHO)
         continue;
@@ -1314,8 +1314,8 @@ llvm_x86_64_should_pass_aggregate_in_mixed_regs(tree TreeType, Type *Ty,
           assert(0 && "Not yet handled!");
       } else if ((NumClasses-i) == 2) {
         if (Class[i+1] == X86_64_SSEUP_CLASS) {
-          const Type *Ty = ConvertType(TreeType);
-          if (const StructType *STy = dyn_cast<StructType>(Ty))
+          Type *Ty = ConvertType(TreeType);
+          if (StructType *STy = dyn_cast<StructType>(Ty))
             // Look pass the struct wrapper.
             if (STy->getNumElements() == 1)
               Ty = STy->getElementType(0);
@@ -1507,13 +1507,13 @@ bool llvm_x86_should_not_return_complex_in_memory(tree type) {
 
 // llvm_suitable_multiple_ret_value_type - Return TRUE if return value 
 // of type TY should be returned using multiple value return instruction.
-static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
+static bool llvm_suitable_multiple_ret_value_type(Type *Ty,
                                                   tree TreeType) {
 
   if (!TARGET_64BIT)
     return false;
 
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy)
     return false;
 
@@ -1547,7 +1547,7 @@ static bool llvm_suitable_multiple_ret_value_type(const Type *Ty,
 // can be returned as a scalar, otherwise return NULL.
 Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
   *Offset = 0;
-  const Type *Ty = ConvertType(type);
+  Type *Ty = ConvertType(type);
   unsigned Size = getTargetData().getTypeAllocSize(Ty);
   if (Size == 0)
     return Type::getVoidTy(Context);
@@ -1633,7 +1633,7 @@ Type *llvm_x86_scalar_type_for_struct_return(tree type, unsigned *Offset) {
 /// The original implementation of this routine is based on 
 /// llvm_x86_64_should_pass_aggregate_in_mixed_regs code.
 void
-llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
+llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, Type *Ty,
                                             std::vector<Type*> &Elts){
   enum x86_64_reg_class Class[MAX_CLASSES];
   enum machine_mode Mode = ix86_getNaturalModeForType(TreeType);
@@ -1690,8 +1690,8 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
           assert(0 && "Not yet handled!");
       } else if ((NumClasses-i) == 2) {
         if (Class[i+1] == X86_64_SSEUP_CLASS) {
-          const Type *Ty = ConvertType(TreeType);
-          if (const StructType *STy = dyn_cast<StructType>(Ty))
+          Type *Ty = ConvertType(TreeType);
+          if (StructType *STy = dyn_cast<StructType>(Ty))
             // Look pass the struct wrapper.
             if (STy->getNumElements() == 1)
               Ty = STy->getElementType(0);
@@ -1770,11 +1770,11 @@ llvm_x86_64_get_multiple_return_reg_classes(tree TreeType, const Type *Ty,
 // Return LLVM Type if TYPE can be returned as an aggregate, 
 // otherwise return NULL.
 Type *llvm_x86_aggr_type_for_struct_return(tree type) {
-  const Type *Ty = ConvertType(type);
+  Type *Ty = ConvertType(type);
   if (!llvm_suitable_multiple_ret_value_type(Ty, type))
     return NULL;
 
-  const StructType *STy = cast<StructType>(Ty);
+  StructType *STy = cast<StructType>(Ty);
   std::vector<Type *> ElementTypes;
 
   // Special handling for _Complex.
@@ -1804,11 +1804,11 @@ static void llvm_x86_extract_mrv_array_element(Value *Src, Value *Dest,
                                                LLVMBuilder &Builder,
                                                bool isVolatile) {
   Value *EVI = Builder.CreateExtractValue(Src, SrcFieldNo, "mrv_gr");
-  const StructType *STy = cast<StructType>(Src->getType());
+  StructType *STy = cast<StructType>(Src->getType());
   llvm::Value *Idxs[3];
-  Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-  Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestFieldNo);
-  Idxs[2] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestElemNo);
+  Idxs[0] = ConstantInt::get(Type::getInt32Ty(Context), 0);
+  Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), DestFieldNo);
+  Idxs[2] = ConstantInt::get(Type::getInt32Ty(Context), DestElemNo);
   Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
   if (STy->getElementType(SrcFieldNo)->isVectorTy()) {
     Value *ElemIndex = ConstantInt::get(Type::getInt32Ty(Context), SrcElemNo);
@@ -1826,11 +1826,11 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
                                             bool isVolatile,
                                             LLVMBuilder &Builder) {
   
-  const StructType *STy = cast<StructType>(Src->getType());
+  StructType *STy = cast<StructType>(Src->getType());
   unsigned NumElements = STy->getNumElements();
 
-  const PointerType *PTy = cast<PointerType>(Dest->getType());
-  const StructType *DestTy = cast<StructType>(PTy->getElementType());
+  PointerType *PTy = cast<PointerType>(Dest->getType());
+  StructType *DestTy = cast<StructType>(PTy->getElementType());
 
   unsigned SNO = 0;
   unsigned DNO = 0;
@@ -1861,8 +1861,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
   }
 
   while (SNO < NumElements) {
-
-    const Type *DestElemType = DestTy->getElementType(DNO);
+    Type *DestElemType = DestTy->getElementType(DNO);
 
     // Directly access first class values using getresult.
     if (DestElemType->isSingleValueType()) {
@@ -1876,10 +1875,10 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     // Special treatement for _Complex.
     if (DestElemType->isStructTy()) {
       llvm::Value *Idxs[3];
-      Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
-      Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DNO);
+      Idxs[0] = ConstantInt::get(Type::getInt32Ty(Context), 0);
+      Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), DNO);
 
-      Idxs[2] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
+      Idxs[2] = ConstantInt::get(Type::getInt32Ty(Context), 0);
       Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
       Value *EVI = Builder.CreateExtractValue(Src, 0, "mrv_gr");
       Builder.CreateStore(EVI, GEP, isVolatile);
@@ -1895,7 +1894,7 @@ void llvm_x86_extract_multiple_return_value(Value *Src, Value *Dest,
     
     // Access array elements individually. Note, Src and Dest type may
     // not match. For example { <2 x float>, float } and { float[3]; }
-    const ArrayType *ATy = cast<ArrayType>(DestElemType);
+    ArrayType *ATy = cast<ArrayType>(DestElemType);
     unsigned ArraySize = ATy->getNumElements();
     unsigned DElemNo = 0; // DestTy's DNO field's element number
     while (DElemNo < ArraySize) {

@@ -53,10 +53,10 @@ static LLVMContext &Context = getGlobalContext();
 // name of the resultant intrinsic.
 static void MergeIntPtrOperand(TreeToLLVM *TTL,
                                unsigned OpNum, Intrinsic::ID IID,
-                               const Type *ResultType,
+                               Type *ResultType,
                                std::vector<Value*> &Ops,
                                LLVMBuilder &Builder, Value *&Result) {
-  const Type *VoidPtrTy = PointerType::getUnqual(Type::getInt8Ty(Context));
+  Type *VoidPtrTy = PointerType::getUnqual(Type::getInt8Ty(Context));
   
   Function *IntFn = Intrinsic::getDeclaration(TheModule, IID);
   
@@ -79,7 +79,7 @@ static void MergeIntPtrOperand(TreeToLLVM *TTL,
 
 // GetAltivecTypeNumFromType - Given an LLVM type, return a unique ID for
 // the type in the range 0-3.
-static int GetAltivecTypeNumFromType(const Type *Ty) {
+static int GetAltivecTypeNumFromType(Type *Ty) {
   return (Ty->isIntegerTy(32) ? 0 : \
           (Ty->isIntegerTy(16) ? 1 : \
            (Ty->isIntegerTy(8) ? 2 : \
@@ -360,7 +360,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VPERM_8HI:
   case ALTIVEC_BUILTIN_VPERM_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
+    Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *ActualOps[] = { Op0, Op1, Ops[2]};
@@ -375,7 +375,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
   case ALTIVEC_BUILTIN_VSEL_8HI:
   case ALTIVEC_BUILTIN_VSEL_16QI: {
     // Operation is identical on all types; we have a single intrinsic.
-    const Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
+    Type *VecTy = VectorType::get(Type::getInt32Ty(Context), 4);
     Value *Op0 = CastToType(Instruction::BitCast, Ops[0], VecTy);
     Value *Op1 = CastToType(Instruction::BitCast, Ops[1], VecTy);
     Value *Op2 = CastToType(Instruction::BitCast, Ops[2], VecTy);
@@ -396,7 +396,7 @@ static unsigned count_num_registers_uses(std::vector<Type*> &ScalarElts) {
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
     if (NumGPRs >= 8)
       break;
-    const Type *Ty = ScalarElts[i];
+    Type *Ty = ScalarElts[i];
     if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
       abort();
     } else if (Ty->isPointerTy()) {
@@ -534,7 +534,7 @@ bool llvm_rs6000_should_pass_aggregate_byval(tree TreeType, Type *Ty) {
 
   // ppc32 passes aggregates by copying, either in int registers or on the 
   // stack.
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy) return true;
 
   // A struct containing only a float, double or vector field, possibly with
@@ -608,7 +608,7 @@ llvm_rs6000_should_pass_aggregate_in_mixed_regs(tree TreeType, Type* Ty,
   if (SrcSize <= 0 || SrcSize > 16)
     return false;
 
-  const StructType *STy = dyn_cast<StructType>(Ty);
+  StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy) return false;
 
   // A struct containing only a float, double or Altivec field, possibly with

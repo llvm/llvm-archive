@@ -133,12 +133,12 @@ static Value *BuildConstantSplatVector(unsigned NumElements, ConstantInt *Val) {
 
 /// BuildDup - Build a splat operation to duplicate a value into every
 /// element of a vector.
-static Value *BuildDup(const Type *ResultType, Value *Val,
+static Value *BuildDup(Type *ResultType, Value *Val,
                        LLVMBuilder &Builder) {
   // GCC may promote the scalar argument; cast it back.
-  const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+  VectorType *VTy = dyn_cast<VectorType>(ResultType);
   assert(VTy && "expected a vector type");
-  const Type *ElTy = VTy->getElementType();
+  Type *ElTy = VTy->getElementType();
   if (Val->getType() != ElTy) {
     assert(!ElTy->isFloatingPointTy() &&
            "only integer types expected to be promoted");
@@ -1681,7 +1681,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     // GCC may promote the scalar argument; cast it back.
     const VectorType *VTy = dyn_cast<const VectorType>(Ops[1]->getType());
     assert(VTy && "expected a vector type for vset_lane vector operand");
-    const Type *ElTy = VTy->getElementType();
+    Type *ElTy = VTy->getElementType();
     if (Ops[0]->getType() != ElTy) {
       assert(!ElTy->isFloatingPointTy() &&
              "only integer types expected to be promoted");
@@ -1721,7 +1721,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
   case NEON_BUILTIN_vget_high:
   case NEON_BUILTIN_vget_low: {
-    const Type *v2f64Ty = VectorType::get(Type::getDoubleTy(Context), 2);
+    Type *v2f64Ty = VectorType::get(Type::getDoubleTy(Context), 2);
     unsigned Idx = (neon_code == NEON_BUILTIN_vget_low ? 0 : 1);
     Result = Builder.CreateBitCast(Ops[0], v2f64Ty);
     Result = Builder.CreateExtractElement(Result, getInt32Const(Idx));
@@ -1800,7 +1800,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     }
     const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
     assert(VTy && "expected a vector type");
-    const Type *ElTy = VTy->getElementType();
+    Type *ElTy = VTy->getElementType();
     unsigned ChunkElts = ChunkBits / ElTy->getPrimitiveSizeInBits();
 
     // Translate to a vector shuffle.
@@ -2521,7 +2521,7 @@ vfp_arg_homogeneous_aggregate_p(enum machine_mode mode, tree type,
 // Walk over an LLVM Type that we know is a homogeneous aggregate and
 // push the proper LLVM Types that represent the register types to pass
 // that struct member in.
-static void push_elts(const Type *Ty, std::vector<Type*> &Elts)
+static void push_elts(Type *Ty, std::vector<Type*> &Elts)
 {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I) {
@@ -2553,7 +2553,7 @@ static void push_elts(const Type *Ty, std::vector<Type*> &Elts)
 static unsigned count_num_words(std::vector<Type*> &ScalarElts) {
   unsigned NumWords = 0;
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
-    const Type *Ty = ScalarElts[i];
+    Type *Ty = ScalarElts[i];
     if (Ty->isPointerTy()) {
       NumWords++;
     } else if (Ty->isIntegerTy()) {
@@ -2585,7 +2585,7 @@ llvm_arm_try_pass_aggregate_custom(tree type,
 
   if (TARGET_HARD_FLOAT_ABI)
     return false;
-  const Type *Ty = ConvertType(type);
+  Type *Ty = ConvertType(type);
   if (Ty->isPointerTy())
     return false;
 
@@ -2689,7 +2689,7 @@ static bool alloc_next_qpr(bool *SPRs) {
 static bool count_num_registers_uses(std::vector<Type*> &ScalarElts,
                                      bool *SPRs) {
   for (unsigned i = 0, e = ScalarElts.size(); i != e; ++i) {
-    const Type *Ty = ScalarElts[i];
+    Type *Ty = ScalarElts[i];
     if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
       switch (VTy->getBitWidth())
       {
@@ -2764,7 +2764,7 @@ Type *llvm_arm_aggr_type_for_struct_return(tree TreeType,
   // Walk Ty and push LLVM types corresponding to register types onto
   // Elts.
   std::vector<Type*> Elts;
-  const Type *Ty = ConvertType(TreeType);
+  Type *Ty = ConvertType(TreeType);
   push_elts(Ty, Elts);
 
   return StructType::get(Context, Elts, false);
@@ -2817,7 +2817,7 @@ void llvm_arm_extract_multiple_return_value(Value *Src, Value *Dest,
 
   while (SNO < NumElements) {
 
-    const Type *DestElemType = DestTy->getElementType(DNO);
+    Type *DestElemType = DestTy->getElementType(DNO);
 
     // Directly access first class values.
     if (DestElemType->isSingleValueType()) {

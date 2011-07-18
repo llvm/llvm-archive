@@ -140,7 +140,7 @@ void readLLVMTypesStringTable() {
   if (!V)
     return;
 
-  const StructType *STy = cast<StructType>(V->getType()->getElementType());
+  StructType *STy = cast<StructType>(V->getType()->getElementType());
 
   for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
     if (const PointerType *PTy = dyn_cast<PointerType>(STy->getElementType(i)))
@@ -320,9 +320,9 @@ static uint64_t getFieldOffsetInBits(tree Field) {
 
 /// FindLLVMTypePadding - If the specified struct has any inter-element padding,
 /// add it to the Padding array.
-static void FindLLVMTypePadding(const Type *Ty, tree type, uint64_t BitOffset,
+static void FindLLVMTypePadding(Type *Ty, tree type, uint64_t BitOffset,
                        SmallVector<std::pair<uint64_t,uint64_t>, 16> &Padding) {
-  if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+  if (StructType *STy = dyn_cast<StructType>(Ty)) {
     const TargetData &TD = getTargetData();
     const StructLayout *SL = TD.getStructLayout(STy);
     uint64_t PrevFieldEnd = 0;
@@ -470,7 +470,7 @@ static bool GCCTypeOverlapsWithPadding(tree type, int PadStartBits,
 }
 
 bool TypeConverter::GCCTypeOverlapsWithLLVMTypePadding(tree type, 
-                                                       const Type *Ty) {
+                                                       Type *Ty) {
   
   // Start by finding all of the padding in the LLVM Type.
   SmallVector<std::pair<uint64_t,uint64_t>, 16> StructPadding;
@@ -601,7 +601,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
       return Ty;
 
     uint64_t ElementSize;
-    const Type *ElementTy;
+    Type *ElementTy;
     if (isSequentialCompatible(type)) {
       // The gcc element type maps to an LLVM type of the same size.
       // Convert to an LLVM array of the converted element type.
@@ -793,7 +793,7 @@ static Attributes HandleArgumentExtension(tree ArgTy) {
 /// for the function.  This method takes the DECL_ARGUMENTS list (Args), and
 /// fills in Result with the argument types for the function.  It returns the
 /// specified result type for the function.
-const FunctionType *TypeConverter::
+FunctionType *TypeConverter::
 ConvertArgListToFnType(tree type, tree Args, tree static_chain,
                        CallingConv::ID &CallingConv, AttrListPtr &PAL) {
   tree ReturnType = TREE_TYPE(type);
@@ -1100,13 +1100,13 @@ struct StructTypeConversionInfo {
   
   /// getTypeAlignment - Return the alignment of the specified type in bytes.
   ///
-  unsigned getTypeAlignment(const Type *Ty) const {
+  unsigned getTypeAlignment(Type *Ty) const {
     return Packed ? 1 : TD.getABITypeAlignment(Ty);
   }
   
   /// getTypeSize - Return the size of the specified type in bytes.
   ///
-  uint64_t getTypeSize(const Type *Ty) const {
+  uint64_t getTypeSize(Type *Ty) const {
     return TD.getTypeAllocSize(Ty);
   }
   
@@ -1150,7 +1150,7 @@ struct StructTypeConversionInfo {
     if (NoOfBytesToRemove == 0)
       return;
 
-    const Type *LastType = Elements.back();
+    Type *LastType = Elements.back();
     unsigned PadBytes = 0;
 
     if (LastType->isIntegerTy(8))
@@ -1181,7 +1181,7 @@ struct StructTypeConversionInfo {
   /// layout is sized properly. Return false if unable to handle ByteOffset.
   /// In this case caller should redo this struct as a packed structure.
   bool ResizeLastElementIfOverlapsWith(uint64_t ByteOffset, tree Field,
-                                       const Type *Ty) {
+                                       Type *Ty) {
     Type *SavedTy = NULL;
 
     if (!Elements.empty()) {
@@ -1266,7 +1266,7 @@ struct StructTypeConversionInfo {
   
   /// addElement - Add an element to the structure with the specified type,
   /// offset and size.
-  void addElement(const Type *Ty, uint64_t Offset, uint64_t Size,
+  void addElement(Type *Ty, uint64_t Offset, uint64_t Size,
                   bool ExtraPadding = false) {
     Elements.push_back((Type*)Ty);
     ElementOffsetInBytes.push_back(Offset);
@@ -1818,7 +1818,7 @@ void TypeConverter::DecodeStructBitField(tree_node *Field,
       PadBytes = StartOffsetInBits/8-FirstUnallocatedByte;
 
     if (PadBytes) {
-      const Type *Pad = Type::getInt8Ty(Context);
+      Type *Pad = Type::getInt8Ty(Context);
       if (PadBytes != 1)
         Pad = ArrayType::get(Pad, PadBytes);
       Info.addElement(Pad, FirstUnallocatedByte, PadBytes);
@@ -1852,7 +1852,7 @@ static bool UnionHasOnlyZeroOffsets(tree type) {
 /// then we will add padding later on anyway to match union size.
 void TypeConverter::SelectUnionMember(tree type,
                                       StructTypeConversionInfo &Info) {
-  const Type *UnionTy = 0;
+  Type *UnionTy = 0;
   tree GccUnionTy = 0;
   tree UnionField = 0;
   unsigned MaxAlignSize = 0, MaxAlign = 0;
@@ -2030,12 +2030,12 @@ Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
              Info->getTypeAlignment(Type::getInt32Ty(Context))) == 0) {
           // Insert array of i32.
           unsigned Int32ArraySize = (GCCTypeSize-LLVMStructSize) / 4;
-          const Type *PadTy =
+          Type *PadTy =
             ArrayType::get(Type::getInt32Ty(Context), Int32ArraySize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            Int32ArraySize, true /* Padding Element */);
         } else {
-          const Type *PadTy = ArrayType::get(Type::getInt8Ty(Context),
+          Type *PadTy = ArrayType::get(Type::getInt8Ty(Context),
                                              GCCTypeSize-LLVMStructSize);
           Info->addElement(PadTy, GCCTypeSize - LLVMLastElementEnd,
                            GCCTypeSize - LLVMLastElementEnd,

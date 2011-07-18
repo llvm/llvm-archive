@@ -1413,7 +1413,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+    VectorType *VTy = dyn_cast<VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabdl result");
     llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
     intFn = Intrinsic::getDeclaration(TheModule, intID, DTy);
@@ -1443,7 +1443,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
     else
       return BadImmediateError(exp, Result);
 
-    const VectorType *VTy = dyn_cast<const VectorType>(ResultType);
+    VectorType *VTy = dyn_cast<VectorType>(ResultType);
     assert(VTy && "expected a vector type for vabal result");
     llvm::Type *DTy = VectorType::getTruncatedElementVectorType(VTy);
     intFn = Intrinsic::getDeclaration(TheModule, intID, DTy);

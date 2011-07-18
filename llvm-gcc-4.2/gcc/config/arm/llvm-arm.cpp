@@ -1515,7 +1515,7 @@ bool TreeToLLVM::TargetIntrinsicLower(tree exp,
 
     intOpTypes[0] = ResultType;
     intOpTypes[1] = Ops[1]->getType();
-    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes2);
+    intFn = Intrinsic::getDeclaration(TheModule, intID, intOpTypes);
     Result = Builder.CreateCall2(intFn, Ops[0], Ops[1]);
     break;
 

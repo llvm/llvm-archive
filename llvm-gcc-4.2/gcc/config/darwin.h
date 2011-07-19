@@ -1486,17 +1486,27 @@ const char *darwin_objc_llvm_special_name_section(const char*);
 
 /* Darwin X86-64 only supports PIC code generation. */
 #if defined (TARGET_386)
-#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+#define LLVM_SET_RELOC_MODEL(RelocModel)             \
   if ((TARGET_64BIT) || flag_pic)                    \
-    argvec.push_back ("--relocation-model=pic");     \
+    RelocModel = Reloc::PIC_;                        \
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
-    argvec.push_back ("--relocation-model=static")
+    RelocModel = Reloc::Static;
 #elif defined (TARGET_ARM)
-#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+#define LLVM_SET_RELOC_MODEL(RelocModel)             \
   if (flag_pic)                                      \
-    argvec.push_back ("--relocation-model=pic");     \
+    RelocModel = Reloc::PIC_;                        \
   else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
-    argvec.push_back ("--relocation-model=static");  \
+    RelocModel = Reloc::Static;
+#else /* !TARGET_386 && !TARGET_ARM */
+#define LLVM_SET_RELOC_MODEL(RelocModel)             \
+  if (flag_pic)                                      \
+    RelocModel = Reloc::PIC_;                        \
+  else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
+    RelocModel = Reloc::Static;
+#endif /* !TARGET_386 && !TARGET_ARM */
+
+#if defined (TARGET_ARM)
+#define LLVM_SET_TARGET_OPTIONS(argvec)              \
   if (darwin_iphoneos_version_min)                   \
     {                                                \
       const char *p = darwin_iphoneos_version_min;   \
@@ -1507,13 +1517,7 @@ const char *darwin_objc_llvm_special_name_section(const char*);
             argvec.push_back("--arm-reserve-r9");    \
         }                                            \
     }
-#else /* !TARGET_386 && !TARGET_ARM */
-#define LLVM_SET_TARGET_OPTIONS(argvec)              \
-  if (flag_pic)                                      \
-    argvec.push_back ("--relocation-model=pic");     \
-  else if (!MACHO_DYNAMIC_NO_PIC_P)                  \
-    argvec.push_back ("--relocation-model=static")
-#endif /* !TARGET_386 && !TARGET_ARM */
+#endif /* TARGET_ARM */
 
 #endif
 /* LLVM LOCAL end */

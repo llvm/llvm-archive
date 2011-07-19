@@ -35,6 +35,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
+#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -381,6 +382,7 @@ namespace llvm {
   Declare(LLVM_TARGET_NAME, TargetInfo);
   Declare(LLVM_TARGET_NAME, Target);
   Declare(LLVM_TARGET_NAME, MCAsmInfo);
+  Declare(LLVM_TARGET_NAME, MCRegisterInfo);
   Declare(LLVM_TARGET_NAME, AsmPrinter);
 #undef Declare
 #undef Declare2
@@ -406,10 +408,13 @@ void llvm_initialize_backend(void) {
   DoInit(LLVM_TARGET_NAME, TargetInfo);
   DoInit(LLVM_TARGET_NAME, Target);
   DoInit(LLVM_TARGET_NAME, MCAsmInfo);
+  DoInit(LLVM_TARGET_NAME, MCRegisterInfo);
   DoInit(LLVM_TARGET_NAME, AsmPrinter);
 #undef DoInit
 #undef DoInit2
   
+  Reloc::Model RelocModel = Reloc::Default;
+
   // Initialize LLVM options.
   std::vector<const char*> Args;
   Args.push_back(progname); // program name
@@ -427,6 +432,9 @@ void llvm_initialize_backend(void) {
 #endif
 #ifdef LLVM_SET_IMPLICIT_FLOAT
   LLVM_SET_IMPLICIT_FLOAT(flag_no_implicit_float)
+#endif
+#ifdef LLVM_SET_RELOC_MODEL
+  LLVM_SET_RELOC_MODEL(RelocModel);
 #endif
   
   if (time_report)
@@ -552,7 +560,8 @@ void llvm_initialize_backend(void) {
     Features.AddFeature(MAttrs[i]);
   FeatureStr = Features.getString();
 
-  TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr);
+  TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr,
+                                       RelocModel);
   TheTarget->setMCUseLoc(false);
   TheTarget->setMCUseCFI(false);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);

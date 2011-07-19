@@ -97,11 +97,11 @@ Boston, MA 02110-1301, USA.  */
 #ifdef ENABLE_LLVM
 
 /* Yes, we're supporting PIC codegen for NetBSD targets! */
-#define LLVM_SET_TARGET_OPTIONS(argvec)              \
+#define LLVM_SET_RELOC_MODEL(RelocModel)             \
   if (flag_pic)                                      \
-    argvec.push_back ("--relocation-model=pic");     \
+    RelocModel = Reloc::PIC_;                        \
   else                                               \
-    argvec.push_back ("--relocation-model=static");
+    RelocModel = Reloc::Static;
 
 #endif
 /* LLVM LOCAL end */

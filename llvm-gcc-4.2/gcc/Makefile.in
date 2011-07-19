@@ -1188,9 +1188,9 @@ LLVMTARGETOBJ := $(sort $(LLVMTARGETOBJ) x86 arm)
 ## and asm printers actually get linked into libllvmgcc<stage>.dylib.
 LLVMTARGETSYMBOLS := \
   _LLVMInitializeARMTarget _LLVMInitializeARMAsmPrinter \
-  _LLVMInitializeARMMCAsmInfo _LLVMInitializeARMMCRegisterInfo \
+  _LLVMInitializeARMMCAsmInfo _LLVMInitializeARMMCCodeGenInfo \
   _LLVMInitializeX86Target _LLVMInitializeX86AsmPrinter \
-  _LLVMInitializeX86MCAsmInfo _LLVMInitializeX86MCRegisterInfo \
+  _LLVMInitializeX86MCAsmInfo _LLVMInitializeX86MCCodeGenInfo \
 
 endif
 

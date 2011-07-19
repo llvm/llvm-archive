@@ -382,7 +382,7 @@ namespace llvm {
   Declare(LLVM_TARGET_NAME, TargetInfo);
   Declare(LLVM_TARGET_NAME, Target);
   Declare(LLVM_TARGET_NAME, MCAsmInfo);
-  Declare(LLVM_TARGET_NAME, MCRegisterInfo);
+  Declare(LLVM_TARGET_NAME, MCCodeGenInfo);
   Declare(LLVM_TARGET_NAME, AsmPrinter);
 #undef Declare
 #undef Declare2
@@ -408,7 +408,7 @@ void llvm_initialize_backend(void) {
   DoInit(LLVM_TARGET_NAME, TargetInfo);
   DoInit(LLVM_TARGET_NAME, Target);
   DoInit(LLVM_TARGET_NAME, MCAsmInfo);
-  DoInit(LLVM_TARGET_NAME, MCRegisterInfo);
+  DoInit(LLVM_TARGET_NAME, MCCodeGenInfo);
   DoInit(LLVM_TARGET_NAME, AsmPrinter);
 #undef DoInit
 #undef DoInit2

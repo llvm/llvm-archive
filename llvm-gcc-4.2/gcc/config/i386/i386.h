@@ -3955,9 +3955,6 @@ enum ix86_builtins
   case CM_MEDIUM_PIC:                                   \
     CMModel = llvm::CodeModel::Medium;                  \
     break;                                              \
-  case CM_32:                                           \
-    CMModel = llvm::CodeModel::Large;                   \
-    break;                                              \
   }
   
 #define LLVM_SET_MACHINE_OPTIONS(argvec)                \

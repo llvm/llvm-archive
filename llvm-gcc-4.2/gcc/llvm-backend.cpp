@@ -414,6 +414,7 @@ void llvm_initialize_backend(void) {
 #undef DoInit2
   
   Reloc::Model RelocModel = Reloc::Default;
+  CodeModel::Model CMModel = CodeModel::Default;
 
   // Initialize LLVM options.
   std::vector<const char*> Args;
@@ -435,6 +436,9 @@ void llvm_initialize_backend(void) {
 #endif
 #ifdef LLVM_SET_RELOC_MODEL
   LLVM_SET_RELOC_MODEL(RelocModel);
+#endif
+#ifdef LLVM_SET_CODE_MODEL
+  LLVM_SET_CODE_MODEL(CMModel);
 #endif
   
   if (time_report)
@@ -561,7 +565,7 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 
   TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr,
-                                       RelocModel);
+                                       RelocModel, CMModel);
   TheTarget->setMCUseLoc(false);
   TheTarget->setMCUseCFI(false);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);

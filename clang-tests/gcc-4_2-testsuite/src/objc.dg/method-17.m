@@ -1,7 +1,7 @@
 /* Test for spurious "may or may not return a value" warnings.  */
 
 /* { dg-do compile } */
-/* { dg-options "-Wextra" } */
+/* { dg-options "-Wextra -Wno-missing-method-return-type" } */
 
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"

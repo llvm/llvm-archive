@@ -8866,7 +8866,7 @@ Constant *TreeConstantToLLVM::EmitLV_ARRAY_REF(tree exp) {
     Idx.push_back(ConstantInt::get(IntPtrTy, 0));
   Idx.push_back(IndexVal);
 
-  return TheFolder->CreateGetElementPtr(ArrayAddr, &Idx[0], Idx.size());
+  return TheFolder->CreateGetElementPtr(ArrayAddr, Idx);
 }
 
 Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
@@ -8898,7 +8898,8 @@ Constant *TreeConstantToLLVM::EmitLV_COMPONENT_REF(tree exp) {
       Constant::getNullValue(Type::getInt32Ty(Context)),
       ConstantInt::get(Type::getInt32Ty(Context), MemberIndex)
     };
-    FieldPtr = TheFolder->CreateGetElementPtr(StructAddrLV, Ops+1, 2);
+    FieldPtr = TheFolder->CreateGetElementPtr(StructAddrLV,
+                                              makeArrayRef(Ops + 1, 2));
 
     FieldPtr = ConstantFoldInstOperands(Instruction::GetElementPtr,
                                         FieldPtr->getType(), Ops, &TD);

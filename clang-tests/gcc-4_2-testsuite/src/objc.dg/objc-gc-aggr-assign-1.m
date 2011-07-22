@@ -40,6 +40,7 @@ struct type_s {
 @end
 
 @implementation NamedObject 
+@synthesize aggre_prop = type_s_ivar;
 - (void) setSome : (struct type_s) arg
   {
      type_s_ivar = arg;
@@ -48,7 +49,6 @@ struct type_s {
   {
     return type_s_ivar;
   }
-@synthesize aggre_prop = type_s_ivar;
 @end
 
 struct type_s some = {{1234}, (id)0};
@@ -102,4 +102,3 @@ int main(void) {
 
    return 0;
 }
-

@@ -31,9 +31,9 @@
 @end
 
 @implementation TwoStep
+@synthesize x;
 - (int)one { return 1; }
 - (int)two { return 2; }
-@synthesize x;
 @end
 
 

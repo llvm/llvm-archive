@@ -10,6 +10,7 @@
 @end
 
 @implementation NamedObject
+@dynamic name;
 - (id)init {
 	if (self = [super init]) {
 		self.name = @"no name";	// no warning or error.
@@ -22,7 +23,6 @@
 	self.name = nil;	// no warning or error.
 	[super dealloc];
 }
-@dynamic name;
 @end
 
 int main(int argc, char **argv) {

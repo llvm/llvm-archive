@@ -2790,7 +2790,7 @@ static void llvm_arm_extract_mrv_array_element(Value *Src, Value *Dest,
   Idxs[0] = ConstantInt::get(llvm::Type::getInt32Ty(Context), 0);
   Idxs[1] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestFieldNo);
   Idxs[2] = ConstantInt::get(llvm::Type::getInt32Ty(Context), DestElemNo);
-  Value *GEP = Builder.CreateGEP(Dest, Idxs, Idxs+3, "mrv_gep");
+  Value *GEP = Builder.CreateGEP(Dest, Idxs, "mrv_gep");
   if (STy->getElementType(SrcFieldNo)->isVectorTy()) {
     Value *ElemIndex = ConstantInt::get(Type::getInt32Ty(Context), SrcElemNo);
     Value *EVIElem = Builder.CreateExtractElement(EVI, ElemIndex, "mrv");

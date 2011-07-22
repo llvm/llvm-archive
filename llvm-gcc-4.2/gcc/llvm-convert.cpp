@@ -803,7 +803,7 @@ Function *TreeToLLVM::FinishFunctionBody() {
         Idxs[0] = ConstantInt::get(Type::getInt32Ty(Context), 0);
         for (unsigned ri = 0; ri < STy->getNumElements(); ++ri) {
           Idxs[1] = ConstantInt::get(Type::getInt32Ty(Context), ri);
-          Value *GEP = Builder.CreateGEP(R1, Idxs, Idxs+2, "mrv_gep");
+          Value *GEP = Builder.CreateGEP(R1, Idxs, "mrv_gep");
           Value *E = Builder.CreateLoad(GEP, "mrv");
           RetVals.push_back(E);
         }
@@ -7183,8 +7183,8 @@ LValue TreeToLLVM::EmitLV_ARRAY_REF(tree exp) {
       Idx.push_back(ConstantInt::get(IntPtrTy, 0));
     Idx.push_back(IndexVal);
     Value *Ptr = flag_wrapv ?
-      Builder.CreateGEP(ArrayAddr, Idx.begin(), Idx.end()) :
-      Builder.CreateInBoundsGEP(ArrayAddr, Idx.begin(), Idx.end());
+      Builder.CreateGEP(ArrayAddr, Idx) :
+      Builder.CreateInBoundsGEP(ArrayAddr, Idx);
 
     Type *ElementTy = ConvertType(ElementType);
     unsigned Alignment = MinAlign(ArrayAlign, TD.getABITypeAlignment(ElementTy));

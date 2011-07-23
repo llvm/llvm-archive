@@ -10,11 +10,12 @@
 @end
 
 @implementation NamedObject
+@dynamic name;
 - (id)init {
 	if (self = [super init]) {
 		self.name = @"no name";	// no warning or error.
 	}
-	
+
 	return self;
 }
 
@@ -22,19 +23,18 @@
 	self.name = nil;	// no warning or error.
 	[super dealloc];
 }
-@dynamic name;
 @end
 
 int main(int argc, char **argv) {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-	
+
 	NamedObject *object = [[NamedObject alloc] init];
 	NSLog(@"object.name == %@", object.name);
 	object.name = @"foo";
 	NSLog(@"object.name == %@", object.name);
 	[object release];
-	
+
 	[pool release];
-	
+
 	return 0;
 }

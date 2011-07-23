@@ -41,7 +41,7 @@ struct nono {
   nono (int val)
   {
     nono_val.may_recurse.ii = val;
-  } 
+  }
 };
 
 @interface NamedObject : NSObject
@@ -53,16 +53,16 @@ struct nono {
 @property(assign) struct type_s aggre_prop;
 @end
 
-@implementation NamedObject 
+@implementation NamedObject
+@synthesize aggre_prop = type_s_ivar;
 - (void) setSome : (struct type_s) arg
   {
      type_s_ivar = arg;
   }
-- (struct type_s) getSome 
+- (struct type_s) getSome
   {
     return type_s_ivar;
   }
-@synthesize aggre_prop = type_s_ivar;
 @end
 
 struct type_s some = {{1234}, (id)0};
@@ -89,7 +89,7 @@ int main(void) {
    NamedObject *object = [[NamedObject alloc] init];
 
    /* Assigning into a global */
-   GlobalVariable = get(); 
+   GlobalVariable = get();
    if (count != 1 || GlobalVariable.may_recurse.ii != 1234)
      abort ();
 
@@ -113,7 +113,7 @@ int main(void) {
    object.aggre_prop = local;
   if (count != 5 || object.aggre_prop.may_recurse.ii != 6578)
     abort ();
-   
+
    /* class assignment with overloaded '=' operator must NOT call the new API. */
    old_count = count;
    nono nono_rhs (89);
@@ -121,7 +121,6 @@ int main(void) {
    nono_lhs = nono_rhs;
   if (count != old_count || nono_lhs.nono_val.may_recurse.ii != 89)
     abort ();
-   
+
    return 0;
 }
-

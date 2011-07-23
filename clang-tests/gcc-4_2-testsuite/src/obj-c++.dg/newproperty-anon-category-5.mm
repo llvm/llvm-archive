@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4994854 */
 /* Check for continuation anonymous category and new property decl in it as well. */
-/* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
@@ -31,9 +31,9 @@
 @end
 
 @implementation TwoStep
+@synthesize x;
 - (int)one { return 1; }
 - (int)two { return 2; }
-@synthesize x;
 @end
 
 

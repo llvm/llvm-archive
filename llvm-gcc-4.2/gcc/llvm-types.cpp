@@ -575,9 +575,14 @@ Type *TypeConverter::ConvertType(tree orig_type) {
     ConversionStatus SavedCS = RecursionStatus;
     if (RecursionStatus == CS_Struct)
       RecursionStatus = CS_StructPtr;
-    
-    Type *Ty = ConvertType(TREE_TYPE(type));
-    
+
+    Type *Ty;
+    if (RecursionStatus != CS_StructPtr)
+      Ty = ConvertType(TREE_TYPE(type));
+    else
+      // FIXME: Hack to avoid crashes with the new LLVM type system.
+      Ty = Type::getInt8Ty(Context);
+
     RecursionStatus = SavedCS;
     
     if (Ty->isVoidTy())

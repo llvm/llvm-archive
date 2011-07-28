@@ -8699,14 +8699,15 @@ Constant *TreeConstantToLLVM::EmitLV(tree exp) {
     break;
   }
 
-  // Check that the type of the lvalue is indeed that of a pointer to the tree
-  // node.  Since LLVM has no void* type, don't insist that void* be converted
-  // to a specific LLVM type.
-  assert((VOID_TYPE_P(TREE_TYPE(exp)) ||
-          LV->getType() == ConvertType(TREE_TYPE(exp))->getPointerTo()) &&
-         "LValue of constant has wrong type!");
+  // Ensure that the lvalue has the expected type.  It is simpler to do this
+  // once here rather than in every helper.
+  Type *Ty;
+  if (VOID_TYPE_P(TREE_TYPE(exp)))
+    Ty = Type::getInt8Ty(Context); // void* -> i8*.
+  else
+    Ty = ConvertType(TREE_TYPE(exp));
 
-  return LV;
+  return TheFolder->CreateBitCast(LV, Ty->getPointerTo());
 }
 
 Constant *TreeConstantToLLVM::EmitLV_Decl(tree exp) {

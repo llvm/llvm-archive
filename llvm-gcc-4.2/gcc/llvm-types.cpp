@@ -571,6 +571,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
   case POINTER_TYPE:
   case REFERENCE_TYPE:
   case BLOCK_POINTER_TYPE: {
+    if (Type *Ty = GET_TYPE_LLVM(type)) return Ty;
     // Disable recursive struct conversion.
     ConversionStatus SavedCS = RecursionStatus;
     if (RecursionStatus == CS_Struct)

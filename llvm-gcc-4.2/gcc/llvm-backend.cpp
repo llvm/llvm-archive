@@ -49,7 +49,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PassManagerBuilder.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Program.h"
 

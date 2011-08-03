@@ -1191,7 +1191,7 @@ LLVMTARGETSYMBOLS := \
   _LLVMInitializeARMTargetMC \
   _LLVMInitializeX86Target _LLVMInitializeX86AsmPrinter \
   _LLVMInitializeX86TargetMC \
-
+  __ZN4llvm18PassManagerBuilderD1Ev
 endif
 
 # We use llvm-config to determine the libraries that we need to link in our

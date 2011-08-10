@@ -13,6 +13,8 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 static void
 dopr(char *buffer, size_t maxlen, const char *format, va_list args);
@@ -529,6 +531,7 @@ int mdprintf(const char *str, ...)
   return bytes;
 
 }
-void main () {
+int main () {
   mdprintf("%d %s %f", 5.0, "arushi", 4.0);
+  return 0;
 }

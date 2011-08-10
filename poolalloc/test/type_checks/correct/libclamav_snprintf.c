@@ -8,6 +8,7 @@
  * RUN: llvm-g++ %t.tc1.s -o %t.tc2
  * Execute
  * RUN: %t.tc2 >& %t.tc.out
+ * RUN: not grep "Type.*mismatch" %t.tc.out
  */
 
 #include <sys/types.h>

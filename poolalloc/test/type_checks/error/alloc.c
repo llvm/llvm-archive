@@ -38,4 +38,5 @@ int main() {
        pinloc[i][j] = 0;
      }
 
+  return 0;
 }

@@ -28,4 +28,6 @@ int main(int argc, char **argv)
  double d = 5.0;
  int *t = (*FP)(&d);
  int v = *t;
+
+ return 0;
 }

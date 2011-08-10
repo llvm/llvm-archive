@@ -486,7 +486,7 @@ TESTSUITE=$(PROJ_OBJ_ROOT)/test
 
 #Run the lit tests for this project
 lit: lit.site.cfg $(TOOLS)
-	$(SETPATH) $(MAKE) -C $(LLVM_OBJ_ROOT)/test check-local-lit TESTSUITE=$(TESTSUITE)
+	$(SETPATH) $(MAKE) -C $(LLVM_OBJ_ROOT)/test check-local-lit TESTSUITE=$(TESTSUITE) ULIMIT=
 
 #Run the lit tests, but supress all error output--just report the test results.
 lit-report: lit.site.cfg $(TOOLS)

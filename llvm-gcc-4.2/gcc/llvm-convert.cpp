@@ -8576,7 +8576,7 @@ Constant *TreeConstantToLLVM::ConvertRecordCONSTRUCTOR(tree exp) {
 
   // This is a hack for brokenness in the objc frontend.
   StructType *LLVMTy = dyn_cast<StructType>(ConvertType(TREE_TYPE(exp)));
-  if (LLVMTy && !LLVMTy->isAnonymous() &&
+  if (LLVMTy && !LLVMTy->isLiteral() &&
       cast<StructType>(Result->getType())->isLayoutIdentical(LLVMTy))
     Result = ConstantStruct::get(LLVMTy, LayoutInfo.ResultElts);
   return Result;

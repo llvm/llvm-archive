@@ -517,8 +517,7 @@ Type *TypeConverter::ConvertType(tree orig_type) {
         return Ty;
 
       // Just mark it as a named type for now.
-      Type *Ty = StructType::createNamed(Context, 
-                                         GetTypeName("enum.", orig_type));
+      Type *Ty = StructType::create(Context, GetTypeName("enum.", orig_type));
       return SET_TYPE_LLVM(orig_type, Ty);
     }
     // FALL THROUGH.
@@ -1953,7 +1952,7 @@ Type *TypeConverter::ConvertRECORD(tree type, tree orig_type) {
   } else {
     // If we have no type for this, set it as an opaque named struct and
     // continue.
-    SET_TYPE_LLVM(type, StructType::createNamed(Context,
+    SET_TYPE_LLVM(type, StructType::create(Context,
                     GetTypeName(IsStruct ? "struct." : "union.", orig_type)));
   }
 

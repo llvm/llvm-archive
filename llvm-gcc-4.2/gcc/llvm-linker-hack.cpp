@@ -35,8 +35,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_os_ostream.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
 
 /// dummy_function - This is used when linking the LLVM libraries into a dynamic
 /// library, allowing the llvm backend to be shared across the various

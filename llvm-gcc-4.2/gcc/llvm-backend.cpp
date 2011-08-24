@@ -1381,6 +1381,22 @@ void reset_initializer_llvm(tree decl) {
   Constant *Init = TreeConstantToLLVM::Convert(DECL_INITIAL(decl));
 
   // Set the initializer.
+  if (GV->getType()->getElementType() != Init->getType()) {
+    GV->removeFromParent();
+    GlobalVariable *NGV = new GlobalVariable(*TheModule, Init->getType(), 
+                                             GV->isConstant(),
+                                             GV->getLinkage(), 0,
+                                             GV->getName());
+    NGV->setVisibility(GV->getVisibility());
+    NGV->setSection(GV->getSection());
+    NGV->setAlignment(GV->getAlignment());
+    NGV->setLinkage(GV->getLinkage());
+    GV->replaceAllUsesWith(TheFolder->CreateBitCast(NGV, GV->getType()));
+    changeLLVMConstant(GV, NGV);
+    delete GV;
+    SET_DECL_LLVM(decl, NGV);
+    GV = NGV;
+  }
   GV->setInitializer(Init);
   if (GV->hasHiddenVisibility() || GV->hasInternalLinkage() ||
       GV->hasPrivateLinkage())

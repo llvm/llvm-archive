@@ -1,5 +1,5 @@
 /* { dg-do compile { target { lp64 } } } */
-/* { dg-options "-fPIC" } */
+/* { dg-options "-fPIC -Wno-array-bounds -fwrapv" } */
 char *ptr = 0;
 char array[100];
 void

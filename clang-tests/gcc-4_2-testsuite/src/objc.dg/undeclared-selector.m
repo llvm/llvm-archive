@@ -21,7 +21,7 @@
 + (void) methodD
 {
   SEL d = @selector(methodD); /* Ok */
-  SEL e = @selector(methodE); /* { dg-warning "undeclared selector" } */
+  SEL e = @selector(methodE);
 }
 
 - (void) methodE

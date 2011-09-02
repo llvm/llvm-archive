@@ -3,6 +3,6 @@
 class A { };
 
 int main()  {
-  A a = a;
-  A b(b); 
+  A a = a; // { dg-warning "" }
+  A b(b); // { dg-warning "" }
 }

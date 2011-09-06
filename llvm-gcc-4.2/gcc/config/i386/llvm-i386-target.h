@@ -227,7 +227,7 @@ llvm_x86_should_pass_aggregate_as_fca(tree type, Type *);
 
 extern bool llvm_x86_should_pass_aggregate_in_memory(tree, Type *);
 
-#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY, CC)     \
+#define LLVM_SHOULD_PASS_AGGREGATE_USING_BYVAL_ATTR(X, TY)      \
   llvm_x86_should_pass_aggregate_in_memory(X, TY)
 
 

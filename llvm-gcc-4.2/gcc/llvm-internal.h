@@ -317,21 +317,12 @@ class TreeToLLVM {
   /// PostPads - The post landing pad for a given EH region.
   IndexedMap<BasicBlock *> PostPads;
 
-  /// CatchAll - Language specific catch-all object.
-  GlobalVariable *CatchAll;
-
   /// ExceptionValue - Is the local to receive the current exception.
   Value *ExceptionValue;
 
   /// ExceptionSelectorValue - Is the local to receive the current exception
   /// selector.
   Value *ExceptionSelectorValue;
-
-  /// FuncEHException - Function used to receive the exception.
-  Function *FuncEHException;
-
-  /// FuncEHSelector - Function used to receive the exception selector.
-  Function *FuncEHSelector;
 
   /// FuncEHGetTypeID - Function used to return type id for give typeinfo.
   Function *FuncEHGetTypeID;

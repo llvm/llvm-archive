@@ -35,7 +35,6 @@ make_something(int a, int b, int c)
 {
     struct tree *rv;
     struct tree *field; /* { dg-error "variable" } */
-                        /* { dg-error "add" "" { target *-*-* } 37 } */
 
     rv = malloc (sizeof (struct tree));
     rv->car = 0;

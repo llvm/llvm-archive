@@ -534,13 +534,14 @@ private:
   Value *EmitMoveOfRegVariableToRightReg(Instruction *I, tree_node *decl);
 
   // Helpers for Builtin Function Expansion.
-  void EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss, bool device);
   Value *BuildVector(const std::vector<Value*> &Elts);
   Value *BuildVector(Value *Elt, ...);
   Value *BuildVectorShuffle(Value *InVec1, Value *InVec2, ...);
-  Value *BuildBinaryAtomicBuiltin(tree_node *exp, Intrinsic::ID id);
-  Value *BuildCmpAndSwapAtomicBuiltin(tree_node *exp, tree_node *type, 
-                                      bool isBool);
+  Value *BuildBinaryAtomic(tree_node *exp, llvm::AtomicRMWInst::BinOp Kind);
+  Value *BuildBinaryAtomicPost(tree_node *exp, llvm::AtomicRMWInst::BinOp Kind,
+                               Instruction::BinaryOps Op);
+  Value *BuildCmpAndSwapAtomic(tree_node *exp, tree_node *type, 
+                               bool isBool);
 
   // Builtin Function Expansion.
   bool EmitBuiltinCall(tree_node *exp, tree_node *fndecl, 

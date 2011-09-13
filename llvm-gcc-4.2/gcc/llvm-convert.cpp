@@ -5282,22 +5282,8 @@ void clearTargetBuiltinCache() {
   TargetBuiltinCache.clear();
 }
 
-void TreeToLLVM::EmitMemoryBarrier(bool ll, bool ls, bool sl, bool ss,
-                                   bool device) {
-  Value* C[5];
-  C[0] = ConstantInt::get(Type::getInt1Ty(Context), ll);
-  C[1] = ConstantInt::get(Type::getInt1Ty(Context), ls);
-  C[2] = ConstantInt::get(Type::getInt1Ty(Context), sl);
-  C[3] = ConstantInt::get(Type::getInt1Ty(Context), ss);
-  C[4] = ConstantInt::get(Type::getInt1Ty(Context), device);
-
-  Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                               Intrinsic::memory_barrier),
-                     C);
-}
-
 Value *
-TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
+TreeToLLVM::BuildBinaryAtomic(tree exp, llvm::AtomicRMWInst::BinOp Kind) {
   Type *ResultTy = ConvertType(TREE_TYPE(exp));
   tree arglist = TREE_OPERAND(exp, 1);
   Value* C[2] = {
@@ -5310,31 +5296,40 @@ TreeToLLVM::BuildBinaryAtomicBuiltin(tree exp, Intrinsic::ID id) {
   C[0] = Builder.CreateBitCast(C[0], Ty[1]);
   C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                "cast");
-  // The gcc builtins are also full memory barriers.
-  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(false, false, true, true, false);
-#else
-  EmitMemoryBarrier(true, true, true, true, true);
-#endif
 
-  Value *Result =
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule, id, Ty), C);
-
-  // The gcc builtins are also full memory barriers.
-  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(true, true, true, true, false);
-#else
-  EmitMemoryBarrier(true, true, true, true, true);
-#endif
+  llvm::Value *Result =
+      Builder.CreateAtomicRMW(Kind, C[0], C[1], llvm::SequentiallyConsistent);
 
   Result = Builder.CreateIntToPtr(Result, ResultTy);
   return Result;
 }
 
 Value *
-TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
+TreeToLLVM::BuildBinaryAtomicPost(tree exp, llvm::AtomicRMWInst::BinOp Kind,
+                                  Instruction::BinaryOps Op) {
+  Type *ResultTy = ConvertType(TREE_TYPE(exp));
+  tree arglist = TREE_OPERAND(exp, 1);
+  Value* C[2] = {
+    Emit(TREE_VALUE(arglist), 0),
+    Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
+  };
+  Type* Ty[2];
+  Ty[0] = ResultTy;
+  Ty[1] = ResultTy->getPointerTo();
+  C[0] = Builder.CreateBitCast(C[0], Ty[1]);
+  C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
+                               "cast");
+
+  llvm::Value *Result =
+      Builder.CreateAtomicRMW(Kind, C[0], C[1], llvm::SequentiallyConsistent);
+  Result = Builder.CreateBinOp(Op, Result, C[1]);
+
+  Result = Builder.CreateIntToPtr(Result, ResultTy);
+  return Result;
+}
+
+Value *
+TreeToLLVM::BuildCmpAndSwapAtomic(tree exp, tree type, bool isBool) {
   Type *ResultTy = ConvertType(type);
   tree arglist = TREE_OPERAND(exp, 1);
   Value* C[3] = {
@@ -5351,27 +5346,8 @@ TreeToLLVM::BuildCmpAndSwapAtomicBuiltin(tree exp, tree type, bool isBool) {
   C[2] = Builder.CreateIntCast(C[2], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                "cast");
 
-  // The gcc builtins are also full memory barriers.
-  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(false, false, true, true, false);
-#else
-  EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-  Value *Result =
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                 Intrinsic::atomic_cmp_swap,
-                                                 Ty),
-                       C);
-
-  // The gcc builtins are also full memory barriers.
-  // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-  EmitMemoryBarrier(true, true, true, true, false);
-#else
-  EmitMemoryBarrier(true, true, true, true, true);
-#endif
+  Value *Result = Builder.CreateAtomicCmpXchg(C[0], C[1], C[2],
+                                              llvm::SequentiallyConsistent);
 
   if (isBool)
     Result = CastToUIntType(Builder.CreateICmpEQ(Result, C[1]),
@@ -5729,13 +5705,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
 
   case BUILT_IN_SYNCHRONIZE: {
     // We assume like gcc appears to, that this only applies to cached memory.
-    Value* C[5];
-    C[0] = C[1] = C[2] = C[3] = ConstantInt::get(Type::getInt1Ty(Context), 1);
-    C[4] = ConstantInt::get(Type::getInt1Ty(Context), 0);
-
-    Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                 Intrinsic::memory_barrier),
-                       C);
+    Builder.CreateFence(llvm::SequentiallyConsistent);
     return true;
   }
 #if defined(TARGET_ALPHA) || defined(TARGET_386) || defined(TARGET_POWERPC) \
@@ -5750,15 +5720,15 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // Note that Intrinsic::getDeclaration expects the type list in reversed
     // order, while CreateCall expects the parameter list in normal order.
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_1: {
-    Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_char_type_node, true);
+    Result = BuildCmpAndSwapAtomic(exp, unsigned_char_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_2: {
-    Result = BuildCmpAndSwapAtomicBuiltin(exp, short_unsigned_type_node, true);
+    Result = BuildCmpAndSwapAtomic(exp, short_unsigned_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_4: {
-    Result = BuildCmpAndSwapAtomicBuiltin(exp, unsigned_type_node, true);
+    Result = BuildCmpAndSwapAtomic(exp, unsigned_type_node, true);
     return true;
   }
   case BUILT_IN_BOOL_COMPARE_AND_SWAP_8: {
@@ -5766,8 +5736,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     if (!TARGET_64BIT)
       return false;
 #endif
-    Result = BuildCmpAndSwapAtomicBuiltin(exp, long_long_unsigned_type_node,
-                                          true);
+    Result = BuildCmpAndSwapAtomic(exp, long_long_unsigned_type_node, true);
     return true;
   }
 
@@ -5780,7 +5749,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_VAL_COMPARE_AND_SWAP_2:
   case BUILT_IN_VAL_COMPARE_AND_SWAP_4: {
     tree type = TREE_TYPE(exp);
-    Result = BuildCmpAndSwapAtomicBuiltin(exp, type, false);
+    Result = BuildCmpAndSwapAtomic(exp, type, false);
     return true;
   }
   case BUILT_IN_FETCH_AND_ADD_8:
@@ -5791,7 +5760,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_ADD_1:
   case BUILT_IN_FETCH_AND_ADD_2:
   case BUILT_IN_FETCH_AND_ADD_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_add);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Add);
     return true;
   }
   case BUILT_IN_FETCH_AND_SUB_8:
@@ -5802,7 +5771,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_SUB_1:
   case BUILT_IN_FETCH_AND_SUB_2:
   case BUILT_IN_FETCH_AND_SUB_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_sub);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Sub);
     return true;
   }
   case BUILT_IN_FETCH_AND_OR_8:
@@ -5813,7 +5782,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_OR_1:
   case BUILT_IN_FETCH_AND_OR_2:
   case BUILT_IN_FETCH_AND_OR_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_or);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Or);
     return true;
   }
   case BUILT_IN_FETCH_AND_AND_8:
@@ -5824,7 +5793,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_AND_1:
   case BUILT_IN_FETCH_AND_AND_2:
   case BUILT_IN_FETCH_AND_AND_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_and);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::And);
     return true;
   }
   case BUILT_IN_FETCH_AND_XOR_8:
@@ -5835,7 +5804,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_XOR_1:
   case BUILT_IN_FETCH_AND_XOR_2:
   case BUILT_IN_FETCH_AND_XOR_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_xor);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Xor);
     return true;
   }
   case BUILT_IN_FETCH_AND_NAND_8:
@@ -5846,7 +5815,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_FETCH_AND_NAND_1:
   case BUILT_IN_FETCH_AND_NAND_2:
   case BUILT_IN_FETCH_AND_NAND_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_load_nand);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Nand);
     return true;
   }
   case BUILT_IN_LOCK_TEST_AND_SET_8:
@@ -5857,7 +5826,7 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_LOCK_TEST_AND_SET_1:
   case BUILT_IN_LOCK_TEST_AND_SET_2:
   case BUILT_IN_LOCK_TEST_AND_SET_4: {
-    Result = BuildBinaryAtomicBuiltin(exp, Intrinsic::atomic_swap);
+    Result = BuildBinaryAtomic(exp, llvm::AtomicRMWInst::Xchg);
     return true;
   }
 
@@ -5869,43 +5838,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_ADD_AND_FETCH_1:
   case BUILT_IN_ADD_AND_FETCH_2:
   case BUILT_IN_ADD_AND_FETCH_4: {
-    Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = ResultTy->getPointerTo();
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
-                                 "cast");
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_add,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result = Builder.CreateAdd(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicPost(exp, AtomicRMWInst::Add,
+                                   llvm::Instruction::Add);
     return true;
   }
   case BUILT_IN_SUB_AND_FETCH_8:
@@ -5916,43 +5850,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_SUB_AND_FETCH_1:
   case BUILT_IN_SUB_AND_FETCH_2:
   case BUILT_IN_SUB_AND_FETCH_4: {
-    Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = ResultTy->getPointerTo();
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
-                                 "cast");
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_sub,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result = Builder.CreateSub(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicPost(exp, AtomicRMWInst::Sub,
+                                   llvm::Instruction::Sub);
     return true;
   }
   case BUILT_IN_OR_AND_FETCH_8:
@@ -5963,43 +5862,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_OR_AND_FETCH_1:
   case BUILT_IN_OR_AND_FETCH_2:
   case BUILT_IN_OR_AND_FETCH_4: {
-    Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = ResultTy->getPointerTo();
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
-                                 "cast");
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_or,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result = Builder.CreateOr(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicPost(exp, AtomicRMWInst::Or,
+                                   llvm::Instruction::Or);
     return true;
   }
   case BUILT_IN_AND_AND_FETCH_8:
@@ -6010,43 +5874,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_AND_AND_FETCH_1:
   case BUILT_IN_AND_AND_FETCH_2:
   case BUILT_IN_AND_AND_FETCH_4: {
-    Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = ResultTy->getPointerTo();
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
-                                 "cast");
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_and,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result = Builder.CreateAnd(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicPost(exp, AtomicRMWInst::And,
+                                   llvm::Instruction::And);
     return true;
   }
   case BUILT_IN_XOR_AND_FETCH_8:
@@ -6057,43 +5886,8 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_XOR_AND_FETCH_1:
   case BUILT_IN_XOR_AND_FETCH_2:
   case BUILT_IN_XOR_AND_FETCH_4: {
-    Type *ResultTy = ConvertType(TREE_TYPE(exp));
-    tree arglist = TREE_OPERAND(exp, 1);
-    Value* C[2] = {
-      Emit(TREE_VALUE(arglist), 0),
-      Emit(TREE_VALUE(TREE_CHAIN(arglist)), 0)
-    };
-    Type* Ty[2];
-    Ty[0] = ResultTy;
-    Ty[1] = ResultTy->getPointerTo();
-    C[0] = Builder.CreateBitCast(C[0], Ty[1]);
-    C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
-                                 "cast");
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_xor,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result = Builder.CreateXor(Result, C[1]);
-    Result = Builder.CreateIntToPtr(Result, ResultTy);
+    Result = BuildBinaryAtomicPost(exp, AtomicRMWInst::Xor,
+                                   llvm::Instruction::Xor);
     return true;
   }
   case BUILT_IN_NAND_AND_FETCH_8:
@@ -6117,27 +5911,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     C[1] = Builder.CreateIntCast(C[1], Ty[0], !TYPE_UNSIGNED(TREE_TYPE(exp)),
                                  "cast");
 
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(false, false, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
-
-    Result =
-      Builder.CreateCall(Intrinsic::getDeclaration(TheModule,
-                                                   Intrinsic::atomic_load_nand,
-                                                   Ty),
-                         C);
-
-    // The gcc builtins are also full memory barriers.
-    // FIXME: __sync_lock_test_and_set and __sync_lock_release require less.
-#if defined(TARGET_ARM) && defined(CONFIG_DARWIN_H)
-    EmitMemoryBarrier(true, true, true, true, false);
-#else
-    EmitMemoryBarrier(true, true, true, true, true);
-#endif
+    llvm::Value *Result =
+        Builder.CreateAtomicRMW(llvm::AtomicRMWInst::Nand, C[0], C[1],
+                                llvm::SequentiallyConsistent);
 
     Result = Builder.CreateAnd(Builder.CreateNot(Result), C[1]);
     Result = Builder.CreateIntToPtr(Result, ResultTy);
@@ -6153,6 +5929,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The argument has typically been coerced to "volatile void*"; the
     // only way to find the size of the operation is from the builtin
     // opcode.
+    // FIXME: This is wrong; it works to some extent on x86 if the optimizer
+    // doesn't get too clever, and is horribly broken anywhere else.  It needs
+    // to use "store atomic [...] release".
     tree type;
     switch(DECL_FUNCTION_CODE(fndecl)) {
       case BUILT_IN_LOCK_RELEASE_1:

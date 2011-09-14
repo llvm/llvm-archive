@@ -28,12 +28,12 @@ int AssignCalled = 0;
 int DisposeCalled = 0;
 
 // local copy instead of libSystem.B.dylib copy
-void _Block_object_assign(void *destAddr, const void *object, const int isWeak) {
+extern "C" void _Block_object_assign(void *destAddr, const void *object, const int isWeak) {
     printf("_Block_object_assign(%p, %p, %d) called\n", destAddr, object, isWeak);
     AssignCalled = 1;
 }
 
-void _Block_object_dispose(const void *object, const int isWeak) {
+extern "C" void _Block_object_dispose(const void *object, const int isWeak) {
     printf("_Block_object_dispose(%p, %d) called\n", object, isWeak);
     DisposeCalled = 1;
 }

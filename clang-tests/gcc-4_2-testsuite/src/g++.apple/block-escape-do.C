@@ -8,7 +8,7 @@
 extern void abort(void);
 
 static int count;
-static void _Block_object_dispose(void * arg, int flag) {
+extern "C" void _Block_object_dispose(void * arg, int flag) {
   printf ("%p\n", arg);
   ++count;
 }

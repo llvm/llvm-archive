@@ -10,7 +10,7 @@
 
 int GotCalled = 0;
 
-void _Block_object_assign(void *destAddr, const void *object, const int flags) {
+extern "C" void _Block_object_assign(void *destAddr, const void *object, const int flags) {
     printf("_Block_object_assign(dest %p, value %p, flags %x)\n", destAddr, object, flags);
     ++GotCalled;
 }

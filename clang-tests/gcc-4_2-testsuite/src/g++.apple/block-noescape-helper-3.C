@@ -8,12 +8,12 @@
 #include <stdio.h>
 
 void *_NSConcreteStackBlock;
-void _Block_object_assign(void * dst, void *src, int flag){}
+extern "C" void _Block_object_assign(void * dst, void *src, int flag){}
 
 extern "C" void abort(void);
 
 static int count;
-static void _Block_object_dispose(void * arg, int flag) {
+extern "C" void _Block_object_dispose(void * arg, int flag) {
         ++count;
 }
 

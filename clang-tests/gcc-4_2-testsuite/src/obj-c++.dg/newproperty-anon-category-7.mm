@@ -11,11 +11,11 @@
     Baz *typeMismatchError;
 }
 
-@property(readonly, nonatomic, assign) Baz *typeMismatchError;
+@property(readonly, nonatomic, assign) Baz *typeMismatchError; /* { dg-error "property declared here" } */
 @end
 
 @interface Foo()
-@property(readwrite, nonatomic, assign) Bar *typeMismatchError; /* { dg-warning "property 'typeMismatchError' type in 'Foo' class continuation does not match class 'Foo' property" } */
+@property(readwrite, nonatomic, assign) Bar *typeMismatchError; /* { dg-error "type of property" } */
 @end
 
 @implementation Foo

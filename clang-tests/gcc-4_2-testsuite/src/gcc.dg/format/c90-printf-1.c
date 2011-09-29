@@ -223,7 +223,7 @@ foo (int i, int i1, int i2, unsigned int u, double d, char *s, void *p,
   printf ("%d%d", i); /* { dg-warning "arguments" "wrong number of args" } */
   printf ("%d", i, i); /* { dg-warning "arguments" "wrong number of args" } */
   /* Miscellaneous bogus constructions.  */
-  printf (""); /* { dg-warning "zero-length" "warning for empty format" } */
+  printf (""); /* Do not warn about empty format strings when there are no data arguments. */
   printf ("\0"); /* { dg-warning "embedded" "warning for embedded NUL" } */
   printf ("%d\0", i); /* { dg-warning "embedded" "warning for embedded NUL" } */
   printf ("%d\0%d", i, i); /* { dg-warning "embedded|too many" "warning for embedded NUL" } */

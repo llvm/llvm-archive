@@ -109,7 +109,7 @@ foo (int *ip, unsigned int *uip, short int *hp, unsigned short int *uhp,
   scanf ("%d%d", ip); /* { dg-warning "arguments" "wrong number of args" } */
   scanf ("%d", ip, ip); /* { dg-warning "arguments" "wrong number of args" } */
   /* Miscellaneous bogus constructions.  */
-  scanf (""); /* { dg-warning "zero-length" "warning for empty format" } */
+  scanf ("");  /* Do not warn about empty format strings when there are no data arguments. */
   scanf ("\0"); /* { dg-warning "embedded" "warning for embedded NUL" } */
   scanf ("%d\0", ip); /* { dg-warning "embedded" "warning for embedded NUL" } */
   scanf ("%d\0%d", ip, ip); /* { dg-warning "embedded|too many" "warning for embedded NUL" } */

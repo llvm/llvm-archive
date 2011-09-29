@@ -34,6 +34,11 @@ RC_ARCHS := ppc i386
 HOSTS = $(RC_ARCHS)
 targets = echo $(RC_ARCHS)
 TARGETS := $(shell $(targets))
+ifneq ($(strip $(RC_SUPPORTED_ARCHS)),)
+TGT_ARCHS := $(shell echo $(RC_SUPPORTED_ARCHS))
+else
+TGT_ARCHS := $(shell echo $(TARGETS))
+endif
 
 SRCROOT = .
 
@@ -102,7 +107,7 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	  exit 1; \
 	fi
 	cd $(OBJROOT) && \
-	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
+	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TGT_ARCHS)"\
 	    $(SRC)/llvmCore /Developer/usr/local $(DSTROOT) $(SYMROOT) \
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
 	    $(ARM_HOSTED_BUILD) $(IOS_SIM_BUILD) \
@@ -110,7 +115,7 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 
 llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
-	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
+	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TGT_ARCHS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(INSTALL_LIBLTO) \
 	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 

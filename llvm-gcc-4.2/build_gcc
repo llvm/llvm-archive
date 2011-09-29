@@ -15,13 +15,33 @@ OMIT_X86_64="sed -e s/x86_64//"
 # The first parameter is a space-separated list of the architectures
 # the compilers will run on.  For instance, "ppc i386".  If the
 # current machine isn't in the list, it will (effectively) be added.
-HOSTS=`echo $1 | $TRANSLATE_ARCH `
+ORIG_HOSTS=$1
+HOSTS=`echo $ORIG_HOSTS | $TRANSLATE_ARCH `
 
 # The second parameter is a space-separated list of the architectures the
 # compilers will generate code for.  If the current machine isn't in
 # the list, a compiler for it will get built anyway, but won't be
 # installed.
-TARGETS=`echo $2 | $TRANSLATE_ARCH | $OMIT_X86_64 | sed -e s,\\',,g`
+for t in $2; do
+  if echo $t | grep arm; then
+    # Do not include a generic "arm" target in the list of ARM variants.
+    if [ "$t" != arm ]; then
+      ARM_ARCHS="$ARM_ARCHS $t"
+    fi
+  else
+    ORIG_TARGETS="$ORIG_TARGETS $t"
+  fi
+done
+# If the list of targets included specific ARM variants, e.g., as specified
+# by RC_SUPPORTED_ARCHS, then use those as list of ARM multilibs to build.
+if [ -n "$ARM_ARCHS" ]; then
+  ARM_MULTILIB_ARCHS=$ARM_ARCHS
+fi
+# Combine all the different ARM variants to a single "arm" target.
+if echo $2 | grep arm; then
+  ORIG_TARGETS="$ORIG_TARGETS arm"
+fi
+TARGETS=`echo $ORIG_TARGETS | $TRANSLATE_ARCH | $OMIT_X86_64 | sed -e s,\\',,g`
 
 # The GNU makefile target ('bootstrap' by default).
 BOOTSTRAP=${BOOTSTRAP-bootstrap}
@@ -323,10 +343,10 @@ for prog in ar nm ranlib strip lipo ld ; do
     chmod a+x $P || exit 1
   done
 done
-# The "as" script adds a default "-arch" option.  Iterate over the lists of
-# untranslated HOSTS and TARGETS in $1 and $2 so those names can be used as
+# The "as" script adds a default "-arch" option.  Iterate over the
+# ORIG_HOSTS and ORIG_TARGETS so those names can be used as
 # the arguments for "-arch" in the scripts.
-for t in `echo $1 $2 | tr ' ' '\n' | sort -u`; do
+for t in `echo $ORIG_HOSTS $ORIG_TARGETS | tr ' ' '\n' | sort -u`; do
   gt=`echo $t | $TRANSLATE_ARCH`
   P=$DIR/bin/${gt}-apple-darwin$DARWIN_VERS-as
   if [ "$gt" = "arm" -a -n "$ARM_SDK" ]; then

@@ -7,6 +7,6 @@ int main()
 {
   void (^b)(void);
 
-  __sync_bool_compare_and_swap(&b, (void*)0, ^{ print("hello\n"); });
+  __sync_bool_compare_and_swap(&b, 0, ^{ print("hello\n"); });
   return 0;
 };

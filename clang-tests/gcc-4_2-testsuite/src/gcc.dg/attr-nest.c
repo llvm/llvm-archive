@@ -8,7 +8,7 @@ void bar (int, ...);
 /* gcc would segfault on the nested attribute.  */
 void foo (void)
 {
-  bar (0, (void (*ATTR_PRINTF) (const char *, ...)) 0); /*dg-warning "attribute ignored" */
+  bar (0, (void (*ATTR_PRINTF) (const char *, ...)) 0); /* { dg-error "attribute ignored" } */
 }
 
 /* For consistency, unnamed decls should give the same warnings as

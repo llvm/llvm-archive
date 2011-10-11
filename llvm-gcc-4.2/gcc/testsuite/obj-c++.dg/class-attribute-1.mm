@@ -22,17 +22,17 @@ __attribute ((deprecated))
 
 __attribute ((deprecated)) void DEP();
 
-@interface DEPRECATED (Category)  /* { dg-warning "deprecated" } */
+@interface DEPRECATED (Category)
 @end
 
 @interface NS : DEPRECATED /* { dg-warning "deprecated" } */
 @end
 
-__attribute ((unavailable)) __attribute ((deprecated)) __attribute ((XXXX)) 
-@interface UNAVAILABLE   /* { dg-warning "unknown" } */
+__attribute ((unavailable)) __attribute ((deprecated)) __attribute ((XXXX)) /* { dg-warning "unknown" } */
+@interface UNAVAILABLE
   - (int *) AnaotherInst;
   + (DEPRECATED*) return_deprecated; /* { dg-warning "deprecated" } */
-  - (UNAVAILABLE *) return_unavailable;  /* { dg-warning "deprecated" } */
+  - (UNAVAILABLE *) return_unavailable;
 @end
 
 DEPRECATED * deprecated_obj; /* { dg-warning "deprecated" } */

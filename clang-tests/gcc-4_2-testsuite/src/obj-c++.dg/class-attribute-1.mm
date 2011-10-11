@@ -22,36 +22,37 @@ __attribute ((deprecated))
 
 __attribute ((deprecated)) void DEP();
 
-@interface DEPRECATED (Category)  /* { dg-warning "deprecated" } */
+@interface DEPRECATED (Category)
 @end
 
 @interface NS : DEPRECATED /* { dg-warning "deprecated" } */
 @end
 
-__attribute ((unavailable)) __attribute ((deprecated)) __attribute ((XXXX)) 
-@interface UNAVAILABLE   /* { dg-warning "unknown" } */
+__attribute ((unavailable)) __attribute ((deprecated)) __attribute ((XXXX))  /* { dg-warning "unknown" } */
+@interface UNAVAILABLE
   - (int *) AnaotherInst;
   + (DEPRECATED*) return_deprecated; /* { dg-warning "deprecated" } */
-  - (UNAVAILABLE *) return_unavailable;  /* { dg-warning "deprecated" } */
+  - (UNAVAILABLE *) return_unavailable; 
 @end
 
 DEPRECATED * deprecated_obj; /* { dg-warning "deprecated" } */
 
-UNAVAILABLE *unavailable_obj;		/* { dg-warning "deprecated" } */
+UNAVAILABLE *unavailable_obj;		/* { dg-error "unavailable" } */
 
 @implementation UNAVAILABLE
   - (int *) AnaotherInst { return (int*)0; }
   + (DEPRECATED *) return_deprecated { return deprecated_obj; } /* { dg-warning "deprecated" } */
-  - (UNAVAILABLE *) return_unavailable { return unavailable_obj; }	/* { dg-warning "deprecated" } */
+  - (UNAVAILABLE *) return_unavailable { return unavailable_obj; }	/* { dg-error "unavailable" } */
 @end
 
 int foo (DEPRECATED *unavailable_obj) /* { dg-warning "deprecated" } */
 {
-    DEPRECATED *p = [DEPRECATED new];	/* { dg-warning "deprecated" } */ 
+    DEPRECATED *p =  /* { dg-warning "deprecated" } */
+      [DEPRECATED new];	/* { dg-warning "deprecated" } */
 
     int ppp = p.prop;		
     p.prop = 1;
-    p.prop != 3;		
+    (void)(p.prop != 3);		
     DEP();	/* { dg-warning "deprecated" } */
     int q = p->ivar;
     return [p instancemethod]; 

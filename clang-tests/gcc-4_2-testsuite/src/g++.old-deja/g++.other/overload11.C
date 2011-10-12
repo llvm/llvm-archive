@@ -38,10 +38,10 @@ int main (int argc, char **argv)
   
   // 13.3.1.1 indicates that the following are errors -- the primary expression
   // is not the name of a function.
-  (0, ovl) (1);             // { dg-error "cannot resolve overloaded" }
-  (0, &ovl) (1);            // { dg-error "cannot resolve overloaded" }
-  (argc ? ovl : ovl) (1);   // { dg-error "cannot resolve overloaded" }
-  (argc ? &ovl : &ovl) (1); // { dg-error "cannot resolve overloaded" }
+  (0, ovl) (1);             // { dg-error "reference to overloaded function could not be resolved" }
+  (0, &ovl) (1);            // { dg-error "reference to overloaded function could not be resolved" }
+  (argc ? ovl : ovl) (1);   // { dg-error "reference to overloaded function could not be resolved" }
+  (argc ? &ovl : &ovl) (1); // { dg-error "reference to overloaded function could not be resolved" }
   
   (fn) (1);                 // ok
   (&fn) (1);                // ok (no overload resolution)
@@ -53,10 +53,10 @@ int main (int argc, char **argv)
   ptr = (ovl);              // ok
   ptr = (&ovl);             // ok
   // 13.4 indicates these are ok.
-  ptr = (0, ovl);           // { dg-error "cannot resolve overloaded" }
-  ptr = (0, &ovl); // { dg-error "cannot resolve overloaded" }
-  ptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded" }
-  ptr = (argc ? &ovl : &ovl); // { dg-error "cannot resolve overloaded" }
+  ptr = (0, ovl);           // { dg-error "reference to overloaded function could not be resolved" }
+  ptr = (0, &ovl); // { dg-error "reference to overloaded function could not be resolved" }
+  ptr = (argc ? ovl : ovl); // { dg-error "reference to overloaded function could not be resolved" }
+  ptr = (argc ? &ovl : &ovl); // { dg-error "reference to overloaded function could not be resolved" }
   
   vptr = (ovl);              // { dg-error "assigning to 'void (*)()' from incompatible type" }
   vptr = (&ovl);             // { dg-error "assigning to 'void (*)()' from incompatible type" } 

@@ -19,11 +19,11 @@ void Foo () {
   
   (c.f<int>) (2);
 
-  c.g;			// { dg-error "a bound member function may only be called" }
-  c.f;		        // { dg-error "a bound member function may only be called" }
-  c.f<int>;		// { dg-error "a bound member function may only be called" }
+  c.g;	// { dg-error "reference to non-static member function must be called" }
+  c.f;	// { dg-error "reference to non-static member function must be called" }	        
+  c.f<int>; // { dg-error "reference to non-static member function must be called" }
   
-  c.g == 1;		// { dg-error "a bound member function may only be called" }
-  c.f == 1;		// { dg-error "a bound member function may only be called" }
-  c.f<int> == 1;	// { dg-error "a bound member function may only be called" }
+  c.g == 1; // { dg-error "reference to non-static member function must be called" }
+  c.f == 1; // { dg-error "reference to non-static member function must be called" }
+  c.f<int> == 1;  // { dg-error "reference to non-static member function must be called" }
 }

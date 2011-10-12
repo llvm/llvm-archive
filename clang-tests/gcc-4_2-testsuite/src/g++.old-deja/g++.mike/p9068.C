@@ -7,13 +7,13 @@ struct ostream {
 
 class C {
 public:
-  static int& i (); // { dg-error "candidate function" }
-  static int& i (int signatureDummy); // { dg-error "candidate function" }
+  static int& i (); // { dg-error "possible target for call" }
+  static int& i (int signatureDummy); // { dg-error "possible target for call" }
 };
 
 void foo (ostream& lhs, const C& rhs)
 {
-  lhs << rhs.i;		// { dg-error "cannot resolve overloaded function" }
+  lhs << rhs.i;		// { dg-error "reference to overloaded function could not be resolved" "invalid operands to binary expression" }
 }
 
 int& C::i () {

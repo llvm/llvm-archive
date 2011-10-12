@@ -4,11 +4,11 @@ struct S {
   void f();
 };
 
-void g(int); // { dg-error "candidate" }
-void g(double); // { dg-error "candidate" }
+void g(int); // { dg-error "possible target for call" }
+void g(double); // { dg-error "possible target for call" }
 
 void h () {
   S s;
-  for (;;s.f); // { dg-error "a bound member function" }
-  for (;;g); // { dg-error "cannot resolve overloaded function" }
+  for (;;s.f); // { dg-error "reference to non-static member function must be called" }
+  for (;;g); // { dg-error "reference to overloaded function could not be resolved" }
 }

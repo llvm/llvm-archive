@@ -4,11 +4,11 @@
 // Origin: Jorn Wolfgang Rennecke <amylaar@gcc.gnu.org>
 // Bug 19608: ICE on invalid
 
-
 void f ()
 {
   class c
     {
-      friend void g () { } // { dg-error "no matching function found in local scope" "" }
+      friend void g () { } // { dg-error "friend function cannot be defined in a local class" }
+      // { dg-error "no matching function found in local scope" "" { target *-*-*} 11 }
     };
 }

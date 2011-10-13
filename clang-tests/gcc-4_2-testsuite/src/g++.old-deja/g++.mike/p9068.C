@@ -13,7 +13,7 @@ public:
 
 void foo (ostream& lhs, const C& rhs)
 {
-  lhs << rhs.i;		// { dg-error "reference to overloaded function could not be resolved" "invalid operands to binary expression" }
+  lhs << rhs.i;		// { dg-error "reference to overloaded function could not be resolved|invalid operands to binary expression" }
 }
 
 int& C::i () {

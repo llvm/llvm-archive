@@ -4,7 +4,7 @@
 int
 test(void)
 {
-    double value, maxValue = - (__extension__	((union { unsigned __l __attribute__((__mode__(__DI__))); double __d; }) { __l: 0x7ff0000000000000ULL }).__d)  ;
+    double value, maxValue = - (__extension__	((union { unsigned __l __attribute__((__mode__(__DI__))); double __d; }) { __l: 0x7ff0000000000000ULL }).__d)  ; // {{ dg-warning "old-style field designator" }}
     int idx, maxIdx = 1;
 
     for (idx = 1; idx < 22; idx++) {

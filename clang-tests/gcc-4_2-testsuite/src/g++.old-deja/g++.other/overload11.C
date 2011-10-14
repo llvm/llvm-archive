@@ -32,9 +32,9 @@ int main (int argc, char **argv)
   void (*vptr) ();
   
   (ovl) (1);                // ok
-  (&ovl) (1);               // { dg-error "called object type" }
+  (&ovl) (1);               // ok
   (ovl) ();                 // { dg-error "no matching function" }
-  (&ovl) ();                // { dg-error "called object type" }
+  (&ovl) ();                // ok
   
   // 13.3.1.1 indicates that the following are errors -- the primary expression
   // is not the name of a function.

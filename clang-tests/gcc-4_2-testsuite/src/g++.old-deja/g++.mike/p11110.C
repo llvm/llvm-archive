@@ -6,12 +6,13 @@ class data;
 class conatiner {
 public:
   virtual void* first    ();
-  virtual data* contents (void* i);     // { dg-error "" } candidates
+  virtual data* contents (void* i);
 };
 
 class user {
 public:
   data* data1 () const;
+  user();
 private:
   conatiner& _c;
 };

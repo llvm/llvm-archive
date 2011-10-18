@@ -7,6 +7,6 @@ struct A {
   void f ();
   void f (int);
   void g () {
-    void (*p)(char *) = f;	// { dg-error "cannot initialize" }
+    void (*p)(char *) = f;	// { dg-error "must be called" }
   }
 };

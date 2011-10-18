@@ -2,7 +2,7 @@
 // { dg-options "" }
 // prms-id: 10769
 
-#define PMF2PF(PMF) ((void (*)())(PMF))
+#define PMF2PF(PMF) ((void (*)())(PMF)) // { dg-error "" } 
 
 class A {
 public:

@@ -901,6 +901,10 @@ ConvertFunctionType(tree type, tree decl, tree static_chain,
   if (flags & ECF_NOTHROW)
     FnAttributes |= Attribute::NoUnwind;
 
+  // Check for 'returnstwice' function attribute.
+  if (flags & ECF_RETURNS_TWICE)
+    FnAttributes |= Attribute::ReturnsTwice;
+
   // Check for 'readnone' function attribute.
   // Both PURE and CONST will be set if the user applied
   // __attribute__((const)) to a function the compiler

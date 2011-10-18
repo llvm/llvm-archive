@@ -1,7 +1,7 @@
 namespace N {
   template <typename T>
   struct S {
-    void f() {}
+    void f() {} // { dg-warning "explicit instantiation refers here" }
   };
   namespace I {
     template void S<double>::f(); // { dg-error "namespace" }

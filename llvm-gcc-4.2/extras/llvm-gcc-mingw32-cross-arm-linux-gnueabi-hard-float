@@ -136,7 +136,7 @@ if [ "$do_configure_llvm" == "yes" ] ; then
       --disable-multilib                                \
       --disable-nls                                     \
       --disable-sjlj-exceptions                         \
-      --with-cpu=cortex-a8                              \
+      --with-cpu=cortex-a9                              \
       --with-fpu=neon                                   \
       --with-abi=aapcs                                  \
       --with-float=hard                                 \
@@ -145,7 +145,7 @@ if [ "$do_configure_llvm" == "yes" ] ; then
       --with-gnu-as                                     \
       --with-gnu-ld                                     \
       --disable-werror                                  \
-	  $@  # Extra args if any
+      $@  # Extra args if any
 
 fi
 
@@ -155,7 +155,7 @@ fi
 if [ "$do_make_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
-   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.   
+   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.
    nice -n 20 make all VERBOSE=1 \
       $@  # Extra args if any, like -j16 for example.
 
@@ -167,7 +167,7 @@ fi
 if [ "$do_install_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
-   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.   
+   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.
    nice -n 20 make install VERBOSE=1 \
       $@  # Extra args if any, like -j16 for example.
    
@@ -205,13 +205,13 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
       --enable-checking                                          \
       --program-prefix=llvm-                                     \
       --disable-bootstrap                                        \
-      --with-cpu=cortex-a8                                       \
+      --with-cpu=cortex-a9                                       \
       --with-fpu=neon                                            \
       --with-float=hard                                          \
       --with-abi=aapcs                                           \
       --disable-shared                                           \
-	  $@  # Extra args if any
-	  
+      $@  # Extra args if any
+      
 fi
 
 #------------------------------------------------------------------------------
@@ -222,7 +222,7 @@ if [ "$do_make_llvmgcc" == "yes" ] ; then
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
    nice -n 20 make all \
       $@  # Extra args if any
-	  
+      
 fi
 
 #------------------------------------------------------------------------------

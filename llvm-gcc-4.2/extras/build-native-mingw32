@@ -128,13 +128,13 @@ if [ "$do_configure_llvm" == "yes" ] ; then
    
    ../${LLVM_src}/configure --prefix=${PRIVATE_INSTALL}            \
       --build=i686-pc-mingw32 --host=i686-pc-mingw32               \
-	  --target=i686-pc-mingw32 --disable-shared --disable-multilib \
-	  --disable-nls --disable-bootstrap --disable-sjlj-exceptions  \
-	  --disable-win32-registry --without-llvmgcc --without-llvmgxx \
-	  --enable-optimized --enable-assertions                       \
+      --target=i686-pc-mingw32 --disable-shared --disable-multilib \
+      --disable-nls --disable-bootstrap --disable-sjlj-exceptions  \
+      --disable-win32-registry --without-llvmgcc --without-llvmgxx \
+      --enable-optimized --enable-assertions                       \
       $@  # Extra args if any
-	  
- fi
+
+fi
 
 #------------------------------------------------------------------------------
 # Step: Make LLVM.
@@ -171,11 +171,11 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
    
    ../${LLVM_GCC_src}/configure --prefix=${PRIVATE_INSTALL}            \
       --build=i686-pc-mingw32 --host=i686-pc-mingw32                   \
-	  --target=i686-pc-mingw32 --disable-shared --disable-bootstrap    \
-	  --disable-nls --disable-win32-registry --disable-sjlj-exceptions \
-	  --enable-languages=c,c++ --program-prefix=llvm-                  \
-	  --enable-llvm=${BUILD_ROOT}/${LLVM_obj}                          \
-      $@  # Extra args if any	  
+      --target=i686-pc-mingw32 --disable-shared --disable-bootstrap    \
+      --disable-nls --disable-win32-registry --disable-sjlj-exceptions \
+      --enable-languages=c,c++ --program-prefix=llvm-                  \
+      --enable-llvm=${BUILD_ROOT}/${LLVM_obj}                          \
+      $@  # Extra args if any
 
 fi
 
@@ -198,5 +198,5 @@ if [ "$do_install_llvmgcc" == "yes" ] ; then
    cd ${BUILD_ROOT}/${LLVM_GCC_obj}
    make install  \
       $@  # Extra args if any
-	  
+
 fi

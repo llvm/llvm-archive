@@ -141,7 +141,7 @@ fi
 if [ "$do_make_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
-   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.   
+   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.
    nice -n 20 make VERBOSE=1 \
       $@  # Extra args if any, like -j16 for example.
 
@@ -153,7 +153,7 @@ fi
 if [ "$do_install_llvm" == "yes" ] ; then
 
    cd ${BUILD_ROOT}/${LLVM_obj}
-   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.   
+   # NOTE: Do not build with ENABLE_OPTIMIZED=1 - some test fail after it.
    nice -n 20 make install VERBOSE=1 \
       $@  # Extra args if any, like -j16 for example.
 
@@ -189,7 +189,7 @@ if [ "$do_configure_llvmgcc" == "yes" ] ; then
       --with-newlib               \
       --with-headers=yes          \
       --enable-llvm=${BUILD_ROOT}/${LLVM_obj} \
-      --with-cpu=cortex-a8        \
+      --with-cpu=cortex-a9        \
       --with-fpu=neon             \
       --with-float=soft           \
       --with-abi=aapcs            \

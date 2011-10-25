@@ -1,7 +1,8 @@
 /* { dg-do compile } */
 
-#define ATTR_PRINTF __attribute__ ((format (printf, 1, 2)))
-#define ATTR_USED __attribute__ ((used))
+#define ATTR_PRINTF __attribute__ ((format (printf, 1, 2))) /* { dg-warning "expanded from macro" } */
+#define ATTR_USED __attribute__ ((used)) /* { dg-warning "expanded from macro" } */
+
 
 void bar (int, ...);
 

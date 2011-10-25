@@ -2,7 +2,7 @@
 
 /* Origin: Joseph Myers <jsm28@cam.ac.uk>.  */
 /* { dg-do compile } */
-/* { dg-options "-std=iso9899:1990 -pedantic-errors" } */
+/* { dg-options "-std=iso9899:1990 -fmacro-backtrace-limit=0 -pedantic-errors" } */
 
 #include <limits.h>
 
@@ -761,3 +761,4 @@ foo (void)
   CHECK_HEX_CONST(ffffffffffffffff);
 #endif
 }
+/* { dg-warning "skipping" "" { target *-*-* } 0 } */

@@ -8,5 +8,6 @@ extern int foo(int x);
 
 #define bar(x) foo(x)
 #define baz(x) bar(##x)
+/* { dg-warning "expanded from" "" { target *-*-* } 10 } */
 
 int quux(int y) { return baz(y); }  /* { dg-warning "valid preprocessing" } */

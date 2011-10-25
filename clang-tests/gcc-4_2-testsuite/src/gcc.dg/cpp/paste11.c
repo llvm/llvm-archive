@@ -6,6 +6,7 @@
    number, as long as no '.', '-' or '+' appears in its spelling.  */
 
 #define glue(x, y) x ## y
+/* { dg-warning "expanded from" "" { target *-*-* } 8 } */
 
 glue (ident, 12)		/* OK.  */
 glue (ident, 12e3)		/* OK.  */

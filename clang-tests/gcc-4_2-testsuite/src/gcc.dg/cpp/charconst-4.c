@@ -21,6 +21,7 @@ extern void abort (void);
 # define POS_CHARCONST '\1'
 #elif INT_MAX == 2147483647
 # define LONG_CHARCONST '!\234abc'
+/* { dg-warning "expanded from" "" { target *-*-* } 23 } */
 # define SHORT_CHARCONST '\234abc'
 # define POS_CHARCONST '\234a'
 #elif INT_MAX == 9223372036854775807

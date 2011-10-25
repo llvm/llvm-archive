@@ -7,3 +7,4 @@
 
 #define a /##/=
 a			/* { dg-warning "valid preprocessing tok" } */
+/* { dg-warning "expanded from" "" { target *-*-* } 8 } */

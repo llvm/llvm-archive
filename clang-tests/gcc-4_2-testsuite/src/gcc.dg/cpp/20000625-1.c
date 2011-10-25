@@ -3,7 +3,8 @@
 
 /* { dg-do compile } */
 
-#define ENTRY(name)	name##:
+#define ENTRY(name)	name##: 
+/* { dg-warning "expanded from" "" { target *-*-* } 6 } */
 #define socket bind
 
 int

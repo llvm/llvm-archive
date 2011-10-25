@@ -45,3 +45,4 @@ make_something(int a, int b, int c)
 
     return rv;
 }
+/* { dg-warning "expanded from" "" { target *-*-* } 27 } */

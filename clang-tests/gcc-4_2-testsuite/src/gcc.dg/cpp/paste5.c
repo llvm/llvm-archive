@@ -10,6 +10,7 @@
 /* { dg-do compile } */
 
 #define glue(a,b) a##b
+/* { dg-warning "expanded from" "" { target *-*-* } 12 } */
 #define struct(x) B(x)
 #define E(x) struct x
 #define FG (22)

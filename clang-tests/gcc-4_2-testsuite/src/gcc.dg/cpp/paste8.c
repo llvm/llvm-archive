@@ -13,3 +13,5 @@ c(1, 2)
 c(1, 2, 3)
 #define d(x) fo(##x)
 d(1)				/* { dg-warning "valid preprocessing token" } */
+/* { dg-warning "expanded from" "" { target *-*-* } 9 } */
+/* { dg-warning "expanded from" "" { target *-*-* } 14 } */

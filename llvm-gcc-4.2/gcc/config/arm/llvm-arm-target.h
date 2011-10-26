@@ -38,7 +38,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
               (TREE_VALUE(tree_last(TYPE_ARG_TYPES(type))) == \
                void_type_node)))                              \
         CC = CallingConv::ARM_AAPCS_VFP;                      \
-      if (!DEFAULT_TARGET_AAPCS_BASED)                        \
+      else if (!DEFAULT_TARGET_AAPCS_BASED)                   \
         CC = CallingConv::ARM_AAPCS;                          \
     } else if (DEFAULT_TARGET_AAPCS_BASED) {                  \
         CC = CallingConv::ARM_APCS;                           \

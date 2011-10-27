@@ -5,9 +5,9 @@
 /* { dg-do compile } */
 /* { dg-options "-g -O0 -fblocks -dA" } */
 /* { dg-final { scan-assembler "\\.Lstring12\[^\\n\\r\]+DW_AT_name" } } */
-/* { dg-final { scan-assembler "\\.Lstring12:\[\\n\\r \\t\]+\\.ascii\\s+\"__block_descriptor\"" } } */
+/* { dg-final { scan-assembler "\\.ascii\\s+\"__block_descriptor\"" } } */
 /* { dg-final { scan-assembler "\\.Lstring13\[^\\n\\r\]+DW_AT_name" } } */
-/* { dg-final { scan-assembler "\\.Lstring13:\[\\n\\r \\t\]+\\.ascii\\s+\"__block_literal_generic\"" } } */
+/* { dg-final { scan-assembler "\\.Lstring13:\\s*\\n\\s*\\.ascii\\s+\"__block_literal_generic\"" } } */
 
 struct inStruct {
   void (^genericBlockPtr)();

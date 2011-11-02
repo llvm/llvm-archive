@@ -34,11 +34,6 @@ RC_ARCHS := ppc i386
 HOSTS = $(RC_ARCHS)
 targets = echo $(RC_ARCHS)
 TARGETS := $(shell $(targets))
-ifneq ($(strip $(RC_SUPPORTED_ARCHS)),)
-TGT_ARCHS := $(shell echo $(RC_SUPPORTED_ARCHS))
-else
-TGT_ARCHS := $(shell echo $(TARGETS))
-endif
 
 SRCROOT = .
 
@@ -104,14 +99,14 @@ llvmCore: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	fi
 	cd $(OBJROOT) && \
 	  DEVELOPER_DIR=Developer \
-	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TGT_ARCHS)"\
+	  $(SRC)/llvmCore/utils/buildit/build_llvm "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC)/llvmCore /usr/local $(DSTROOT) $(SYMROOT) \
 	    $(ENABLE_ASSERTIONS) $(LLVM_OPTIMIZED) $(INSTALL_LIBLTO) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 
 
 llvmgcc42: $(OBJROOT) $(SYMROOT) $(DSTROOT)
 	cd $(OBJROOT) && \
-	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TGT_ARCHS)" \
+	  $(SRC)/build_gcc "$(RC_ARCHS)" "$(TARGETS)" \
 	    $(SRC) $(PREFIX) $(DSTROOT) $(SYMROOT) $(INSTALL_LIBLTO) \
 	    $(ENABLE_ASSERTIONS) $(LLVMCORE_PATH) \
 	    $(RC_ProjectSourceVersion) $(RC_ProjectSourceSubversion) 

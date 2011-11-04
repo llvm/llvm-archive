@@ -51,7 +51,7 @@ mi_gdb_load ${binfile}
 
 mi_runto pass_ref
 
-mi_gdb_test {-var-create input_var * input} {.*name="input_var",numchild="2",type="Derived &",typecode="REF",dynamic_type="Derived &",resolved_type="Derived &",in_scope="true".*} {Create input_var in pass_ref_ptr}
+mi_gdb_test {-var-create input_var * input} {.*name="input_var",numchild="2",type="class Derived &",typecode="REF",dynamic_type="Derived &",resolved_type="class Derived &",in_scope="true".*} {Create input_var in pass_ref_ptr}
 
 mi_gdb_test {-var-list-children input_var} {.*numchild="2",children=\[child=\{name="input_var.Base",exp="Base",numchild="1",type="Base &",typecode="REF",dynamic_type="",resolved_type="Base &"\},child=\{name="input_var.private",exp="private",numchild="1",type="",typecode="FAKE_CHILD",dynamic_type="",resolved_type=""\}\]} {List children of input_var}
 
@@ -93,9 +93,9 @@ mi_gdb_test {-var-evaluate-expression input_var.Base.private.my_var} {.*value="1
 set bkptno [mi_break_function pass_ref_ptr]
 mi_continue_to $bkptno {pass_ref_ptr.*} {.*} {.*} {.*} {.*}
 
-mi_gdb_test {-var-create input_ptr_var * input_ptr} {.*name="input_ptr_var",numchild="1",type="Derived \*&",typecode="REF",dynamic_type="",resolved_type="Derived \*&",in_scope="true".*} {Create input_ptr_var in pass_ref_ptr}
+mi_gdb_test {-var-create input_ptr_var * input_ptr} {.*name="input_ptr_var",numchild="1",type="class Derived \*&",typecode="REF",dynamic_type="",resolved_type="class Derived \*&",in_scope="true".*} {Create input_ptr_var in pass_ref_ptr}
 
-mi_gdb_test {-var-list-children input_ptr_var} {.*numchild="1",children=\[child=\{name="input_ptr_var.\*input_ptr",exp="\*input_ptr",numchild="2",type="Derived \*",typecode="PTR",dynamic_type="Derived \*",resolved_type="Derived \*"\}\]} {List children of input_ptr_var}
+mi_gdb_test {-var-list-children input_ptr_var} {.*numchild="1",children=\[child=\{name="input_ptr_var.\*input_ptr",exp="\*input_ptr",numchild="2",type="class Derived \*",typecode="PTR",dynamic_type="Derived \*",resolved_type="class Derived \*"\}\]} {List children of input_ptr_var}
 
 mi_gdb_test {-var-list-children input_ptr_var.*input_ptr} {.*numchild="2",children=\[child=\{name="input_ptr_var\.\*input_ptr.Base",exp="Base",numchild="1",type="Base \*",typecode="PTR",dynamic_type="",resolved_type="Base \*"\},child=\{name="input_ptr_var\.\*input_ptr.private",exp="private",numchild="1",type="",typecode="FAKE_CHILD",dynamic_type="",resolved_type=""\}\]} {List children of input_ptr_var.*input_ptr}
 
@@ -137,7 +137,7 @@ mi_gdb_test {-var-evaluate-expression input_ptr_var.*input_ptr.Base.private.my_v
 set bkptno [mi_break_function pass_base_ref]
 mi_continue_to $bkptno {pass_base_ref.*} {.*} {.*} {.*} {.*}
 
-mi_gdb_test {-var-create base_var * input} {.*name="base_var",numchild="2",type="Base &",typecode="REF",dynamic_type="Derived &",resolved_type="Base &",in_scope="true".*} {Create base_var in pass_base_ref}
+mi_gdb_test {-var-create base_var * input} {.*name="base_var",numchild="2",type="class Base &",typecode="REF",dynamic_type="Derived &",resolved_type="class Base &",in_scope="true".*} {Create base_var in pass_base_ref}
 
 mi_gdb_test {-var-list-children base_var} {.*numchild="2",children=\[child=\{name="base_var.Base",exp="Base",numchild="1",type="Base &",typecode="REF",dynamic_type="",resolved_type="Base &"\},child=\{name="base_var.private",exp="private",numchild="1",type="",typecode="FAKE_CHILD",dynamic_type="",resolved_type=""\}\]} {List children of base_var}
 

@@ -99,7 +99,7 @@ mi_gdb_test {-var-create fooVar * myFoo} \
       "list children of fooVar"
   
 mi_gdb_test {-var-list-children fooVar.private} \
-    {\^done,numchild="1",children=\[child={name="fooVar.private.contents",exp="contents",numchild="2",type="Container \*",typecode="PTR",dynamic_type="FancyIntContainer \*",resolved_type="Container \*"}\]} \
+    {\^done,numchild="1",children=\[child={name="fooVar.private.contents",exp="contents",numchild="2",type="class Container \*",typecode="PTR",dynamic_type="FancyIntContainer \*",resolved_type="class Container \*"}\]} \
     "list children of fooVar.private"
 
 mi_gdb_test {-var-list-children fooVar.private.contents} \

@@ -2,7 +2,7 @@
 
 /* Origin: Joseph Myers <jsm@polyomino.org.uk> */
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options "-w" } */
 
 static int y[];
 void

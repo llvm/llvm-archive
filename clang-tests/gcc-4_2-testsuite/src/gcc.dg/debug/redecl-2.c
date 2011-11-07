@@ -3,7 +3,7 @@
    diagnosed.  Debug test: avoid ICE.  */
 /* Origin: Joseph Myers <jsm@polyomino.org.uk> */
 /* { dg-do compile } */
-/* { dg-options "" } */
+/* { dg-options "-w" } */
 
 typedef int IA[];
 typedef int A5[5];

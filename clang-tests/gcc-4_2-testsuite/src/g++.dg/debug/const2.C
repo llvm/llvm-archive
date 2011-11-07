@@ -1,7 +1,7 @@
 // Copyright (C) 2005 Free Software Foundation, Inc.
 // Contributed by Nathan Sidwell 1 Apr 2005 <nathan@codesourcery.com>
 
-// { dg-options "-ggdb2" }
+// { dg-options "-g" }
 // Origin: ivan <ivanr@syncad.com>
 //	   pinskia@gcc.gnu.org
 // Bug 20505: ICE with -ggdb2

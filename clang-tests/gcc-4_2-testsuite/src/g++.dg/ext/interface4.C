@@ -1,7 +1,7 @@
 /* https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=227376 */
 
 /* { dg-do compile } */
-/* { dg-options "-g2" } */
+/* { dg-options "-g" } */
 
 /* We used to crash when emitting debug info for type N::A because its
    context was a namespace, not a function.  */

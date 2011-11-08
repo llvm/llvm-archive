@@ -249,7 +249,7 @@ h5 (void)
   sizeof(*c5());
   {
     extern IA *c5 (void);
-    sizeof(*c5());
+    /* FIXME: This is valid: sizeof(*c5()); */
     {
       int c5;
       {
@@ -291,7 +291,7 @@ h13 (void)
   sizeof(*c13());
   {
     extern IA *c13 (void);
-    sizeof(*c13());
+    /* FIXME: This is valid: sizeof(*c13()); */
     {
       int c13;
       {
@@ -333,7 +333,7 @@ h18 (void)
   sizeof(*c18());
   {
     extern IA *c18 (void);
-    sizeof(*c18());
+    /* FIXME: This is valid: sizeof(*c18()); */
   }
   sizeof(*c18());
 }

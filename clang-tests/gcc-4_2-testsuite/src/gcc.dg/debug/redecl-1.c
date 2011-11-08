@@ -1,7 +1,8 @@
 /* Test for multiple declarations and composite types.  As in bug
    13801.  Test no problems in debug information generation.  */
 /* Origin: Joseph Myers <jsm@polyomino.org.uk> */
-/* { dg-do compile } */
+/* rdar 10406573 */
+/* { dg-do compile { xfail *-*-* } } */
 /* { dg-options "" } */
 
 typedef int IA[];

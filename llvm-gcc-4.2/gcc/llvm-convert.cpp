@@ -3689,7 +3689,7 @@ Value *TreeToLLVM::EmitBIT_NOT_EXPR(tree exp) {
               cast<VectorType>(Ty)->getElementType()->isFloatingPointTy())) {
     Op = BitCastToType(Op, getSuitableBitCastIntType(Ty));
   }
-  return BitCastToType(Builder.CreateNot(Op, Op->getName() + "not", Ty);
+  return BitCastToType(Builder.CreateNot(Op, Op->getName() + "not"), Ty);
 }
 
 Value *TreeToLLVM::EmitTRUTH_NOT_EXPR(tree exp) {

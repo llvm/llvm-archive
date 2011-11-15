@@ -1649,13 +1649,9 @@ void emit_global_to_llvm(tree decl) {
   }
 
   if (TheDebugInfo) {
-    std::string Name = GV->getNameStr();
-    const char LPrefix[] = "\01L_OBJC_";
-    const char lPrefix[] = "\01l_OBJC_";
-
     if (flag_objc_abi == -1 || flag_objc_abi == 0 ||
-        (strncmp(Name.c_str(), LPrefix, sizeof(LPrefix) - 1) != 0 &&
-         strncmp(Name.c_str(), lPrefix, sizeof(lPrefix) - 1) != 0))
+        (!GV->getName().startswith("\01L_OBJC_") &&
+         !GV->getName().startswith("\01l_OBJC_")))
       TheDebugInfo->EmitGlobalVariable(GV, decl);
   }
 

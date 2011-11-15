@@ -6,16 +6,15 @@
 
 @interface Super @end
 
-@interface MyWpModule @end
+@interface MyWpModule @end 	/* { dg-error "previous definition is here" } */
 
 @compatibility_alias  MyAlias MyWpModule;
 
 @compatibility_alias  AliasForSuper Super;
 
-@interface MyAlias : AliasForSuper // expected-error {{duplicate interface declaration for class 'MyWpModule'}}
-@end /* { dg-error "duplicate interface declaration for class 'MyWpModule'" } */
-     /* { dg-error "redefinition of 'struct MyWpModule'" "" { target *-*-* } 16 } */
+@interface MyAlias : AliasForSuper /* { dg-error "duplicate interface definition for class 'MyWpModule'" } */
+@end
 
-@implementation MyAlias : AliasForSuper /* { dg-error "conflicting super class name 'Super'" } */
+@implementation MyAlias : AliasForSuper
 @end
 

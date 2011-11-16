@@ -413,6 +413,14 @@ void llvm_initialize_backend(void) {
   
   Reloc::Model RelocModel = Reloc::Default;
   CodeModel::Model CMModel = CodeModel::Default;
+  CodeGenOpt::Level OptLevel = CodeGenOpt::Default;  // -O2, -Os, and -Oz
+  if (optimize == 0)
+    OptLevel = CodeGenOpt::None;
+  else if (optimize == 1)
+    OptLevel = CodeGenOpt::Less;
+  else if (optimize == 3)
+    // -O3 and above.
+    OptLevel = CodeGenOpt::Aggressive;
 
   // Initialize LLVM options.
   std::vector<const char*> Args;
@@ -563,7 +571,7 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 
   TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr,
-                                       RelocModel, CMModel);
+                                       RelocModel, CMModel, OptLevel);
   TheTarget->setMCUseLoc(false);
   TheTarget->setMCUseCFI(false);
   assert(TheTarget->getTargetData()->isBigEndian() == BYTES_BIG_ENDIAN);
@@ -767,7 +775,7 @@ static void createPerFunctionOptimizationPasses() {
     // Note, this also adds codegenerator level optimization passes.
     if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                        TargetMachine::CGFT_AssemblyFile,
-                                       OptLevel, DisableVerify)) {
+                                       DisableVerify)) {
       errs() << "Error interfacing to target machine!\n";
       exit(1);
     }
@@ -880,7 +888,7 @@ static void createPerModuleOptimizationPasses() {
       // Note, this also adds codegenerator level optimization passes.
       if (TheTarget->addPassesToEmitFile(*PM, *AsmOutRawStream,
                                          TargetMachine::CGFT_AssemblyFile,
-                                         OptLevel, DisableVerify)) {
+                                         DisableVerify)) {
         errs() << "Error interfacing to target machine!\n";
         exit(1);
       }

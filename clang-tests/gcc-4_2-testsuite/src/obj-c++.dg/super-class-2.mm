@@ -7,7 +7,7 @@
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"
 
-@class MyWpModule; /* { dg-error "forward class is declared here" } */
+@class MyWpModule; /* { dg-error "forward declaration of class here" } */
 
 @compatibility_alias MyObject Object;
 @compatibility_alias FictitiousModule MyWpModule;

@@ -5,7 +5,7 @@
 
 #include <objc/Object.h>
 
-@class MyWpModule; /* { dg-error "forward class is declared here" } */
+@class MyWpModule; /* { dg-error "forward declaration of class here" } */
 
 @compatibility_alias MyObject Object;
 @compatibility_alias FictitiousModule MyWpModule;

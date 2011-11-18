@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+import os
+import optparse
+import re
+import sys
+
+def main():
+    parser = optparse.OptionParser("""\
+usage: %%prog [options] { files }*
+
+Print the RUNTESTFLAGS used by DejaGNU to run an individual test.\
+""" % locals())
+    parser.add_option("-r", "--replace", dest="patterns",
+                      metavar="PATTERN=REPLACEMENT",
+                      help="define a pattern to replace",
+                      type="str", action="append", default=[])
+
+    opts,args = parser.parse_args()
+
+    # Compile the patterns.
+    patterns = []
+    for pattern in opts.patterns:
+        match,sub = pattern.split('=',1)
+        match = re.compile(match)
+        patterns.append((match,sub))
+
+    # Iterate over all the paths, doing the replacement.
+    paths = args
+    for path in paths:
+        print >>sys.stderr,"scanning %r..." % path
+
+        with open(path) as f:
+            orig_data = data = f.read()
+            for rex,sub in patterns:
+                data = rex.sub(sub, data)
+
+            if data != orig_data:
+                f.close()
+                with open(path, 'w') as f:
+                    f.write(data)
+                print >>sys.stderr,"replaced in %r" % path
+                    
+if __name__ == '__main__':
+    main()

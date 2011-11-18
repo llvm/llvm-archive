@@ -7,6 +7,6 @@ static int sNSImageSnapshotInWindowsComputedValue = -2;
 
 static void _NSImageSnapshotInWindows(void)
 {
-  static int nInvalid = ^{ return 1; };	/* { dg-error "incompatible types in initialization" } */
-  sNSImageSnapshotInWindowsComputedValue = ^{ return 1; }; /* { dg-error "incompatible types in assignment" } */
+  static int nInvalid = ^{ return 1; };	/* { dg-error "incompatible type" } */
+  sNSImageSnapshotInWindowsComputedValue = ^{ return 1; }; /* { dg-error "incompatible type" } */
 }

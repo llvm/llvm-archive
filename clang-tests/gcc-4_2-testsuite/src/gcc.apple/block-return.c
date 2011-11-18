@@ -28,21 +28,21 @@ CL foo() {
       return (char*)0;
   };
 
-  double (^A)(void) = ^ {
+  double (^A)(void) = ^ {			/* { dg-error "incompatible block pointer types initializing" } */
     if (1)
       return (float)1.0;
     else
       if (2)
-	return (double)2.0;	/* { dg-error "incompatible type returning" } */
-    return 1;		/* { dg-error "incompatible type returning" } */
-  };			/* { dg-error "incompatible block pointer types initializing" } */
+	return (double)2.0;	/* { dg-error "incompatible type returning" "" { xfail *-*-* } } <rdar://problem/10466373> */
+    return 1;		/* { dg-error "incompatible type returning" "" { xfail *-*-* } } <rdar://problem/10466373> */
+  };
   char *(^B)(void) = ^{
     if (3)
       return "";
     else
-      return 2;		/* { dg-error "incompatible type returning" } */
-			/* { dg-warning "return makes pointer from integer without a cast" "" { target *-*-* } 43 } */
+      return 2;		/* { dg-error "incompatible integer to pointer" } */
+			/* { dg-warning "return makes pointer from integer without a cast" "" { xfail *-*-* } 43 } */
   };
 
-  return ^{ return 1; };	/* { dg-error "incompatible block pointer types initializing" } */
+  return ^{ return 1; };	/* { dg-error "incompatible block pointer types returning" } */
 }

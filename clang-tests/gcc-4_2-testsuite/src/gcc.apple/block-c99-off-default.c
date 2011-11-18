@@ -5,5 +5,5 @@
 
 int main()
 {
-	void (^Vblock)(void) = ^{};	/* { dg-error "expected identifier" } */
+	void (^Vblock)(void) = ^{};	/* { dg-error "expected identifier" "" { xfail *-*-* } } */
 }

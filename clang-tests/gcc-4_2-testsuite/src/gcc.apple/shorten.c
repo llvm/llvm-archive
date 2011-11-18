@@ -13,8 +13,8 @@ void foo() {
   c = i;
   c = ll;
   i = (int) ll;
-  i = ll;	/* { dg-warning "implicit conversion shortens 64-bit value into a 32-bit value" } */
-  i += ll;	/* { dg-warning "implicit conversion shortens 64-bit value into a 32-bit value" } */
-  i = i ? ll : i;/* { dg-warning "implicit conversion shortens 64-bit value into a 32-bit value" } */
-  bar (ll);	/* { dg-warning "implicit conversion shortens 64-bit value into a 32-bit value" } */
+  i = ll;	/* { dg-warning "-Wshorten-64-to-32" } */
+  i += ll;	/* { dg-warning "-Wshorten-64-to-32" "" { xfail *-*-* } } <rdar://problem/10466193> */
+  i = i ? ll : i;/* { dg-warning "-Wshorten-64-to-32" }*/
+  bar (ll);	/* { dg-warning "-Wshorten-64-to-32" } */
 }

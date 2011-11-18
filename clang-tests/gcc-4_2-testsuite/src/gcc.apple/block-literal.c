@@ -23,9 +23,9 @@ T somefunction() {
 
   I(^{ });
 
-  noop = ^noop /* { dg-error "expected specifier" } */ 
-	       /*  { dg-error "blocks require" "" { target *-*-* } 26 } */
-    ;  /* { dg-error "argument list is required for block expression literals" } */
+  noop = ^noop /* { dg-error "requires a specifier" } */ 
+	       /*  { dg-error "expected expression" "" { target *-*-* } 26 } */
+    ;
 
   return ^{printf("\nBlock\n"); };  
 }
@@ -34,13 +34,13 @@ void test2() {
   int x = 4;
 
   takeblock(^{ printf("%d\n", x); });
-  takeblock(^{ x = 4; });  /* { dg-error "assignment of read-only variable" } */
+  takeblock(^{ x = 4; });  /* { dg-error "variable is not assignable" } */
 
-  takeblock(^test2() /* { dg-error "expected specifier" } */  
-		     /* { dg-error "blocks require" "" { target *-*-* } 39 } */
-	    );	/* { dg-error "argument list is required for block expression literals" } */
+  takeblock(^test2() /* { dg-error "requires a specifier" } */  
+		     /* { dg-error "expected expression" "" { target *-*-* } 39 } */
+	    );
 
-  takeblock(^(void)(void)printf("hello world!\n")); /* { dg-error "blocks require" } */
+  takeblock(^(void)(void)printf("hello world!\n")); /* { dg-error "expected expression" } */
 }
 
 void (^test3())(void) {
@@ -54,16 +54,19 @@ void test4() {
 }
 
 void test5() {
-  takeintint(^(int x)(x+1)); /* { dg-error "blocks require" } */
-
+  takeintint(^(int x)(x+1)); /* { dg-error "expected expression" }
+                                { dg-error "use of undeclared identifier 'x'" "" { target *-*-* } 57 } */
   // Block expr of statement expr.
-  takeintint(^(int x)({ /* { dg-error "blocks require" } */
-			return 42; }));   /* { dg-error "return not allowed in block expression literal" } */
+  takeintint(^(int x)({ /* { dg-error "expected expression" } */
+			return 42; }));
 
   int y;
-  takeintint(^(int x)(x+y)); /* { dg-error "blocks require" } */
+  takeintint(^(int x)(x+y)); /* { dg-error "expected expression" }
+                                { dg-error "use of undeclared identifier 'x'" "" { target *-*-* } 64 } */
 
-  void *X = ^(x+r);  /* { dg-error "expected" } */
+  void *X = ^(x+r);  /* { dg-error "expected" }
+                        { dg-error "to match this" "" { target *-*-* } 67 } 
+                        { dg-warning "declaration specifier missing" "" { target *-*-* } 67 } */
 
   int (^c)(char);
   (1 ? c : 0)('x');

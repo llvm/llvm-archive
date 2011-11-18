@@ -39,7 +39,7 @@ static void __enable_execute_stack ()
 
   [self foo:
     ^() {
-      __block new;
+      __block int new;
       new = [super bork:i];
     }];
 }

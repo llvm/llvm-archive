@@ -4,5 +4,5 @@
 /* { dg-do compile { target *-*-darwin* } } */
 
 #include <CoreFoundation/CoreFoundation.h>
-void doSomething(CFStringRef format, CFStringRef bla) __attribute__((format(CFString, 0, 1))); /* { dg-error "argument number of CFString format cannot be less than one" } */
+void doSomething(CFStringRef format, CFStringRef bla) __attribute__((format(CFString, 0, 1))); /* { dg-error "attribute parameter 2 is out of bounds" } */
 

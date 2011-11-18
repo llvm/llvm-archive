@@ -7,7 +7,7 @@ void foo() {
     static int s_i = 10;
     int local;
     ^ { ++s_i; }; 
-    ^ { local--; }; /* { dg-error "decrement of read-only variable" } */
+    ^ { local--; }; /* { dg-error "variable is not assignable" } */
     ++s_i;
 }
 

@@ -18,12 +18,12 @@ const char *string;
 int main()
 {
         CFStringRef  foo;
-        CFGetAlertPanel (CFSTR ("foo%@"),foo, CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"));    /* { dg-warning "format not a string literal and no format arguments" } */
+        CFGetAlertPanel (CFSTR ("foo%@"),foo, CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"));    /* { dg-warning "format not a string literal and no format arguments" "" { xfail *-*-* } } */
         CFGetAlertPanel (CFSTR ("foo is %@"), foo, CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"),CFSTR ("foo%@"));         // ok
 
 
 	 CFRunAlertPanel(CFSTR ("title%@"), foo, CFSTR ("defaultButton%@"), CFSTR ("alternateButton%@"), 
-				  CFSTR ("otherButton%@")); /* { dg-warning "format not a string literal and no format arguments" } */
+				  CFSTR ("otherButton%@")); /* { dg-warning "format not a string literal and no format arguments" "" { xfail *-*-* } } */
 	 CFRunAlertPanel(CFSTR ("title%@"), foo, CFSTR ("defaultButton%@"), CFSTR ("alternateButton%@"), 
 				  CFSTR ("otherButton%@"), 100, 200);
 

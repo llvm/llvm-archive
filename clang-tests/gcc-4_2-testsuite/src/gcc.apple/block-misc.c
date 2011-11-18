@@ -13,7 +13,7 @@ int test1() {
   if (PFR == II)	// OK
     donotwarn();
 
-  if (PFR == IFP)  /* { dg-error "comparison of distinct block types" } */
+  if (PFR == IFP)
     donotwarn();
 
   if (PFR == (int (^) (int))IFP) // OK
@@ -28,12 +28,12 @@ int test1() {
   if (!PFR)	// OK
     donotwarn();
 
-  return PFR != IFP;  /* { dg-error "comparison of distinct block types" } */
+  return PFR != IFP;
 }
 
 int test2(double (^S)()) {
   double (^I)(int)  = (void*) S;
-  (void*)I = (void *)S;  /* { dg-warning "target of assignment not really an lvalue; this will be a hard error in the future" } */
+  (void*)I = (void *)S;  /* { dg-warning "assignment to cast is illegal" } */
 
   void *pv = I;
 

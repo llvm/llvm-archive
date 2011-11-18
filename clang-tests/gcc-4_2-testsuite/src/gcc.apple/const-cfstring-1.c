@@ -10,7 +10,7 @@
 typedef const struct __CFString *CFStringRef;
 
 #ifdef __CONSTANT_CFSTRINGS__
-#define CFSTR(STR)  ((CFStringRef) __builtin___CFStringMakeConstantString (STR))
+#define CFSTR(STR)  ((CFStringRef) __builtin___CFStringMakeConstantString (STR)) /* { dg-warning "expanded from macro 'CFSTR'" } */
 #else
 #error __CONSTANT_CFSTRINGS__ not defined
 #endif
@@ -22,8 +22,8 @@ const CFStringRef s0 = CFSTR("Hello" "there");
 
 int main(void) {
   CFStringRef s1 = CFSTR("Str1");
-  CFStringRef s2 = CFSTR(cond? "Str2": "Str3"); /* { dg-error "literal expression is not constant" } */
-  CFStringRef s3 = CFSTR(func());  /* { dg-error "literal expression is not constant" } */
+  CFStringRef s2 = CFSTR(cond? "Str2": "Str3"); /* { dg-error "CFString literal is not a string" } */
+  CFStringRef s3 = CFSTR(func());  /* { dg-error "CFString literal is not a string" } */
 
   return 0;
 }

@@ -7,20 +7,19 @@
 int size=5;
 
 int main() {
-  __block int array[size];	/* { dg-error "__block not allowed on a variable length array declaration" } */
+  __block int array[size];	/* { dg-error "__block attribute not allowed on declaration with a variably" } */
 
-  __block id aid1[size];	/* { dg-error "__block not allowed on a variable length array declaration" } */
+  __block id aid1[size];	/* { dg-error "__block attribute not allowed on declaration with a variably" } */
 
- __block id aid2[2][size];	/* { dg-error "__block not allowed on a variable length array declaration" } */
+ __block id aid2[2][size];	/* { dg-error "__block attribute not allowed on declaration with a variably" } */
 
- __block id aid3[][size];	/* { dg-error "__block not allowed on a variable length array declaration" } */
-				/* { dg-error "array size missing in" "" { target *-*-* } 16 } */
+ __block id aid3[][size];	/* { dg-error "__block attribute not allowed on declaration with a variably" } */
+				/* { dg-error "needs an explicit size" "" { target *-*-* } 16 } */
 
 
  __block id oid1 [1];
  __block id oid2 [2][3];
- __block id oid4 [][1];	/* { dg-error "__block not allowed on a variable length array declaration" } */
-		        /* { dg-error "array size missing in" "" { target *-*-* } 22 } */
+ __block id oid4 [][1];	/* { dg-error "needs an explicit size" } */
  return 0;
 }
 

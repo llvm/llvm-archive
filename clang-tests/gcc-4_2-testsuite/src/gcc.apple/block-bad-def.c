@@ -4,9 +4,7 @@
 
 int main(void)
 {
-        void (^b)(void) { }; /* { dg-error "bad definition of a block" } */
-                            /* { dg-error "expected" "" { target *-*-* } 7 } */
-
+        void (^b)(void) { }; /* { dg-error "expected ';' at end of declaration" } */
 
         return 0;
 }

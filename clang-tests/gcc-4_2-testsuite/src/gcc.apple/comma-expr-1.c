@@ -3,4 +3,4 @@
    constituent elements are.  */
 /* { dg-do compile } */
 
-int i = (1, 2);  /* { dg-error "initializer element is not constant" } */
+int i = (1, 2);  /* { dg-error "initializer element is not constant" "" { xfail *-*-* } } */

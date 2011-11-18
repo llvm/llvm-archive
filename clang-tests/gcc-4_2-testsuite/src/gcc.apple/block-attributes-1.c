@@ -11,15 +11,13 @@ int main()
 {
        void (^a)(void) __attribute__((noreturn)) = ^ (void) __attribute__((noreturn)) { exit (0); }; // OK;
 
-	int (^b)(int) __attribute__((noreturn)) = ^ (int i) __attribute__((noreturn)) { return i; }; /* { dg-warning "function declared \\'noreturn\\' has a \\'return\\' statement" } */
-							   /* { dg-warning "\\'noreturn\\' function does return" "" { target *-*-* } 14 } */
+	int (^b)(int) __attribute__((noreturn)) = ^ (int i) __attribute__((noreturn)) { return i; }; /* { dg-warning "block declared \\'noreturn\\' should not return" } */
 
-	int (^c)(void) __attribute__((noreturn)) = ^ __attribute__((noreturn)) { return 100; }; /* { dg-warning "function declared \\'noreturn\\' has a \\'return\\' statement" } */
-						     /* { dg-warning "\\'noreturn\\' function does return" "" { target *-*-* } 17 } */
+	int (^c)(void) __attribute__((noreturn)) = ^ __attribute__((noreturn)) { return 100; }; /* { dg-warning "block declared \\'noreturn\\' should not return" } */
 
 	a = ^ (void) __attribute__((noreturn)) { exit (0); }; // OK
 
-        a = ^ (void) __attribute__((noreturn)) { ; };	/* { dg-warning "\\'noreturn\\' function does return" } */
+        a = ^ (void) __attribute__((noreturn)) { ; };	/* { dg-warning "\\'noreturn\\' function does return" "" { xfail *-*-* } } <rdar://problem/10466107> */
 
 }
 

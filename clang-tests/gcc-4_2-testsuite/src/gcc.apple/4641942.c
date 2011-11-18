@@ -17,5 +17,5 @@ void foo (void)
 {
   data* eng;
   unsigned long long next = eng->t + eng->s;
-  rec m = *((rec*)&next); /* { dg-warning "dereferencing type-punned pointer will break strict-aliasing rules" } */
+  rec m = *((rec*)&next); /* { dg-warning "dereferencing type-punned pointer will break strict-aliasing rules" "" { xfail *-*-* } } */
 }

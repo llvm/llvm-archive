@@ -15,7 +15,7 @@ typedef __attribute__ ((vector_size (16))) unsigned int v4si;
 char w[16] __attribute__((aligned(16)));
  
 
-/* Emulate the vspltis? instructions on a 16-byte array of chars.  */
+/* Emulate the vspltis? instructions on a 16-byte char array.  */
 
 void vspltisb (char *v, int val)
 {

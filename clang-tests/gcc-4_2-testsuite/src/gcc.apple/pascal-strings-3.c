@@ -9,12 +9,12 @@
 typedef unsigned char Str15[16];
 
 Str15 ggg = "\p012345678901234";
-Str15 hhh = "\p0123456789012345"; /* { dg-warning "initializer.string for array of chars is too long" } */
+Str15 hhh = "\p0123456789012345"; /* { dg-warning "initializer.string for char array is too long" } */
 
 int foo(void)
 {
   Str15 sss = "\p012345678901234";
-  Str15 ttt = "\p0123456789012345"; /* { dg-warning "initializer.string for array of chars is too long" } */
+  Str15 ttt = "\p0123456789012345"; /* { dg-warning "initializer.string for char array is too long" } */
 
   return 0;
 }

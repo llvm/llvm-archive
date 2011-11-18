@@ -16,8 +16,8 @@ void h(a)
 
 char s[1] = "x";
 char s1[1] = { "x" };
-char t[1] = "xy"; /* { dg-warning "warning: initializer-string for array of chars is too long" } */
-char t1[1] = { "xy" }; /* { dg-warning "warning: initializer-string for array of chars is too long" } */
+char t[1] = "xy"; /* { dg-warning "warning: initializer-string for char array is too long" } */
+char t1[1] = { "xy" }; /* { dg-warning "warning: initializer-string for char array is too long" } */
 char u[1] = { "x", "x" }; /* { dg-error "error: excess elements in char array initializer" } */
 /* { dg-error "near init" "near" { target *-*-* } 21 } */
 

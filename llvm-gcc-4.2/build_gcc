@@ -763,22 +763,6 @@ for t in $TARGETS ; do
     ln -s ../../libllvmgcc.dylib
 done
 
-if [ "x$RC_ProjectName" == "xllvmgcc42_Embedded" ]; then
-    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-        mkdir -p $DEST_DIR${ARM_PLATFORM}/usr/bin
-        cd $DEST_DIR${ARM_PLATFORM}/usr/bin
-        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-        ln -s ${ARM_PLATFORM}/Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
-    fi
-else
-    if [ "x$LLVM_BUILT_ROOTS" == "x" ]; then
-        mkdir -p $DEST_DIR/usr/bin
-        cd $DEST_DIR/usr/bin
-        ln -s /Developer/usr/bin/llvm-gcc-4.2 llvm-gcc-4.2
-        ln -s /Developer/usr/bin/llvm-g++-4.2 llvm-g++-4.2
-    fi
-fi
-
 # Remove unwind.h from the install directory for > 10.6
 if [ $DARWIN_VERS -gt 10 ]; then
     find $DEST_DIR -name "unwind.h" -print | xargs rm || exit 1

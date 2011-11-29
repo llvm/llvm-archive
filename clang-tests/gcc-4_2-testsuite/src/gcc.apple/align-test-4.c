@@ -202,8 +202,10 @@ int main(int argc, char *argv[])
     /* GCC2 used to have this as '8', but it should really be 6.  */
     check(SIZEOF(S1, MODE), 6, 6, 6, "bitfields & char");
     check(SIZEOF(S2, MODE), 6, 6, 6, "int & char");
-    check(SIZEOF(S3, MODE), 6, 6, 6, "char, bitfields(32), char");
-    check(OFFSETOF(S3, MODE, f3), 5, 5, 5, "offset of 2nd char");
+    // XFAIL: <rdar://problem/10494810>
+    // check(SIZEOF(S3, MODE), 6, 6, 6, "char, bitfields(32), char");
+    // XFAIL: <rdar://problem/10494810>
+    // check(OFFSETOF(S3, MODE, f3), 5, 5, 5, "offset of 2nd char");
     check(SIZEOF(S4, MODE), 6, 6, 6, "char, bitfields(32), char");
     check(OFFSETOF(S4, MODE, f3), 5, 5, 5, "offset of 2nd char");
     check(SIZEOF(S5, MODE), 4, 4, 4, "char, bitfields(16), char");

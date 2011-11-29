@@ -17,7 +17,7 @@ int func ()
 {
 	NSAutoreleasePool *pool	= [[NSAutoreleasePool alloc] init];
 
-	int array[5];
+	int array[5]; /* { dg-error "declared here" } */
 	
 	int i;
 	const int c = 5;
@@ -32,7 +32,7 @@ int func ()
 		NSLog (@"c = %d", c);
 		for (i = 0; i < c; ++i)
 		{
-			NSLog (@"array[%d] = %d", i, array[i]);	/* { dg-error "cannot access copied-in variable of array type inside block" } */
+			NSLog (@"array[%d] = %d", i, array[i]);	/* { dg-error "cannot refer to declaration with an array type inside block" } */
 		}
 	
 	};
@@ -48,7 +48,7 @@ int main (int argc, const char *argv[])
         int res;
 	NSAutoreleasePool *pool	= [[NSAutoreleasePool alloc] init];
 
-	int array[_getArrayCount()];
+	int array[_getArrayCount()]; /* { dg-error "declared here" } */
 	
 	int i;
 	const int c = _getArrayCount();
@@ -64,7 +64,7 @@ int main (int argc, const char *argv[])
 		NSLog (@"c = %d", c);
 		for (i = 0; i < c; ++i)
 		{
-			NSLog (@"array[%d] = %d", i, array[i]);	/* { dg-error "cannot access copied-in variable of array type inside block" } */
+			NSLog (@"array[%d] = %d", i, array[i]);	/* { dg-error "cannot refer to declaration with a variably modified type inside block" } */
 		}
 	
 	};
@@ -78,9 +78,9 @@ int main (int argc, const char *argv[])
 
 int test()
 {
-__block int arr[100];
+__block int arr[100]; /* { dg-error "declared here" } */
 
   ^ {  
-      (void)arr[2];	/* { dg-error "cannot access __block variable of array type inside block" } */
+      (void)arr[2];	/* { dg-error "cannot refer to declaration with an array type inside block" } */
     };
 }

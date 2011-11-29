@@ -7,9 +7,7 @@ void foo (void*);
 
 int main(void)
 {
-	foo (^{ _self; });  /* { dg-error "\\'_self\\' undeclared" } */
-			/*  { dg-error "\\(Each undeclared identifier" "" { target *-*-* } 10 } */
-			/*  { dg-error "for each function it appears in" "" { target *-*-* } 10 } */
+	foo (^{ _self; });  /* { dg-error "use of undeclared identifier \\'_self\\'" } */
 	return 0;
 }
 

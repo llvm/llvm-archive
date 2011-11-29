@@ -25,8 +25,8 @@ const int *f;
 void
 f1 (void)
 {
-  c = 1; /* { dg-error "error: assignment of read-only variable 'c'" } */
-  d.x = 1; /* { dg-error "error: assignment of read-only variable 'd'" } */
+  c = 1; /* { dg-error "read-only variable is not assignable" } */
+  d.x = 1; /* { dg-error "read-only variable is not assignable" } */
   e.x = 1; /* { dg-error "error: assignment of read-only member 'x'" } */
   *f = 1; /* { dg-error "error: assignment of read-only location" } */
   c++; /* { dg-error "error: increment of read-only variable 'c'" } */

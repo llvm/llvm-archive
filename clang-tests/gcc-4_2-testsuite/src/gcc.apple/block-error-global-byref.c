@@ -21,7 +21,7 @@ int foo() {
 				stat++;
 			        ++static_local;
 			      });
-		  ++local;  		/* { dg-error "increment of read-only variable" } */
+		  ++local;  		/* { dg-error "variable is not assignable" } */
 		  ++static_local; 	
 		 });
     return 0;

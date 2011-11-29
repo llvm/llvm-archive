@@ -32,7 +32,7 @@ void test2() {
   int x = 4;
 
   takeblock(^{ printf("%d\n", x); });
-  takeblock(^{ x = 4; });  /* { dg-error "assignment of read-only variable" } */
+  takeblock(^{ x = 4; });  /* { dg-error "read-only variable is not assignable" } */
 }
 
 void (^test3())(void) {

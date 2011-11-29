@@ -33,8 +33,8 @@ union u h (union u u)
 
 void f()
 {
-  cs.d32 = 1.23dd; /* { dg-error "assignment of read-only variable" } */
-  cs.d64 = 1.23df; /* { dg-error "assignment of read-only variable" } */
+  cs.d32 = 1.23dd; /* { dg-error "read-only variable is not assignable" } */
+  cs.d64 = 1.23df; /* { dg-error "read-only variable is not assignable" } */
   s.d64 = 1.23df;  /* { dg-error "assignment of read-only member" } */
 
   s.d32 = 1.23dd;
@@ -44,11 +44,11 @@ void f()
   u.cs.d32 = 1.23dd; /* { dg-error "assignment of read-only member" } */
   u.cs.d64 = 1.23df; /* { dg-error "assignment of read-only member" } */
   
-  cu.d32 = 1.23dd;   /* { dg-error "assignment of read-only variable" } */
+  cu.d32 = 1.23dd;   /* { dg-error "read-only variable is not assignable" } */
 
-  cu.d64 = 1.23df;    /* { dg-error "assignment of read-only variable" } */
-  cu.cs.d32 = 1.23dd; /* { dg-error "assignment of read-only variable" } */
-  cu.cs.d64 = 1.23df; /* { dg-error "assignment of read-only variable" } */
+  cu.d64 = 1.23df;    /* { dg-error "read-only variable is not assignable" } */
+  cu.cs.d32 = 1.23dd; /* { dg-error "read-only variable is not assignable" } */
+  cu.cs.d64 = 1.23df; /* { dg-error "read-only variable is not assignable" } */
 
   /* f().x is a valid postfix expression but is not an lvalue if 
      function f() returning a structure or union.  */

@@ -2,14 +2,14 @@
 /* { dg-do compile } */
 /* { dg-options "-fblocks" } */
 
-int main() {
+void takeblock(void (^f0)());
 
+int main() {
 while (1) {
           takeblock(^{
-            break;   /* { dg-error "break statement not within loop or switch" } */
+            break;   /* { dg-error "'break' statement not in loop or switch" } */
             while(1) break;  /* ok */
-	    goto label1; /* { dg-error "goto not allowed in block literal" } */
-			 /* { dg-error "label" "" { target *-*-* } 11 } */
+	    goto label1; /* { dg-error "undeclared label 'label1'" } */
           });
 	  label1:
           break; /* OK */
@@ -19,7 +19,7 @@ while (1) {
 
   void (^vcl)(void) =
 	^{
-		break; /* { dg-error "break statement not within loop or switch" } */
+		break; /* { dg-error "'break' statement not in loop or switch" } */
 
 		while (1) {
 		  void (^vcl1) (void) = ^{};
@@ -32,7 +32,7 @@ while (1) {
 	^{
 		while (1) {
 	          int i;
-		  void (^vcl1) (void) = ^{ continue; };/* { dg-error "continue statement not within a loop" } */
+		  void (^vcl1) (void) = ^{ continue; };/* { dg-error "'continue' statement not in loop" } */
 			break;
 		  for (i = 0; i < 100; i++)
 		   if (i == 10)

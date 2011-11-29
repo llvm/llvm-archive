@@ -6,7 +6,7 @@
 int (^IFP) ();
 int (^II) (int);
 int main() {
-	int (^PFR) (int) = IFP;	/* { dg-error "incompatible block pointer types initializing" } */
+	int (^PFR) (int) = IFP;
 	PFR = II;
 
 
@@ -21,9 +21,9 @@ int main() {
 
 	int * const (^IPCC1) () = IPCC;
 
-	int * (^IPCC2) () = IPCC;	
+	int * (^IPCC2) () = IPCC; /* { dg-error "incompatible block pointer types initializing" } */
 
-	int (^IPCC3) (const int) = PFR;	
+	int (^IPCC3) (const int) = PFR;
 
 	int (^IPCC4) (int, char (^CArg) (double));
 
@@ -33,11 +33,11 @@ int main() {
 	int (^IPCC6) (int, char (^CArg) (float))  = IPCC4; /* { dg-error "incompatible block pointer types initializing" } */
 
 	IPCC2 = 0;
-	IPCC2 = 1; /* { dg-error "invalid conversion assigning integer" } */
+	IPCC2 = 1; /* { dg-error "invalid block pointer conversion" } */
 	int (^x)() = 0;
-	int (^y)() = 3;   /* { dg-error "invalid conversion initializing integer" } */
+	int (^y)() = 3;   /* { dg-error "invalid block pointer conversion" } */
 	int a = 1;
-	int (^z)() = a+4;   /* { dg-error "invalid conversion initializing integer" } */
+	int (^z)() = a+4;   /* { dg-error "invalid block pointer conversion" } */
 	return 0;
 }
 

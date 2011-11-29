@@ -10,5 +10,5 @@ void
 f (void)
 {
   x.a = 1; /* { dg-error "error: assignment of read-only member 'a'" } */
-  b = 1; /* { dg-error "error: assignment of read-only variable 'b'" } */
+  b = 1; /* { dg-error "read-only variable is not assignable" } */
 }

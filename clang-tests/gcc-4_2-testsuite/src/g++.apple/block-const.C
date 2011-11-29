@@ -10,7 +10,7 @@ void bar(void) { printf("I'm in bar\n"); }
 
 int main(char *argc, char *argv[]) {
     void (^const  blockA)(void) = ^ { printf("hello\n"); };
-    blockA = ^ { printf("world\n"); }; /* { dg-error "assignment of read-only variable" } */
+    blockA = ^ { printf("world\n"); }; /* { dg-error "read-only variable is not assignable" } */
     return 0;
 }
 

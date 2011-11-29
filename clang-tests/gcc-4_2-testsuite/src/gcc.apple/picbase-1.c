@@ -21,7 +21,7 @@ double global_x, global_y;
 main ()
 {
   global_x = 100.0;
-  printf ("", &global_x, &global_y);	/* Frighten the optimizer.  */
+  printf("%p %p", &global_x, &global_y);	/* Frighten the optimizer.  */
   global_y = xsqrt (global_x / 2.0);	/* Compensate for the "x += x;" in xsqrt().  */
   if (global_y != 10.0)
     abort ();

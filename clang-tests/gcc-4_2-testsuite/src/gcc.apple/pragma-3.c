@@ -1,3 +1,3 @@
 /* APPLE LOCAL file 5979888 */
 
-#pragma unused ( )
+#pragma unused ( ) /* { dg-warning "argument to be a variable name" } */

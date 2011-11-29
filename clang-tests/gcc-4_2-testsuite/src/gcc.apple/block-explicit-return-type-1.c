@@ -23,7 +23,7 @@ int (*(*funcptr2)(long))[5];
 int (*(*(^b11)(char))(long))[5] =
   ^int (*(*(char x))(long))[5] { if (x) x='a'; return funcptr2;};
 
-int sz4 = sizeof (^int(*)(int p1)(int) { return 0; }); /* { dg-error "block cannot return function type" } */
+int sz4 = sizeof (^int(*)(int p1)(int) { return 0; }); /* { dg-error "function cannot return function type" } */
 
 int (*funcptr3[5])(long);
 int (*funcptr4)(long);
@@ -32,4 +32,3 @@ int sz6 = sizeof (^int (int i) { return i; });
 int sz7 = sizeof(^int (*())(long) {return funcptr4;});
 int sz8 = sizeof(^int (*[5])(long) {return (int)funcptr3;});	/* { dg-error " block cannot return array type" } */
 int sz9 = sizeof (^int (*((*)[5]))(long j) { j; });	/* { dg-error "undeclared" } */
-/* { dg-error "for each function it appears in"  "" { target *-*-* } 34 } */

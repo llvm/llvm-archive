@@ -2,8 +2,8 @@
 /* { dg-options "-fblocks" } */
 /* { dg-do compile } */
 
-int main(int p) {
-  p = -5;
+int main(int argc, char **argv) {
+  argc = -5;
   __block int O1;
   int i;
  LOUT: ;

@@ -1,5 +1,5 @@
-/* APPLE LOCAL file 5192466 */
-/* Check for addition of two new fiellds at end of protocol meta-data. */
+/* APPLE LOCAL file radar 5192466 - radar 10492418 */
+/* Check the size of protocol meta-data. */
 /* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
@@ -11,4 +11,4 @@
 
 @interface Super <Proto1, Proto2> { id isa; } @end
 @implementation Super @end
-/* { dg-final { scan-assembler ".long\t72\n\t.long\t0" } } */
+/* { dg-final { scan-assembler ".long\t80\n\t.long\t0" } } */

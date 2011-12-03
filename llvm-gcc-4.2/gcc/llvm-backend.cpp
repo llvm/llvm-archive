@@ -449,16 +449,6 @@ void llvm_initialize_backend(void) {
   
   if (time_report)
     Args.push_back("--time-passes");
-  if (fast_math_flags_set_p())
-    Args.push_back("--enable-unsafe-fp-math");
-  if (!flag_honor_infinites)
-    Args.push_back("--enable-no-infs-fp-math");
-  if (!flag_honor_nans)
-    Args.push_back("--enable-no-nans-fp-math");
-  if (!flag_omit_frame_pointer)
-    Args.push_back("--disable-fp-elim");
-  if (!flag_zero_initialized_in_bss)
-    Args.push_back("--nozero-initialized-in-bss");
   if (flag_verbose_asm)
     Args.push_back("--asm-verbose");
   if (flag_debug_pass_structure)
@@ -571,6 +561,11 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 
   TargetOptions Options;
+  Options.UnsafeFPMath = fast_math_flags_set_p();
+  Options.NoInfsFPMath = !flag_honor_infinites;
+  Options.NoNaNsFPMath = !flag_honor_nans;
+  Options.NoFramePointerElim = !flag_omit_frame_pointer;
+  Options.NoZerosInBss = !flag_zero_initialized_in_bss;
   TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr, Options,
                                        RelocModel, CMModel, OptLevel);
   TheTarget->setMCUseLoc(false);

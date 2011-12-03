@@ -561,6 +561,7 @@ void llvm_initialize_backend(void) {
   FeatureStr = Features.getString();
 
   TargetOptions Options;
+  LLVM_SET_TARGET_OPTIONS(Options);
   Options.UnsafeFPMath = fast_math_flags_set_p();
   Options.NoInfsFPMath = !flag_honor_infinites;
   Options.NoNaNsFPMath = !flag_honor_nans;

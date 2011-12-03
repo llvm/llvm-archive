@@ -3962,14 +3962,18 @@ enum ix86_builtins
   
 #define LLVM_SET_MACHINE_OPTIONS(argvec)                \
   do {                                                  \
-    /* A value of 3 in flag_omit_frame_pointer implies  \
-       omitting leaf frame pointers only.  */           \
-    if (flag_omit_frame_pointer == 3)                   \
-      argvec.push_back("--disable-non-leaf-fp-elim");   \
-                                                        \
     if (ix86_force_align_arg_pointer)                   \
       argvec.push_back("-force-align-stack");           \
   } while (0)
+
+#define LLVM_SET_TARGET_OPTIONS(options)                \
+  do {                                                  \
+    /* A value of 3 in flag_omit_frame_pointer implies  \
+       omitting leaf frame pointers only.  */           \
+    if (flag_omit_frame_pointer == 3)                   \
+      options.NoFramePointerElimNonLeaf = true;         \
+  } while (0)
+
 #endif /* ENABLE_LLVM */
 /* LLVM LOCAL end */
 

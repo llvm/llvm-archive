@@ -3569,14 +3569,16 @@ enum neon_builtins
                         ? "armv4" : ""))))))))
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)               \
-  if (TARGET_SOFT_FLOAT)                               \
-    argvec.push_back("-soft-float");                   \
-  if (TARGET_HARD_FLOAT_ABI)                           \
-    argvec.push_back("-float-abi=hard");               \
   if (flag_mkernel || flag_apple_kext) {               \
     argvec.push_back("-arm-long-calls");               \
     argvec.push_back("-arm-strict-align");             \
   }
+
+#define LLVM_SET_TARGET_OPTIONS(options)               \
+  options.GenerateSoftFloatCalls = TARGET_SOFT_FLOAT;  \
+  if (TARGET_HARD_FLOAT_ABI)                           \
+    options.FloatABIForCalls = llvm::FloatABI::Hard;
+
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */
 #define TARGET_LLVM_MIN_BYTES_COPY_BY_MEMCPY 4

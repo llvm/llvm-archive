@@ -565,7 +565,7 @@ void llvm_initialize_backend(void) {
   Options.NoInfsFPMath = !flag_honor_infinites;
   Options.NoNaNsFPMath = !flag_honor_nans;
   Options.NoFramePointerElim = !flag_omit_frame_pointer;
-  Options.NoZerosInBss = !flag_zero_initialized_in_bss;
+  Options.NoZerosInBSS = !flag_zero_initialized_in_bss;
   TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr, Options,
                                        RelocModel, CMModel, OptLevel);
   TheTarget->setMCUseLoc(false);

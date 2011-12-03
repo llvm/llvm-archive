@@ -570,7 +570,8 @@ void llvm_initialize_backend(void) {
     Features.AddFeature(MAttrs[i]);
   FeatureStr = Features.getString();
 
-  TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr,
+  TargetOptions Options;
+  TheTarget = TME->createTargetMachine(TargetTriple, CPU, FeatureStr, Options,
                                        RelocModel, CMModel, OptLevel);
   TheTarget->setMCUseLoc(false);
   TheTarget->setMCUseCFI(false);

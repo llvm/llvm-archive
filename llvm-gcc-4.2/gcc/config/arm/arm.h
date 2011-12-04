@@ -3574,7 +3574,7 @@ enum neon_builtins
     argvec.push_back("-arm-strict-align");             \
   }
 
-#define LLVM_SET_TARGET_OPTIONS(options)               \
+#define LLVM_SET_TARGET_MACHINE_OPTIONS(options)       \
   options.GenerateSoftFloatCalls = TARGET_SOFT_FLOAT;  \
   if (TARGET_HARD_FLOAT_ABI)                           \
     options.FloatABIForCalls = llvm::FloatABI::Hard;

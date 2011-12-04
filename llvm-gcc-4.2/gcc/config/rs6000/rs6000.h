@@ -3470,7 +3470,7 @@ enum rs6000_builtins
 
 #define LLVM_SET_MACHINE_OPTIONS(argvec)
 
-#define LLVM_SET_TARGET_OPTIONS(options)               \
+#define LLVM_SET_TARGET_MACHINE_OPTIONS(options)       \
   options.GenerateSoftFloatCalls = TARGET_SOFT_FLOAT;
 
 /* When -m64 is specified, set the architecture to powerpc64-os-blah even if the

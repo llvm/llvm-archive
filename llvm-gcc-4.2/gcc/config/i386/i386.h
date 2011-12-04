@@ -3966,7 +3966,7 @@ enum ix86_builtins
       argvec.push_back("-force-align-stack");           \
   } while (0)
 
-#define LLVM_SET_TARGET_OPTIONS(options)                \
+#define LLVM_SET_TARGET_MACHINE_OPTIONS(options)        \
   do {                                                  \
     /* A value of 3 in flag_omit_frame_pointer implies  \
        omitting leaf frame pointers only.  */           \

@@ -3575,9 +3575,9 @@ enum neon_builtins
   }
 
 #define LLVM_SET_TARGET_MACHINE_OPTIONS(options)       \
-  options.GenerateSoftFloatCalls = TARGET_SOFT_FLOAT;  \
+  options.UseSoftFloat = TARGET_SOFT_FLOAT;            \
   if (TARGET_HARD_FLOAT_ABI)                           \
-    options.FloatABIForCalls = llvm::FloatABI::Hard;
+    options.FloatABIType = llvm::FloatABI::Hard;
 
 
 /* Doing struct copy by partial-word loads and stores is not a good idea on ARM. */

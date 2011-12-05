@@ -11,14 +11,14 @@ CL foo() {
   CL X = ^{
     if (2)
       return;
-    return 1;		/* { dg-error "void block should not return a value" } */
+    return 1;		/* { dg-error "return type 'int' must match previous return type 'void' when block literal has unspecified explicit return type" } */
   };
 
   int (^Y) (void)  = ^{
     if (3)
       return 1;
     else
-      return;		/* { dg-error "non-void block should return a value" } */
+      return;		/* { dg-error "return type 'void' must match previous return type 'int' when block literal has unspecified explicit return type" } */
   };
 
   char *(^Z)(void) = ^{
@@ -28,20 +28,19 @@ CL foo() {
       return (char*)0;
   };
 
-  double (^A)(void) = ^ {			/* { dg-error "incompatible block pointer types initializing" } */
+  double (^A)(void) = ^ { /* { dg-error "incompatible block pointer types initializing" } */
     if (1)
       return (float)1.0;
     else
       if (2)
-	return (double)2.0;	/* { dg-error "incompatible type returning" "" { xfail *-*-* } } <rdar://problem/10466373> */
-    return 1;		/* { dg-error "incompatible type returning" "" { xfail *-*-* } } <rdar://problem/10466373> */
-  };
+	return (double)2.0;	/* { dg-error "return type 'double' must match previous return type 'float' when block literal has unspecified explicit return type" } */
+    return 1;		/* { dg-error "return type 'int' must match previous return type 'float' when block literal has unspecified explicit return type" } */
+  };	
   char *(^B)(void) = ^{
     if (3)
       return "";
     else
-      return 2;		/* { dg-error "incompatible integer to pointer" } */
-			/* { dg-warning "return makes pointer from integer without a cast" "" { xfail *-*-* } 43 } */
+      return 2;		/* { dg-error "return type" } */
   };
 
   return ^{ return 1; };	/* { dg-error "incompatible block pointer types returning" } */

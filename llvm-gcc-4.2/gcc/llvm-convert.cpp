@@ -5510,7 +5510,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CLZL:
   case BUILT_IN_CLZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::ctlz);
+    Function *F =
+      Intrinsic::getDeclaration(TheModule, Intrinsic::ctlz, Amt->getType());
+    Result = Builder.CreateCall2(F, Amt, Builder.getTrue());
     Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy, 
                                    !TYPE_UNSIGNED(TREE_TYPE(exp)),
@@ -5521,7 +5523,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
   case BUILT_IN_CTZL:
   case BUILT_IN_CTZLL: {
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
+    Function *F =
+      Intrinsic::getDeclaration(TheModule, Intrinsic::cttz, Amt->getType());
+    Result = Builder.CreateCall2(F, Amt, Builder.getTrue());
     Type *DestTy = ConvertType(TREE_TYPE(exp));
     Result = Builder.CreateIntCast(Result, DestTy,
                                    !TYPE_UNSIGNED(TREE_TYPE(exp)),
@@ -5645,7 +5649,9 @@ bool TreeToLLVM::EmitBuiltinCall(tree exp, tree fndecl,
     // The argument and return type of cttz should match the argument type of
     // the ffs, but should ignore the return type of ffs.
     Value *Amt = Emit(TREE_VALUE(TREE_OPERAND(exp, 1)), 0);
-    EmitBuiltinUnaryOp(Amt, Result, Intrinsic::cttz);
+    Function *F =
+      Intrinsic::getDeclaration(TheModule, Intrinsic::cttz, Amt->getType());
+    Result = Builder.CreateCall2(F, Amt, Builder.getTrue());
     Result = Builder.CreateAdd(Result,
       ConstantInt::get(Result->getType(), 1));
     Result = CastToUIntType(Result, ConvertType(TREE_TYPE(exp)));

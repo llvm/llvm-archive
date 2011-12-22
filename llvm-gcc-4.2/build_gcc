@@ -634,7 +634,7 @@ for t in $TARGETS ; do
 done
 
 # LLVM LOCAL begin
-MAN1_DIR=$DEST_DIR/Developer/usr/share/man/man1
+MAN1_DIR=$DEST_DIR$DEST_ROOT/../share/man/man1
 mkdir -p ${MAN1_DIR}
 for i in gcc.1 g++.1 cpp.1 gcov.1 ; do
     cp $DIR/obj-$BUILD-$BUILD/gcc/doc/$i ${MAN1_DIR}/$i

@@ -638,7 +638,7 @@ done
 if [ "x$RC_ProjectName" = "xllvmgcc42_Embedded" ]; then
 MAN1_DIR=${DEST_DIR}${ARM_PLATFORM}/Developer/usr/share/man/man1
 else
-MAN1_DIR=$DEST_DIR/Developer/usr/share/man/man1
+MAN1_DIR=$DEST_DIR$DEST_ROOT/../share/man/man1
 fi
 mkdir -p ${MAN1_DIR}
 for i in gcc.1 g++.1 cpp.1 gcov.1 ; do

@@ -760,6 +760,10 @@ done
 if [ "x$LLVM_BUILT_ROOTS" != "x" ]; then
     DISABLE_USR_LINKS=1
 fi
+# Set DISABLE_USR_LINKS if DEST_ROOT is not in /Developer.
+if [ "x$DEST_ROOT" != "x/Developer/usr/llvm-gcc-4.2" ]; then
+    DISABLE_USR_LINKS=1
+fi
 # Roots built by B&I, need to include sym links in /usr/bin and /usr/lib
 # because B&I sets XCODE_DEVELOPER_USR_PATH=/.  Otherwise, we don't want those
 # sym links.

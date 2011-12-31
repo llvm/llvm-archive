@@ -47,7 +47,7 @@ libgcc_s.$(SHLIB_SOVERSION)$(SHLIB_EXT): stmp-multilib
 	MLIBS=`$(GCC_FOR_TARGET) --print-multi-lib \
 		| sed -e 's/;.*$$//' -e '/^\.$$/d'` ; \
 	if [ -n "$$MLIBS" ] ; then \
-	  for mlib in '' $$MLIBS ; do \
+	  for mlib in $$MLIBS ; do \
 	    cp ./$${mlib}/libgcc_s.$(SHLIB_SOVERSION)$(SHLIB_EXT).tmp \
 	       ./libgcc_s.$(SHLIB_SOVERSION)$(SHLIB_EXT)_T_$${mlib} || exit 1 ; \
 	  done ; \

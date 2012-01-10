@@ -31,6 +31,8 @@ gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib no addr specified
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x0) (dynamic prog)
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x20c49ba5c72000) (dynamic prog)
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib maybe without a slide) (dynamic prog)
+gdb.apple/var-path-expr.exp: list children of fooVar.private
+gdb.apple/varobj-references.exp: Create base_var in pass_base_ref
 ld-r/ld-r.exp: Break at bar: ld-r testing - ar - debug info in .o files
 ld-r/ld-r.exp: Break at baz: ld-r testing - ar - debug info in .o files
 ld-r/ld-r.exp: Hit breakpoint at fooFunc: ld-r testing - ar - debug info in .o files
@@ -297,6 +299,8 @@ gdb.cp/namespace.exp: ptype ::C::CClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: ptype ::C::CClass::NestedClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: ptype ::C::NestedClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: ptype ::C::OtherFileClass (PRMS: gdb/1448)
+gdb.cp/namespace.exp: print 'BBB::Class::xyzq'
+gdb.cp/namespace.exp: print BBB::Class::xyzq
 gdb.cp/pr-574.exp: PR gdb/574
 gdb.cp/templates.exp: ptype T5<int>
 gdb.cp/templates.exp: ptype t5i

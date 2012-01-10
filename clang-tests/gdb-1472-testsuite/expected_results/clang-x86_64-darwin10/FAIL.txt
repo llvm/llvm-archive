@@ -55,6 +55,7 @@ ld-r/ld-r.exp: Break at baz-2: ld-r testing - debug info in .o files
 ld-r/ld-r.exp: Hit breakpoint at fooFunc2: ld-r testing - debug info in .o files
 ld-r/ld-r.exp: Hit breakpoint at bazFunc2: ld-r testing - debug info in .o files
 ld-r/ld-r.exp: Got warnings for mismatched timestamp2: ld-r testing - debug info in .o files
+gdb.apple/mi1-varobj.exp: List objectVar's children as MyClass
 gdb.apple/mi1-varobj.exp: 144 var-create for outer where file:line is objc-prog.m:0 (invalid line number of zero)
 gdb.apple/mi1-varobj.exp: 145 var-evaluate-expression for outer where file:line is objc-prog.m:0
 gdb.apple/mi1-varobj.exp: 146 var-create for outer where file:line is objc-prog.m:999999 (invalid line number of 999999)
@@ -301,6 +302,7 @@ gdb.cp/namespace.exp: ptype ::C::NestedClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: ptype ::C::OtherFileClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: print 'BBB::Class::xyzq'
 gdb.cp/namespace.exp: print BBB::Class::xyzq
+gdb.cp/overload.exp: ptype foo_instance1
 gdb.cp/pr-574.exp: PR gdb/574
 gdb.cp/templates.exp: ptype T5<int>
 gdb.cp/templates.exp: ptype t5i

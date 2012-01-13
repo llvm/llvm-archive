@@ -1,3 +1,4 @@
+// { dg-options "-Wno-vexing-parse" }
 // { dg-do assemble  }
 // GROUPS passed recursive-aborts
 // types

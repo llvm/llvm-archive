@@ -1,3 +1,4 @@
+// { dg-options "-Wno-vexing-parse" }
 // { dg-do assemble  }
 // Bug: g++ tries to instantiate ccList twice, and fails.
 

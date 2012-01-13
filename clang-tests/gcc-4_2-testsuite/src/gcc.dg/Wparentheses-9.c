@@ -17,27 +17,27 @@ bar (void)
     foo (1);
   else
     foo (2);
-  if (c) /* { dg-warning "ambiguous" "correct warning" } */
+  if (c)
     if (a)
       foo (3);
-    else
+    else /* { dg-warning "add explicit braces to avoid dangling else" } */
       foo (4);
   if (a)
     if (c)
       foo (5);
   if (a)
-    if (b) /* { dg-warning "ambiguous" "correct warning" } */
+    if (b)
       if (c)
 	foo (6);
-      else
+      else /* { dg-warning "add explicit braces to avoid dangling else" } */
 	foo (7);
-  if (a) /* { dg-warning "ambiguous" "correct warning" } */
+  if (a)
     if (b)
       if (c)
 	foo (8);
       else
 	foo (9);
-    else
+    else /* { dg-warning "add explicit braces to avoid dangling else" } */
       foo (10);
   if (a)
     if (b)
@@ -58,4 +58,5 @@ bar (void)
     else
       foo (17);
   }
+  return 0;
 }

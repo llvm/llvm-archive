@@ -15,7 +15,7 @@ void foo (NSString *p)
 	[p lossyCString];	/* { dg-warning "\\'lossyCString\\' is deprecated" } */
 	[NSString stringWithContentsOfFile]; /* { dg-warning "\\'stringWithContentsOfFile\\' is deprecated" } */
 
-	[pid lossyCString];			// OK
+	[pid lossyCString];			/* { dg-warning "\\'lossyCString\\' is deprecated" } */
 	[pclass stringWithContentsOfFile];      // OK
 }
 

@@ -13,7 +13,7 @@ template <class T> struct Template2 {};
 @implementation Test
 
 - (void) test {
-        Template2<int> youCanInstantiateTemplatesNoProblem();
+        Template2<int> youCanInstantiateTemplatesNoProblem(); /* { dg-warning "empty parentheses interpreted as a function declaration" } */
 }
 
 template <class T> struct TemplateDeclarationIsNoGoodHere {};

@@ -1,3 +1,4 @@
+// { dg-options "-Wno-vexing-parse" }
 // { dg-do run  }
 // Test that a local declaration of one of a global overload set works
 

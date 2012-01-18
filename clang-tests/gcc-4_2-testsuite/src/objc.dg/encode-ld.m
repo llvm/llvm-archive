@@ -2,6 +2,7 @@
 /* { dg-do run } */
 
 #include <stdio.h>
+#include <string.h>
 
 extern void abort();
 

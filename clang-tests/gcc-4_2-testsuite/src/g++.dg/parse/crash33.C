@@ -5,4 +5,4 @@ template<int>
 void foo()
 [
   throw;	// { dg-error "expected" }
-}		// { dg-error "expected" }
+}		// { dg-error "extraneous closing brace" }

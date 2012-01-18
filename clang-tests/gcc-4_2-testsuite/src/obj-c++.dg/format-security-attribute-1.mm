@@ -15,11 +15,10 @@ const char *string;
 int main()
 {
 	NSString * foo;
-        NSLog (foo);	/* { dg-warning "format not a string literal and no format arguments" } */	
+        NSLog (foo);	/* { dg-warning "format string is not a string literal" } */	
 	NSLog (foo, d);		// ok
-	NSLog(@"foo is %@", @"foo is %@", foo);	// OK
+	NSLog(@"foo is %@", @"foo is %@", foo);	/* { dg-warning "data argument not used by format string" } */
 	NSLog(@"foo is %@", @"foo is %@");	// OK
-	NSLog(@"foo is %@", @"foo is %@", foo);	// OK
-	NSLog(@"foo is %@");			// OK
+	NSLog(@"foo is %@");			/* { dg-warning "more '%' conversions than data arguments" } */
 }
 

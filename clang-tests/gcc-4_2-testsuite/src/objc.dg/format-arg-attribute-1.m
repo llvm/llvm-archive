@@ -26,7 +26,7 @@ static void Buggy_WarnAboutResponse( NSString *serverResponse )
        identified and exploited in both Apple and third-party apps, during the Month Of Apple Bugs.
        Fortunately, the format attribute added to My_NSRunAlertPanel causes the compiler to emit 
        a warning for this unsafe call. */
-    My_NSRunAlertPanel(@"Bad Server Response:", serverResponse, @"OK",nil,nil);     /* { dg-warning "format not a string literal and no format arguments" } */
+    My_NSRunAlertPanel(@"Bad Server Response:", serverResponse, @"OK",nil,nil);     /* { dg-warning "format string is not a string literal" } */
 }
 
 
@@ -40,7 +40,7 @@ static void WarnAboutResponse( NSString *serverResponse )
     My_NSRunAlertPanel(NSLocalizedString(@"Bad Server Response:", @"Title of error panel"),   
                        NSLocalizedString(@"The server responded: %@", @"Message of error panel"),    
                        @"OK",nil,nil,
-                       serverResponse);     /* { dg-warning "format not a string literal, argument types not checked" } */
+                       serverResponse);     /* { dg-warning "format string is not a string literal" } */
 }
 
 

@@ -42,8 +42,8 @@ static void WarnAboutResponse( NSString *serverResponse )
        and the untrusted string passed as an argument to be formatted. Note that the format string is localized, 
        however, meaning that it's passed through NSLocalizedString. But with -Wformat-nonliteral nevertheless
        we issue the warning. */
-    My_NSRunAlertPanel(NSLocalizedString(@"Bad Server Response:", @"Title of error panel"),   
-                       NSLocalizedString(@"The server responded: %@", @"Message of error panel"),    /* { dg-warning "format string is not a string literal" } */
+    My_NSRunAlertPanel([[NSBundle mainBundle] localizedStringForKey:(@"Bad Server Response:") value:@"" table:nil],
+                       [[NSBundle mainBundle] localizedStringForKey:(@"The server responded: %@") value:@"" table:nil], /* { dg-warning "format string is not a string literal" } */
                        @"OK",nil,nil,
                        serverResponse);
 }

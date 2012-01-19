@@ -8,6 +8,11 @@
 
 
 #include <Cocoa/Cocoa.h>
+#ifdef NSLocalizedString
+#undef NSLocalizedString
+#endif
+#define NSLocalizedString(key, comment) \
+            [[NSBundle mainBundle] localizedStringForKey:(key) value:@"" table:nil] /* { dg-error "note: expanded from macro" } */
 
 APPKIT_EXTERN NSInteger My_NSRunAlertPanel(NSString *title, NSString *msgFormat, NSString *defaultButton, NSString *alternateButton, NSString *otherButton, ...)
         __attribute__ ((format (__NSString__, 2, 6)));

@@ -8,6 +8,7 @@
 
 extern void abort (void);
 extern void *memcpy (void *, const void *, __SIZE_TYPE__);
+extern int memcmp(const void *, const void *, unsigned long);
 
 static int AI[4];
 static int init_si[4] = { -30,-30,-50,-50 };

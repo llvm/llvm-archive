@@ -11,6 +11,6 @@
 #define f(x) x
 
 f (
-#if 1		/* { dg-error "embedding a directive within macro arguments is not portable" } */
+#if 1		/* { dg-error "embedding a directive within macro" } */
 1)
 #endif

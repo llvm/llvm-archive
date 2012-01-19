@@ -38,9 +38,9 @@ static void WarnAboutResponse( NSString *serverResponse )
        however, meaning that it's passed through NSLocalizedString. But with -Wformat-nonliteral nevertheless
        we issue the warning. */
     My_NSRunAlertPanel(NSLocalizedString(@"Bad Server Response:", @"Title of error panel"),   
-                       NSLocalizedString(@"The server responded: %@", @"Message of error panel"),    
+                       NSLocalizedString(@"The server responded: %@", @"Message of error panel"),    /* { dg-warning "format string is not a string literal" } */
                        @"OK",nil,nil,
-                       serverResponse);     /* { dg-warning "format string is not a string literal" } */
+                       serverResponse);
 }
 
 

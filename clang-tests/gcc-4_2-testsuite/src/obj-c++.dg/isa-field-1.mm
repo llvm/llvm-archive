@@ -1,4 +1,5 @@
 /* Ensure there are no bizarre difficulties with accessing the 'isa' field of objects.  */
+/* { dg-options "-Wno-deprecated-objc-isa-usage" } */
 /* { dg-do compile } */
 
 /* APPLE LOCAL radar 4894756 */

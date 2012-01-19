@@ -5,6 +5,8 @@ int second_global_int = 6;
 static int second_static_int = 7;
 static int second_static_doesnt_match = 8;
 
+int strcmp (const char *, const char *);
+
 int foo ()
 {
   /* Use all the variables so -gused won't strip them.  */

@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4995066 */
 /* Must compile with -m64 and -m32. */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-fnext-runtime -fobjc-gc" } */
+/* { dg-options "-fnext-runtime -fobjc-gc -Wno-deprecated-objc-isa-usage" } */
 /* { dg-require-effective-target objc_gc } */
 
 #include <CoreFoundation/CoreFoundation.h>

@@ -6,7 +6,7 @@
 void
 foo (void)
 {
-  bar (); /* { dg-warning "implicit declaration of function 'bar' is invalid in C99" } */
+  bar (); /* { dg-error "implicit declaration of function 'bar' is invalid in C99" } */
 }
 
 /* C90 subclause 7.1.7 says we can implicitly declare strcmp; C99 removes
@@ -15,6 +15,6 @@ foo (void)
 int
 bar (const char *a, const char *b)
 {
-  return strcmp (a, b); /* { dg-warning "implicitly declaring C library function" } */
-                        /* { dg-error "note: please include the header <string.h>" { target *-*-* } 18 } */
+  return strcmp (a, b); /* { dg-error "implicitly declaring C library function" } */
+                        /* { dg-error "note: please include the header" { target *-*-* } 18 } */
 }

@@ -19,11 +19,11 @@ foo (int *ip, char *s, va_list v0, va_list v1, va_list v2, va_list v3,
   sscanf (s, "%d", ip);
   sscanf (s, "%ld", ip); /* { dg-warning "format" "sscanf" } */
   vfscanf (stdin, "%d", v0);
-  vfscanf (stdin, "%Y", v1);
+  vfscanf (stdin, "%Y", v1);  /* { dg-warning "invalid conversion" "vfscanf" } */
   vscanf ("%d", v2);
-  vscanf ("%Y", v3);
+  vscanf ("%Y", v3);  /* { dg-warning "invalid conversion" "vscanf" } */
   vsscanf (s, "%d", v4);
-  vsscanf (s, "%Y", v5);
+  vsscanf (s, "%Y", v5);  /* { dg-warning "invalid conversion" "vsscanf" } */
   scanf (gettext ("%d"), ip);
   scanf (gettext ("%ld"), ip);
   scanf (dgettext ("", "%d"), ip);

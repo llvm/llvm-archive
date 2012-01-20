@@ -55,7 +55,7 @@ foo (int *ip, unsigned int *uip, short int *hp, unsigned short int *uhp,
   scanf ("%h[ac]", s); /* { dg-warning "length" "bad use of %h" } */
   scanf ("%hc", s); /* { dg-warning "length" "bad use of %h" } */
   scanf ("%hp", pp); /* { dg-warning "length" "bad use of %h" } */
-  scanf ("%h"); /* { dg-warning "conversion lacks type" "bare %h" } */
+  scanf ("%h"); /* { dg-warning "incomplete format specifier" "bare %h" } */
   scanf ("%h."); /* { dg-warning "conversion" "bogus %h" } */
   scanf ("%ld%li%lo%lu%lx%lX%ln", lp, lp, ulp, ulp, ulp, ulp, ln);
   scanf ("%le%lE%lf%lg%lG", dp, dp, dp, dp, dp);

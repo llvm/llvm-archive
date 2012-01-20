@@ -16,5 +16,5 @@ int
 bar (const char *a, const char *b)
 {
   return strcmp (a, b); /* { dg-error "implicitly declaring C library function" } */
-                        /* { dg-error "note: please include the header" { target *-*-* } 18 } */
+                        /* { dg-error "error: please include the header" { target *-*-* } 18 } */
 }

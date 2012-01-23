@@ -10,7 +10,7 @@ int f (enum foo ef)
     case one:
     case thirty:
       return 0;
-    default:
+    default: /* { dg-warning "default is unreachable as all enumeration values are accounted for" } */
       return 1;
     }
 }

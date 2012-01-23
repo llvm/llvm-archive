@@ -1,6 +1,6 @@
 /* PR c/4475, PR c++/3780 */
 /* { dg-do compile } */
-/* { dg-options "-Wswitch" } */
+/* { dg-options "-Wswitch -Wno-switch-redundant-default" } */
 
 enum e { e1, e2 };
 

@@ -1,6 +1,6 @@
 /* PR c/5044 */
 /* { dg-do compile } */
-/* { dg-options "-Wswitch-enum" } */
+/* { dg-options "-Wswitch-enum -Wno-switch-redundant-default" } */
 
 enum e { e1, e2 };
 

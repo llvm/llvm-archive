@@ -23,7 +23,7 @@ int main (int argc, const char * argv[])
 
         getter<NSObject> g;
 
-        NSLog ( @"String addr = [%x]", g.foo ( nil )  ); /* { dg-warning "conversion specifies type .+ but the argument has type" } */
+        NSLog ( @"String addr = [%x]", g.foo ( nil )  ); /* { dg-warning "format specifies type 'unsigned int' but the argument has type 'NSString *'" } */
         NSLog ( @"String = [%@]", g.foo ( nil ) );
 
     }

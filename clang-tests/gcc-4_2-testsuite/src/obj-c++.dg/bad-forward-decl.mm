@@ -1,5 +1,5 @@
 /* APPLE LOCAL begin radar 4278236 */
-class TestCPP { }; 	/* { dg-error "previous declaration of" } */
+class TestCPP { }; /* { dg-warning "previous definition is here" } */
 
-@class TestCPP;		/* { dg-error "redeclared as different kind of symbol" } */
+@class TestCPP;    /* { dg-error "redefinition of .TestCPP. as different kind of symbol" } */
 /* APPLE LOCAL end radar 4278236 */

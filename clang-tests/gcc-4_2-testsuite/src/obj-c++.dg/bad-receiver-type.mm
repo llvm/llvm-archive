@@ -11,5 +11,6 @@ extern int foo();
 
 void baz()
 {
-    [foo test];	/* { dg-warning "invalid receiver type" } */
+    [foo test]; /* { dg-warning "receiver type .+ or interface pointer, consider casting it" } */
+    /* { dg-warning "instance method .+ not found" "" { target *-*-* } 14 } */
 }

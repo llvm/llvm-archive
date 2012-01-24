@@ -29,7 +29,7 @@ __attribute ((deprecated)) void DEP();
 @end
 
 __attribute ((unavailable)) __attribute ((deprecated)) __attribute ((XXXX))  /* { dg-warning "unknown" } */
-@interface UNAVAILABLE
+@interface UNAVAILABLE /* { dg-warning "declaration has been explicitly marked unavailable here" } */
   - (int *) AnaotherInst;
   + (DEPRECATED*) return_deprecated; /* { dg-warning "deprecated" } */
   - (UNAVAILABLE *) return_unavailable; 

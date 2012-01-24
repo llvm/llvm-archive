@@ -10,20 +10,17 @@
 @end
 
 @interface WithBitfields: Base {
-  void *isa;
-  unsigned a: 3;
-  signed b: 4;
-  int c: 5;
+  void *isa;     /* { dg-warning "previous definition is here" } */
+  unsigned a: 3; /* { dg-warning "previous definition is here" } */
+  signed b: 4;   /* { dg-warning "previous definition is here" } */
+  int c: 5;      /* { dg-warning "previous definition is here" } */
 }
 @end
 
 @implementation WithBitfields {
-  char *isa;  /* { dg-error "conflicting instance variable type .char \\*isa." } */
-  /* { dg-error "previous declaration of .void \\*isa." "" { target *-*-* } 13 } */
-  unsigned a: 5;  /* { dg-error "conflicting instance variable type .unsigned( int)? a: 5." } */
-  /* { dg-error "previous declaration of .unsigned( int)? a: 3." "" { target *-*-* } 14 } */                     
-  signed b: 4;  /* This one is fine. */
-  int c: 3;  /* { dg-error "conflicting instance variable type .int c: 3." } */
-  /* { dg-error "previous declaration of .int c: 5." "" { target *-*-* } 16 } */ 
+  char *isa;     /* { dg-error "instance variable is already declared" } */
+  unsigned a: 5; /* { dg-error "instance variable is already declared" } */
+  signed b: 4;   /* { dg-error "instance variable is already declared" } */
+  int c: 3;      /* { dg-error "instance variable is already declared" } */
 }
 @end

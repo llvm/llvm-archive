@@ -1,6 +1,6 @@
 /* PR c/4475, PR c++/3780 */
 /* { dg-do compile } */
-/* { dg-options "-Wswitch -Wno-switch-redundant-default" } */
+/* { dg-options "-Wswitch -Wno-covered-switch-default" } */
 
 enum e { e1, e2 };
 
@@ -56,7 +56,7 @@ foo (int i, int j, enum e ei, enum e ej, enum e ek, enum e el,
     {
     case e1: return 1;
     case e2: return 2;
-    case 3: return 3;
+    case 3: return 3; /* { dg-warning "case value not in enumerated type" } */
     default: break;
     } /* Since there is a default, no warning about ``case 3'' */
   return 0;

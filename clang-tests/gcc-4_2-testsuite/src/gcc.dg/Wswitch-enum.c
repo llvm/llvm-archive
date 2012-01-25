@@ -30,7 +30,7 @@ foo (int i, int j, enum e ei, enum e ej, enum e ek, enum e el,
     {
     case e1: return 1;
     }
-  switch (el) /* { dg-warning "enumeration value 'e2' not handled in switch" } */
+  switch (el) /* { dg-warning "enumeration value 'e2' not explicitly handled in switch" } */
     {
     case e1: return 1;
     default: break;

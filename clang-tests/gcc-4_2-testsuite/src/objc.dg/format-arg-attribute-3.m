@@ -10,20 +10,20 @@ APPKIT_EXTERN NSInteger My_NSRunAlertPanel(NSString *title, CFStringRef msgForma
         __attribute__ ((format (__CFString__, 2, 6)));
 
 extern CFStringRef _My_LocalizedStringForKey( CFStringRef key,  NSString *value, NSString *tableName )
-                                            __attribute__ ((format_arg (1)));     
+                                            __attribute__ ((format_arg (1)));
 
 #define My_NSLocalizedString(key, comment) \
-	    _My_LocalizedStringForKey(key,@"",nil)
+        _My_LocalizedStringForKey(key,@"",nil)
 
 
 static void Buggy_WarnAboutResponse( CFStringRef serverResponse )
 {
-    /* This next line is a security problem: it passes an untrusted string, received from the network, 
-       as the format string of NSRunAlertPanel. At least six such misuses of NSRunAlertPanel were 
+    /* This next line is a security problem: it passes an untrusted string, received from the network,
+       as the format string of NSRunAlertPanel. At least six such misuses of NSRunAlertPanel were
        identified and exploited in both Apple and third-party apps, during the Month Of Apple Bugs.
-       Fortunately, the format attribute added to My_NSRunAlertPanel causes the compiler to emit 
+       Fortunately, the format attribute added to My_NSRunAlertPanel causes the compiler to emit
        a warning for this unsafe call. */
-    My_NSRunAlertPanel(@"Bad Server Response:", serverResponse, @"OK",nil,nil);     /* { dg-warning "format not a string literal and no format arguments" } */
+    My_NSRunAlertPanel(@"Bad Server Response:", serverResponse, @"OK",nil,nil); /* { dg-warning "format string is not a string literal" } */
 }
 
 static void SimpleAlert()
@@ -31,7 +31,7 @@ static void SimpleAlert()
     /* My_NSRunAlertPanel this time uses My_NSLocalizedString callfor its formatting argument.
        because of format_arg (1) attribute on My_NSLocalizedString, no warning to be issued.
        Even when -Wformat-nonliteral is specified. */
-    My_NSRunAlertPanel(@"Title of oops panel", 
+    My_NSRunAlertPanel(@"Title of oops panel",
                        My_NSLocalizedString(CFSTR("Something went wrong. Sorry."), @"Message of oops panel"),
-                       @"OK",nil,nil);     
+                       @"OK",nil,nil);
 }

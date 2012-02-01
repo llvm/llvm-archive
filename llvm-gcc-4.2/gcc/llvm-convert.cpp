@@ -2076,7 +2076,7 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
                                         TREE_VEC_LENGTH(Cases));
   EmitBlock(BasicBlock::Create(Context, ""));
   // Default location starts out as fall-through
-  SI->setSuccessor(0, Builder.GetInsertBlock());
+  SI->setDefaultDest(Builder.GetInsertBlock());
 
   assert(!SWITCH_BODY(exp) && "not a gimple switch?");
 
@@ -2131,8 +2131,8 @@ Value *TreeToLLVM::EmitSWITCH_EXPR(tree exp) {
   }
 
   if (DefaultDest) {
-    if (SI->getSuccessor(0) == Builder.GetInsertBlock())
-      SI->setSuccessor(0, DefaultDest);
+    if (SI->getDefaultDest() == Builder.GetInsertBlock())
+      SI->setDefaultDest(DefaultDest);
     else {
       Builder.CreateBr(DefaultDest);
       // Emit a "fallthrough" block, which is almost certainly dead.

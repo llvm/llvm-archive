@@ -18,12 +18,12 @@ static int f1(void);
 void g1(void) { __typeof__(f1()) x; }
 
 /* __typeof__ variably modified, not OK.  */
-static int f2(void); /* { dg-error "used but never defined" } */
-void g2(void) { __typeof__(int [f2()]) x; }
+static int f2(void); /* { dg-error "has internal linkage but is not defined" } */
+void g2(void) { __typeof__(int [f2()]) x; } /* { dg-error "note: used here" } */
 
 /* __typeof__ variably modified, not OK.  */
-static int f3(void); /* { dg-error "used but never defined" } */
-void g3(void) { __typeof__(int (*)[f3()]) x; }
+static int f3(void); /* { dg-error "has internal linkage but is not defined" } */
+void g3(void) { __typeof__(int (*)[f3()]) x; } /* { dg-error "note: used here" } */
 
 /* Integer sizeof of VM typeof, OK.  */
 static int f4(void);

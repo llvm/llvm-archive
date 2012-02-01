@@ -12,7 +12,7 @@ typedef struct {
 myint24 x[3] = {
   0x123456,
   0x789abc,
-  0xdef012
+  0xdef012 /* { dg-warning "implicit truncation" } */
 };
 
 myint24 y[3];  // starts out as zeros

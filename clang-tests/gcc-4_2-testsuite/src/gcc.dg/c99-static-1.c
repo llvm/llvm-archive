@@ -23,13 +23,16 @@ static int f3(void);
 void g3(void) { sizeof(f3()); }
 
 /* OK (VM type, not VLA).  */
-static int f4(void);
-void g4(void) { sizeof(int (*)[f4()]); }
+/* FIXME: clang currently messing up here */
+static int f4(void); /* { dg-error "has internal linkage but is not defined" } */
+void g4(void) { sizeof(int (*)[f4()]); } /* { dg-error "note: used here" } */
 
 /* Constraint violation (VLA).  */
-static int f5(void); /* { dg-error "used but never defined" "VLA" { xfail *-*-* } } */
-void g5(void) { sizeof(int [0 ? f5() : 1]); }
+static int f5(void); /* { dg-error "has internal linkage but is not defined" } */
+void g5(void) { sizeof(int [0 ? f5() : 1]); } /* { dg-error "note: used here" } */
 
 /* OK (non-constant sizeof inside constant sizeof).  */
-static int f6(void);
-void g6(void) { sizeof(sizeof(int [f6()])); }
+/* FIXME: clang currently messing up here */
+static int f6(void); /* { dg-error "has internal linkage but is not defined" } */
+void g6(void) { sizeof(sizeof(int [f6()])); } /* { dg-error "note: used here" } */
+

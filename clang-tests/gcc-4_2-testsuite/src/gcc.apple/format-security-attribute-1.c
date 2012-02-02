@@ -13,7 +13,7 @@ const char *string;
 int main()
 {
 	CFStringRef foo;
-        CFLog (foo);	/* { dg-warning "format not a string literal and no format arguments" "" { xfail *-*-* } } */	
+        CFLog (foo);	/* { dg-warning "format string is not a string literal" } */	
 	CFLog (foo, d);		// ok
 	CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo);	// OK
 	CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"));	// OK

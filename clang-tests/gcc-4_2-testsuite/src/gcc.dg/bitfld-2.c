@@ -11,13 +11,13 @@ struct bf
   int b: 2;
 };
 
-struct bf p = {4, 0};		/* { dg-warning "implicit truncation from 'int' to bitfield changes value from 4 to 0" } */
-struct bf q = {0, 2};
+struct bf p = {4, 0};          /* { dg-warning "implicit truncation from 'int' to bitfield changes value from 4 to 0" } */
+struct bf q = {0, 2};          /* { dg-warning "implicit truncation from 'int' to bitfield changes value from 2 to -2" } */
 struct bf r = {3, -2};
 
 void foo ()
 {
-  p.a = 4, p.b = 0;		/* { dg-warning "implicit truncation from 'int' to bitfield changes value from 4 to 0" } */
-  q.a = 0, q.b = 2;
+  p.a = 4, p.b = 0;            /* { dg-warning "implicit truncation from 'int' to bitfield changes value from 4 to 0" } */
+  q.a = 0, q.b = 2;            /* { dg-warning "implicit truncation from 'int' to bitfield changes value from 2 to -2" } */
   r.a = 3, r.b = -2;
 }

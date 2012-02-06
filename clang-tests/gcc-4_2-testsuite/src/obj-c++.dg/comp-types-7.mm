@@ -26,8 +26,8 @@ int main()
   MyClass *obj_cp = nil;
   MyOtherClass *obj_cp2 = nil;
 
-  obj_cp = obj_p;  /* { dg-warning "incompatible Objective-C types assigning \\'objc_object\\*\\', expected \\'MyClass\\*\\'" } */
-  obj_cp2 = obj_p; /* { dg-warning "incompatible Objective-C types assigning \\'objc_object\\*\\', expected \\'MyOtherClass\\*\\'" } */
+  obj_cp = obj_p;
+  obj_cp2 = obj_p;
   obj_p = obj_cp;  /* Ok */
   obj_p = obj_cp2; /* Ok */
 

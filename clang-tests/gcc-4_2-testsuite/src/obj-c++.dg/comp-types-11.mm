@@ -14,18 +14,19 @@
 @end
 
 @interface Derived2: Object
-+ (Derived1 *)new;
++ (Derived1 *)new; /* { dg-warning "method is expected to return an instance of its class type" } */
 @end
 
 id<Foo> func(void) {
   Object *o = [Object new];
-  return o;  /* { dg-warning "class .Object. does not implement the .Foo. protocol" } */
+  return o;  /* { dg-error "cannot initialize return object of type .+ with an lvalue of type" } */
 }
 
 @implementation Derived2
 + (Derived1 *)new {
   Derived2 *o = [super new];
-  return o;  /* { dg-warning "incompatible Objective-C types returning \\'Derived2\\*\\', expected \\'Derived1\\*\\'" } */
+  return o;  /* { dg-error "cannot initialize return object of type .+ with an lvalue of type" } */
 }
 @end
+/* { dg-output "overridden method is part of the 'new' method family" } */
 

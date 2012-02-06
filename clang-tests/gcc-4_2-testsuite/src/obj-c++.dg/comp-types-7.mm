@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5839123 */
 /* Test assignments and comparisons involving category protocols.  */
 /* Author: Nicola Pero <nicola@brainstorm.co.uk>.  */
+/* { dg-options "-Wno-empty-body" } */
 /* { dg-do compile } */
 
 #include <objc/objc.h>

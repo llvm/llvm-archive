@@ -16,8 +16,8 @@ static CFStringRef foobar = (CFStringRef)@"Apple";
 int main(void) {
   char *c, *d;
 
-  c = (char *)[(id)foobar cString];
-  d = (char *)[(id)@"Hello" cString];
+  c = (char *)[(id)foobar cString];   /* { dg-warning "'cString' is deprecated" } */
+  d = (char *)[(id)@"Hello" cString]; /* { dg-warning "'cString' is deprecated" } */
 
   if (*c != 'A')
     abort ();

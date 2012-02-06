@@ -29,47 +29,47 @@ int main()
 
   /* These should all generate warnings.  */
   
-  obj = i; /* { dg-error "invalid conversion" } */
-  obj = j; /* { dg-error "cannot convert" } */
+  obj = i; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj = j; /* { dg-error "assigning to .+ from incompatible type" } */
 
-  obj_p = i; /* { dg-error "invalid conversion" } */
-  obj_p = j; /* { dg-error "cannot convert" } */
+  obj_p = i; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_p = j; /* { dg-error "assigning to .+ from incompatible type" } */
   
-  obj_c = i; /* { dg-error "invalid conversion" } */
-  obj_c = j; /* { dg-error "cannot convert" } */
+  obj_c = i; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_c = j; /* { dg-error "assigning to .+ from incompatible type" } */
 
-  obj_C = i; /* { dg-error "invalid conversion" } */
-  obj_C = j; /* { dg-error "cannot convert" } */
+  obj_C = i; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_C = j; /* { dg-error "assigning to .+ from incompatible type" } */
   
-  i = obj;   /* { dg-error "invalid conversion" } */
-  i = obj_p; /* { dg-error "invalid conversion" } */
-  i = obj_c; /* { dg-error "invalid conversion" } */
-  i = obj_C; /* { dg-error "invalid conversion" } */
+  i = obj;   /* { dg-error "assigning to .+ from incompatible type" } */
+  i = obj_p; /* { dg-error "assigning to .+ from incompatible type" } */
+  i = obj_c; /* { dg-error "assigning to .+ from incompatible type" } */
+  i = obj_C; /* { dg-error "assigning to .+ from incompatible type" } */
   
-  j = obj;   /* { dg-error "cannot convert" } */
-  j = obj_p; /* { dg-error "cannot convert" } */
-  j = obj_c; /* { dg-error "cannot convert" } */
-  j = obj_C; /* { dg-error "cannot convert" } */
+  j = obj;   /* { dg-error "assigning to .+ from incompatible type" } */
+  j = obj_p; /* { dg-error "assigning to .+ from incompatible type" } */
+  j = obj_c; /* { dg-error "assigning to .+ from incompatible type" } */
+  j = obj_C; /* { dg-error "assigning to .+ from incompatible type" } */
   
   if (obj == i) ; /* { dg-error "comparison between pointer and integer" } */
   if (i == obj) ; /* { dg-error "comparison between pointer and integer" } */
-  if (obj == j) ; /* { dg-error "lacks a cast" } */
-  if (j == obj) ; /* { dg-error "lacks a cast" } */
+  if (obj == j) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (j == obj) ; /* { dg-warning "comparison of distinct pointer types" } */
 
   if (obj_c == i) ; /*{ dg-error "comparison between pointer and integer" }*/
   if (i == obj_c) ; /*{ dg-error "comparison between pointer and integer" }*/
-  if (obj_c == j) ; /* { dg-error "lacks a cast" } */
-  if (j == obj_c) ; /* { dg-error "lacks a cast" } */
+  if (obj_c == j) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (j == obj_c) ; /* { dg-warning "comparison of distinct pointer types" } */
 
   if (obj_p == i) ; /*{ dg-error "comparison between pointer and integer" }*/
   if (i == obj_p) ; /*{ dg-error "comparison between pointer and integer" }*/
-  if (obj_p == j) ; /* { dg-error "lacks a cast" } */
-  if (j == obj_p) ; /* { dg-error "lacks a cast" } */
+  if (obj_p == j) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (j == obj_p) ; /* { dg-warning "comparison of distinct pointer types" } */
 
   if (obj_C == i) ; /*{ dg-error "comparison between pointer and integer" }*/
   if (i == obj_C) ; /*{ dg-error "comparison between pointer and integer" }*/
-  if (obj_C == j) ; /* { dg-error "lacks a cast" } */
-  if (j == obj_C) ; /* { dg-error "lacks a cast" } */
+  if (obj_C == j) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (j == obj_C) ; /* { dg-warning "comparison of distinct pointer types" } */
 
   return 0;
 }

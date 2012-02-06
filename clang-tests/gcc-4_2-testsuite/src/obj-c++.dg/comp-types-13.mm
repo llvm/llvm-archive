@@ -16,6 +16,6 @@ typedef id FuncSignature (Object *arg1, Derived *arg2);
 
 void foo(void)
 {
-  [Derived registerFunc: ExternFunc];
+  [Derived registerFunc: ExternFunc]; /* { dg-error "incompatible pointer types" } */
 }
 

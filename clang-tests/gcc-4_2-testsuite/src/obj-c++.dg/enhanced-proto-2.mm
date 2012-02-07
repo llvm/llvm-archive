@@ -13,9 +13,9 @@
 @end
 
 @interface  MyProto2 <MyProto1>
-@required 		/* { dg-error "@optional/@required is allowed in @protocol context only" }  */
+@required        /* { dg-error "directive may only be specified in protocols only" }  */
 - (void) FOO2;
-@optional		/* { dg-error "@optional/@required is allowed in @protocol context only" }  */
+@optional        /* { dg-error "directive may only be specified in protocols only" }  */
 - (void) FOO3;
 @end
 

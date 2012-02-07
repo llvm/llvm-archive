@@ -15,6 +15,6 @@ foo (void)
 int
 bar (const char *a, const char *b)
 {
-  return strcmp (a, b); /* { dg-error "implicitly declaring C library function" } */
-                        /* { dg-error "error: please include the header" "" { target *-*-* } 18 } */
+  return strcmp (a, b); /* { dg-error "implicitly declaring library function .strcmp" } */
+                        /* { dg-warning "please include the header" "" { target *-*-* } 18 } */
 }

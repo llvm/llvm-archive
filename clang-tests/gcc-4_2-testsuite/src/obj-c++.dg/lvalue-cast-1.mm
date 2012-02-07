@@ -28,6 +28,6 @@ typedef struct _NSRect {
 
 @implementation NSLayoutManager
 - (void)_growCachedRectArrayToSize:(unsigned)newSize {
-  ( NSRect *)_cachedRectArray = nil;  /* { dg-warning "target of assignment not really an lvalue" } */
+  ( NSRect *)_cachedRectArray = nil;  /* { dg-error "assignment to cast is illegal, lvalue casts are not supported" } */
 }
 @end

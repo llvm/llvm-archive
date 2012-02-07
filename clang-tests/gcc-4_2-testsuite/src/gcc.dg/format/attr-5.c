@@ -12,7 +12,7 @@ static int scanf(const char *restrict, ...);
 /* This sscanf declaration doesn't have variable arguments, so isn't
    compatible with a format attribute.  */
 extern int sscanf(const char *restrict, const char *restrict, int *); /* { dg-warning "incompatible redeclaration" "conflict" } */
-								      /* { dg-error "error: 'sscanf' is a builtin with type" { target *-*-* } 14 }} */
+                                      /* { dg-error "error: 'sscanf' is a builtin with type" "" { target *-*-* } 14 }} */
 
 void
 foo (const char *s, int *p)

@@ -29,27 +29,27 @@ int main()
 
   /* These should all generate warnings.  */
   
-  obj = i; /* { dg-error "assigning to .+ from incompatible type" } */
-  obj = j; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj = i; /* { dg-error "assigning to .{4} from incompatible type" } */
+  obj = j; /* { dg-error "assigning to .{4} from incompatible type" } */
 
-  obj_p = i; /* { dg-error "assigning to .+ from incompatible type" } */
-  obj_p = j; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_p = i; /* { dg-error "assigning to .{16} from incompatible type" } */
+  obj_p = j; /* { dg-error "assigning to .{16} from incompatible type" } */
   
-  obj_c = i; /* { dg-error "assigning to .+ from incompatible type" } */
-  obj_c = j; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_c = i; /* { dg-error "assigning to .{11} from incompatible type" } */
+  obj_c = j; /* { dg-error "assigning to .{11} from incompatible type" } */
 
-  obj_C = i; /* { dg-error "assigning to .+ from incompatible type" } */
-  obj_C = j; /* { dg-error "assigning to .+ from incompatible type" } */
+  obj_C = i; /* { dg-error "assigning to .{7} from incompatible type" } */
+  obj_C = j; /* { dg-error "assigning to .{7} from incompatible type" } */
   
-  i = obj;   /* { dg-error "assigning to .+ from incompatible type" } */
-  i = obj_p; /* { dg-error "assigning to .+ from incompatible type" } */
-  i = obj_c; /* { dg-error "assigning to .+ from incompatible type" } */
-  i = obj_C; /* { dg-error "assigning to .+ from incompatible type" } */
+  i = obj;   /* { dg-error "assigning to .{5} from incompatible type" } */
+  i = obj_p; /* { dg-error "assigning to .{5} from incompatible type" } */
+  i = obj_c; /* { dg-error "assigning to .{5} from incompatible type" } */
+  i = obj_C; /* { dg-error "assigning to .{5} from incompatible type" } */
   
-  j = obj;   /* { dg-error "assigning to .+ from incompatible type" } */
-  j = obj_p; /* { dg-error "assigning to .+ from incompatible type" } */
-  j = obj_c; /* { dg-error "assigning to .+ from incompatible type" } */
-  j = obj_C; /* { dg-error "assigning to .+ from incompatible type" } */
+  j = obj;   /* { dg-error "assigning to .{7} from incompatible type" } */
+  j = obj_p; /* { dg-error "assigning to .{7} from incompatible type" } */
+  j = obj_c; /* { dg-error "assigning to .{7} from incompatible type" } */
+  j = obj_C; /* { dg-error "assigning to .{7} from incompatible type" } */
   
   if (obj == i) ; /* { dg-error "comparison between pointer and integer" } */
   if (i == obj) ; /* { dg-error "comparison between pointer and integer" } */

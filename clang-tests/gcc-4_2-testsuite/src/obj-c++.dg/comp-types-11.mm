@@ -19,14 +19,14 @@
 
 id<Foo> func(void) {
   Object *o = [Object new];
-  return o;  /* { dg-error "cannot initialize return object of type .+ with an lvalue of type" } */
+  return o;  /* { dg-error "cannot initialize return object of type .{9} with an lvalue of type" } */
 }
 
 @implementation Derived2
 + (Derived1 *)new {
   Derived2 *o = [super new];
+  /* { dg-output "overridden method is part of the 'new' method family" } */
   return o;  /* { dg-error "cannot initialize return object of type .+ with an lvalue of type" } */
 }
 @end
-/* { dg-output "overridden method is part of the 'new' method family" } */
 

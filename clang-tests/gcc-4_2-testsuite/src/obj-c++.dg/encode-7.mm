@@ -30,7 +30,7 @@
 @interface Test : Object
 { float j; }
 -(void) test2: (int [5])a with: (int [])b;
--(id) test3: (Test **)b; /* { dg-warning "previous declaration of .\\-\\(id\\)test3:\\(Test \\*\\*\\)b." } */
+-(id) test3: (Test **)b; /* { dg-warning "previous definition is here" } */
 @end
 
 @implementation Test
@@ -38,9 +38,12 @@
 {
   a[3] = *b;
 }
--(void) test3: (Test [3][4])b {  /* { dg-warning "conflicting types for .\\-\\(void\\)test3:\\(Test \\\[3\\\]\\\[4\\\]\\)b." } */
+-(void) test3: (Test [3][4])b {  /* { dg-error "array of interface .Test. is invalid" } */
 }
 @end
+
+/* { dg-warning "conflicting return type in implementation" "" { target *-*-* } 41 } */
+/* { dg-warning "conflicting parameter types in implementation" "" { target *-*-* } 41 } */
 
 int bb[6] = { 0, 1, 2, 3, 4, 5 };
 int *b = bb;
@@ -67,10 +70,10 @@ int main(int argc, char **argv)
 /* APPLE LOCAL radar 4923914 */
 #   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%di]%d^i%d", &offs1,
-	 &offs2, &offs3, &offs4, &offs5, &offs6);
+     &offs2, &offs3, &offs4, &offs5, &offs6);
 #else
   sscanf(meth->method_types, "v%d@%d:%d[%di]%d^i%d", &offs1,
-	 &offs2, &offs3, &offs4, &offs5, &offs6);
+     &offs2, &offs3, &offs4, &offs5, &offs6);
 #endif
   CHECK_IF (!offs2 && offs4 == 5 && offs3 > 0);
   CHECK_IF (offs5 == 2 * offs3 && offs6 == 3 * offs3 && offs1 == 4 * offs3);
@@ -80,10 +83,10 @@ int main(int argc, char **argv)
 /* APPLE LOCAL radar 4923914 */
 #   if (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5 || __OBJC2__)
   sscanf(method_getTypeEncoding(meth), "v%d@%d:%d[%d[%d{Test=#f}]]%d",
-	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
+     &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
 #else
   sscanf(meth->method_types, "v%d@%d:%d[%d[%d{Test=#f}]]%d",
-	 &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
+     &offs1, &offs2, &offs3, &offs4, &offs5, &offs6);
 #endif
   CHECK_IF (!offs2 && offs4 == 3 && offs5 == 4 && offs3 > 0);
   CHECK_IF (offs6 == 2 * offs3 && offs1 == 3 * offs3);

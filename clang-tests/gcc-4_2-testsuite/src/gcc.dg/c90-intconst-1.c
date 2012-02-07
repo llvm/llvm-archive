@@ -7,112 +7,112 @@
 #include <limits.h>
 
 /* Assertion that constant C is of type T.  */
-#define ASSERT_CONST_TYPE(C, T)			\
-	do {					\
-	  typedef T type;			\
-	  typedef type **typepp;		\
-	  typedef __typeof__((C)) ctype;	\
-	  typedef ctype **ctypepp;		\
-	  typepp x = 0;				\
-	  ctypepp y = 0;			\
-	  x = y;				\
-	  y = x;				\
-	} while (0)
+#define ASSERT_CONST_TYPE(C, T)         \
+    do {                                \
+      typedef T type;                   \  /* { dg-warning "expanded from macro" } */
+      typedef type **typepp;            \
+      typedef __typeof__((C)) ctype;    \ /* { dg-warning "expanded from macro" } */
+      typedef ctype **ctypepp;          \
+      typepp x = 0;                     \
+      ctypepp y = 0;                    \
+      x = y;                            \ /* { dg-warning "expanded from macro" } */
+      y = x;                            \ /* { dg-warning "expanded from macro" } */
+    } while (0)
 
 /* (T *) if E is zero, (void *) otherwise.  */
-#define type_if_not(T, E) __typeof__(0 ? (T *)0 : (void *)(E))
+#define type_if_not(T, E) __typeof__(0 ? (T *)0 : (void *)(E))  /* { dg-warning "expanded from macro" } */
 
 /* (T *) if E is nonzero, (void *) otherwise.  */
-#define type_if(T, E) type_if_not(T, !(E))
+#define type_if(T, E) type_if_not(T, !(E))  /* { dg-warning "expanded from macro" } */
 
 /* Combine pointer types, all but one (void *).  */
-#define type_comb2(T1, T2) __typeof__(0 ? (T1)0 : (T2)0)
-#define type_comb3(T1, T2, T3) type_comb2(T1, type_comb2(T2, T3))
-#define type_comb4(T1, T2, T3, T4)				\
-	type_comb2(T1, type_comb2(T2, type_comb2(T3, T4)))
+#define type_comb2(T1, T2) __typeof__(0 ? (T1)0 : (T2)0)  /* { dg-warning "expanded from macro" } */
+#define type_comb3(T1, T2, T3) type_comb2(T1, type_comb2(T2, T3))  /* { dg-warning "expanded from macro" } */
+#define type_comb4(T1, T2, T3, T4)                \
+    type_comb2(T1, type_comb2(T2, type_comb2(T3, T4)))
 
 /* (T1 *) if E1, otherwise (T2 *) if E2.  */
-#define first_of2p(T1, E1, T2, E2) type_comb2(type_if(T1, (E1)),	   \
-					     type_if(T2, (!(E1) && (E2))))
+#define first_of2p(T1, E1, T2, E2) type_comb2(type_if(T1, (E1)), \ /* { dg-warning "expanded from macro" } */
+                         type_if(T2, (!(E1) && (E2))))
 /* (T1 *) if E1, otherwise (T2 *) if E2, otherwise (T3 *) if E3.  */
-#define first_of3p(T1, E1, T2, E2, T3, E3)			\
-	type_comb3(type_if(T1, (E1)),				\
-		   type_if(T2, (!(E1) && (E2))),		\
-		   type_if(T3, (!(E1) && !(E2) && (E3))))
+#define first_of3p(T1, E1, T2, E2, T3, E3)            \
+    type_comb3(type_if(T1, (E1)),                \  /* { dg-warning "expanded from macro" } */
+           type_if(T2, (!(E1) && (E2))),         \  /* { dg-warning "expanded from macro" } */
+           type_if(T3, (!(E1) && !(E2) && (E3))))   /* { dg-warning "expanded from macro" } */
 /* (T1 *) if E1, otherwise (T2 *) if E2, otherwise (T3 *) if E3, otherwise
    (T4 *) if E4.  */
-#define first_of4p(T1, E1, T2, E2, T3, E3, T4, E4)			\
-	type_comb4(type_if(T1, (E1)),					\
-		   type_if(T2, (!(E1) && (E2))),			\
-		   type_if(T3, (!(E1) && !(E2) && (E3))),		\
-		   type_if(T4, (!(E1) && !(E2) && !(E3) && (E4))))
+#define first_of4p(T1, E1, T2, E2, T3, E3, T4, E4)            \
+    type_comb4(type_if(T1, (E1)),                    \
+           type_if(T2, (!(E1) && (E2))),            \
+           type_if(T3, (!(E1) && !(E2) && (E3))),        \
+           type_if(T4, (!(E1) && !(E2) && !(E3) && (E4))))
 
 /* Likewise, but return the original type rather than a pointer type.  */
-#define first_of2(T1, E1, T2, E2)			\
-	__typeof__(*((first_of2p(T1, (E1), T2, (E2)))0))
-#define first_of3(T1, E1, T2, E2, T3, E3)				\
-	__typeof__(*((first_of3p(T1, (E1), T2, (E2), T3, (E3)))0))
-#define first_of4(T1, E1, T2, E2, T3, E3, T4, E4)			    \
-	__typeof__(*((first_of4p(T1, (E1), T2, (E2), T3, (E3), T4, (E4)))0))
+#define first_of2(T1, E1, T2, E2)            \
+    __typeof__(*((first_of2p(T1, (E1), T2, (E2)))0)) /* { dg-warning "expanded from macro" } */
+#define first_of3(T1, E1, T2, E2, T3, E3)                \
+    __typeof__(*((first_of3p(T1, (E1), T2, (E2), T3, (E3)))0))  /* { dg-warning "expanded from macro" } */
+#define first_of4(T1, E1, T2, E2, T3, E3, T4, E4)                \
+    __typeof__(*((first_of4p(T1, (E1), T2, (E2), T3, (E3), T4, (E4)))0))
 
 /* Types of constants according to the C90 rules.  */
-#define C90_UNSUF_DEC_TYPE(C)				\
-	first_of3(int, (C) <= INT_MAX,			\
-		  long int, (C) <= LONG_MAX,		\
-		  unsigned long int, (C) <= ULONG_MAX)
-#define C90_UNSUF_OCTHEX_TYPE(C)			\
-	first_of4(int, (C) <= INT_MAX,			\
-		  unsigned int, (C) <= UINT_MAX,	\
-		  long int, (C) <= LONG_MAX,		\
-		  unsigned long int, (C) <= ULONG_MAX)
-#define C90_SUFu_TYPE(C)				\
-	first_of2(unsigned int, (C) <= UINT_MAX,	\
-		  unsigned long int, (C) <= ULONG_MAX)
-#define C90_SUFl_TYPE(C)				\
-	first_of2(long int, (C) <= LONG_MAX,		\
-		  unsigned long int, (C) <= ULONG_MAX)
+#define C90_UNSUF_DEC_TYPE(C)                \
+    first_of3(int, (C) <= INT_MAX,           \  /* { dg-warning "expanded from macro" } */
+          long int, (C) <= LONG_MAX,         \  /* { dg-warning "expanded from macro" } */
+          unsigned long int, (C) <= ULONG_MAX)
+#define C90_UNSUF_OCTHEX_TYPE(C)            \
+    first_of4(int, (C) <= INT_MAX,          \
+          unsigned int, (C) <= UINT_MAX,    \
+          long int, (C) <= LONG_MAX,        \
+          unsigned long int, (C) <= ULONG_MAX)
+#define C90_SUFu_TYPE(C)                       \
+    first_of2(unsigned int, (C) <= UINT_MAX,   \
+          unsigned long int, (C) <= ULONG_MAX)
+#define C90_SUFl_TYPE(C)                       \
+    first_of2(long int, (C) <= LONG_MAX,       \ /* { dg-warning "expanded from macro" } */
+          unsigned long int, (C) <= ULONG_MAX)
 
 /* Checks that constants have correct type.  */
-#define CHECK_UNSUF_DEC_TYPE(C) ASSERT_CONST_TYPE((C), C90_UNSUF_DEC_TYPE((C)))
-#define CHECK_UNSUF_OCTHEX_TYPE(C)				\
-	ASSERT_CONST_TYPE((C), C90_UNSUF_OCTHEX_TYPE((C)))
+#define CHECK_UNSUF_DEC_TYPE(C) ASSERT_CONST_TYPE((C), C90_UNSUF_DEC_TYPE((C)))  /* { dg-warning "expanded from macro" } */
+#define CHECK_UNSUF_OCTHEX_TYPE(C)                      \
+    ASSERT_CONST_TYPE((C), C90_UNSUF_OCTHEX_TYPE((C)))
 #define CHECK_SUFu_TYPE(C) ASSERT_CONST_TYPE((C), C90_SUFu_TYPE((C)))
-#define CHECK_SUFl_TYPE(C) ASSERT_CONST_TYPE((C), C90_SUFl_TYPE((C)))
+#define CHECK_SUFl_TYPE(C) ASSERT_CONST_TYPE((C), C90_SUFl_TYPE((C))) /* { dg-warning "expanded from macro" } */
 #define CHECK_SUFul_TYPE(C) ASSERT_CONST_TYPE((C), unsigned long int)
 
 /* Check a decimal value, with all suffixes.  */
-#define CHECK_DEC_CONST(C)			\
-	CHECK_UNSUF_DEC_TYPE(C);		\
-	CHECK_SUFu_TYPE(C##u);			\
-	CHECK_SUFu_TYPE(C##U);			\
-	CHECK_SUFl_TYPE(C##l);			\
-	CHECK_SUFl_TYPE(C##L);			\
-	CHECK_SUFul_TYPE(C##ul);		\
-	CHECK_SUFul_TYPE(C##uL);		\
-	CHECK_SUFul_TYPE(C##Ul);		\
-	CHECK_SUFul_TYPE(C##UL);
+#define CHECK_DEC_CONST(C)            \
+    CHECK_UNSUF_DEC_TYPE(C);          \
+    CHECK_SUFu_TYPE(C##u);            \
+    CHECK_SUFu_TYPE(C##U);            \
+    CHECK_SUFl_TYPE(C##l);            \
+    CHECK_SUFl_TYPE(C##L);            \
+    CHECK_SUFul_TYPE(C##ul);          \
+    CHECK_SUFul_TYPE(C##uL);          \
+    CHECK_SUFul_TYPE(C##Ul);          \
+    CHECK_SUFul_TYPE(C##UL);
 
 /* Check an octal or hexadecimal value, with all suffixes.  */
-#define CHECK_OCTHEX_CONST(C)			\
-	CHECK_UNSUF_OCTHEX_TYPE(C);		\
-	CHECK_SUFu_TYPE(C##u);			\
-	CHECK_SUFu_TYPE(C##U);			\
-	CHECK_SUFl_TYPE(C##l);			\
-	CHECK_SUFl_TYPE(C##L);			\
-	CHECK_SUFul_TYPE(C##ul);		\
-	CHECK_SUFul_TYPE(C##uL);		\
-	CHECK_SUFul_TYPE(C##Ul);		\
-	CHECK_SUFul_TYPE(C##UL);
+#define CHECK_OCTHEX_CONST(C)         \
+    CHECK_UNSUF_OCTHEX_TYPE(C);       \
+    CHECK_SUFu_TYPE(C##u);            \
+    CHECK_SUFu_TYPE(C##U);            \
+    CHECK_SUFl_TYPE(C##l);            \
+    CHECK_SUFl_TYPE(C##L);            \
+    CHECK_SUFul_TYPE(C##ul);          \
+    CHECK_SUFul_TYPE(C##uL);          \
+    CHECK_SUFul_TYPE(C##Ul);          \
+    CHECK_SUFul_TYPE(C##UL);
 
 #define CHECK_OCT_CONST(C) CHECK_OCTHEX_CONST(C)
-#define CHECK_HEX_CONST(C)			\
-	CHECK_OCTHEX_CONST(0x##C);		\
-	CHECK_OCTHEX_CONST(0X##C);
+#define CHECK_HEX_CONST(C)            \
+    CHECK_OCTHEX_CONST(0x##C);        \
+    CHECK_OCTHEX_CONST(0X##C);
 
 /* True iff "long" is at least B bits.  This presumes that (B-2)/3 is at
    most 31.  */
-#define LONG_AT_LEAST(B)						\
-	(LONG_MAX >> ((B)-2)/3 >> ((B)-2)/3 >> ((B)-2 - ((B)-2)/3 - ((B)-2)/3))
+#define LONG_AT_LEAST(B)                        \
+    (LONG_MAX >> ((B)-2)/3 >> ((B)-2)/3 >> ((B)-2 - ((B)-2)/3 - ((B)-2)/3))
 
 #define LONG_HAS_BITS(B) (LONG_AT_LEAST((B)) && !LONG_AT_LEAST((B) + 1))
 
@@ -215,17 +215,17 @@
 #define LARGE_UNSIGNED_DECIMAL 4611686018427387904
 #endif
 #if LONG_HAS_BITS(64)
-#define LARGE_UNSIGNED_DECIMAL 9223372036854775808
+#define LARGE_UNSIGNED_DECIMAL 9223372036854775808  /* { dg-warning "expanded from macro" } */
 #endif
 #if LONG_AT_LEAST(65)
 #error "extend this test to allow for long larger than 64 bits"
 #endif
 
-#define cat(x, y) x ## y
-#define xcat(x, y) cat(x, y)
+#define cat(x, y) x ## y     /* { dg-warning "expanded from macro" } */
+#define xcat(x, y) cat(x, y) /* { dg-warning "expanded from macro" } */
 
 #define LARGE_UNSIGNED_DECIMALl xcat(LARGE_UNSIGNED_DECIMAL, l)
-#define LARGE_UNSIGNED_DECIMALL xcat(LARGE_UNSIGNED_DECIMAL, L)
+#define LARGE_UNSIGNED_DECIMALL xcat(LARGE_UNSIGNED_DECIMAL, L) /* { dg-warning "expanded from macro" } */
 #define LARGE_UNSIGNED_DECIMALu xcat(LARGE_UNSIGNED_DECIMAL, u)
 #define LARGE_UNSIGNED_DECIMALU xcat(LARGE_UNSIGNED_DECIMAL, U)
 #define LARGE_UNSIGNED_DECIMALul xcat(LARGE_UNSIGNED_DECIMAL, ul)
@@ -431,6 +431,7 @@ foo (void)
   /* Separate checks for values that are unsigned.  */
   CHECK_UNSUF_DEC_TYPE(LARGE_UNSIGNED_DECIMAL); /* { dg-warning "unsigned" "unsigned decimal no suffix" } */
   CHECK_SUFl_TYPE(LARGE_UNSIGNED_DECIMALl); /* { dg-warning "unsigned" "unsigned decimal long suffix" } */
+  /* { dg-error "incompatible pointer types assigning to .typepp" "" { target *-*-* } 433} */
   CHECK_SUFl_TYPE(LARGE_UNSIGNED_DECIMALL); /* { dg-warning "unsigned" "unsigned decimal long suffix" } */
   CHECK_SUFu_TYPE(LARGE_UNSIGNED_DECIMALu);
   CHECK_SUFu_TYPE(LARGE_UNSIGNED_DECIMALU);
@@ -761,4 +762,3 @@ foo (void)
   CHECK_HEX_CONST(ffffffffffffffff);
 #endif
 }
-/* { dg-warning "skipping" "" { target *-*-* } 0 } */

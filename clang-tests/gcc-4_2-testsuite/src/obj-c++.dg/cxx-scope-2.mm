@@ -12,9 +12,9 @@
 @end
 
 int main(void) {
-  id i = [std::iostream new];  /* { dg-warning "not an Objective\\-C class name or alias" } */
+  id i = [std::iostream new];  /* { dg-warning "is not an Objective.C class" } */
   i = [iostream new];
-  i = [std::basic_string<char> new];  /* { dg-warning "not an Objective\\-C class name or alias" } */
+  i = [std::basic_string<char> new];  /* { dg-warning "is not an Objective.C class" } */
 
   return 0;
 }

@@ -10,13 +10,12 @@
 
 @interface Class2
 - (void)setWindow:(Class1 *)window; /* { dg-warning "also found" } */
-@end /* { dg-warning "Object. may not respond to .setWindow" } */
+@end
 
 id foo(void) {
   Object *obj = [[Object alloc] init];
   id obj2 = obj;
-  [obj setWindow:nil];
-  [obj2 setWindow:nil]; /* { dg-warning "multiple methods named .setWindow. found" } */
-
+  [obj setWindow:nil];  /* { dg-warning "Object. may not respond to .setWindow" } */
+  [obj2 setWindow:nil]; /* { dg-warning "multiple methods named .setWindow.. found" } */
   return obj;
 }

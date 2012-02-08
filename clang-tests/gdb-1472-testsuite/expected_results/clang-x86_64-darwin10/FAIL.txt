@@ -392,3 +392,6 @@ gdb.trace/infotrace.exp: 2.2b: info tracepoint 1 (gdb_asm_test)
 gdb.trace/passcount.exp: Could not find gdb_recursion_test function
 gdb.trace/save-trace.exp: Could not find gdb_recursion_test function
 gdb.trace/tracecmd.exp: Could not find gdb_recursion_test function
+gdb.apple/varobj-references.exp: Create input_ptr_var in pass_ref_ptr
+gdb.apple/varobj-references.exp: Create input_var in pass_ref_ptr
+gdb.apple/varobj-references.exp: List children of input_ptr_var

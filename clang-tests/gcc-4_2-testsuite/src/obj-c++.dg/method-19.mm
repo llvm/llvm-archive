@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CHECK_IF(expr) if(!(expr)) abort()
+#define CHECK_IF(expr) if(!(expr)) abort() /* { dg-warning "expanded from macro" } */
 
 @protocol Proto
 - (const char *) method4;
@@ -71,9 +71,9 @@ int main(void)
   CHECK_IF(!strcmp([Derived method2], "Root::+method2"));
   CHECK_IF(!strcmp([Derived method3], "Root(Categ)::-method3"));
   CHECK_IF(!strcmp([Derived method4], "Root(Categ)::-method4"));
-  CHECK_IF(!strcmp([obj method1], "Root::-method1"));
+  CHECK_IF(!strcmp([obj method1], "Root::-method1")); /* { dg-warning "instance method .method1. is being used on .Class. which is not in the root class" } */
   CHECK_IF(!strcmp([obj method2], "Root::+method2"));
-  CHECK_IF(!strcmp([obj method3], "Root(Categ)::-method3"));
+  CHECK_IF(!strcmp([obj method3], "Root(Categ)::-method3")); /* { dg-warning "instance method .method3. is being used on .Class. which is not in the root class" } */
   CHECK_IF(!strcmp([obj method4], "Root(Categ)::-method4"));
 
   return 0;

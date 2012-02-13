@@ -9,13 +9,13 @@
 
 void foo (NSString *p)
 {
-	id pid;
+    id pid;
         Class pclass;
 
-	[p lossyCString];	/* { dg-warning "\\'lossyCString\\' is deprecated" } */
-	[NSString stringWithContentsOfFile]; /* { dg-warning "\\'stringWithContentsOfFile\\' is deprecated" } */
+    [p lossyCString];    /* { dg-warning "\\'lossyCString\\' is deprecated" } */
+    [NSString stringWithContentsOfFile]; /* { dg-warning "\\'stringWithContentsOfFile\\' is deprecated" } */
 
-	[pid lossyCString];			/* { dg-warning "\\'lossyCString\\' is deprecated" } */
-	[pclass stringWithContentsOfFile];      // OK
+    [pid lossyCString];
+    [pclass stringWithContentsOfFile];      // OK
 }
 

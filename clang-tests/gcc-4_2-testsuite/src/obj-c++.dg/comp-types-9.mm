@@ -20,7 +20,7 @@
 @implementation MyViewTemplate
 - (id)createRealObject {
     id realObj;
-    *(MyView *)realObj = *(MyView *)self;
+    *(MyView *)realObj = *(MyView *)self; /* { dg-error "cannot assign to class object ..MyView. invalid" } */
     return realObj;
 }
 @end

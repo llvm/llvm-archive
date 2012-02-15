@@ -10,25 +10,19 @@
 #include <objc/objc.h>
 
 @interface Object1
-- (void)initWithData:(Object1 *)data;
+- (void)initWithData:(Object1 *)data; /* { dg-warning "using" } */
 @end
 
 @interface Object2
-- (id)initWithData:(Object1 *)data;
+- (id)initWithData:(Object1 *)data; /* { dg-warning "also found" } */
 @end
 
 @interface Object3
-- (id)initWithData:(Object2 *)data;
+- (id)initWithData:(Object2 *)data; /* { dg-warning "also found" } */
 @end
 
 void foo(void) {
   id obj1, obj2 = 0;
-  obj2 = [obj1 initWithData: obj2];
-     /* { dg-warning "multiple methods named .\\-initWithData:. found" "" { target *-*-* } 26 } */
-     /* { dg-warning "using .\\-\\(void\\)initWithData:\\(Object1 \\*\\)data." "" { target *-*-* } 13 } */
-     /* { dg-warning "also found .\\-\\(id\\)initWithData:\\(Object1 \\*\\)data." "" { target *-*-* } 17 } */
-     /* { dg-warning "also found .\\-\\(id\\)initWithData:\\(Object2 \\*\\)data." "" { target *-*-* } 21 } */
-
-     /* The following error is a consequence of picking the "wrong" method signature.  */
-     /* { dg-error "void value not ignored as it ought to be" "" { target *-*-* } 26 } */
+  obj2 = [obj1 initWithData: obj2]; /* { dg-error "assigning to .id. from incompatible type" } */
+  /* { dg-warning "multiple methods named .initWithData" "" { target *-*-* } 26 } */
 }

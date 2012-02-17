@@ -7,4 +7,4 @@
 @implementation  INTF
 @end
 /* LLVM LOCAL allow different spelling */
-/* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:\n\t(.long\t0|.space\t4)\n\t.long\t16" } } */
+/* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:\n\t(.long\t0|.space\t4)\n\t.long\t0" } } */

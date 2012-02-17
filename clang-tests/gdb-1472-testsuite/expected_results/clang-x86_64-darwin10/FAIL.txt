@@ -302,6 +302,8 @@ gdb.cp/namespace.exp: ptype ::C::NestedClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: ptype ::C::OtherFileClass (PRMS: gdb/1448)
 gdb.cp/namespace.exp: print 'BBB::Class::xyzq'
 gdb.cp/namespace.exp: print BBB::Class::xyzq
+gdb.cp/namespace.exp: ptype CClass
+gdb.cp/namespace.exp: ptype OtherFileClass
 gdb.cp/overload.exp: ptype foo_instance1
 gdb.cp/pr-574.exp: PR gdb/574
 gdb.cp/templates.exp: ptype T5<int>

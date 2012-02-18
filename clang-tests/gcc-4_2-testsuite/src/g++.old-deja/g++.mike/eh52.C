@@ -1,5 +1,5 @@
 // { dg-do run  }
-// { dg-options "-fexceptions -O9" }
+// { dg-options "-fexceptions -O3" }
 
 int promote_mode (int mode, int *punsignedp)
 {

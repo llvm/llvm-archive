@@ -1,5 +1,5 @@
 // { dg-do run { xfail sparc64-*-elf arm-*-pe } }
-// { dg-options "-fexceptions -O9" }
+// { dg-options "-fexceptions -O3" }
 
 void main1() {
   throw 1;

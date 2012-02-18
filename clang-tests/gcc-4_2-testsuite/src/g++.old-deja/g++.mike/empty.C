@@ -4,10 +4,12 @@
 #define NOPE
 
 void foo() {
-  while (1); /* { dg-error "suggest a space before " } */
+  while (1); /* { dg-error "while loop has empty body" }
+                { dg-error "put the semicolon" "" { target *-*-* } 7 } */
     {
     }
-  for (;;); /* { dg-error "suggest a space before " } */
+  for (;;); /* { dg-error "for loop has empty body" 1 }
+                { dg-error "put the semicolon" "" { target *-*-* } 11 } */
     {
     }
   while (1)
@@ -16,9 +18,8 @@ void foo() {
     ;
   while (1) ;
   for (;;) ;
-  /* These two work when using mapped locations */
-  while (1) NOPE; /* { dg-bogus "suggest a space before " "suggest" { xfail *-*-* } } */
-  for (;;) NOPE; /* { dg-bogus "suggest a space before " "suggest" { xfail *-*-* } } */
+  while (1) NOPE;
+  for (;;) NOPE;
   while (1)
     NOPE;
   for (;;)

@@ -6,4 +6,4 @@
 @end
 @implementation  INTF
 @end
-/* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:\n\t.long\t0\n\t.long\t16" } } */
+/* { dg-final { scan-assembler "L_OBJC_IMAGE_INFO:\n\t.long\t0\n\t.long\t0" } } */

@@ -6,7 +6,7 @@ int
 main() {
 
   int a = 4;
-  int b = 5;
+  int b = 5; // { dg-error "" }
   int (*x)[b] = new int[a][b]; // { dg-error "" }
 
   x[2][1] = 7;

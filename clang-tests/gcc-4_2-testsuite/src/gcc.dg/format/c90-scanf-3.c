@@ -13,7 +13,7 @@ foo (char **sp, wchar_t **lsp)
   /* %a formats for allocation, only recognized in C90 mode, are a
      GNU extension.
   */
-  scanf ("%as", sp); /* { dg-warning "non-standard" "%as" } */
-  scanf ("%aS", lsp); /* { dg-warning "non-standard" "%aS" } */
-  scanf ("%a[bcd]", sp); /* { dg-warning "non-standard" "%a[]" } */
+  scanf ("%as", sp); /* { dg-warning "not supported" "%as" } */
+  scanf ("%aS", lsp); /* { dg-warning "not supported" "%aS" } */
+  scanf ("%a[bcd]", sp); /* { dg-warning "not supported" "%a[]" } */
 }

@@ -1,3 +1,5 @@
+void abort(void) __attribute__((noreturn));
+
 int check_fa_work (const char *, const char *) __attribute__((noinline));
 int check_fa_mid (const char *) __attribute__((noinline));
 int check_fa (char *) __attribute__((noinline));

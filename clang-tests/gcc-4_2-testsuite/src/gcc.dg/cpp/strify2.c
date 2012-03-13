@@ -1,7 +1,7 @@
 /* Copyright (C) 2000 Free Software Foundation, Inc.  */
 
 /* { dg-do run } */
-/* { dg-options "-std=c99 -pedantic-errors -fno-show-column" } */
+/* { dg-options "-std=c99 -pedantic-errors -fno-show-column -Wno-unused-value" } */
 
 /* Tests a whole bunch of things are correctly stringified.  */
 
@@ -20,9 +20,9 @@ extern void abort (void);
 
 int main (int argc, char *argv[])
 {
-  str (\);		/* { dg-warning "valid string" "str(\\)" } */
-  str (\\);		/* OK.  */
-  str (\\\);		/* { dg-warning "valid string" "str(\\\\\\)" } */
+  str (\);        /* { dg-warning "valid string" "str(\\)" } */
+  str (\\);       /* OK.  */
+  str (\\\);      /* { dg-warning "valid string" "str(\\\\\\)" } */
 
   /* This also serves as a useful test of the value of __INCLUDE_LEVEL.  */
   if (strcmp (xstr (__INCLUDE_LEVEL__), "0"))
@@ -37,7 +37,7 @@ int main (int argc, char *argv[])
   if (strcmp(str ("s\n"), "\"s\\n\""))
     err ("quoted string");
 
-  if (strcmp (str (a € b), "a \200 b"))
+  if (strcmp (str (a \200 b), "a \200 b"))
     err ("unprintable char");
 
   if (strcmp (str (	a    b@ c   ), "a b@ c"))

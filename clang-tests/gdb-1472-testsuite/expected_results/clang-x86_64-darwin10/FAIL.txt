@@ -304,7 +304,7 @@ gdb.cp/overload.exp: ptype foo_instance1
 gdb.cp/pr-574.exp: PR gdb/574
 gdb.cp/templates.exp: ptype T5<int>
 gdb.cp/templates.exp: ptype t5i
-gdb.cp/templates.exp: constructor breakpoint (bad menu choices)
+gdb.cp/templates.exp: constructor breakpoint (timeout)
 gdb.cp/templates.exp: ptype fvpchar (PRMS: gdb/1512)
 gdb.cp/templates.exp: print Foo<volatile char *>::foo (PRMS: gdb/931)
 gdb.cp/templates.exp: print Foo<volatile char*>::foo (PRMS: gdb/931)

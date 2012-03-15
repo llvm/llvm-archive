@@ -2,14 +2,13 @@
 // GROUPS passed prefix-postfix
 class foo {
 public:
-      operator ++ (); // { dg-error "" } no type or storage class
+      operator ++ (); // { dg-error "C++ requires a type specifier for all declarations" }
 };
 
 int main()
 {
   foo x;
 
-  // This should fall back to calling operator++(), and be an error with
-  // the -pedantic flag.
-  x++;  // clang no longer issues 2ndry error because class foo is marked invalid. 
+  // This should fall back to calling operator++(), and be an error
+  x++;  // { dg-error "cannot increment value of type" } no type or storage class
 }

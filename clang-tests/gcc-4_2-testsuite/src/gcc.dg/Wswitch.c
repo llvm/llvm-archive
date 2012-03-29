@@ -56,8 +56,8 @@ foo (int i, int j, enum e ei, enum e ej, enum e ek, enum e el,
     {
     case e1: return 1;
     case e2: return 2;
-    case 3: return 3;
-    default: break; /* { dg-warning "case value not in enumerated type" } */
+    case 3: return 3; /* { dg-warning "case value not in enumerated type" } */
+    default: break; 
     }
   return 0;
 }

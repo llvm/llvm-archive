@@ -7,12 +7,12 @@
 struct A 
 {
 protected:
-  int a;			// { dg-error "protected" }
+  int a;			// { dg-error "must name" }
 };
 
 struct B : A 
 {
   void foo() {
-    (void)&A::a;		// { dg-error "this context" }
+    (void)&A::a;		// { dg-error "protected member" }
   }
 };

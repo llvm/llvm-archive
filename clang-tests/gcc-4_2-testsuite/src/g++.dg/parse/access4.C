@@ -6,7 +6,7 @@
 
 class A {
 protected:
-  void foo() {}			// { dg-error "protected" }
+  void foo() {}			// { dg-error "must name" }
 public:
   A();
 };
@@ -14,7 +14,7 @@ public:
 class B : public A {
   void bar() {
     A a;
-    void (A::*pmf)() = &A::foo;	// { dg-error "this context" }
+    void (A::*pmf)() = &A::foo;	// { dg-error "protected member" }
     (a.*pmf)();
   }
 };

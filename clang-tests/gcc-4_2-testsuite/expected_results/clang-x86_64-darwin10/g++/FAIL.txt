@@ -233,7 +233,6 @@ g++.dg/abi/mangle20-2.C  (test for warnings, line 10)
 g++.dg/abi/mangle20-2.C scan-assembler \n_?_Z1fILi1EEvPALi2E_i[: \t\n]
 g++.dg/abi/mangle22.C scan-assembler \n_?_Z1g2CBIL_Z3foocEE[: \t\n]
 g++.dg/abi/mangle24.C (test for excess errors)
-g++.dg/abi/mangle4.C (test for excess errors)
 g++.dg/abi/offsetof.C  (test for warnings, line 21)
 g++.dg/abi/rtti3.C scan-assembler .weak_definition[ \t]_?_ZTSPP1A
 g++.dg/abi/vbase10.C  (test for warnings, line 13)

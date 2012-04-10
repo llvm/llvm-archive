@@ -4,12 +4,12 @@
 class A {};
 class B : public A {};
 
-template<const A* a> class C {};
-template<const B* b> class D {};
-template<B* b> class E {};
+template<const A* a> class C {}; // { dg-error "declared here" }
+template<const B* b> class D {}; 
+template<B* b> class E {}; // { dg-error "declared here" }
 
-template<const B* b> void f(D<b> &, C<static_cast<const A*>(b)> &) {} // { dg-error "" }
-template<const B* b> void g(D<b> &, E<const_cast<B*>(b)> &) {} // { dg-error "" }
+template<const B* b> void f(D<b> &, C<static_cast<const A*>(b)> &) {}
+template<const B* b> void g(D<b> &, E<const_cast<B*>(b)> &) {}
 
 B b;
 

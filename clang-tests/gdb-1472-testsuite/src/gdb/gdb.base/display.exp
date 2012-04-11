@@ -87,7 +87,7 @@ gdb_test "cont"     ".*Breakpoint 2, do_loops.*" "get to do_loops"
 # Create stopping points.
 #
 gdb_test "watch sum"    ".*\[Ww\]atchpoint 3: sum.*" "set watch"
-gdb_test "break 19"     ".*Breakpoint 4.*" "break 19"
+gdb_test "break 21"     ".*Breakpoint 4.*" "break 21"
 
 # Create displays for those points
 #

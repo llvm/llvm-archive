@@ -65,4 +65,4 @@ typedef struct {
 
 /* { dg-final { scan-assembler "objc_msgSendSuper" } } */
 /* { dg-final { scan-assembler-not "objc_msgSend\[^S\]" } } */
-/* { dg-final { scan-assembler-not "objc_assign_strongCast" } } */
+/* { dg-final { scan-assembler "objc_assign_strongCast" } } */

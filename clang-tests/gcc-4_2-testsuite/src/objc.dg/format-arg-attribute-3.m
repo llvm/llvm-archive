@@ -13,7 +13,7 @@ extern CFStringRef _My_LocalizedStringForKey( CFStringRef key,  NSString *value,
                                             __attribute__ ((format_arg (1)));
 
 #define My_NSLocalizedString(key, comment) \
-        _My_LocalizedStringForKey(key,@"",nil)
+        _My_LocalizedStringForKey(key,@"",nil)  /* { dg-warning "expanded from macro" } */
 
 
 static void Buggy_WarnAboutResponse( CFStringRef serverResponse )
@@ -32,6 +32,6 @@ static void SimpleAlert()
        because of format_arg (1) attribute on My_NSLocalizedString, no warning to be issued.
        Even when -Wformat-nonliteral is specified. */
     My_NSRunAlertPanel(@"Title of oops panel",
-                       My_NSLocalizedString(CFSTR("Something went wrong. Sorry."), @"Message of oops panel"),
+                       My_NSLocalizedString(CFSTR("Something went wrong. Sorry."), @"Message of oops panel"), /* { dg-warning "format string is not a string literal" } */
                        @"OK",nil,nil);
 }

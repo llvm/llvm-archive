@@ -12,11 +12,11 @@ struct A
 };
 
 template <typename T> 
-void func(A<T>::B* )	// { dg-error "variable|template|expression" }
+void func(A<T>::B* )	// { dg-error "typename" }
 {
 }
 
 int main() 
 {
-  func<void>(0);	// { dg-error "not declared|expression|;" }
+  func<void>(0);
 }

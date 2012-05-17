@@ -14,7 +14,7 @@ template <class T> struct A : T {
 
 struct B {
   void f(B);
-  void g(B) {}; // { dg-error "must qualify identifier to find this declaration in dependent base class" }
+  void g(B) {} // { dg-error "must qualify identifier to find this declaration in dependent base class" }
 };
 
 void f(B) {}

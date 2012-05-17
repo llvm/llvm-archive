@@ -60,7 +60,7 @@ void testRoutine() {
     
     
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     testRoutine();
     if (constructors == 0) {
         printf("No copy constructors!!!\n");

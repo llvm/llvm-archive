@@ -20,7 +20,7 @@ blockATYPE MyBlockIdFunc (id id_arg)
   return id_arg;
 }
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     void (^blockA)(void) = ^ { printf("hello\n"); };
     // an 'id' can be initialized wit a block.
     id aBlock = blockA;

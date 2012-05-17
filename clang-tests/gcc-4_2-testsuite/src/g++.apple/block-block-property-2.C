@@ -33,7 +33,7 @@ int DoBlock (int (^getIntCopy)(void))
 
 
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   int count;
   __block int val = 0;
   TestObject *to = [[TestObject alloc] init];

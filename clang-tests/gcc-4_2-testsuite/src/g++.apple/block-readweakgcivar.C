@@ -32,7 +32,7 @@ id objc_read_weak(id *location) {
 @end
 
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   // an object should not be retained within a stack Block
   __block int i = 0;
   void (^local)(void);

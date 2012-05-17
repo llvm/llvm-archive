@@ -85,7 +85,7 @@ void testRoutine() {
     
     
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     testRoutine();
     if (recovered == 1) {
         printf("%s: success\n", argv[0]);

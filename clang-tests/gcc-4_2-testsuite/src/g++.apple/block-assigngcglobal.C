@@ -31,7 +31,7 @@ id objc_assign_strongCast(id val, id *dest) {
 void (^GlobalVoidVoid)(void);
 
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   __block int i = 0;
    // assigning a Block into a global should elicit a global write-barrier under GC
    GlobalVoidVoid = ^ { ++i; };

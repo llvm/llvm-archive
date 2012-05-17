@@ -106,7 +106,7 @@ void testRoutine() {
     hack(b);
 }
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     testRoutine();
     exit(0);
 }

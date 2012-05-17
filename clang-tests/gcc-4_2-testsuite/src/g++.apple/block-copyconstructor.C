@@ -72,7 +72,7 @@ void testRoutine() {
     void (^b)(void) = ^{ printf("my const copy of one is %d\n", one.version()); };
 }
     
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     //simpletest();
     testRoutine();
     if (constructors != 0) {

@@ -20,7 +20,7 @@ extern "C" const char *class_getIvarLayout(Class cls);
 @dynamic getInt;
 @end
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     const char *layout = (char *)class_getIvarLayout([TestObject self]);
     printf("layout is:\n");
     int cursor = 0;

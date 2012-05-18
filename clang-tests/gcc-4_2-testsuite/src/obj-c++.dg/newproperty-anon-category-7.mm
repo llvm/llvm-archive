@@ -1,7 +1,6 @@
 /* APPLE LOCAL file radar 5159707 */
 /* Check that appropriate warning on property type mismatch is issued. */
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-do run { target *-*-darwin* } } */
 
 @class Bar;
 @class Baz;
@@ -11,7 +10,7 @@
     Baz *typeMismatchError;
 }
 
-@property(readonly, nonatomic, assign) Baz *typeMismatchError; /* { dg-error "property declared here" } */
+@property(readonly, nonatomic, assign) Baz *typeMismatchError; /* { dg-warning "property declared here" } */
 @end
 
 @interface Foo()

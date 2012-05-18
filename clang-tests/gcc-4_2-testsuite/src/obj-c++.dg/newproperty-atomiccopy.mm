@@ -33,7 +33,7 @@ id objc_getProperty(id self, SEL _sel, ptrdiff_t offset, BOOL atomic) {
 
 @end
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     id pool = [NSAutoreleasePool new];
     HandTested *to = [HandTested new];
     id tmp = [@"testString" mutableCopy];

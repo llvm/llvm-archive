@@ -74,7 +74,7 @@ NSString *playWithProperties()
                         g.techLead.fullName, g.runtimeGuru.fullName, g.propertiesMaven.fullName];
 }
 
-main()
+int main()
 {
     char buf [256];
     NSAutoreleasePool* pool  = [[NSAutoreleasePool alloc] init];

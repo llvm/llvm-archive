@@ -165,7 +165,7 @@ void testExpressions(const char *message, id collection) {
 }
     
 
-int main(int argc, char *argv) {
+int main(int argc, char *argv[]) {
 /**
     ++Verbosity;
 */

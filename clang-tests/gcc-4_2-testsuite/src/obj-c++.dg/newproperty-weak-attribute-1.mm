@@ -17,7 +17,7 @@
 @synthesize delegate=ivar;
 @end
 
-main () {
+int main () {
   [NSAutoreleasePool new];
 
   Foo *foo = [Foo new];

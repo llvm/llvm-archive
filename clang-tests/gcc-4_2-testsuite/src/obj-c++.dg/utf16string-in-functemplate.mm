@@ -7,7 +7,7 @@
 
 template <typename T> NSString* test (T i) { return @"æble"; }
 
-main () { 
+int main () { 
    NSLog (@"string: %@", test(42)); 
    return 0;
 }

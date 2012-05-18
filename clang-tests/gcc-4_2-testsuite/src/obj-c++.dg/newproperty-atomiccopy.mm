@@ -8,12 +8,14 @@
 
 static int count;
 
+extern "C"
 void objc_setProperty(id self, SEL _sel, ptrdiff_t offset, id value, BOOL atomic, BOOL shouldCopy)  {
   if (count != 0)
     abort ();
   ++ count;
 }
 
+extern "C"
 id objc_getProperty(id self, SEL _sel, ptrdiff_t offset, BOOL atomic) {
     if (count == 0)
      abort ();

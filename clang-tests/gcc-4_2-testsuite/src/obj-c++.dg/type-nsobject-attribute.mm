@@ -2,7 +2,7 @@
 /* Test for implementation of __attribute__ ((NSObject)) to make a struct pointer
    a first class objective-c pointer to object. */
 /* { dg-options "-mmacosx-version-min=10.6 -framework Foundation" } */
-/* { dg-do run { target *-*-darwin* } } */
+/* { dg-do compile { target *-*-darwin* } } */
 
 #import <Foundation/Foundation.h>
 
@@ -34,7 +34,7 @@ id objc_getProperty(id self, SEL _sel, ptrdiff_t offset, BOOL atomic) {
 @synthesize x=x;
 @end
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     HandTested *to = [HandTested new];
     to.x = tmp;  // setter
     if (tmp != to.x)

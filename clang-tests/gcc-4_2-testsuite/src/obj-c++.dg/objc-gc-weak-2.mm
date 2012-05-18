@@ -4,6 +4,7 @@
 /* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fnext-runtime -fobjc-gc" } */
 /* { dg-require-effective-target objc_gc } */
+/* { dg-skip-if "" { x86_64*-*-darwin* } { "*" } { "" } } */
 
 #include <objc/objc.h>
 #include <stdio.h>

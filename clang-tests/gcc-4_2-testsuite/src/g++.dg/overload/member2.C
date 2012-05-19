@@ -22,7 +22,7 @@ struct baz : foo
   int bar () {return 3;}
 };
 
-int main ()
+int main (int argv, char *argc[])
 {
   baz b;
   foo f;

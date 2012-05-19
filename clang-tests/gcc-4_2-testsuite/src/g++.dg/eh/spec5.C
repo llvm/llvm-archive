@@ -15,7 +15,7 @@ struct A {};
 
 void B::f () throw (A) {}
 
-int main ()
+int main (int argc, char *argc[])
 {
   B b;
   b.f();

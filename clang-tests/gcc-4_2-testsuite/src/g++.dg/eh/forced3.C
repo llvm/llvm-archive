@@ -50,7 +50,7 @@ doit () throw()
   force_unwind ();
 }
 
-int main()
+int main(int argc, char *argv[])
 { 
   std::set_unexpected (handle_unexpected);
   doit ();

@@ -43,7 +43,7 @@ force_unwind ()
   abort ();
 }
 
-int main()
+int main(int argc, char *argv[])
 { 
   try {
     force_unwind ();

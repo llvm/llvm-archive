@@ -31,7 +31,7 @@ A a;
 extern "C" void abort (void);
 extern "C" void exit (int);
 
-int main ()
+int main (int argv, char *argc[])
 {
   if (a.a.w != 1)
     abort ();

@@ -66,7 +66,7 @@ class C9
  ,  public C6
  ,  public C5
 {};
-main() {
+int main(int argc, char *argv[]) {
   C0 c0;
   C1 c1;
   C2 c2;

@@ -9,7 +9,7 @@ int \U000000C2(void) { return 3; }
 int wh\u00ff(void) { return 4; }
 int a\u00c4b\u0441\U000003b4e(void) { return 5; }
 
-int main (void)
+int main (int argv, char *argc[])
 {
   
   if (\u00C0() != 1)

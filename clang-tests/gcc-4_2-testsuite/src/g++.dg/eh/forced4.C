@@ -43,7 +43,7 @@ doit () throw(int)
   force_unwind ();
 }
 
-int main()
+int main(int argv, char *argc[])
 { 
   try {
     doit ();

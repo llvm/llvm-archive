@@ -14,6 +14,6 @@ template <int N> struct X
 };
 X<1234> bring;
 
-int main() {
+int main(int argv, char *argc[]) {
   return foo<5678> (bring) != 12345678;
 }

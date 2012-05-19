@@ -12,7 +12,7 @@ void f(const int &) { global = 78; }
 
 long long_arr[2];
 
-int main(void) {
+int main(int argv, char *argc[]) {
 
   char *p;
 

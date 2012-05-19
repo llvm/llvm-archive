@@ -33,7 +33,7 @@ int g(int y)
       if (x) { tick++; caught_x = ex; }
     }}
 }
-main()
+int main(int argv, char *argc[])
 {
   g(3);
   if (tick != 2 || caught_x != 3)

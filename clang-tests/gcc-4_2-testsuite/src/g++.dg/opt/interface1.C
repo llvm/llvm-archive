@@ -8,6 +8,6 @@
 
 extern void g();
 
-int main () {
+int main (int argv, char *argc[]) {
   g();
 }

@@ -75,7 +75,7 @@ static __attribute__ ((noinline)) void doit ()
   }
 }
 
-int main()
+int main(int argc, char *argv[])
 { 
   doit ();
   abort ();

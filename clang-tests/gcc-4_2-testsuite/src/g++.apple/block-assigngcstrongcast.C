@@ -17,6 +17,8 @@ void _Block_byref_release(void*src){}
 
 int GlobalInt = 0;
 
+// Make sure the objc runtime function names are not mangled.
+extern "C" {
 id objc_assign_global(id val, id *dest) {
     GlobalInt = 1;
     return (id)0;
@@ -30,6 +32,7 @@ id objc_assign_ivar(id val, id dest, ptrdiff_t offset) {
 id objc_assign_strongCast(id val, id *dest) {
     GlobalInt = 1;
     return (id)0;
+}
 }
 
 typedef struct {

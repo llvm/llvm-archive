@@ -12,6 +12,8 @@ void _Block_byref_release(void*src){}
 int GlobalInt = 0;
 int GlobalInt2 = 0;
 
+// Make sure the objc runtime function names are not mangled.
+extern "C" {
 id objc_assign_weak(id value, id *location) {
   GlobalInt = 1;
   *location = value;
@@ -22,7 +24,7 @@ id objc_read_weak(id *location) {
   GlobalInt2 = 1;
   return *location;
 }
-
+}
 //void (^GlobalVoidVoid)(void);
 
 int* (^__weak Henry)(void);

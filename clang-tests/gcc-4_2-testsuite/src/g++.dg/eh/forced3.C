@@ -11,7 +11,7 @@
 
 static _Unwind_Reason_Code
 force_unwind_stop (int version, _Unwind_Action actions,
-                   _Unwind_Exception_Class exc_class,
+                   uint64_t exc_class,
                    struct _Unwind_Exception *exc_obj,
                    struct _Unwind_Context *context,
                    void *stop_parameter)

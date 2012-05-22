@@ -12,16 +12,19 @@ void _Block_byref_release(void*src){}
 
 int GlobalInt = 0;
 
+extern "C"
 id objc_assign_global(id val, id *dest) {
     GlobalInt = 1;
     return (id)0;
 }
 
+extern "C"
 id objc_assign_ivar(id val, id dest, long offset) {
     GlobalInt = 1;
     return (id)0;
 }
 
+extern "C"
 id objc_assign_strongCast(id val, id *dest) {
     GlobalInt = 1;
     return (id)0;

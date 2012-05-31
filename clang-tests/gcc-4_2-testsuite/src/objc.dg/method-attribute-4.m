@@ -3,8 +3,8 @@
 /* { dg-do compile } */
 
 @interface NSString 
-- (const char *)lossyCString __attribute__((deprecated));
-+ (const char *)stringWithContentsOfFile __attribute__((deprecated));
+- (const char *)lossyCString __attribute__((deprecated)); /* { dg-error "declared here" } */
++ (const char *)stringWithContentsOfFile __attribute__((deprecated)); /* { dg-error "declared here" } */
 @end
 
 void foo (NSString *p)

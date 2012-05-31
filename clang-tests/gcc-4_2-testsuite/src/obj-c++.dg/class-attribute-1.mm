@@ -9,7 +9,8 @@
 #include "../objc/execute/Object2.h"
 
 __attribute ((deprecated))  
-@interface DEPRECATED : Object
+@interface DEPRECATED : Object /* { dg-warning "declared here" } */ \
+                               /* { dg-warning "declared here" } */
   { @public int ivar; } 
   - (int) instancemethod;
 @property int prop; 
@@ -20,7 +21,7 @@ __attribute ((deprecated))
   -(int) instancemethod {  return ivar; } 
 @end
 
-__attribute ((deprecated)) void DEP();
+__attribute ((deprecated)) void DEP(); /* { dg-warning "declared here" } */
 
 @interface DEPRECATED (Category)
 @end

@@ -4,9 +4,9 @@
 extern void foo() __attribute__((deprecated));
 extern void bar() __attribute__((deprecated));
 
-void foo() {}
+void foo() {} /* { dg-error "declared here" } */
 
-void bar() {
+void bar() { /* { dg-error "declared here" } */
     foo();  
 }
 

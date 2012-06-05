@@ -1,8 +1,10 @@
 /* APPLE LOCAL file radar 5096648 */
-#import <CoreFoundation/CFString.h>
 /* Test for implementation of (__format__ (__CFString__, m, n)) attribute */
 /* { dg-options "-Wformat -Wformat-security" } */
 /* { dg-do compile { target *-*-darwin* } } */
+
+typedef const struct __CFString * CFStringRef;
+#define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr "")) // expected-warning {{expanded from macro 'CFSTR'}}
 
 #define SECURITY_ATTR	__attribute__ ((__format__ (__CFString__, 1, 2)))
 

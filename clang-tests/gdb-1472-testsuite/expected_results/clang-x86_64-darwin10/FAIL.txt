@@ -190,6 +190,16 @@ gdb.base/so-impl-ld.exp: step in solib call
 gdb.base/so-impl-ld.exp: step out of solib call
 gdb.base/volatile.exp: ptype video
 gdb.cp/gdb1355.exp: ptype s1
+gdb.cp/inherit.exp: print g_vD.vC::vx
+gdb.cp/inherit.exp: print g_vE
+gdb.cp/inherit.exp: print g_vE.vA::va
+gdb.cp/inherit.exp: print g_vE.vA::vx
+gdb.cp/inherit.exp: print g_vE.vB::vb
+gdb.cp/inherit.exp: print g_vE.vB::vx
+gdb.cp/inherit.exp: print g_vE.vC::vc
+gdb.cp/inherit.exp: print g_vE.vC::vx
+gdb.cp/inherit.exp: print g_vE.vD::vd
+gdb.cp/inherit.exp: print g_vE.vD::vx
 gdb.cp/m-static.exp: static const int initialized elsewhere
 gdb.cp/m-static.exp: static const int initialized nowhere
 gdb.cp/namespace.exp: print 'BBB::Class::xyzq'
@@ -202,10 +212,15 @@ gdb.cp/namespace.exp: ptype CClass
 gdb.cp/namespace.exp: ptype OtherFileClass
 gdb.cp/overload.exp: ptype foo_instance1
 gdb.cp/pr-574.exp: PR gdb/574
+gdb.cp/pr-1210.exp: print *obj
+gdb.cp/pr-1210.exp: print obj->myB
 gdb.cp/templates.exp: constructor breakpoint (bad menu choices)
 gdb.cp/templates.exp: ptype T5<int>
 gdb.cp/templates.exp: ptype t5i
 gdb.cp/virtfunc.exp: print pEe->D::vg() (rdar://problem/3645369)
+gdb.cp/virtfunc.exp: print pEe->fvb()
+gdb.cp/virtfunc.exp: print pEe->vd()
+gdb.cp/virtfunc.exp: print pEe->vvb()
 gdb.mi/gdb669.exp: -thread-list-ids (at main)
 gdb.mi/gdb669.exp: -thread-list-ids (try 0)
 gdb.mi/gdb669.exp: -thread-list-ids (try 1)

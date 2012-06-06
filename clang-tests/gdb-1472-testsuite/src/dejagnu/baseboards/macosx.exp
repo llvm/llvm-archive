@@ -11,7 +11,7 @@ set arch_option ""
 
 set timeout 10
 # By default debugging option for compiler is "-gdwarf-2".
-set debug_option "-g"
+set debug_option "-g --save-temps -dA"
 
 global debug_default_format_is_dwarf
 global debug_default_format_is_stabs
@@ -84,18 +84,18 @@ foreach x $board_variant_list {
             set debug_default_format_is_stabs 1
 	}
 	{ gdwarf } {
-	    set debug_option "-gdwarf-2"
+	    set debug_option "-gdwarf-2 --save-temps -dA"
             set debug_default_format_is_dwarf 1
             set debug_default_format_is_stabs 0
 	}
 	{ dsym } {
-	    set debug_option "-gdwarf-2"
+	    set debug_option "-gdwarf-2 --save-temps -dA"
 	    set gdb_test_apple_dsym 1
             set debug_default_format_is_dwarf 1
             set debug_default_format_is_stabs 0
 	}
 	{ dsym_strip } {
-	    set debug_option "-gdwarf-2"
+	    set debug_option "-gdwarf-2 --save-temps -dA"
 	    set gdb_test_apple_dsym 2
             set debug_default_format_is_dwarf 1
             set debug_default_format_is_stabs 0

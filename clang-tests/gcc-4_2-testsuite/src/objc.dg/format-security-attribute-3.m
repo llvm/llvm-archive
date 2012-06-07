@@ -16,9 +16,9 @@ int main()
     CFStringRef foo;
         CFLog (foo); /* { dg-warning "format string is not a string literal" } */
     CFLog (foo, d);  // ok
-    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); // expected-warning {{data argument not used by format string}}
+    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); // dg-warning {{data argument not used by format string}}
     CFLog(CFSTR("foo is %@"), CFSTR("foo is %@")); // OK
-    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); // expected-warning {{data argument not used by format string}}
-    CFLog(CFSTR("foo is %@")); // expected-warning {{more '%' conversions than data arguments}}
+    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); // dg-warning {{data argument not used by format string}}
+    CFLog(CFSTR("foo is %@")); // dg-warning {{more '%' conversions than data arguments}}
 }
 

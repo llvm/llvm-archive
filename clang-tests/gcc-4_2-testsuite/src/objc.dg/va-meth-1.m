@@ -9,13 +9,13 @@
 
 @interface MathClass: Object
 /* sum positive numbers; -1 ends the list */
-+ (int) sum: (int)firstNumber, int secondNumber, ...;
-+ (int) prod: (int) firstNumber, int secondNumber, int thirdNumber;
++ (int) sum: (int)firstNumber, int secondNumber, ...; 	/* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */
++ (int) prod: (int) firstNumber, int secondNumber, int thirdNumber; /* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */
 + (int) minimum: (int) firstNumber, ...;
 @end
 
 @implementation MathClass
-+ (int) sum: (int)firstNumber, int secondNumber, ...
++ (int) sum: (int)firstNumber, int secondNumber, ... /* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */
 {
   va_list ap;
   int sum = 0, number = 0;
@@ -33,7 +33,7 @@
 
   return sum;
 }
-+ (int) prod: (int) firstNumber, int secondNumber, int thirdNumber {
++ (int) prod: (int) firstNumber, int secondNumber, int thirdNumber { /* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */
   return firstNumber * secondNumber * thirdNumber;
 }
 + (int) minimum: (int)firstNumber, ...

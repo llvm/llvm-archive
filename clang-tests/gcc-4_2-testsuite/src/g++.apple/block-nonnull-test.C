@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5925781 */
 /* Test for the "nonnull" function attribute.  */
 /* { dg-do compile } */
-/* { dg-options "-Wnonnull" } */
+/* { dg-options "-Wnonnull -fno-show-column" } */
 
 #include <stddef.h>
 

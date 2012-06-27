@@ -19,9 +19,9 @@ int main(void)
   p = ^{ ; };
         return 0;
 }
-/* { dg-final { scan-assembler "___main_block_invoke_0" } } */
-/* { dg-final { scan-assembler "___main_block_invoke_0\[0-9\]" } } */
-/* { dg-final { scan-assembler "___DOO_block_invoke_0" } } */
-/* { dg-final { scan-assembler "___DOO_block_invoke_0\[0-9\]" } } */
+/* { dg-final { scan-assembler "___main_block_invoke" } } */
+/* { dg-final { scan-assembler "___main_block_invoke_2" } } */
+/* { dg-final { scan-assembler "___DOO_block_invoke" } } */
+/* { dg-final { scan-assembler "___DOO_block_invoke_2" } } */
 
 

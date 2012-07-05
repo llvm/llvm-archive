@@ -7,6 +7,8 @@ debug-in-ofile/debug-in-ofile.exp: missing one.o four.o - Setting bpt at my_one
 debug-in-ofile/debug-in-ofile.exp: missing one.o four.o: Continue to my_six
 gdb.apple/bigenum.exp: print myvar with enum value of b
 gdb.apple/blocks.exp: Print self in int return block
+gdb.apple/dirname-tab.exp: correct tab completion on directory name
+gdb.apple/dirname-tab.exp: correct tab completion on directory name 2ndtry
 gdb.apple/file-statics.exp: -file-list-globals: all files, supply shlib, no values
 gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, no values
 gdb.apple/file-statics.exp: -file-list-globals: supply file and shlib, simple values

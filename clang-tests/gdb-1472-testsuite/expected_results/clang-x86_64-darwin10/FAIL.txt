@@ -281,6 +281,11 @@ gdb.trace/tracecmd.exp: Could not find gdb_recursion_test function
 ld-r/ld-r.exp: Got warnings for mismatched timestamp1: ld-r testing - ar - debug info in .o files
 ld-r/ld-r.exp: Got warnings for mismatched timestamp2: ld-r testing - debug info in .o files
 small-c/mi-fix-small-c.exp: finish out of static_printer, look for correct strings (picbase register setup test)
+small-c/fix-small-c.exp: small c fix and continue tests suppressed
+small-c/mi-fix-small-c.exp: mi runto main (2)
+small-c/mi-fix-small-c.exp: small c fix and continue MI tests suppressed
+small-objc/fix-small-objc.exp: setting breakpoint at main
+small-objc/fix-small-objc.exp: small objc fix and continue tests suppressed
 xcode/stack-list-frames-lite-sigtramp.exp: -stack-list-frames-lite -limit 500 works
 xcode/stack-list-frames-lite-sigtramp.exp: check stack depth is as expected
 xcode/stack-list-frames-lite-sigtramp.exp: get values from stack-list-frames-lite

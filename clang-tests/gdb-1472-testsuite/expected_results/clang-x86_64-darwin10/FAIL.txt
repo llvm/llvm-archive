@@ -192,6 +192,20 @@ gdb.base/so-impl-ld.exp: step in solib call
 gdb.base/so-impl-ld.exp: step out of solib call
 gdb.base/volatile.exp: ptype video
 gdb.cp/gdb1355.exp: ptype s1
+gdb.cp/inherit.exp: print g_vB
+gdb.cp/inherit.exp: print g_vB.vA::va
+gdb.cp/inherit.exp: print g_vB.vA::vx
+gdb.cp/inherit.exp: print g_vB.va
+gdb.cp/inherit.exp: print g_vC
+gdb.cp/inherit.exp: print g_vC.vA::va
+gdb.cp/inherit.exp: print g_vC.vA::vx
+gdb.cp/inherit.exp: print g_vC.va
+gdb.cp/inherit.exp: print g_vD
+gdb.cp/inherit.exp: print g_vD.vA::va
+gdb.cp/inherit.exp: print g_vD.vA::vx
+gdb.cp/inherit.exp: print g_vD.vB::vb
+gdb.cp/inherit.exp: print g_vD.vB::vx
+gdb.cp/inherit.exp: print g_vD.vC::vc
 gdb.cp/inherit.exp: print g_vD.vC::vx
 gdb.cp/inherit.exp: print g_vE
 gdb.cp/inherit.exp: print g_vE.vA::va

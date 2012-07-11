@@ -21,3 +21,6 @@ gdb.base/dump.exp: reload array as memory, intel hex; capture intarray
 gdb.base/dump.exp: reload struct as memory, intel hex; capture intstruct
 gdb.base/ending-run.exp: don't step after run
 gdb.gdbtk/browser.exp: Insight not supported on Mac OS X.
+small-c/fix-small-c.exp: setting breakpoint at main
+small-c/mi-fix-small-c.exp: breakpoint at main
+small-objc/fix-small-objc.exp: set DYLD_LIBRARY_PATH

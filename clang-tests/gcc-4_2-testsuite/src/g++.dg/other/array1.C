@@ -5,6 +5,6 @@
 
 int main()
 {
-	const char *s = typeid(double[][]).name(); // { dg-error "bounds|confused" }
-	return 0;
+    const char *s = typeid(double[][]).name(); // { dg-error "array has incomplete element type" }
+    return 0;
 }

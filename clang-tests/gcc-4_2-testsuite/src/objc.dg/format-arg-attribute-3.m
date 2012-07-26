@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5195402 */
 /* Test for correct implementation of format_arg attribute on CFStringRef type of
    format strings. */
-/* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral -mmacosx-version-min=10.5" } */
+/* { dg-options "-Wformat -Wformat-security -Wformat-nonliteral -Wunused-function -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 #include <Cocoa/Cocoa.h>

@@ -4,7 +4,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fno-objc-gc -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fno-objc-gc" { target arm*-*-darwin* } } */
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 {
   id x;
 }

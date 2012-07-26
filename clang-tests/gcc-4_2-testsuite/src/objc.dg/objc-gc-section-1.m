@@ -6,7 +6,7 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-skip-if "" { arm*-*-darwin* } { "*" } { "" } } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 @end
 @implementation  INTF
 @end

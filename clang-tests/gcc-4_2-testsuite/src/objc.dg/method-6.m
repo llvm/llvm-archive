@@ -6,7 +6,7 @@
 
 #include <objc/Protocol.h>
 
-@interface Base
+__attribute__((objc_root_class)) @interface Base
 - (unsigned)port;
 @end
 

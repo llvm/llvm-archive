@@ -5,7 +5,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 @protocol NSCopying;
 
-@interface NSWindow 
+__attribute__((objc_root_class)) @interface NSWindow 
 {
 	NSWindow* IVAR;
 }

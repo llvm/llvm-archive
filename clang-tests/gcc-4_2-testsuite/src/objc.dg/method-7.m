@@ -5,11 +5,11 @@
 /* APPLE LOCAL radar 4894756 */
 #include "../objc/execute/Object2.h"
 
-@interface Class1
+__attribute__((objc_root_class)) @interface Class1
 - (void)setWindow:(Object *)wdw;
 @end
 
-@interface Class2
+__attribute__((objc_root_class)) @interface Class2
 - (void)setWindow:(Class1 *)window;
 @end
 

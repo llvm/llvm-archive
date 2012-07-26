@@ -6,7 +6,7 @@ in the same places that the old ABI uses objc_msgSend_fpret().
 /* { dg-do compile { target i?86-*-darwin* } } */
 /* { dg-require-effective-target ilp32 } */
 
-@interface Test @end
+__attribute__((objc_root_class)) @interface Test @end
 @implementation Test
 +(double) method { return 0.0; }
 @end

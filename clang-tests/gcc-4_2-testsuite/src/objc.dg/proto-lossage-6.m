@@ -2,7 +2,7 @@
 @class Base;
 @protocol _Protocol;
 
-@interface ClassA {
+__attribute__((objc_root_class)) @interface ClassA {
 }
 -(void) func1:(Base<_Protocol> *)inTarget;
 @end

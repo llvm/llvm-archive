@@ -4,7 +4,7 @@
 
 typedef struct S { int i; } NSDictionary;
 
-@interface A 
+__attribute__((objc_root_class)) @interface A 
 {
     NSDictionary * _userInfo;
     int i1;

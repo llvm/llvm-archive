@@ -12,7 +12,7 @@
 - (void) method;
 @end
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 @end
 
 int main()

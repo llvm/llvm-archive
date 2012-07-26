@@ -15,7 +15,7 @@
 @property(readonly)    id                syncSetsList;
 @end
 
-@interface SFFileSyncManager <SFFileSyncManager>
+__attribute__((objc_root_class)) @interface SFFileSyncManager <SFFileSyncManager>
 @end
 
 @implementation SFFileSyncManager

@@ -3,7 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 { 
     int x;
 }
@@ -23,7 +23,7 @@
 @end
 
 
-@interface Bar
+__attribute__((objc_root_class)) @interface Bar
 { 
     int x;
 }
@@ -41,7 +41,7 @@
 @end
 
 
-@interface Baz
+__attribute__((objc_root_class)) @interface Baz
 { 
     int x;
 }

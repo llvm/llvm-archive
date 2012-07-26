@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-abi-version=1" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface untitled
+__attribute__((objc_root_class)) @interface untitled
 -(int)countArgs:(id)fmt, ...;
 @end
 

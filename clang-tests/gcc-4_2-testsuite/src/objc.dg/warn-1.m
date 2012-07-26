@@ -6,7 +6,7 @@ void depFunc1() {}
 __attribute__((deprecated))
 void depFunc2() { depFunc1(); }
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 -(void)deprecatedMethod1 __attribute__((deprecated));
 -(void)deprecatedMethod2 __attribute__((deprecated));
 @end

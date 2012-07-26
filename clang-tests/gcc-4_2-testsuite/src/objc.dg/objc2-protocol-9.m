@@ -10,7 +10,7 @@
 @protocol Proto2
 @end
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 @end
 
 @interface Foo (Category) <Proto1, Proto2>

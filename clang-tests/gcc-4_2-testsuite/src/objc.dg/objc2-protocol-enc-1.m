@@ -15,7 +15,7 @@
 @property(copy)  Foo <X, Y, Z> *fooxyz;
 @end
 
-@interface Intf <Proto>
+__attribute__((objc_root_class)) @interface Intf <Proto>
 {
 id <X> IVAR_x;
 id <X, Y> IVAR_xy;

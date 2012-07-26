@@ -11,7 +11,7 @@
 @protocol Square
 @end
 
-@interface Label <Square, Rectangle>
+__attribute__((objc_root_class)) @interface Label <Square, Rectangle>
 @end;
 
 int  main ()

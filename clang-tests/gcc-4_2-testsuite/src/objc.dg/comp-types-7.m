@@ -2,14 +2,14 @@
 /* We used to ICE because we removed the cast to List_linked*
    in -[ListIndex_linked next]. */
 
-@interface List
+__attribute__((objc_root_class)) @interface List
 {
 @public
   int firstLink;
 }
 @end
 
-@interface ListIndex_linked
+__attribute__((objc_root_class)) @interface ListIndex_linked
 {
 @public
   List *collection;

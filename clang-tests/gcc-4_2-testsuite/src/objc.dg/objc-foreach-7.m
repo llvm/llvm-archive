@@ -12,7 +12,7 @@ typedef struct objc_object {
 
 struct __objcFastEnumerationState;
 
-@interface MyList 
+__attribute__((objc_root_class)) @interface MyList 
 @end
 
 @implementation MyList

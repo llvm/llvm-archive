@@ -5,7 +5,7 @@
 /* { dg-options "-fobjc-new-property -fobjc-abi-version=1" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface Moe
+__attribute__((objc_root_class)) @interface Moe
 @property int ivar;
 @end
 
@@ -14,7 +14,7 @@
 - (void)setIvar:(int)arg{}
 @end 
 
-@interface Fred
+__attribute__((objc_root_class)) @interface Fred
 @property int ivar;
 @end
 
@@ -27,7 +27,7 @@
 - (int)ivar{return 1;}
 @end
 
-@interface Bob
+__attribute__((objc_root_class)) @interface Bob
 @property int ivar;
 @end
 
@@ -37,7 +37,7 @@
 - (int)ivar{return 1;}
 @end
 
-@interface Jade
+__attribute__((objc_root_class)) @interface Jade
 @property int ivar;
 @end
 

@@ -3,7 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 {
     int intSetter; 
 }

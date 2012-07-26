@@ -4,7 +4,7 @@
 /* { dg-options "-Wall" } */
 /* { dg-do compile } */
 
-@interface NSObject {
+__attribute__((objc_root_class)) @interface NSObject {
 }
 - (unsigned)retainCount;
 @end

@@ -5,7 +5,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface A {
+__attribute__((objc_root_class)) @interface A {
 };
 @property id *foo;
 @property id **foo2;

@@ -5,15 +5,15 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" } */
 
-@interface c1 @end
-@interface c2 @end
-@interface c3 @end
-@interface c4 @end
-@interface c5 @end
-@interface c6 @end
-@interface c7 @end
-@interface c8 @end
-@interface c9 @end
+__attribute__((objc_root_class)) @interface c1 @end
+__attribute__((objc_root_class)) @interface c2 @end
+__attribute__((objc_root_class)) @interface c3 @end
+__attribute__((objc_root_class)) @interface c4 @end
+__attribute__((objc_root_class)) @interface c5 @end
+__attribute__((objc_root_class)) @interface c6 @end
+__attribute__((objc_root_class)) @interface c7 @end
+__attribute__((objc_root_class)) @interface c8 @end
+__attribute__((objc_root_class)) @interface c9 @end
 
 @implementation c1 +load { } +(void)initialize { } @end
 @implementation c2 +load { } +(void)initialize { } @end

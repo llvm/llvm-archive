@@ -4,7 +4,7 @@
 /* { dg-options "-fno-objc-legacy-dispatch" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface Foo 
+__attribute__((objc_root_class)) @interface Foo 
 +class; 
 @end
 int main() {

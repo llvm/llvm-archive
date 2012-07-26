@@ -5,7 +5,7 @@
 /* { dg-do compile } */
 #include <Foundation/Foundation.h>
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 - (id)initWithFormat:(NSString *)format arguments:(va_list)argList __attribute__((format(__NSString__, 1, 0)));
 @end
 

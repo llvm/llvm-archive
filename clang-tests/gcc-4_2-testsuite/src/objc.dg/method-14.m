@@ -3,7 +3,7 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 - (void)insertNewButtonImage:(Foo *)newButtonImage in:(Foo *)buttonCell;
 + (oneway void)oneway:(int)i2 byref:(int)i3 out:(float)f4 bycopy:(float)f5;
 @end

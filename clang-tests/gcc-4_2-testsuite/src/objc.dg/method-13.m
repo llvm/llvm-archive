@@ -20,7 +20,7 @@ extern int strcmp(const char *, const char *);
 - (const char *) method4;
 @end
 
-@interface Root
+__attribute__((objc_root_class)) @interface Root
 { Class isa; }
 + (const char *) method2;
 @end

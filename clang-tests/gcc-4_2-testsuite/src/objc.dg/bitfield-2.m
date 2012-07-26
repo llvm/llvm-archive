@@ -11,7 +11,7 @@ extern int strcmp(const char *, const char *);
 
 #define CHECK_IF(expr) if(!(expr)) abort();
 
-@interface Base 
+__attribute__((objc_root_class)) @interface Base 
 {
     struct objc_class *isa;
     int full;

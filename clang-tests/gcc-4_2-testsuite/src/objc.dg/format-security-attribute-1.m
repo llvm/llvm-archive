@@ -6,7 +6,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 
 @class NSString;
-@interface NSString @end
+__attribute__((objc_root_class)) @interface NSString @end
 
 #define SECURITY_ATTR	__attribute__ ((__format__ (__NSString__, 1, 2)))
 

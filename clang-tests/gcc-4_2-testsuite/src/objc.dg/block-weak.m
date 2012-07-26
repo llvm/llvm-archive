@@ -2,7 +2,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-fblocks" } */
 
-@interface ShortcutsController
+__attribute__((objc_root_class)) @interface ShortcutsController
 @end
 
 @class barbar;

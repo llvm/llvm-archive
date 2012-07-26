@@ -3,7 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Super { id isa; } @end
+__attribute__((objc_root_class)) @interface Super { id isa; } @end
 
 @implementation Super
 	+method { return self; } 

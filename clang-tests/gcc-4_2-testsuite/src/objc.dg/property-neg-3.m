@@ -4,7 +4,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface MyClass {
+__attribute__((objc_root_class)) @interface MyClass {
 
 };
 @property unsigned char bufferedUTF8Bytes[4]; /* { dg-error "bad property declaration" } */

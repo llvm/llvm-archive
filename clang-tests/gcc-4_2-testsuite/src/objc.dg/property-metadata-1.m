@@ -11,7 +11,7 @@
 @property(readonly) const char *description;
 @end
 
-@interface GCObject <GCObject> {
+__attribute__((objc_root_class)) @interface GCObject <GCObject> {
     Class       isa;
 }
 @end

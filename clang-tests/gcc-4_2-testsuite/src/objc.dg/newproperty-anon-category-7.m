@@ -6,7 +6,7 @@
 @class Bar;
 @class Baz;
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 {
     Baz *typeMismatchError;
 }

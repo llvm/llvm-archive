@@ -12,7 +12,7 @@ typedef struct objc_object {
 @protocol NSObject
 @end
 
-@interface NSObject <NSObject> 
+__attribute__((objc_root_class)) @interface NSObject <NSObject> 
 @end
 
 @protocol NSCopying

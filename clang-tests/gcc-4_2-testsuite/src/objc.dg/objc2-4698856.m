@@ -7,7 +7,7 @@
 static void * _objc_empty_cache;
 static IMP _objc_empty_vtable;
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 @end
 
 @implementation Foo @end

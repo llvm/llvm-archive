@@ -13,7 +13,7 @@ typedef struct objc_object { } *id ;
 int x = 41 ;
 extern id objc_msgSend(id self, char * op, ...);
 extern int bogonic (int, int, int) ;
-@interface Document {}
+__attribute__((objc_root_class)) @interface Document {}
 - (Document *) window;
 - (Document *) class;
 - (Document *) close;

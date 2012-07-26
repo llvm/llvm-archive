@@ -9,7 +9,7 @@
 @protocol Proto2
 @end
 
-@interface Super <Proto1, Proto2> { id isa; } @end
+__attribute__((objc_root_class)) @interface Super <Proto1, Proto2> { id isa; } @end
 @implementation Super @end
 /* { dg-final { scan-assembler "l_OBJC_PROTOCOL_\\\$_Proto1:" } } */
 /* { dg-final { scan-assembler "l_OBJC_PROTOCOL_\\\$_Proto2:" } } */

@@ -5,7 +5,7 @@
 /* APPLE LOCAL radar 4894756 */
 /* { dg-require-effective-target ilp32 } */
 
-@interface Test
+__attribute__((objc_root_class)) @interface Test
 -(void) test2: (volatile int) a;
 @end
 

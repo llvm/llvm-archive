@@ -1,7 +1,7 @@
 /* Test for graceful handling of anonymous ivars.  */
 /* { dg-do compile } */
 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
    unsigned char : 1;
    int e: 3;
    signed: 2;

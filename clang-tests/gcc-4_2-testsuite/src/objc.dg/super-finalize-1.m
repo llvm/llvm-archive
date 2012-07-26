@@ -3,7 +3,7 @@
 
 /* { dg-do compile } */
 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
   void *isa;
 }
 - (void) finalize;

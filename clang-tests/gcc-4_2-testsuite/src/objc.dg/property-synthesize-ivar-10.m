@@ -4,7 +4,7 @@
 /* { dg-options "-fnew-property-ivar-synthesis -fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface I
+__attribute__((objc_root_class)) @interface I
 {
 	int _p;
 	int _p3;

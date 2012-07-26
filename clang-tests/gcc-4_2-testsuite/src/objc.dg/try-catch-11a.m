@@ -8,7 +8,7 @@
 
 typedef volatile int IOSharedLockData;
 
-@interface TestMyTests
+__attribute__((objc_root_class)) @interface TestMyTests
 - (void) testSpoon;
 @end
 

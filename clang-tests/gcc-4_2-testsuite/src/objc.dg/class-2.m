@@ -1,10 +1,10 @@
 /* Test super classes.  */
 /* { dg-do compile } */
 
-@interface supclass1
+__attribute__((objc_root_class)) @interface supclass1
 @end
 
-@interface supclass2
+__attribute__((objc_root_class)) @interface supclass2
 @end
 
 @interface class1 : supclass1

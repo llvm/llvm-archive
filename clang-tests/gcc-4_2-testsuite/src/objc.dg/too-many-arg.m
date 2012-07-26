@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4491608 */
 /* { dg-do compile } */
 
-@interface SomeClass
+__attribute__((objc_root_class)) @interface SomeClass
 + method:(int)foo;
 @end
 

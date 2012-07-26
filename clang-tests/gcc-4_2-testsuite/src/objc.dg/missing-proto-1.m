@@ -2,5 +2,5 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface Foo <Missing> /* { dg-error "cannot find protocol declaration for .Missing." } */
+__attribute__((objc_root_class)) @interface Foo <Missing> /* { dg-error "cannot find protocol declaration for .Missing." } */
 @end

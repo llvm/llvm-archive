@@ -4,12 +4,12 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface NSArray @end
+__attribute__((objc_root_class)) @interface NSArray @end
 
 @interface NSMutableArray : NSArray
 @end
 
-@interface Class1 
+__attribute__((objc_root_class)) @interface Class1 
 {
  NSMutableArray* pieces;
  double* unrelated;
@@ -21,7 +21,7 @@
 
 @end
 
-@interface Class2  {
+__attribute__((objc_root_class)) @interface Class2  {
  Class1* container;
 }
 

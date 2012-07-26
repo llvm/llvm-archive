@@ -5,7 +5,7 @@
 
 @class QZFile;
 
-@interface QZImage
+__attribute__((objc_root_class)) @interface QZImage
 {
 }
 @property (copy) QZFile *imageFile;

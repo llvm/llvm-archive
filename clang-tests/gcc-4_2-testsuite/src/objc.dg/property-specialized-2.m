@@ -9,7 +9,7 @@
 @protocol P2 @end
 @protocol P3 @end
 
-@interface NSData @end
+__attribute__((objc_root_class)) @interface NSData @end
 
 @interface MutableNSData : NSData @end
 

@@ -2,7 +2,7 @@
 /* Test that lvalue cast with -fobjc-gc also results in a warning. */
 /* { dg-options "-fobjc-gc" } */
 
-@interface I @end
+__attribute__((objc_root_class)) @interface I @end
 
 void foo(I* pI)
 {

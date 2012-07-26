@@ -4,9 +4,9 @@
 */
 /* { dg-do compile } */
 
-@interface Super @end
+__attribute__((objc_root_class)) @interface Super @end
 
-@interface MyWpModule @end 	/* { dg-error "previous definition is here" } */
+__attribute__((objc_root_class)) @interface MyWpModule @end 	/* { dg-error "previous definition is here" } */
 
 @compatibility_alias  MyAlias MyWpModule;
 

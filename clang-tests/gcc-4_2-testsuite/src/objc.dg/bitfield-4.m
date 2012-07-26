@@ -3,7 +3,7 @@
 /* Author: Ziemowit Laski   <zlaski@apple.com>  */
 /* { dg-do compile } */
 
-@interface Base {
+__attribute__((objc_root_class)) @interface Base {
   int i;
 }
 @end

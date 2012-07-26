@@ -5,7 +5,7 @@
 @class NSString;
 @protocol NSObject
 @end
-@interface NSObject <NSObject> {
+__attribute__((objc_root_class)) @interface NSObject <NSObject> {
 }
 @end
 void __setRetained(id *ivar, id value) {

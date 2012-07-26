@@ -50,7 +50,7 @@ typedef struct {
   __strong CFDictionaryRef cfElementArray[10];
 } struct_with_ids_t;
 
-@interface Foo  {
+__attribute__((objc_root_class)) @interface Foo  {
 @public
 // assignments to any/all of these fields should generate objc_assign_ivar
   __strong CFDictionaryRef dict;

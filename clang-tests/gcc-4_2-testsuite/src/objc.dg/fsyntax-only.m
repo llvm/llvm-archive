@@ -2,7 +2,7 @@
 /* { dg-do compile } */
 /* { dg-options "-fsyntax-only" } */
 
-@interface foo
+__attribute__((objc_root_class)) @interface foo
 -(void) my_method:(int) i with:(int) j;
 @end
 

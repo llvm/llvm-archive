@@ -4,7 +4,7 @@
 /* { dg-options "-gdwarf-2 -dA" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-final { scan-assembler "\"_prop\\\\0\".*DW_AT_name" } } */
-@interface Foo 
+__attribute__((objc_root_class)) @interface Foo 
 {
   id isa;
   const char* _prop;

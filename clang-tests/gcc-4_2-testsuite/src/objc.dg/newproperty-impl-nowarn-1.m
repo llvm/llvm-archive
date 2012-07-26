@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Larry
+__attribute__((objc_root_class)) @interface Larry
 @property int ivar;
 @end
 
@@ -14,7 +14,7 @@
 - (int)ivar{};
 @end
 
-@interface Moe
+__attribute__((objc_root_class)) @interface Moe
 {
     int ivar;
 }
@@ -27,7 +27,7 @@
 - (void)setIvar:(int)arg{};
 @end
 
-@interface Curly
+__attribute__((objc_root_class)) @interface Curly
 @property int ivar;
 @end
 

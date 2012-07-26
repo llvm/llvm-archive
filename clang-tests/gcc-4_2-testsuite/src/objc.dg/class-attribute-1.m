@@ -29,7 +29,7 @@ __attribute ((deprecated)) void DEP();
 @end /* { dg-warning "deprecated" } */
 
 __attribute ((unavailable)) __attribute ((XXXX)) 
-@interface UNAVAILABLE 
+__attribute__((objc_root_class)) @interface UNAVAILABLE 
   - (int *) AnaotherInst;	/* { dg-warning "unknown" } */
   + (DEPRECATED*) return_deprecated; /* { dg-warning "deprecated" } */
   - (UNAVAILABLE *) return_unavailable;  /* { dg-error "unavailable" } */

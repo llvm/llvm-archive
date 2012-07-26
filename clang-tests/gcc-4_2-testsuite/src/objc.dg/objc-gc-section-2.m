@@ -5,7 +5,7 @@
 /* { dg-require-effective-target ilp32 } */
 /* { dg-require-effective-target objc_gc } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 @end
 @implementation  INTF
 @end

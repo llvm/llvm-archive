@@ -5,7 +5,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface PSEntry
+__attribute__((objc_root_class)) @interface PSEntry
 @property (getter=isRead, setter=setRead:) int read;
 @end
 

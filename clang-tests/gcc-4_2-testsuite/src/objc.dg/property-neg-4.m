@@ -4,7 +4,7 @@
 /* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Person 
+__attribute__((objc_root_class)) @interface Person 
 {
 }
 @property char *fullName;

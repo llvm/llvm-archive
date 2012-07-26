@@ -8,7 +8,7 @@ typedef struct _NSAttributeDictionaryElement {
     unsigned value;
 } NSAttributeDictionaryElement;
 
-@interface NSTableOptions {
+__attribute__((objc_root_class)) @interface NSTableOptions {
     unsigned numElements;
     unsigned refCount;
     NSAttributeDictionaryElement elements[1024];

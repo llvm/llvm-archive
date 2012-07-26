@@ -8,7 +8,7 @@
 struct empty {
 };
 
-@interface PC {
+__attribute__((objc_root_class)) @interface PC {
 }
 @end
 

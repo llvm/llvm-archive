@@ -3,7 +3,7 @@
 /* { dg-do compile } */
 /* { dg-options "-Wformat" } */
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 - (void) message_with_line : (int)anchor : (const char *)format, ...
   __attribute__ ((__format__ (__printf__, 2, 3))) __attribute__ ((deprecated)) __attribute__ ((__sentinel__(1)));
 + (void) class_message : (int)anchor : (const char *)format, ... __attribute__ ((__format__ (__printf__, 2, 3)));

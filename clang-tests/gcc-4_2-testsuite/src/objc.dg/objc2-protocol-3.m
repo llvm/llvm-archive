@@ -10,7 +10,7 @@
 @protocol PROTO2
 @end
 
-@interface INTF <PROTO, PROTO1, PROTO2> @end
+__attribute__((objc_root_class)) @interface INTF <PROTO, PROTO1, PROTO2> @end
 
 @implementation INTF @end
 

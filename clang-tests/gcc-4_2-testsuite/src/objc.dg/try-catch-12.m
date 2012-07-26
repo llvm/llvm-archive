@@ -6,7 +6,7 @@
 /* { dg-options "-fobjc-exceptions -fnext-runtime" } */
 /* { dg-do compile } */
 
-@interface TestMyTests
+__attribute__((objc_root_class)) @interface TestMyTests
 - (void) testSpoon;
 @end
 

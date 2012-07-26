@@ -5,7 +5,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 __attribute__((visibility("hidden"))) 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
   @public
     id publicIvar;
   @protected

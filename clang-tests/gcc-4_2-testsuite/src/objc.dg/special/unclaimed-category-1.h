@@ -10,22 +10,22 @@
 /* Test loading unclaimed categories - categories of a class defined
    separately from the class itself.  */
 
-@interface TestClass
+__attribute__((objc_root_class)) @interface TestClass
 {
   id isa;
 }
 - (int)D;
 @end
 
-@interface TestClass (A)
+__attribute__((objc_root_class)) @interface TestClass (A)
 - (int)A;
 @end
 
-@interface TestClass (B)
+__attribute__((objc_root_class)) @interface TestClass (B)
 - (int)B;
 @end
 
-@interface TestClass (C)
+__attribute__((objc_root_class)) @interface TestClass (C)
 - (int)C;
 @end
 

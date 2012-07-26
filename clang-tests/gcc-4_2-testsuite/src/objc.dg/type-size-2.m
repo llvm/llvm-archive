@@ -21,7 +21,7 @@ extern void abort(void);
 
 enum Enum { one, two, three, four };
 
-@interface ArrayTest
+__attribute__((objc_root_class)) @interface ArrayTest
 - (const char *)str:(signed char [])arg1 with:(unsigned char *)arg2 and:(enum Enum[4])en;
 - (int)meth1:(int [])arg1 with:(int [0])arg2 with:(int [2])arg3;
 @end

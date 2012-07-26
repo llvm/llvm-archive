@@ -6,7 +6,7 @@ struct Cxx {
   const struct Cxx *next;
 };
 
-@interface ObjC {
+__attribute__((objc_root_class)) @interface ObjC {
   const struct Cxx *obj;
 }
 - (ObjC *)initWithCxx: (struct Cxx *const)c and: (const struct Cxx *)d;

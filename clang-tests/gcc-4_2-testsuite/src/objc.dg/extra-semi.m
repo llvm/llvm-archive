@@ -3,7 +3,7 @@
 
 /* { dg-do compile } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
    -(Foo *) expiration;
    -(void) setExpiration:(Foo *) date;;
    -(int) getVersion;

@@ -14,7 +14,7 @@
 
 @end
 
-@interface Test <Test> {
+__attribute__((objc_root_class)) @interface Test <Test> {
   int ivar;
 }
 - (int) PROPERTY1;

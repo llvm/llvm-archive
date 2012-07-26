@@ -4,7 +4,7 @@
 
 @protocol MyProto;
 
-@interface MyClass <MyProto>   /* { dg-warning "no definition of protocol \\'MyProto\\' " } */
+__attribute__((objc_root_class)) @interface MyClass <MyProto>   /* { dg-warning "no definition of protocol \\'MyProto\\' " } */
 @end
 
 @interface MyClass (Category) <MyProto>	 /* { dg-warning "no definition of protocol \\'MyProto\\' " } */

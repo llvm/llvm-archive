@@ -23,7 +23,7 @@ extern void abort();
 
 @end
 
-@interface ObjCClass <CommonProtocol>
+__attribute__((objc_root_class)) @interface ObjCClass <CommonProtocol>
 {
 
 }

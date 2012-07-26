@@ -4,7 +4,7 @@
 /* { dg-options "-Wdirect-ivar-access" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface MyObject {
+__attribute__((objc_root_class)) @interface MyObject {
 @public
     id _myMaster;
     id _isTickledPink;

@@ -2,14 +2,14 @@
 /* Check for illegal use of 'ivar' in objc2 abi */
 /* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
-@interface LKLayerTransaction
+__attribute__((objc_root_class)) @interface LKLayerTransaction
 {
 @public
   LKLayerTransaction *next;
 }
 @end
 
-@interface LKLayer @end
+__attribute__((objc_root_class)) @interface LKLayer @end
 
 @implementation LKLayer
 

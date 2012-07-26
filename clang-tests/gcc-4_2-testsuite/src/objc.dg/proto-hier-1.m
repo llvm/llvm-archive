@@ -13,7 +13,7 @@ typedef struct objc_object { struct objc_class *class_pointer; } *id;
 - (void)someOtherMethod;
 @end
 
-@interface NSObject <NSObj>
+__attribute__((objc_root_class)) @interface NSObject <NSObj>
 - (void)someMethod; 
 @end
 

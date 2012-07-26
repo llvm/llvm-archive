@@ -1,8 +1,8 @@
 /* APPLE LOCAL file radar 6231433 */
 /* { dg-do compile } */
 
-@interface NSKey @end
-@interface UpdatesList @end
+__attribute__((objc_root_class)) @interface NSKey @end
+__attribute__((objc_root_class)) @interface UpdatesList @end
 
 void foo (int i, NSKey *NSKeyValueCoding_NullValue, UpdatesList *nukedUpdatesList)
 {

@@ -3,7 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-abi-version=2 -fvisibility=hidden" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-fvisibility=hidden" { target arm*-*-darwin* } } */
 
-@interface Unspecified {
+__attribute__((objc_root_class)) @interface Unspecified {
 @private
     int privateIvar;
 @public
@@ -14,7 +14,7 @@
 @implementation Unspecified @end
 
 __attribute__((visibility("default")))
-@interface Default {
+__attribute__((objc_root_class)) @interface Default {
     @private
     int privateIvar;
     @public
@@ -24,7 +24,7 @@ __attribute__((visibility("default")))
 @implementation Default @end
 
 __attribute__((visibility("hidden")))
-@interface Hidden {
+__attribute__((objc_root_class)) @interface Hidden {
     @private
     int privateIvar;
     @public

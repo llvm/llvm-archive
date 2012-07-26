@@ -15,7 +15,7 @@
 @property double duration;
 @end
 
-@interface LKAnimation <LKObject, LKTiming>
+__attribute__((objc_root_class)) @interface LKAnimation <LKObject, LKTiming>
 @end
 
 static void test (void)

@@ -7,7 +7,7 @@
 
 #define ATTR __attribute__ ((__sentinel__))
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (void) foo1 : (int)x, ... ATTR;
 - (void) foo3 : (int)x ATTR;     /* { dg-warning "attribute only applies to variadic functions" "sentinel" } */
 - (void) foo4 : (int)x ATTR, ... ATTR; /* { dg-error "method attributes must be specified" } */

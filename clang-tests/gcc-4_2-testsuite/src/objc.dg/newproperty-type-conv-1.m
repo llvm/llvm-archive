@@ -7,13 +7,13 @@
 @class AClass;
 @class ASubClass;
 
-@interface NSArray
+__attribute__((objc_root_class)) @interface NSArray
 @end
 
 @interface NSMutableArray : NSArray
 @end
 
-@interface foo  {
+__attribute__((objc_root_class)) @interface foo  {
      NSMutableArray *_array;
      NSArray *_array1;
      NSMutableArray *_array2;

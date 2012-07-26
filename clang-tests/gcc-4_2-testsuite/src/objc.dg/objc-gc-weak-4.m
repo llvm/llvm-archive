@@ -10,7 +10,7 @@ struct S {
 union U {
 	__weak id  p; /* { dg-warning "__weak attribute cannot be specified on a field declaration" } */
 };
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
 struct {
    __weak id i; /* { dg-warning "__weak attribute cannot be specified on a field declaration" } */
 } IVAR;

@@ -2,7 +2,7 @@
 /* Test implementaion of attributes on methods. */
 /* { dg-do compile } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (void) foo1 __attribute__((deprecated));
 - (int*) foo2  __attribute__((deprecated)) : (int) x1 __attribute__((deprecated)); /* { dg-error "expected \';\' before \\':\\' token" } */
 - (void) foo3 __attribute__((deprecated)) : (int) x1, ... __attribute__((deprecated)); /* { dg-error "expected \';\' before \\':\\' token" } */

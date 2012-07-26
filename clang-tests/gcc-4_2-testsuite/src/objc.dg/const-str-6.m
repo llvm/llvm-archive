@@ -6,7 +6,7 @@
 /* APPLE LOCAL objc2 */
 /* { dg-require-effective-target ilp32 } */
 
-@interface MyBase {
+__attribute__((objc_root_class)) @interface MyBase {
   char p;
 }
 @end

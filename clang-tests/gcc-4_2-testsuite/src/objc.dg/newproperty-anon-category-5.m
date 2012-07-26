@@ -7,7 +7,7 @@
 // Should compile cleanly
 
 // Baseline "nil continuation":
-@interface ToBeContinued
+__attribute__((objc_root_class)) @interface ToBeContinued
 @end
 
 @interface ToBeContinued()
@@ -18,7 +18,7 @@
 
 
 // Add methods and properties:
-@interface TwoStep
+__attribute__((objc_root_class)) @interface TwoStep
 {
     int x;
 }
@@ -38,7 +38,7 @@
 
 
 // Multiple continuations:
-@interface Trilogy
+__attribute__((objc_root_class)) @interface Trilogy
 - (int)one;
 @end
 
@@ -58,7 +58,7 @@
 
 
 // "Property extension" continuation:
-@interface Immutable
+__attribute__((objc_root_class)) @interface Immutable
 {
     int x;
 }

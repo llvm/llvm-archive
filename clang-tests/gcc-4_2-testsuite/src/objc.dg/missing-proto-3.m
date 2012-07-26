@@ -9,7 +9,7 @@
 - (id) missingMethod1;
 @end
 
-@interface MyClass <UndefinedProtocol, DefinedProtocol>
+__attribute__((objc_root_class)) @interface MyClass <UndefinedProtocol, DefinedProtocol>
 /* { dg-error "cannot find protocol declaration for .UndefinedProtocol." "" { target *-*-* } 12 } */
 @end
 

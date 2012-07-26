@@ -4,7 +4,7 @@
 /* { dg-do compile } */
 #include <objc/objc.h>
 
-@interface MySuperClass
+__attribute__((objc_root_class)) @interface MySuperClass
 {
 @private
   int private;

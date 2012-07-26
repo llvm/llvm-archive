@@ -9,7 +9,7 @@ typedef  const struct _CFURLRequest*     CONSTRequestRef;
 
 int Policy (CONSTRequestRef);
 
-@interface NSURL 
+__attribute__((objc_root_class)) @interface NSURL 
 {
     @public
     __strong  const struct _CFURLRequest*  request;

@@ -2,7 +2,7 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface MyBase 
+__attribute__((objc_root_class)) @interface MyBase 
 - (void) rootInstanceMethod;
 @end
 

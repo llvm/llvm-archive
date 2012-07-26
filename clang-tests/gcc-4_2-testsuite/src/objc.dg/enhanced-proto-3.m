@@ -11,7 +11,7 @@
 + (void) CLS_OPT;
 @end
 
-@interface MyClass <MyProto1>
+__attribute__((objc_root_class)) @interface MyClass <MyProto1>
 @end
 
 @implementation MyClass

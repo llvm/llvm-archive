@@ -22,7 +22,7 @@ extern void abort(void);
 - (bycopy) address:(byref inout id)location with:(out short unsigned **)arg2;
 @end
 
-@interface Foo <Retain>
+__attribute__((objc_root_class)) @interface Foo <Retain>
 + (oneway void)retainArgument:(out bycopy id)arg with:(in signed char **)arg2;
 @end
 

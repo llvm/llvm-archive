@@ -5,7 +5,7 @@
 @protocol PROTO
 @end
 
-@interface INTF <PROTO> @end
+__attribute__((objc_root_class)) @interface INTF <PROTO> @end
 
 @implementation INTF @end
 /* { dg-final { scan-assembler ".section __DATA, __objc_const" } } */

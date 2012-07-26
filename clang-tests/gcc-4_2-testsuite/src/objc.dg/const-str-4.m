@@ -6,7 +6,7 @@
 
 extern void abort(void);
 
-@interface MyString
+__attribute__((objc_root_class)) @interface MyString
 {
   void *isa;
   char *str;

@@ -6,7 +6,7 @@
 @end
 @protocol NSCoding
 @end
-@interface NSObject < NSObject > {
+__attribute__((objc_root_class)) @interface NSObject < NSObject > {
 }
 @end
 @interface nsi:NSObject < NSCoding > {
@@ -16,7 +16,7 @@
 }
 -(int) b;
 @end
-@interface data {
+__attribute__((objc_root_class)) @interface data {
 }
 @end
 @implementation data - (id) init {

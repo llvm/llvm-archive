@@ -12,7 +12,7 @@ void foo()
   baz(@"hiya");  /* { dg-error "annot find interface declaration" } */
 }
 
-@interface NXConstantString
+__attribute__((objc_root_class)) @interface NXConstantString
 {
   void *isa;
   char *str;

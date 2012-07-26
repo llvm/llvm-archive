@@ -6,7 +6,7 @@
 
 #include <Foundation/Foundation.h>
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 - (void) message_with_line : (int)anchor : (NSString *)format, ...
   __attribute__ ((__format__ (__NSString__, 2, 3)));
 + (void) class_message : (int)anchor : (NSString *)format, ... __attribute__ ((__format__ (__NSString__, 2, 3)));

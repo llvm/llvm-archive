@@ -5,7 +5,7 @@
 
 typedef struct objc_object { struct objc_class *isa; } *id;
 
-@interface NSObject
+__attribute__((objc_root_class)) @interface NSObject
 + (int) test_func0;
 @end
 @interface NSMenuItem: NSObject

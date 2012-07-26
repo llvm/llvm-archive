@@ -8,7 +8,7 @@
 /* { dg-do compile { target i?86-*-darwin* } } */
 /* { dg-options "-fnext-runtime -m64 -fobjc-abi-version=1" } */
 
-@interface Test { id isa; } @end
+__attribute__((objc_root_class)) @interface Test { id isa; } @end
 @implementation Test
 +(void)initialize { }
 +(float) float_return { return 0; }

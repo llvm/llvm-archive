@@ -3,7 +3,7 @@
    already 'weak'. */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 - (void) a __attribute__((weak_import));
 - (void) b __attribute__((weak_import));
 + (void) c __attribute__((weak_import));

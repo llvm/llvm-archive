@@ -5,7 +5,7 @@
 
 #include <objc/objc.h>
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 
 + (void) methodA;
 - (void) methodB;

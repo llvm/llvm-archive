@@ -8,15 +8,15 @@
 
 #include <objc/objc.h>
 
-@interface Object1
+__attribute__((objc_root_class)) @interface Object1
 - (void)initWithData:(Object1 *)data;
 @end
 
-@interface Object2
+__attribute__((objc_root_class)) @interface Object2
 - (id)initWithData:(Object1 *)data;
 @end
 
-@interface Object3
+__attribute__((objc_root_class)) @interface Object3
 - (id)initWithData:(Object2 *)data;
 @end
 

@@ -7,7 +7,7 @@
 #define EMPTY
 
 #define ATTR __attribute__ ((deprecated))
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (void) foo __attribute__ ((deprecated)) __attribute__ ((unavailable)); /* { dg-error "" } */
 
 - (int) variarg : (int)anchor, ... ATTR;

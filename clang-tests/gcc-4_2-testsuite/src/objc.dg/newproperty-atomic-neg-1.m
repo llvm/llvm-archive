@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface BASE
+__attribute__((objc_root_class)) @interface BASE
 @property (copy) id p1;
 @property (nonatomic, copy) id p2;
 @end

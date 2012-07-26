@@ -16,7 +16,7 @@
 -(void)doItInstance2;
 @end
 
-@interface MyClass1 <MyProto1>
+__attribute__((objc_root_class)) @interface MyClass1 <MyProto1>
 {
   Class isa;
 }
@@ -33,7 +33,7 @@
 -(void)doItInstance2{}
 @end
 
-@interface MyClass3
+__attribute__((objc_root_class)) @interface MyClass3
 {
   Class isa;
 }
@@ -277,7 +277,7 @@ testInheritedNonRoot(void)
 +(id)doItClass1;
 -(id)doItInstance1;
 @end
-@interface MyOtherClass1 <MyOtherProto1>
+__attribute__((objc_root_class)) @interface MyOtherClass1 <MyOtherProto1>
 @end
 
 Class <MyOtherProto1> oclsP1;

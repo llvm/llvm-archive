@@ -3,7 +3,7 @@
 /* { dg-options "-mmacosx-version-min=10.5 -fnext-runtime -m64 -fobjc-abi-version=2 -fno-constant-cfstrings" } */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
-@interface NSConstantString { id isa; const char *c; int l; } @end
+__attribute__((objc_root_class)) @interface NSConstantString { id isa; const char *c; int l; } @end
 @implementation NSConstantString @end
 
 int _objc_empty_cache = 0;

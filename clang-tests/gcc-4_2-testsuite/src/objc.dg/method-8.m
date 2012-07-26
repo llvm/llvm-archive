@@ -3,7 +3,7 @@
 /* Contributed by Ziemowit Laski <zlaski@apple.com>  */
 /* { dg-do compile } */
 
-@interface A
+__attribute__((objc_root_class)) @interface A
 @end
 
 @interface B: A

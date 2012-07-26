@@ -2,14 +2,14 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface Sprite {
+__attribute__((objc_root_class)) @interface Sprite {
   int a;
 }
 @end
 
 Sprite *glob;
 
-@interface blah 
+__attribute__((objc_root_class)) @interface blah 
 {
   Sprite* sprite;
 }

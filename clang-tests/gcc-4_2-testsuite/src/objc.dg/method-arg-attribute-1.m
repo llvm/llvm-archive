@@ -3,7 +3,7 @@
 /* { dg-options "-Wmost -Wextra" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (void) correct_use_of_unused: (void *) notice : (id)another_arg;
 - (void) will_warn_unused_arg: (void *) notice : (id)warn_unused;
 - (void) unused_attr_on_decl_ignored: (void *)  __attribute__((unused)) will_warn;

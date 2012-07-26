@@ -10,7 +10,7 @@
 @end
 
 
-@interface QueryNode <QueryItem>
+__attribute__((objc_root_class)) @interface QueryNode <QueryItem>
 
 @property (retain) id children;
 

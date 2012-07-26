@@ -6,7 +6,7 @@
 
 #include <objc/objc.h>
 
-@interface Base
+__attribute__((objc_root_class)) @interface Base
 - (id) meth1: (Base *)arg1;
 - (id) window;
 @end

@@ -10,14 +10,14 @@ typedef struct objc_object { struct objc_class *class_pointer; } *id;
 - (int)someValue;
 @end
 
-@interface NSObject <NSObject>
+__attribute__((objc_root_class)) @interface NSObject <NSObject>
 @end
 
 @protocol PlateMethods
 - (void)someMethod;
 @end
 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
   NSObject <PlateMethods> *plate;
   id <PlateMethods> plate1;
   NSObject *plate2;

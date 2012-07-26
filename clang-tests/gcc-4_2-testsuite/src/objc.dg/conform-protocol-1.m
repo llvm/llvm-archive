@@ -7,7 +7,7 @@
 - (void)m;
 @end
 
-@interface Base
+__attribute__((objc_root_class)) @interface Base
 - (void)m;
 @end
 

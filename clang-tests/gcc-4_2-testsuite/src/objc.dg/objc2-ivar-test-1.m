@@ -4,7 +4,7 @@
 /* { dg-options "-g -dA -mmacosx-version-min=10.5 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Rootclass { 
+__attribute__((objc_root_class)) @interface Rootclass { 
 } @end
 
 @interface Superclass : Rootclass { 

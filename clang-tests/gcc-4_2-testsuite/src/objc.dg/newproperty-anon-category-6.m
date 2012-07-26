@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface TwoStep
+__attribute__((objc_root_class)) @interface TwoStep
 {
     int x;
 }

@@ -3,7 +3,7 @@
 
 #include <objc/objc.h>
 
-@interface Foo { Class isa; } @end
+__attribute__((objc_root_class)) @interface Foo { Class isa; } @end
 @implementation Foo @end
 
 @interface Bar : Foo { Class Barisa; } @end

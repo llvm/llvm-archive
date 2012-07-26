@@ -4,7 +4,7 @@
 
 #include <objc/Object.h>
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 @end
 @implementation Foo
 -(void) foo

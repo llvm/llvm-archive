@@ -14,7 +14,7 @@ typedef struct
         int i;
 } MyStruct;
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 {
   id _mainData;
   MyStruct *_anotherData;

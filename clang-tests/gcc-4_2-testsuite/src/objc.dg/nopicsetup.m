@@ -1,7 +1,7 @@
 /* APPLE LOCAL file */
 /* { dg-do compile { target powerpc*-*-darwin* } } */
 /* Magic "bcl" to do PIC setup should be suppressed (commented) */
-@interface Base {}
+__attribute__((objc_root_class)) @interface Base {}
 - (id)init;
 @end
 @interface Derived : Base {}

@@ -6,7 +6,7 @@
 
 #include <objc/Object.h>
 
-@interface NSObject { Class isa; } @end
+__attribute__((objc_root_class)) @interface NSObject { Class isa; } @end
 
 @interface SCMObject : NSObject  {
     SCMObject *__weak _parent; 

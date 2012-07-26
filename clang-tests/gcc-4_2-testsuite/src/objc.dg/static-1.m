@@ -3,7 +3,7 @@
 /* Developed by Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface Object {
+__attribute__((objc_root_class)) @interface Object {
   struct objc_class *isa;
 }
 @end

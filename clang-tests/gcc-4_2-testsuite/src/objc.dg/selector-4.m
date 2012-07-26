@@ -4,7 +4,7 @@
 
 /* { dg-do compile } */
 
-@interface Int1 
+__attribute__((objc_root_class)) @interface Int1 
 + (int)and_eq:(int)arg1 and:(int)arg2;
 - (int)or_eq:(int)arg1 or:(int)arg3;
 - (int)not:(int)arg1 xor:(int)arg2;

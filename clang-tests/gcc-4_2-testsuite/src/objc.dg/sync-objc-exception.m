@@ -9,7 +9,7 @@
  
 struct MyPoint { int x; };
 
-@interface MyObject {}
+__attribute__((objc_root_class)) @interface MyObject {}
 +(void) doNothingWithPoint:(struct MyPoint)aPoint;
 @end
 

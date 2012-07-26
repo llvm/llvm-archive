@@ -10,7 +10,7 @@ typedef enum { en2_1, en2_2 } En2;
 typedef struct { int a, b; } St1;
 typedef struct { unsigned a, b; } St2;
 
-@interface Base
+__attribute__((objc_root_class)) @interface Base
 - (id) meth1: (En1)arg1;
 - (St1) window;
 @end

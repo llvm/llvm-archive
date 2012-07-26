@@ -8,10 +8,10 @@
 - (void) foo;
 @end
 
-@interface MyClass
+__attribute__((objc_root_class)) @interface MyClass
 @end
 
-@interface MyOtherClass <MyProtocol>
+__attribute__((objc_root_class)) @interface MyOtherClass <MyProtocol>
 - (void) foo;
 @end
 

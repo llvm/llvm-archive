@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -fobjc-gc" } */
 /* { dg-require-effective-target objc_gc } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 {
   id IVAR;
 }

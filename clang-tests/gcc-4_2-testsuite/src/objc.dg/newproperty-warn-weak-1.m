@@ -5,7 +5,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-require-effective-target objc_gc } */
 
-@interface DooFus  {
+__attribute__((objc_root_class)) @interface DooFus  {
    __weak id y;
    __weak id x;
    __weak id z;

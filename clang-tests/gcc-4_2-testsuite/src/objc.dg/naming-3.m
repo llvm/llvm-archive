@@ -1,7 +1,7 @@
 /* APPLE LOCAL begin radar 4281748 */
 /* Test for class name same as an unrelated struct field name. */
 /* { dg-do compile } */
-@interface PassThrough {
+__attribute__((objc_root_class)) @interface PassThrough {
 
 }
 @end

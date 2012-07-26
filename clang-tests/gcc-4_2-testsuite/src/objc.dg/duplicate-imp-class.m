@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4689268 */
 /* Check that compiler gracefully exits on duplicate implementaiton of
    same class. */
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 @end
 
 @implementation Foo

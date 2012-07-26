@@ -24,7 +24,7 @@ id objc_assign_weak(id value, id *dest) {
 @class NSObject;
 @class NSString;
 
-@interface Foo  {
+__attribute__((objc_root_class)) @interface Foo  {
 @public
 // assignments to __weak fields should generate objc_assign_weak
   __weak CFDictionaryRef dict;

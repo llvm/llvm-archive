@@ -8,7 +8,7 @@ typedef int foo;
 
 typedef int bar;
 
-@interface bar
+__attribute__((objc_root_class)) @interface bar
 @end  /* { dg-error "redeclared as different kind of symbol" } */
 /* { dg-error "previous declaration of" "" { target *-*-* } 9 } */
 

@@ -10,7 +10,7 @@ typedef struct objc_object { struct objc_class *class_pointer; } *id;
 - (long)someValue;
 @end
 
-@interface Obj
+__attribute__((objc_root_class)) @interface Obj
 - (long)anotherValue;
 @end
 

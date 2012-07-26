@@ -12,7 +12,7 @@
 @optional
 @end
 
-@interface  MyProto2 <MyProto1>
+__attribute__((objc_root_class)) @interface  MyProto2 <MyProto1>
 @required 		/* { dg-error "@optional/@required is allowed in @protocol context only" }  */
 - (void) FOO2;
 @optional		/* { dg-error "@optional/@required is allowed in @protocol context only" }  */

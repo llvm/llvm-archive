@@ -5,7 +5,7 @@
 /* { dg-require-effective-target ilp32 } */
 
 __attribute__((visibility("hidden"))) 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
   @public
     id publicIvar;
   @protected

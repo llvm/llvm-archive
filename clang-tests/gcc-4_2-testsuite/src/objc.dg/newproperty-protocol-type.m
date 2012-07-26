@@ -5,7 +5,7 @@
 /* { dg-require-effective-target objc_gc } */
 @protocol PROTO @end
 
-@interface Foo 
+__attribute__((objc_root_class)) @interface Foo 
 @property id <PROTO> prop; /* { dg-warning "no 'assign', 'retain', or 'copy' attribute is specified" } */
 @property Class <PROTO> prop1;
 @end

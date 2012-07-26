@@ -4,7 +4,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 
 
-@interface parent
+__attribute__((objc_root_class)) @interface parent
 {
   int data;
 }

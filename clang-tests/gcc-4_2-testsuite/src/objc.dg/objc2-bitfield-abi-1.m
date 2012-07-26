@@ -7,7 +7,7 @@
 #include <stdio.h>
 extern void abort(void);
 
-@interface Base {
+__attribute__((objc_root_class)) @interface Base {
     id isa;
 }
 @end
@@ -34,7 +34,7 @@ extern void abort(void);
 @implementation Sub @end
 
 
-@interface Base2 {
+__attribute__((objc_root_class)) @interface Base2 {
     id isa;
 }
 @end

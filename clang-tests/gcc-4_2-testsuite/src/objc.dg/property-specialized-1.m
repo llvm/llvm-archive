@@ -9,11 +9,11 @@
 @protocol P2 @end
 @protocol P3 @end
 
-@interface NSData @end
+__attribute__((objc_root_class)) @interface NSData @end
 
 @interface MutableNSData : NSData @end
 
-@interface Base 
+__attribute__((objc_root_class)) @interface Base 
 @property(readonly) id ref;
 @property(readonly) id another_ref;
 @property (readonly) NSData *nsdata;

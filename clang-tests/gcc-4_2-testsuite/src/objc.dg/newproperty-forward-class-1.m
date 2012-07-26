@@ -8,6 +8,6 @@
 
 @class BLOCK;
 
-@interface INTC
+__attribute__((objc_root_class)) @interface INTC
 @property BLOCK* p;
 @end

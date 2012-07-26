@@ -12,7 +12,7 @@
 @end
 
 
-@interface GroupEditor  <GroupEditorProtocol>
+__attribute__((objc_root_class)) @interface GroupEditor  <GroupEditorProtocol>
 {
   GroupItem *groupItem;
 }

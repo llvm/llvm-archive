@@ -32,7 +32,7 @@ void func(id a, id *b, id **c) {
 
 // Instances
 
-@interface something {
+__attribute__((objc_root_class)) @interface something {
     id w, *x, **y;
 }
 @end

@@ -2,7 +2,7 @@
 /* { dg-options "-m64 -mmacosx-version-min=10.6" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface NSObject
+__attribute__((objc_root_class)) @interface NSObject
 -method;
 @end
 

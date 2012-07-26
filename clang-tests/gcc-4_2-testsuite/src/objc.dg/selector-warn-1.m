@@ -6,7 +6,7 @@
 typedef struct objc_object { struct objc_class *class_pointer; } *id;
 typedef struct objc_selector    *SEL;
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 - (char*) foo;
 - (void) bar;
 @end

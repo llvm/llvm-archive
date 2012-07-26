@@ -25,7 +25,7 @@
 
 #endif
 
-@interface A {
+__attribute__((objc_root_class)) @interface A {
     id _x;
 }
 @end

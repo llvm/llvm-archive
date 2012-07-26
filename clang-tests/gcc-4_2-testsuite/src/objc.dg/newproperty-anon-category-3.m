@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 {
 int _foo;
 }

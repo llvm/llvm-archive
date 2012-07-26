@@ -17,7 +17,7 @@ __attribute ((deprecated)) @protocol MyProto1
 @end
 
 
-@interface MyClass1 <MyProto1> /* { dg-warning "protocol 'MyProto1' is deprecated" } */
+__attribute__((objc_root_class)) @interface MyClass1 <MyProto1> /* { dg-warning "protocol 'MyProto1' is deprecated" } */
 {
   Class isa;
 }

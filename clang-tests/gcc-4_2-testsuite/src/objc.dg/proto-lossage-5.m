@@ -4,11 +4,11 @@
 @class MyClassThatFails;
 @protocol _MyProtocol;
 
-@interface MyClassThatFails
+__attribute__((objc_root_class)) @interface MyClassThatFails
 - (MyBaseClass<_MyProtocol> *) aMethod;
 @end
 
-@interface MyBaseClass
+__attribute__((objc_root_class)) @interface MyBaseClass
 @end
 
 @protocol _MyProtocol

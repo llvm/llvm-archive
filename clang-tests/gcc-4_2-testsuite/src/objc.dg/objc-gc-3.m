@@ -26,7 +26,7 @@ id objc_assign_ivar(id value, id dest, unsigned int offset) {
 // The test case elements;
 @class NSObject;
 
-@interface Foo  {
+__attribute__((objc_root_class)) @interface Foo  {
 @public
 // assignments to 'obj' below should generate objc_assign_ivar
   Foo *obj[20];

@@ -9,7 +9,7 @@
 
 SSyncSet *slocal;
 
-@interface SPeer
+__attribute__((objc_root_class)) @interface SPeer
 {
 }
 @property(nonatomic,readonly,retain) SSyncSet* syncSet;
@@ -23,18 +23,18 @@ SSyncSet *slocal;
 - (SSyncSet_iDisk*) syncSet;
 @end
 
-@interface SPeer_iDisk_local
+__attribute__((objc_root_class)) @interface SPeer_iDisk_local
 {
 }
 - (SSyncSet_iDisk*) syncSet;
 @end
 
-@interface SSyncSet
+__attribute__((objc_root_class)) @interface SSyncSet
 {
 }
 @end
 
-@interface SSyncSet_iDisk
+__attribute__((objc_root_class)) @interface SSyncSet_iDisk
 {
 }
 

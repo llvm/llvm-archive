@@ -5,7 +5,7 @@
 /* { dg-options "-Wall" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface test
+__attribute__((objc_root_class)) @interface test
 @property int foo;
 @property int foo1;
 @property int foo2;

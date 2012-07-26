@@ -2,7 +2,7 @@
 
 /* { dg-do compile } */
 
-@interface Foo
+__attribute__((objc_root_class)) @interface Foo
 -(void) method3 __attribute__((unavailable));
 @end
 

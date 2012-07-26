@@ -4,13 +4,13 @@
    warning of the "Method definition not found" kind. */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface NSObject
+__attribute__((objc_root_class)) @interface NSObject
 @end
 
-@interface NSInvocation
+__attribute__((objc_root_class)) @interface NSInvocation
 @end
 
-@interface NSProxy
+__attribute__((objc_root_class)) @interface NSProxy
 @end
 
 @protocol MyProtocol

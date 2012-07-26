@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4219590 */
 /* { dg-do compile } */
 
-@interface foo
+__attribute__((objc_root_class)) @interface foo
 - (void) test;
 @end
 

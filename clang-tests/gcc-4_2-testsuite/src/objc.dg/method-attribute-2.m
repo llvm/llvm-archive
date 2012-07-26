@@ -2,7 +2,7 @@
 /* Test implementaion of attributes on methods. */
 /* { dg-do compile } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (int) foo1: (int)arg1 __attribute__((deprecated));
 
 - (int) foo: (int)arg1;	

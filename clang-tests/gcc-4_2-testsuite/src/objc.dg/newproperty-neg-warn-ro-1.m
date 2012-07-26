@@ -5,7 +5,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 
-@interface Mutable
+__attribute__((objc_root_class)) @interface Mutable
 @property(readwrite) int count;
 @property(readwrite) int age;
 @property(readonly)  int year;
@@ -24,7 +24,7 @@
 @property(readonly)  int year;
 @end
 
-@interface AlsoImmutable <PMutable>
+__attribute__((objc_root_class)) @interface AlsoImmutable <PMutable>
 @property(readonly) int count;
 @property(readwrite) int age;
 @property(readwrite) int year;

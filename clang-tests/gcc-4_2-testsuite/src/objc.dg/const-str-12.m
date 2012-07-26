@@ -5,7 +5,7 @@
 /* PR objc/27438, make sure that the decl produced by the front-end
    does not cause a warning to be produced. */
 
-@interface NXConstantString
+__attribute__((objc_root_class)) @interface NXConstantString
 {
   void *isa;
   const char * const nxcsptr;

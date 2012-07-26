@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-@interface Foo {
+__attribute__((objc_root_class)) @interface Foo {
 @private
     int first;
     int :1;

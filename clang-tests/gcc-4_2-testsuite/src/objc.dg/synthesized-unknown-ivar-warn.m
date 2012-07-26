@@ -3,7 +3,7 @@
    abi only. */
 /* { dg-options "-fobjc-abi-version=1" } */
 
-@interface MyStupidClass {
+__attribute__((objc_root_class)) @interface MyStupidClass {
     id _bar;
 }
 @property(readwrite, retain) id foo;

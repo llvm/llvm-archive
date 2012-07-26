@@ -5,7 +5,7 @@
 
 #include <Foundation/Foundation.h>
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 @property NSDictionary* undoAction; /* { dg-warning "no 'assign', 'retain'" } */  
 				    /* { dg-warning "default 'assign' attribute" "" { target *-*-* } 9 } */
 @end

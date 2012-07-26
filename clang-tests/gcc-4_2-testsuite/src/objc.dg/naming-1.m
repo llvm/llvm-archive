@@ -2,7 +2,7 @@
 /* Author: Ziemowit Laski <zlaski@apple.com>.  */
 /* { dg-do compile } */
 
-@interface View
+__attribute__((objc_root_class)) @interface View
 @end
 
 void foo(void)

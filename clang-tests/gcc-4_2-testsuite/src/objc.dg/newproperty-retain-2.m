@@ -4,7 +4,7 @@
 /* { dg-options "-fobjc-new-property" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
-@interface NSPerson
+__attribute__((objc_root_class)) @interface NSPerson
 {
   id ivar;
 }

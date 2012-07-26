@@ -2,7 +2,7 @@
 /* Test of implementation of method attributes on class methods. */
 /* { dg-do compile } */
 
-@interface NSString 
+__attribute__((objc_root_class)) @interface NSString 
 - (const char *)lossyCString __attribute__((deprecated)); /* { dg-error "declared here" } */
 + (const char *)stringWithContentsOfFile __attribute__((deprecated)); /* { dg-error "declared here" } */
 @end

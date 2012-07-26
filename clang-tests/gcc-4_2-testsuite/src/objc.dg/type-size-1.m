@@ -4,7 +4,7 @@
 
 struct unknownStruct;
 
-@interface ArrayTest
+__attribute__((objc_root_class)) @interface ArrayTest
 {
     short   unknownSize[unknownValue];  /* { dg-error ".unknownValue. (undeclared|was not declared)" } */
     /* { dg-error "instance variable .unknownSize. has unknown size" "" { target *-*-* } 9 } */

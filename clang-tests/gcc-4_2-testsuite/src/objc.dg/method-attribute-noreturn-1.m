@@ -3,7 +3,7 @@
 
 extern void exit (int);
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 - (void) noret __attribute__ ((noreturn));
 - (void) noretok __attribute__ ((noreturn));
 + (void) c_noret __attribute__ ((noreturn));

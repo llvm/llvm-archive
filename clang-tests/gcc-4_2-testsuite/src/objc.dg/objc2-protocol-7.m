@@ -17,7 +17,7 @@
 -(void)doItInstance2;
 @end
 
-@interface MyClass1 <Proto1>
+__attribute__((objc_root_class)) @interface MyClass1 <Proto1>
 {
   Class isa;
 }
@@ -34,7 +34,7 @@
 -(void)doItInstance2{}
 @end
 
-@interface MyClass3
+__attribute__((objc_root_class)) @interface MyClass3
 {
   Class isa;
 }

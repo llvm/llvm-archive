@@ -3,11 +3,11 @@
 
 #include <objc/objc.h>
 
-@interface A
+__attribute__((objc_root_class)) @interface A
 + (A *)currentContext;
 @end
 
-@interface B
+__attribute__((objc_root_class)) @interface B
 + (B *)currentContext;
 @end
 

@@ -2,7 +2,7 @@
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.5 -m64" } */
 
-@interface INTF
+__attribute__((objc_root_class)) @interface INTF
 @end
 @implementation  INTF
 @end

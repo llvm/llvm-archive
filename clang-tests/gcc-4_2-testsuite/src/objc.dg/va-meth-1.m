@@ -7,7 +7,7 @@
 
 /* Test methods with "C-style" trailing arguments, with or without ellipsis. */
 
-@interface MathClass: Object
+__attribute((objc_root_class)) @interface MathClass
 /* sum positive numbers; -1 ends the list */
 + (int) sum: (int)firstNumber, int secondNumber, ...; 	/* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */
 + (int) prod: (int) firstNumber, int secondNumber, int thirdNumber; /* { dg-warning "use of C-style parameters in Objective-C method declarations is deprecated " } */

@@ -8,7 +8,7 @@ void useBlock (void (^arg)(void));
 
 void useBlock (void (^arg)(void)) {}
 
-@interface Fred
+@interface Fred /* { dg-warning "class 'Fred' defined without specifying a base class" } */
 - (void) useBlock:(void (^)(void)) aBlock;
 @end
 

@@ -11,6 +11,7 @@ typedef struct objc_object { struct objc_class *class_pointer; } *id;
 
 #define CHECK_IF(expr) if(!(expr)) abort();
 
+__attribute__((objc_root_class))
 @interface Base 
 {
     struct objc_class *isa;

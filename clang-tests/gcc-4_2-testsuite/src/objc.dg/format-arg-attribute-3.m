@@ -16,7 +16,7 @@ extern CFStringRef _My_LocalizedStringForKey( CFStringRef key,  NSString *value,
         _My_LocalizedStringForKey(key,@"",nil) 
 
 
-static void Buggy_WarnAboutResponse( CFStringRef serverResponse )
+static void Buggy_WarnAboutResponse( CFStringRef serverResponse ) /* { dg-warning "unused function 'Buggy_WarnAboutResponse'" } */
 {
     /* This next line is a security problem: it passes an untrusted string, received from the network,
        as the format string of NSRunAlertPanel. At least six such misuses of NSRunAlertPanel were
@@ -26,7 +26,7 @@ static void Buggy_WarnAboutResponse( CFStringRef serverResponse )
     My_NSRunAlertPanel(@"Bad Server Response:", serverResponse, @"OK",nil,nil); /* { dg-warning "format string is not a string literal" } */
 }
 
-static void SimpleAlert()
+static void SimpleAlert() /* { dg-warning "unused function 'SimpleAlert'" } */
 {
     /* My_NSRunAlertPanel this time uses My_NSLocalizedString callfor its formatting argument.
        because of format_arg (1) attribute on My_NSLocalizedString, no warning to be issued.

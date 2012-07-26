@@ -14,6 +14,7 @@
 #define _OBJC_OBJECT_H_
 #include <objc/runtime.h>
 
+__attribute__((objc_root_class))
 @interface Object {
 @public
      Class isa;

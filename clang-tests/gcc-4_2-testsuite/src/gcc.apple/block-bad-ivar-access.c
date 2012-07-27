@@ -3,7 +3,8 @@
 /* { dg-options "-mmacosx-version-min=10.5 -ObjC -fblocks" } */
 
 
-@interface Foo { /* { dg-warning "class 'Foo' defined without specifying a base class" } */
+__attribute__((objc_root_class))
+@interface Foo {
     int x;
     int y;
 }

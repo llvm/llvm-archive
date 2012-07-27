@@ -8,7 +8,8 @@ void useBlock (void (^arg)(void));
 
 void useBlock (void (^arg)(void)) {}
 
-@interface Fred /* { dg-warning "class 'Fred' defined without specifying a base class" } */
+__attribute__((objc_root_class))
+@interface Fred
 - (void) useBlock:(void (^)(void)) aBlock;
 @end
 

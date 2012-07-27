@@ -2,6 +2,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 /* { dg-options "-mmacosx-version-min=10.6 -fobjc-abi-version=2" { target i?86*-*-darwin* } } */
 
+__attribute__((objc_root_class))
 __attribute__((weak_import)) @interface WeakRootClass @end
 @implementation WeakRootClass @end
 

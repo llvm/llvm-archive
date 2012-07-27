@@ -4,7 +4,7 @@
 /* { dg-do compile { target *-*-darwin* } } */
 
 typedef const struct __CFString * CFStringRef;
-#define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr ""))
+#define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr "")) /* { dg-warning "expanded from macro" } */
 #define SECURITY_ATTR    __attribute__ ((__format__ (__CFString__, 1, 2)))
 
 extern void CFLog(CFStringRef format, ...) SECURITY_ATTR;

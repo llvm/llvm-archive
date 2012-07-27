@@ -5,7 +5,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface Root @end  /* { dg-warning "class 'Root' defined without specifying a base class" } */
+__attribute__((objc_root_class))
+@interface Root @end
 
 extern void bar(double (^cp)(int));
 

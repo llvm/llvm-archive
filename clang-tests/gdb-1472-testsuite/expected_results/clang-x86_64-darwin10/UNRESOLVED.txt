@@ -1,24 +1,44 @@
+gdb.apple/objc-rbreak.exp: finish out of ObjC member function
 gdb.apple/objc-rbreak.exp: step #1 in newWithArg:
 gdb.apple/objc-rbreak.exp: step #2 in newWithArg:
 gdb.apple/objc-rbreak.exp: step into ObjC member function
-gdb.apple/objc-rbreak.exp: finish out of ObjC member function
-gdb.apple/r5414488.exp: Step into inlined subroutine
 gdb.apple/r5414488.exp: First step inside inlined subroutine
-gdb.apple/r5414488.exp: Second step inside inlined subroutine
-gdb.apple/r5414488.exp: Third step inside inlined subroutine
 gdb.apple/r5414488.exp: Fourth step inside inlined subroutine
+gdb.apple/r5414488.exp: Second step inside inlined subroutine
+gdb.apple/r5414488.exp: Step into inlined subroutine
+gdb.apple/r5414488.exp: Third step inside inlined subroutine
 gdb.apple/slipnslide.exp: fputs is where it should be on a non-slide
 gdb.arch/i386-unwind.exp: run past gdb1435 (timeout)
+gdb.base/attach.exp: (timeout) after attach1, print should_exit
+gdb.base/attach.exp: (timeout) after attach2, exit
+gdb.base/attach.exp: (timeout) after attach2, reach tbreak postloop
+gdb.base/attach.exp: (timeout) after attach2, set should_exit
+gdb.base/attach.exp: (timeout) after attach2, set tbreak postloop
+gdb.base/attach.exp: (timeout) after attach3, exit
+gdb.base/attach.exp: (timeout) attach when process' a.out not in cwd
+gdb.base/attach.exp: (timeout) attach1 detach
+gdb.base/attach.exp: (timeout) attach1, after setting file
+gdb.base/attach.exp: (timeout) attach1, purging file after detach
+gdb.base/attach.exp: (timeout) attach2
+gdb.base/attach.exp: (timeout) before attach3, flush exec
+gdb.base/attach.exp: (timeout) before attach3, flush symbols
+gdb.base/attach.exp: (timeout) cd away from process' a.out
+gdb.base/attach.exp: (timeout) set file, before attach1
+gdb.base/attach.exp: (timeout) set source path
+gdb.base/attach.exp: set verbose off
+gdb.base/attach.exp: set verbose off (2)
+gdb.base/attach.exp: set verbose on
+gdb.base/attach.exp: set verbose on (2)
 gdb.base/auxv.exp: gcore
-gdb.base/completion.exp: cd to ${srcdir}
-gdb.base/completion.exp: (timeout) complete-command 'file ./gdb.base/compl'
 gdb.base/completion.exp: (timeout) complete 'file ./gdb.base/complet'
 gdb.base/completion.exp: (timeout) complete 'info func marke'
 gdb.base/completion.exp: (timeout) complete 'set follow-fork-mode'
-gdb.base/dump.exp: reload array as value, intel hex; capture intarray
-gdb.base/dump.exp: reload struct as value, intel hex; capture intstruct
+gdb.base/completion.exp: (timeout) complete-command 'file ./gdb.base/compl'
+gdb.base/completion.exp: cd to ${srcdir}
 gdb.base/dump.exp: reload array as memory, intel hex; capture intarray
+gdb.base/dump.exp: reload array as value, intel hex; capture intarray
 gdb.base/dump.exp: reload struct as memory, intel hex; capture intstruct
+gdb.base/dump.exp: reload struct as value, intel hex; capture intstruct
 gdb.base/ending-run.exp: don't step after run
 gdb.gdbtk/browser.exp: Insight not supported on Mac OS X.
 small-c/fix-small-c.exp: setting breakpoint at main

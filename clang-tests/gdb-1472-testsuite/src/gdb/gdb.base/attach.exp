@@ -110,6 +110,7 @@ proc do_attach_tests {} {
    global subdir
    global timeout
 
+   set timeout 30 
    # Start the program running and then wait for a bit, to be sure
    # that it can be attached to.
    #

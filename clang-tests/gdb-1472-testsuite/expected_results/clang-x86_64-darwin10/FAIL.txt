@@ -18,19 +18,24 @@ gdb.apple/global-blocks-lines.exp: Next to main
 gdb.apple/global-blocks-lines2.exp: Next from first Block function
 gdb.apple/global-blocks-lines2.exp: Next from second Block function
 gdb.apple/global-blocks-lines2.exp: Next from third Block function
+gdb.apple/info-shared-addr.exp: get printf address pre-execution
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib maybe without a slide) (dynamic prog)
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib no addr specified) (dynamic prog)
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x0) (dynamic prog)
 gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x20c49ba5c72000) (dynamic prog)
+gdb.apple/ivars.exp: continue to obj bp: Program exited (dylib slide from 0x20c49ba5e06000) (dynamic prog)
 gdb.apple/mi1-varobj.exp: 144 var-create for outer where file:line is objc-prog.m:0 (invalid line number of zero)
 gdb.apple/mi1-varobj.exp: 145 var-evaluate-expression for outer where file:line is objc-prog.m:0
 gdb.apple/mi1-varobj.exp: 146 var-create for outer where file:line is objc-prog.m:999999 (invalid line number of 999999)
 gdb.apple/mi1-varobj.exp: 147 var-evaluate-expression for outer where file:line is objc-prog.m:999999
+gdb.apple/mi1-varobj.exp: List objectVar's children as MyClass
 gdb.apple/pc-verify.exp: p/x $fp returns the same as info frame's $fp
 gdb.apple/po.exp: p (int)CFShow($9)
 gdb.apple/scoped-typedefs.exp: print myvar with int element in foo
 gdb.apple/slipnslide.exp: (timeout) default libSystem didn't slide
+gdb.apple/slipnslide.exp: get fputs pre-start load address
 gdb.apple/slipnslide.exp: get libSystem pre-startup load address
+gdb.apple/slipnslide.exp: get puts pre-start load address
 gdb.apple/struct-in-struct.exp: ptype outer::inner before expanding psymtab (rdar://problem/4223302)
 gdb.apple/var-path-expr.exp: list children of fooVar.private
 gdb.apple/varobj-references.exp: Create base_var in pass_base_ref
@@ -62,6 +67,7 @@ gdb.base/annota1.exp: signal sent (rdar://problem/3061801)
 gdb.base/annota3.exp: backtrace @ signal handler (pattern 1) (rdar://problem/3061801)
 gdb.base/annota3.exp: send SIGUSR1 (pattern 5) (rdar://problem/3061801)
 gdb.base/annota3.exp: signal sent (pattern 6) (rdar://problem/3061801)
+gdb.base/attach.exp: (timeout) attach to nonexistent process is prohibited
 gdb.base/auxv.exp: generate native core dump
 gdb.base/auxv.exp: info auxv on live process
 gdb.base/break.exp: called user-defined function on breakpoint in called function (rdar://problem/3313204)
@@ -193,13 +199,13 @@ gdb.base/so-impl-ld.exp: step out of solib call
 gdb.base/volatile.exp: ptype video
 gdb.cp/gdb1355.exp: ptype s1
 gdb.cp/inherit.exp: print g_vB
+gdb.cp/inherit.exp: print g_vB.va
 gdb.cp/inherit.exp: print g_vB.vA::va
 gdb.cp/inherit.exp: print g_vB.vA::vx
-gdb.cp/inherit.exp: print g_vB.va
 gdb.cp/inherit.exp: print g_vC
+gdb.cp/inherit.exp: print g_vC.va
 gdb.cp/inherit.exp: print g_vC.vA::va
 gdb.cp/inherit.exp: print g_vC.vA::vx
-gdb.cp/inherit.exp: print g_vC.va
 gdb.cp/inherit.exp: print g_vD
 gdb.cp/inherit.exp: print g_vD.vA::va
 gdb.cp/inherit.exp: print g_vD.vA::vx
@@ -294,8 +300,10 @@ gdb.trace/save-trace.exp: Could not find gdb_recursion_test function
 gdb.trace/tracecmd.exp: Could not find gdb_recursion_test function
 ld-r/ld-r.exp: Got warnings for mismatched timestamp1: ld-r testing - ar - debug info in .o files
 ld-r/ld-r.exp: Got warnings for mismatched timestamp2: ld-r testing - debug info in .o files
-small-c/mi-fix-small-c.exp: finish out of static_printer, look for correct strings (picbase register setup test)
+small-c/fix-small-c.exp: Reject adding local variable to function on the stack.
 small-c/fix-small-c.exp: small c fix and continue tests suppressed
+small-c/fix-small-c.exp: step over bar() version 18
+small-c/mi-fix-small-c.exp: finish out of static_printer, look for correct strings (picbase register setup test)
 small-c/mi-fix-small-c.exp: mi runto main (2)
 small-c/mi-fix-small-c.exp: small c fix and continue MI tests suppressed
 small-objc/fix-small-objc.exp: setting breakpoint at main

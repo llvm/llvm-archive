@@ -310,8 +310,8 @@ InsertBaggyBoundsChecks::adjustAlloca (AllocaInst * AI) {
     Value *Zero = ConstantInt::getSigned(Int32Type, 0);
     Value *Two = ConstantInt::getSigned(Int32Type, 2);
     Value *idx[3] = {Zero, Two, Zero};
-    Value *V = GetElementPtrInst::Create(AI_new, idx, Twine(""));
-    new StoreInst(ConstantInt::getSigned(Int32Type, objectSize), V);
+    Value *V = GetElementPtrInst::Create(AI_new, idx, Twine(""), AI);
+    new StoreInst(ConstantInt::get(Int32Type, objectSize), V, AI);
 
     //
     // Create a GEP that accesses the first element of this new structure.

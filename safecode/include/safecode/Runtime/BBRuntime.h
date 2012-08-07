@@ -165,9 +165,9 @@ extern "C" {
 #endif
 
   // Exact checks
-  void * bb_exactcheck2 (const char *base, const char *result, unsigned size);
-  void * bb_exactcheck2_debug (const char *base, const char *result, unsigned size,
-                            TAG, SRC_INFO);
+  void * bb_exactcheck2 (char *source, char *base, char *result, unsigned size);
+  void * bb_exactcheck2_debug (char *source, char *base, char *result,
+                               unsigned size, TAG, SRC_INFO);
 
   void __sc_bb_funccheck (unsigned num, void *f, void *g, ...);
   void * pchk_getActualValue (PPOOL, void * src);

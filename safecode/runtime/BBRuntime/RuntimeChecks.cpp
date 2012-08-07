@@ -53,7 +53,7 @@ using namespace NAMESPACE_SC;
 //  0xc0000000. Current we only handle 64-bit OS and 32-bit Linux OS.
 //
 static inline int isOOB(uintptr_t p) {
-  return (p & SET_MASK);
+  return (p >= SET_MASK);
 }
 
 //
@@ -184,7 +184,7 @@ bb_poolcheck_debug (DebugPoolTy *Pool,
   //
   // Check if is an OOB pointer
   //
-  if ((uintptr_t)Node & SET_MASK) {
+  if (isOOB((uintptr_t)Node)) {
     DebugViolationInfo v;
     v.type = ViolationInfo::FAULT_LOAD_STORE,
     v.faultPC = __builtin_return_address(0),
@@ -239,7 +239,7 @@ bb_poolcheckui_debug (DebugPoolTy *Pool,
   //
   // Check if is an OOB pointer
   //
-  if ((uintptr_t)Node & SET_MASK) {
+  if (isOOB((uintptr_t)Node)) {
     DebugViolationInfo v;
     v.type = ViolationInfo::FAULT_LOAD_STORE,
     v.faultPC = __builtin_return_address(0),
@@ -311,7 +311,7 @@ bb_poolcheckalign_debug (DebugPoolTy *Pool,
   //
   // Check if is an OOB pointer
   //
-  if ((uintptr_t)Node & SET_MASK) {
+  if (isOOB((uintptr_t)Node)) {
 
     //
     // The object has not been found.  Provide an error.

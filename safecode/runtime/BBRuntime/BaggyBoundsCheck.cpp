@@ -140,7 +140,31 @@ pool_init_runtime(unsigned Dangling, unsigned RewriteOOB, unsigned Terminate) {
   //
   // Allocate a range of memory for rewrite pointers.
   //
+  #if defined(_LP64)
+  const unsigned invalidsize = 1 * 1024 * 1024 * 1024;
+  void * Addr = mmap (0, invalidsize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+  if (Addr == MAP_FAILED) {
+     perror ("mmap:");
+     fflush (stdout);
+     fflush (stderr);
+     assert(0 && "valloc failed\n");
+  }
+  //memset (Addr, 0x00, invalidsize);
+  #if !defined(__linux__)
+  madvise (Addr, invalidsize, MADV_FREE);
+  #else
+  madvise (Addr, invalidsize, MADV_DONTNEED);
+  #endif
+  InvalidLower = (uintptr_t) Addr;
+  InvalidUpper = (uintptr_t) Addr + invalidsize;
+  #endif
 
+  if (logregs) {
+    fprintf (stderr, "OOB Area: %p - %p\n", (void *) InvalidLower,
+                                            (void *) InvalidUpper);
+    fflush (stderr);
+  }
+  
   //
   // Leave initialization of the Report logfile to the reporting routines.
   // The libc stdio functions may have not been initialized by this point, so

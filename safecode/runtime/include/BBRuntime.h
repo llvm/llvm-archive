@@ -15,6 +15,7 @@
 #define _BB_RUNTIME_H_
 
 #include "BitmapAllocator.h"
+#include "safecode/Runtime/SplayTree.h"
 
 #include <iosfwd>
 
@@ -77,6 +78,22 @@ typedef struct DebugMetaData {
 typedef DebugMetaData * PDebugMetaData;
 
 struct DebugPoolTy : public BitmapPoolTy {
+  // Splay tree used for object registration
+  RangeSplaySet<> Objects;
+
+  // Splay tree used for out of bound objects
+  RangeSplayMap<void *> OOB;
+
+  // Splay tree used by dangling pointer runtime
+  RangeSplayMap<PDebugMetaData> DPTree;
+
+  // Cache of recently found memory objects
+  struct {
+    void * lower;
+    void * upper;
+  } objectCache[2];
+
+  unsigned char cacheIndex;
 };
 
 void * rewrite_ptr (DebugPoolTy * Pool, const void * p, const void * ObjStart,

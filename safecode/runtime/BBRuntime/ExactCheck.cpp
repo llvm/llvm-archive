@@ -14,6 +14,8 @@
 
 #include "DebugReport.h"
 #include "ConfigData.h"
+#include "PoolAllocator.h"
+#include "RewritePtr.h"
 
 #include "safecode/Config/config.h"
 #include "safecode/Runtime/BBRuntime.h"
@@ -140,13 +142,13 @@ exactcheck_check (void * Source,
    * pool, which is the only pool that can be used at present.  Change
    * the function to pass in a pool pointer later if need be.
    */
-  if ((uintptr_t)Source >= SET_MASK) {
+  if (isRewritePtr(Source)) {
     /*
      * Get the real pointer value (which must be outside the bounds 
      * of a valid object, as the pointer was re-written).
      */
     DebugPoolTy * Pool = NULL;
-    void * RealSrc = pchk_getActualValue (Pool, Source);
+    void * RealSrc = bb_pchk_getActualValue (Pool, Source);
 
     /*
      * Compute the real result pointer (the value the GEP would really have
@@ -192,7 +194,7 @@ exactcheck_check (void * Source,
    */
   if ((!(ConfigData.StrictIndexing)) ||
       (((char *) RealDest) == (((char *)RealObjEnd)+1))) {
-    void *ptr = (void *)((uintptr_t)RealDest | SET_MASK);
+    void *ptr = rewrite_ptr(NULL, RealDest, ObjStart, ObjEnd, SourceFile, lineno);
     if (logregs) {
       fprintf (ReportLog,
                "exactcheck: rewrite(1): %p %p %p at pc=%p to %p: %s %d\n",
@@ -207,7 +209,7 @@ exactcheck_check (void * Source,
     //
     // Determine if this is a rewrite pointer that is being indexed.
     //
-    if ((logregs) && ((uintptr_t)Dest >= SET_MASK)) {
+    if ((logregs) && isRewritePtr(Dest)) {
       fprintf (stderr, "Was a rewrite: %p\n", Dest);
       fflush (stderr);
     }

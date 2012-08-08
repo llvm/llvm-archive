@@ -22,7 +22,9 @@
 
 #include "ConfigData.h"
 #include "DebugReport.h"
-#include "safecode/Runtime/BBRuntime.h"
+#include "PoolAllocator.h"
+#include "RewritePtr.h"
+
 #include "../include/CWE.h"
 
 #include <cstring>
@@ -56,6 +58,10 @@
 NAMESPACE_SC_BEGIN
 
 struct ConfigData ConfigData;
+
+// Invalid address range
+uintptr_t InvalidUpper = 0xf0000000;
+uintptr_t InvalidLower = 0xc0000000;
 
 // Configuration for C code; flags that we should stop on the first error
 unsigned StopOnError = 0;
@@ -593,9 +599,8 @@ __sc_bb_poolrealloc(DebugPoolTy *Pool,
     __sc_bb_poolfree(Pool, Node);
     return 0;
   }
-
-  uintptr_t Source = (uintptr_t)Node;
-  if (Source >= SET_MASK) {
+  
+  if (isRewritePtr(Node)) {
     return 0;
   }
 
@@ -604,6 +609,7 @@ __sc_bb_poolrealloc(DebugPoolTy *Pool,
     return 0;
   __sc_bb_poolregister(Pool, New, NumBytes);
 
+  uintptr_t Source = (uintptr_t)Node;
   unsigned  char e = __baggybounds_size_table_begin[Source >> SLOT_SIZE];
   unsigned int size_old = 1 << e;
   uintptr_t Source_new = (uintptr_t)New;

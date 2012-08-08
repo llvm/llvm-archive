@@ -16,6 +16,7 @@
 
 #include "safecode/SAFECode.h"
 #include "safecode/Runtime/BitmapAllocator.h"
+#include "safecode/Runtime/SplayTree.h"
 
 #include <iosfwd>
 
@@ -77,11 +78,28 @@ typedef struct DebugMetaData {
 } DebugMetaData;
 typedef DebugMetaData * PDebugMetaData;
 
+class BitmapPoolTy;
 struct DebugPoolTy : public BitmapPoolTy {
+  // Splay tree used for object registration
+  RangeSplaySet<> Objects;
+
+  // Splay tree used for out of bound objects
+  RangeSplayMap<void *> OOB;
+
+  // Splay tree used by dangling pointer runtime
+  RangeSplayMap<PDebugMetaData> DPTree;
+
+  // Cache of recently found memory objects
+  struct {
+    void * lower;
+    void * upper;
+  } objectCache[2];
+
+  unsigned char cacheIndex;
 };
 
-void * rewrite_ptr (DebugPoolTy * Pool, const void * p, const void * ObjStart,
-const void * ObjEnd, const char * SourceFile, unsigned lineno);
+void * rewrite_ptr (DebugPoolTy * Pool, const void * p, void * ObjStart,
+void * ObjEnd, const char * SourceFile, unsigned lineno);
 void installAllocHooks (void);
 
 NAMESPACE_SC_END
@@ -91,14 +109,6 @@ NAMESPACE_SC_END
 #define PPOOL NAMESPACE_SC::DebugPoolTy*
 #define TAG unsigned
 #define SRC_INFO const char *, unsigned int
-
-#if defined(_LP64)
-#define UNSET_MASK 0x7fffffffffff
-#define SET_MASK 0xffff800000000000
-#else
-#define UNSET_MASK 0xbfffffff
-#define SET_MASK 0xc0000000
-#endif
 
 extern "C" {
   void pool_init_runtime(unsigned Dangling,
@@ -170,7 +180,7 @@ extern "C" {
                                unsigned size, TAG, SRC_INFO);
 
   void __sc_bb_funccheck (unsigned num, void *f, void *g, ...);
-  void * pchk_getActualValue (PPOOL, void * src);
+  void * bb_pchk_getActualValue (PPOOL, void * src);
 
   // Change memory protections to detect dangling pointers
   void * bb_pool_shadow (void * Node, unsigned NumBytes);

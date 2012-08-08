@@ -202,18 +202,30 @@ InsertBaggyBoundsChecks::adjustGlobalValue (GlobalValue * V) {
                                           NULL);
 
     //
+    // Store the object's size into a metadata variable.
+    //
+    Type *Int32Type = Type::getInt32Ty (GV->getContext());
+    std::vector<Constant *> metaVals(2);
+    metaVals[0] = ConstantInt::get(Int32Type, objectSize);
+    metaVals[1] = Constant::getNullValue(Int32Type);
+    Constant *c = ConstantStruct::get((StructType *)metadataType, metaVals);
+    GlobalVariable *metaData = new GlobalVariable (*(GV->getParent()),
+                                                   metadataType,
+                                                   GV->isConstant(),
+                                                   GV->getLinkage(),
+                                                   c,
+                                                   "meta." + GV->getName());
+
+    //
     // Create a global initializer.  The first element has the initializer of
     // the original memory object, the second initializes the padding array,
-    // the third initializes the object's metadata.
+    // the third initializes the object's metadata using the metadata variable.
     //
-    Constant *c = 0;
-    if (GV->hasInitializer()) {
-      std::vector<Constant *> vals(3);
-      vals[0] = GV->getInitializer();
-      vals[1] = Constant::getNullValue(newType1);
-      vals[2] = Constant::getNullValue(metadataType);
-      c = ConstantStruct::get(newType, vals);
-    }
+    std::vector<Constant *> vals(3);
+    vals[0] = GV->getInitializer();
+    vals[1] = Constant::getNullValue(newType1);
+    vals[2] = (Constant *)metaData;
+    c = ConstantStruct::get(newType, vals);
 
     //
     // Create the new global memory object with the correct alignment.
@@ -227,21 +239,12 @@ InsertBaggyBoundsChecks::adjustGlobalValue (GlobalValue * V) {
     GV_new->copyAttributesFrom (GV);
     GV_new->setAlignment(1u<<size);
     GV_new->takeName (GV);
-
-    //
-    // Store the object size information into the medadata.
-    //
-    Type *Int32Type = Type::getInt32Ty(GV->getContext());
-    Value *Zero = ConstantInt::getSigned(Int32Type, 0);
-    Value *Two = ConstantInt::getSigned(Int32Type, 2);
-    Value *idx[3] = {Zero, Two, Zero};
-    Value *V = GetElementPtrInst::Create(GV_new,idx, Twine(""));
-    new StoreInst(ConstantInt::getSigned(Int32Type, objectSize), V);
-
+    
     //
     // Create a GEP expression that will represent the global value and replace
     // all uses of the global value with the new constant GEP.
     //
+    Value *Zero = ConstantInt::getSigned(Int32Type, 0);
     Value *idx1[2] = {Zero, Zero};
     Constant *init = ConstantExpr::getGetElementPtr(GV_new, idx1, 2);
     GV->replaceAllUsesWith(init);

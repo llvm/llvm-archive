@@ -120,6 +120,16 @@ __sc_bb_pooldestroy(DebugPoolTy *Pool) {
 
 void
 pool_init_runtime(unsigned Dangling, unsigned RewriteOOB, unsigned Terminate) {
+  // Flag for whether we've already initialized the run-time
+  static int initialized = 0;
+
+  //
+  // If the run-time has already been initialized, do nothing.
+  //
+  if (initialized)
+    return;
+  else
+    initialized = 1;
   //
   // Initialize the signal handlers for catching errors.
   //

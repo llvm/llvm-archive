@@ -128,7 +128,7 @@ using namespace safecode;
 //  If src is an out of object pointer, get the original value.
 //
 void *
-bb_pchk_getActualValue (DebugPoolTy * Pool, void * p) {
+pchk_getActualValue (DebugPoolTy * Pool, void * p) {
   //
   // If the pointer is not within the rewrite pointer range, then it is not a
   // rewritten pointer.  Simply return its current value.

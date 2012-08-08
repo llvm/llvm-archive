@@ -163,6 +163,7 @@ InsertBaggyBoundsChecks::adjustGlobalValue (GlobalValue * V) {
   //
   GlobalVariable * GV = mustAdjustGlobalValue(V);
   if (!GV) return;
+  if (!GV->hasInitializer()) return;
 
   //
   // Find the greatest power-of-two size that is larger than the object's

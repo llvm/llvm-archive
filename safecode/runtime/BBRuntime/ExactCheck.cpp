@@ -148,7 +148,7 @@ exactcheck_check (void * Source,
      * of a valid object, as the pointer was re-written).
      */
     DebugPoolTy * Pool = NULL;
-    void * RealSrc = bb_pchk_getActualValue (Pool, Source);
+    void * RealSrc = pchk_getActualValue (Pool, Source);
 
     /*
      * Compute the real result pointer (the value the GEP would really have

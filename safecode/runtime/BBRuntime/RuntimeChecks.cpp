@@ -89,8 +89,8 @@ _barebone_boundscheck (uintptr_t Source, uintptr_t Dest) {
       //
       // This means that Source is an OOB pointer
       //
-      RealSrc = bb_pchk_getActualValue(NULL, (void *)Source);
-      RealDest = bb_pchk_getActualValue(NULL, (void *)Dest);
+      RealSrc = pchk_getActualValue(NULL, (void *)Source);
+      RealDest = pchk_getActualValue(NULL, (void *)Dest);
    } 
   //
   // Look for the bounds in the table

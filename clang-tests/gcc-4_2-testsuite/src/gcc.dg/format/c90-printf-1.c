@@ -197,7 +197,7 @@ foo (int i, int i1, int i2, unsigned int u, double d, char *s, void *p,
      legitimate by the standard.)
   */
   printf ("%p", foo); /* { dg-warning "format" "bad argument types" } */
-  printf ("%n", un); /* { dg-warning "format" "bad argument types" } */
+  printf ("%n", un);
   printf ("%p", n); /* { dg-warning "format" "bad argument types" } */
   /* Allow character pointers with %p.  */
   printf ("%p%p%p%p", s, ss, us, css);

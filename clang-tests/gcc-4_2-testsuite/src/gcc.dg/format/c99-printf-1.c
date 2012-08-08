@@ -192,6 +192,6 @@ foo (int i, unsigned int u, double d, char *s, void *p, int *n,
      by the standard, but a bad idea, so GCC should diagnose if what
      is used is not signed char *.)
   */
-  printf ("%hhn", s); /* { dg-warning "format" "%hhn plain char" } */
-  printf ("%hhn", us); /* { dg-warning "format" "%hhn unsigned char" } */
+  printf ("%hhn", s);
+  printf ("%hhn", us);
 }

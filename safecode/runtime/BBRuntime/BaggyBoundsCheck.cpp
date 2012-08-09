@@ -386,6 +386,18 @@ __sc_bb_src_poolregister (DebugPoolTy *Pool,
   // the allocation+metadata isn't threaded through the calls.
   // Also, only heap allocations currently have this metadata, so it needs
   // to be here instead of inside __internal_register.
+  
+  //
+  // If the object has zero length, don't do anything.
+  //
+  if (NumBytes == 0) return;
+
+  //
+  // If we're trying to register a NULL pointer, return.
+  //
+  if (!allocaptr)
+    return;
+
   __internal_register(Pool,
                       allocaptr,
                       NumBytes + sizeof(BBMetaData),
@@ -408,6 +420,17 @@ __sc_bb_src_poolregister_stack (DebugPoolTy *Pool,
                                 unsigned NumBytes, TAG,
                                 const char* SourceFilep,
                                 unsigned lineno) {
+  //
+  // If the object has zero length, don't do anything.
+  //
+  if (NumBytes == 0) return;
+
+  //
+  // If we're trying to register a NULL pointer, return.
+  //
+  if (!allocaptr)
+    return;
+  
   __internal_register(Pool,
                       allocaptr,
                       NumBytes + sizeof(BBMetaData),
@@ -461,6 +484,17 @@ __sc_bb_src_poolregister_global_debug (DebugPoolTy *Pool,
                                        unsigned NumBytes,TAG,
                                        const char *SourceFilep,
                                        unsigned lineno) {
+  //
+  // If the object has zero length, don't do anything.
+  //
+  if (NumBytes == 0) return;
+
+  //
+  // If we're trying to register a NULL pointer, return.
+  //
+  if (!allocaptr)
+    return;
+
   __internal_register(Pool,
                       allocaptr,
                       NumBytes + sizeof(BBMetaData),

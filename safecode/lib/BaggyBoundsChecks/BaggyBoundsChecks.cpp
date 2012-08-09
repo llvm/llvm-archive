@@ -507,22 +507,18 @@ InsertBaggyBoundsChecks::cloneFunction (Function * F) {
     unsigned int alignment = 1u << size;
     LEN.push_back(alignment);
 
-    if(adjustedSize == alignment) {
-    // To do
-    } else {
-      //
-      // Create a structure type to pad the argument. The first element will 
-      // be the argument's type; the second will be an array of bytes that 
-      // will pad the size out; the third will be the metadata type.
-      //
-      Type *newType1 = ArrayType::get(Int8Type, alignment - adjustedSize);
-      Type *metadataType = TypeBuilder<BBMetaData, false>::get(I->getContext());
-      StructType *newType = StructType::get(ET, newType1, metadataType, NULL);
+    //
+    // Create a structure type to pad the argument. The first element will 
+    // be the argument's type; the second will be an array of bytes that 
+    // will pad the size out; the third will be the metadata type.
+    //
+    Type *newType1 = ArrayType::get(Int8Type, alignment - adjustedSize);
+    Type *metadataType = TypeBuilder<BBMetaData, false>::get(I->getContext());
+    StructType *newType = StructType::get(ET, newType1, metadataType, NULL);
 
-      // push the padded type into the vectors
-      TP.push_back(newType->getPointerTo());
-      NTP.push_back(newType);
-    }
+    // push the padded type into the vectors
+    TP.push_back(newType->getPointerTo());
+    NTP.push_back(newType);
   }//end for arguments handling
     
   //
@@ -690,34 +686,30 @@ InsertBaggyBoundsChecks::callClonedFunction (Function * F, Function * NewF) {
           unsigned int alignment = 1u << size;
           LEN.push_back(alignment);
 
-          if(adjustedSize == alignment) {
-            // To do
-          } else {
-            //
-            // Create a structure type to pad the argument. The first element
-            // will be the argument's type; the second will be an array of 
-            // bytes that will pad the size out; the third will be the metadata 
-            // type.
-            //
-            Type *newType1 = ArrayType::get(Int8Type, alignment - adjustedSize);
-            Type *meteTP = TypeBuilder<BBMetaData, false>::get(I->getContext());
-            StructType *newType = StructType::get(ET,
-                                                  newType1,
-                                                  meteTP,
-                                                  NULL);
+          // Create a structure type to pad the argument. The first element
+          // will be the argument's type; the second will be an array of 
+          // bytes that will pad the size out; the third will be the metadata 
+          // type.
+          //
+          Type *newType1 = ArrayType::get(Int8Type, alignment - adjustedSize);
+          Type *meteTP = TypeBuilder<BBMetaData, false>::get(I->getContext());
+          StructType *newType = StructType::get(ET,
+                                                newType1,
+                                                meteTP,
+                                                NULL);
 
               
-            Value *zero = ConstantInt::get(Type::getInt32Ty(F->getContext()),0);
-            Value *Idx[] = { zero, zero }; 
-            AllocaInst *AINew = new AllocaInst(newType, 0, alignment, "", InsertPoint);
-            LoadInst *LINew = new LoadInst(CI->getOperand(i), "", CI);
-            GetElementPtrInst *GEPNew = GetElementPtrInst::Create(AINew,
-                                                                  Idx,
-                                                                  Twine(""),
-                                                                  CI);
-            new StoreInst(LINew, GEPNew, CI);
-            args.push_back(AINew);
-          } 
+          Value *zero = ConstantInt::get(Type::getInt32Ty(F->getContext()),0);
+          Value *Idx[] = { zero, zero }; 
+          AllocaInst *AINew = new AllocaInst(newType, 0, alignment, "", InsertPoint);
+          LoadInst *LINew = new LoadInst(CI->getOperand(i), "", CI);
+          GetElementPtrInst *GEPNew = GetElementPtrInst::Create(AINew,
+                                                                Idx,
+                                                                Twine(""),
+                                                                CI);
+          new StoreInst(LINew, GEPNew, CI);
+          args.push_back(AINew);
+         
         }
 
         // replace the original function with the cloned one.
@@ -729,7 +721,9 @@ InsertBaggyBoundsChecks::callClonedFunction (Function * F, Function * NewF) {
 
         for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
              I != E; ++I, ++i) {
-          if (I->hasByValAttr()) {
+          if (I->hasByValAttr() && !I->use_empty()) {
+            CallI->removeAttribute(i + 1, CallI->getAttributes()
+                         .getParamAttributes(i+1) & Attribute::Alignment);
             CallI->addAttribute(i + 1,
                          llvm::Attribute::constructAlignmentFromInt(*iiter++)); 
           }
@@ -790,7 +784,7 @@ InsertBaggyBoundsChecks::runOnModule (Module & M) {
     if (!mustCloneFunction(F)) continue;
     
     Function *NewF = cloneFunction(F);
-    callClonedFunction(F, NewF);
+    //callClonedFunction(F, NewF);
   }
   return true;
 }

@@ -5,7 +5,6 @@
 /* { dg-skip-if "" { powerpc*-*-darwin* } { "-m64" } { "" } } */
 
 #import <Foundation/Foundation.h>
-void *_NSConcreteGlobalBlock;
 
 id Global = nil;
 

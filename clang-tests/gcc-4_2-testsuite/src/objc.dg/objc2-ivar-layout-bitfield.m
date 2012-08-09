@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 5781140 */
 /* Check for correct outputing of ivar layout when last fields are bitfields. */
 /* { dg-do run { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-mmacosx-version-min=10.5 -framework Foundation -fobjc-gc" } */
+/* { dg-options "-mmacosx-version-min=10.5 -Wno-implicit-function-declaration -Wno-pointer-sign -framework Foundation -fobjc-gc" } */
 /* { dg-require-effective-target objc_gc } */
 
 #import <Foundation/Foundation.h>

@@ -1,3 +1,4 @@
+// { dg-options "-Wno-non-literal-null-conversion" }
 // PR c++/29106
 // { dg-do run } 
 

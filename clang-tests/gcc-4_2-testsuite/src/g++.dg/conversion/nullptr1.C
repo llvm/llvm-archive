@@ -1,5 +1,6 @@
 /* Test for overflow in NULL pointer constant.  */
 /* { dg-do compile } */
+// { dg-options "-Wno-non-literal-null-conversion" }
 
 #include <limits.h>
 

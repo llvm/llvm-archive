@@ -8,8 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-void * _NSConcreteStackBlock;
-
 enum {
     BLOCK_NEEDS_FREE =        (1 << 24),
     BLOCK_HAS_COPY_DISPOSE =  (1 << 25),

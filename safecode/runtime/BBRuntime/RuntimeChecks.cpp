@@ -45,18 +45,42 @@ extern unsigned WORD_SIZE;
 extern const unsigned int  logregs;
 using namespace NAMESPACE_SC;
 
+//
+// Function: _barebone_pointers_in_bounds()
+//
+// Description:
+//  This is the internal path for a boundscheck() and boundcheckui() calls.
+//
+// Inputs:
+//  Source   - The source pointer used in the indexing operation (the GEP).
+//  Dest     - The result pointer of the indexing operation (the GEP).
+//
+// Return:
+//  0:  The Dest is within the valid object in which Source was found.
+//  1:  The Dest is not within the valid object in which Source was found.
+//
 static inline int
 _barebone_pointers_in_bounds(uintptr_t Source, uintptr_t Dest) {
+  //
+  // Look for the bounds in the table.
+  //
   unsigned char e;
   e = __baggybounds_size_table_begin[Source >> SLOT_SIZE];
+  // The object is not registed, so it cannot be checked.
+  if (e == 0) return 0;
 
-  if (e == 0)
-    return Source != Dest;
-
+  //
+  // Get the bounds for the object in which Source was found.
+  //
   uintptr_t begin = Source & ~((1<<e)-1);
   BBMetaData *data = (BBMetaData*)(begin + (1<<e) - sizeof(BBMetaData));
+  if (data->size == 0) return 0;
   uintptr_t end = begin + data->size;
 
+  //
+  // If the Dest is within the valid object in which Source was found,
+  // return 0; else return 1.
+  //
   return !(begin <= Source && Source < end && begin <= Dest && Dest < end);
 }
 
@@ -73,38 +97,44 @@ _barebone_pointers_in_bounds(uintptr_t Source, uintptr_t Dest) {
 //
 static inline void*
 _barebone_boundscheck (uintptr_t Source, uintptr_t Dest) {
-  //
-  // Check if it is an OOB pointer
-  //
+
   uintptr_t val = 1 ;
   unsigned char e;
   void * RealSrc = (void *)Source;
   void * RealDest = (void *)Dest;
 
-  e = __baggybounds_size_table_begin[Source >> SLOT_SIZE];
+  //
+  // Check the bounds of the pointers.
+  //
   val = _barebone_pointers_in_bounds(Source, Dest);
+  if(!val) return RealDest;
 
-  if (val) {
-    if (isRewritePtr((void *)Source)) {
-      //
-      // This means that Source is an OOB pointer
-      //
-      RealSrc = pchk_getActualValue(NULL, (void *)Source);
-      RealDest = pchk_getActualValue(NULL, (void *)Dest);
-   } 
   //
-  // Look for the bounds in the table
+  // Either:
+  //  1) Dest is not within the valid object in which Source was found or
+  //  2) Source is an OOB pointer.
   //
-    e = __baggybounds_size_table_begin[(uintptr_t)RealSrc >> SLOT_SIZE];
-    if (e == 0) {
-      return RealDest;
-    }
-    val = _barebone_pointers_in_bounds((uintptr_t)RealSrc, (uintptr_t)RealDest);
-
-    if (val) {
-        RealDest = rewrite_ptr(NULL, RealDest, 0, 0, 0, 0);
-    }
+  if (!isRewritePtr((void *)Source)) {
+    // Dest is not within the valid object in which Source was found.
+    RealDest = rewrite_ptr(NULL, RealDest, 0, 0, 0, 0);
+    return RealDest;
   }
+
+  //
+  // This means that Source is an OOB pointer. Compute the original source.
+  //
+  RealSrc = pchk_getActualValue(NULL, (void *)Source);
+  //
+  // Compute the real result pointer.
+  //
+  RealDest = (void *)((intptr_t) RealSrc + Dest - Source);
+  //
+  // Re-check the real result pointer.
+  //
+  val = _barebone_pointers_in_bounds((uintptr_t)RealSrc, (uintptr_t)RealDest);
+  if (!val) return RealDest;
+   
+  RealDest = rewrite_ptr(NULL, RealDest, 0, 0, 0, 0);
   return RealDest;
 }
 

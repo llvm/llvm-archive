@@ -171,6 +171,7 @@ InsertBaggyBoundsChecks::adjustGlobalValue (GlobalValue * V) {
   //
   Type * GlobalType = GV->getType()->getElementType();
   unsigned long objectSize = TD->getTypeAllocSize(GlobalType);
+  if (!objectSize) return;
   unsigned long adjustedSize = objectSize + sizeof(BBMetaData);
   unsigned int size = findP2Size (adjustedSize);
 

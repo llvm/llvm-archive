@@ -1,4 +1,3 @@
-// { dg-options "-Wno-non-literal-null-conversion" }
 // PR c++/29106
 // { dg-do run } 
 
@@ -11,7 +10,7 @@ void f(__SIZE_TYPE__) {
 
 int main()
 {
-  int* const savepos = sizeof(*savepos) ? 0 : 0;
+  int* const savepos = sizeof(*savepos) ? 0 : 0; // { dg-warning "expression which evaluates to zero treated as a null pointer constant" }
 
   f (sizeof (*savepos));
 

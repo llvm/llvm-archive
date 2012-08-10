@@ -17,15 +17,15 @@ __attribute__((objc_root_class)) @interface TestClass
 - (int)D;
 @end
 
-__attribute__((objc_root_class)) @interface TestClass (A)
+@interface TestClass (A)
 - (int)A;
 @end
 
-__attribute__((objc_root_class)) @interface TestClass (B)
+@interface TestClass (B)
 - (int)B;
 @end
 
-__attribute__((objc_root_class)) @interface TestClass (C)
+@interface TestClass (C)
 - (int)C;
 @end
 

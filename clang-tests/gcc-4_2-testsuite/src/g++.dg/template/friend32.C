@@ -12,10 +12,10 @@ template<class T> class A
 
 template<class T> class B
 {
-  friend void A<T>::f ();	// { dg-error "this context" }
+  friend void A<T>::f ();	// { dg-error "friend function 'f' is a private member of 'A<int>'" }
 };
 
 int f ()
 {
-  B<int> b;			// { dg-error "instantiated" }
+  B<int> b;			// { dg-error "instantiation" }
 }

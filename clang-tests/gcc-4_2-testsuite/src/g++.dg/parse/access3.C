@@ -10,5 +10,5 @@ private:
 };
 
 class B {
-  friend void A::f();	// { dg-error "context" }
+  friend void A::f();	// { dg-error "friend function 'f' is a private member of 'A'" }
 };

@@ -218,7 +218,7 @@ InsertBaggyBoundsChecks::adjustGlobalValue (GlobalValue * V) {
   std::vector<Constant *> vals(3);
   vals[0] = GV->getInitializer();
   vals[1] = Constant::getNullValue(newType1);
-  vals[2] = (Constant *)metaData;
+  vals[2] = metaData->getInitializer();
   c = ConstantStruct::get(newType, vals);
 
   //

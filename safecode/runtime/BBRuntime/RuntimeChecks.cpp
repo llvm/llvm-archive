@@ -67,14 +67,13 @@ _barebone_pointers_in_bounds(uintptr_t Source, uintptr_t Dest) {
   unsigned char e;
   e = __baggybounds_size_table_begin[Source >> SLOT_SIZE];
   // The object is not registed, so it cannot be checked.
-  if (e == 0) return 0;
+  if (e == 0) return 0; 
 
   //
   // Get the bounds for the object in which Source was found.
   //
   uintptr_t begin = Source & ~((1<<e)-1);
   BBMetaData *data = (BBMetaData*)(begin + (1<<e) - sizeof(BBMetaData));
-  if (data->size == 0) return 0;
   uintptr_t end = begin + data->size;
 
   //
@@ -179,6 +178,7 @@ bb_poolcheck_debug (DebugPoolTy *Pool,
   //
   unsigned char e;
   e = __baggybounds_size_table_begin[(uintptr_t)Node >> SLOT_SIZE];
+  if (e == 0) return;
 
   uintptr_t ObjStart = (uintptr_t)Node & ~((1<<e)-1);
   BBMetaData *data = (BBMetaData*)(ObjStart + (1<<e) - sizeof(BBMetaData));
@@ -234,6 +234,7 @@ bb_poolcheckui_debug (DebugPoolTy *Pool,
   //
   unsigned char e;
   e = __baggybounds_size_table_begin[(uintptr_t)Node >> SLOT_SIZE];
+  if (e == 0) return;
 
   uintptr_t ObjStart = (uintptr_t)Node & ~((1<<e)-1);
   BBMetaData *data = (BBMetaData*)(ObjStart + (1<<e) - sizeof(BBMetaData));
@@ -328,6 +329,7 @@ bb_boundscheck_debug (DebugPoolTy * Pool,
                       void * Dest, TAG, 
                       const char * SourceFile, 
                       unsigned lineno) {
+  if (!isRewritePtr((void *)Source) && (Source == Dest)) return Dest;
   return _barebone_boundscheck((uintptr_t)Source, (uintptr_t)Dest);
 }
 

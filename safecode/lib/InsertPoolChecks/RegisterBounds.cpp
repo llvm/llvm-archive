@@ -128,7 +128,7 @@ RegisterGlobalVariables::runOnModule(Module & M) {
     if (!GV) continue;
 
     // Don't register  external global variables
-    if (GV->isDeclaration()) continue;
+    //if (GV->isDeclaration()) continue;
 
     std::string name = GV->getName();
 

@@ -121,9 +121,9 @@ mustAdjustGlobalValue (GlobalValue * V) {
   //
   // Don't modify external global variables or variables with no uses.
   // 
-  if (GV->isDeclaration()) {
-    return 0;
-  }
+  //if (GV->isDeclaration()) {
+    //return 0;
+ // }
 
   //
   // Don't bother modifying the size of metadata.

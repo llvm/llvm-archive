@@ -2,7 +2,7 @@
    wording of the diagnostic.  */
 /* Origin: Joseph Myers <jsm@polyomino.org.uk> */
 /* { dg-do compile } */
-/* { dg-options "-Wbad-function-cast" } */
+/* { dg-options "-Wbad-function-cast -Wno-unused-value" } */
 
 void vf(void);
 int if1(void);

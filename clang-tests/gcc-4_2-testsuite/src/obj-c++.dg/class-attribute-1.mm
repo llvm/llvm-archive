@@ -10,7 +10,7 @@
 
 __attribute ((deprecated))  
 @interface DEPRECATED : Object /* { dg-warning "declared here" } */
-                               /* { dg-warning "declared here" "" { target *-*-* } 12} */
+                               /* { dg-warning "declared here" "" { target *-*-* } } */
   { @public int ivar; } 
   - (int) instancemethod;
 @property int prop; 

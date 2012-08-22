@@ -1,7 +1,7 @@
 /* APPLE LOCAL file 4548636 */
 /* Check for a variety of rules for objc's class attributes. */
 /* APPLE LOCAL radar 4899595 */
-/* { dg-options "-mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile } */
 
 #include <objc/objc.h>
@@ -9,8 +9,7 @@
 #include "../objc/execute/Object2.h"
 
 __attribute ((deprecated))  
-@interface DEPRECATED : Object /* { dg-warning "declared here" } */
-                               /* { dg-warning "declared here" "" { target *-*-* } } */
+@interface DEPRECATED : Object /* { dg-warning "declared here" "" { target *-*-* } } */
   { @public int ivar; } 
   - (int) instancemethod;
 @property int prop; 

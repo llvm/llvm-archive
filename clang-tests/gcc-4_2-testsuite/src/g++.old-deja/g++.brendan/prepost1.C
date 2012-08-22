@@ -2,7 +2,7 @@
 // GROUPS passed prefix-postfix
 class foo {
 public:
-      operator ++ (); // { dg-error "C++ requires a type specifier for all declarations" }
+      operator ++ (); // { dg-error "requires a type specifier for all declarations" }
 };
 
 int main()

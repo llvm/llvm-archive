@@ -2,7 +2,7 @@
 /* Ensure that the preprocessor handles ObjC string constants gracefully. */
 /* Author: Ziemowit Laski <zlaski@apple.com> */
 /* APPLE LOCAL radar 4621575 */
-/* { dg-options "-fnext-runtime -fno-constant-cfstrings -fconstant-string-class=MyString -lobjc" } */ 
+/* { dg-options "-Wno-objc-root-class -fnext-runtime -fno-constant-cfstrings -fconstant-string-class=MyString -lobjc" } */ 
 /* { dg-do run { target *-*-darwin* } } */
 
 extern "C" void abort(void);

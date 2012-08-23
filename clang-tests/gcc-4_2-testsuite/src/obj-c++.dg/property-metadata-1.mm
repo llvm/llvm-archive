@@ -23,4 +23,4 @@
 @end
 
 /* { dg-final { scan-assembler "l_OBJC_\\\$_PROP_LIST_GCObject:" } } */
-/* { dg-final { scan-assembler "l_OBJC_\\\$_PROP_PROTO_LIST_GCObject:" } } */
+/* { dg-final { scan-assembler "l_OBJC_\\\$_PROP_LIST_GCObject15:" } } */

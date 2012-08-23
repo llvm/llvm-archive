@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5839123 */
 /* Test various ObjC types assignments and comparisons.  */
 /* Author: Nicola Pero <nicola@brainstorm.co.uk>.  */
+/* { dg-options "-Wno-empty-body" } */
 /* { dg-do compile } */
 
 #include <objc/objc.h>
@@ -34,26 +35,26 @@ int main()
   /* Assigning to a 'MyClass *' variable should always generate a
      warning, unless done from an 'id'.  */
   obj_c = obj;    /* Ok */
-  obj_c = obj_p;  /* { dg-warning "incompatible Objective-C types assigning \\'objc_object\\*\\', expected \\'MyClass\\*\\'" } */
-  obj_c = obj_cp; /* { dg-warning "incompatible Objective-C types assigning \\'MyOtherClass\\*\\', expected \\'MyClass\\*\\'" } */
-  obj_c = obj_C;  /* { dg-warning "incompatible Objective-C types assigning \\'objc_class\\*\\', expected \\'MyClass\\*\\'" } */
+  obj_c = obj_p;  /* { dg-error "assigning to" } */
+  obj_c = obj_cp; /* { dg-error "assigning to" } */
+  obj_c = obj_C;
 
   /* Assigning to an 'id<MyProtocol>' variable should generate a
      warning if done from a 'MyClass *' (which doesn't implement
      MyProtocol), but not from an 'id' or from a 'MyOtherClass *'
      (which implements MyProtocol).  */
   obj_p = obj;    /* Ok */
-  obj_p = obj_c;  /* { dg-warning "does not implement" } */
+  obj_p = obj_c;  /* { dg-error "assigning to 'id<MyProtocol>' from incompatible type" } */
   obj_p = obj_cp; /* Ok  */
-  obj_p = obj_C;  /* { dg-warning "incompatible Objective-C types assigning \\'objc_class\\*\\', expected \\'objc_object\\*\\'" } */
+  obj_p = obj_C; 
 
   /* Assigning to a 'MyOtherClass *' variable should always generate
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since
      MyOtherClass implements MyProtocol).  */
   obj_cp = obj;    /* Ok */
-  obj_cp = obj_c;  /* { dg-warning "incompatible Objective-C types assigning \\'MyClass\\*\\', expected \\'MyOtherClass\\*\\'" } */
+  obj_cp = obj_c;  /* { dg-error "assigning to" } */
   obj_cp = obj_p;  /* Ok */
-  obj_cp = obj_C;  /* { dg-warning "incompatible Objective-C types assigning \\'objc_class\\*\\', expected \\'MyOtherClass\\*\\'" } */
+  obj_cp = obj_C;
 
   /* Any comparison involving an 'id' must be without warnings.  */
   if (obj == obj_p) ;  /* Ok  */ /*Bogus warning here in 2.95.4*/
@@ -67,12 +68,12 @@ int main()
 
   /* Any comparison between 'MyClass *' and anything which is not an 'id'
      must generate a warning.  */
-  if (obj_c == obj_p) ; /* { dg-warning "lacks a cast" } */
-  if (obj_p == obj_c) ; /* { dg-warning "lacks a cast" } */
-  if (obj_c == obj_cp) ; /* { dg-warning "lacks a cast" } */
-  if (obj_cp == obj_c) ; /* { dg-warning "lacks a cast" } */
-  if (obj_c == obj_C) ;  /* { dg-warning "lacks a cast" } */
-  if (obj_C == obj_c) ;  /* { dg-warning "lacks a cast" } */
+  if (obj_c == obj_p) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (obj_p == obj_c) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (obj_c == obj_cp) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (obj_cp == obj_c) ; /* { dg-warning "comparison of distinct pointer types" } */
+  if (obj_c == obj_C) ;
+  if (obj_C == obj_c) ;
 
   /* Any comparison between 'MyOtherClass *' (which implements
      MyProtocol) and an 'id' implementing MyProtocol are Ok.  */
@@ -80,10 +81,10 @@ int main()
   if (obj_p == obj_cp) ; /* Ok */
 
 
-  if (obj_p == obj_C) ; /* { dg-warning "lacks a cast" } */
-  if (obj_C == obj_p) ; /* { dg-warning "lacks a cast" } */
-  if (obj_cp == obj_C) ; /* { dg-warning "lacks a cast" } */
-  if (obj_C == obj_cp) ; /* { dg-warning "lacks a cast" } */
+  if (obj_p == obj_C) ;
+  if (obj_C == obj_p) ;
+  if (obj_cp == obj_C) ;
+  if (obj_C == obj_cp) ;
 
   return 0;
 }

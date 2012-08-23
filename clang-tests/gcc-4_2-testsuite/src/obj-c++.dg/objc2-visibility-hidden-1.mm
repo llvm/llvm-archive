@@ -15,8 +15,8 @@ __attribute__((visibility("hidden")))
 }
 @end
 @implementation Foo @end
-/* { dg-final { scan-assembler ".private_extern _OBJC_METACLASS_\\\$_Foo" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_CLASS_\\\$_Foo" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_Foo.publicIvar" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_Foo.protectedIvar" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_Foo.privateIvar" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_METACLASS_\\\$_Foo" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_CLASS_\\\$_Foo" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_Foo.publicIvar" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_Foo.protectedIvar" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_Foo.privateIvar" } } */

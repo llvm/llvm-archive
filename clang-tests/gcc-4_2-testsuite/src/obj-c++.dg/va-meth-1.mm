@@ -1,4 +1,5 @@
 /* Based on objc/execute/va_method.m, by Nicola Pero */
+/* { dg-options "-Wno-deprecated-declarations" } */
 
 /* { dg-do run } */
 

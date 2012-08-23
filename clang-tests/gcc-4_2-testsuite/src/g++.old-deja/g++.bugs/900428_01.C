@@ -1,3 +1,4 @@
+// { dg-options "-Wno-unused-volatile-lvalue -Wno-unused-value" }
 // { dg-do assemble  }
 // g++ 1.37.1 bug 900428_01
 

@@ -8,6 +8,9 @@
 
 extern void CFLog(CFStringRef format, ...) SECURITY_ATTR;
 
+#undef CFSTR
+#define CFSTR(cStr)  ((CFStringRef) __builtin___CFStringMakeConstantString ("" cStr "")) /* { dg-warning "expanded from macro" } */
+
 int d;
 const char *string;
 int main()
@@ -15,8 +18,9 @@ int main()
     CFStringRef foo;
         CFLog (foo); /* { dg-warning "format string is not a string literal" } */
     CFLog (foo, d); // ok
-    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); // { dg-warning "data argument not used by format string" }
+    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo); /* { dg-warning "data argument not used by format string" } */
     CFLog(CFSTR("foo is %@"), CFSTR("foo is %@")); // OK
-    CFLog(CFSTR("foo is %@")); // { dg-warning "more '%' conversions than data arguments" }
+    CFLog(CFSTR("foo is %@"), CFSTR("foo is %@"), foo);  /* { dg-warning "data argument not used by format string" } */
+    CFLog(CFSTR("foo is %@")); /* { dg-warning "more '%' conversions than data arguments" } */
 }
 

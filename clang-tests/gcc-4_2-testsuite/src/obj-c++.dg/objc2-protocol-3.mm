@@ -1,5 +1,5 @@
 /* APPLE LOCAL file radar 6351990 */
-/* { dg-options "-mmacosx-version-min=10.6 -m32 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.6 -m32 -fobjc-abi-version=2" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-Wno-objc-root-class -fobjc-abi-version=2" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 

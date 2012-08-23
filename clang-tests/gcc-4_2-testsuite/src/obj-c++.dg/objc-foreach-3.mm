@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4538105 */
 /* The new foreach generates a spurious warning if the key is not used, but 
    the loop is instead being utilized for a side effect. */
-/* { dg-options "-mmacosx-version-min=10.5 -Wall" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5 -Wall" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-Wno-objc-root-class -Wall" { target arm*-*-darwin* } } */
 /* { dg-do compile } */
 

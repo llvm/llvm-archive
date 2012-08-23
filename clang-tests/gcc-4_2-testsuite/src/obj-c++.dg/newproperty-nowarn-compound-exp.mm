@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4805321 - test modified because of radar 5435299 */
 /* Test that no bogus warning is issued in the synthesize compound-expression. */
-/* { dg-options "-fobjc-new-property -mmacosx-version-min=10.5 -Wall" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -fobjc-new-property -mmacosx-version-min=10.5 -Wall" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-options "-Wno-objc-root-class -fobjc-new-property -Wall" { target arm*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 

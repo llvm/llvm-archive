@@ -1,5 +1,5 @@
 /* APPLE LOCAL file 5724385 */
-/* { dg-options "-mmacosx-version-min=10.5 -m64 -lobjc" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5 -m64 -lobjc" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <objc/runtime.h>

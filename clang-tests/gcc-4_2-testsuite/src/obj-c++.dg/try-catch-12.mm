@@ -3,7 +3,7 @@
    "inherit" their EH-volatileness from other variables in the stack frame
    do not trigger "discards qualifiers from target pointer type" warnings.  */
 
-/* { dg-options "-fobjc-exceptions -fnext-runtime" } */
+/* { dg-options "-Wno-objc-root-class -fobjc-exceptions -fnext-runtime" } */
 /* { dg-do compile } */
 
 typedef volatile int IOSharedLockData;

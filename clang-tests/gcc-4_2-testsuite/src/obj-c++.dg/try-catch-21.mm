@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 4502186 */
 /* Check that in the presence of @try/@catch, we can use variable argument 
    list functions in the block. Program must compile with no error/warning. */
-/* { dg-options "-fobjc-abi-version=1" } */
+/* { dg-options "-Wno-objc-root-class -fobjc-abi-version=1" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface untitled

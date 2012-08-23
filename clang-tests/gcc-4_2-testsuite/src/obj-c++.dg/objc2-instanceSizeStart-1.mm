@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5333233  - radar 6064186 */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-mmacosx-version-min=10.6 -m64" } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.6 -m64" } */
 
 @interface Super { id isa; } @end
 @implementation Super @end

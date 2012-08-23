@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 6029624 */
 /* Test for const refrence property types. */
-/* { dg-options "-mmacosx-version-min=10.5" } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 struct MyStruct

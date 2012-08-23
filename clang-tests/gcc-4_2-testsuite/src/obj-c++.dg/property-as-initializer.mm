@@ -1,7 +1,7 @@
 /* APPLE LOCAL file radar 6936421 */
 /* Test that no seg. fault is generated due to initializer being a property
    getter of a class with copy constructor. */
-/* { dg-options "-mmacosx-version-min=10.5" { target *-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5" { target *-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 struct vector {

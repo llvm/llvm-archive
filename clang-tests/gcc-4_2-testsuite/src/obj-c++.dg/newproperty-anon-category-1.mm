@@ -2,7 +2,7 @@
 /* Test for checking out property execution with anonymous category adding setter to
    primary category. */
 /* { dg-options "-mmacosx-version-min=10.5 -fobjc-new-property -framework Foundation" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
-/* { dg-options "-fobjc-new-property -framework Foundation" { target arm*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -fobjc-new-property -framework Foundation" { target arm*-*-darwin* } } */
 /* { dg-do run { target *-*-darwin* } } */
 
 #include <Foundation/Foundation.h>

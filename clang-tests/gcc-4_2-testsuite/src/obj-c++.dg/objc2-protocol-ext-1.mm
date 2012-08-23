@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5192466 - radar 10492418 */
 /* Check the size of protocol meta-data. */
-/* { dg-options "-mmacosx-version-min=10.5 -m64" } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5 -m64" } */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 @protocol Proto1

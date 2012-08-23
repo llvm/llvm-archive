@@ -2,7 +2,7 @@
 /* Test that we generate correct message call for method returning a C++ class
    with copy constructor. Such methods return the result in memory and not in
    registers. */
-/* { dg-options "-fnext-runtime -m64 -mmacosx-version-min=10.5" } */
+/* { dg-options "-Wno-objc-root-class -fnext-runtime -m64 -mmacosx-version-min=10.5" } */
 /* { dg-do compile { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 
 class DTLock {

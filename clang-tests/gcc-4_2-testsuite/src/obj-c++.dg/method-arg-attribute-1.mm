@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 4157812 */
 /* Test use of __attribute__((unused)) on method arguments. */
-/* { dg-options "-Wmost -Wextra" } */
+/* { dg-options "-Wno-objc-root-class -Wmost -Wextra" } */
 /* { dg-do compile { target *-*-darwin* } } */
 
 @interface INTF

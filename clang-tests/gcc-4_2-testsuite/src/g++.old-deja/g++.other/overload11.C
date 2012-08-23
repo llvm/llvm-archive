@@ -58,12 +58,12 @@ int main (int argc, char **argv)
   ptr = (argc ? ovl : ovl); // { dg-error "reference to overloaded function could not be resolved" }
   ptr = (argc ? &ovl : &ovl); // { dg-error "reference to overloaded function could not be resolved" }
   
-  vptr = (ovl);              // { dg-error "assigning to 'void (*)()' from incompatible type" }
-  vptr = (&ovl);             // { dg-error "assigning to 'void (*)()' from incompatible type" } 
-  vptr = (0, ovl);           // { dg-error "cannot resolve overloaded" } 
-  vptr = (0, &ovl);          // { dg-error "cannot resolve overloaded" } 
-  vptr = (argc ? ovl : ovl); // { dg-error "cannot resolve overloaded" } 
-  vptr = (argc ? &ovl : &ovl);// { dg-error "cannot resolve overloaded" } 
+  vptr = (ovl);              // { dg-error "assigning to|from incompatible type" }
+  vptr = (&ovl);             // { dg-error "assigning to|from incompatible type" } 
+  vptr = (0, ovl);           // { dg-error "could not be resolved" } 
+  vptr = (0, &ovl);          // { dg-error "could not be resolved" } 
+  vptr = (argc ? ovl : ovl); // { dg-error "could not be resolved" } 
+  vptr = (argc ? &ovl : &ovl);// { dg-error "could not be resolved" } 
   
   ptr = (fn);
   ptr = (&fn);
@@ -73,8 +73,8 @@ int main (int argc, char **argv)
   ptr = (argc ? &fna : &fn);
   
   f;                // { dg-error "use of undeclared identifier" }
-  ovl;              // { dg-error "cannot resolve overloaded function 'ovl' from context" }
-  &ovl;             // { dg-error "cannot resolve overloaded function 'ovl' from context" }
+  ovl;              // { dg-error "overloaded function could not be resolved" }
+  &ovl;             // { dg-error "overloaded function could not be resolved" }
   (void)f;          // { dg-error "use of undeclared identifier" }
   (void)ovl;        // { dg-error "address of overloaded function 'ovl' cannot be cast to type 'void'" }
   (void)&ovl;       // { dg-error "address of overloaded function 'ovl' cannot be cast to type 'void'" }
@@ -82,11 +82,11 @@ int main (int argc, char **argv)
   static_cast<void>(ovl);        // { dg-error "address of overloaded function 'ovl' cannot be static_cast to type 'void'" }
   static_cast<void>(&ovl);       // { dg-error "address of overloaded function 'ovl' cannot be static_cast to type 'void'" }
   ((void)1, f);             // { dg-error "use of undeclared identifier 'f'" }
-  ((void)1, ovl);           // { dg-error "cannot resolve overloaded function 'ovl' from context" } 
-  ((void)1, &ovl);          // { dg-error "cannot resolve overloaded function 'ovl' from context" } 
+  ((void)1, ovl);           // { dg-error "overloaded function could not be resolved" }
+  ((void)1, &ovl);          // { dg-error "overloaded function could not be resolved" }
   (void)((void)1, f);           // { dg-error "use of undeclared identifier 'f'" }
-  (void)((void)1, ovl);         // { dg-error "cannot resolve overloaded function 'ovl' from context" }
-  (void)((void)1, &ovl);        // { dg-error "cannot resolve overloaded function 'ovl' from context" }
+  (void)((void)1, ovl);         // { dg-error "overloaded function could not be resolved" }
+  (void)((void)1, &ovl);        // { dg-error "overloaded function could not be resolved" }
 
   return 0;
 }

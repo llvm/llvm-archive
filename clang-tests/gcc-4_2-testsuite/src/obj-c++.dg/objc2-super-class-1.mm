@@ -19,4 +19,4 @@ int main() {
     [Sub method];
 }
 /* { dg-final { scan-assembler "__objc_superrefs" } } */
-/* { dg-final { scan-assembler "OBJC_CLASSLIST_SUP_REFS_\\\$_0:" } } */
+/* { dg-final { scan-assembler "OBJC_CLASSLIST_SUP_REFS_\\\$_" } } */

@@ -1,7 +1,7 @@
 // { dg-do assemble  }
 // GROUPS passed templates
 
-template<class T>
+template<class T> // { dg-error "" } template parameter is declared here
 class Vector
 {
   int sz;
@@ -44,5 +44,5 @@ void Sort<Comp>::sort (Vector<Comp::T> &v)// { dg-error "" } use of bad T
 void
 f (Vector<int> &vi)
 {
-  Sort<Comparator<int> >::sort (vi);
+  Sort<Comparator<int> >::sort (vi); // { dg-error "" } use of undeclared identifier
 }

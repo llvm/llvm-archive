@@ -1,6 +1,7 @@
 /* APPLE LOCAL file radar 5245946 - radar 4301047*/
 /* Check that protocol qualifiers are compiled and encoded properly.  */
 /* Author: Ziemowit Laski <zlaski@apple.com>  */
+/* { dg-options "-lobjc" } */
 /* { dg-do run } */
 
 #include <stdio.h>

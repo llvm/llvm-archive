@@ -21,7 +21,7 @@ load_lib obj-c++-dg.exp
 # If a testcase doesn't have special options, use these.
 global DEFAULT_OBJCXXFLAGS
 if ![info exists DEFAULT_OBJCXXFLAGS] then {
-    set DEFAULT_OBJCXXFLAGS " -ansi -pedantic-errors -Wno-long-long"
+    set DEFAULT_OBJCXXFLAGS " -ansi -pedantic-errors -Wno-objc-root-class -Wno-long-long"
 }
 
 # Initialize `dg'.

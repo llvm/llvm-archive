@@ -1,6 +1,6 @@
 /* APPLE LOCAL file radar 5040740 */
 /* Test use of new @package ivars. */
-/* { dg-options "-mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
+/* { dg-options "-Wno-objc-root-class -mmacosx-version-min=10.5 -m64" { target powerpc*-*-darwin* i?86*-*-darwin* } } */
 /* { dg-do compile { target *-*-darwin* } } */
 @interface INTF
 {
@@ -31,7 +31,7 @@ int foo ()
   INTF *p;
   return p->PACKAGE_IVAR + p->PACKAGE_IVAR3 + p->PUBLIC_IVAR1;
 }
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR1" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR2" } } */
-/* { dg-final { scan-assembler ".private_extern _OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR3" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR1" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR2" } } */
+/* { dg-final { scan-assembler ".private_extern	_OBJC_IVAR_\\\$_INTF.PACKAGE_IVAR3" } } */

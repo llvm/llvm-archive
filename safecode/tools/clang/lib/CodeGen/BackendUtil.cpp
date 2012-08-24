@@ -231,8 +231,8 @@ void EmitAssemblyHelper::CreatePasses() {
   if (CodeGenOpts.MemSafety) {
 
     // C standard library / format string function transforms
+    MPM->add (new StringTransform());
     if (!CodeGenOpts.BaggyBounds) {
-      MPM->add (new StringTransform());
       MPM->add (new FormatStringTransform());
       MPM->add (new RegisterVarargCallSites());
       MPM->add (new LoggingFunctions());

@@ -5,7 +5,7 @@
 // bug 616. We failed to complete the type of decls in templates, leading to
 // bogus errors.
 
-struct Z;
+struct Z; // { dg-warning "" } forward declaration
 struct Y
 {
   Y (int i = 1);

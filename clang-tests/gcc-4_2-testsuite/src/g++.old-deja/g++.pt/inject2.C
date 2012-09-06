@@ -1,5 +1,4 @@
 // { dg-do assemble  }
-// { dg-options "-Wno-non-template-friend" }
 // Origin: Mark Mitchell <mark@codesourcery.com>
 
 template<int I>

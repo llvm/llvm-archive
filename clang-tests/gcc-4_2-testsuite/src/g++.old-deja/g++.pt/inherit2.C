@@ -20,12 +20,12 @@ template <class T> class B
 
   private: // only our friends can get out values
   static T valueA_AA;
-  static T valueA_AC;
+  static T valueA_AC; // { dg-warning "" } declared private here
   static T value_AC;
 };
 template <typename T> T B<T>::valueA_AA;
-template <typename T> T B<T>::valueA_AC;// { dg-error "" "" } private - 
-template <typename T> T B<T>::value_AC;	// { dg-bogus "" "" }  - 
+template <typename T> T B<T>::valueA_AC;
+template <typename T> T B<T>::value_AC;
 
 // this one is a friend
 template <class T> struct A<T>::AA
@@ -62,6 +62,6 @@ AC ac;
 int main ()
 {
   a_aa.M ();
-  a_ac.M ();
+  a_ac.M (); // { dg-warning "" } instantiation of
   ac.M ();
 }

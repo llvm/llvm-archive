@@ -4,9 +4,9 @@
 // Origin: Jason Merrill <jason@redhat.com>
 
 
-template <int i> void f()
+template <int i> void f()			// { dg-error "" } excessive recursion
 {
-  f<i+1>();			// { dg-error "" } excessive recursion
+  f<i+1>();			// { dg-error "" } in instantiation --- no matching function
 }
 
 // We should never need this specialization because we should issue an
@@ -17,5 +17,5 @@ template <> void f<11>();
 
 int main()
 {
-  f<0>();
+  f<0>();			// { dg-warning "" } in instantiation
 }

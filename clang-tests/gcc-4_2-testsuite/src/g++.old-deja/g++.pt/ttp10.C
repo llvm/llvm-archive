@@ -11,7 +11,7 @@ template<class T> int D<T>::f()
 	return sizeof(T);
 }
 
-template<template<class> class D,class E> class C
+template<template<class> class D,class E> class C // { dg-warning "" } template is declared here
 {
 		D d;			// { dg-error "" } D is a template
 	public:
@@ -20,7 +20,7 @@ template<template<class> class D,class E> class C
 
 template<template<class> class D,class E> int C<D,E>::f()
 {
-	return d.f();			// { dg-error "" } d not properly declared
+	return d.f();
 }
 
 int main()

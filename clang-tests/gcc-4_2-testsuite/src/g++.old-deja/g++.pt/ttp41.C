@@ -14,7 +14,7 @@ template<class T> class D
 template<class T> int D<T>::f()
 {
 	C<D,D> c;	// { dg-error "" }
-	return c.g();	// { dg-error "" }
+	return c.g();
 }
 
 int main()

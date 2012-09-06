@@ -1,8 +1,8 @@
 // { dg-do assemble  }
 
-struct A { // { dg-error "" } forward declaration
-  friend struct B : A {		// { dg-error "" } 
+struct A {
+  friend struct B : A {		// { dg-error "" } cannot define a type in a friend declaration
     int x;
-  };	// { dg-error "" } class definition cannot be a friend
+  };
   int y;
 };

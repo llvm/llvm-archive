@@ -5,8 +5,8 @@
 
 int r = 0;
 
-struct foo {		        // { dg-error "" } candidate
-  foo(int x) { r = 1; }		// { dg-error "" } candidate
+struct foo {
+  foo(int x) { r = 1; }
 };
 
 struct bar : foo {

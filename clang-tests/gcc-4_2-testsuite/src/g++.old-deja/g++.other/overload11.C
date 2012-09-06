@@ -34,7 +34,7 @@ int main (int argc, char **argv)
   (ovl) (1);                // ok
   (&ovl) (1);               // ok
   (ovl) ();                 // { dg-error "no matching function" }
-  (&ovl) ();                // ok
+  (&ovl) ();                // { dg-error "no matching function" }
   
   // 13.3.1.1 indicates that the following are errors -- the primary expression
   // is not the name of a function.

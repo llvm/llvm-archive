@@ -17,9 +17,9 @@ struct X
 void foo (int const &);
 void wibble (int const &);
 void wibble (int const &, int const &);
-void punk (int const & = 3.5f);        // { dg-warning "" } in passing
+void punk (int const & = 3.5f);        // { dg-warning "" } float to int
 void rock ();
-void rock (int const &, int  const & = 3.5f);       // { dg-warning "" } in passing
+void rock (int const &, int  const & = 3.5f);       // { dg-warning "" } float to int
 
 void fn ()
 {
@@ -40,9 +40,6 @@ void fn ()
   wibble (3.5f);    // { dg-warning "" } float to int
   wibble (1, 3.5f); // { dg-warning "" } float to int
   wibble (3.5f, 1); // { dg-warning "" } float to int
-
-  punk ();          // { dg-warning "" } float to int
-  rock (1);         // { dg-warning "" } float to int
 }
 
 // and make sure we really know when something's unsigned

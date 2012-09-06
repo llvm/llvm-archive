@@ -3,4 +3,4 @@
 // PRMS Id: 5481
 
 struct A { };
-static A a = A();
+static A a = A(); // { dg-warning "" } unused variable 'a'

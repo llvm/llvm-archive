@@ -10,7 +10,7 @@
 
 namespace tmp {
   typedef int B;
-  B b;
+  B b; // { dg-warning "" }
 }
 
 class A {

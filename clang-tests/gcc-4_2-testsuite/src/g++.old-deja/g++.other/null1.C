@@ -1,7 +1,7 @@
 // { dg-do link  }
 // { dg-options "-Wconversion" }
 
-#define NULL __null // { dg-warning "" }
+#define NULL __null
 
 void g(int) {}
 void g(long) {}
@@ -24,7 +24,7 @@ void l(long) {}
 int main()
 {
   int i = NULL; // { dg-warning "" } converting NULL to non-pointer type
-  float z = NULL; // converting NULL to non-pointer type
+  float z = NULL; // { dg-warning "" } converting NULL to non-pointer type
   int a[2];
 
   i != NULL; // { dg-warning "" } NULL used in arithmetic
@@ -36,10 +36,10 @@ int main()
   ~NULL;     // converting NULL to non-pointer type
   a[NULL] = 3; // converting NULL to non-pointer-type
   i = NULL;  // { dg-warning "" } converting NULL to non-pointer type
-  z = NULL;  // converting NULL to non-pointer type
+  z = NULL;  // { dg-warning "" } converting NULL to non-pointer type
   k(NULL);   // { dg-warning "" } converting NULL to int
   g(NULL);   // converting NULL to int
   h<NULL>(); // No warning: NULL bound to integer template parameter
   l(NULL);   // converting NULL to int
-  NULL && NULL; // No warning: converting NULL to bool is OK
+  NULL && NULL; // { dg-warning "" } converting NULL to bool (specific warning)
 }

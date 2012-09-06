@@ -1,6 +1,6 @@
 /* APPLE LOCAL file elide global inits 3814991 */
 /* { dg-do compile } */
-/* { dg-options "-O2 -fno-use-cxa-atexit" } */
+/* { dg-options "-O2" } */
 /* { dg-final { scan-assembler-not "_GLOBAL__I_" } } */
 /* Radar 3814991 */
 

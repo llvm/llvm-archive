@@ -12,7 +12,7 @@
 enum enum0 { enum0_value_0 };	
 
 struct struct0 {
-  int enum0;			
+  int enum0;			// { dg-warning "" } enum 'enum0' is hidden by a non-type declaration of 'enum0' here
   void member_function (enum0 e); // { dg-error "" } invalid use of struct-local member
 };
 

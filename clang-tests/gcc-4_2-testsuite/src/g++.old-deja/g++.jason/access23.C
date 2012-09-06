@@ -49,11 +49,11 @@ public:
     printf("%p\n",PUB.pX);  
     B = 0;			
   /* APPLE LOCAL default to Wformat-security 5764921 */
-    printf("%p\n",Foo::pY);  
+    printf("%p\n",Bar::pY);  
     PRT_A = 0;
     PRT.B = 0;		
   /* APPLE LOCAL default to Wformat-security 5764921 */
-    printf("%p\n",Foo::PRT.pY);	
+    printf("%p\n",Bar::PRT.pY);	
     PRV_A = 0;			// { dg-error "" } 
     Foo::C = 0;			// { dg-error "" } 
     printf("%x\n",pZ);  	// { dg-error "" } 

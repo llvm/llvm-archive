@@ -102,7 +102,6 @@ static inline void*
 _barebone_boundscheck (uintptr_t Source, uintptr_t Dest) {
 
   uintptr_t val = 1 ;
-  unsigned char e;
   void * RealSrc = (void *)Source;
   void * RealDest = (void *)Dest;
 

@@ -78,7 +78,7 @@ typedef struct DebugMetaData {
 } DebugMetaData;
 typedef DebugMetaData * PDebugMetaData;
 
-class BitmapPoolTy;
+struct BitmapPoolTy;
 struct DebugPoolTy : public BitmapPoolTy {
   // Splay tree used for object registration
   RangeSplaySet<> Objects;

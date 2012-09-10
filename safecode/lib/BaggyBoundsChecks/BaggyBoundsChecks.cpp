@@ -776,8 +776,12 @@ InsertBaggyBoundsChecks::runOnModule (Module & M) {
     Function *F = I;
     if (!mustCloneFunction(F)) continue;
     
+#if 0
     Function *NewF = cloneFunction(F);
-    //callClonedFunction(F, NewF);
+    callClonedFunction(F, NewF);
+#else
+    cloneFunction(F);
+#endif
   }
   return true;
 }

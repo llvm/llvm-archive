@@ -1,11 +1,11 @@
 // { dg-do assemble  }
 // try throwing overloaded function
 
-void f(int)
+void f(int) // { dg-error "" }
 {
 }
 
-void f(long)
+void f(long) // { dg-error "" }
 {
 }
 

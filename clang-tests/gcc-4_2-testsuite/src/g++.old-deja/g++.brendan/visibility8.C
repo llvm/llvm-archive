@@ -7,7 +7,7 @@ class foo
 public:
   static int y; // { dg-error "" } private
 };
-class foo1 : private foo
+class foo1 : private foo  // { dg-error "" } private
 { };
 class foo2 : public foo1
 { public:

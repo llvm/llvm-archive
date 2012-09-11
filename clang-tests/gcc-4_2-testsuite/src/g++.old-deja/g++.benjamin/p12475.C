@@ -6,7 +6,7 @@
 #if LONG_MAX == 2147483647
 #define TEST 2147483648
 #elif LONG_MAX == 9223372036854775807
-#define TEST 9223372036854775808
+#define TEST 9223372036854775808 // { dg-warning "" }
 #else
 #error "Unsupported test -- add new constants."
 #endif

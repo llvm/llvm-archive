@@ -3,7 +3,7 @@
 
 class foo {
  public:
-   class __iterator;
+   class __iterator; // { dg-error "" } 
    friend class __iterator;
    typedef __iterator const_iterator;
    virtual ~foo() { }

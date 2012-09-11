@@ -11,7 +11,7 @@ public:
      int b; // { dg-error "" } private
 };
 
-class C : private A {                   // NOTE WELL. private, not public
+class C : private A { // { dg-error "" } private
 public:
         int d;
 };

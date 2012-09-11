@@ -13,5 +13,6 @@ X foo() { X x; return x; }
 int main() 
 {
   X   x(foo()); // { dg-error "" } Compiler doesn't warn about temporary reference.
-  x.bar(foo()); // { dg-error "" } The same mistake is warned about in this case.
+  X y;
+  y.bar(foo()); // { dg-error "" } The same mistake is warned about in this case.
 }

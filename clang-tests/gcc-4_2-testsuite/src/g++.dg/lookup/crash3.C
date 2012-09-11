@@ -4,12 +4,12 @@
 
 typedef __SIZE_TYPE__ size_t; 
 
-struct A { void *operator new(size_t s){} };  // { dg-error "operator new" }
-struct B { void *operator new(size_t s){} };  // { dg-error "operator new" }
+struct A { void *operator new(size_t s){} };  // { dg-error "member found" }
+struct B { void *operator new(size_t s){} };  // { dg-error "member found" }
 
 struct C : A,B {}; 
 
 int crash() 
 {
-  C *c=new C();   // { dg-error "ambiguous" }
+  C *c=new C();   // { dg-error "multiple base classes" }
 }

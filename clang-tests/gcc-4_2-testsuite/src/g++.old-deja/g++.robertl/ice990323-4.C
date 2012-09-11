@@ -3,7 +3,7 @@
 
 template <class T> void f(T);
 
-template <class T> void f(T)
+template <class T> void f(T) // { dg-warning "" }
 {
 }
 

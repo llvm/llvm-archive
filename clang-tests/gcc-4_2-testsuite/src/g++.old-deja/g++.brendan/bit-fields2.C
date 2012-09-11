@@ -2,7 +2,7 @@
 // GROUPS passed bit-fields
 	struct S {
 	    char c;
-	    int i:8;
+	    int i:8; // { dg-warning "declared here" }
 	} s;
 	
 	int main()

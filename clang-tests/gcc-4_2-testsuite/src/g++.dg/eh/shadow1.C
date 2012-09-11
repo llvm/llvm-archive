@@ -13,12 +13,12 @@ struct D : private B
   friend class E;
   
   static B *baz (D *);
-  virtual void V () throw (B);  // { dg-error "overriding" "" }
+  virtual void V () throw (B);  // { dg-warning "overridden" "" }
 };
 
 struct E : public D
 {
-  virtual void V () throw (D); // { dg-error "looser throw" "" }
+  virtual void V () throw (D); // { dg-error "more lax" "" }
 };
 
 B* foo (D *);

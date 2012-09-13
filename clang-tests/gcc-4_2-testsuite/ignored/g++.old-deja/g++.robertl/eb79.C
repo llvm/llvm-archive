@@ -5,7 +5,7 @@
 using namespace std;
 
 template<class T>
-T max(T a, T b)
+T max(T a, T b)  // { dg-error "" } 
 {
   return (a > b) ? a : b;
 }

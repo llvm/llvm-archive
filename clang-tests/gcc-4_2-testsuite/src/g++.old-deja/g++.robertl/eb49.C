@@ -16,7 +16,7 @@ struct A
 
 template<class T, class U> class XX;
 
-template<class T, class U>
+template<class T, class U> // { dg-error "" }
 class X
 {
 public:

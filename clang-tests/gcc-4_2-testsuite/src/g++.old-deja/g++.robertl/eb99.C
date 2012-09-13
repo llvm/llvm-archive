@@ -127,7 +127,7 @@ class Baz : public ref_counted {
 };
 
 
-class Bar;
+class Bar;  //{ dg-error "" }
 
 int main() {
   ref_ptr<Baz> foo;

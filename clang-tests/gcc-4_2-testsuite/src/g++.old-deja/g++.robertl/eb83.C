@@ -8,6 +8,7 @@ test_swap(int& x, int& y) throw()
   y = tmp;
 }
 
+int
 main()
 {
   int i = 5;

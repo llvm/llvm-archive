@@ -8,5 +8,5 @@ public:
 
 void f()
 {
-  A<int&> a;
+  A<int&> a; // { dg-error "" } pointer to reference
 }

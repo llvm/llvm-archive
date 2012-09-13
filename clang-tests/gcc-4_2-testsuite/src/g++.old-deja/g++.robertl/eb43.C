@@ -26,9 +26,9 @@ int main()
   sort( a.begin(), a.end(),
 	static_cast<bool (*)(const Expr<int>,const Expr<int>)>(compare) );
   sort( a.begin(), a.end(), compare<int> );
-  sort<vector<int>::iterator,
+  sort<vector<int>::iterator, // { dg-error "" } constructor is explicit
        pointer_to_binary_function<const Expr<int>, const Expr<int>, bool> >
-    ( a.begin(), a.end(), compare ); // { dg-error "" } constructor is explicit
+    ( a.begin(), a.end(), compare );
   sort( a.begin(), a.end(),
 	ptr_fun<const Expr<int>, const Expr<int>, bool> (compare) );
   sort( a.begin(), a.end(),

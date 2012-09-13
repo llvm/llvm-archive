@@ -5,7 +5,8 @@
 
 // Make sure we diagnose bad uses of va_arg
 
-#include <stdarg.h>
+#define va_arg(ap, type)    __builtin_va_arg(ap, type)  // { dg-error "" }
+typedef __builtin_va_list va_list;
 
 struct X {int m;};
 struct Y : X {int m;};

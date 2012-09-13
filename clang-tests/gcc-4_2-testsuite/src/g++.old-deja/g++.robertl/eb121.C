@@ -3,11 +3,11 @@ class A {
 private:
   int i1_;
 public:
-  void f(int const i1 = 1); // { dg-error "previous specification" }
+  void f(int const i1 = 1); // { dg-error "previous definition" }
 };
 
 void
-A::f(int const i1 = 1) // { dg-error "default argument given" }
+A::f(int const i1 = 1) // { dg-error "redefinition of default argument" }
 {
   i1_ = i1;
 }

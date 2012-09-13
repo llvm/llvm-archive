@@ -1,6 +1,6 @@
 // { dg-do assemble  }
 
-int f (int x)
+int f (int x) // { dg-error "" }
 {
   extern void g (int i = f (x)); // { dg-error "" } default argument uses local
   
@@ -9,7 +9,7 @@ int f (int x)
   return 0;
 }
 
-int f (void);
+int f (void); // { dg-error "" }
 
 int h1 (int (*)(int) = f);
 int h2 (int (*)(double) = f); // { dg-error "" } no matching f

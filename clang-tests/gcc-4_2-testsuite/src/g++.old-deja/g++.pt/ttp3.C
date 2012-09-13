@@ -1,10 +1,10 @@
 // { dg-do assemble  }
 
-template<class E,class F> class D
+template<class E,class F> class D  // { dg-error "" }
 {
 };
 
-template<template<class> class D,class E> class C
+template<template<class> class D,class E> class C  // { dg-error "" }
 {
 };
 

@@ -11,7 +11,7 @@
 //    ... class X::X ...
 // caused us to ICE as we got confused about pushing and popping scopes.
 
-template <class T> class image
+template <class T> class image // { dg-error "" }
 {
 public:   
   template <class U> image(const image<U> &copy);

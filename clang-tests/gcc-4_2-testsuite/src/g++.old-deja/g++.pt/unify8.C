@@ -8,7 +8,7 @@
 // overload resolution.
 
 
-template <typename T> void Foo (T const **);
+template <typename T> void Foo (T const **);  // { dg-error "" }
 template <typename T> void Bar (T const * const *);
 void Foo (int);       // { dg-error "" } candidate
 void Foo (float);     // { dg-error "" } candidate

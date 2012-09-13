@@ -1,9 +1,9 @@
 // { dg-do assemble  }
 
-class A { // { dg-error "" } synthesized copy ctor
+class A {
 public:
-  A(int);			// { dg-error "" } referenced below
-  A(float);			// { dg-error "" } referenced below
+  A(int);
+  A(float);
   ~A();
 };
 

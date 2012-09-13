@@ -2,7 +2,10 @@
 // Copyright (C) 2000 Free Software Foundation
 // Contributed by Nathan Sidwell 22 June 2000 <nathan@codesourcery.com>
 
-#include <stdarg.h>
+typedef __builtin_va_list va_list;
+#define va_start(ap, param) __builtin_va_start(ap, param)
+#define va_end(ap)          __builtin_va_end(ap)
+#define va_arg(ap, type)    __builtin_va_arg(ap, type) // { dg-error "" }
 
 struct A {
   virtual ~A () {};

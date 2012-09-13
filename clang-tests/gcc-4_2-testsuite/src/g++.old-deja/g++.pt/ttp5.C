@@ -4,7 +4,7 @@ template<int> class D
 {
 };
 
-template<template<int> class D,class E> class C
+template<template<int> class D,class E> class C  // { dg-error "" }
 {
 	D<int> d;			// { dg-error "" } arg not match
 };

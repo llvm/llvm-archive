@@ -7,7 +7,7 @@ struct B{
   typedef T value_type;
 };
 
-template<class>class Vector{};
+template<class>class Vector{};  // { dg-error "" }
 
 template<class T>
 struct D:B<T>{

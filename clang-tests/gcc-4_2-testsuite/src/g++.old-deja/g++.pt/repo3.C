@@ -26,6 +26,7 @@ struct D : public B<T>, public C<T>
 {
 };
 
+int
 main ()
 {
   D<int> x;

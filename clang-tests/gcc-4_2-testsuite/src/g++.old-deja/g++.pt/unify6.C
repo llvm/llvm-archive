@@ -19,7 +19,7 @@ template<> void fn<int &>() {} // ok, specialize A
 template<> void fn<void ()>() {} // ok, specialize A
 
 // now make sure we moan when we really should
-template<class T> void foo(T const *){}
+template<class T> void foo(T const *){} // { dg-error "" }
 
 void f()
 {
@@ -29,11 +29,11 @@ void f()
 
 typedef void (*Fptr)();
 
-template<class T> void PV(Fptr const &, T const * const &);
-template<class T1, class T2> void PV(T1 const * const &, T2 const * const &);
+template<class T> void PV(Fptr const &, T const * const &);  // { dg-error "" }
+template<class T1, class T2> void PV(T1 const * const &, T2 const * const &);  // { dg-error "" }
 
 void baz()
 {
   void *t;
-  PV(&baz, t);
+  PV(&baz, t);  // { dg-error "" }
 }

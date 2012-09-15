@@ -43,6 +43,14 @@ proc prune_gcc_output { text } {
     regsub -all "(^|\n)\[^\n\]*file path prefix \[^\n\]* never used" $text "" text
     regsub -all "(^|\n)\[^\n\]*linker input file unused since linking not done" $text "" text
 
+    # efriedma: clang-specific ignore lines:
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*declared here\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*required here\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*requested here\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*attempt to specialize declaration here\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: expanded from macro\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*forward declaration of\[^\n\]*" $text "" text
+
     #send_user "After:$text\n"
 
     return $text

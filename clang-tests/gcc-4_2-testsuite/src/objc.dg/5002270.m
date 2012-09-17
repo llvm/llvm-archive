@@ -24,7 +24,7 @@ __attribute__((objc_root_class)) @interface data {
 
 -(void) foo: (unsigned long)
   dt mt:(unsigned long)
-  btfr:(ns *) bm
+  btfr :(ns *) bm
 {
   char ** n;
   char ** e;

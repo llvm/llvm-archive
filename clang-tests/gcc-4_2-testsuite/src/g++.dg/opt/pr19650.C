@@ -27,7 +27,7 @@ public:
     arg_cmp_func func;
     static arg_cmp_func comparator_matrix[4][2];
 
-    int Arg_comparator::set_compare_func(Item_bool_func2 *item, int type)
+    int set_compare_func(Item_bool_func2 *item, int type)
     {
         owner = item;
 

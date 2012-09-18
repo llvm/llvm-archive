@@ -13,9 +13,9 @@ public:
 };
 
 template <void (A::*)() >
-void g() {}
+void g() {}   // { dg-error "" } 
 template <int A::*>
-void h() {}
+void h() {}   // { dg-error "" } 
 
 
 int main() {

@@ -26,10 +26,10 @@ void tf(C *ptr)
 {
   N::nf<N::e0>();
   gf<N::e0>();
-  ptr->X::xfn <N::e0> ();
+  ptr->X::template xfn <N::e0> ();
   ptr->C::template xfn <N::e0> ();
   ptr->template xfn <N::e0> ();
-  ptr->X::sfn <N::e0> ();
+  ptr->X::template sfn <N::e0> ();
   ptr->C::template sfn <N::e0> ();
   ptr->template sfn <N::e0> ();
   X::sfn <N::e0> ();

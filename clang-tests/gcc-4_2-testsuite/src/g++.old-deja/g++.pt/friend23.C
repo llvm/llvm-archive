@@ -2,8 +2,8 @@
 
 template <class T = int> // { dg-error "" } original definition
 struct S
-{ // { dg-error "" } redefinition of default arg
-  template <class U = int>
+{
+  template <class U = int>  // { dg-error "" } redefinition of default arg
   friend class S;
 };
 

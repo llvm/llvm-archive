@@ -1,7 +1,7 @@
 // { dg-do assemble  }
 
 template <class T>
-void f(T) {} // { dg-error "previously" }
+void f(T) {} // { dg-error "previous" }
 
 template <class U>
 struct S {

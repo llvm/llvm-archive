@@ -50,6 +50,8 @@ proc prune_gcc_output { text } {
     regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*attempt to specialize declaration here\[^\n\]*" $text "" text
     regsub -all "(^|\n)\[^\n\]*: note: expanded from macro\[^\n\]*" $text "" text
     regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*forward declaration of\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*candidate template ignored\[^\n\]*" $text "" text
+    regsub -all "(^|\n)\[^\n\]*: note: \[^\n\]*previous definition is here\[^\n\]*" $text "" text
 
     #send_user "After:$text\n"
 

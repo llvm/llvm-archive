@@ -2918,3 +2918,11 @@ tmpdir-g++.dg-struct-layout-1/t030 cp_compat_x_tst.o-cp_compat_y_alt.o execute "
 tmpdir-g++.dg-struct-layout-1/t030 cp_compat_x_tst.o-cp_compat_y_alt.o execute "-m64","-m64"
 tmpdir-g++.dg-struct-layout-1/t030 cp_compat_x_tst.o-cp_compat_y_tst.o execute "-m32","-m32"
 tmpdir-g++.dg-struct-layout-1/t030 cp_compat_x_tst.o-cp_compat_y_tst.o execute "-m64","-m64"
+g++.old-deja/g++.other/linkage4.C  (test for errors, line 11)
+g++.old-deja/g++.pt/friend10.C (test for excess errors)
+g++.old-deja/g++.pt/friend13.C (test for excess errors)
+g++.old-deja/g++.pt/friend24.C (test for excess errors)
+g++.old-deja/g++.pt/friend32.C (test for excess errors)
+g++.old-deja/g++.pt/friend5.C (test for excess errors)
+g++.old-deja/g++.pt/link1.C (test for excess errors)
+g++.old-deja/g++.pt/memclass5.C (test for excess errors)

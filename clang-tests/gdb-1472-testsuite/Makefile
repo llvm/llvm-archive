@@ -69,7 +69,8 @@ make-test-directories: $(TEST_DIRECTORIES:%=$(objdir)/%/.dir)
 check: ${objdir}/.dir make-test-directories site.exp
 	@cp site.exp ${objdir}/$*
 	(cd ${objdir}/$* && \
-	 env $(ENV_FLAGS) $(RUNTEST) $(RUNTESTFLAGS))
+	 env $(ENV_FLAGS) $(RUNTEST) $(RUNTESTFLAGS); \
+         python ../filter.py gdb.sum ../expected_results/clang-x86_64-darwin10)
 .PHONY: check
 
 clean:

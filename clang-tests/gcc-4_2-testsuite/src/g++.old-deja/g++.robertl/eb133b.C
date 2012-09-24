@@ -3,7 +3,7 @@
 // From: Klaus-Georg Adams <Klaus-Georg.Adams@chemie.uni-karlsruhe.de> 
 // Reported against EGCS snaps 98/06/28.
 
-using namespace std; // { dg-error "" "" { xfail *-*-* } }
+using namespace std; // { dg-error "" }
 
 int main()
 {

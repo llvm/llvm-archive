@@ -10,7 +10,7 @@ __attribute__((objc_root_class)) @interface Moe
 @end
 
 @implementation Moe
-@synthesize ivar; /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar" } */
+@synthesize ivar; /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible instance variable or must explicitly name an instance variable" } */
 - (void)setIvar:(int)arg{}
 @end 
 
@@ -22,7 +22,7 @@ __attribute__((objc_root_class)) @interface Fred
 // due to change to ivar spec, a @synthesize triggers an 'ivar' synthsis im 64bit 
 // mode if one not found. In 32bit mode, lookup fails to find one and this result in an error.
 // This is regardless of existance of setter/getters by user.
-@synthesize ivar; /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible ivar or must explicitly name an ivar" } */
+@synthesize ivar; /* { dg-error "synthesized property 'ivar' must either be named the same as a compatible instance variable or must explicitly name an instance variable" } */
 - (void)setIvar:(int)arg{}
 - (int)ivar{return 1;}
 @end

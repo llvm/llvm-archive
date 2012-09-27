@@ -14,6 +14,6 @@
 @end
 @implementation Test3
 @synthesize prop;	/* { dg-error "previous property declaration of \\'prop\\' was here" } */
-@synthesize prop;  /* { dg-error "synthesized properties \\'prop\\' and \\'prop\\' both claim ivar \\'prop\\'" } */
+@synthesize prop;  /* { dg-error "synthesized properties \\'prop\\' and \\'prop\\' both claim instance variable \\'prop\\'" } */
 		   /* { dg-error "property \\'prop\\' is already implemented" "" { target *-*-* } 17 } */
 @end

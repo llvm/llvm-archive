@@ -826,7 +826,7 @@ static void createPerModuleOptimizationPasses() {
       // functions that are  marked as always_inline.
       for (Module::iterator I = TheModule->begin(), E = TheModule->end();
            I != E; ++I)
-        if (I->hasFnAttr(Attribute::AlwaysInline)) {
+        if (I->getFnAttributes().hasAlwaysInlineAttr()) {
           NeedAlwaysInliner = true;
           break;
         }

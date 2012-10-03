@@ -1,3 +1,5 @@
+// { dg-options "-Wno-uninitialized" }
+
 class hop
 {
 public:

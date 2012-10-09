@@ -70,7 +70,7 @@ check: ${objdir}/.dir make-test-directories site.exp
 	@cp site.exp ${objdir}/$*
 	(cd ${objdir}/$* && \
 	 env $(ENV_FLAGS) $(RUNTEST) $(RUNTESTFLAGS); \
-         python ../filter.py gdb.sum ../expected_results/clang-x86_64-darwin10)
+         python ../filter.py ../expected_results/clang-x86_64-darwin10 < gdb.sum > filtered.gdb.sum)
 .PHONY: check
 
 clean:

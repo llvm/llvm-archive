@@ -22,7 +22,7 @@ void ff() {
     }
   }
 }
-int g(int y)
+void g(int y)
 {
   bool x = h() != 0;
   if ( x) {

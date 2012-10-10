@@ -13,6 +13,7 @@ public:
   A &operator =(const A &i)
   {
     status = 0;
+    return *this;
   }
 };
 

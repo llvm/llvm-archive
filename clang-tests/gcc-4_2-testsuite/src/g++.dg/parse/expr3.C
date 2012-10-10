@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-options "-Wno-shift-op-parentheses" } */
 /* PR/18047  Test that operators have the right precedence.  */
 /* by bonzini@gnu.org */
 

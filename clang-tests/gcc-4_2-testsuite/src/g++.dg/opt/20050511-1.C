@@ -38,7 +38,7 @@ typedef struct
 }C;
 
 
-UINT32 bar (const C * sPtr)
+void bar (const C * sPtr)
 {
   UINT w = sPtr->w;
   A a;

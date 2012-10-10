@@ -34,7 +34,7 @@ bool testHandwritten(const char *style, const char *test, const char *message, i
                 if ([reference member:elem]) ++counter;
                 
             } while (innerCounter < limit);
-        } while (limit = [collection countByEnumeratingWithState:&state objects:buffer count:4]);
+        } while ((limit = [collection countByEnumeratingWithState:&state objects:buffer count:4]));
     }
             
  
@@ -130,19 +130,19 @@ bool testBreakOnValue(NSArray *array) {
     return true;
 }
     
-bool testBreaks(NSArray *array) {
+void testBreaks(NSArray *array) {
     int counter = 0;
     for (counter = 1; counter < [array count]; ++counter) {
         testBreak(counter, array);
     }
 }
         
-bool testCompleteness(const char *test, const char *message, id collection, NSSet *reference) {
+void testCompleteness(const char *test, const char *message, id collection, NSSet *reference) {
     testHandwritten("handwritten", test, message, collection, reference);
     testCompiler("compiler", test, message, collection, reference);
 }
 
-bool testEnumerator(const char *test, const char *message, id collection, NSSet *reference) {
+void testEnumerator(const char *test, const char *message, id collection, NSSet *reference) {
     testHandwritten("handwritten", test, message, [collection objectEnumerator], reference);
     testCompiler("compiler", test, message, [collection objectEnumerator], reference);
 }    

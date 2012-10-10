@@ -12,7 +12,7 @@
 int Verbosity = 0;
 int Errors = 0;
 
-bool testHandwritten(const char *style, const char *test, const char *message, id collection, NSSet *reference) {
+void testHandwritten(const char *style, const char *test, const char *message, id collection, NSSet *reference) {
     int counter = 0;
     bool result = true;
     if (Verbosity) {
@@ -35,7 +35,7 @@ bool testHandwritten(const char *style, const char *test, const char *message, i
                 if ([reference member:elem]) ++counter;
                 
             } while (innerCounter < limit);
-        } while (limit = [collection countByEnumeratingWithState:&state objects:buffer count:4]);
+        } while ((limit = [collection countByEnumeratingWithState:&state objects:buffer count:4]));
     }
             
  
@@ -53,7 +53,7 @@ bool testHandwritten(const char *style, const char *test, const char *message, i
     }
 }
 
-bool testCompiler(const char *style, const char *test, const char *message, id collection, NSSet *reference) {
+void testCompiler(const char *style, const char *test, const char *message, id collection, NSSet *reference) {
     int counter = 0;
     bool result = true;
     if (Verbosity) {
@@ -74,7 +74,7 @@ bool testCompiler(const char *style, const char *test, const char *message, id c
     }
 }
 
-bool testCompleteness(const char *test, const char *message, id collection, NSSet *reference) {
+void testCompleteness(const char *test, const char *message, id collection, NSSet *reference) {
     testHandwritten("handwritten", test, message, collection, reference);
     testCompiler("compiler", test, message, collection, reference);
 }

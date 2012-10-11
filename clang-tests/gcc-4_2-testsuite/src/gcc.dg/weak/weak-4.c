@@ -4,13 +4,13 @@
 
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1a" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1b" } } */
-/* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1c" } } */
+/* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1c" { xfail *-*-* } } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1d" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1e" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1f" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1g" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1h" } } */
-/* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1i" } } */
+/* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1i" { xfail *-*-* } } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1j" } } */
 /* { dg-final { scan-assembler "weak\[^ \t\]*\[ \t\]_?vfoo1k" } } */
 
@@ -32,7 +32,7 @@ void * foo1b (void)
 }
 
 
-extern int vfoo1c;  /* { dg-warning "applying #pragma weak" "applying #pragma weak" } */
+extern int vfoo1c;  /* { dg-warning "applying #pragma weak" "applying #pragma weak" { xfail *-*-* } } */
 void * foo1c (void)
 {
   return (void *)&vfoo1c;
@@ -64,7 +64,7 @@ void * foo1f (void)
 #pragma weak vfoo1f
 
 
-extern int vfoo1g;  /* { dg-warning "applying #pragma weak" "applying #pragma weak" } */
+extern int vfoo1g;  /* { dg-warning "applying #pragma weak" "applying #pragma weak" { xfail *-*-* } } */
 void * foo1g (void)
 {
   return (void *)&vfoo1g;

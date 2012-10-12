@@ -13,7 +13,8 @@
 @property int prop;
 @end
 @implementation Test3
-@synthesize prop;	/* { dg-error "previous property declaration of \\'prop\\' was here" } */
-@synthesize prop;  /* { dg-error "synthesized properties \\'prop\\' and \\'prop\\' both claim ivar \\'prop\\'" } */
-		   /* { dg-error "property \\'prop\\' is already implemented" "" { target *-*-* } 17 } */
+@synthesize prop;  /* { dg-warning "previous use is here" } */
+@synthesize prop;  /* { dg-error "synthesized properties \\'prop\\' and \\'prop\\' both claim instance variable \\'prop\\'" } */
+                   /* { dg-warning "previous declaration is here" "" { target *-*-* } 16 } */
+                   /* { dg-error "property \\'prop\\' is already implemented" "" { target *-*-* } 17 } */
 @end

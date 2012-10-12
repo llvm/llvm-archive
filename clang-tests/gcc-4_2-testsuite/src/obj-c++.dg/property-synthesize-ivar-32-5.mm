@@ -14,8 +14,8 @@
 @property int prop2;
 @end
 @implementation Test5_1
-@synthesize ivar; /* { dg-error "previous property declaration of \\'ivar\\' was here" } */
-@synthesize prop2 = ivar; /* { dg-error "synthesized properties \\'prop2\\' and \\'ivar\\' both claim ivar \\'ivar\\'" } */
+@synthesize ivar;         /* { dg-warning "previous use is here" } */
+@synthesize prop2 = ivar; /* { dg-error "synthesized properties \\'prop2\\' and \\'ivar\\' both claim instance variable \\'ivar\\'" } */
 @end
 
 @interface Test5_2 : Object
@@ -26,8 +26,8 @@
 @property int ivar;
 @end
 @implementation Test5_2
-@synthesize prop2 = ivar;  /* { dg-error "previous property declaration of \\'prop2\\' was here" } */
-@synthesize ivar; /* { dg-error "synthesized properties \\'ivar\\' and \\'prop2\\' both claim ivar \\'ivar\\'" } */
+@synthesize prop2 = ivar;  /* { dg-warning "previous use is here" } */
+@synthesize ivar;          /* { dg-error "synthesized properties \\'ivar\\' and \\'prop2\\' both claim instance variable \\'ivar\\'" } */
 @end
 
 @interface Test5_3 : Object
@@ -38,6 +38,6 @@
 @property int prop2;
 @end
 @implementation Test5_3
-@synthesize prop1 = ivar;  /* { dg-error "previous property declaration of \\'prop1\\' was here" } */
-@synthesize prop2 = ivar; /* { dg-error "synthesized properties \\'prop2\\' and \\'prop1\\' both claim ivar \\'ivar\\'" } */
+@synthesize prop1 = ivar; /* { dg-warning "previous use is here" } */
+@synthesize prop2 = ivar; /* { dg-error "synthesized properties \\'prop2\\' and \\'prop1\\' both claim instance variable \\'ivar\\'" } */
 @end

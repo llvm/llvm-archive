@@ -3,7 +3,7 @@
 */
 /* Origin: Joseph Myers <jsm28@cam.ac.uk> */
 /* { dg-do compile } */
-/* { dg-options "-std=iso9899:1990" } */
+/* { dg-options "-std=iso9899:1990 -Wno-int-to-pointer-cast" } */
 /* Note: not using -pedantic since the -std option alone should be enough
    to give the correct behavior to conforming programs.  If -pedantic is
    needed to make (say) (0, 0) not be a constant expression, this is a

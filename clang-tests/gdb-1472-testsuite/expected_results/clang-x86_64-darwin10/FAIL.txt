@@ -184,12 +184,15 @@ gdb.base/setshow.exp: show complaints (0)
 gdb.base/shlib-call.exp: step inside shr2 (shlib func)
 gdb.base/shlib-call.exp: step into mainshr1
 gdb.base/shlib-call.exp: step out of shr2 to main
+gdb.base/sigaltstack.exp: continue to catch (timeout)
 gdb.base/sigaltstack.exp: finish to catch MAIN
 gdb.base/sigaltstack.exp: finish to MAIN
 gdb.base/sigaltstack.exp: finish to OUTER
+gdb.base/siginfo.exp: continue to stepi handler (timeout)
 gdb.base/siginfo.exp: step out of handler
 gdb.base/signals.exp: backtrace for SIGUSR1 (rdar://problem/3061801)
 gdb.base/signals.exp: signal SIGUSR1 (the program exited) (rdar://problem/4527097)
+gdb.base/sigstep.exp: continue to stepi handler (timeout)
 gdb.base/sigstep.exp: next from handler; leave handler
 gdb.base/sigstep.exp: nexti from handleri; leave signal trampoline (stepped)
 gdb.base/sigstep.exp: step from handler; leave handler

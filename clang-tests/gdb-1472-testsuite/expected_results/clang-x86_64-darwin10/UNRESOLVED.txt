@@ -40,6 +40,127 @@ gdb.base/dump.exp: reload array as value, intel hex; capture intarray
 gdb.base/dump.exp: reload struct as memory, intel hex; capture intstruct
 gdb.base/dump.exp: reload struct as value, intel hex; capture intstruct
 gdb.base/ending-run.exp: don't step after run
+gdb.base/sigaltstack.exp: backtrace (pattern 1) (timeout)
+gdb.base/sigaltstack.exp: finish from catch INNER
+gdb.base/sigaltstack.exp: finish from catch LEAF
+gdb.base/sigaltstack.exp: finish to catch INNER
+gdb.base/sigaltstack.exp: finish to throw INNER
+gdb.base/sigaltstack.exp: next
+gdb.base/siginfo.exp: backtrace for nexti (pattern 1) (timeout)
+gdb.base/sigstep.exp: Set done as return will have skipped it
+gdb.base/sigstep.exp: backtrace for nexti (pattern 1) (timeout)
+gdb.base/sigstep.exp: break 66
+gdb.base/sigstep.exp: continue on breakpoint, skip handler; break infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, skip handler; clear infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, skip handler; continue to infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, skip handler; performing continue
+gdb.base/sigstep.exp: continue on breakpoint, skip handler; resync
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; break handler
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; break infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; clear handler
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; clear infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; continue to infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; performing continue (PRMS gdb/1738)
+gdb.base/sigstep.exp: continue on breakpoint, to handler entry; resync
+gdb.base/sigstep.exp: continue on breakpoint, to handler; break handler
+gdb.base/sigstep.exp: continue on breakpoint, to handler; break infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler; clear handler
+gdb.base/sigstep.exp: continue on breakpoint, to handler; clear infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler; continue to infinite loop
+gdb.base/sigstep.exp: continue on breakpoint, to handler; performing continue (PRMS gdb/1738)
+gdb.base/sigstep.exp: continue on breakpoint, to handler; resync
+gdb.base/sigstep.exp: continue over handler; advance to infinite loop
+gdb.base/sigstep.exp: continue over handler; performing continue
+gdb.base/sigstep.exp: continue over handler; resync
+gdb.base/sigstep.exp: continue to handler entry; advance to infinite loop
+gdb.base/sigstep.exp: continue to handler entry; break handler
+gdb.base/sigstep.exp: continue to handler entry; clear handler
+gdb.base/sigstep.exp: continue to handler entry; performing continue
+gdb.base/sigstep.exp: continue to handler entry; resync
+gdb.base/sigstep.exp: continue to handler; advance to infinite loop
+gdb.base/sigstep.exp: continue to handler; break handler
+gdb.base/sigstep.exp: continue to handler; clear handler
+gdb.base/sigstep.exp: continue to handler; performing continue
+gdb.base/sigstep.exp: continue to handler; resync
+gdb.base/sigstep.exp: finish from handleri; continue to handler
+gdb.base/sigstep.exp: finish from handleri; leave handler
+gdb.base/sigstep.exp: finish from handleri; leave signal trampoline
+gdb.base/sigstep.exp: next from handler; continue to handler
+gdb.base/sigstep.exp: next on breakpoint, skip handler; break infinite loop
+gdb.base/sigstep.exp: next on breakpoint, skip handler; clear infinite loop
+gdb.base/sigstep.exp: next on breakpoint, skip handler; continue to infinite loop
+gdb.base/sigstep.exp: next on breakpoint, skip handler; performing next
+gdb.base/sigstep.exp: next on breakpoint, skip handler; resync
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; break handler
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; break infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; clear handler
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; clear infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; continue to infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; performing next (PRMS gdb/1738)
+gdb.base/sigstep.exp: next on breakpoint, to handler entry; resync
+gdb.base/sigstep.exp: next on breakpoint, to handler; break handler
+gdb.base/sigstep.exp: next on breakpoint, to handler; break infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler; clear handler
+gdb.base/sigstep.exp: next on breakpoint, to handler; clear infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler; continue to infinite loop
+gdb.base/sigstep.exp: next on breakpoint, to handler; performing next (PRMS gdb/1738)
+gdb.base/sigstep.exp: next on breakpoint, to handler; resync
+gdb.base/sigstep.exp: next over handler; advance to infinite loop
+gdb.base/sigstep.exp: next over handler; performing next
+gdb.base/sigstep.exp: next over handler; resync
+gdb.base/sigstep.exp: next to handler entry; advance to infinite loop
+gdb.base/sigstep.exp: next to handler entry; break handler
+gdb.base/sigstep.exp: next to handler entry; clear handler
+gdb.base/sigstep.exp: next to handler entry; performing next
+gdb.base/sigstep.exp: next to handler entry; resync
+gdb.base/sigstep.exp: next to handler; advance to infinite loop
+gdb.base/sigstep.exp: next to handler; break handler
+gdb.base/sigstep.exp: next to handler; clear handler
+gdb.base/sigstep.exp: next to handler; performing next
+gdb.base/sigstep.exp: next to handler; resync
+gdb.base/sigstep.exp: nexti from handleri; continue to handler
+gdb.base/sigstep.exp: nexti from handleri; leave handler
+gdb.base/sigstep.exp: nexti from handleri; leave signal trampoline
+gdb.base/sigstep.exp: return from handleri; continue to handler
+gdb.base/sigstep.exp: return from handleri; leave handler
+gdb.base/sigstep.exp: return from handleri; leave signal trampoline
+gdb.base/sigstep.exp: set itimer = itimer_real
+gdb.base/sigstep.exp: step from handler; continue to handler
+gdb.base/sigstep.exp: step on breakpoint, skip handler; break infinite loop
+gdb.base/sigstep.exp: step on breakpoint, skip handler; clear infinite loop
+gdb.base/sigstep.exp: step on breakpoint, skip handler; continue to infinite loop
+gdb.base/sigstep.exp: step on breakpoint, skip handler; performing step
+gdb.base/sigstep.exp: step on breakpoint, skip handler; resync
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; break handler
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; break infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; clear handler
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; clear infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; continue to infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; performing step (PRMS gdb/1738)
+gdb.base/sigstep.exp: step on breakpoint, to handler entry; resync
+gdb.base/sigstep.exp: step on breakpoint, to handler; break handler
+gdb.base/sigstep.exp: step on breakpoint, to handler; break infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler; clear handler
+gdb.base/sigstep.exp: step on breakpoint, to handler; clear infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler; continue to infinite loop
+gdb.base/sigstep.exp: step on breakpoint, to handler; performing step (PRMS gdb/1738)
+gdb.base/sigstep.exp: step on breakpoint, to handler; resync
+gdb.base/sigstep.exp: step over handler; advance to infinite loop
+gdb.base/sigstep.exp: step over handler; performing step
+gdb.base/sigstep.exp: step over handler; resync
+gdb.base/sigstep.exp: step to handler entry; advance to infinite loop
+gdb.base/sigstep.exp: step to handler entry; break handler
+gdb.base/sigstep.exp: step to handler entry; clear handler
+gdb.base/sigstep.exp: step to handler entry; performing step
+gdb.base/sigstep.exp: step to handler entry; resync
+gdb.base/sigstep.exp: step to handler; advance to infinite loop
+gdb.base/sigstep.exp: step to handler; break handler
+gdb.base/sigstep.exp: step to handler; clear handler
+gdb.base/sigstep.exp: step to handler; performing step
+gdb.base/sigstep.exp: step to handler; resync
+gdb.base/sigstep.exp: stepi from handleri; continue to handler
+gdb.base/sigstep.exp: stepi from handleri; leave handler
+gdb.base/sigstep.exp: stepi from handleri; leave signal trampoline
 gdb.gdbtk/browser.exp: Insight not supported on Mac OS X.
 small-c/fix-small-c.exp: setting breakpoint at main
 small-c/mi-fix-small-c.exp: breakpoint at main

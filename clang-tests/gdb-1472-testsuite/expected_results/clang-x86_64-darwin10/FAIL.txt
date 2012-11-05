@@ -37,6 +37,7 @@ gdb.apple/slipnslide.exp: get fputs pre-start load address
 gdb.apple/slipnslide.exp: get libSystem pre-startup load address
 gdb.apple/slipnslide.exp: get puts pre-start load address
 gdb.apple/struct-in-struct.exp: ptype outer::inner before expanding psymtab (rdar://problem/4223302)
+gdb.apple/struct-in-struct.exp: ptype outer::inner after expanding psymtab
 gdb.apple/var-path-expr.exp: list children of fooVar.private
 gdb.apple/varobj-references.exp: Create base_var in pass_base_ref
 gdb.apple/varobj-references.exp: Create input_ptr_var in pass_ref_ptr

@@ -73,6 +73,7 @@ gdb_expect {
 	} else {
 	    fail "errno should be 0 after we set it to 0 - probably not getting shared cache correctly"
 	}
+	gdb_expect -re "$gdb_prompt $"
     }
     -re "$gdb_prompt $" {
 	fail "could not print errno after we set it"

@@ -1,3 +1,0 @@
-load_lib return0.exp
-
-hlvm-ret-zero-test "*.hlx" 1

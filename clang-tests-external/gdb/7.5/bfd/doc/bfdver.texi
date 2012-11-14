@@ -1,0 +1,4 @@
+@set VERSION 2.22.52
+@set VERSION_PACKAGE (GNU Binutils) 
+@set UPDATED August 2012
+@set BUGURL @uref{http://www.sourceware.org/bugzilla/}

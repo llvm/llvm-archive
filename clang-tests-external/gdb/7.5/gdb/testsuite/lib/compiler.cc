@@ -30,7 +30,9 @@
 
 set compiler_info "unknown" ;
 
-#if defined (__GNUC__)
+#if defined (__clang__)
+set compiler_info [join {clang __clang_major__ __clang_minor__ __clang_patchlevel__} -]
+#elif defined (__GNUC__)
 #if defined (__GNUC_PATCHLEVEL__)
 /* Only GCC versions >= 3.0 define the __GNUC_PATCHLEVEL__ macro.  */
 set compiler_info [join {gcc __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__} -]

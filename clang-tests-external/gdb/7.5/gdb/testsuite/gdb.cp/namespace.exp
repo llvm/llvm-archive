@@ -116,12 +116,18 @@ gdb_test "print AAA::xyzq('x')" \
        
 # Break on a function in a namespace
 
-if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
-    xfail "clang/14397"
-    return -1
+send_gdb "break AAA::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 47\\.\r\n$gdb_prompt $" {
+    }
+    -re "Breakpoint.*at $hex: AAA::xyzq\\. \\(2 locations\\)\r\n$gdb_prompt $" {
+        if [test_compiler_info {clang-*-*-*}] {
+            setup_xfail "clang/14397" *-*-*
+        }
+        fail "break AAA::xyzq created multiple breakpoints"
+        return -1
+    }
 }
-gdb_test "break AAA::xyzq" \
-    "Breakpoint.*at $hex: file.*namespace.cc, line 47\\."
 
 # Break on a function in the global namespace.
 

@@ -24,8 +24,11 @@ if { [prepare_for_testing enumval.exp "enumval" "" {debug}] } {
 }
 
 # Check the real contents.
+setup_xfail "clang/14404" *-*-*
 gdb_test "print e" "= J"
+setup_xfail "clang/14404" *-*-*
 gdb_test "print f" "= K"
 
 gdb_test "print J" "= J"
+setup_xfail "clang/14404" *-*-*
 gdb_test "print K" "= K"

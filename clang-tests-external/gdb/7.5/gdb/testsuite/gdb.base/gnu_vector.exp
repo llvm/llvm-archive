@@ -27,7 +27,8 @@ if [get_compiler_info] {
 }
 
 # Check if our compiler is a GCC that suppports the vector extension
-if { ![test_compiler_info gcc-4-*] } {
+if { ![test_compiler_info gcc-4-*] &&
+     ![test_compiler_info clang-*-*]} {
     setup_xfail "*-*-*"
     fail "This compiler can not handle GNU vectors"
     return 0

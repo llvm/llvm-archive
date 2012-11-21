@@ -239,7 +239,7 @@ proc do_tests {} {
     gdb_test_no_output "set multiple-symbols ask"
 
     if ![runto_main] {
-        if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+        if [test_compiler_info {clang-*-*-*}] {
             setup_xfail "clang/14397" *-*-*
         }
         fail "failed to set unique breakpoint at main"

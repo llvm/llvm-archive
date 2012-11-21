@@ -80,7 +80,11 @@ proc start_scalars_test { type } {
 
     # Advance to main
     if { ![runto_main] } then {
-	gdb_suppress_tests;
+        if [test_compiler_info {clang-*-*-*}] {
+            setup_xfail "clang/14397" *-*-*
+        }
+        fail "failed to set unique breakpoint at main"
+        return -1
     }
 
     # Get the debug format
@@ -96,6 +100,7 @@ proc start_scalars_test { type } {
 	}
     }
     gdb_test "ptype foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
+    return 0
 }
 
 
@@ -395,7 +400,9 @@ proc test_scalar_returns { } {
 # Test every single char struct from 1..17 in size.  This is what the
 # original "scalars" test was doing.
 
-start_scalars_test tc
+if [start_scalars_test tc] {
+  return -1
+}
 test_scalar_calls
 test_scalar_returns
 

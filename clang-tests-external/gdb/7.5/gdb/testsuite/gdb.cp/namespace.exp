@@ -116,6 +116,10 @@ gdb_test "print AAA::xyzq('x')" \
        
 # Break on a function in a namespace
 
+if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+    xfail "clang/14397"
+    return -1
+}
 gdb_test "break AAA::xyzq" \
     "Breakpoint.*at $hex: file.*namespace.cc, line 47\\."
 

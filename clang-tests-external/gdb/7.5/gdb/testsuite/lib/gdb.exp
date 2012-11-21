@@ -362,6 +362,7 @@ proc gdb_breakpoint { function args } {
     gdb_expect 30 {
 	-re "$break_message \[0-9\]* at .*: file .*, line $decimal.\r\n$gdb_prompt $" {}
 	-re "$break_message \[0-9\]*: file .*, line $decimal.\r\n$gdb_prompt $" {}
+        -re ".0\\] cancel.*" { return 0 }
 	-re "$break_message \[0-9\]* at .*$gdb_prompt $" {}
 	-re "$break_message \[0-9\]* \\(.*\\) pending.*$gdb_prompt $" {
 		if {$pending_response == "n"} {

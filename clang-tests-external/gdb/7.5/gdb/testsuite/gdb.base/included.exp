@@ -29,12 +29,18 @@ gdb_load ${binfile}
 
 gdb_test_no_output "set listsize 1"
 
-if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
-    xfail "clang/14394"
-    return -1
+send_gdb "list main\n"
+gdb_expect {
+    -re "No line number known for main.\r\n$gdb_prompt $" {
+        if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+            setup_xfail "clang/14394" *-*-*
+        }
+        fail "listing main finds no line numbers"
+        return -1
+    }
+    -re ".*\r\n$gdb_prompt $" {
+    }
 }
-
-gdb_test "list main" ".*"
 
 get_debug_format
 set non_dwarf [expr ! [test_debug_format "DWARF 2"]]

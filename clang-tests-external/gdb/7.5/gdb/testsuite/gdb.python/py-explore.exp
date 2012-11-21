@@ -13,6 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# gdb 7.5 doesn't recognize the 'explore' command when -data-directory is
+# specified. No idea why.
+set INTERNAL_GDBFLAGS "-nw -nx"
+
 standard_testfile
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {

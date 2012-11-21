@@ -16,6 +16,10 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
 
+# gdb 7.5 doesn't recognize the 'explore' command when -data-directory is
+# specified. No idea why.
+set INTERNAL_GDBFLAGS "-nw -nx"
+
 if { [skip_cplus_tests] } { continue }
 
 standard_testfile py-explore.cc

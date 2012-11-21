@@ -362,8 +362,6 @@ proc gdb_breakpoint { function args } {
     gdb_expect 30 {
 	-re "$break_message \[0-9\]* at .*: file .*, line $decimal.\r\n$gdb_prompt $" {}
 	-re "$break_message \[0-9\]*: file .*, line $decimal.\r\n$gdb_prompt $" {}
-        # temporary hack to workaround PR14397
-	-re "$break_message \[0-9\]*: .*. \\($decimal locations\\)\r\n$gdb_prompt $" {}
 	-re "$break_message \[0-9\]* at .*$gdb_prompt $" {}
 	-re "$break_message \[0-9\]* \\(.*\\) pending.*$gdb_prompt $" {
 		if {$pending_response == "n"} {
@@ -417,44 +415,38 @@ proc runto { function args } {
 
     gdb_run_cmd
 
-    set res 0
-    
     # the "at foo.c:36" output we get with -g.
     # the "in func" output we get without -g.
     gdb_expect 30 {
 	-re "Break.* at .*:$decimal.*$gdb_prompt $" {
-	    set res 1
+            return 1
 	}
 	-re "Breakpoint \[0-9\]*, \[0-9xa-f\]* in .*$gdb_prompt $" { 
-	    set res 1
+            return 1
 	}
 	-re "The target does not support running in non-stop mode.\r\n$gdb_prompt $" {
 	    unsupported "Non-stop mode not supported"
-	    set res 0
+            return 0
 	}
 	-re ".*A problem internal to GDB has been detected" {
 	    fail "running to $function in runto (GDB internal error)"
 	    gdb_internal_error_resync
-	    set res 0
+            return 0
 	}
 	-re "$gdb_prompt $" { 
 	    fail "running to $function in runto"
-	    set res 0
+            return 0
 	}
 	eof { 
 	    fail "running to $function in runto (end of file)"
-	    set res 0
+            return 0
 	}
 	timeout { 
 	    fail "running to $function in runto (timeout)"
-	    set res 0
+            return 0
 	}
     }
-    # workaround for PR14397
-    if {$res == 1} {
-      delete_breakpoints
-    }
-    return $res
+    return 1
 }
 
 # Ask gdb to run until we hit a breakpoint at main.

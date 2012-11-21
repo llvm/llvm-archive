@@ -340,7 +340,11 @@ proc rerun_and_prepare {} {
 	gdb_test_no_output "set overload-resolution 0"
     } else {
 	if { ![runto_main] } {
-	    gdb_suppress_tests;
+            if [test_compiler_info {clang-*-*-*}] {
+                setup_xfail "clang/14397" *-*-*
+            }
+            fail "failed to set unique breakpoint at main"
+            return 0
 	}
 	gdb_test_no_output "set language c"
     }
@@ -367,7 +371,9 @@ gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
 
-rerun_and_prepare
+if ![rerun_and_prepare] {
+    return 0
+}
 
 # Save all register contents.
 set old_reg_content [fetch_all_registers "retrieve original register contents"]

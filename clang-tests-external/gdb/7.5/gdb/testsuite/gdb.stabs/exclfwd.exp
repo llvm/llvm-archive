@@ -32,7 +32,13 @@ if ![runto_main] then {
     continue
 }
 
-get_debug_format
+if ![get_debug_format] {
+    if [test_compiler_info {clang-*-*-*}] {
+        setup_xfail "clang/14394" *-*-*
+    }
+    fail "failed to break at a source location"
+    return -1
+}
 
 set eol "\[ \t\]*\[\n\r\]+"
 

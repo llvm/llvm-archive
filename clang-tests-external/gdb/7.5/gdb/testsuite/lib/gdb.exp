@@ -3280,7 +3280,7 @@ proc get_debug_format { } {
 	    return 1;
 	}
 	-re "No current source file.\r\n$gdb_prompt $" {
-	    perror "get_debug_format used when no current source file"
+	    warning "get_debug_format used when no current source file"
 	    return 0;
 	}
 	-re "$gdb_prompt $" {

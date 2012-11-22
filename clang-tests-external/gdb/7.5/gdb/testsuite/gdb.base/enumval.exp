@@ -23,12 +23,17 @@ if { [prepare_for_testing enumval.exp "enumval" "" {debug}] } {
     return -1
 }
 
+set has_clang 0
+if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+  set has_clang 1
+}
+
 # Check the real contents.
-setup_xfail "clang/14404" *-*-*
+if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print e" "= J"
-setup_xfail "clang/14404" *-*-*
+if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print f" "= K"
 
 gdb_test "print J" "= J"
-setup_xfail "clang/14404" *-*-*
+if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print K" "= K"

@@ -59,7 +59,15 @@ exec sleep 2
 
 gdb_start
 file delete -- $binfile
-gdb_test "attach $testpid" "Attaching to process $testpid\r\n.*: No such file or directory\\." "attach"
+set test "attach"
+gdb_test_multiple "attach $testpid" $test {
+    -re "Attaching to process $testpid\r\n.*: No such file or directory\\.\r\n$gdb_prompt $" {
+        pass $test
+    }
+    -re "Attaching to process $testpid\r\nptrace: Operation not permitted.\r\n$gdb_prompt $" {
+        untested ${testfile}.exp
+    }
+}
 gdb_test "set architecture $arch" "The target architecture is assumed to be $arch"
 gdb_test "info shared" "From\[ \t\]+To\[ \t\]+Syms Read\[ \t\]+Shared Object Library\r\n0x.*"
 

@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # This testcase is part of GDB, the GNU debugger.
 
 # Copyright 2009-2012 Free Software Foundation, Inc.

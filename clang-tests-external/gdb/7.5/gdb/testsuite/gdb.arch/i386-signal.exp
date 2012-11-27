@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2007-2012 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.

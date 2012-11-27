@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 1992, 1994, 1996-1998, 2001, 2003, 2007-2012 Free Software
 # Foundation, Inc.
 

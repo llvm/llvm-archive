@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # temargs.exp - Template argument tests
 #
 # Copyright 2010-2012 Free Software Foundation, Inc.

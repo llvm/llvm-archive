@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # tls.exp -- Expect script to test thread-local storage
 # Copyright (C) 1992, 2003, 2007-2012 Free Software Foundation, Inc.
 

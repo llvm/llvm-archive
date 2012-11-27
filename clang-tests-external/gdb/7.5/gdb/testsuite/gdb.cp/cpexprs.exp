@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # cpexprs.exp - C++ expressions tests
 #
 # Copyright 2008-2012 Free Software Foundation, Inc.

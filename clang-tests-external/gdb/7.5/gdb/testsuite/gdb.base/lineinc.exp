@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Test macro handling of #included files.
 # Copyright 2003, 2007-2012 Free Software Foundation, Inc.
 

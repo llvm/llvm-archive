@@ -1,3 +1,4 @@
+if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2011-2012 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.

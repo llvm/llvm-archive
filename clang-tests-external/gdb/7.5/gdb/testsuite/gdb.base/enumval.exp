@@ -24,7 +24,7 @@ if { [prepare_for_testing enumval.exp "enumval" "" {debug}] } {
 }
 
 set has_clang 0
-if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+if [using_clang] {
   set has_clang 1
 }
 

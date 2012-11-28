@@ -32,7 +32,7 @@ gdb_test_no_output "set listsize 1"
 send_gdb "list main\n"
 gdb_expect {
     -re "No line number known for main.\r\n$gdb_prompt $" {
-        if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+        if [using_clang] {
             setup_xfail "clang/14394" *-*-*
         }
         fail "listing main finds no line numbers"

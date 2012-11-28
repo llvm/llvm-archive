@@ -437,7 +437,7 @@ gdb_test_multiple "maint info sections DATA" "maint info sections DATA" {
 
 set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
 
-if {[get_compiler_info] || [test_compiler_info {clang-*-*-*}]} {
+if [using_clang] {
     setup_xfail "clang/14394" *-*-*
 }
 gdb_test_multiple "maint info breakpoints" "maint info breakpoints" {

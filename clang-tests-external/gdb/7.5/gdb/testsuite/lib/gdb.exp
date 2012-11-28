@@ -2258,8 +2258,12 @@ proc test_compiler_info { {compiler ""} } {
     return [string match $compiler $compiler_info]
 }
 
+proc using_clang { } {
+    return ![get_compiler_info] && [test_compiler_info "clang-*-*-*"]
+}
+
 proc clang_baseline { } {
-    return [get_compiler_info] && [test_compiler_info "clang-*-*-*"]
+    return [using_clang]
 }
 
 proc current_target_name { } {

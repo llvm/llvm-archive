@@ -8,6 +8,7 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
 
+      (void)new EntryPointAnalysis();
       (void)new llvm::BasicDataStructures();
       (void)new llvm::LocalDataStructures();
       (void)new llvm::StdLibDataStructures();

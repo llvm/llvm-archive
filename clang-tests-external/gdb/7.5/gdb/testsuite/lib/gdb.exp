@@ -2263,7 +2263,8 @@ proc using_clang { } {
 }
 
 proc clang_baseline { } {
-    return [using_clang]
+    global SUPPRESS_CLANG_BASELINE
+    return { ![info exists SUPPRESS_CLANG_BASELINE] && [using_clang] }
 }
 
 proc current_target_name { } {

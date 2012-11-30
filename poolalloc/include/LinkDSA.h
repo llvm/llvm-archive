@@ -16,7 +16,6 @@ namespace {
       (void)new llvm::EquivBUDataStructures();
       (void)new llvm::TDDataStructures();
       (void)new llvm::EQTDDataStructures();
-      (void)new llvm::SteensgaardDataStructures();
       (void)new llvm::RTAssociate();
     }
   } ForceDSALinking; // Force link by creating a global definition.

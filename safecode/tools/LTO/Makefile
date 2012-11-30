@@ -13,7 +13,7 @@ LINK_COMPONENTS := all-targets ipo scalaropts linker bitreader bitwriter \
                    mcdisassembler vectorize
 
 USEDLIBS := addchecks.a optchecks.a sc-support.a scutility.a \
-  LLVMDataStructure.a poolalloc.a cmspasses.a
+  AssistDS.a LLVMDataStructure.a poolalloc.a cmspasses.a
 
 LINK_LIBS_IN_SHARED := 1
 SHARED_LIBRARY := 1
@@ -67,6 +67,10 @@ endif
 # SAFECode object tree.  This allows the LLVM build machinery to handle
 # library dependencies.
 #
+$(PROJ_OBJ_ROOT)/$(BuildMode)/lib/libAssistDS.a: $(POOLALLOC_OBJDIR)/$(BuildMode)/lib/AssistDS.a
+	$(VERB) echo "Creating symlink to $@"
+	$(VERB) ln -fs $< $@
+
 $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/libLLVMDataStructure.a: $(POOLALLOC_OBJDIR)/$(BuildMode)/lib/LLVMDataStructure.a
 	$(VERB) echo "Creating symlink to $@"
 	$(VERB) ln -fs $< $@

@@ -47,6 +47,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "poolalloc/PoolAllocate.h"
 #include "poolalloc/Heuristic.h"
+#include "poolalloc/RunTimeAssociate.h"
 
 #include "safecode/CompleteChecks.h"
 #include "safecode/LowerSafecodeIntrinsic.h"
@@ -55,6 +56,13 @@
 #include "safecode/SafeLoadStoreOpts.h"
 
 #include "CommonMemorySafetyPasses.h"
+
+#include "dsa/EntryPointAnalysis.h"
+#include "LinkDSA.h"
+
+#ifdef POOLALLOC
+#include <iostream>
+#endif
 
 using namespace llvm;
 

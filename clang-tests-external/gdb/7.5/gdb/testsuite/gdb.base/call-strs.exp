@@ -60,9 +60,6 @@ gdb_test_no_output "set print symbol off"
 gdb_test_no_output "set width 0"
 
 if ![runto_main] then {
-    if [using_clang] {
-        setup_xfail "clang/14397" *-*-*
-    }
     fail "couldn't run to breakpoint"
     continue
 }

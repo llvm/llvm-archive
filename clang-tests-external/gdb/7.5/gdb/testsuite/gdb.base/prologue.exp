@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Test for prologue skipping in minimal symbols with line info.
 # Copyright 2007-2012 Free Software Foundation, Inc.
 

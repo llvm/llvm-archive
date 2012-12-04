@@ -31,4 +31,4 @@ gdb_test "file" ".*" "file" \
 	 {Discard symbol table from `.*'\? \(y or n\) } "y"
 gdbserver_run ""
 gdb_test "set sysroot remote:"
-gdb_test "info files" "\r\nLocal exec file:\r\n\t<no file loaded>"
+gdb_test "info files"

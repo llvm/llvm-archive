@@ -38,24 +38,29 @@ if {![runto_main]} {
   return -1
 }
 
+if [using_clang] { setup_xfail "clang/14500" *-*-* }
 gdb_test "break here" \
   "Breakpoint.*at.*" \
   "breakpoint here"
 
+if [using_clang] { setup_xfail "clang/14500" *-*-* }
 gdb_test "break main:there" \
   "Breakpoint.*at.*" \
   "breakpoint there"
 
+if [using_clang] { setup_xfail "clang/14500" *-*-* }
 gdb_test "cont" \
   "Breakpoint 3,.*" \
   "continue to 'there'"
 
+if [using_clang] { setup_xfail "clang/14500" *-*-* }
 gdb_test "cont" \
   "Breakpoint 2,.*" \
   "continue to 'here'"
 
 rerun_to_main
 
+if [using_clang] { setup_xfail "clang/14500" *-*-* }
 gdb_test "cont" \
   "Breakpoint 3,.*" \
   "continue to 'there' after re-run"

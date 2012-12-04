@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -383,4 +382,5 @@ gdb_test "python print gdb.find_pc_line(gdb.selected_frame().pc()).line == line"
 gdb_py_test_silent_cmd "step" "Step into func2" 1
 gdb_py_test_silent_cmd "up" "Step out of func2" 1
 
+if [using_clang] { setup_xfail "clang/14501" *-*-* }
 gdb_test "python print gdb.find_pc_line(gdb.selected_frame().pc()).line > line" "True" "Test find_pc_line with resume address"

@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2009-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -197,6 +196,7 @@ proc test_template {} {
 	|| [test_compiler_info {gcc-4-[0-5]-*}]} {
 	setup_xfail "gcc/46955" *-*-*
     }
+    if [using_clang] { setup_xfail "clang/14492" *-*-* }
     gdb_test "python print ttype.template_argument(2)" "&C::c"
 }
 

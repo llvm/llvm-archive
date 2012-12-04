@@ -437,9 +437,6 @@ gdb_test_multiple "maint info sections DATA" "maint info sections DATA" {
 
 set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
 
-if [using_clang] {
-    setup_xfail "clang/14394" *-*-*
-}
 gdb_test_multiple "maint info breakpoints" "maint info breakpoints" {
     -re "Num\[ \t\]+Type\[ \t\]+Disp\[ \t\]+Enb\[ \t\]+Address\[ \t\]+What\r\n1\[ \t\]+breakpoint\[ \t\]+keep\[ \t\]+y\[ \t\]+$hex\[ \t\]+in main at.*break.c:$bp_location6 inf 1\r\n\[ \t\]+breakpoint already hit 1 time\r\n.*$gdb_prompt $" {
 	pass "maint info breakpoints"

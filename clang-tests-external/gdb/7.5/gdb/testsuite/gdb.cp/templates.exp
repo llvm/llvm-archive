@@ -61,6 +61,12 @@ proc test_ptype_of_templates {} {
 	    kfail "gdb/1111" "ptype T5<int>"
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
 	}
+	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+            xfail "ptype T5<int> (clang PR14471)"
+        }
+	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\(T5<int> ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+            xfail "ptype T5<int> (clang PR14472)"
+        }
     }
 
     gdb_test_multiple "ptype t5i" "ptype t5i" {
@@ -90,6 +96,12 @@ proc test_ptype_of_templates {} {
 	    kfail "gdb/1111" "ptype T5<int>"
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
 	}
+	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+            xfail "ptype T5<int> (clang PR14471)"
+        }
+	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\(T5<int> ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+            xfail "ptype T5<int> (clang PR14472)"
+        }
     }
 }
 
@@ -102,7 +114,10 @@ proc test_template_breakpoints {} {
     global testfile
     global srcdir
     global hp_aCC_compiler
+    global decimal
+    global hex
 
+    if [using_clang] { setup_xfail "clang/14473" *-*-* }
     gdb_test_multiple "break T5<int>::T5" "constructor breakpoint" {
 	-re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2.*templates.cc:T5<int>::T5\\((T5<int> const|const T5<int>) ?&\\)\[\r\n\]*.3.*templates.cc:T5<int>::T5\\(int\\)\[\r\n\]*> $" {
 	    gdb_test "0" \
@@ -120,11 +135,15 @@ proc test_template_breakpoints {} {
 		    "nonsense intended to insure that this test fails" \
 		    "constructor breakpoint (bad menu choices)"
 	}
+        -re "Breakpoint $decimal at $hex: .*\. \\($decimal locations\\)\[\r\n\]*$gdb_prompt $" {
+            fail "multiple breakpoints for T5<int>::T5"
+        }
     }
     
 # See CLLbs14792
     if {$hp_aCC_compiler} {setup_xfail hppa*-*-* CLLbs14792}
 
+    if [using_clang] { setup_xfail "clang/14473" *-*-* }
     gdb_test_multiple "break T5<int>::~T5" "destructor_breakpoint" {
 	-re "Breakpoint.*at.* file .*${testfile}.cc, line.*$gdb_prompt $"
 	{
@@ -134,6 +153,9 @@ proc test_template_breakpoints {} {
 	{
 	    kfail "gdb/1112" "destructor breakpoint"
 	}
+        -re "Breakpoint $decimal at $hex: .*\. \\($decimal locations\\)\[\r\n\]*$gdb_prompt $" {
+            fail "multiple breakpoints for T5<int>::~T5"
+        }
     }
     
     gdb_test "break T5<int>::value" \
@@ -202,7 +224,7 @@ proc test_template_typedef {} {
 
     set test "print destructor of template typedef"
     gdb_test_multiple "print intBazOne::~Baz" $test {
-	-re "~Baz(\\(\\))?>\r\n$gdb_prompt $" {
+	-re "~Baz(\\((void|)\\))?>\r\n$gdb_prompt $" {
 	    pass $test
 	}
 	-re "There is no field named ~Baz\r\n$gdb_prompt $" {
@@ -227,7 +249,7 @@ proc test_template_args {} {
 
     set empty_re "Empty *<void *\\(FunctionArg *<int>\\)>"
     gdb_test "ptype empty" \
-	"type = (struct|class) $empty_re {.*<no data fields>.*}"
+	"type = (struct|class) $empty_re {.*(<no data fields>)?.*}"
 
     gdb_test "ptype arg" \
 	"type = (struct|class) FunctionArg<int> {.*int method\\($empty_re \\&\\);.*}"
@@ -238,13 +260,7 @@ proc do_tests {} {
     # menu when breaking on overloaded methods.
     gdb_test_no_output "set multiple-symbols ask"
 
-    if ![runto_main] {
-        if [test_compiler_info {clang-*-*-*}] {
-            setup_xfail "clang/14397" *-*-*
-        }
-        fail "failed to set unique breakpoint at main"
-        return 0
-    }
+    runto_main
 
     test_ptype_of_templates
     test_template_breakpoints
@@ -254,12 +270,9 @@ proc do_tests {} {
     if [ runto_main] {
 	test_template_calls
     }
-    return 1
 }
 
-if ![do_tests] {
-    return 0
-}
+do_tests
 
 
 # More tests for different kinds of template parameters,
@@ -496,10 +509,10 @@ gdb_test_multiple "ptype Qux" "ptype Qux" {
 # pt Qux<int,&string>
 
 gdb_test_multiple "ptype quxint" "ptype quxint" {
-    -re "type = class Qux<int, ?& ?string> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int qux\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
+    -re "type = class Qux<int, ?&? ?string> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int qux\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype quxint"
     }
-    -re "type = class Qux<int, ?& ?string> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int qux\\(int, int\\);.*\r\n\\}\r\n$gdb_prompt $" {
+    -re "type = class Qux<int, ?&? ?string> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int qux\\(int, int\\);.*\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype quxint"
     }
     -re "type = class Qux<int, ?\\(char ?\\*\\)\\(& ?\\(?string\\)?\\)> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int qux\\(int, int\\);.*\r\n\\}\r\n$gdb_prompt $" {

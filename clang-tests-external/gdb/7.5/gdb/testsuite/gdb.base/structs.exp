@@ -92,11 +92,7 @@ proc start_structs_test { types } {
 
     # Advance to main
     if { ![runto_main] } then {
-        if [test_compiler_info {clang-*-*-*}] {
-            setup_xfail "clang/14397" *-*-*
-        }
-        fail "failed to set unique breakpoint at main"
-        return 0
+	gdb_suppress_tests;
     }
 
     # Get the debug format
@@ -120,7 +116,6 @@ proc start_structs_test { types } {
     append foo_t "\[\r\n \]+\}"
     gdb_test "ptype foo[llength ${types}]" "${foo_t}" \
 	    "ptype foo[llength ${types}]; ${testfile}"
-    return 1
 }
 
 # The expected value for fun${n}, L${n} and foo${n}.  First element is
@@ -500,9 +495,7 @@ proc test_struct_returns { n } {
 # Test every single char struct from 1..17 in size.  This is what the
 # original "structs" test was doing.
 
-if ![start_structs_test { tc }] {
-  return 0
-}
+start_structs_test { tc }
 test_struct_calls 1
 test_struct_calls 2
 test_struct_calls 3

@@ -44,7 +44,7 @@ gdb_load ${binfile}
 # symtab.c:rbreak_command to handle this.  Make sure that mod isn't lost
 # in merges.
 
-set timeout 10
+set timeout 30
 
 gdb_test "rbreak WithArg" \
     "Breakpoint $decimal.*at.* file.*objc-prog.m.*Breakpoint $decimal.*at.* file.*objc-prog.m.*"  \

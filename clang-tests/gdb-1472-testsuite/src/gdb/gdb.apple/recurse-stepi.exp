@@ -24,7 +24,7 @@ if $tracelevel then {
 }
 
 
-set timeout 5
+set timeout 10
 
 set prms_id 0
 set bug_id 0

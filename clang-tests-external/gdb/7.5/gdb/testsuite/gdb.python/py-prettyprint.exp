@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -131,7 +130,7 @@ gdb_test_no_output "python execfile ('${remote_python_file}')"
 gdb_breakpoint [gdb_get_line_number "eval-break"]
 gdb_continue_to_breakpoint "eval-break" ".* eval-break .*"
 
-gdb_test "info locals" "eval9 = eval=<123456789>"
+gdb_test "info locals" "eval. = eval=<123456789>"
 
 gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
     ".*Breakpoint.*"

@@ -639,6 +639,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+enable_lto_tests
 testobjdir
 testsrcdir
 capsaicinobjdir
@@ -708,6 +709,7 @@ with_capsaicin_srcdir
 with_capsaicin_objdir
 with_test_srcdir
 with_test_objdir
+enable_lto_tests
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1342,6 +1344,8 @@ Optional Features:
   --enable-kernel         Use SAFECode for use with Linux Kernel (default is
                           NO)
   --enable-capsaicin      Enable Capsaicin (default is NO)
+  --enable-lto-tests      Enable use of lto in SAFECode test-suite runs
+                          (default is no)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4223,6 +4227,19 @@ poolallocsrcdir=`cd $poolallocsrcdir; pwd`
 poolallocobjdir=`cd $poolallocobjdir; pwd`
 testsrcdir=`cd $testsrcdir; pwd`
 testobjdir=`cd $testobjdir; pwd`
+
+
+
+
+# Check whether --enable-lto-tests was given.
+if test "${enable_lto_tests+set}" = set; then
+  enableval=$enable_lto_tests; enable_lto_tests=$enableval
+else
+  enable_lto_tests=no
+
+fi
+
+
 
 
 ac_config_headers="$ac_config_headers include/safecode/Config/config.h"

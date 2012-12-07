@@ -153,6 +153,21 @@ testsrcdir=`cd $testsrcdir; pwd`
 testobjdir=`cd $testobjdir; pwd`
 
 dnl **************************************************************************
+dnl * Set any flags used in the Make
+dnl **************************************************************************
+
+dnl Specify whether we should use libLTO when running the test suite
+
+AC_SUBST(enable_lto_tests)
+AC_ARG_ENABLE(lto-tests,
+  AS_HELP_STRING([--enable-lto-tests],
+    [Enable use of lto in SAFECode test-suite runs (default is no)]),
+  [enable_lto_tests=$enableval], 
+  [enable_lto_tests=no]
+  )
+
+
+dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
 

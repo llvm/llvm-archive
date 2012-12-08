@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2010-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -111,6 +110,7 @@ gdb_test "break [gdb_get_line_number "forth breakpoint here"]" \
          "set forth breakpoint in main"
 gdb_continue_to_breakpoint "continue to forth breakpoint in main"
 
+if [using_clang] { setup_xfail "test is oversensitive to register allocation/unoptimized code" *-*-* }
 for { set r 7 } { $r <= $nr_regs  } { incr r } {
     gdb_test "print \$$dword_regs($r)" \
         ".. = $r" \

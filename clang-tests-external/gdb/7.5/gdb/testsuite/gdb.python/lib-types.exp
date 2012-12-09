@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2010-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -104,7 +103,7 @@ gdb_test_multiple "python print str (basic_type_typedef_const_typedef_class1_obj
 # test nested typedef/reference stripping
 gdb_test_no_output "python typedef_const_typedef_class1_ref_obj = gdb.parse_and_eval ('typedef_const_typedef_class1_ref_obj')"
 gdb_test_no_output "python basic_type_typedef_const_typedef_class1_ref_obj = gdb.types.get_basic_type (typedef_const_typedef_class1_ref_obj.type)"
-gdb_test "python print str (typedef_const_typedef_class1_ref_obj.type)" "const typedef_const_typedef_class1_ref"
+gdb_test "python print str (typedef_const_typedef_class1_ref_obj.type)" "(const )?typedef_const_typedef_class1_ref"
 set test "nested typedef/ref stripping"
 gdb_test_multiple "python print str (basic_type_typedef_const_typedef_class1_ref_obj)" $test {
     -re "\[\r\n\]+class1\[\r\n\]+$gdb_prompt $" {

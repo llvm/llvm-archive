@@ -67,6 +67,7 @@ main (void)
       if (semid >= 0)
 	break;
 
+      perror("Trying to create a semaphore");
       ++semkey;
     }
 

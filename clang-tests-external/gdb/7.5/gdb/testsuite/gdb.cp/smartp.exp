@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008, 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -65,7 +64,7 @@ gdb_test "p mt4p->b"         "= 12"
 
 # Test that incorrect use of the arrow operator
 # is still handled correctly.
-gdb_test "p mt4->fake"       "There is no member named fake."
+gdb_test "p mt4->fake"       "There is no member( or method)? named fake."
 gdb_test "p mt4->fake()"     "Couldn't find method Type4::fake"
 
 # Test that overloading of -> works recursively

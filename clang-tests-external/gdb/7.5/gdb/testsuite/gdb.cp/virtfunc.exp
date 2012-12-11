@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 1992, 1994-1999, 2001-2004, 2006-2012 Free Software
 # Foundation, Inc.
 
@@ -262,7 +261,9 @@ proc test_info_vtbl {} {
     gdb_test "info vtbl b" "${vt_B}${vt_V}"
     gdb_test "info vtbl c" "${vt_V}"
     gdb_test "info vtbl d" "${vt_D}${vt_V}"
+    if [using_clang] { setup_xfail "clang/14569" *-*-* }
     gdb_test "info vtbl e" "${vt_E}${vt_D2}${vt_V2}"
+    if [using_clang] { setup_xfail "clang/14569" *-*-* }
     gdb_test "info vtbl pEe" "${vt_E}${vt_D2}${vt_V2}"
 
     gdb_test "info vtbl" "Argument required.*"

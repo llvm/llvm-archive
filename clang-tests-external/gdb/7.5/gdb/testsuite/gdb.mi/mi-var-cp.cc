@@ -43,25 +43,27 @@ struct S2 : S {};
 int base_in_reference_test (S2& s2)
 {
   /*: BEGIN: base_in_reference :*/
-  return s2.i;
+  int res = s2.i;
   /*: 
-    mi_create_varobj "S2" "s2" "create varobj for s2"
-    mi_list_varobj_children "S2" {
-       {"S2.S" "S" "1" "S"}
-    } "list children of s2"
-    mi_list_varobj_children "S2.S" {
-       {"S2.S.public" "public" "2"}
-    } "list children of s2.s"
-    mi_list_varobj_children "S2.S.public" {
-       {"S2.S.public.i" "i" "0" "int"}
-       {"S2.S.public.j" "j" "0" "int"}
-    } "list children of s2.s.public"
+    if ![mi_create_varobj "S2" "s2" "create varobj for s2"] {
+      mi_list_varobj_children "S2" {
+         {"S2.S" "S" "1" "S"}
+      } "list children of s2"
+      mi_list_varobj_children "S2.S" {
+         {"S2.S.public" "public" "2"}
+      } "list children of s2.s"
+      mi_list_varobj_children "S2.S.public" {
+         {"S2.S.public.i" "i" "0" "int"}
+         {"S2.S.public.j" "j" "0" "int"}
+      } "list children of s2.s.public"
 
-    mi_check_varobj_value "S2.S.public.i" "67" "check S2.S.public.i"
-    mi_check_varobj_value "S2.S.public.j" "89" "check S2.S.public.j"
-    mi_delete_varobj S2 "delete S2"
+      mi_check_varobj_value "S2.S.public.i" "67" "check S2.S.public.i"
+      mi_check_varobj_value "S2.S.public.j" "89" "check S2.S.public.j"
+      mi_delete_varobj S2 "delete S2"
+    }
     
   :*/
+  return s2.i;
   /*: END: base_in_reference :*/
 }
         

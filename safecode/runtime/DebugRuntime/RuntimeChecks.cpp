@@ -68,6 +68,43 @@ updateCache (DebugPoolTy * Pool, void * Start, void * End) {
 }
 
 //
+// Provide dummy implementations of the common infrastructure run-time checks
+// to appease libLTO linking on Mac OS X.
+//
+extern "C" {
+  void __loadcheck(unsigned char*, size_t);
+  void __storecheck(unsigned char*, size_t);
+  void __fastloadcheck (unsigned char *, size_t, unsigned char *, size_t);
+  void __faststorecheck(unsigned char *, size_t, unsigned char *, size_t);
+  unsigned char * __fastgepcheck(unsigned char*, unsigned char*, unsigned char*, size_t);
+}
+
+void
+__loadcheck(unsigned char* a, size_t b) {
+  return;
+}
+
+void
+__storecheck(unsigned char* a, size_t b) {
+  return;
+}
+
+void
+__fastloadcheck (unsigned char * p, size_t size, unsigned char * q, size_t r) {
+  return;
+}
+
+void
+__faststorecheck (unsigned char * a, size_t b, unsigned char * c, size_t d) {
+  return;
+}
+
+unsigned char *
+__fastgepcheck (unsigned char* a, unsigned char* b, unsigned char* c, size_t d){
+  return 0;
+}
+
+//
 // Function: _barebone_poolcheck()
 //
 // Description:

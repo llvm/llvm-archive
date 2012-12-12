@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2009, 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -75,7 +74,7 @@ set line_callme_body   [expr $line_callme_head + 2]
 set line_main_head     [gdb_get_line_number "main ("]
 set line_main_body     [expr $line_main_head + 2]
 set line_main_hello    [gdb_get_line_number "Hello, World!"]
-set line_main_callme_1 [gdb_get_line_number "callme (1"]
+set line_main_callme_1 [gdb_get_line_number "callme (return_1"]
 
 # Forward execute to the callme() function, so that we can
 # execute backward from there.

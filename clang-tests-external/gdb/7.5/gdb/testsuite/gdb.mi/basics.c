@@ -64,7 +64,7 @@ main ()
 
   do_nothing (); /* Hello, World! */
 
-  callme (1);
+  callme (return_1 ());
   callme (2);
 
   return 0;

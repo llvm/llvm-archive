@@ -221,7 +221,7 @@ proc prelink_no {arg {name {}}} {
     }
     # Last line does miss the trailing \n.  There can be multiple such messages
     # as ARG may list multiple files.
-    if {$result == 1 && [regexp {^(/usr/sbin/prelink[^\r\n]*: [^ ]* does not have .gnu.prelink_undo section\n?)*$} $output]} {
+    if {$result == 1 && [regexp {^((/usr/sbin/)?prelink[^\r\n]*: [^ ]* does not have .gnu.prelink_undo section\n?)*$} $output]} {
 	pass $test
 	return 1
     } else {

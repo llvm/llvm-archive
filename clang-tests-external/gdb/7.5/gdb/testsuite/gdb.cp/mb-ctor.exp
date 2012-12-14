@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2007-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -68,6 +67,7 @@ gdb_test "continue" \
     ".*Breakpoint.*~Derived.*" \
     "run to breakpoint 3 v2"
 
+if [using_clang] { setup_xfail "clang/14610" *-*-* }
 gdb_test "continue" \
     ".*exited normally.*" \
     "run to exit"

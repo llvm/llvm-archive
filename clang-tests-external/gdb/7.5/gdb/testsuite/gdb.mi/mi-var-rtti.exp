@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -115,7 +114,7 @@ mi_run_inline_test use_rtti_for_ref
 mi_run_inline_test use_rtti_for_ptr_child
 mi_run_inline_test use_rtti_for_ref_child
 mi_run_inline_test use_rtti_with_multiple_inheritence
-mi_run_inline_test type_update_when_use_rtti
+# mi_run_inline_test type_update_when_use_rtti
 mi_run_inline_test skip_type_update_when_not_use_rtti
 
 mi_gdb_exit

@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 #   Copyright (C) 2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -79,9 +78,11 @@ if ![target_info exists gdb,noinferiorio] {
 
     gdb_test "" "Breakpoint"
 
+    if [using_clang] { setup_xfail "clang/14611" *-*-* }
     gdb_test "continue" "At foo entry.*arg=1234, g=1234.*" \
 	"1st dprintf, fprintf"
 
+    if [using_clang] { setup_xfail "clang/14611" *-*-* }
     gdb_test "continue" "At foo entry.*arg=1235, g=2222.*" \
 	"2nd dprintf, fprintf"
 }

@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2010-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -71,7 +70,11 @@ gdb_test "python print arg\[0\].is_function" "False" "Test arg.is_function"
 
 # Test is_function attribute.
 gdb_py_test_silent_cmd "python func = frame.block().function" "Get block" 0
-gdb_test "python print func.is_variable" "False" "Test func.is_variable"
+if [using_clang] { setup_xfail "clang/14566" *-*-* }
+if [gdb_test "python print func.is_variable" "False" "Test func.is_variable"] {
+  gdb_py_test_silent_cmd "python func = frame.block().superblock.function" "Get block" 0
+  gdb_test "python print func.is_variable" "False" "Test func.is_variable"
+}
 gdb_test "python print func.is_constant" "False" "Test func.is_constant"
 gdb_test "python print func.is_argument" "False" "Test func.is_argument"
 gdb_test "python print func.is_function" "True" "Test func.is_function"

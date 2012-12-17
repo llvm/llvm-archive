@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 #   Copyright 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -84,6 +83,7 @@ gdb_test "info skip" \
 
 if ![runto_main] { fail "skip tests suppressed" }
 gdb_test "step" ".*" "step in the main"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "bt" "\\s*\\#0\\s+main.*" "step after all ignored"
 
 #
@@ -103,6 +103,7 @@ gdb_test "info skip" \
 if ![runto_main] { fail "skip tests suppressed" }
 gdb_test "step" "foo \\(\\) at.*" "step after deleting 1 (1)"
 gdb_test "step" ".*" "step after deleting 1 (2)" ; # Return from foo()
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "step" "main \\(\\) at.*" "step after deleting 1 (3)"
 
 #
@@ -115,10 +116,25 @@ gdb_test "info skip 3" ".*\\n3\\s+file\\s+n.*" \
   "info skip shows entry as disabled"
 
 if ![runto_main] { fail "skip tests suppressed" }
-gdb_test "step" "bar \\(\\) at.*" "step after disabling 3 (1)"
-gdb_test "step" ".*" "step after disabling 3 (2)"; # Return from foo()
-gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (3)"
-gdb_test "step" ".*" "step after disabling 3 (4)"; # Return from bar()
+# account for differing order of evaluation of function operands
+if [using_clang] {
+  gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (1)"
+} else {
+  gdb_test "step" "bar \\(\\) at.*" "step after disabling 3 (1)"
+}
+if ![using_clang] { # Clang PR14580
+  gdb_test "step" ".*" "step after disabling 3 (2)"; # Return from foo()
+}
+# account for differing order of evaluation of function operands
+if [using_clang] {
+  gdb_test "step" "bar \\(\\) at.*" "step after disabling 3 (3)"
+} else {
+  gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (3)"
+}
+if ![using_clang] { # Clang PR14580
+  gdb_test "step" ".*" "step after disabling 3 (4)"; # Return from bar()
+}
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "step" "main \\(\\) at.*" "step after disabling 3 (5)"
 
 #
@@ -131,6 +147,7 @@ gdb_test "info skip 3" ".*\\n3\\s+file\\s+y.*" \
 if ![runto_main] { fail "skip tests suppressed" }
 gdb_test "step" "foo \\(\\) at.*" "step after enable 3 (1)"
 gdb_test "step" ".*" "step after enable 3 (2)"; # Return from foo()
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "step" "main \\(\\) at.*" "step after enable 3 (3)"
 
 gdb_test "skip disable"

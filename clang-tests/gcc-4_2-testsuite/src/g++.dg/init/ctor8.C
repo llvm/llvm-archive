@@ -1,11 +1,11 @@
 // PR c++/29039
 
-typedef struct S { // { dg-error "reference" }
-  int &r; 
+struct S {
+  int &r; // { dg-error "reference" }
 };
 
 S f () {
-  return S (); // { dg-error "synthesized" }
+  return S (); // { dg-error "in value-initialization" }
 }
 
 

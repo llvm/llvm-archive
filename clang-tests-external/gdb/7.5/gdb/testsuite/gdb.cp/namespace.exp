@@ -221,11 +221,9 @@ gdb_test "print E::ce" "No symbol \"ce\" in namespace \"C::D::E\"."
 gdb_test "ptype C" "type = namespace C::C"
 gdb_test "ptype E" "type = namespace C::D::E"
 
-if [using_clang] { setup_xfail "clang/14467" *-*-* }
 gdb_test "ptype CClass" "type = (class C::CClass \{\r\n  public:|struct C::CClass \{)\r\n    int x;\r\n\}"
 gdb_test "ptype CClass::NestedClass" "type = (class C::CClass::NestedClass \{\r\n  public:|struct C::CClass::NestedClass \{)\r\n    int y;\r\n\}"
 gdb_test "ptype NestedClass" "No symbol \"NestedClass\" in current context."
-if [using_clang] { setup_xfail "clang/14467" *-*-* }
 gdb_test "ptype ::C::CClass" "type = class C::CClass \{\r\n  public:\r\n    int x;\r\n\}"
 gdb_test "ptype ::C::CClass::NestedClass" "type = class C::CClass::NestedClass \{\r\n  public:\r\n    int y;\r\n\}"
 gdb_test "ptype ::C::NestedClass" "No symbol \"NestedClass\" in namespace \"C\"."

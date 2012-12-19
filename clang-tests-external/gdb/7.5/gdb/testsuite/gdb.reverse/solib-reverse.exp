@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2009-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -107,12 +106,16 @@ gdb_test "reverse-next" " generic statement.*" "reverse-next generic"
 # Test reverse-step into debuggable solib function
 #
 
-gdb_test "reverse-step" "${libsrc}.*" "reverse-step into solib function one"
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if ![gdb_test "reverse-step" "}" "reverse-step into solib function one"] {
+  gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
+}
 gdb_test "reverse-step" " middle part two.*" "reverse-step back to main one"
 
-gdb_test "reverse-step" "${libsrc}.*" "reverse-step into solib function two"
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if ![gdb_test "reverse-step" "}" "reverse-step into solib function two"] {
+  gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
+}
 gdb_test "reverse-step" " begin part two.*" "reverse-step back to main two"
 
 #

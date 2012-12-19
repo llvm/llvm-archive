@@ -23,7 +23,7 @@
 #include <string.h>
 
 int extern_array[4] = {1, 2, 3, 4};
-static int static_array[4] = {5, 6, 7, 8};
+static __attribute__((used)) int static_array[4] = {5, 6, 7, 8};
 static int un_initialized_array[4];
 static char *heap_string;
 

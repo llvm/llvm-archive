@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 #   Copyright 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -83,6 +82,7 @@ if ![runto_main] { fail "skip tests suppressed" }
 # We shouldn't step into square(), since we skipped skip-solib-lib.c.
 #
 gdb_test "step" ""
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "bt" "#0\\s+main.*" "step after ignoring solib file."
 
 #
@@ -126,4 +126,5 @@ gdb_test "info skip" \
 # last line of square.
 #
 gdb_test "step" ""
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test "bt" "#0\\s+square.*"

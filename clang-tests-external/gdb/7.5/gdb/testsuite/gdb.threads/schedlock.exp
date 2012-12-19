@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 1996-1997, 2002-2003, 2007-2012 Free Software
 # Foundation, Inc.
 
@@ -110,6 +109,12 @@ proc step_ten_loops { msg } {
 	    -re ".*myp\\) \\+\\+;\[\r\n\]+$gdb_prompt $" {
 		pass "step to increment ($msg $i)"
 	    }
+            -re "\}\[\r\n\]+$gdb_prompt $" {
+                if [using_clang] { setup_xfail "clang/14660" *-*-* }
+                fail "step to increment ($msg $i)"
+                send_gdb "step\n"
+                exp_continue
+            }
 	    -re "$gdb_prompt $" {
 		if {$other_step == 0} {
 		    set other_step 1

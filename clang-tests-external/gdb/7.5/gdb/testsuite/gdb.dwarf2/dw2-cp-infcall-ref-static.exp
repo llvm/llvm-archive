@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2010-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -16,6 +15,11 @@ if [clang_baseline] { xfail "clang baseline"; return -1 }
 
 # Check that GDB can call C++ functions whose parameters or return values have
 # type containing a static member of the same type.
+
+if [using_clang] {
+  untested "Clang does not guarantee ordering of inline asm relative to functions"
+  return -1
+}
 
 # Still no C++ compiler is used.
 if { [skip_cplus_tests] } { continue }

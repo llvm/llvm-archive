@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -145,6 +144,10 @@ gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 
 set stepi_location  [gdb_get_line_number "ARRIVED IN CALLEE" "$srcfile"]
 set test_message "reverse stepi thru function return"
+# xfail from here to ensure we still expect failure even when the output differs
+# and we never match the failure regexes (so we can update them rather than 
+# silently flip-flop between passing and expecting failure)
+ # if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test_multiple "stepi" "$test_message" {
     -re "NEXTI TEST.*$gdb_prompt $" {
 	fail "$test_message (start statement)"
@@ -154,6 +157,14 @@ gdb_test_multiple "stepi" "$test_message" {
 	exp_continue
     }
     -re "$hex\[ \t\]*$stepi_location.*ARRIVED IN CALLEE.*$gdb_prompt $" {
+	send_gdb "stepi\n"
+	exp_continue
+    }
+    -re "$stepi_location\r\n$stepi_location.*ARRIVED IN CALLEE.*$gdb_prompt $" {
+	# xfail again here because we might reach this pattern multiple times,
+	# not just on the first pass
+	if [using_clang] { setup_xfail "clang/14580" *-*-* }
+	fail "$test_message"
 	send_gdb "stepi\n"
 	exp_continue
     }

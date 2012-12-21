@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # This testcase is part of GDB, the GNU debugger.
 
 # Copyright 2008-2012 Free Software Foundation, Inc.
@@ -44,10 +43,13 @@ gdb_test "break $bp_location" \
 gdb_test continue "Continuing\\..*Breakpoint \[0-9\]+, main \\(\\) at .*$srcfile:$bp_location.*set breakpoint here.*" \
     "run until breakpoint set at a line number"
 
+if [using_clang] { setup_xfail "clang/14660" *-*-* }
 gdb_test "next 2" ".*place2.*" "next 2 (1)"
 gdb_test "next 2" ".*place3.*" "next 2 (2)"
+if [using_clang] { setup_xfail "clang/14660" *-*-* }
 gdb_test "next 2" ".*place2.*" "next 2 (3)"
 gdb_test "next 2" ".*place3.*" "next 2 (4)"
+if [using_clang] { setup_xfail "clang/14660" *-*-* }
 gdb_test "next 2" ".*place2.*" "next 2 (5)"
 gdb_test "next 2" ".*place3.*" "next 2 (6)"
 

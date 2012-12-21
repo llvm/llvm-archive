@@ -180,10 +180,6 @@ gdb_test_multiple "stepi" "$test_message" {
 	send_gdb "stepi\n"
 	exp_continue
     }
-    # this matches the pattern GDB seems to emit when the user steps between
-    # functions. For Clang debug info, this transition occurs straight onto
-    # this line, whereas with GCC debug info it occurs onto the "RETURN FROM
-    # CALLEE" line.
     -re "$stepi_location\r\n$stepi_location.*ARRIVED IN CALLEE.*$gdb_prompt $" {
         # xfail again here because we might reach this pattern multiple times,
         # not just on the first pass

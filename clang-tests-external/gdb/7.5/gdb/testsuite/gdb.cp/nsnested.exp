@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -33,10 +32,12 @@ gdb_breakpoint C::first
 gdb_continue_to_breakpoint "C::first"
 
 gdb_test "print ab" "No symbol .* in current context."
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print C::D::ab" "= 11"
 
 ############################################
 gdb_breakpoint C::D::second
 gdb_continue_to_breakpoint "C::D::second"
 
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print ab" "= 11"

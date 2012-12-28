@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # tls.exp -- Expect script to test thread-local storage
 # Copyright (C) 1992, 2003, 2007-2012 Free Software Foundation, Inc.
 
@@ -67,18 +66,22 @@ proc check_thread_local {number} {
     set me_variable [get_me_variable $number]
     set expected_value [compute_expected_value ${me_variable}]
 
+    if {$number != "first" && $number != "2" && [using_clang]} { setup_xfail "clang/14728" *-*-* }
     gdb_test "p a_thread_local" \
 	    "= $expected_value" \
 	    "${number} thread local storage"
 
+    if [using_clang] { setup_xfail "clang/14728" *-*-* }
     gdb_test "p K::another_thread_local" \
 	    "= $me_variable" \
 	    "${number} another thread local storage"
 
+    if [using_clang] { setup_xfail "clang/14660" *-*-* }
     gdb_test "info address a_thread_local" \
 	    ".*a_thread_local.*a thread-local variable at offset.*" \
 	    "${number} info address a_thread_local"
 
+    if [using_clang] { setup_xfail "clang/14660" *-*-* }
     gdb_test "info address K::another_thread_local" \
     	    ".*another_thread_local.*a thread-local variable at offset.*" \
 	    "${number} info address another_thread_local"
@@ -284,13 +287,16 @@ gdb_test "info address me" ".*me.*is a (complex DWARF expression:|variable).*" \
 
 gdb_test "p a_thread_local" " = \[0-9\]+"
 # Here it could crash with: Cannot access memory at address 0x0
+if [using_clang] { setup_xfail "clang/14728" *-*-* }
 gdb_test "p file2_thread_local" " = \[0-9\]+"
 # Depending on the current lookup scope we get LOC_UNRESOLVED or LOC_COMPUTED
 # both printing:
 # Symbol "file2_thread_local" is a thread-local variable at offset 8 in the thread-local storage for `.../gdb.threads/tls'.
+if [using_clang] { setup_xfail "clang/14728" *-*-* }
 gdb_test "info address file2_thread_local" "Symbol \"file2_thread_local\" is a thread-local variable.*"
 # Here it could also crash with: Cannot access memory at address 0x0
 gdb_test "p a_thread_local" " = \[0-9\]+" "p a_thread_local second time"
+if [using_clang] { setup_xfail "clang/14728" *-*-* }
 gdb_test "info address a_thread_local" "Symbol \"a_thread_local\" is a thread-local variable.*"
 
 # Done!

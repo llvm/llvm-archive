@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2002, 2007-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -52,6 +51,7 @@ gdb_continue_to_breakpoint "end of constructors"
 # Different compilers order the data for <A> differently, so I'm not
 # matching the result exactly.
 
+if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "print *theB" "\\$\[0-9\]* = {<A> = {\[^}\]*}, static b = <optimized out>}" "PR gdb/574"
 
 gdb_exit

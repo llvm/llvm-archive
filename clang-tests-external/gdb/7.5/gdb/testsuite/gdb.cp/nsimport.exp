@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008, 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -33,6 +32,8 @@ if ![runto_main] then {
     continue
 }
 
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print x" "\\$\[0-9\].* = 11"
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print xx" "\\$\[0-9\].* = 22"
 gdb_test "print xxx" "\\$\[0-9\].* = 33"

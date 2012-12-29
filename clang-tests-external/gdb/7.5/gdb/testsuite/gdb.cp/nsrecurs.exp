@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008, 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -34,12 +33,14 @@ if ![runto_main] then {
 # test printing from namespace imported into
 # imported namespace
 
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print ax" "= 9"
 
 ############################################
 # test that gdb can print without falling
 # into search loop
 
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print dx" "= 99"
 
 ############################################

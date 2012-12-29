@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 1997-2001, 2003, 2005, 2007-2012 Free Software Foundation,
 # Inc.
 
@@ -70,13 +69,12 @@ gdb_test "next" "21\[ \t\]*result = solib_main .result.;" \
 gdb_test "step" "solib_main .arg=10000. at.*${libfile}.c:17.*" \
     "step into solib call"
 
-# Verify that we can step within the shlib call.
-#
-gdb_test "next" "18\[ \t\]*\}" "step in solib call"
 
 # Verify that we can step out of the shlib call, and back out into
 # the caller.
 #
+set expect_brace true
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 gdb_test_multiple "next" "step out of solib call" {
     -re "0x\[0-9a-f\]*\[ \t\]*9\[ \t\]*.*$gdb_prompt $" {
 	gdb_test "next" \
@@ -84,7 +82,17 @@ gdb_test_multiple "next" "step out of solib call" {
 	    "step out of solib call"
     }
     -re "main .. at.*so-impl-ld.c:22.*$gdb_prompt $" {
-	pass "step out of solib call"
+        if $expect_brace {
+            fail "step out of solib call"
+        } else {
+	    pass "step out of solib call"
+        }
+    }
+    -re "18\[ \t\]*\}.*$gdb_prompt $" {
+        set expect_brace false
+        pass "step in solib call"
+        send_gdb "next\n"
+        exp_continue
     }
 }
 

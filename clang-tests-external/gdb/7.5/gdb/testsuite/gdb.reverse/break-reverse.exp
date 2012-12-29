@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 #   Copyright 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -47,9 +46,15 @@ gdb_test "break bar" \
     "Breakpoint $decimal at .* line $bar_location\." \
     "set breakpoint on bar"
 
-gdb_test "break $end_location" \
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if [gdb_test "break $end_location" \
     "Breakpoint $decimal at .* line $end_location\." \
-    set breakpoint at end of main"
+    "set breakpoint at end of main"] {
+    set end_location [expr { $end_location - 1 }]
+    gdb_test "break $end_location" \
+        "Breakpoint $decimal at .* line $end_location\." \
+        "set breakpoint at end of main"
+}
 
 gdb_continue_to_breakpoint "foo" ".*/$srcfile:$foo_location.*"
 gdb_continue_to_breakpoint "bar" ".*/$srcfile:$bar_location.*"
@@ -78,7 +83,7 @@ gdb_test_multiple "continue" "end of record log" {
     -re ".*Breakpoint $decimal,.*/$srcfile:$end_location.*$gdb_prompt $" {
 	pass "end of record log"
     }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+    -re "No more reverse-execution history.*/$srcfile:$end_location.*$gdb_prompt $" {
 	pass "end of record log"
     }
 }

@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2007-2012 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
@@ -38,6 +37,6 @@ gdb_load ${binfile}
 
 runto func
 gdb_test "backtrace 10" \
-    "#0  ($hex in )?func.*\r\n#1  <signal handler called>\r\n#2  ($hex in)?main.*"
+    "#0  ($hex in )?func.*\r\n#1  <signal handler called>\r\n#2  ($hex in )?main.*"
 
 gdb_test "finish" "Run till exit from \#0  func.*<signal handler called>"

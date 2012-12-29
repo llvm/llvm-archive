@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # temargs.exp - Template argument tests
 #
 # Copyright 2010-2012 Free Software Foundation, Inc.
@@ -80,15 +79,19 @@ gdb_test "break $srcfile:$line" "Breakpoint 7.*" \
 gdb_continue_to_breakpoint "continue to first breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "ptype T" "double" "test type of T in base_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print I" " = 23" "test value of I in base_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in base_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in base_m"
 
 #
@@ -99,9 +102,11 @@ gdb_continue_to_breakpoint "continue to second breakpoint for temargs"
 
 
 if {!$have_pr_45024_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "ptype T" "long" "test type of T in inner_m"
 
 if {!$have_pr_45024_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print I" " = 47" "test value of I in inner_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
@@ -110,9 +115,11 @@ if $have_older_template_gcc { setup_xfail "*-*-*"
   # gcc-4.5.x still does not emit inner DW_TAG_structure_type.
   setup_xfail "*-*-*"
 }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in inner_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in inner_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
@@ -121,6 +128,7 @@ if $have_older_template_gcc { setup_xfail "*-*-*"
   # gcc-4.5.x still does not emit outer DW_TAG_structure_type.
   setup_xfail "*-*-*"
 }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "whatis Z" "float" "test type of Z in inner_m"
 
 #
@@ -136,9 +144,11 @@ if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print I" " = 91" "test value of I in func"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in func"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in func"
 
 #
@@ -148,15 +158,19 @@ gdb_test "print MP" "&S::f" "test value of MP in func"
 gdb_continue_to_breakpoint "continue to fourth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "ptype T" "double" "test type of T in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print I" " = 23" "test value of I in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in templ_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
@@ -169,6 +183,7 @@ gdb_test "whatis Q" "short" "test type of Q in templ_m"
 gdb_continue_to_breakpoint "continue to fifth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_xfail "clang/4492" *-*-* }
 gdb_test "ptype F" "type = void \\\(S::\\\*\\\)\\\(S \\\* const\\\)" \
     "test type of F in k2_m"
 

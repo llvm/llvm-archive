@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 1999-2005, 2007-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -46,13 +45,19 @@ proc test_stepi_nexti {} {
     set line_main_body  [expr $line_main_head + 2]
     set line_main_hello [gdb_get_line_number "Hello, World!"]
 
-    set line [mi_execute_to "exec-step-instruction" "end-stepping-range" "main" "" \
-                  ".*basics.c" "\[0-9\]+" "" "step-instruction at main"]
-    if { $line >= $line_main_body && $line <= $line_main_hello } {
- 		pass "step-instruction at main (line check)"
-    } else {
-        fail "step-instruction at main (line check)"
-    }    
+    # clang/14501 means that "step"ing from this line steps into the function
+    # whereas the test expects to just step over a constant register
+    # initialization. Remove the conditional once 14501 is fixed.
+    if ![using_clang] {
+        set line [mi_execute_to "exec-step-instruction" "end-stepping-range" \
+                      "main" "" ".*basics.c" "\[0-9\]+" "" \
+                      "step-instruction at main"]
+        if { $line >= $line_main_body && $line <= $line_main_hello } {
+             pass "step-instruction at main (line check)"
+        } else {
+            fail "step-instruction at main (line check)"
+        }
+    }
 
     set line [mi_execute_to "exec-next-instruction" "end-stepping-range" "main" "" \
                   ".*basics.c" "\[0-9\]+" "" "next-instruction at main"]

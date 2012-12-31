@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -16,10 +15,6 @@ if [clang_baseline] { xfail "clang baseline"; return -1 }
 
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
-
-# gdb 7.5 doesn't recognize the 'explore' command when -data-directory is
-# specified. No idea why.
-set INTERNAL_GDBFLAGS "-nw -nx"
 
 if { [skip_cplus_tests] } { continue }
 

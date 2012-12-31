@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -38,11 +37,18 @@ if [supports_process_record] {
 # Run until end, then save execution log. 
 
 set breakloc [gdb_get_line_number "end of main" "$srcfile"]
-gdb_test "break $breakloc" \
-    "Breakpoint $decimal at .*/$srcfile, line $breakloc\." \
-    "BP at end of main"
-
-gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if [gdb_test "break $breakloc" \
+      "Breakpoint $decimal at .*/$srcfile, line $breakloc\." \
+      "BP at end of main"] {
+    set breakloc [expr $breakloc - 1]
+    gdb_test "break $breakloc" \
+        "Breakpoint $decimal at .*/$srcfile, line $breakloc\." \
+        "BP at end of main"
+    gdb_test "continue" "Breakpoint .* return 0;.*" "run to end of main"
+} else {
+    gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+}
 
 gdb_test "record save $precsave" \
     "Saved core file $precsave with execution log\."  \

@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Tests for anonymous union support.
 # Copyright 2011-2012 Free Software Foundation, Inc.
 
@@ -21,14 +20,18 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } 
      return -1
 }
 
+if [using_clang] { setup_xfail "clang/14762" *-*-* }
 gdb_test "ptype t::t" "type = void \\(t \\* const\\)" \
     "print type of t::t"
 
+if [using_clang] { setup_xfail "clang/14762" *-*-* }
 gdb_test "ptype X::t2" "type = struct X::t2 {\[\r\n \]*X::C2 m;\[\r\n \]*}" \
     "print type of X::t2"
 
+if [using_clang] { setup_xfail "clang/14762" *-*-* }
 gdb_test "ptype X::t2::t2" "type = void \\(X::t2 \\* const\\)" \
     "print type of X::t2::t2"
 
+if [using_clang] { setup_xfail "clang/14762" *-*-* }
 gdb_test "ptype t3::~t3" "type = void \\(t3 \\* const\\)" \
     "print type of t3::~t3"

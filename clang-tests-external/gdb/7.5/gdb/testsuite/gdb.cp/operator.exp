@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright 2008, 2011-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -28,26 +27,38 @@ if ![runto_main] then {
 }
 
 # Test global operator
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p a == 1" "= 11" "global operator"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p a == 'a'" "= 12" "global operator overload"
 
 # Test ADL operator
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p bc == 1" "= 22" "ADL operator"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p bc == 'a'" "= 23" "ADL operator overload"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p B::BD::operator== (bc,'a')" "= 24" "Fully qualified explicit operator call"
 
 # Test operator imported from anonymous namespace
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p d == 1" "= 33" "anonymous namespace operator"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p d == 'a'" "= 34" "anonymous namespace operator overload"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p d == 1.0f" "= 35" "anonymous namespace operator overload float"
 
 # Test operator imported by using directive
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p e == 1" "= 44" "imported operator"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p e == 'a'" "= 45" "imported operator overload"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p e == 1.0f" "= 46" "imported operator overload float"
 
 # Test member operator
 gdb_test "p g == 1" "= 55" "member operator"
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p g == 'a'" "= 56" "member operator overload"
 
 # Test that operators are not wrongly imported
@@ -56,6 +67,7 @@ gdb_test "p h == 1" "Cannot resolve function operator== to any overloaded instan
 gdb_test "p j == 1" "Cannot resolve function operator== to any overloaded instance" "imported declaration"
 
 # Test that indirectly imported operators work
+if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p l == 1" "= 88"
 
 # Test that we don't fall into an import loop

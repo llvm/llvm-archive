@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 #   Copyright 2008-2012 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -41,11 +40,18 @@ if [supports_process_record] {
     gdb_test_no_output "record" "Turn on process record"
 }
 
-gdb_test "break $end_location" \
-    "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
-    "BP at end of main"
-
-gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+if [using_clang] { setup_xfail "clang/PR14580" *-*-* }
+if [gdb_test "break $end_location" \
+      "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
+      "BP at end of main"] {
+    set end_location [expr $end_location - 1]
+    gdb_test "break $end_location" \
+        "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
+        "BP at end of main"
+    gdb_test "continue" "Breakpoint .* return .*;.*" "run to end of main"
+} else {
+    gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+}
 
 gdb_test "record save $precsave" \
     "Saved core file $precsave with execution log\."  \
@@ -68,14 +74,7 @@ gdb_test "break bar" \
 
 gdb_continue_to_breakpoint "foo" ".*/$srcfile:$foo_location.*"
 gdb_continue_to_breakpoint "bar" ".*/$srcfile:$bar_location.*"
-gdb_test_multiple "continue" "go to end of main forward" {
-    -re ".*Breakpoint $decimal,.*/$srcfile:$end_location.*$gdb_prompt $"  {
-	pass "go to end of main forward"
-    }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
-	pass "go to end of main forward"
-    }
-}
+gdb_test "continue" ".*No more reverse-execution history\..*main .* at .*/$srcfile:$end_location.*" "go to end of main forward"
 
 gdb_test_no_output "set exec-direction reverse" "set reverse"
 
@@ -96,11 +95,4 @@ gdb_test_no_output "set exec-direction forward" "set forward"
 gdb_continue_to_breakpoint "foo" ".*/$srcfile:$foo_location.*"
 gdb_continue_to_breakpoint "bar" ".*/$srcfile:$bar_location.*"
 
-gdb_test_multiple "continue" "end of record log" {
-    -re ".*Breakpoint $decimal,.*/$srcfile:$end_location.*$gdb_prompt $" {
-	pass "end of record log"
-    }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
-	pass "end of record log"
-    }
-}
+gdb_test "continue" ".*No more reverse-execution history\..*main .* at .*/$srcfile:$end_location.*" "end of record log"

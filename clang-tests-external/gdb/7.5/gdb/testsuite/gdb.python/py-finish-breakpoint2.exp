@@ -1,4 +1,3 @@
-if [clang_baseline] { xfail "clang baseline"; return -1 }
 # Copyright (C) 2011-2012 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -16,6 +15,14 @@ if [clang_baseline] { xfail "clang baseline"; return -1 }
 
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
+
+if {![get_compiler_info] && ![test_compiler_info gcc-*-*]} {
+    untested "FinishBreakpoint support in the presence of exceptions is documented 
+possibly fail. This test unreliably depends on success. See
+http://sourceware-org.1504.n7.nabble.com/Re-RFC-Python-Finish-Breakpoints-tt84688.html#a84717
+for more details"
+    return -1
+}
 
 load_lib gdb-python.exp
 

@@ -2260,11 +2260,6 @@ proc using_clang { } {
     return ![get_compiler_info] && [test_compiler_info "clang-*-*-*"]
 }
 
-proc clang_baseline { } {
-    global SUPPRESS_CLANG_BASELINE
-    return { ![info exists SUPPRESS_CLANG_BASELINE] && [using_clang] }
-}
-
 proc current_target_name { } {
     global target_info
     if [info exists target_info(target,name)] {

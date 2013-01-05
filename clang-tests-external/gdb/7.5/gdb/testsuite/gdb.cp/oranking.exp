@@ -38,7 +38,6 @@ setup_kfail "gdb/12096" *-*-*
 gdb_test "p foo0(b)" "10"
 
 gdb_test "p test1()" "12"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1(b)" "12"
 
 gdb_test "p test2()" "13"
@@ -65,7 +64,6 @@ gdb_test "p test8()"  "212"
 gdb_test "p foo8(co)" "212"
 
 gdb_test "p test9()"  "214"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo9(co)" "214"
 
 gdb_test "p test10()"   "216"

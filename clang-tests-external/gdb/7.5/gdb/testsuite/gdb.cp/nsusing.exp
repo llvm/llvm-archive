@@ -85,7 +85,7 @@ if ![runto marker5] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print cc" "= 3"
 
 gdb_exit

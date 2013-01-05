@@ -181,7 +181,7 @@ typedef TOA  TTOA;
 
 //------------
 
-static union {
+static __attribute__((used)) union {
     int  a;
     char b;
 }p_union;

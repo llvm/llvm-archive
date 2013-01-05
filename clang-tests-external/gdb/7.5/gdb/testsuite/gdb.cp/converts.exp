@@ -29,35 +29,24 @@ if ![runto_main] then {
 gdb_breakpoint [gdb_get_line_number "end of main"]
 gdb_continue_to_breakpoint "end of main"
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo0_1 (ta)"   "= 1"              "typedef to another typedef"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo0_2 (ta)"   "= 2"              "typedef to typedef of a typedef"
 gdb_test "p foo0_3 (bppp)" "Cannot resolve.*" \
  "Pointer-to-pointer-to-pointer derived to Pointer-to-pointer-to-pointer base."
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_1 (a)"  "= 11"             "pointer to pointer"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_2 (a)"  "= 12"             "pointer to array"
 gdb_test "p foo1_3 (a)"  "Cannot resolve.*" "pointer to pointer of wrong type"
 gdb_test "p foo1_3 (bp)" "Cannot resolve.*" "pointer to pointer of wrong type"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_4 (bp)" "= 14"             "pointer to ancestor pointer"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_5 (bp)" "= 15"             "pointer to void pointer"
 gdb_test "p foo1_6 (bp)" "Cannot resolve.*"     "pointer to void pointer pointer"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_7 (bp)" "= 17"                 "pointer to boolean"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_8 (bp)" "Using non-standard.*" "pointer to long int"
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo1_5 (b)" "= 15"             "pointer pointer to void pointer"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo2_1 (b)" "= 21"             "pointer pointer to pointer pointer"
 gdb_test "p foo2_2 (b)" "Cannot resolve.*" "pointer pointer to array of arrays"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo2_3 (b)" "= 23"             "pointer pointer to array of pointers"
 gdb_test "p foo2_4 (b)" "Cannot resolve.*" "pointer pointer to array of wrong pointers"
 

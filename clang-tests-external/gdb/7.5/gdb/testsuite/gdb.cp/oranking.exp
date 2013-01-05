@@ -46,7 +46,6 @@ setup_kfail "gdb/12098" *-*-*
 gdb_test "p foo2(b)" "13"
 
 gdb_test "p test3()"    "21"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo3(1.0f)" "21"
 
 gdb_test "p test4()"  "24"
@@ -54,19 +53,15 @@ setup_kfail "gdb/12098" *-*-*
 gdb_test "p foo4(&a)" "24"
 
 gdb_test "p test5()" "26"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo5(c)" "26"
 
 gdb_test "p test6()"  "28"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo6(bp)" "28"
 
 gdb_test "p test7()"  "210"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo7(cp)" "210"
 
 gdb_test "p test8()"  "212"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo8(co)" "212"
 
 gdb_test "p test9()"  "214"
@@ -88,7 +83,6 @@ gdb_test "p foo11(d)" "32"
 gdb_test "p test12()" "42"
 # this passes only because gdb does not yet
 # implement template function calling
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo12(1)" "42"
 
 gdb_test "p test13()" "44"

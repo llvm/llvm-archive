@@ -66,24 +66,19 @@ if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(ju)" "= 8"
 if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(js)" "= 9"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(je)" "= 10"
 
 #test for class members
 setup_xfail "*-*-*"
 gdb_test "p foo(jab)" "= 11"
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(jap)" "= 12"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(japp)" "= 13"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(jca)" "= 14"
 
 #test overload resolution
 if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(ko,1)" "= 15"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(ko,1.0f)" "= 16"
 setup_xfail "*-*-*"
 gdb_test "p bar(ko,1)" "= -1"
@@ -97,14 +92,11 @@ gdb_test "p foo(labo)" "= 17"
 gdb_test "p ma.foo('a')" "= 18"
 if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p foo(ma,'a')" "= 19"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p M::N::foo(ma,'a')" "= 20"
 gdb_test "p M::FAKE::foo(ma,'a')" "No type \"FAKE\" within class or namespace \"M\"."
 gdb_test "p M::N::fake(ma,'a')" "No symbol \"fake\" in namespace \"M::N\"."
 
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p M::bar('a')" "= 21"
-if [using_clang] { setup_xfail "clang/14573" *-*-* }
 gdb_test "p M::N::bar('a')" "= 22"
 
 #test that lookup supports typedef

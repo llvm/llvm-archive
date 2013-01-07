@@ -40,7 +40,7 @@ if [supports_process_record] {
     gdb_test_no_output "record" "Turn on process record"
 }
 
-if [using_clang] { setup_xfail "clang/PR14580" *-*-* }
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
 if [gdb_test "break $end_location" \
       "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
       "BP at end of main"] {

@@ -50,7 +50,6 @@ gdb_continue_to_breakpoint "continue to pmi = NULL"
 # ptype on pointer to data member
 
 set name "ptype pmi (A::j)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "ptype pmi" $name {
     -re "type = int A::\\*\r\n$gdb_prompt $" {
 	pass $name
@@ -60,7 +59,6 @@ gdb_test_multiple "ptype pmi" $name {
 # print pointer to data member
 
 set name "print pmi (A::j) "
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print pmi" $name {
     -re "$vhn = &A::j\r\n$gdb_prompt $" {
 	pass $name
@@ -92,7 +90,6 @@ gdb_test_multiple "print pmi" $name {
 # print dereferenced pointer to data member
 
 set name "print a.*pmi (A::j)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -113,7 +110,6 @@ gdb_test_multiple "print a.*pmi" $name {
 # this time, dereferenced through a pointer
 
 set name "print a_p->*pmi (A::j)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a_p->*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -150,7 +146,6 @@ gdb_test_multiple "set var pmi = &A::jj" $name {
 # print the pointer again
 
 set name "print pmi (A::jj)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print pmi" $name {
     -re "$vhn = &A::jj\r\n$gdb_prompt $" {
 	pass $name
@@ -174,7 +169,6 @@ gdb_test_multiple "print pmi" $name {
 # print dereferenced pointer to data member again
 
 set name "print a.*pmi (A::jj)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 1331\r\n$gdb_prompt $" {
 	pass $name
@@ -206,7 +200,6 @@ gdb_test_multiple "set var pmi = &A::j" $name {
 # print dereferenced pointer to data member yet again (extra check, why not)
 
 set name "print a.*pmi (A::j) (again)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -221,7 +214,6 @@ gdb_test_multiple "print a.*pmi" $name {
 # Set the data member pointed to.
 
 set name "print a.*pmi = 33"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 if ![gdb_test_multiple "print a.*pmi = 33" $name {
     -re "$vhn = 33\r\n$gdb_prompt $" {
 	pass $name
@@ -271,8 +263,7 @@ gdb_test_multiple "print a" $name {
 # Set the data member pointed to, using ->*
 
 set name "print a_p->*pmi = 44"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
-if ![gdb_test_multiple "print a_p->*pmi = 44" $name {
+gdb_test_multiple "print a_p->*pmi = 44" $name {
     -re "$vhn = 44\r\n$gdb_prompt $" {
 	pass $name
     }
@@ -281,12 +272,11 @@ if ![gdb_test_multiple "print a_p->*pmi = 44" $name {
 	# gcc HEAD 2004-01-10 -gstabs+
 	kfail "gdb/NNNN" $name
     }
-}] {
+}
 
 # Check that the data really was changed
 
 set name "print a_p->*pmi (44)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a_p->*pmi" $name {
     -re "$vhn = 44\r\n$gdb_prompt $" {
 	pass $name
@@ -301,7 +291,6 @@ gdb_test_multiple "print a_p->*pmi" $name {
 # Double-check by printing a.
 
 set name "print a (j = 44)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print a" $name {
     -re "$vhn = \{c = 120 'x', j = 44, jj = 1331, (static|static int) s = 10, (_vptr.A|_vptr\\$) = ($hex|$hex <A virtual table>)\}\r\n$gdb_prompt $" {
 	pass $name
@@ -318,12 +307,10 @@ gdb_test_multiple "print a" $name {
 	kfail "gdb/NNNN" $name
     }
 }
-}
 
 # ptype the dereferenced pointer to member.
 
 set name "ptype a.*pmi"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "ptype a.*pmi" $name {
     -re "type = int\r\n$gdb_prompt" {
 	pass $name
@@ -339,7 +326,6 @@ gdb_test_multiple "ptype a.*pmi" $name {
 # this is not allowed: a pmi must be bound to an object to dereference
 
 set name "print *pmi"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print *pmi" $name {
     -re "Attempt to dereference pointer to member without an object\r\n$gdb_prompt $" {
 	pass $name
@@ -359,7 +345,6 @@ gdb_test_multiple "print *pmi" $name {
 # this is not allowed: a pmi must be bound to an object to dereference
 
 set name "ptype *pmi"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "ptype *pmi" $name {
     -re "Attempt to dereference pointer to member without an object\r\n$gdb_prompt $" {
 	pass $name
@@ -559,7 +544,6 @@ gdb_test_multiple "set var pmf = &A::foo" $name {
 # this is not allowed: a pmf must be bound to an object to dereference
 
 set name "print *pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "print *pmf" $name {
     -re "Attempt to dereference pointer to member without an object\r\n$gdb_prompt $" {
 	pass $name
@@ -579,7 +563,6 @@ gdb_test_multiple "print *pmf" $name {
 # this is not allowed: a pmf must be bound to an object to dereference
 
 set name "ptype *pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test_multiple "ptype *pmf" $name {
     -re "Attempt to dereference pointer to member without an object\r\n$gdb_prompt $" {
 	pass $name
@@ -623,9 +606,7 @@ gdb_test "ptype a.*pmf" "type = int \\(A \\*( const)?, int\\)"
 
 # Print out a pointer to data member which requires looking into
 # a base class.
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print diamond_pmi" "$vhn = &Base::x"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print diamond.*diamond_pmi" "$vhn = 77"
 
 # Examine some more complicated pmfs, which require adjusting "this"
@@ -680,16 +661,12 @@ gdb_test "print diamond.*left_vpmf ()" \
     "Invalid data type for function to be called\\."
 
 # NULL pointer to member tests.
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmi" "$vhn = NULL"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmi = &A::j" "$vhn = &A::j"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmi = 0" "$vhn = NULL"
 
 if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmf" "$vhn = NULL"
 if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmf = &A::foo" "$vhn = \\(int \\(A::\\*\\)\\(A \\*( const)?, int\\)\\) $hex <A::foo ?\\(int\\)>"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
 gdb_test "print null_pmf = 0" "$vhn = NULL"

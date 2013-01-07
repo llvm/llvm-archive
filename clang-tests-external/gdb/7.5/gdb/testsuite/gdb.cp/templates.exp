@@ -62,7 +62,7 @@ proc test_ptype_of_templates {} {
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-            xfail "ptype T5<int> (clang PR14471)"
+            xfail "ptype T5<int> (clang/14471)"
         }
 	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\(T5<int> ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
             xfail "ptype T5<int> (clang PR14472)"
@@ -97,7 +97,7 @@ proc test_ptype_of_templates {} {
 	    # Add here a PASS case when PR gdb/1111 gets fixed.
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-            xfail "ptype T5<int> (clang PR14471)"
+            xfail "ptype T5<int> (clang/14471)"
         }
 	-re "type = class T5<int> \{${ws}public:${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\(T5<int> ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
             xfail "ptype T5<int> (clang PR14472)"

@@ -168,7 +168,7 @@ proc delete_breakpoints {} {
     #
     send_gdb "delete breakpoints\n"
     gdb_expect 100 {
-	 -re "Delete all breakpoints.*y or n.*$" {
+	 -re "Delete all breakpoints. .y or n. $" {
 	    send_gdb "y\n";
 	    exp_continue
 	}

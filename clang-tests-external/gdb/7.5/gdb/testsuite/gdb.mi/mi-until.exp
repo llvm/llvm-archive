@@ -61,7 +61,7 @@ proc test_until {} {
     global mi_gdb_prompt
     global hex fullname_syntax srcfile
 
-    setup_kfail gdb/2104 "*-*-*"
+    if ![using_clang] { setup_kfail gdb/2104 "*-*-*" }
     mi_execute_to "exec-until" "end-stepping-range" "foo" "" ".*until.c" "12" "" \
         "until after while loop"
 

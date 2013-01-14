@@ -172,6 +172,9 @@ proc delete_breakpoints {} {
 	    send_gdb "y\n";
 	    exp_continue
 	}
+         -re "Please answer y or n." {
+            exp_continue
+         }
 	 -re "$gdb_prompt $" { # This happens if there were no breakpoints
 	    }
 	 timeout { perror "Delete all breakpoints in delete_breakpoints (timeout)" ; return }

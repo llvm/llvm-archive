@@ -68,7 +68,7 @@ foreach x { 1 2 3 4 5 6 } {
     gdb_test_no_output "condition $trcpt $x - 1 == $x / 2" \
 	     "10.x: set condition for tracepoint $trcpt"
 
-    if [using_clang] { setup_xfail "gdb/14999" *-*-* }
+    if [using_clang] { setup_kfail "gdb/14999" *-*-* }
     if [gdb_trace_setactions "10.x: set actions for tracepoint $x" \
 	    "" \
 	    "collect q$x" "^$" \

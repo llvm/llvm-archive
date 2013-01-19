@@ -384,7 +384,7 @@ gdb_test_multiple "print ((int) pmi) == ((char *) &a.j - (char *) & a)" $name {
 # ptype a pointer to a method
 
 set name "ptype pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "ptype pmf" $name {
     -re "type = int \\( ?A::\\*\\)\\(A \\*( const)?, int\\)\r\n$gdb_prompt $" {
 	pass $name
@@ -407,7 +407,7 @@ gdb_test_multiple "ptype pmf" $name {
 # print a pointer to a method
 
 set name "print pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "print pmf" $name {
     -re "$vhn = \\(int \\(A::\\*\\)\\(A \\*( const)?, int\\)\\) $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
@@ -430,7 +430,7 @@ gdb_test_multiple "print pmf" $name {
 # ptype a pointer to a pointer to a method
 
 set name "ptype pmf_p"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "ptype pmf_p" $name {
     -re "type = int \\( ?A::\\*\\*\\)\\(A \\*( const)?, int\\)\r\n$gdb_prompt $" {
 	pass $name
@@ -473,7 +473,7 @@ gdb_test_multiple "print pmf_p" $name {
 # print dereferenced pointer to method
 
 set name "print a.*pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "print a.*pmf" $name {
     -re "$vhn = {int \\(A \\*( const)?, int\\)} $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
@@ -496,7 +496,7 @@ gdb_test_multiple "print a.*pmf" $name {
 # print dereferenced pointer to method, using ->*
 
 set name "print a_p->*pmf"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "print a_p->*pmf" $name {
     -re "$vhn = {int \\(A \\*( const)?, int\\)} $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
@@ -581,7 +581,7 @@ gdb_test_multiple "ptype *pmf" $name {
 # Call a function through a pmf.
 
 set name "print (a.*pmf)(3)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test_multiple "print (a.*pmf)(3)" $name {
     -re "$vhn = 50\r\n$gdb_prompt $" {
 	pass $name
@@ -601,7 +601,7 @@ gdb_test_multiple "print (a.*pmf)(3)" $name {
     }
 }
 
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "ptype a.*pmf" "type = int \\(A \\*( const)?, int\\)"
 
 # Print out a pointer to data member which requires looking into
@@ -613,46 +613,46 @@ gdb_test "print diamond.*diamond_pmi" "$vhn = 77"
 # and looking through virtual tables.
 
 # These two have a different object adjustment, but call the same method.
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print diamond.*left_pmf" \
     "$vhn = {int \\(Diamond \\*( const)?\\)} $hex <Base::get_x\\((void|)\\)>"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print diamond.*right_pmf" \
     "$vhn = {int \\(Diamond \\*( const)?\\)} $hex <Base::get_x\\((void|)\\)>"
 
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print (diamond.*left_pmf) ()" "$vhn = 77"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print (diamond.*right_pmf) ()" "$vhn = 88"
 
 # These two point to different methods, although they have the same
 # virtual table offsets.
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print diamond.*left_vpmf" \
     "$vhn = {int \\(Diamond \\*( const)?\\)} $hex <Left::vget\\((void|)\\)>"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print diamond.*right_vpmf" \
     "$vhn = {int \\(Diamond \\*( const)?\\)} $hex <Right::vget\\((void|)\\)>"
 
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print (diamond.*left_vpmf) ()" "$vhn = 177"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print (diamond.*left_base_vpmf) ()" "$vhn = 2077"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print (diamond.*right_vpmf) ()" "$vhn = 288"
 
 # We should be able to figure out left_vpmf even without an object,
 # because it comes from a non-virtual base.  The same for right_vpmf.
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print left_vpmf" "$vhn = &virtual Left::vget\\(\\)"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print right_vpmf" "$vhn = &virtual Right::vget\\(\\)"
 
 # But we should gracefully fail to figure out base_vpmf, because
 # its runtime type is more derived than its static type.  This
 # is a valid but unspecified cast (it is value preserving, i.e.
 # can be casted back to the correct type and used).
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print base_vpmf" \
     "$vhn = &virtual table offset \[0-9\]*, this adjustment -\[0-9\]*"
 
@@ -665,8 +665,8 @@ gdb_test "print null_pmi" "$vhn = NULL"
 gdb_test "print null_pmi = &A::j" "$vhn = &A::j"
 gdb_test "print null_pmi = 0" "$vhn = NULL"
 
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print null_pmf" "$vhn = NULL"
-if [using_clang] { setup_xfail "clang/14759" *-*-* }
+if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "print null_pmf = &A::foo" "$vhn = \\(int \\(A::\\*\\)\\(A \\*( const)?, int\\)\\) $hex <A::foo ?\\(int\\)>"
 gdb_test "print null_pmf = 0" "$vhn = NULL"

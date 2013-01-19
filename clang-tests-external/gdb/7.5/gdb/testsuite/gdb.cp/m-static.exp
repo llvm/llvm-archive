@@ -102,7 +102,6 @@ gdb_test "print test3.data.value_derived" "\\$\[0-9\].* = etruscan" "template ob
 # Four.
 
 # static const int initialized in another file.
-if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "print test4.elsewhere" "\\$\[0-9\].* = 221" "static const int initialized elsewhere"
 
 # static const int that nobody initializes.  From PR gdb/635.
@@ -113,12 +112,10 @@ if {[test_compiler_info {gcc-[0-3]-*}]
     # and DW_AT_MIPS_linkage_name = _ZN9gnu_obj_47nowhereE .
     setup_xfail *-*-*
 }
-if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "print test4.nowhere" "field nowhere is nonexistent or has been optimized out" "static const int initialized nowhere"
 
 # static const initialized in the class definition, PR gdb/11702.
 if { $non_dwarf } { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "print test4.everywhere" "\\$\[0-9\].* = 317" "static const int initialized in class definition"
 if { $non_dwarf } { setup_xfail *-*-* }
 if [using_clang] { setup_xfail "clang/14471" *-*-* }
@@ -126,7 +123,6 @@ gdb_test "print test4.somewhere" "\\$\[0-9\].* = 3.14\[0-9\]*" "static const flo
 
 # Also make sure static const members can be found via "info var".
 if { $non_dwarf } { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "info variable everywhere" "File .*/m-static\[.\]h.*const int gnu_obj_4::everywhere;" "info variable everywhere"
 
 # Perhaps at some point test4 should also include a test for a static

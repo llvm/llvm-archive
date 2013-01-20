@@ -601,7 +601,6 @@ gdb_test_multiple "print (a.*pmf)(3)" $name {
     }
 }
 
-if [using_clang] { setup_kfail "gdb/14998" *-*-* }
 gdb_test "ptype a.*pmf" "type = int \\(A \\*( const)?, int\\)"
 
 # Print out a pointer to data member which requires looking into

@@ -27,6 +27,5 @@ if ![runto_main] then {
 gdb_breakpoint [gdb_get_line_number "marker"]
 gdb_continue_to_breakpoint "marker"
 
-if [using_clang] { setup_xfail "clang/14734" *-*-* }
 gdb_test "p a" "{static axis = {{static axis = <same as static member of an already.*"
 

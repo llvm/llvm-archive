@@ -118,7 +118,6 @@ gdb_test "print test4.nowhere" "field nowhere is nonexistent or has been optimiz
 if { $non_dwarf } { setup_xfail *-*-* }
 gdb_test "print test4.everywhere" "\\$\[0-9\].* = 317" "static const int initialized in class definition"
 if { $non_dwarf } { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14471" *-*-* }
 gdb_test "print test4.somewhere" "\\$\[0-9\].* = 3.14\[0-9\]*" "static const float initialized in class definition"
 
 # Also make sure static const members can be found via "info var".

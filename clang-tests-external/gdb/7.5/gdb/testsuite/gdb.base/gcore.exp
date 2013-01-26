@@ -80,7 +80,6 @@ set pre_corefile_uninit_array \
 	[capture_command_output "print un_initialized_array" "$print_prefix"]
 set pre_corefile_heap_string \
 	[capture_command_output "print heap_string" "$print_prefix"]
-if [using_clang] { setup_xfail "clang/14566" *-*-* }
 set pre_corefile_local_array \
 	[capture_command_output "print array_func::local_array" "$print_prefix"]
 set pre_corefile_extern_array \
@@ -192,7 +191,6 @@ if ![string compare $pre_corefile_heap_string $post_corefile_heap_string]  {
     fail "corefile restored heap array"
 }
 
-if [using_clang] { setup_xfail "clang/14566" *-*-* }
 set post_corefile_local_array \
 	[capture_command_output "print array_func::local_array" "$print_prefix"]
 if ![string compare $pre_corefile_local_array $post_corefile_local_array]  {

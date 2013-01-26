@@ -58,7 +58,6 @@ gdb_test "python print sblock.is_static" "True" "Is the static block"
 gdb_test_no_output "python block = block.superblock" "Get superblock"
 gdb_test "python print block.function" "None" "Second anonymous block"
 gdb_test_no_output "python block = block.superblock" "Get superblock 2"
-if [using_clang] { setup_xfail "clang/14566" *-*-* }
 gdb_test "python print block.function" "block_func" \
          "Print superblock 2 function"
 

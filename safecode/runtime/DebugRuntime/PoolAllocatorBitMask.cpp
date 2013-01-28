@@ -84,7 +84,10 @@ uintptr_t InvalidUpper = 0x00000000;
 uintptr_t InvalidLower = 0x00000003;
 
 // Splay tree for mapping shadow pointers to canonical pointers
-static RangeSplayMap<void *> ShadowMap;
+static RangeSplayMap<void *> & ShadowMap (void) {
+  static RangeSplayMap<void *> realShadowMap;
+  return realShadowMap;
+}
 
 // Configuration for C code; flags that we should stop on the first error
 unsigned StopOnError = 0;
@@ -93,8 +96,8 @@ unsigned StopOnError = 0;
 using namespace llvm;
 
 // Map between call site tags and allocation sequence numbers
-std::map<unsigned,unsigned> allocSeqMap;
-std::map<unsigned,unsigned> freeSeqMap;
+std::map<unsigned,unsigned> * allocSeqMap;
+std::map<unsigned,unsigned> * freeSeqMap;
 
 /// UNUSED in production version
 FILE * ReportLog = 0;
@@ -205,6 +208,12 @@ pool_init_runtime (unsigned Dangling, unsigned RewriteOOB, unsigned Terminate) {
   // Initialize the dummy pool.
   //
   __sc_dbg_poolinit(&dummyPool, 1, 0);
+
+  //
+  // Initialize the sequence numbers used for debugging.
+  //
+  allocSeqMap = new std::map<unsigned,unsigned>;
+  freeSeqMap = new std::map<unsigned,unsigned>;
 
   //
   // Initialize the signal handlers for catching errors.
@@ -567,7 +576,7 @@ pool_register_debug (DebugPoolTy *Pool,
   // Generate a generation number for this object registration.  We only do
   // this for heap allocations.
   //
-  unsigned allocID = (allocSeqMap[tag] += 1);
+  unsigned allocID = ((*allocSeqMap)[tag] += 1);
 
   //
   // Create the meta data object containing the debug information for this
@@ -1117,7 +1126,7 @@ updateMDOnFree (DebugPoolTy *Pool,
   //
   // Increment the ID number for this deallocation.
   //
-  unsigned freeID = (freeSeqMap[tag] += 1);
+  unsigned freeID = ((*freeSeqMap)[tag] += 1);
 
   //
   // Ignore frees of NULL pointers.  These are okay.
@@ -1593,7 +1602,7 @@ getCanonicalPtr (void * ShadowPtr) {
   //
   void * start, * end;
   void * CanonPtr = 0;
-  bool found = ShadowMap.find (ShadowPtr, start, end, CanonPtr);
+  bool found = ShadowMap().find (ShadowPtr, start, end, CanonPtr);
   return (found ? CanonPtr : ShadowPtr);
 }
 
@@ -1633,7 +1642,7 @@ pool_shadow (void * CanonPtr, unsigned NumBytes) {
   //
   // Record the mapping from shadow pointer to canonical pointer.
   //
-  ShadowMap.insert (shadowptr, 
+  ShadowMap().insert (shadowptr, 
                         (char*) shadowptr + NumBytes - 1,
                         CanonPtr);
   if (logregs) {

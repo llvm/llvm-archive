@@ -1492,8 +1492,8 @@ bus_error_handler (int sig, siginfo_t * info, void * context) {
     void * tag = 0;
     void * end;
     if (OOBPool.OOB.find (faultAddr, start, end, tag)) {
-      const char * Filename = (const char *)(RewriteSourcefile[faultAddr]);
-      unsigned lineno = RewriteLineno[faultAddr];
+      const char * Filename = (const char *)(RewriteSourcefile()[faultAddr]);
+      unsigned lineno = RewriteLineno()[faultAddr];
 
       //
       // Get the bounds of the original object.

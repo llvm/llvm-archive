@@ -418,8 +418,8 @@ poolcheckui_debug (DebugPoolTy *Pool,
   ObjStart = 0;
   ObjEnd = 0;
   if (isRewritePtr (Node)) {
-    ObjStart = RewrittenObjs[Node].first;
-    ObjEnd   = RewrittenObjs[Node].second;
+    ObjStart = RewrittenObjs()[Node].first;
+    ObjEnd   = RewrittenObjs()[Node].second;
     Node = pchk_getActualValue (Pool, Node);
   }
 

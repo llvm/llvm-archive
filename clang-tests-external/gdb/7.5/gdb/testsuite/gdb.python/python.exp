@@ -69,6 +69,7 @@ gdb_py_test_multiple "indented multi-line python command" \
 
 gdb_test "source $srcdir/$subdir/source2.py" "yes" "source source2.py"
 
+set timeout 360
 gdb_test "source -s source2.py" "yes" "source -s source2.py"
 
 gdb_test "python print gdb.current_objfile()" "None"

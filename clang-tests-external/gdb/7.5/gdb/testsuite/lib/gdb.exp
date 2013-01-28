@@ -1341,7 +1341,7 @@ proc default_gdb_start { } {
 	perror "Spawning $GDB failed."
 	return 1;
     }
-    gdb_expect 360 {
+    gdb_expect 600 {
 	-re "\[\r\n\]$gdb_prompt $" {
 	    verbose "GDB initialized."
 	}

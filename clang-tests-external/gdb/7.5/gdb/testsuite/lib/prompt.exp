@@ -51,7 +51,7 @@ proc default_prompt_gdb_start { } {
 	perror "Spawning $GDB failed."
 	return 1;
     }
-    gdb_expect 360 {
+    gdb_expect 600 {
 	-re ".*$gdb_prompt_fail.*$gdb_prompt_fail.*" {
 	    fail "double prompted fail prompt"
 	}

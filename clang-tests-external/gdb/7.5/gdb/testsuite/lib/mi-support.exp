@@ -151,7 +151,7 @@ proc default_mi_gdb_start { args } {
 	perror "Spawning $GDB failed."
 	return 1;
     }
-    gdb_expect {
+    gdb_expect 600 {
 	-re "~\"GNU.*\r\n~\".*$mi_gdb_prompt$" {
 	    # We have a new format mi startup prompt.  If we are
 	    # running mi1, then this is an error as we should be

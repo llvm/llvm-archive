@@ -13,25 +13,27 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dsa-local"
+
 #include "dsa/DataStructure.h"
 #include "dsa/DSGraph.h"
-#include "llvm/Use.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Constants.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/InstVisitor.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/DataLayout.h"
+
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Use.h"
 
 #include <fstream>
 
@@ -684,9 +686,9 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   //
   // Ensure that the indexed pointer has a DSNode.
   //
-  DSNodeHandle Value = getValueDest(GEP.getOperand(0));
-  if (Value.isNull())
-    Value = createNode();
+  DSNodeHandle NodeH = getValueDest(GEP.getOperand(0));
+  if (NodeH.isNull())
+    NodeH = createNode();
 
   //
   // There are a few quick and easy cases to handle.  If  the DSNode of the 
@@ -695,9 +697,9 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
   // as the indexed pointer.
   //
 
-  if (!Value.isNull() &&
-      Value.getNode()->isNodeCompletelyFolded()) {
-    setDestTo(GEP, Value);
+  if (!NodeH.isNull() &&
+      NodeH.getNode()->isNodeCompletelyFolded()) {
+    setDestTo(GEP, NodeH);
     return;
   }
 
@@ -735,15 +737,15 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
       int FieldNo = CUI->getSExtValue();
       // increment the offset by the actual byte offset being accessed
 
-      unsigned requiredSize = TD.getTypeAllocSize(STy) + Value.getOffset() + Offset;
-      if(!Value.getNode()->isArrayNode() || Value.getNode()->getSize() <= 0){
-        if (requiredSize > Value.getNode()->getSize())
-          Value.getNode()->growSize(requiredSize);
+      unsigned requiredSize = TD.getTypeAllocSize(STy) + NodeH.getOffset() + Offset;
+      if(!NodeH.getNode()->isArrayNode() || NodeH.getNode()->getSize() <= 0){
+        if (requiredSize > NodeH.getNode()->getSize())
+          NodeH.getNode()->growSize(requiredSize);
       }
       Offset += (unsigned)TD.getStructLayout(STy)->getElementOffset(FieldNo);
       if(TypeInferenceOptimize) {
         if(ArrayType* AT = dyn_cast<ArrayType>(STy->getTypeAtIndex(FieldNo))) {
-          Value.getNode()->mergeTypeInfo(AT, Value.getOffset() + Offset);
+          NodeH.getNode()->mergeTypeInfo(AT, NodeH.getOffset() + Offset);
           if((++I) == E) {
             break;
           }
@@ -754,7 +756,7 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
           // Uncomment the line below to get all the nested types.
           gep_type_iterator J = I;
           while(isa<ArrayType>(*(++J))) {
-            //      Value.getNode()->mergeTypeInfo(AT1, Value.getOffset() + Offset);
+            //      NodeH.getNode()->mergeTypeInfo(AT1, NodeH.getOffset() + Offset);
             if((++I) == E) {
               break;
             }
@@ -767,27 +769,27 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
       }
     } else if(ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
       // indexing into an array.
-      Value.getNode()->setArrayMarker();
+      NodeH.getNode()->setArrayMarker();
       Type *CurTy = ATy->getElementType();
 
       if(!isa<ArrayType>(CurTy) &&
-         Value.getNode()->getSize() <= 0) {
-        Value.getNode()->growSize(TD.getTypeAllocSize(CurTy));
-      } else if(isa<ArrayType>(CurTy) && Value.getNode()->getSize() <= 0){
+         NodeH.getNode()->getSize() <= 0) {
+        NodeH.getNode()->growSize(TD.getTypeAllocSize(CurTy));
+      } else if(isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
         Type *ETy = (cast<ArrayType>(CurTy))->getElementType();
         while(isa<ArrayType>(ETy)) {
           ETy = (cast<ArrayType>(ETy))->getElementType();
         }
-        Value.getNode()->growSize(TD.getTypeAllocSize(ETy));
+        NodeH.getNode()->growSize(TD.getTypeAllocSize(ETy));
       }
 
       // Find if the DSNode belongs to the array
       // If not fold.
-      if((Value.getOffset() || Offset != 0)
+      if((NodeH.getOffset() || Offset != 0)
          || (!isa<ArrayType>(CurTy)
-             && (Value.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
-        Value.getNode()->foldNodeCompletely();
-        Value.getNode();
+             && (NodeH.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
+        NodeH.getNode()->foldNodeCompletely();
+        NodeH.getNode();
         Offset = 0;
         break;
       }
@@ -805,23 +807,23 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
 
       if (!isa<Constant>(I.getOperand()) ||
           !cast<Constant>(I.getOperand())->isNullValue()) {
-        Value.getNode()->setArrayMarker();
+        NodeH.getNode()->setArrayMarker();
 
 
-        if(!isa<ArrayType>(CurTy) && Value.getNode()->getSize() <= 0){
-          Value.getNode()->growSize(TD.getTypeAllocSize(CurTy));
-        } else if(isa<ArrayType>(CurTy) && Value.getNode()->getSize() <= 0){
+        if(!isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
+          NodeH.getNode()->growSize(TD.getTypeAllocSize(CurTy));
+        } else if(isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
           Type *ETy = (cast<ArrayType>(CurTy))->getElementType();
           while(isa<ArrayType>(ETy)) {
             ETy = (cast<ArrayType>(ETy))->getElementType();
           }
-          Value.getNode()->growSize(TD.getTypeAllocSize(ETy));
+          NodeH.getNode()->growSize(TD.getTypeAllocSize(ETy));
         }
-        if(Value.getOffset() || Offset != 0
+        if(NodeH.getOffset() || Offset != 0
            || (!isa<ArrayType>(CurTy)
-               && (Value.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
-          Value.getNode()->foldNodeCompletely();
-          Value.getNode();
+               && (NodeH.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
+          NodeH.getNode()->foldNodeCompletely();
+          NodeH.getNode();
           Offset = 0;
           break;
         }
@@ -829,14 +831,14 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
     }
 
   // Add in the offset calculated...
-  Value.setOffset(Value.getOffset()+Offset);
+  NodeH.setOffset(NodeH.getOffset()+Offset);
 
   // Check the offset
-  DSNode *N = Value.getNode();
-  if (N) N->checkOffsetFoldIfNeeded(Value.getOffset());
+  DSNode *N = NodeH.getNode();
+  if (N) N->checkOffsetFoldIfNeeded(NodeH.getOffset());
 
-  // Value is now the pointer we want to GEP to be...
-  setDestTo(GEP, Value);
+  // NodeH is now the pointer we want to GEP to be...
+  setDestTo(GEP, NodeH);
 }
 
 

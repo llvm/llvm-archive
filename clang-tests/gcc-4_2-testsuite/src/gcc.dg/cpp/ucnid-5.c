@@ -1,17 +1,23 @@
-/* { dg-do preprocess } */
-/* { dg-options "-std=c99 -pedantic -fextended-identifiers" } */
+/* { dg-do compile } */
+/* { dg-options "-std=c99 -pedantic" } */
 
-\u00AA
-\u00AB /* { dg-error "not valid in an identifier" } */
-\u00B6 /* { dg-error "not valid in an identifier" } */
-\u00BA
-\u00C0
-\u00D6
-\u0384 /* { dg-error "not valid in an identifier" } */
+int \u00AA;
+int \u00AB; /* { dg-error "expected identifier" } */
+int \u00B6; /* { dg-error "expected identifier" } */
+int \u00BA;
+int \u00C0;
+int \u00D6;
+int \u0384; /* { dg-error "expected identifier" } */
 
-\u0669 /* { dg-error "not valid at the start of an identifier" } */
-A\u0669
-0\u00BA
-0\u0669
-\u0E59 /* { dg-error "not valid at the start of an identifier" } */
-A\u0E59
+int \u0669; /* { dg-error "expected identifier" } */
+int A\u0669;
+
+/* APPLE LOCAL <rdar://problem/13134700> */
+/* These are valid preprocessor numeric tokens, but invalid parsing tokens.
+   Clang will accept the former, but there's no way to tell if it's made up
+   of one token or two. */
+#define TOKEN1 0\u00BA; 
+#define TOKEN2 0\u0669;
+
+int \u0E59; /* { dg-error "expected identifier" } */
+int A\u0E59;

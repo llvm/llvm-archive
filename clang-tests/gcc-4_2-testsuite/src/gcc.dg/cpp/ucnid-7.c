@@ -2,4 +2,4 @@
 /* { dg-options "-std=c99 -fextended-identifiers" } */
 #define a b(
 #define b(x) q
-int a\U0000000z );
+int a\U0000000z ); /* { dg-warning "incomplete universal character name" } */

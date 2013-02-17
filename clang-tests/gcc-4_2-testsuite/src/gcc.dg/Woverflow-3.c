@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -Wno-overflow" } */
+/* { dg-options "-O2 -Wno-integer-overflow" } */
 
 #include <limits.h>
 

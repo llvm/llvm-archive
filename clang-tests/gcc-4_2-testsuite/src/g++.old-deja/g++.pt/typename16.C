@@ -1,4 +1,4 @@
-// { dg-do link  }
+// { dg-do compile  }
 // { dg-options "-Wno-deprecated" }
 
 struct B {

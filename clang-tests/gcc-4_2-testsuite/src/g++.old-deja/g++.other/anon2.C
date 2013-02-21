@@ -1,4 +1,5 @@
 // { dg-do run  }
+// { dg-options "-Wno-nested-anon-types" }
 extern "C" void abort (void);
 
 static union { 

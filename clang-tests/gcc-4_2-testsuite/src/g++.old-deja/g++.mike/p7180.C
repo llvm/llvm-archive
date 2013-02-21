@@ -1,4 +1,4 @@
-// { dg-do run  }
+// { dg-do compile  }
 // prms-id: 7180
 
 class String {

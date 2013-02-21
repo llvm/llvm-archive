@@ -1,4 +1,4 @@
-// { dg-do run { xfail *-*-* } }
+// { dg-do compile { xfail *-*-* } }
 // { dg-options "-w -fpermissive" }
 
 int *foo = new int[1](42); // { dg-bogus "" }

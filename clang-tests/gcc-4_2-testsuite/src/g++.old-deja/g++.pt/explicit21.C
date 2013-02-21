@@ -6,5 +6,6 @@ T foo(T* t);
 template <>
 int foo<char>(char c); // { dg-error "" } does not match declaration.
 
-template <>
+template <>      // { dg-error "" }
 int bar<char>(); // { dg-error "" } no template bar.
+		 // { dg-error "" "" { target *-*-* } 10 } */

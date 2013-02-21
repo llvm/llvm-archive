@@ -1,7 +1,7 @@
 // { dg-do assemble  }
-// { dg-options "-Wno-nested-anon-types" }
+// { dg-options "-Wnested-anon-types" }
 
 static union {
-  union {
+  union {  // { dg-warning "" } types declared in an anonymous union
   };
-}; // { dg-warning "" } anonymous union with no members
+};

@@ -1,3 +1,5 @@
+// { dg-do run  }
+// { dg-options "-Wno-nested-anon-types" }
 // Test that we can have an unnamed struct inside an anonymous union.
 
 struct A
@@ -19,4 +21,5 @@ int main ()
   {
     struct { int i; } bar;
   };
+  return 0;
 }

@@ -443,6 +443,14 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
       }
     }
  
+    // Do a check for some other SAFECode run-time checks.
+    if (mergedModule->getFunction("poolcheck_freeui") ||
+        mergedModule->getFunction("poolcheck_freeui_debug") ||
+        mergedModule->getFunction("poolcheck_free") ||
+        mergedModule->getFunction("poolcheck_free_debug")) {
+      UsingSAFECode = true;
+    }
+
     if (UsingSAFECode) {
       passes.add(new DataLayout(*_target->getDataLayout()));
       passes.add(createSAFECodeMSCInfoPass());

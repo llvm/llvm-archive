@@ -1,7 +1,7 @@
 dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
-AC_INIT([[[SAFECode]]],[[[1.00]]],[criswell@illinois.edu])
+AC_INIT([SAFECode],[1.00],[criswell@illinois.edu])
 
 dnl Identify where LLVM source tree is
 LLVM_SRC_ROOT="`(cd $srcdir/../..; pwd)`"
@@ -88,6 +88,13 @@ AC_ARG_ENABLE(kernel,
   AS_HELP_STRING(--enable-kernel,
                  [Use SAFECode for use with Linux Kernel (default is NO)]),
                   AC_DEFINE(LLVA_KERNEL,[[1]]),
+                  )
+
+dnl --enable-poolalloc: compile SAFECode with Automatic Pool Allocation support
+AC_ARG_ENABLE(poolalloc,
+  AS_HELP_STRING(--enable-poolalloc,
+                 [Enable libLTO Automatic Pool Allocation (default is NO)]),
+                  AC_DEFINE(HAVE_POOLALLOC,[[1]]),
                   )
 
 dnl --enable-capsaicin: compile SAFECode with Capsaicin support

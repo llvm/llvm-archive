@@ -59,8 +59,9 @@
 
 #include "dsa/EntryPointAnalysis.h"
 #include "LinkDSA.h"
+#include "safecode/Config/config.h"
 
-#ifdef POOLALLOC
+#ifdef HAVE_POOLALLOC
 #include <iostream>
 #endif
 
@@ -371,7 +372,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   _scopeRestrictionsDone = true;
 }
 
-#ifdef POOLALLOC
+#ifdef HAVE_POOLALLOC
 //
 // Names of intrinsics from the debug runtime that need lowering to SAFECode
 // equivalents.
@@ -464,7 +465,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
         passes.add(new CompleteChecks());
       }
     
-#ifdef POOLALLOC
+#ifdef HAVE_POOLALLOC
       LowerSafecodeIntrinsic::IntrinsicMappingEntry *MapStart, *MapEnd;
       MapStart = RuntimeDebug;
       MapEnd = &RuntimeDebug[sizeof(RuntimeDebug) / sizeof(RuntimeDebug[0])];
@@ -482,7 +483,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
      // Run our queue of passes all at once now, efficiently.
      passes.run(*mergedModule);
 
-#ifdef POOLALLOC
+#ifdef HAVE_POOLALLOC
      if (const char *OutFileName = getenv("PA_BITCODE_FILE")) {
        // Write out the pool allocated bitcode file for debugging purposes.
        std::cerr << "Writing out poolalloc bitcode file to " << OutFileName;

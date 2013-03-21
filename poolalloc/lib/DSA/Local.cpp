@@ -799,29 +799,45 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
       //
       // Unless we're advancing the pointer by zero bytes via array indexing,
       // fold the node (i.e., mark it type-unknown) and indicate that we're
-      // indexing zero bytes into the object.
+      // indexing zero bytes into the object (because all fields are aliased).
       //
       // Note that we break out of the loop if we fold the node.  Once
       // something is folded, all values within it are considered to alias.
       //
-
       if (!isa<Constant>(I.getOperand()) ||
           !cast<Constant>(I.getOperand())->isNullValue()) {
+
+        //
+        // Treat the memory object (DSNode) as an array.
+        //
         NodeH.getNode()->setArrayMarker();
 
-
-        if(!isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
+        //
+        // Ensure that the DSNode's size is large enough to contain one
+        // element of the type to which the pointer points.
+        //
+        if (!isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
           NodeH.getNode()->growSize(TD.getTypeAllocSize(CurTy));
-        } else if(isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
+        } else if (isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
           Type *ETy = (cast<ArrayType>(CurTy))->getElementType();
-          while(isa<ArrayType>(ETy)) {
+          while (isa<ArrayType>(ETy)) {
             ETy = (cast<ArrayType>(ETy))->getElementType();
           }
           NodeH.getNode()->growSize(TD.getTypeAllocSize(ETy));
         }
-        if(NodeH.getOffset() || Offset != 0
-           || (!isa<ArrayType>(CurTy)
-               && (NodeH.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
+
+        //
+        // Fold the DSNode if we're indexing into it in a type-incompatible
+        // manner.  That can occur if:
+        //  1) The DSNode represents a pointer into the object at a non-zero
+        //     offset.
+        //  2) The offset of the pointer is already non-zero.
+        //  3) The size of the array element does not match the size into which
+        //     the pointer indexing is indexing.
+        //
+        if (NodeH.getOffset() || Offset != 0 ||
+            (!isa<ArrayType>(CurTy) &&
+             (NodeH.getNode()->getSize() != TD.getTypeAllocSize(CurTy)))) {
           NodeH.getNode()->foldNodeCompletely();
           NodeH.getNode();
           Offset = 0;

@@ -738,42 +738,51 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
       // increment the offset by the actual byte offset being accessed
 
       unsigned requiredSize = TD.getTypeAllocSize(STy) + NodeH.getOffset() + Offset;
-      if(!NodeH.getNode()->isArrayNode() || NodeH.getNode()->getSize() <= 0){
+
+      //
+      // Grow the DSNode size as needed.
+      //
+      if (!NodeH.getNode()->isArrayNode() || NodeH.getNode()->getSize() <= 0){
         if (requiredSize > NodeH.getNode()->getSize())
           NodeH.getNode()->growSize(requiredSize);
       }
+
       Offset += (unsigned)TD.getStructLayout(STy)->getElementOffset(FieldNo);
-      if(TypeInferenceOptimize) {
-        if(ArrayType* AT = dyn_cast<ArrayType>(STy->getTypeAtIndex(FieldNo))) {
+      if (TypeInferenceOptimize) {
+        if (ArrayType* AT = dyn_cast<ArrayType>(STy->getTypeAtIndex(FieldNo))) {
           NodeH.getNode()->mergeTypeInfo(AT, NodeH.getOffset() + Offset);
-          if((++I) == E) {
+          if ((++I) == E) {
             break;
           }
+
           // Check if we are still indexing into an array.
           // We only record the topmost array type of any nested array.
           // Keep skipping indexes till we reach a non-array type.
           // J is the type of the next index.
           // Uncomment the line below to get all the nested types.
           gep_type_iterator J = I;
-          while(isa<ArrayType>(*(++J))) {
+          while (isa<ArrayType>(*(++J))) {
             //      NodeH.getNode()->mergeTypeInfo(AT1, NodeH.getOffset() + Offset);
             if((++I) == E) {
               break;
             }
             J = I;
           }
-          if((I) == E) {
+          if ((I) == E) {
             break;
           }
         }
       }
-    } else if(ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
+    } else if (ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
       // indexing into an array.
       NodeH.getNode()->setArrayMarker();
       Type *CurTy = ATy->getElementType();
 
-      if(!isa<ArrayType>(CurTy) &&
-         NodeH.getNode()->getSize() <= 0) {
+      //
+      // Ensure that the DSNode's size is large enough to contain one
+      // element of the type to which the pointer points.
+      //
+      if (!isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0) {
         NodeH.getNode()->growSize(TD.getTypeAllocSize(CurTy));
       } else if(isa<ArrayType>(CurTy) && NodeH.getNode()->getSize() <= 0){
         Type *ETy = (cast<ArrayType>(CurTy))->getElementType();

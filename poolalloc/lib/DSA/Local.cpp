@@ -803,7 +803,41 @@ void GraphBuilder::visitGetElementPtrInst(User &GEP) {
         break;
       }
     } else if (const PointerType *PtrTy = dyn_cast<PointerType>(*I)) {
+      // Get the type pointed to by the pointer
       Type *CurTy = PtrTy->getElementType();
+
+      //
+      // Some LLVM transforms lower structure indexing into byte-level
+      // indexing.  Try to recognize forms of that here.
+      //
+      Type * Int8Type  = Type::getInt8Ty(CurTy->getContext());
+      ConstantInt * IS = dyn_cast<ConstantInt>(I.getOperand());
+      if (IS &&
+          (NodeH.getOffset() == 0) &&
+          (!(NodeH.getNode()->isArrayNode())) &&
+          (CurTy == Int8Type)) {
+        // Calculate the offset of the field
+        Offset += IS->getSExtValue() * TD.getTypeAllocSize (Int8Type);
+
+        //
+        // Grow the DSNode size as needed.
+        //
+        unsigned requiredSize = Offset + TD.getTypeAllocSize (Int8Type);
+        if (NodeH.getNode()->getSize() <= requiredSize){
+          NodeH.getNode()->growSize (requiredSize);
+        }
+
+        // Add in the offset calculated...
+        NodeH.setOffset(NodeH.getOffset()+Offset);
+
+        // Check the offset
+        DSNode *N = NodeH.getNode();
+        if (N) N->checkOffsetFoldIfNeeded(NodeH.getOffset());
+
+        // NodeH is now the pointer we want to GEP to be...
+        setDestTo(GEP, NodeH);
+        return;
+      }
 
       //
       // Unless we're advancing the pointer by zero bytes via array indexing,

@@ -7,7 +7,7 @@
 // 
 //===----------------------------------------------------------------------===//
 //
-// This pass aligns globals and stack allocated values to the correct power to 
+// This pass aligns globals and stack allocated values to the correct power of 
 // two boundary.
 //
 //===----------------------------------------------------------------------===//

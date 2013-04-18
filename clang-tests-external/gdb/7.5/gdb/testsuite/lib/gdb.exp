@@ -2222,6 +2222,7 @@ proc get_compiler_info {{arg ""}} {
     if { [regexp "^gcc-3-" "$compiler_info" ] } { set gcc_compiled 3 }
     if { [regexp "^gcc-4-" "$compiler_info" ] } { set gcc_compiled 4 }
     if { [regexp "^gcc-5-" "$compiler_info" ] } { set gcc_compiled 5 }
+    if { [regexp "^clang-" "$compiler_info" ] } { set gcc_compiled 4 }
     if { [regexp "^hpcc-"  "$compiler_info" ] } { set hp_cc_compiler 1 }
     if { [regexp "^hpacc-" "$compiler_info" ] } { set hp_aCC_compiler 1 }
 

@@ -49,4 +49,5 @@ gdb_test_multiple $test $test {
 
 # FAIL was on `bt' producing:
 # Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+if [using_clang] { setup_xfail "clang/14332" *-*-* }
 gdb_test "up 3000" " in main .*"

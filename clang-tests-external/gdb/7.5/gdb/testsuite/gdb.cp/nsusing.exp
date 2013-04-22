@@ -33,7 +33,6 @@ if ![runto_main] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print _a" "= 1"
 
 # Test that names are not printed when they
@@ -66,7 +65,6 @@ if ![runto_main] then {
 gdb_breakpoint [gdb_get_line_number "marker1 stop"]
 gdb_continue_to_breakpoint "marker1 stop"
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print _a" "= 1" "print _a in a nested scope"
 
 
@@ -165,7 +163,6 @@ if ![runto I::marker7] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print ghx" "= 6"
 
 ############################################

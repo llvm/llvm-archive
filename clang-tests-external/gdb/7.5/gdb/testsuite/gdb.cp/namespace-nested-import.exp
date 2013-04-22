@@ -30,5 +30,4 @@ if ![runto_main] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print C::x" "= 5"

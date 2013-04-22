@@ -40,7 +40,6 @@ gdb_test "print ax" "= 9"
 # test that gdb can print without falling
 # into search loop
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print dx" "= 99"
 
 ############################################

@@ -33,7 +33,6 @@ if ![runto_main] then {
 # test printing from namespace imported into
 # imported namespace
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print ax" "= 9"
 
 ############################################

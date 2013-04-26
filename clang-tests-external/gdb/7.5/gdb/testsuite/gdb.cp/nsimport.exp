@@ -32,8 +32,6 @@ if ![runto_main] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print x" "\\$\[0-9\].* = 11"
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print xx" "\\$\[0-9\].* = 22"
 gdb_test "print xxx" "\\$\[0-9\].* = 33"

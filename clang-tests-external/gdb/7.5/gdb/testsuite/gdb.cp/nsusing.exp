@@ -83,7 +83,6 @@ if ![runto marker5] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print cc" "= 3"
 
 gdb_exit
@@ -151,7 +150,6 @@ if ![runto marker5] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print efx" "= 5"
 
 ############################################
@@ -174,7 +172,6 @@ if ![runto L::marker8] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print jx" "= 44"
 
 gdb_breakpoint "K::marker9"

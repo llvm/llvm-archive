@@ -112,7 +112,6 @@ gdb_exit
 gdb_start
 gdb_load ${binfile}
 
-if [using_clang] { setup_xfail "clang/14658" *-*-* }
 set msg "set breakpoint by full path before loading symbols - built other"
 if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
     pass $msg
@@ -123,7 +122,6 @@ if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] !=
 gdb_test "break main" \
 	 "Breakpoint.*at.*line.*" "set breakpoint at main - built other"
 
-if [using_clang] { setup_xfail "clang/14658" *-*-* }
 set msg "set breakpoint by full path after loading symbols - built other"
 if { [gdb_breakpoint ${objdir}/${subdir}/tmp-${srcfile}:${line} {no-message}] != 0 } {
     pass $msg

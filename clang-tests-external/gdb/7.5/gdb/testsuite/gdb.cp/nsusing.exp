@@ -139,7 +139,6 @@ if ![runto marker4] then {
     continue
 }
 
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print dx" "= 4"
 
 ############################################

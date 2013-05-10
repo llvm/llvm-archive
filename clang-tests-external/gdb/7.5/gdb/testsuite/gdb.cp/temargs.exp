@@ -85,11 +85,9 @@ if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print I" " = 23" "test value of I in base_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in base_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in base_m"
 
 #
@@ -111,11 +109,9 @@ if $have_older_template_gcc { setup_xfail "*-*-*"
   # gcc-4.5.x still does not emit inner DW_TAG_structure_type.
   setup_xfail "*-*-*"
 }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in inner_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in inner_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
@@ -139,11 +135,9 @@ if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print I" " = 91" "test value of I in func"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in func"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in func"
 
 #
@@ -159,11 +153,9 @@ if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print I" " = 23" "test value of I in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print P == &a_global" " = true" "test value of P in templ_m"
 
 if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
@@ -176,7 +168,7 @@ gdb_test "whatis Q" "short" "test type of Q in templ_m"
 gdb_continue_to_breakpoint "continue to fifth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-if [using_clang] { setup_xfail "clang/14492" *-*-* }
+if [using_clang] { setup_kfail "gdb/14492" *-*-* }
 gdb_test "ptype F" "type = void \\\(S::\\\*\\\)\\\(S \\\* const\\\)" \
     "test type of F in k2_m"
 
@@ -193,7 +185,9 @@ gdb_test "print F" "&S::somefunc" "test value of F in k2_m"
 gdb_continue_to_breakpoint "continue to sixth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_xfail gcc/49546 "*-*-*" }
+} elseif {[test_compiler_info {gcc-*}]} {
+  setup_xfail gcc/49546 "*-*-*"
+}
 gdb_test "ptype F" {type = void \(\*\)\(int\)} "test type of F in k3_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"

@@ -196,7 +196,6 @@ proc test_template {} {
 	|| [test_compiler_info {gcc-4-[0-5]-*}]} {
 	setup_xfail "gcc/46955" *-*-*
     }
-    if [using_clang] { setup_xfail "clang/14492" *-*-* }
     gdb_test "python print ttype.template_argument(2)" "&C::c"
 }
 

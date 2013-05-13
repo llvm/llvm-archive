@@ -168,7 +168,6 @@ gdb_test "whatis Q" "short" "test type of Q in templ_m"
 gdb_continue_to_breakpoint "continue to fifth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
-if [using_clang] { setup_kfail "gdb/14492" *-*-* }
 gdb_test "ptype F" "type = void \\\(S::\\\*\\\)\\\(S \\\* const\\\)" \
     "test type of F in k2_m"
 

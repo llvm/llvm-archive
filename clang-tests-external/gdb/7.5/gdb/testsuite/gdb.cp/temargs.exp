@@ -168,6 +168,7 @@ gdb_test "whatis Q" "short" "test type of Q in templ_m"
 gdb_continue_to_breakpoint "continue to fifth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
+if [using_clang] { setup_kfail "gdb/14971" *-*-* }
 gdb_test "ptype F" "type = void \\\(S::\\\*\\\)\\\(S \\\* const\\\)" \
     "test type of F in k2_m"
 
@@ -190,6 +191,8 @@ if $have_older_template_gcc { setup_xfail "*-*-*"
 gdb_test "ptype F" {type = void \(\*\)\(int\)} "test type of F in k3_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_xfail gcc/49546 "*-*-*" }
+} elseif {[test_compiler_info {gcc-*}]} {
+  setup_xfail gcc/49546 "*-*-*"
+}
 gdb_test "print F" { = \(void \(\*\)\(int\)\) 0x[0-9a-f]+ <S3::m\(int\)>} \
 	 "test value of F in k3_m"

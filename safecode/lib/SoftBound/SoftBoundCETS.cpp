@@ -4150,10 +4150,10 @@ bool SoftBoundCETSPass:: isByValDerived(Value* pointer_operand){
 
 void SoftBoundCETSPass::handleLoad(LoadInst* load_inst) { 
 
-  AllocaInst* base_alloca;
-  AllocaInst* bound_alloca;
-  AllocaInst* key_alloca;
-  AllocaInst* lock_alloca;
+  AllocaInst* base_alloca = 0;
+  AllocaInst* bound_alloca = 0;
+  AllocaInst* key_alloca = 0;
+  AllocaInst* lock_alloca = 0;
 
   SmallVector<Value*, 8> args;
 

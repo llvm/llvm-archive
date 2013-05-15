@@ -37,6 +37,8 @@
 #include "../include/CWE.h"
 #include "../include/DebugRuntime.h"
 
+#include <errno.h>
+
 #include <map>
 #include <cstdarg>
 #include <cstdio>
@@ -225,6 +227,16 @@ poolcheck_debug (DebugPoolTy *Pool,
 
     return;
   }
+
+  //
+  // If the pointer is within the errno variable, go ahead and let it be.
+  // For some reason, errno may not be registered in the ExternalObjects splay
+  // tree with the same location as during program startup, so we'll check it
+  // again now.
+  //
+  unsigned char * errnoPtr = (unsigned char *) &errno;
+  if ((errnoPtr == Node) && (length <= sizeof (errno)))
+    return;
 
   //
   // If it's a rewrite pointer, convert it back into its original value so

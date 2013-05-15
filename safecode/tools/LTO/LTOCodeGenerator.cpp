@@ -455,7 +455,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
     if (UsingSAFECode) {
       passes.add(new DataLayout(*_target->getDataLayout()));
       passes.add(createSAFECodeMSCInfoPass());
+#if 0
       passes.add(createExactCheckOptPass());
+#endif
 
       passes.add(new DominatorTree());
       passes.add(new ScalarEvolution());

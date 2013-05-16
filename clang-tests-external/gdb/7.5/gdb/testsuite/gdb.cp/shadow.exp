@@ -79,4 +79,5 @@ if { [test_compiler_info {gcc-[0-3]-*}] ||
     setup_xfail *-*-*
 }
 
+if [using_clang] { setup_xfail "clang/14606" *-*-* }
 gdb_test "print x" "= 11" "Print imported namespace x"

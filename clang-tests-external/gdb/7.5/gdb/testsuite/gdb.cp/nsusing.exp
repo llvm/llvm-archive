@@ -196,5 +196,5 @@ if { [test_compiler_info {gcc-[0-3]-*}] ||
 }
 
 # Assert that M::x is printed and not N::x
-if [using_clang] { setup_xfail "clang/14606" *-*-* }
+if [using_clang] { setup_xfail "gdb/15502" *-*-* }
 gdb_test "print x" "= 911" "print x (from M::x)"

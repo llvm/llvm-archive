@@ -109,7 +109,6 @@ gdb_test "tbreak 1216" \
 "tbreakpoint line 1216"
 
 if ![gdb_skip_stdio_test "continue to 1216"] {
-    if [using_clang] { setup_xfail "clang/16146" *-*-* }
     gdb_test_sequence "continue" "continue to 1216" {
 	"\[ \t\r\n\]+array_c :"
 	"\[ \t\r\n\]+========="

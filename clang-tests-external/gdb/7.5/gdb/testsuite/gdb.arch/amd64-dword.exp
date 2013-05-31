@@ -18,6 +18,11 @@
 
 # This file is part of the gdb testsuite.
 
+if [using_clang] {
+  xfail "test is oversensitive to register allocation/unoptimized code"
+  return -1
+}
+
 
 if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
     verbose "Skipping amd64 dword register tests."
@@ -110,7 +115,6 @@ gdb_test "break [gdb_get_line_number "forth breakpoint here"]" \
          "set forth breakpoint in main"
 gdb_continue_to_breakpoint "continue to forth breakpoint in main"
 
-if [using_clang] { setup_xfail "test is oversensitive to register allocation/unoptimized code" *-*-* }
 for { set r 7 } { $r <= $nr_regs  } { incr r } {
     gdb_test "print \$$dword_regs($r)" \
         ".. = $r" \

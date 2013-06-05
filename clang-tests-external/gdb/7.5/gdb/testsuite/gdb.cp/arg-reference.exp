@@ -30,5 +30,4 @@ if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
     return -1
 }
 
-if [using_clang] { setup_xfail "clang/14763" *-*-* }
 gdb_test "ptype foo" "type = int \\\(Obj\\\)" "No false reference"

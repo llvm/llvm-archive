@@ -699,7 +699,6 @@ gdb_test "set listsize 1"
 
 # "print METHOD"
 foreach name [get_functions print] {
-    if {[using_clang] && ($name == "policyd4::policyd" || $name == "policyd<base, operation_1<base> >::policyd")} { setup_xfail "clang/14645" *-*-* }
     gdb_test "print $name" [get $name print] "print $name"
 }
 

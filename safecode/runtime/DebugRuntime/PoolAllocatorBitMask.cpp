@@ -411,7 +411,6 @@ _internal_poolregister (DebugPoolTy *Pool,
   //
   // If the pool is NULL or the object has zero length, don't do anything.
   //
-  assert (NumBytes && "NumBytes must be more than zero!\n");
   if (NumBytes == 0) return;
 
   //

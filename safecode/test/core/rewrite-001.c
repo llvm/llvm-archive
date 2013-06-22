@@ -1,6 +1,7 @@
 // RUN: test.sh -p -t %t %s
 //
 // TEST: rewrite-001
+// XFAIL: darwin,linux
 //
 // Description:
 //  Test that indexing out of and then back into a locally stack-allocated

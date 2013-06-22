@@ -444,6 +444,7 @@ _internal_poolregister (DebugPoolTy *Pool,
       // the largest object that contains the object we are registering and the
       // already registered object.
       //
+      case Stack:
       case Global: {
         void * start;
         void * end;
@@ -475,14 +476,6 @@ _internal_poolregister (DebugPoolTy *Pool,
         SPTree->insert(allocaptr, (char*) allocaptr + NumBytes - 1);
         break;
       }
-
-      //
-      // There's just no way that this should ever happen with stack-allocated
-      // memory objects.  Flag an error since this must be a SAFECode bug.
-      //
-      case Stack:
-        assert (0 && "poolregister failed: Object already registered!\n");
-        break;
     }
   }
 

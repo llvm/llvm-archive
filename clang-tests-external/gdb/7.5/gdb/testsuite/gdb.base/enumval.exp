@@ -23,17 +23,9 @@ if { [prepare_for_testing enumval.exp "enumval" "" {debug}] } {
     return -1
 }
 
-set has_clang 0
-if [using_clang] {
-  set has_clang 1
-}
-
 # Check the real contents.
-if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print e" "= J"
-if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print f" "= K"
 
 gdb_test "print J" "= J"
-if $has_clang { setup_xfail "clang/14404" *-*-* }
 gdb_test "print K" "= K"

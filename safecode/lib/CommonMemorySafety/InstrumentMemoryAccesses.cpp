@@ -30,7 +30,6 @@ using namespace llvm;
 STATISTIC(LoadsInstrumented, "Loads instrumented");
 STATISTIC(StoresInstrumented, "Stores instrumented");
 STATISTIC(AtomicsInstrumented, "Atomic memory intrinsics instrumented");
-STATISTIC(IntrinsicsInstrumented, "Block memory intrinsics instrumented");
 
 namespace {
   class InstrumentMemoryAccesses : public FunctionPass,
@@ -67,7 +66,6 @@ namespace {
     void visitStoreInst(StoreInst &SI);
     void visitAtomicCmpXchgInst(AtomicCmpXchgInst &I);
     void visitAtomicRMWInst(AtomicRMWInst &I);
-    void visitMemIntrinsic(MemIntrinsic &MI);
   };
 } // end anon namespace
 
@@ -151,15 +149,3 @@ void InstrumentMemoryAccesses::visitAtomicCmpXchgInst(AtomicCmpXchgInst &I) {
   ++AtomicsInstrumented;
 }
 
-void InstrumentMemoryAccesses::visitMemIntrinsic(MemIntrinsic &MI) {
-  // Instrument llvm.mem[set|cpy|move].* calls with load/store checks.
-  Builder->SetInsertPoint(&MI);
-  Value *AccessSize = Builder->CreateIntCast(MI.getLength(), SizeTy,
-                                             /*isSigned=*/false);
-
-  // memcpy and memmove have a source memory area but memset doesn't
-  if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(&MI))
-    instrument(MTI->getSource(), AccessSize, LoadCheckFunction, MI);
-  instrument(MI.getDest(), AccessSize, StoreCheckFunction, MI);
-  ++IntrinsicsInstrumented;
-}

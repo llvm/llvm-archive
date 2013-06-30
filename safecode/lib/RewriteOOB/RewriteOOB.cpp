@@ -124,6 +124,17 @@ RewriteOOB::processFunction (Module & M, const CheckInfo & Check) {
       Value * PeeledOperand = RealOperand->stripPointerCasts();
 
       //
+      // Determine if the checked pointer and the run-time check belong to
+      // the same basic block.
+      //
+      bool inSameBlock = false;
+      if (Instruction * I = dyn_cast<Instruction>(PeeledOperand)) {
+        if (CI->getParent() == I->getParent()) {
+          inSameBlock = true;
+        }
+      }
+
+      //
       // Don't rewrite a check on a constant NULL pointer.  NULL pointers
       // never belong to a valid memory object, and trying to replace them
       // in other parts of the code simply creates problems.
@@ -163,12 +174,21 @@ RewriteOOB::processFunction (Module & M, const CheckInfo & Check) {
       std::vector<User *> Uses;
       Value::use_iterator UI = PeeledOperand->use_begin();
       for (; UI != PeeledOperand->use_end(); ++UI) {
-        if (Instruction * Use = dyn_cast<Instruction>(*UI))
-          if (Use->getParent()->getParent() == CurrentFunction)
+        if (Instruction * Use = dyn_cast<Instruction>(*UI)) {
+          if (Use->getParent()->getParent() == CurrentFunction) {
+            if (isa<PHINode>(Use)) {
+              if (inSameBlock) {
+                Uses.push_back (*UI);
+                ++Changes;
+              }
+              continue;
+            }
             if ((CI != Use) && (domTree->dominates (CI, Use))) {
               Uses.push_back (*UI);
               ++Changes;
             }
+          }
+        }
       }
 
       while (Uses.size()) {

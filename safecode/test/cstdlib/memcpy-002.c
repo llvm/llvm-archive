@@ -4,10 +4,11 @@
 
 // memcpy() called with too short a source.
 
-int main(int argc)
+int main(int argc, char ** argv)
 {
   char src[] = "aaaaaaa";
   char dst[100];
   memcpy(dst, src, 11);
-  return dst[argc];
+  printf ("%c\n", dst[argc]);
+  return 0;
 }

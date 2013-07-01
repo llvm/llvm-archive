@@ -320,6 +320,8 @@ __sc_dbg_pooldestroy(DebugPoolTy * Pool) {
   pooldestroy(Pool);
 }
 
+extern char ** environ;
+
 //
 // Function: poolargvregister()
 //
@@ -333,6 +335,7 @@ poolargvregister (int argc, char ** argv) {
              (void *) (((unsigned char *)(&(argv[argc+1]))) - 1));
     fflush (stderr);
   }
+
   for (int index=0; index < argc; ++index) {
     if (logregs) {
       fprintf (stderr, "poolargvregister: %p %u: %s\n", argv[index],
@@ -350,6 +353,21 @@ poolargvregister (int argc, char ** argv) {
   // Note that the argv array is supposed to end with a NULL pointer element.
   //
   ExternalObjects->insert(argv, ((unsigned char *)(&(argv[argc+1]))) - 1);
+
+  //
+  // Register the environment strings and the array that points to them.
+  //
+  unsigned numEnvs;
+  for (unsigned numEnvs = 0; environ[numEnvs]; ++numEnvs) {
+    char * envstr = environ[numEnvs];
+    if (logregs) {
+      fprintf (stderr, "poolargvregister: env: %p %u: %s\n", envstr,
+               (unsigned)strlen(envstr), envstr);
+      fflush (stderr);
+    }
+    ExternalObjects->insert(envstr, envstr + strlen (envstr));
+  }
+  ExternalObjects->insert(environ, ((unsigned char *)(environ + numEnvs)) - 1);
 
   //
   // Register errno for kicks and giggles.

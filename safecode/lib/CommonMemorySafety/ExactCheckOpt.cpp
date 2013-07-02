@@ -125,6 +125,7 @@ bool ExactCheckOpt::runOnModule(Module &M) {
   M.getOrInsertFunction("fastlscheck", VoidTy, VoidPtrTy, VoidPtrTy, Int32Type,
                         Int32Type, NULL);
 
+#if 0
   //
   // Add the readnone attribute to the fast checks; they don't use global state
   // to determine if a pointer passes the check.
@@ -136,6 +137,7 @@ bool ExactCheckOpt::runOnModule(Module &M) {
   //
   M.getFunction("exactcheck2")->addFnAttr (Attributes::ReadNone);
   M.getFunction("fastlscheck")->addFnAttr (Attributes::ReadNone);
+#endif
 
   CheckInfoListType CheckInfoList = MSCI->getCheckInfoList();
   for (size_t i = 0, N = CheckInfoList.size(); i < N; ++i) {

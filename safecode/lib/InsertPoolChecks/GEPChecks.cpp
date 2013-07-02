@@ -58,6 +58,8 @@ InsertGEPChecks::visitGetElementPtrInst (GetElementPtrInst & GEP) {
     return;
   }
 
+  GEP.setIsInBounds (false);
+
   //
   // Get the function in which the GEP instruction lives.
   //

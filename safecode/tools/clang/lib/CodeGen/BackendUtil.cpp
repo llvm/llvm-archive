@@ -41,6 +41,7 @@
 #include "CommonMemorySafetyPasses.h"
 #include "safecode/ArrayBoundsCheck.h"
 #include "safecode/BaggyBoundsChecks.h"
+#include "safecode/BreakConstantGEPs.h"
 #include "safecode/CFIChecks.h"
 #include "safecode/CStdLib.h"
 #include "safecode/DebugInstrumentation.h"
@@ -328,6 +329,7 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
     }
 
     MPM->add (new InitAllocas());
+    MPM->add (new BreakConstantGEPs());
     MPM->add (new RegisterGlobalVariables());
     MPM->add (new RegisterMainArgs());
     MPM->add (new InsertFreeChecks());
@@ -367,7 +369,9 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
   //
   // Rerun the LLVM optimizations again.
   //
+#if 0
   PMBuilder.populateModulePassManager(*MPM);
+#endif
 
   // For SAFECode, do the debug instrumentation and OOB rewriting after
   // all optimization is done.

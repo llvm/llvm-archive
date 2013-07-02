@@ -28,7 +28,7 @@
 #include <map>
 #include <utility>
 
-NAMESPACE_SC_BEGIN
+namespace llvm {
 
 // Identifier variable for the pass
 char BreakConstantGEPs::ID = 0;
@@ -104,8 +104,7 @@ convertGEP (ConstantExpr * CE, Instruction * InsertPt) {
   // Make the new GEP instruction.
   //
   return (GetElementPtrInst::Create (CE->getOperand(0),
-                                     Indices.begin(),
-                                     Indices.end(),
+                                     ArrayRef<Value *>(Indices),
                                      CE->getName(),
                                      InsertPt));
 }
@@ -226,6 +225,21 @@ bool
 BreakConstantGEPs::runOnFunction (Function & F) {
   bool modified = false;
 
+  //
+  // If this function is a constructor added by SAFECode, do not transform it.
+  //
+  std::string fname = F.getName().str();
+  if (fname.find ("pool_ctor") != fname.npos) {
+    return false;
+  } else {
+    std::cerr << "JTC: " << fname << "\t" << fname.find ("pool_ctor") << std::endl;
+  }
+
+  if (fname.find ("sc.register_globals") != fname.npos) {
+    return false;
+  }
+
+  //
   // Worklist of values to check for constant GEP expressions
   std::vector<Instruction *> Worklist;
 
@@ -307,5 +321,5 @@ BreakConstantGEPs::runOnFunction (Function & F) {
   return modified;
 }
 
-NAMESPACE_SC_END
+}
 

@@ -6,8 +6,8 @@ LIBRARYNAME=abc
 SOURCES := \
             ArrayBoundCheckDummy.cpp \
             ArrayBoundCheckLocal.cpp \
+            BreakConstantGEPs.cpp \
             #ArrayBoundCheckStruct.cpp
-            #BreakConstantGEPs.cpp \
             #AffineExpressions.cpp \
             #BottomUpCallGraph.cpp
 

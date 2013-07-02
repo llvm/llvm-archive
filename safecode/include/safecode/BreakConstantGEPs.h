@@ -21,9 +21,7 @@
 
 #include "safecode/SAFECode.h"
 
-using namespace llvm;
-
-NAMESPACE_SC_BEGIN
+namespace llvm {
 
 //
 // Pass: BreakConstantGEPs
@@ -40,7 +38,7 @@ struct BreakConstantGEPs : public FunctionPass {
 
   public:
     static char ID;
-    BreakConstantGEPs() : FunctionPass((intptr_t)(&ID)) {}
+    BreakConstantGEPs() : FunctionPass(ID) {}
     const char *getPassName() const {return "Remove Constant GEP Expressions";}
     virtual bool runOnFunction (Function & F);
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -49,6 +47,6 @@ struct BreakConstantGEPs : public FunctionPass {
     }
 };
 
-NAMESPACE_SC_END
+}
 
 #endif

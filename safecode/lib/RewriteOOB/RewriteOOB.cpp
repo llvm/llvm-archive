@@ -54,6 +54,15 @@ STATISTIC (GetActuals, "Number of getActualValue() Calls Inserted");
 // Register the pass
 static RegisterPass<RewriteOOB> P ("oob-rewriter",
                                    "OOB Pointer Rewrite Transform");
+static inline Value *
+peelAllCasts (Value * V, std::set<Value *> & Casts) {
+  while (CastInst * Cast = dyn_cast<CastInst>(V)) {
+    Casts.insert (Cast);
+    V = Cast->getOperand(0);
+  }
+
+  return V;
+}
 
 //
 // Method: processFunction()
@@ -120,15 +129,19 @@ RewriteOOB::processFunction (Module & M, const CheckInfo & Check) {
       // one because a call instruction's first operand is the function to
       // call.
       //
+      std::set<Value *> Casts;
+      Casts.insert (CI);
       Value * RealOperand = Check.getCheckedPointer (CI);
-      Value * PeeledOperand = RealOperand->stripPointerCasts();
+      Value * PeeledOperand = peelAllCasts (RealOperand, Casts);
 
       //
       // Determine if the checked pointer and the run-time check belong to
       // the same basic block.
       //
       bool inSameBlock = false;
+      bool ptrIsInst = false;
       if (Instruction * I = dyn_cast<Instruction>(PeeledOperand)) {
+        ptrIsInst = isa<GetElementPtrInst>(I);
         if (CI->getParent() == I->getParent()) {
           inSameBlock = true;
         }
@@ -175,7 +188,10 @@ RewriteOOB::processFunction (Module & M, const CheckInfo & Check) {
       Value::use_iterator UI = PeeledOperand->use_begin();
       for (; UI != PeeledOperand->use_end(); ++UI) {
         if (Instruction * Use = dyn_cast<Instruction>(*UI)) {
-          if (Use->getParent()->getParent() == CurrentFunction) {
+          if (ptrIsInst && (Casts.count(Use) == 0)) {
+            Uses.push_back (*UI);
+            ++Changes;
+          } else if (Use->getParent()->getParent() == CurrentFunction) {
             if (isa<PHINode>(Use)) {
               if (inSameBlock) {
                 Uses.push_back (*UI);

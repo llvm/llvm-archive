@@ -344,11 +344,15 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
     MPM->add (new ArrayBoundsCheckLocal());
     MPM->add (new InsertGEPChecks());
     MPM->add (createSpecializeCMSCallsPass());
+#if 0
     MPM->add (createExactCheckOptPass());
+#endif
 
     MPM->add (new DominatorTree());
     MPM->add (new ScalarEvolution());
+#if 0
     MPM->add (createOptimizeImpliedFastLSChecksPass());
+#endif
 
     MPM->add (new OptimizeChecks());
     if (CodeGenOpts.MemSafeTerminate) {

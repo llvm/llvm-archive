@@ -231,8 +231,6 @@ BreakConstantGEPs::runOnFunction (Function & F) {
   std::string fname = F.getName().str();
   if (fname.find ("pool_ctor") != fname.npos) {
     return false;
-  } else {
-    std::cerr << "JTC: " << fname << "\t" << fname.find ("pool_ctor") << std::endl;
   }
 
   if (fname.find ("sc.register_globals") != fname.npos) {

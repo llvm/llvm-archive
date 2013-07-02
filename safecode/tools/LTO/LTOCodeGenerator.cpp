@@ -61,7 +61,7 @@
 #include "LinkDSA.h"
 #include "safecode/Config/config.h"
 
-#ifdef HAVE_POOLALLOC
+#if 1
 #include <iostream>
 #endif
 
@@ -461,7 +461,9 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
       passes.add(new DominatorTree());
       passes.add(new ScalarEvolution());
+#if 0
       passes.add(createOptimizeImpliedFastLSChecksPass());
+#endif
 
       if (mergedModule->getFunction("main")) {
         passes.add(new CompleteChecks());
@@ -485,7 +487,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
      // Run our queue of passes all at once now, efficiently.
      passes.run(*mergedModule);
 
-#ifdef HAVE_POOLALLOC
+#if 1
      if (const char *OutFileName = getenv("PA_BITCODE_FILE")) {
        // Write out the pool allocated bitcode file for debugging purposes.
        std::cerr << "Writing out poolalloc bitcode file to " << OutFileName;

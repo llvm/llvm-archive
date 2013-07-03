@@ -137,8 +137,10 @@ const struct {
   {"ctime",     {NRET_YARGS,  YRET_NARGS, NRET_NARGS, NRET_NARGS, false}}, 
   {"asctime",   {NRET_YARGS,  YRET_NARGS, NRET_NARGS, NRET_NARGS, false}}, 
   {"utime",     {NRET_YARGS,  YRET_NARGS, NRET_NARGS, NRET_NARGS, false}}, 
+#if 0
   {"localtime", {NRET_YARGS,  YRET_NARGS, NRET_NARGS, NRET_NARGS, false}}, 
   {"gmtime",    {NRET_YARGS,  YRET_NARGS, NRET_NARGS, NRET_NARGS, false}}, 
+#endif
   {"ftime",     {NRET_YARGS,  NRET_YARGS, NRET_NARGS, NRET_NARGS, false}}, 
 
   // printf not strictly true, %n could cause a write

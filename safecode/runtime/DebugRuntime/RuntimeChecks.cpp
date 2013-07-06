@@ -185,6 +185,14 @@ poolcheck_debug (DebugPoolTy *Pool,
                  const char * SourceFilep,
                  unsigned lineno) {
   //
+  // If the memory access is zero bytes in length, don't report an error.
+  // This can happen on memcpy() and memset() calls that are instrumented
+  // with load/store checks.
+  //
+  if (length == 0)
+    return;
+
+  //
   // Check to see if the pointer points to an object within the pool.  If it
   // does, check to see if the last byte read/written will be within the same
   // object.  If so, then the check succeeds, so just return to the caller.
@@ -376,6 +384,14 @@ poolcheckui_debug (DebugPoolTy *Pool,
                    TAG,
                    const char * SourceFilep,
                    unsigned lineno) {
+  //
+  // If the memory access is zero bytes in length, don't report an error.
+  // This can happen on memcpy() and memset() calls that are instrumented
+  // with load/store checks.
+  //
+  if (length == 0)
+    return;
+
   //
   // Check to see if the pointer points to an object within the pool.  If it
   // does, check to see if the last byte read/written will be within the same

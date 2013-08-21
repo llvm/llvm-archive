@@ -2,8 +2,6 @@
 //
 // TEST: env-003
 //
-// XFAIL: darwin,linux
-//
 // Description:
 //  This is identical to env-001 but doesn't use argv
 //

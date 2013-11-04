@@ -45,7 +45,6 @@ gdb_test_multiple $test $test {
 gdb_continue_to_breakpoint "caller" ".*caller-line.*"
 
 # Test GDB caught this return call and not the next one through B::B()
-if [using_clang] { setup_xfail "clang/14610" *-*-* }
 gdb_test "bt" \
 	 "#0 \[^\r\n\]* (A::)?A \[^\r\n\]*\r\n#1 \[^\r\n\]* main \[^\r\n\]*" \
 	 "bt from A"

@@ -163,13 +163,9 @@ gdb_test "break BBB::Class::xyzq" \
 
 gdb_test "whatis C::cOtherFileType" "type = short"
 gdb_test "whatis ::C::cOtherFileType" "type = short"
-if [using_clang] { setup_xfail *-*-* }
 gdb_test "whatis C::cOtherFileVar" "type = const C::cOtherFileType"
-if [using_clang] { setup_xfail *-*-* }
 gdb_test "whatis ::C::cOtherFileVar" "type = const C::cOtherFileType"
-if [using_clang] { setup_xfail *-*-* }
 gdb_test "print C::cOtherFileVar" "\\$\[0-9\].* = 319"
-if [using_clang] { setup_xfail *-*-* }
 gdb_test "print ::C::cOtherFileVar" "\\$\[0-9\].* = 319"
 
 if $xfail_class_types { setup_xfail *-*-* }

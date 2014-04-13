@@ -36,7 +36,6 @@ gdb_test "break func1" \
 # The result should be a breakpoint with two locations: the
 # out-of-line function and the single inlined instance.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func2" \
     "Breakpoint.*at.*func2.*\\(2 locations\\)"
 
@@ -55,7 +54,6 @@ gdb_test "break func3b" \
 # the inlined call to func4a in main, and the inlined instance
 # within the out-of-line func4a.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func4b" \
     "Breakpoint.*at.*func4b.*\\(2 locations\\)"
 
@@ -65,7 +63,6 @@ gdb_test "break func4b" \
 # breakpoint with two locations: the out-of-line function and the
 # inlined instance within the inlined call to func5a in main.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func5b" \
     "Breakpoint.*at.*func5b.*\\(2 locations\\)"
 #
@@ -75,7 +72,6 @@ gdb_test "break func5b" \
 # inlined instance within the out-of-line func6a, and the inlined
 # instance within the inlined call to func6a in main,
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func6b" \
     "Breakpoint.*at.*func6b.*\\(3 locations\\)"
 
@@ -85,7 +81,6 @@ gdb_test "break func6b" \
 # two locations: the inlined instance within the inlined instance of
 # func7a, and the inlined instance within main.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func7b" \
     "Breakpoint.*at.*func7b.*\\(2 locations\\)"
 
@@ -96,7 +91,6 @@ gdb_test "break func7b" \
 # within the inlined instance of func7a, and the inlined instance
 # within main.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "break func8b" \
     "Breakpoint.*at.*func8b.*\\(3 locations\\)"
 
@@ -115,6 +109,5 @@ gdb_test "print func1" \
 # print, but if this was failing the "print func1" test would likely
 # fail instead.
 #
-if [using_clang] { setup_xfail "clang/14743" *-*-* }
 gdb_test "print func2" \
     "\\\$.* = {int \\(int\\)} .* <func2>"

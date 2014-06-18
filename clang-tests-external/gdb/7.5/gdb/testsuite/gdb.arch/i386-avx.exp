@@ -24,6 +24,11 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
     return
 }
 
+if [using_clang] {
+    unsupported "test is oversensitive to register allocation/unoptimized code"
+    return -1
+}
+
 set testfile "i386-avx"
 set srcfile ${testfile}.c
 set binfile ${objdir}/${subdir}/${testfile}

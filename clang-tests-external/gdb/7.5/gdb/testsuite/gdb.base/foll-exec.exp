@@ -294,6 +294,7 @@ proc do_exec_tests {} {
    # reaches zero.
    #
    send_gdb "next 2\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "step through execl call"}
@@ -301,6 +302,7 @@ proc do_exec_tests {} {
      timeout         {fail "(timeout) step through execl call"}
    }
    send_gdb "next\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re "26.*printf.*$gdb_prompt $"\
                      {pass "step after execl call"}
@@ -312,6 +314,7 @@ proc do_exec_tests {} {
    # assigned the value of main's argc).
    #
    send_gdb "print local_j\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re ".* = 3.*$gdb_prompt $"\
                      {pass "print execd-program/local_j (after execl)"}
@@ -348,6 +351,7 @@ proc do_exec_tests {} {
      timeout         {fail "(timeout) jump to execv call"}
    }
    send_gdb "next\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "step through execv call"}
@@ -355,6 +359,7 @@ proc do_exec_tests {} {
      timeout         {fail "(timeout) step through execv call"}
    }
    send_gdb "next\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re "26.*printf.*$gdb_prompt $"\
                      {pass "step after execv call"}
@@ -366,6 +371,7 @@ proc do_exec_tests {} {
    # assigned the value of main's argc).
    #
    send_gdb "print local_j\n"
+   if [using_clang] { setup_xfail "clang/14501" *-*-* }
    gdb_expect {
      -re ".* = 2.*$gdb_prompt $"\
                      {pass "print execd-program/local_j (after execv)"}

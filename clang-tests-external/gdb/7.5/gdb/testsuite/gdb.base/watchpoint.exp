@@ -327,7 +327,15 @@ proc test_stepping {} {
 	set test "until out of loop"
 	gdb_test_multiple "until" $test {
 	    -re "(for \\(count = 0|\}).*$gdb_prompt $" {
-		gdb_test "until" "ival1 = count; /. Outside loop ./" $test
+		gdb_test_multiple "until" $test {
+		    -re "ival = count; /. Outside loop ./.*$gdb_prompt $" {
+			pass $test
+		    }
+		    -re "ival1 = count.*$gdb_prompt $" {
+			kfail "gdb/17315" $test
+			gdb_test "until 181" "ival1 = count; /. Outside loop ./" $test
+		    }
+		}
 	    }
 	    -re "ival1 = count; /. Outside loop ./.*$gdb_prompt $" {
 		pass $test

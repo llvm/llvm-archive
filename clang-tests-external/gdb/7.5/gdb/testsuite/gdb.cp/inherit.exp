@@ -620,7 +620,7 @@ proc test_print_mvi_classes { } {
 	    # gcc HEAD 2004-01-21 -gstabs+
 	    pass "$name (FIXME v3 vtbl ptr)"
 	}
-	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_3_vB = $hex, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 23, vx = 24\}, $re_vbptr_3_vD = $hex, vd = 25, vx = 26\}$nl$gdb_prompt $" {
+	-re "$vhn = \{<vB> = \{<vA> = \{va = 19, vx = 20\}, $re_vbptr_3_vB = ${hex}( <vtable for vD.*>)?, vb = 21, vx = 22\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 23, vx = 24\}, $re_vbptr_3_vD = ${hex}( <vtable for vD.*>)?, vd = 25, vx = 26\}$nl$gdb_prompt $" {
 	    # gcc 3.3.2 -gstabs+
 	    pass "$name"
 	}
@@ -643,7 +643,7 @@ proc test_print_mvi_classes { } {
 	    # gcc HEAD 2004-07-31 -gdwarf-2
 	    pass "$name (FIXME v3 vtbl ptr)"
 	}
-	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = $hex, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vD>, vc = 0, vx = 0\}, $re_vbptr_3_vD = $hex, vd = 0, vx = 0\}, $re_vbptr_3_vE = $hex, ve = 27, vx = 28\}$nl$gdb_prompt $" {
+	-re "$vhn = \{<vD> = \{<vB> = \{<vA> = \{va = 0, vx = 0\}, $re_vbptr_3_vB = ${hex}( <vtable for vE.*>)?, vb = 0, vx = 0\}, <vC> = \{$re_vbptr_3_vC = $hex <VTT for vE>, vc = 0, vx = 0\}, $re_vbptr_3_vD = ${hex}( <vtable for vE.*>)?, vd = 0, vx = 0\}, $re_vbptr_3_vE = ${hex}( <vtable for vE.*>)?, ve = 27, vx = 28\}$nl$gdb_prompt $" {
 	    # gcc 3.2.7-rh -gstabs+
 	    pass $name
 	}

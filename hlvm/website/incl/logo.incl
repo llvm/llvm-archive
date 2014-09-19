@@ -1,6 +1,0 @@
-<a href="/"
-  onmouseover="window.status='High Level Virtual Machine';return true;"
-  title="High Level Virtual Machine">
-  <img src="/img/logo.png" style="border:none" alt="HLVM Logo"/>
-</a>
-<hr/>

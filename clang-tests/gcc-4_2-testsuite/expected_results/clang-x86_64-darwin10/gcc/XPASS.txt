@@ -1,3 +1,0 @@
-gcc.dg/c99-const-expr-2.c bogus null pointer constant (test for bogus messages, line 37)
-gcc.dg/c99-const-expr-2.c bogus null pointer constant (test for bogus messages, line 38)
-gcc.dg/c99-const-expr-2.c bogus null pointer constant (test for bogus messages, line 40)

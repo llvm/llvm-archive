@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ..
 
-DIRS=j3 vmjc llcj
+DIRS=j3 vmjc
 
 include $(LEVEL)/Makefile.common
 

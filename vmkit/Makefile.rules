@@ -191,7 +191,7 @@ CLANG_FILES=$(patsubst %.c,$(BUILD_DIR)/%,$(call all-suffixes,.c)) \
             $(patsubst %.cc,$(BUILD_DIR)/%,$(call all-suffixes,.cc)) \
             $(patsubst %.cpp,$(BUILD_DIR)/%,$(call all-suffixes,.cpp))
 
-BC_FILES=$(addsuffix .bc,$(CLANG_FILES)) $(addprefix $(BUILD_DIR)/,$(filter %.bc, $(GEN)))
+BC_FILES+=$(addsuffix .bc,$(CLANG_FILES)) $(addprefix $(BUILD_DIR)/,$(filter %.bc, $(GEN)))
 
 ifdef NEED_BC
 # if we need bytecode, we link a module with all the bc in the build_dir directory, optimize this module
@@ -262,7 +262,7 @@ DEP_LIBS=$(patsubst %,$(LIB_DIR)/lib%.a,$(LINK_USE))
 
 $(BIN_DIR)/$(TOOL)$(EXEEXT): $(MODULE_A) $(DEP_LIBS) $(BUILD_DIR)/frametables.o $(SELF) $(BIN_DIR)/.dir
 	$(Echo) "Linking executable '$(notdir $@)'"
-	$(Verb) $(CLANGXX) -o $@  $(LDFLAGS) $(MODULE_A) $(BUILD_DIR)/frametables.o $(DEP_LIBS) $(DEP_LIBS) $(LIBS)
+	$(Verb) $(CLANGXX) -o $@  $(LDFLAGS) $(BUILD_DIR)/frametables.o $(MODULE_A) $(DEP_LIBS) $(DEP_LIBS) $(LIBS)
 
 $(LIB_DIR)/$(LIBRARY)$(SHLIBEXT): $(MODULE_A) $(DEP_LIBS) $(SELF) $(LIB_DIR)/.dir
 	$(Echo) "Linking shared library '$(notdir $@)'"

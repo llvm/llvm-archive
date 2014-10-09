@@ -25,6 +25,7 @@
 using namespace j3;
 using namespace llvm;
 
+
 namespace j3 { 
   namespace llvm_runtime { 
     #include "LLVMRuntime.inc"
@@ -47,6 +48,9 @@ void J3Intrinsics::init(llvm::Module* module) {
 
   ResolvedConstantPoolType = ptrPtrType;
  
+#if OSGI_BUNDLE_TIER_TAGGING
+  TierIDType = IntegerType::getInt32Ty(Context);
+#endif
 
   ObjectHeaderType = PointerType::getUnqual(module->getPointerSize() == Module::Pointer32 ?
   		    Type::getInt32Ty(Context) : Type::getInt64Ty(Context));
@@ -99,15 +103,21 @@ void J3Intrinsics::init(llvm::Module* module) {
     PointerType::getUnqual(module->getTypeByName("UTF8"));
   AttributeType =
     PointerType::getUnqual(module->getTypeByName("Attribute"));
+  ThreadType =
+    PointerType::getUnqual(module->getTypeByName("Thread"));
   JavaThreadType =
     PointerType::getUnqual(module->getTypeByName("JavaThread"));
   MutatorThreadType =
     PointerType::getUnqual(module->getTypeByName("MutatorThread"));
   
+#if EMBEDDED_LIST_IN_CALL_STACK
+  StackEmbeddedListNodeType =
+    PointerType::getUnqual(module->getTypeByName("StackEmbeddedListNode"));
+#endif
+
   J3DenseMapType =
     PointerType::getUnqual(module->getTypeByName("J3DenseMap"));
-  
-  
+
   JavaObjectNullConstant =
     Constant::getNullValue(J3Intrinsics::JavaObjectType);
   MaxArraySizeConstant = ConstantInt::get(Type::getInt32Ty(Context),
@@ -125,6 +135,9 @@ void J3Intrinsics::init(llvm::Module* module) {
 
   JavaObjectVTOffsetConstant = constantZero;
 
+#if OSGI_BUNDLE_TIER_TAGGING
+  InvalidTierIDConstant = constantMinusOne;
+#endif
 
   OffsetClassInVTConstant =
     ConstantInt::get(Type::getInt32Ty(Context),
@@ -152,6 +165,16 @@ void J3Intrinsics::init(llvm::Module* module) {
   OffsetBaseClassInArrayClassConstant = constantOne;
   OffsetLogSizeInPrimitiveClassConstant = constantOne;
 
+  OffsetOffsetInJavaMethodConstant = ConstantInt::get(Type::getInt32Ty(Context), 9);
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+  OffsetCallerNodeInStackEmbeddedListNodeConstant	= constantZero;
+  OffsetDataInStackEmbeddedListNodeConstant			= constantOne;
+  OffsetStackEmbeddedListHeadInThreadConstant =	ConstantInt::get(Type::getInt32Ty(Context), 13);
+#endif
+
+  constantNullJavaMethodPtr = Constant::getNullValue(this->JavaMethodType);
+
   OffsetObjectSizeInClassConstant = constantOne;
   OffsetVTInClassConstant = ConstantInt::get(Type::getInt32Ty(Context), 7);
   OffsetTaskClassMirrorInClassConstant = constantThree;
@@ -165,6 +188,10 @@ void J3Intrinsics::init(llvm::Module* module) {
   OffsetThreadInMutatorThreadConstant =     ConstantInt::get(Type::getInt32Ty(Context), 0);
   OffsetJNIInJavaThreadConstant =           ConstantInt::get(Type::getInt32Ty(Context), 1);
   OffsetJavaExceptionInJavaThreadConstant = ConstantInt::get(Type::getInt32Ty(Context), 2);
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  OffsetChargedTierIDInThreadConstant =     	ConstantInt::get(Type::getInt32Ty(Context), 12);
+#endif
 
   ClassReadyConstant = ConstantInt::get(Type::getInt8Ty(Context), ready);
   
@@ -246,5 +273,15 @@ void J3Intrinsics::init(llvm::Module* module) {
   GetLockFunction = module->getFunction("getLock");
   ThrowExceptionFromJITFunction =
     module->getFunction("j3ThrowExceptionFromJIT"); 
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  PushChargedTierNodeFunction	= module->getFunction("pushChargedTierNode");
+  PopChargedTierNodeFunction	= module->getFunction("popChargedTierNode");
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  OffsetTotalCalledMethodsCounterInThread =
+    ConstantInt::get(Type::getInt32Ty(Context), 14);
+#endif
 }
 

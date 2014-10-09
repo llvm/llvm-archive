@@ -15,6 +15,7 @@
 #include <string>
 #include <sstream>
 #include <cstring>
+#include <cstdarg>
 
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -46,6 +47,59 @@
 using namespace j3;
 using namespace llvm;
 using namespace std;
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+
+void JavaJIT::incrementTotalCalledMethodsCounter()
+{
+	if (TheCompiler->isCompilingGarbageCollector()) return;
+
+	auto TotalCalledMethodsCountPtr = getElementPtr(
+		"TotalCalledMethodsCountPtr", getThreadPtr(), intrinsics->constantZero,
+		intrinsics->OffsetTotalCalledMethodsCounterInThread, nullptr);
+
+	auto value_type =
+		TotalCalledMethodsCountPtr->getType()->getPointerElementType();
+	auto ui64_one = ConstantInt::get(value_type, 1);
+	auto old_val = new LoadInst(TotalCalledMethodsCountPtr,
+		"TotalCalledMethodsCountOldValue", currentBlock);
+	auto new_val = BinaryOperator::CreateAdd(old_val, ui64_one,
+		"TotalCalledMethodsCounterNewValue", currentBlock);
+	new StoreInst(new_val, TotalCalledMethodsCountPtr, currentBlock);
+}
+
+#endif
+
+Value* JavaJIT::allocateOnStack(
+	const char* name, size_t byteCount, Type* realType)
+{
+	std::string bufferName(name);
+	bufferName += "Buffer";
+
+	auto wordCount = ConstantInt::get(
+		Type::getInt32Ty(*llvmContext),
+		vmkit::System::WordAlignUp(byteCount) / sizeof(void*));
+
+	auto buffer = new AllocaInst(intrinsics->ptrType,
+		wordCount, sizeof(void*), bufferName, currentBlock);
+	return new BitCastInst(buffer, realType, name, currentBlock);
+}
+
+Value* JavaJIT::getElementPtr(
+	const char *name, Value* element, Value* firstIndex, ...)
+{
+	std::vector<Value*> indexList;
+	indexList.push_back(firstIndex);
+
+	va_list argList;
+	Value* arg;
+	va_start(argList, firstIndex);
+	while ((arg = va_arg(argList, Value*)) != nullptr)
+		indexList.push_back(arg);
+	va_end(argList);
+
+	return GetElementPtrInst::Create(element, indexList, name, currentBlock);
+}
 
 void JavaJIT::updateStackInfo(Opinfo& info) {
   if (stackSize()) {
@@ -196,6 +250,10 @@ void JavaJIT::invokeVirtual(uint16 index) {
   FunctionType::param_iterator it  = virtualType->param_end();
   llvm::Type* retType = virtualType->getReturnType();
 
+#if OSGI_BUNDLE_TIER_TAGGING
+  calculateChargedTierIDForInvokeVirtual(index);
+#endif
+
   bool needsInit = false;
   if (canBeDirect && canBeInlined(meth, customized)) {
     makeArgs(it, index, args, signature->nbArguments + 1);
@@ -221,37 +279,47 @@ void JavaJIT::invokeVirtual(uint16 index) {
       indexes2[1] = Offset;
     } else {
       nullChecked = true;
-      GlobalVariable* GV = new GlobalVariable(*llvmFunction->getParent(),
-                                              Type::getInt32Ty(*llvmContext),
-                                              false,
-                                              GlobalValue::ExternalLinkage,
-                                              intrinsics->constantZero, "");
-    
+      GlobalVariable* cachedMethodPtr = new GlobalVariable(
+        *llvmFunction->getParent(), intrinsics->JavaMethodType,
+        false, GlobalValue::ExternalLinkage,
+        intrinsics->constantNullJavaMethodPtr, "cachedMethodPtr");
+      Value* cachedMethod = new LoadInst(
+        cachedMethodPtr, "cachedMethod", false, currentBlock);
+
       BasicBlock* resolveVirtual = createBasicBlock("resolveVirtual");
       BasicBlock* endResolveVirtual = createBasicBlock("endResolveVirtual");
-      PHINode* node = PHINode::Create(Type::getInt32Ty(*llvmContext), 2, "",
-                                      endResolveVirtual);
+      PHINode* methodPtr = PHINode::Create(
+        intrinsics->JavaMethodType, 2, "methodPtr", endResolveVirtual);
+      methodPtr->addIncoming(cachedMethod, currentBlock);
 
-      Value* load = new LoadInst(GV, "", false, currentBlock);
-      Value* test = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, load,
-                                 intrinsics->constantZero, "");
+      Value* test = new ICmpInst(
+        *currentBlock, ICmpInst::ICMP_EQ, cachedMethod,
+        intrinsics->constantNullJavaMethodPtr, "isCacheEmpty");
       BranchInst::Create(resolveVirtual, endResolveVirtual, test, currentBlock);
-      node->addIncoming(load, currentBlock);
+
       currentBlock = resolveVirtual;
       std::vector<Value*> Args;
       Args.push_back(TheCompiler->getNativeClass(compilingClass));
       Args.push_back(ConstantInt::get(Type::getInt32Ty(*llvmContext), index));
-      Args.push_back(GV);
+      Args.push_back(cachedMethodPtr);
       Value* targetObject = getTarget(signature);
-      targetObject = new LoadInst(targetObject, "", false, currentBlock);
+      targetObject = new LoadInst(
+        targetObject, "targetObject", false, currentBlock);
       if (!thisReference) JITVerifyNull(targetObject);
       Args.push_back(targetObject);
-      load = invoke(intrinsics->VirtualLookupFunction, Args, "", currentBlock);
-      node->addIncoming(load, currentBlock);
+      Value* calculatedMethodPtr = invoke(intrinsics->VirtualLookupFunction,
+        Args, "calculatedMethod", currentBlock);
+      methodPtr->addIncoming(calculatedMethodPtr, currentBlock);
+
       BranchInst::Create(endResolveVirtual, currentBlock);
       currentBlock = endResolveVirtual;
 
-      indexes2[1] = node;
+      Value* methodOffset = getElementPtr(
+        "methodOffsetPtr", methodPtr, intrinsics->constantZero,
+        intrinsics->OffsetOffsetInJavaMethodConstant, nullptr);
+      methodOffset = new LoadInst(methodOffset, "methodOffset", currentBlock);
+
+      indexes2[1] = methodOffset;
     }
 
     makeArgs(it, index, args, signature->nbArguments + 1);
@@ -287,22 +355,39 @@ void JavaJIT::invokeVirtual(uint16 index) {
       }
     }
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  resetChargedTierID();
+#endif
 }
 
 llvm::Value* JavaJIT::getMutatorThreadPtr() {
-  Value* FrameAddr = CallInst::Create(intrinsics->llvm_frameaddress,
-                                     	intrinsics->constantZero, "", currentBlock);
-  Value* threadId = new PtrToIntInst(FrameAddr, intrinsics->pointerSizeType, "",
-                              			 currentBlock);
-  threadId = BinaryOperator::CreateAnd(threadId, intrinsics->constantThreadIDMask,
-                                       "", currentBlock);
-  threadId = new IntToPtrInst(threadId, intrinsics->MutatorThreadType, "MutatorThreadPtr", currentBlock);
-
-  return threadId;
+	return new BitCastInst(
+		getThreadPtr(), intrinsics->MutatorThreadType, "MutatorThreadPtr", currentBlock);
 }
 
-llvm::Value* JavaJIT::getJavaThreadPtr(llvm::Value* mutatorThreadPtr) {
-  return new BitCastInst(mutatorThreadPtr, intrinsics->JavaThreadType, "JavaThreadPtr", currentBlock);
+llvm::Value* JavaJIT::getThreadPtr()
+{
+	if (!currentThreadPtr) {
+		Value* frameAddr = CallInst::Create(
+			intrinsics->llvm_frameaddress, intrinsics->constantZero,
+			"frameAddress", currentBlock);
+		Value* ptr = new PtrToIntInst(
+			frameAddr, intrinsics->pointerSizeType, "", currentBlock);
+		ptr = BinaryOperator::CreateAnd(
+			ptr, intrinsics->constantThreadIDMask, "", currentBlock);
+		ptr = new IntToPtrInst(
+			ptr, intrinsics->ThreadType, "threadPtr", currentBlock);
+
+		currentThreadPtr = ptr;
+	}
+
+	return currentThreadPtr;
+}
+
+llvm::Value* JavaJIT::getJavaThreadPtr() {
+	return new BitCastInst(
+		getThreadPtr(), intrinsics->JavaThreadType, "JavaThreadPtr", currentBlock);
 }
 
 llvm::Value* JavaJIT::getIsolateIDPtr(llvm::Value* mutatorThreadPtr) { 
@@ -420,7 +505,6 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
     return llvmFunction;
   }
   
-  
   Function* func = llvmFunction;
   if (j3) {
     Function* callee = Function::Create(llvmFunction->getFunctionType(),
@@ -429,6 +513,19 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
                                         llvmFunction->getParent());
     TheCompiler->setMethod(callee, (void*)natPtr, functionName);
     currentBlock = createBasicBlock("start");
+
+#if OSGI_BUNDLE_TIER_TAGGING
+    getThreadPtr();
+    allocateChargedTierID();
+    initializeChargedTierID();
+    calculateChargedTierIDForInvokeNative();
+    setChargedTierID();
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+    incrementTotalCalledMethodsCounter();
+#endif
+
     std::vector<Value*> args;
     for (Function::arg_iterator i = func->arg_begin(), e = func->arg_end();
          i != e;
@@ -436,6 +533,11 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
       args.push_back(i);
     }
     Value* res = CallInst::Create(callee, args, "", currentBlock);
+
+#if OSGI_BUNDLE_TIER_TAGGING
+    restoreChargedTierID();
+#endif
+
     if (returnType != Type::getVoidTy(*llvmContext)) {
       ReturnInst::Create(*llvmContext, res, currentBlock);
     } else {
@@ -446,30 +548,37 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
 
   currentExceptionBlock = endExceptionBlock = 0;
   currentBlock = createBasicBlock("start");
-  endBlock = createBasicBlock("end block");
+  endBlock = createBasicBlock("endBlock");
   
+  getThreadPtr();
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  allocateChargedTierID();
+#endif
+
   if (returnType != Type::getVoidTy(*llvmContext)) {
     endNode = PHINode::Create(returnType, 0, "", endBlock);
   }
   
   // Allocate currentLocalIndexNumber pointer
-  Value* temp = new AllocaInst(Type::getInt32Ty(*llvmContext), "",
-                               currentBlock);
+  Value* temp = new AllocaInst(
+	Type::getInt32Ty(*llvmContext), "currentLocalIndexNumber", currentBlock);
   new StoreInst(intrinsics->constantZero, temp, false, currentBlock);
   
   // Allocate oldCurrentLocalIndexNumber pointer
-  Value* oldCLIN = new AllocaInst(PointerType::getUnqual(Type::getInt32Ty(*llvmContext)), "",
-                                  currentBlock);
+  Value* oldCLIN = new AllocaInst(
+	PointerType::getUnqual(Type::getInt32Ty(*llvmContext)),
+	"oldLocalIndexNumber", currentBlock);
   
   Constant* sizeF = ConstantInt::get(Type::getInt32Ty(*llvmContext), sizeof(vmkit::KnownFrame));
-  Value* Frame = new AllocaInst(Type::getInt8Ty(*llvmContext), sizeF, "", currentBlock);
+  Value* Frame = new AllocaInst(Type::getInt8Ty(*llvmContext), sizeF, "knownFrame", currentBlock);
   
   uint32 nargs = func->arg_size() + 1 + (stat ? 1 : 0); 
   std::vector<Value*> nativeArgs;
   nativeArgs.push_back(NULL); // Will contain the callee
   
   
-  Value* jniEnv = getJNIEnvPtr(getJavaThreadPtr(getMutatorThreadPtr()));
+  Value* jniEnv = getJNIEnvPtr(getJavaThreadPtr());
  
   jniEnv = new BitCastInst(jniEnv, intrinsics->ptrType, "", currentBlock);
 
@@ -487,10 +596,10 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
        index < nargs; ++i, ++index) {
     
     if (i->getType() == intrinsics->JavaObjectType) {
-      BasicBlock* BB = createBasicBlock("");
-      BasicBlock* NotZero = createBasicBlock("");
+      BasicBlock* BB = createBasicBlock("continue");
+      BasicBlock* NotZero = createBasicBlock("storeObjParamOnStack");
       Type* Ty = PointerType::getUnqual(intrinsics->JavaObjectType);
-      PHINode* node = PHINode::Create(Ty, 2, "", BB);
+      PHINode* node = PHINode::Create(Ty, 2, "stack_obj_param_", BB);
 
       Value* test = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, i,
                                  intrinsics->JavaObjectNullConstant, "");
@@ -500,8 +609,9 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
 
       currentBlock = NotZero;
 
-      Instruction* temp = new AllocaInst(intrinsics->JavaObjectType, "",
-                                         func->begin()->getTerminator());
+      Instruction* temp = new AllocaInst(
+    	intrinsics->JavaObjectType, "nonNullObjParamOnStack",
+        func->begin()->getTerminator());
       if (i == func->arg_begin() && !stat) {
         this->thisObject = temp;
       }
@@ -529,11 +639,10 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
     }
   }
   
-  
   Instruction* ResultObject = 0;
   if (returnType == intrinsics->JavaObjectType) {
-    ResultObject = new AllocaInst(intrinsics->JavaObjectType, "",
-                                  func->begin()->begin());
+    ResultObject = new AllocaInst(
+    	intrinsics->JavaObjectType, "resultObjOnStack", func->begin()->begin());
     
     if (TheCompiler->useCooperativeGC()) {
       
@@ -549,14 +658,24 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
                     currentBlock);
     }
   }
-  
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  initializeChargedTierID();
+  calculateChargedTierIDForInvokeNative();
+  setChargedTierID();
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  incrementTotalCalledMethodsCounter();
+#endif
+
   Value* nativeFunc = TheCompiler->getNativeFunction(compilingMethod, (void*)natPtr);
   if (TheCompiler->isStaticCompiling()) {
     Value* Arg = TheCompiler->getMethodInClass(compilingMethod); 
     
     // If the global variable is null, then load it.
-    BasicBlock* unloadedBlock = createBasicBlock("");
-    BasicBlock* endBlock = createBasicBlock("");
+    BasicBlock* unloadedBlock = createBasicBlock("unloadedBlock");
+    BasicBlock* endBlock = createBasicBlock("endBlock");
     Value* test = new LoadInst(nativeFunc, "", currentBlock);
     Type* Ty = test->getType();
     PHINode* node = PHINode::Create(Ty, 2, "", endBlock);
@@ -595,7 +714,7 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
     Type* Ty = PointerType::getUnqual(intrinsics->JavaObjectType);
     Constant* C = Constant::getNullValue(Ty);
     Value* cmp = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, result, C, "");
-    BasicBlock* loadBlock = createBasicBlock("");
+    BasicBlock* loadBlock = createBasicBlock("loadBlock");
 
     endNode->addIncoming(intrinsics->JavaObjectNullConstant, currentBlock);
     BranchInst::Create(endBlock, loadBlock, cmp, currentBlock);
@@ -612,7 +731,6 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
   
   BranchInst::Create(endBlock, currentBlock);
 
-
   currentBlock = endBlock; 
  
   Value* Args2[1] = { oldCLIN };
@@ -623,21 +741,31 @@ llvm::Function* JavaJIT::nativeCompile(word_t natPtr) {
   if (isSynchro(compilingMethod->access))
     endSynchronize();
 
-  BasicBlock* ifNormal = createBasicBlock("");
-  BasicBlock* ifException = createBasicBlock("");
-  Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr(getMutatorThreadPtr()));
+  BasicBlock* ifNormal = createBasicBlock("ifNormal");
+  BasicBlock* ifException = createBasicBlock("ifException");
+  Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr());
   Value* obj = new LoadInst(javaExceptionPtr, "", currentBlock);
   Value* test = new ICmpInst(*currentBlock, ICmpInst::ICMP_NE, obj, intrinsics->JavaObjectNullConstant, "");
   BranchInst::Create(ifException, ifNormal, test, currentBlock);
 
   currentBlock = ifException;
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  restoreChargedTierID();
+#endif
+
   // Clear exception.
   new StoreInst(intrinsics->JavaObjectNullConstant, javaExceptionPtr,
                 currentBlock);
   CallInst::Create(intrinsics->ThrowExceptionFunction, obj, "", currentBlock);
   new UnreachableInst(*llvmContext, currentBlock);
+
   currentBlock = ifNormal;
-  
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  restoreChargedTierID();
+#endif
+
   if (returnType != Type::getVoidTy(*llvmContext))
     ReturnInst::Create(*llvmContext, endNode, currentBlock);
   else
@@ -681,8 +809,8 @@ void JavaJIT::monitorEnter(Value* obj) {
   Value* cmp = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, atomic,
                             lock, "");
   
-  BasicBlock* OK = createBasicBlock("synchronize passed");
-  BasicBlock* NotOK = createBasicBlock("synchronize did not pass");
+  BasicBlock* OK = createBasicBlock("synchronizePassed");
+  BasicBlock* NotOK = createBasicBlock("synchronizeDidNotPass");
 
   BranchInst::Create(OK, NotOK, cmp, currentBlock);
 
@@ -734,7 +862,7 @@ void JavaJIT::monitorExit(Value* obj) {
   Value* cmp = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, atomic,
                             oldValMask, "");
   
-  BasicBlock* LockFreeCASFailed = createBasicBlock("Lock-Free CAS Failed");
+  BasicBlock* LockFreeCASFailed = createBasicBlock("LockFreeCASFailed");
 
   BranchInst::Create(EndBlock, LockFreeCASFailed, cmp, currentBlock);
 
@@ -1038,28 +1166,34 @@ llvm::Function* JavaJIT::javaCompile() {
     opcodeInfos[i].exceptionBlock = endExceptionBlock;
   }
 
+  getThreadPtr();
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  allocateChargedTierID();
+#endif
+
   Instruction* returnValue = NULL;
   if (returnType == intrinsics->JavaObjectType &&
       TheCompiler->useCooperativeGC()) {
-    returnValue = new AllocaInst(intrinsics->JavaObjectType, "returnValue",
-                                 currentBlock);
-    Instruction* cast = 
-        new BitCastInst(returnValue, intrinsics->ptrPtrType, "", currentBlock);
+    returnValue = new AllocaInst(
+    	intrinsics->JavaObjectType, "returnValueStorage", currentBlock);
+    Instruction* cast = new BitCastInst(
+    	returnValue, intrinsics->ptrPtrType, "returnValue", currentBlock);
     Value* GCArgs[2] = { cast, intrinsics->constantPtrNull };
         
     CallInst::Create(intrinsics->llvm_gc_gcroot, GCArgs, "", currentBlock);
   }
 
   for (int i = 0; i < maxLocals; i++) {
-    intLocals.push_back(new AllocaInst(Type::getInt32Ty(*llvmContext), setInstructionName(instName, instNameLen, "int_%d", i), currentBlock));
+    intLocals.push_back(new AllocaInst(Type::getInt32Ty(*llvmContext), setInstructionName(instName, instNameLen, "local_int_%d", i), currentBlock));
     new StoreInst(Constant::getNullValue(Type::getInt32Ty(*llvmContext)), intLocals.back(), false, currentBlock);
-    doubleLocals.push_back(new AllocaInst(Type::getDoubleTy(*llvmContext), setInstructionName(instName, instNameLen, "double_%d", i), currentBlock));
+    doubleLocals.push_back(new AllocaInst(Type::getDoubleTy(*llvmContext), setInstructionName(instName, instNameLen, "local_double_%d", i), currentBlock));
     new StoreInst(Constant::getNullValue(Type::getDoubleTy(*llvmContext)), doubleLocals.back(), false, currentBlock);
-    longLocals.push_back(new AllocaInst(Type::getInt64Ty(*llvmContext), setInstructionName(instName, instNameLen, "long_%d", i), currentBlock));
+    longLocals.push_back(new AllocaInst(Type::getInt64Ty(*llvmContext), setInstructionName(instName, instNameLen, "local_long_%d", i), currentBlock));
     new StoreInst(Constant::getNullValue(Type::getInt64Ty(*llvmContext)), longLocals.back(), false, currentBlock);
-    floatLocals.push_back(new AllocaInst(Type::getFloatTy(*llvmContext), setInstructionName(instName, instNameLen, "float_%d", i), currentBlock));
+    floatLocals.push_back(new AllocaInst(Type::getFloatTy(*llvmContext), setInstructionName(instName, instNameLen, "local_float_%d", i), currentBlock));
     new StoreInst(Constant::getNullValue(Type::getFloatTy(*llvmContext)), floatLocals.back(), false, currentBlock);
-    objectLocals.push_back(new AllocaInst(intrinsics->JavaObjectType, setInstructionName(instName, instNameLen, "object_%d", i), currentBlock));
+    objectLocals.push_back(new AllocaInst(intrinsics->JavaObjectType, setInstructionName(instName, instNameLen, "local_object_%d", i), currentBlock));
     // The GCStrategy will already initialize the value.
     if (!TheCompiler->useCooperativeGC())
       new StoreInst(Constant::getNullValue(intrinsics->JavaObjectType), objectLocals.back(), false, currentBlock);
@@ -1131,7 +1265,7 @@ llvm::Function* JavaJIT::javaCompile() {
 
   nbHandlers = readExceptionTable(reader, codeLen);
   if (nbHandlers != 0) {
-    jmpBuffer = new AllocaInst(ArrayType::get(Type::getInt8Ty(*llvmContext), sizeof(vmkit::ExceptionBuffer)), "", currentBlock);
+    jmpBuffer = new AllocaInst(ArrayType::get(Type::getInt8Ty(*llvmContext), sizeof(vmkit::ExceptionBuffer)), "exceptionSavePointStorage", currentBlock);
     jmpBuffer = new BitCastInst(jmpBuffer, intrinsics->ptrType, "exceptionSavePoint", currentBlock);
   }
 
@@ -1141,8 +1275,16 @@ llvm::Function* JavaJIT::javaCompile() {
   endBlock = createBasicBlock("end");
 
   if (returnType != Type::getVoidTy(*llvmContext)) {
-    endNode = llvm::PHINode::Create(returnType, 0, "", endBlock);
+    endNode = llvm::PHINode::Create(returnType, 0, "returnValuePhi", endBlock);
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  initializeChargedTierID();
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  incrementTotalCalledMethodsCounter();
+#endif
 
   checkYieldPoint();
   
@@ -1165,8 +1307,8 @@ llvm::Function* JavaJIT::javaCompile() {
 
     stackCheck = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, stackCheck,
                               intrinsics->constantPtrZero, "");
-    BasicBlock* stackOverflow = createBasicBlock("stack overflow");
-    BasicBlock* noStackOverflow = createBasicBlock("no stack overflow");
+    BasicBlock* stackOverflow = createBasicBlock("stackOverflow");
+    BasicBlock* noStackOverflow = createBasicBlock("noStackOverflow");
     BranchInst::Create(stackOverflow, noStackOverflow, stackCheck,
                        currentBlock);
     currentBlock = stackOverflow;
@@ -1227,9 +1369,9 @@ llvm::Function* JavaJIT::javaCompile() {
     currentBlock->eraseFromParent();
   } else {
     if (nbHandlers != 0) {
-      BasicBlock* ifNormal = createBasicBlock("No exception was thrown");
-      BasicBlock* ifException = createBasicBlock("Rethrow Exception");
-      Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr(getMutatorThreadPtr()));
+      BasicBlock* ifNormal = createBasicBlock("noExceptionThrown");
+      BasicBlock* ifException = createBasicBlock("reThrowException");
+      Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr());
       Value* obj = new LoadInst(javaExceptionPtr, "pendingException", currentBlock);
       Value* test = new ICmpInst(*currentBlock, ICmpInst::ICMP_NE, obj, intrinsics->JavaObjectNullConstant, "");
       BranchInst::Create(ifException, ifNormal, test, currentBlock);
@@ -1381,8 +1523,8 @@ void JavaJIT::JITVerifyNull(Value* obj) {
     } else {
       Value* test = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, obj, intrinsics->JavaObjectNullConstant, "");
 
-      BasicBlock* nullObjBlock = createBasicBlock("object is null");
-      BasicBlock* notNullObjBlock = createBasicBlock("object is not null");
+      BasicBlock* nullObjBlock = createBasicBlock("objectIsNull");
+      BasicBlock* notNullObjBlock = createBasicBlock("objectIsNotNull");
 
       BranchInst::Create(nullObjBlock, notNullObjBlock, test, currentBlock);
       currentBlock = nullObjBlock;
@@ -1408,8 +1550,8 @@ Value* JavaJIT::verifyAndComputePtr(Value* obj, Value* index,
     Value* cmp = new ICmpInst(*currentBlock, ICmpInst::ICMP_ULT, index, size,
                               "");
 
-    BasicBlock* ifTrue =  createBasicBlock("true verifyAndComputePtr");
-    BasicBlock* ifFalse = createBasicBlock("false verifyAndComputePtr");
+    BasicBlock* ifTrue =  createBasicBlock("trueVerifyAndComputePtr");
+    BasicBlock* ifFalse = createBasicBlock("falseVerifyAndComputePtr");
 
     BranchInst::Create(ifTrue, ifFalse, cmp, currentBlock);
     
@@ -1659,6 +1801,10 @@ void JavaJIT::invokeSpecial(uint16 index) {
     func = TheCompiler->getMethod(meth, NULL);
   }
 
+#if OSGI_BUNDLE_TIER_TAGGING
+  calculateChargedTierIDForInvokeSpecial(index);
+#endif
+
   std::vector<Value*> args;
   FunctionType::param_iterator it  = virtualType->param_end();
   makeArgs(it, index, args, signature->nbArguments + 1);
@@ -1688,6 +1834,10 @@ void JavaJIT::invokeSpecial(uint16 index) {
       }
     }
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  resetChargedTierID();
+#endif
 }
 
 void JavaJIT::invokeStatic(uint16 index) {
@@ -1708,7 +1858,6 @@ void JavaJIT::invokeStatic(uint16 index) {
 
   JavaMethod* meth = ctpInfo->infoOfStaticOrSpecialMethod(index, ACC_STATIC,
                                                           signature);
-    
 
   uint32 clIndex = ctpInfo->getClassIndexFromMethod(index);
   UserClass* cl = 0;
@@ -1717,6 +1866,10 @@ void JavaJIT::invokeStatic(uint16 index) {
     CallInst::Create(intrinsics->ForceInitialisationCheckFunction, Cl, "",
                      currentBlock);
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  calculateChargedTierIDForInvokeStatic(index);
+#endif
   
   Value* func = 0;
   bool needsInit = false;
@@ -1760,6 +1913,10 @@ void JavaJIT::invokeStatic(uint16 index) {
       }
     }
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  resetChargedTierID();
+#endif
 }
 
 Value* JavaJIT::getConstantPoolAt(uint32 index, Function* resolver,
@@ -1880,7 +2037,11 @@ void JavaJIT::invokeNew(uint16 index) {
     Size = CallInst::Create(intrinsics->GetObjectSizeFromClassFunction, Cl,
                             "", currentBlock);
   }
- 
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  calculateChargedTierIDForNew(index);
+#endif
+
   VT = new BitCastInst(VT, intrinsics->ptrType, "", currentBlock);
   Instruction* val = invoke(cl ? intrinsics->VTAllocateFunction :
                            intrinsics->VTAllocateUnresolvedFunction,
@@ -1895,6 +2056,10 @@ void JavaJIT::invokeNew(uint16 index) {
   if (cl && cl->virtualVT->hasDestructor()) {
     CallInst::Create(intrinsics->AddFinalizationCandidate, val, "", currentBlock);
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  resetChargedTierID();
+#endif
 }
 
 Value* JavaJIT::ldResolved(uint16 index, bool stat, Value* object, 
@@ -1911,10 +2076,8 @@ Value* JavaJIT::ldResolved(uint16 index, bool stat, Value* object,
       Value* Cl = TheCompiler->getNativeClass(field->classDef);
       bool needsCheck = needsInitialisationCheck(field->classDef);
       if (needsCheck) {
-        Cl = invoke(intrinsics->InitialisationCheckFunction, Cl, "",
-                    currentBlock);
-        CallInst::Create(intrinsics->ForceInitialisationCheckFunction, Cl, "",
-                         currentBlock);
+        Cl = invoke(intrinsics->InitialisationCheckFunction, Cl, "", currentBlock);
+        CallInst::Create(intrinsics->ForceInitialisationCheckFunction, Cl, "", currentBlock);
       }
 
       object = TheCompiler->getStaticInstance(field->classDef);
@@ -2180,6 +2343,394 @@ void JavaJIT::getVirtualField(uint16 index) {
   }
 }
 
+#if JAVA_CHARGED_TIER_CALL_STACK
+
+void JavaJIT::pushChargedTier()
+{
+	if (!stackEmbeddedListNode) return;
+
+	// Save the current head of the linked list into the node.
+	// node->callerNode = (*threadHead);
+	auto threadHeadPtr = new LoadInst(threadStackEmbeddedListHeadPtrPtr,
+		"threadHeadPtr", currentBlock);
+	new StoreInst(
+		threadHeadPtr, stackEmbeddedListHeadCallerNodePtr, currentBlock);
+
+	// node->data[0] = reinterpret_cast<word_t>(chargedTierID);
+	new StoreInst(
+		chargedTierID, stackEmbeddedListHeadChargedTierPtr, currentBlock);
+
+	// *threadHead = node;
+	new StoreInst(stackEmbeddedListNode, threadStackEmbeddedListHeadPtrPtr,
+		true, currentBlock);	// volatile = true
+}
+
+void JavaJIT::popChargedTier()
+{
+	if (!stackEmbeddedListNode) return;
+
+	// Restore the linked list head.
+	// *threadHead = node->callerNode;
+	auto callerNode = new LoadInst(stackEmbeddedListHeadCallerNodePtr,
+		"callerNode", currentBlock);
+	new StoreInst(callerNode, threadStackEmbeddedListHeadPtrPtr,
+		true, currentBlock);	// volatile = true
+}
+
+void JavaJIT::allocateChargedTierID()
+{
+	if (TheCompiler->isCompilingGarbageCollector()) return;
+
+	assert(!stackEmbeddedListNode && "stackEmbeddedListNode already allocated");
+
+	// Allocate stack embedded list node
+	stackEmbeddedListNode = allocateOnStack("chargedTierNode",
+		sizeof(vmkit::StackEmbeddedListNode),
+		intrinsics->StackEmbeddedListNodeType);
+}
+
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+
+void JavaJIT::initializeChargedTierID()
+{
+	if (TheCompiler->isCompilingGarbageCollector()) return;
+
+	// j3::StackEmbeddedListNode** threadHead =
+	//    thread->stackEmbeddedListHead + StackEmbeddedListIntendedCaller;
+	threadStackEmbeddedListHeadPtrPtr =
+		getElementPtr("threadHeadPtrPtr", getThreadPtr(),
+			intrinsics->constantZero,
+			intrinsics->OffsetStackEmbeddedListHeadInThreadConstant,
+			intrinsics->constantZero, nullptr);
+
+	// node->callerNode
+	stackEmbeddedListHeadCallerNodePtr = getElementPtr(
+		"callerNodePtr", stackEmbeddedListNode,
+		intrinsics->constantZero,
+		intrinsics->OffsetCallerNodeInStackEmbeddedListNodeConstant, nullptr);
+
+	// node->data + 0
+	stackEmbeddedListHeadChargedTierPtr = getElementPtr(
+		"nodeChargedTierPtr", stackEmbeddedListNode,
+		intrinsics->constantZero,
+		intrinsics->OffsetDataInStackEmbeddedListNodeConstant,
+		intrinsics->constantZero, nullptr);
+
+	auto TierIDPtrType = PointerType::getUnqual(intrinsics->TierIDType);
+	stackEmbeddedListHeadChargedTierPtr = new BitCastInst(
+		stackEmbeddedListHeadChargedTierPtr, TierIDPtrType,
+		"nodeChargedTierPtrPtr", currentBlock);
+
+	// Determine our own tier ID
+	auto vm = JavaThread::get()->getJVM();
+	compilingClassTierID = vm->tier_manager.getAccountingConfig().
+		getTierOfCommonClass(compilingClass);
+
+	// Retrieve the thread-local charged tier ID
+	threadChargedTierIDPtr = getElementPtr("threadChargedTierIDPtr",
+		getThreadPtr(), intrinsics->constantZero,
+		intrinsics->OffsetChargedTierIDInThreadConstant, nullptr);
+
+	threadChargedTierIDOldValue = new LoadInst(threadChargedTierIDPtr,
+		"threadChargedTierIDOldValue", true, // volatile = true
+		currentBlock);
+
+	// We are in method prolog. We received a chargedTierID from the caller.
+	// If the caller thinks we should be charged, it must pass 0xffffffff,
+	// otherwise the caller should pass the tier ID to be charged.
+
+	auto threadChargedTierIDIsInvalid = new ICmpInst(*currentBlock,
+		ICmpInst::ICMP_EQ, threadChargedTierIDOldValue,
+		intrinsics->InvalidTierIDConstant, "threadChargedTierIDIsInvalid");
+
+	auto chargeCalledTierID = createBasicBlock("chargeCalledTierID");
+	auto chargeCallerTierID = createBasicBlock("chargeCallerTierID");
+	auto chargeCalledTierIDEnd = createBasicBlock("chargeCalledTierIDEnd");
+
+	chargedTierID = PHINode::Create(
+		intrinsics->TierIDType, 2, "chargedTierID", chargeCalledTierIDEnd);
+
+	BranchInst::Create(chargeCalledTierID, chargeCallerTierID,
+		threadChargedTierIDIsInvalid, currentBlock);
+
+	// If we should charge the called, then our tier id becomes charged.
+	currentBlock = chargeCalledTierID;
+
+	chargedTierID->addIncoming(ConstantInt::get(intrinsics->TierIDType,
+		compilingClassTierID, false), currentBlock);
+
+	BranchInst::Create(chargeCalledTierIDEnd, currentBlock);
+
+	// If we should charge the caller, then the charged continues to be
+	// the passed tier id.
+	currentBlock = chargeCallerTierID;
+
+	chargedTierID->addIncoming(threadChargedTierIDOldValue, currentBlock);
+
+	BranchInst::Create(chargeCalledTierIDEnd, currentBlock);
+
+	currentBlock = chargeCalledTierIDEnd;
+
+	newChargedTierID = threadChargedTierIDOldValue;
+}
+
+void JavaJIT::calculateChargedTierIDForInvokeStatic(uint16_t index)
+{
+	if (!chargedTierID) return;
+
+	// Gather information about the call destination.
+	const UTF8 *called_class_name = nullptr, *called_method_name = nullptr;
+	Signdef* signature = nullptr;
+	compilingClass->ctpInfo->nameOfStaticOrSpecialMethod(
+		index, called_class_name, called_method_name, signature);
+	auto method = compilingClass->ctpInfo->infoOfStaticOrSpecialMethod(
+		index, ACC_STATIC, signature);
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	const UTF8 *called_bundle_name = nullptr;
+	if (method != nullptr) {
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		auto vm = JavaThread::get()->getJVM();
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			method->classDef->classLoader, info_iterator))
+		{
+			auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_class_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForInvokeSpecial(uint16_t index)
+{
+	if (!chargedTierID) return;
+
+	// Gather information about the call destination.
+	const UTF8 *called_class_name = nullptr, *called_method_name = nullptr;
+	Signdef* signature = nullptr;
+	compilingClass->ctpInfo->nameOfStaticOrSpecialMethod(
+		index, called_class_name, called_method_name, signature);
+	auto method = compilingClass->ctpInfo->infoOfStaticOrSpecialMethod(
+		index, ACC_VIRTUAL, signature);
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	const UTF8 *called_bundle_name = nullptr;
+	if (method != nullptr) {
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		auto vm = JavaThread::get()->getJVM();
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			method->classDef->classLoader, info_iterator))
+		{
+			auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_class_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForInvokeInterface(uint16_t index)
+{
+	if (!chargedTierID) return;
+
+	// Gather information about the call destination.
+	auto vm = JavaThread::get()->getJVM();
+	auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+	const UTF8* called_method_name = nullptr;
+	compilingClass->ctpInfo->infoOfInterfaceOrVirtualMethod(
+		index, called_method_name);
+
+	CommonClass* cl = nullptr;
+	JavaMethod* meth = nullptr;
+	compilingClass->ctpInfo->infoOfMethod(index, ACC_VIRTUAL, cl, meth);
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	const UTF8 *called_bundle_name = nullptr, *called_interface_name = nullptr;
+	if (cl != nullptr) {
+		called_interface_name = cl->name;
+
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			cl->classLoader, info_iterator))
+		{
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	} else {
+		auto entry = compilingClass->ctpInfo->ctpDef[index];
+		uint32 class_index = entry >> 16;
+		auto class_entry = compilingClass->ctpInfo->ctpDef[class_index];
+		called_interface_name = compilingClass->ctpInfo->UTF8At(class_entry);
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_interface_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForInvokeVirtual(uint16_t index)
+{
+	if (!chargedTierID) return;
+
+	// Gather information about the call destination.
+	auto vm = JavaThread::get()->getJVM();
+	auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+	const UTF8* called_method_name = nullptr;
+	compilingClass->ctpInfo->infoOfInterfaceOrVirtualMethod(
+		index, called_method_name);
+
+	CommonClass* cl = nullptr;
+	JavaMethod* meth = nullptr;
+	compilingClass->ctpInfo->infoOfMethod(index, ACC_VIRTUAL, cl, meth);
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	const UTF8 *called_bundle_name = nullptr, *called_interface_name = nullptr;
+	if (cl != nullptr) {
+		called_interface_name = cl->name;
+
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			cl->classLoader, info_iterator))
+		{
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	} else {
+		auto entry = compilingClass->ctpInfo->ctpDef[index];
+		uint32 class_index = entry >> 16;
+		auto class_entry = compilingClass->ctpInfo->ctpDef[class_index];
+		called_interface_name = compilingClass->ctpInfo->UTF8At(class_entry);
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_interface_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForInvokeNative()
+{
+	if (!chargedTierID) return;
+
+	// Gather information about the call destination.
+	auto called_method_name = compilingMethod->name;
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	const UTF8 *called_bundle_name = nullptr, *called_class_name = nullptr;
+	if (compilingMethod->classDef != nullptr) {
+		called_class_name = compilingMethod->classDef->name;
+
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		auto vm = JavaThread::get()->getJVM();
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			compilingMethod->classDef->classLoader, info_iterator))
+		{
+			auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_class_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForNew(uint16_t index)
+{
+	// Gather information about the call destination.
+	auto called_method_name = upcalls->InitObject->name;
+	const UTF8 *called_class_name = nullptr, *called_bundle_name = nullptr;
+
+	auto called_tier_id = OSGi::runtimeTierID;
+	Class* cl = nullptr;
+	getResolvedClass(index, false, false, &cl);
+	if (cl != nullptr) {
+		called_class_name = cl->name;
+
+		auto vm = JavaThread::get()->getJVM();
+		OSGi::BundleStateMonitor::BundleInfoType::const_iterator info_iterator;
+		if (vm->bundle_state_monitor.getBundleInfoByClassLoader(
+			cl->classLoader, info_iterator))
+		{
+			auto& accountingConfig = vm->tier_manager.getAccountingConfig();
+
+			called_bundle_name = info_iterator->second.name;
+			called_tier_id =
+				accountingConfig.getTierOfBundleName(called_bundle_name);
+		}
+	} else {
+		called_class_name = compilingClass->ctpInfo->resolveClassName(index);
+	}
+
+	calculateChargedTierIDForInvoke(OSGi::CallConfiguration(
+		compilingClassTierID, called_tier_id,
+		called_bundle_name, called_class_name, called_method_name));
+}
+
+void JavaJIT::calculateChargedTierIDForInvoke(const OSGi::CallConfiguration& cc)
+{
+	// Decide who should be charged for this call.
+	auto& accountingConfig =
+		JavaThread::get()->getJVM()->tier_manager.getAccountingConfig();
+	auto chargeToCaller = accountingConfig.isAccountingChargedToCaller(cc);
+
+	// If the caller is charged then pass the currently charged tier id, which
+	// is either our own tier id, or the tier is that was passed by our caller.
+	// If the called is charged then pass "invalidTierID", and the called
+	// method will change the currently charged tier id to its own
+	// implementation tier id.
+	newChargedTierID = (chargeToCaller ?
+		static_cast<Value*>(chargedTierID) :
+		static_cast<Value*>(intrinsics->InvalidTierIDConstant));
+}
+
+void JavaJIT::setChargedTierID()
+{
+#if EMBEDDED_LIST_UPDATE
+	if (!chargedTierID) return;
+
+	new StoreInst(newChargedTierID, threadChargedTierIDPtr, currentBlock);
+
+	pushChargedTier();
+#endif
+}
+
+void JavaJIT::resetChargedTierID()
+{
+	if (!chargedTierID) return;
+
+	newChargedTierID = threadChargedTierIDOldValue;
+}
+
+void JavaJIT::restoreChargedTierID()
+{
+#if EMBEDDED_LIST_UPDATE
+	if (!chargedTierID) return;
+
+	new StoreInst(threadChargedTierIDOldValue, threadChargedTierIDPtr, currentBlock);
+
+	popChargedTier();
+#endif
+}
+
+#endif
 
 void JavaJIT::invokeInterface(uint16 index) {
   
@@ -2321,6 +2872,10 @@ void JavaJIT::invokeInterface(uint16 index) {
   node = new BitCastInst(node, virtualPtrType, "", currentBlock);
 #endif
 
+#if OSGI_BUNDLE_TIER_TAGGING
+  calculateChargedTierIDForInvokeInterface(index);
+#endif
+
   std::vector<Value*> args; // size = [signature->nbIn + 3];
   FunctionType::param_iterator it  = virtualType->param_end();
   makeArgs(it, index, args, signature->nbArguments + 1);
@@ -2337,6 +2892,10 @@ void JavaJIT::invokeInterface(uint16 index) {
       }
     }
   }
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  resetChargedTierID();
+#endif
 }
 
 DebugLoc JavaJIT::CreateLocation() {
@@ -2345,14 +2904,13 @@ DebugLoc JavaJIT::CreateLocation() {
 }
 
 Instruction* JavaJIT::invoke(Value *F, std::vector<llvm::Value*>& args,
-                       const char* Name,
-                       BasicBlock *InsertAtEnd) {
+  const char* Name, BasicBlock *InsertAtEnd) {
   assert(!inlining);
  
   BasicBlock* ifException = NULL;
   if (jmpBuffer != NULL) {
-    BasicBlock* doCall = createBasicBlock("Perform call");
-    ifException = createBasicBlock("Exception thrown");
+    BasicBlock* doCall = createBasicBlock("performCall");
+    ifException = createBasicBlock("exceptionThrown");
     Instruction* check = CallInst::Create(intrinsics->SetjmpFunction, jmpBuffer, "", currentBlock);
     check = new ICmpInst(*currentBlock, ICmpInst::ICMP_EQ, check, intrinsics->constantZero, "");
     BranchInst::Create(doCall, ifException, check, currentBlock);
@@ -2360,17 +2918,31 @@ Instruction* JavaJIT::invoke(Value *F, std::vector<llvm::Value*>& args,
     CallInst::Create(intrinsics->RegisterSetjmpFunction, jmpBuffer, "", currentBlock);
   }
 
+#if OSGI_BUNDLE_TIER_TAGGING
+  setChargedTierID();
+#endif
+
   Instruction* res = CallInst::Create(F, args, Name,  currentBlock);
   DebugLoc DL = CreateLocation();
   res->setDebugLoc(DL);
-  
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  restoreChargedTierID();
+#endif
+
   if (jmpBuffer != NULL) {
     CallInst::Create(intrinsics->UnregisterSetjmpFunction, jmpBuffer, "", currentBlock);
-    BasicBlock* ifNormal = createBasicBlock("no exception block");
+    BasicBlock* ifNormal = createBasicBlock("noExceptionBlock");
     BranchInst::Create(ifNormal, currentBlock);
 
     currentBlock = ifException;
+
+#if OSGI_BUNDLE_TIER_TAGGING
+    restoreChargedTierID();
+#endif
+
     CallInst::Create(intrinsics->UnregisterSetjmpFunction, jmpBuffer, "", currentBlock);
+
     BranchInst::Create(currentExceptionBlock, currentBlock);
     currentBlock = ifNormal; 
   }
@@ -2379,14 +2951,14 @@ Instruction* JavaJIT::invoke(Value *F, std::vector<llvm::Value*>& args,
 }
 
 Instruction* JavaJIT::invoke(Value *F, Value* arg1, const char* Name,
-                       BasicBlock *InsertAtEnd) {
+  BasicBlock *InsertAtEnd) {
   std::vector<Value*> args;
   args.push_back(arg1);
   return invoke(F, args, Name, InsertAtEnd);
 }
 
 Instruction* JavaJIT::invoke(Value *F, Value* arg1, Value* arg2,
-                       const char* Name, BasicBlock *InsertAtEnd) {
+  const char* Name, BasicBlock *InsertAtEnd) {
   std::vector<Value*> args;
   args.push_back(arg1);
   args.push_back(arg2);
@@ -2394,7 +2966,7 @@ Instruction* JavaJIT::invoke(Value *F, Value* arg1, Value* arg2,
 }
 
 Instruction* JavaJIT::invoke(Value *F, const char* Name,
-                       BasicBlock *InsertAtEnd) {
+  BasicBlock *InsertAtEnd) {
   std::vector<Value*> args;
   return invoke(F, args, Name, InsertAtEnd);
 }
@@ -2405,7 +2977,7 @@ void JavaJIT::throwException(Value* obj, bool checkNull) {
     CallInst::Create(intrinsics->ThrowExceptionFunction, obj, "", currentBlock);
     new UnreachableInst(*llvmContext, currentBlock);
   } else {
-    Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr(getMutatorThreadPtr()));
+    Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr());
     if (vmkit::Collector::needsNonHeapWriteBarrier()) {
       Instruction* ptr = new BitCastInst(javaExceptionPtr, intrinsics->ptrPtrType, "", currentBlock);
       Instruction* val = new BitCastInst(obj, intrinsics->ptrType, "", currentBlock);
@@ -2557,7 +3129,7 @@ unsigned JavaJIT::readExceptionTable(Reader& reader, uint32 codeLen) {
     Value* VTVar = TheCompiler->getVirtualTable(cur->catchClass->virtualVT);
 
     // Get the Java exception.
-    Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr(getMutatorThreadPtr()));
+    Value* javaExceptionPtr = getJavaExceptionPtr(getJavaThreadPtr());
     Value* obj = new LoadInst(javaExceptionPtr, "pendingException", currentBlock);
     
     Value* objVT = CallInst::Create(intrinsics->GetVTFunction, obj, "objectVT",

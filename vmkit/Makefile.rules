@@ -23,7 +23,7 @@ ifeq ($(OPTIMIZED),1)
   LLC_FLAGS+= -O=3
   OPT_FLAGS+= -disable-opt
   CPPGEN_FLAGS+=-strip-debug
-  COMMON_CFLAGS+= -O3
+  COMMON_CFLAGS+=-O3
 else
   LLC_FLAGS+=-O=0 -asm-verbose
   OPT_FLAGS+=-disable-opt -inline
@@ -36,7 +36,7 @@ LLC_FLAGS+=-disable-cfi -disable-fp-elim -relocation-model=pic
 OPT_FLAGS+=-disable-cfi -disable-fp-elim 
 
 INCLUDES+=-I$(PROJ_SRC_CWD) -I$(PROJ_SRC_ROOT)/include -I$(PROJ_SRC_ROOT)/lib/vmkit/MMTk -I$(BUILD_DIR) \
-					-I$(shell $(LLVM_CONFIG) --includedir) -I$(shell $(LLVM_CONFIG) --obj-root)/include -I$(shell $(LLVM_CONFIG) --src-root)
+					-I$(shell $(LLVM_CONFIG) --includedir) -I$(shell $(LLVM_CONFIG) --bindir)/../include -I$(shell $(LLVM_CONFIG) --src-root)
 
 WARN_CFLAGS=  -Wall -Wno-long-long -Wno-variadic-macros -Wno-unused-private-field -Wno-unused-variable
 COMMON_CFLAGS+= $(INCLUDES) -ansi -pedantic $(WARN_CFLAGS) -fPIC \
@@ -44,10 +44,10 @@ COMMON_CFLAGS+= $(INCLUDES) -ansi -pedantic $(WARN_CFLAGS) -fPIC \
 								-fno-strict-aliasing -fno-omit-frame-pointer -fvisibility-inlines-hidden 
 
 CFLAGS+=$(COMMON_CFLAGS)
-CXXFLAGS+=$(COMMON_CFLAGS) -Woverloaded-virtual -Wcast-qual -fno-exceptions $(LLVM_RTTI)
+CXXFLAGS+=$(COMMON_CFLAGS) -std=c++11 -stdlib=libc++ -Woverloaded-virtual -Wcast-qual -fno-exceptions $(LLVM_RTTI)
 LDFLAGS+=$(COMMON_CFLAGS) $(shell $(LLVM_CONFIG) --ldflags) $(LDOPT)
-SHOPT+=$(COMMON_CFLAGS)
-LIBS+=$(shell $(LLVM_CONFIG) --libs) -lz
+SHOPT+=$(COMMON_CFLAGS) -lc++ -lc++abi
+LIBS+=$(shell $(LLVM_CONFIG) --libs) -lz -lpthread -ldl -lc++ -lc++abi
 
 DEPEND_OPTIONS=-MMD -MP -MF "$(BUILD_DIR)/$$*.d.tmp" -MT "$(BUILD_DIR)/$$*.bc" -MT "$(BUILD_DIR)/$$*.d"
 DOM=then mv -f "$(BUILD_DIR)/$$*.d.tmp" "$(BUILD_DIR)/$$*.d"; else rm -f "$(BUILD_DIR)/$$*.d.tmp"; exit 1; fi
@@ -262,11 +262,11 @@ DEP_LIBS=$(patsubst %,$(LIB_DIR)/lib%.a,$(LINK_USE))
 
 $(BIN_DIR)/$(TOOL)$(EXEEXT): $(MODULE_A) $(DEP_LIBS) $(BUILD_DIR)/frametables.o $(SELF) $(BIN_DIR)/.dir
 	$(Echo) "Linking executable '$(notdir $@)'"
-	$(Verb) $(CLANGXX) -o $@  $(LDFLAGS) $(MODULE_A) $(BUILD_DIR)/frametables.o $(DEP_LIBS) $(DEP_LIBS) $(LIBS)
+	$(Verb) $(CLANGXX) -std=c++11 -stdlib=libc++ -o $@  $(LDFLAGS) $(MODULE_A) $(BUILD_DIR)/frametables.o $(DEP_LIBS) $(DEP_LIBS) $(LIBS)
 
 $(LIB_DIR)/$(LIBRARY)$(SHLIBEXT): $(MODULE_A) $(DEP_LIBS) $(SELF) $(LIB_DIR)/.dir
 	$(Echo) "Linking shared library '$(notdir $@)'"
-	$(Verb) $(CLANGXX) -o $@ $(SHOPT) -shared -Wl,--whole-archive $(MODULE_A) -Wl,--no-whole-archive $(DEP_LIBS)
+	$(Verb) $(CLANGXX) -std=c++11 -stdlib=libc++ -L$(shell $(LLVM_CONFIG) --bindir)/../lib -o $@ $(SHOPT) -shared -Wl,--whole-archive $(MODULE_A) -Wl,--no-whole-archive $(DEP_LIBS)
 
 ###############################################################################
 #   Frametables

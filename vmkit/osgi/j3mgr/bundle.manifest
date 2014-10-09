@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-Version: 1.0.0
+Bundle-Name: J3 Manager
+Bundle-ManifestVersion: 2
+Bundle-Activator: j3mgr.Activator
+Bundle-SymbolicName: j3mgr
+Bundle-Vendor: Koutheir Attouchi
+Export-Package: j3
+Import-Package: org.osgi.framework

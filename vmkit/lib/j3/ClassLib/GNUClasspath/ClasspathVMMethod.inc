@@ -289,6 +289,7 @@ JavaObject* proceedVMMethod(JavaObjectVMMethod* Meth, JavaObject* obj,
 
   Jnjvm* vm = JavaThread::get()->getJVM();
   JavaMethod* meth = JavaObjectVMMethod::getInternalMethod(Meth);
+
   UserCommonClass* _cl =  (UserCommonClass*)JavaObjectVMMethod::getClass(Meth);
 
   sint32 nbArgs = args ? ArrayObject::getSize(args) : 0;

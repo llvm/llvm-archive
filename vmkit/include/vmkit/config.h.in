@@ -1,0 +1,8 @@
+#define OSGI_OBJECT_TIER_TAGGING            0
+#define OSGI_BUNDLE_STATE_INFO              0
+#define EMBEDDED_LIST_IN_CALL_STACK         0
+#define JAVA_CHARGED_TIER_CALL_STACK        0
+#define OSGI_BUNDLE_TIER_TAGGING            0
+#define OSGI_STACK_SPACE_TIER_TAGGING       0
+#define EMBEDDED_LIST_UPDATE                0
+#define MONITOR_CREATED_OBJECTS_COUNT       0

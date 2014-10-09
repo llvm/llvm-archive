@@ -24,14 +24,14 @@ cd classpath-0.99
 ./configure --disable-plugin --disable-examples --disable-Werror --with-antlr-jar=/opt//local/share/java/antlr.jar
 make -j12
 cd lib
-ln -s ../native/jni/gtk-peer/.libs/libgtkpeer.dylib;
-ln -s ../native/jni/gconf-peer/.libs/libgconfpeer.dylib;
-ln -s ../native/jni/java-io/.libs/libjavaio.dylib;
-ln -s ../native/jni/java-lang/.libs/libjavalangreflect.dylib;
-ln -s ../native/jni/java-lang/.libs/libjavalang.dylib;
-ln -s ../native/jni/java-net/.libs/libjavanet.dylib;
-ln -s ../native/jni/java-nio/.libs/libjavanio.dylib;
-ln -s ../native/jni/java-util/.libs/libjavautil.dylib;
+ln -s ../native/jni/gtk-peer/.libs/libgtkpeer.so;
+ln -s ../native/jni/gconf-peer/.libs/libgconfpeer.so;
+ln -s ../native/jni/java-io/.libs/libjavaio.so;
+ln -s ../native/jni/java-lang/.libs/libjavalangreflect.so;
+ln -s ../native/jni/java-lang/.libs/libjavalang.so;
+ln -s ../native/jni/java-net/.libs/libjavanet.so;
+ln -s ../native/jni/java-nio/.libs/libjavanio.so;
+ln -s ../native/jni/java-util/.libs/libjavautil.so;
 
 * For Linux users:
 wget http://ftp.gnu.org/gnu/classpath/classpath-0.99.tar.gz
@@ -80,8 +80,8 @@ NOTICE:
 
 * Make it (release mode):
 
-./configure --enable-optimized --enable-assertions --enable-jit --enable-cxx11 --enable-threads --enable-pthreads --enable-pic --enable-targets=host,cpp --enable-zlib --disable-docs --disable-doxygen
-make -j12 BUILD_EXAMPLES=0 ENABLE_DOCS=0
+./configure --enable-optimized --enable-assertions --enable-jit --enable-cxx11 --enable-libcpp --enable-threads --enable-pthreads --enable-pic --enable-targets=host,cpp --enable-zlib --disable-docs --disable-doxygen
+make -j12
 
 * You can also make it in debug mode, but this is is not necessary to debug compiled programs:
 
@@ -105,15 +105,15 @@ svn co https://YOUR_USER_NAME@llvm.org/svn/llvm-project/vmkit/trunk
 
 * Make it (release mode):
 
-./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip
+./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-clang-path=@PATH_TO_LLVM@/Release+Asserts/bin --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip
 
 * Or you can make it in debug mode:
 
-./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip --enable-assert=yes --disable-optimized --enable-debug=yes
+./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-clang-path=@PATH_TO_LLVM@/Release+Asserts/bin --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip --enable-assert=yes --disable-optimized --enable-debug=yes
 
 * Or you can enable OSGi Incinerator build:
 
-./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip --enable-incinerator=yes
+./configure --with-llvm-config-path=@PATH_TO_LLVM@/Release+Asserts/bin/llvm-config --with-clang-path=@PATH_TO_LLVM@/Release+Asserts/bin --with-gnu-classpath-libs=@PATH_TO_GNUCLASSPATH@/lib --with-gnu-classpath-glibj=@PATH_TO_GNUCLASSPATH@/lib/glibj.zip --enable-incinerator=yes
 
 * Build it:
 

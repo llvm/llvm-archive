@@ -19,9 +19,6 @@
 #include "vmkit/Locks.h"
 #include "vmkit/GC.h"
 
-#include <cassert>
-#include <map>
-
 namespace vmkit {
 
 class CompiledFrames;
@@ -104,7 +101,7 @@ public:
 
   /// doExit - Should the VM exit now?
   bool doExit;
-  
+
   /// setMainThread - Set the main thread of this VM.
   ///
   void setMainThread(vmkit::Thread* th) { mainThread = th; }

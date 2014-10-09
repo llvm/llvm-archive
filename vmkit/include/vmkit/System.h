@@ -17,6 +17,12 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "vmkit/config.h"
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+extern "C" void Jnjvm_dumpGlobalStats();
+#endif
+
 #if defined(__linux__) || defined(__FreeBSD__)
 #define LINUX_OS 1
 #elif defined(__APPLE__)
@@ -94,10 +100,35 @@ const word_t kVmkitThreadMask = 0xF0000000;
 
 const word_t kGCMemorySize = 0x30000000;
 
+#if JAVA_CHARGED_TIER_CALL_STACK
+
+#define TRY {                                                       \
+	vmkit::Thread* __current_thread_ = vmkit::Thread::get();        \
+	vmkit::StackEmbeddedListNode* node = __current_thread_->        \
+		stackEmbeddedListHead[vmkit::StackEmbeddedListChargedTier]; \
+	vmkit::ExceptionBuffer __buffer__;                              \
+	if (!SETJMP(__buffer__.buffer))
+
+#define CATCH		else {  \
+	__current_thread_->     \
+		stackEmbeddedListHead[vmkit::StackEmbeddedListChargedTier] = node;
+
+#define IGNORE      else {                                                 \
+	__current_thread_->                                                    \
+		stackEmbeddedListHead[vmkit::StackEmbeddedListChargedTier] = node; \
+	__current_thread_->clearException();                                   \
+}}
+
+#define END_CATCH }}
+
+#else
+
 #define TRY { vmkit::ExceptionBuffer __buffer__; if (!SETJMP(__buffer__.buffer))
 #define CATCH else
 #define IGNORE else { vmkit::Thread::get()->clearException(); }}
 #define END_CATCH }
+
+#endif
 
 class System {
 public:
@@ -148,7 +179,7 @@ public:
     return pagesize;
   }
 
-  static word_t GetCallerAddress() __attribute((always_inline)) {
+  static word_t GetCallFrameAddress() __attribute((always_inline)) {
 #if defined(ARCH_X86) || defined(ARCH_X64)
     return (word_t)__builtin_frame_address(0);
 #else
@@ -156,15 +187,15 @@ public:
 #endif
   }
 
-  static word_t GetCallerOfAddress(word_t addr) {
-    return ((word_t*)addr)[0];
+  static word_t GetCallerCallFrame(word_t currentCallFrame) {
+    return *(word_t*)currentCallFrame;
   }
 
-  static word_t GetIPFromCallerAddress(word_t addr) {
+  static word_t GetReturnAddressOfCallFrame(word_t currentCallFrame) {
 #if defined(MACOS_OS) && defined(ARCH_PPC)
-    return ((word_t*)addr)[2];
+    return ((word_t*)currentCallFrame)[2];
 #else
-    return ((word_t*)addr)[1];
+    return ((word_t*)currentCallFrame)[1];
 #endif
   }
 
@@ -233,7 +264,11 @@ public:
   }
 
   static void Exit(int value) {
-    _exit(value);
+#if MONITOR_CREATED_OBJECTS_COUNT
+  Jnjvm_dumpGlobalStats();
+#endif
+
+  _exit(value);
   }
 
   static bool SupportsHardwareNullCheck();

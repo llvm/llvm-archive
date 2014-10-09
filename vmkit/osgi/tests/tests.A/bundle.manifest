@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-Version: 1.0.0
+Bundle-Name: Tests A
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: tests.A
+Export-Package: tests.A

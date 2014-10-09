@@ -44,7 +44,6 @@
 #include "Reader.h"
 #include "Zip.h"
 
-
 using namespace j3;
 using namespace std;
 
@@ -882,6 +881,10 @@ const UTF8* JnjvmClassLoader::readerConstructUTF8(const uint16* buf,
 }
 
 JnjvmClassLoader::~JnjvmClassLoader() {
+
+#if OSGI_BUNDLE_STATE_INFO
+  OSGi::BundleStateMonitor::get()->onClassLoaderUnloaded(this);
+#endif
 
   if (vm) {
     vm->removeFrameInfos(TheCompiler);

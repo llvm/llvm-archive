@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-Version: 1.0.0
+Bundle-Name: Tests G Impl
+Bundle-ManifestVersion: 2
+Bundle-Activator: tests.GImpl.Activator
+Bundle-SymbolicName: tests.GImpl
+Import-Package: org.osgi.framework, tests.E, tests.B
+

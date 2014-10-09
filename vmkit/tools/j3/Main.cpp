@@ -40,6 +40,7 @@ int main(int argc, char **argv, char **envp) {
   // Run the application. 
   vm->runApplication(argc, argv);
   vm->waitForExit();
+
   System::Exit(0);
 
   // Destroy everyone.

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-Version: 1.0.0
+Bundle-Name: Tests A Impl
+Bundle-Activator: tests.AImpl.Activator
+Bundle-ManifestVersion: 2
+Import-Package: org.osgi.framework, tests.A, tests.B, tests.E
+Bundle-SymbolicName: tests.AImpl
+

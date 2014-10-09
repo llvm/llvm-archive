@@ -7,21 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-
-#include "vmkit/Cond.h"
-#include "vmkit/Locks.h"
 #include "vmkit/ObjectLocks.h"
-#include "vmkit/Thread.h"
-#include "vmkit/VirtualMachine.h"
 #include "VmkitGC.h"
-#include <cerrno>
-#include <sys/time.h>
-#include <pthread.h>
-
-#include "../../j3/VMCore/JavaObject.h"
-#include "../../j3/VMCore/JavaClass.h"
-#include "../../j3/VMCore/UTF8.h"
+#include "vmkit/VirtualMachine.h"
 
 namespace vmkit {
 
@@ -336,8 +324,8 @@ bool FatLock::acquire(gc* obj, LockSystem& table) {
 //	if (lockingThreads == 0)
 //      table.deallocate(this);
 
-	word_t methodIP = System::GetCallerAddress();
-	methodIP = System::GetIPFromCallerAddress(methodIP);
+	word_t methodIP = System::GetCallFrameAddress();
+	methodIP = System::GetReturnAddressOfCallFrame(methodIP);
     Thread::get()->throwNullPointerException(methodIP);
   }
 

@@ -18,7 +18,11 @@
 #include "types.h"
 
 #include "vmkit/System.h"
+#include "vmkit/StackWalker.h"
 
+#if EMBEDDED_LIST_IN_CALL_STACK
+#include "vmkit/StackEmbeddedList.h"
+#endif
 
 namespace vmkit {
 
@@ -117,6 +121,14 @@ public:
   Thread() {
     lastExceptionBuffer = 0;
     lastKnownFrame = 0;
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+    stackEmbeddedListHead[StackEmbeddedListChargedTier] = nullptr;
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+    total_called_methods_count = 0;
+#endif
   }
 
   /// yield - Yield the processor to another thread.
@@ -172,7 +184,7 @@ public:
   /// get - Get the thread specific data of the current thread.
   ///
   static Thread* get() {
-    return (Thread*)(System::GetCallerAddress() & System::GetThreadIDMask());
+    return (Thread*)(System::GetCallFrameAddress() & System::GetThreadIDMask());
   }
   
 private:
@@ -239,7 +251,7 @@ public:
   /// stackOverflow - Returns if there is a stack overflow in Java land.
   ///
   bool stackOverflow() {
-    return (System::GetCallerAddress() & StackOverflowMask) == 0;
+    return (System::GetCallFrameAddress() & StackOverflowMask) == 0;
   }
 
   /// operator new - Allocate the Thread object as well as the stack for this
@@ -275,6 +287,25 @@ public:
   /// lastExceptionBuffer - The last exception buffer on this thread's stack.
   ///
   ExceptionBuffer* lastExceptionBuffer;
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  uint32_t	chargedTierID;
+#else
+  uint32_t	unused_1;
+#endif
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+  StackEmbeddedListNode*
+    stackEmbeddedListHead[StackEmbeddedListNodeCountPerThread];
+#else
+  void*	unused_2[1];
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  uint64_t total_called_methods_count;
+#else
+  uint64_t unused_3;
+#endif
 
   void internalThrowException();
 
@@ -324,23 +355,6 @@ public:
 
   jmp_buf buffer;
   ExceptionBuffer* previousBuffer;
-};
-
-/// StackWalker - This class walks the stack of threads, returning a FrameInfo
-/// object at each iteration.
-///
-class StackWalker {
-public:
-  word_t addr;
-  word_t ip;
-  KnownFrame* frame;
-  vmkit::Thread* thread;
-
-  StackWalker(vmkit::Thread* th) __attribute__ ((noinline));
-  void operator++();
-  word_t operator*();
-  FrameInfo* get();
-
 };
 
 

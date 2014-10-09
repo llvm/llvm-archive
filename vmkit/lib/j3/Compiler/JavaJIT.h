@@ -31,6 +31,8 @@
 #include "JavaClass.h"
 #include "JavaUpcalls.h"
 
+#include "AccountingConfiguration.h"
+
 namespace j3 {
 
 class Class;
@@ -107,6 +109,25 @@ public:
     overridesThis = false;
     nbHandlers = 0;
     jmpBuffer = NULL;
+    currentThreadPtr = nullptr;
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+    chargedTierID				= nullptr;
+    stackEmbeddedListHeadChargedTierPtr	= nullptr;
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+    threadChargedTierIDPtr		= nullptr;
+    threadChargedTierIDOldValue	= nullptr;
+    newChargedTierID			= nullptr;
+    compilingClassTierID		= OSGi::runtimeTierID;
+#endif
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+    stackEmbeddedListNode				= nullptr;
+    threadStackEmbeddedListHeadPtrPtr	= nullptr;
+    stackEmbeddedListHeadCallerNodePtr	= nullptr;
+#endif
   }
 
   /// javaCompile - Compile the Java method.
@@ -168,6 +189,8 @@ private:
 
   llvm::Value* jmpBuffer;
 
+  llvm::Value* currentThreadPtr;
+
   /// return the header of an object
   llvm::Value* objectToHeader(llvm::Value* obj);
   
@@ -182,6 +205,8 @@ private:
                     llvm::BasicBlock* currentBlock, bool usign);
  
   /// getMutatorThreadPtr - Emit code to get a pointer to the current MutatorThread.
+	llvm::Value* getThreadPtr();
+	llvm::Value* getJavaThreadPtr();
 	llvm::Value* getMutatorThreadPtr();
 
   /// getIsolateIDPtr - Emit code to get a pointer to IsolateID.
@@ -570,6 +595,49 @@ private:
 //===--------------------- Yield point support  ---------------------------===//
 
   void checkYieldPoint();
+
+  llvm::Value* getElementPtr(
+    const char *name, llvm::Value* element, llvm::Value* firstIndex, ...);
+  llvm::Value* allocateOnStack(
+    const char* name, size_t byteCount, llvm::Type* realType);
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  void allocateChargedTierID();
+  void pushChargedTier();
+  void popChargedTier();
+
+  llvm::PHINode* chargedTierID;
+  llvm::Value* stackEmbeddedListHeadChargedTierPtr;
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  void initializeChargedTierID();
+  void setChargedTierID();
+  void resetChargedTierID();
+  void restoreChargedTierID();
+  void calculateChargedTierIDForInvoke(const OSGi::CallConfiguration&);
+  void calculateChargedTierIDForInvokeStatic(uint16_t index);
+  void calculateChargedTierIDForInvokeSpecial(uint16_t index);
+  void calculateChargedTierIDForInvokeInterface(uint16_t index);
+  void calculateChargedTierIDForInvokeVirtual(uint16_t index);
+  void calculateChargedTierIDForInvokeNative();
+  void calculateChargedTierIDForNew(uint16_t index);
+
+  OSGi::tier_id_t compilingClassTierID;
+  llvm::Value* threadChargedTierIDPtr;
+  llvm::Value* threadChargedTierIDOldValue;
+  llvm::Value* newChargedTierID;
+#endif
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+  llvm::Value* stackEmbeddedListNode;
+  llvm::Value* threadStackEmbeddedListHeadPtrPtr;
+  llvm::Value* stackEmbeddedListHeadCallerNodePtr;
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  void incrementTotalCalledMethodsCounter();
+#endif
 };
 
 enum Opcode {

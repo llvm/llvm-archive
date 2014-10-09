@@ -11,6 +11,7 @@
 #define JNJVM_JAVA_THREAD_H
 
 #include <ostream>
+#include <vector>
 
 #include "vmkit/Cond.h"
 #include "vmkit/Locks.h"

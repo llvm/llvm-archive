@@ -98,12 +98,29 @@ extern "C" void postalloc(gc* obj, void* type, uint32_t size) {
 	JnJVM_org_j3_bindings_Bindings_postalloc__Lorg_vmmagic_unboxed_ObjectReference_2Lorg_vmmagic_unboxed_ObjectReference_2I(obj, type, size);
 }
 
+#if OSGI_OBJECT_TIER_TAGGING
+extern "C" void OSGi_TierManager_updateTierChargedToNewlyCreatedObject(gc*);
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+extern "C" void Jnjvm_newlyCreatedObject();
+#endif
+
 extern "C" void* vmkitgcmalloc(uint32_t sz, void* type) {
 	gc* res = 0;
 	llvm_gcroot(res, 0);
 	sz += gcHeader::hiddenHeaderSize();
 	sz = llvm::RoundUpToAlignment(sz, sizeof(void*));
 	res = ((gcHeader*)JnJVM_org_j3_bindings_Bindings_vmkitgcmalloc__ILorg_vmmagic_unboxed_ObjectReference_2(sz, type))->toReference();
+
+#if OSGI_OBJECT_TIER_TAGGING
+	OSGi_TierManager_updateTierChargedToNewlyCreatedObject(res);
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+	Jnjvm_newlyCreatedObject();
+#endif
+
 	return res;
 }
 
@@ -125,6 +142,15 @@ extern "C" void* VTgcmalloc(uint32_t sz, void* VT) {
 	sz += gcHeader::hiddenHeaderSize();
 	sz = llvm::RoundUpToAlignment(sz, sizeof(void*));
 	res = ((gcHeader*)JnJVM_org_j3_bindings_Bindings_VTgcmalloc__ILorg_vmmagic_unboxed_ObjectReference_2(sz, VT))->toReference();
+
+#if OSGI_OBJECT_TIER_TAGGING
+	OSGi_TierManager_updateTierChargedToNewlyCreatedObject(res);
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+	Jnjvm_newlyCreatedObject();
+#endif
+
 	return res;
 }
 
@@ -180,10 +206,19 @@ bool Collector::isLive(gc* ptr, word_t closure) {
   return JnJVM_org_j3_bindings_Bindings_isLive__Lorg_mmtk_plan_TraceLocal_2Lorg_vmmagic_unboxed_ObjectReference_2(closure, ptr);
 }
 
+#if OSGI_OBJECT_TIER_TAGGING
+extern "C" void OSGi_TierManager_accountForLiveObject(void* obj);
+#endif
+
 void Collector::scanObject(FrameInfo* FI, void** ptr, word_t closure) {
   if ((*ptr) != NULL) {
     assert(vmkit::Thread::get()->MyVM->isCorruptedType((gc*)(*ptr)));
   }
+
+#if OSGI_OBJECT_TIER_TAGGING
+  OSGi_TierManager_accountForLiveObject(*ptr);
+#endif
+
   JnJVM_org_j3_bindings_Bindings_reportDelayedRootEdge__Lorg_mmtk_plan_TraceLocal_2Lorg_vmmagic_unboxed_Address_2(closure, ptr);
 }
  
@@ -194,6 +229,11 @@ void Collector::markAndTrace(void* source, void* ptr, word_t closure) {
 		assert(vmkit::Thread::get()->MyVM->isCorruptedType((gc*)(*ptr_)));
 	}
 	if ((*(void**)ptr) != NULL) assert(vmkit::Thread::get()->MyVM->isCorruptedType((gc*)(*(void**)ptr)));
+
+#if OSGI_OBJECT_TIER_TAGGING
+	OSGi_TierManager_accountForLiveObject(*ptr_);
+#endif
+
 	JnJVM_org_j3_bindings_Bindings_processEdge__Lorg_mmtk_plan_TransitiveClosure_2Lorg_vmmagic_unboxed_ObjectReference_2Lorg_vmmagic_unboxed_Address_2(closure, source, ptr);
 }
   
@@ -203,6 +243,11 @@ void Collector::markAndTraceRoot(void* source, void* ptr, word_t closure) {
   if ((*ptr_) != NULL) {
     assert(vmkit::Thread::get()->MyVM->isCorruptedType((gc*)(*ptr_)));
   }
+
+#if OSGI_OBJECT_TIER_TAGGING
+  OSGi_TierManager_accountForLiveObject(*ptr_);
+#endif
+
   JnJVM_org_j3_bindings_Bindings_processRootEdge__Lorg_mmtk_plan_TraceLocal_2Lorg_vmmagic_unboxed_Address_2Z(closure, ptr, true);
 }
 

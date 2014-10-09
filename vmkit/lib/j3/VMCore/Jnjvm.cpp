@@ -44,6 +44,7 @@ const char* Jnjvm::dirSeparator = "/";
 const char* Jnjvm::envSeparator = ":";
 const unsigned int Jnjvm::Magic = 0xcafebabe;
 
+
 /**
  * In JVM specification, the virtual machine should execute some code when
  *  the application finish.
@@ -1079,18 +1080,42 @@ JnjvmClassLoader* Jnjvm::loadAppClassLoader() {
   JavaObject* loader = 0;
   llvm_gcroot(loader, 0);
   
-  if (appClassLoader == NULL) {
-    UserClass* cl = upcalls->newClassLoader;
-    loader = upcalls->getSystemClassLoader->invokeJavaObjectStatic(this, cl);
-    appClassLoader = JnjvmClassLoader::getJnjvmLoaderFromJavaObject(loader,
-                                                                    this);
-    if (argumentsInfo.jarFile) {
-      appClassLoader->loadLibFromJar(this, argumentsInfo.jarFile,
-                                     argumentsInfo.className);
-    } else if (argumentsInfo.className) {
-      appClassLoader->loadLibFromFile(this, argumentsInfo.className);
+  if (appClassLoader != nullptr) return appClassLoader;
+
+  UserClass* cl = upcalls->newClassLoader;
+  loader = upcalls->getSystemClassLoader->invokeJavaObjectStatic(this, cl);
+  appClassLoader = JnjvmClassLoader::getJnjvmLoaderFromJavaObject(loader, this);
+
+#if OSGI_BUNDLE_STATE_INFO
+  if (argumentsInfo.className != nullptr) {
+    bundle_state_monitor.setFrameworkFromMainClass(
+      argumentsInfo.className, appClassLoader);
+  }
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  if (argumentsInfo.className != nullptr) {
+    const char* filename = "./tests/monitoring.rules";
+    std::string errorDescription;
+    auto r = tier_manager.loadAccountingRules(filename, errorDescription);
+
+    if (!r) {
+      std::cout << "Accounting configuration rules loaded from '" << filename
+        << "'. Status: " << errorDescription << "." << std::endl;
+    } else {
+      std::cout << "Failed to load accounting configuration rules from '"
+        << filename << "'. Error: " << errorDescription << "." << std::endl;
     }
   }
+#endif
+
+  if (argumentsInfo.jarFile) {
+    appClassLoader->loadLibFromJar(this, argumentsInfo.jarFile,
+                                   argumentsInfo.className);
+  } else if (argumentsInfo.className) {
+    appClassLoader->loadLibFromFile(this, argumentsInfo.className);
+  }
+
   return appClassLoader;
 }
 
@@ -1320,6 +1345,7 @@ void Jnjvm::mainJavaStart(JavaThread* thread) {
 
     vm->executeClass(info.className, args);
   }
+
   vm->threadSystem.leave();
 }
 
@@ -1350,6 +1376,10 @@ Jnjvm::Jnjvm(vmkit::BumpPtrAllocator& Alloc,
              vmkit::CompiledFrames** frames,
              JnjvmBootstrapLoader* loader) : 
   VirtualMachine(Alloc, frames), lockSystem(Alloc)
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  , tier_manager(bundle_state_monitor, loader->hashUTF8)
+#endif
 {
   classpath = getenv("CLASSPATH");
   if (classpath == NULL) classpath = ".";
@@ -1553,3 +1583,37 @@ void Jnjvm::printBacktrace()
 	std::cerr << "Back trace:" << std::endl;
 	JavaThread::get()->printJavaBacktrace();
 }
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+
+static std::atomic<uint64_t>	total_created_objects(0);
+static std::atomic<uint64_t>	total_called_methods_count(0);
+
+extern "C" void Jnjvm_newlyCreatedObject()
+{
+	++total_created_objects;
+}
+
+extern "C" void Jnjvm_incrementTotalCalledMethodsCounter(vmkit::Thread* thread)
+{
+	total_called_methods_count += thread->total_called_methods_count;
+	thread->total_called_methods_count = 0;
+}
+
+extern "C" void Jnjvm_dumpGlobalStats()
+{
+	auto th = vmkit::Thread::get();
+	auto tcur = th;
+
+	do {
+		Jnjvm_incrementTotalCalledMethodsCounter(tcur);
+		tcur = (vmkit::Thread*)tcur->next();
+	} while (tcur != th);
+
+	std::cout << "==== STATS ====" << std::endl
+		<< "TotalCreatedObjectsCount=" << total_created_objects
+		<< ",TotalCalledMethodsCount=" << total_called_methods_count
+		<< std::endl;
+}
+
+#endif

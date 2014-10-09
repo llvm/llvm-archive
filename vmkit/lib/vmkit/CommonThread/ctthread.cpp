@@ -26,6 +26,10 @@
 #include <signal.h>
 #include <unistd.h>
 
+#if MONITOR_CREATED_OBJECTS_COUNT
+extern "C" void Jnjvm_incrementTotalCalledMethodsCounter(vmkit::Thread*);
+#endif
+
 using namespace vmkit;
 
 int Thread::kill(void* tid, int signo) {
@@ -60,7 +64,7 @@ void Thread::joinRVAfterLeave(word_t savedSP) {
 
 void Thread::startKnownFrame(KnownFrame& F) {
   // Get the caller of this function
-  word_t cur = System::GetCallerAddress();
+  word_t cur = System::GetCallFrameAddress();
   F.previousFrame = lastKnownFrame;
   F.currentFP = cur;
   // This is used as a marker.
@@ -75,12 +79,12 @@ void Thread::endKnownFrame() {
 
 void Thread::startUnknownFrame(KnownFrame& F) {
   // Get the caller of this function
-  word_t cur = System::GetCallerAddress();
+  word_t cur = System::GetCallFrameAddress();
   // Get the caller of the caller.
-  cur = System::GetCallerOfAddress(cur);
+  cur = System::GetCallerCallFrame(cur);
   F.previousFrame = lastKnownFrame;
   F.currentFP = cur;
-  F.currentIP = System::GetIPFromCallerAddress(cur);
+  F.currentIP = System::GetReturnAddressOfCallFrame(cur);
   lastKnownFrame = &F;
 }
 
@@ -97,7 +101,7 @@ void Thread::printBacktrace() {
   StackWalker Walker(this);
 
   while (FrameInfo* FI = Walker.get()) {
-    MyVM->printMethod(FI, Walker.ip, Walker.addr);
+    MyVM->printMethod(FI, Walker.returnAddress, Walker.callFrameAddress);
     ++Walker;
   }
 }
@@ -124,42 +128,89 @@ uint32_t Thread::getFrameContextLength() {
 }
 
 FrameInfo* StackWalker::get() {
-  if (addr == thread->baseSP) return 0;
-  ip = System::GetIPFromCallerAddress(addr);
-  return thread->MyVM->IPToFrameInfo(ip);
+  if (callFrameAddress == thread->baseSP) return 0;
+  returnAddress = System::GetReturnAddressOfCallFrame(callFrameAddress);
+  return thread->MyVM->IPToFrameInfo(returnAddress);
+}
+
+FrameInfo* StackWalker::getNextFrameWithMetadata()
+{
+	FrameInfo* FI;
+	for (void *metadata = NULL;							// (1)
+		(!metadata) && ((FI = this->get()) != NULL);	// (2)+
+		metadata = FI->Metadata, ++(*this));			// (3)*
+	return FI;
+}
+
+FrameInfo* StackWalker::getNextFrameWithMetadata(
+	size_t& totalFrameSizeWithoutMetadata)
+{
+	size_t frameSize = 0;
+	FrameInfo* FI = NULL;
+	for (void *metadata = NULL;							// (1)
+		(!metadata) && ((FI = this->get()) != NULL);	// (2)+
+
+		frameSize += FI->FrameSize,						// (3)*
+		metadata = FI->Metadata,
+		++(*this));
+
+	if (FI != NULL) frameSize -= FI->FrameSize;
+	totalFrameSizeWithoutMetadata = frameSize;
+	return FI;
+}
+
+FrameInfo* StackWalker::getNextFrameWithMetadata(
+	word_t& callFrameAddress_, word_t& returnAddress_, KnownFrame*& frame_)
+{
+	FrameInfo* FI;
+	word_t _callFrameAddress, _returnAddress;
+	KnownFrame* _frame;
+	void *metadata = NULL;
+
+	for (; (!metadata) && ((FI = this->get()) != NULL);	// (1)+
+		metadata = FI->Metadata,						// (2)*
+		_callFrameAddress = callFrameAddress, _returnAddress = returnAddress, _frame = frame,
+		++(*this));
+
+	callFrameAddress_ = _callFrameAddress;
+	returnAddress_ = _returnAddress;
+	frame_ = _frame;
+	return FI;
 }
 
 word_t StackWalker::operator*() {
-  if (addr == thread->baseSP) return 0;
-  ip = System::GetIPFromCallerAddress(addr);
-  return ip;
+  if (callFrameAddress == thread->baseSP) return 0;
+  returnAddress = System::GetReturnAddressOfCallFrame(callFrameAddress);
+  return returnAddress;
 }
 
 void StackWalker::operator++() {
-  if (addr != thread->baseSP) {
-    //assert((addr < thread->baseSP) && "Corrupted stack");
-    //assert((addr < System::GetCallerOfAddress(addr)) && "Corrupted stack");
-    if ((frame != NULL) && (addr == frame->currentFP)) {
+  if (callFrameAddress != thread->baseSP) {
+    assert((callFrameAddress < thread->baseSP) && "Corrupted stack");
+    assert((callFrameAddress < System::GetCallerCallFrame(callFrameAddress)) && "Corrupted stack");
+    if ((frame != NULL) && (callFrameAddress == frame->currentFP)) {
       assert(frame->currentIP == 0);
       frame = frame->previousFrame;
       assert(frame != NULL);
       assert(frame->currentIP != 0);
-      addr = frame->currentFP;
+      callFrameAddress = frame->currentFP;
       frame = frame->previousFrame;
     } else {
-      addr = System::GetCallerOfAddress(addr);
+      callFrameAddress = System::GetCallerCallFrame(callFrameAddress);
     }
   }
 }
 
-StackWalker::StackWalker(vmkit::Thread* th) {
+StackWalker::StackWalker(vmkit::Thread* th) :
+	returnAddress(0)
+{
   thread = th;
   frame = th->lastKnownFrame;
   if (vmkit::Thread::get() == th) {
-    addr = System::GetCallerAddress();
-    addr = System::GetCallerOfAddress(addr);
+    callFrameAddress = System::GetCallFrameAddress();
+    callFrameAddress = System::GetCallerCallFrame(callFrameAddress);
   } else {
-    addr = th->waitOnSP();
+    callFrameAddress = th->waitOnSP();
     if (frame) {
 //    	if (frame->currentFP < addr) {
 //    		fprintf(stderr, "Error in thread with pointer %p because %x < %x\n", th, frame->currentFP, addr);
@@ -167,9 +218,9 @@ StackWalker::StackWalker(vmkit::Thread* th) {
 //    	}
 
 
-    	assert(frame->currentFP >= addr);
+    	assert(frame->currentFP >= callFrameAddress);
     }
-    if (frame && (addr == frame->currentFP)) {
+    if (frame && (callFrameAddress == frame->currentFP)) {
       frame = frame->previousFrame;
       // Let this be called from JNI, as in
       // OpenJDK's JVM_FillInStackTrace:
@@ -178,14 +229,32 @@ StackWalker::StackWalker(vmkit::Thread* th) {
       assert((frame == NULL) || (frame->currentIP == 0));
     }
   }
-  assert(addr && "No address to start with");
+  assert(callFrameAddress && "No address to start with");
 }
 
+StackWalker::StackWalker() :
+	returnAddress(0)
+{
+  thread = vmkit::Thread::get();
+  frame = thread->lastKnownFrame;
+  callFrameAddress = System::GetCallFrameAddress();
+  callFrameAddress = System::GetCallerCallFrame(callFrameAddress);
+  assert(callFrameAddress && "No address to start with");
+}
+
+#if OSGI_STACK_SPACE_TIER_TAGGING
+extern "C" void OSGi_TierManager_accountForThreadStack(vmkit::Thread* thread);
+#endif
 
 void Thread::scanStack(word_t closure) {
+
+#if OSGI_STACK_SPACE_TIER_TAGGING
+  OSGi_TierManager_accountForThreadStack(this);
+#endif
+
   StackWalker Walker(this);
   while (FrameInfo* MI = Walker.get()) {
-    MethodInfoHelper::scan(closure, MI, Walker.ip, Walker.addr);
+    MethodInfoHelper::scan(closure, MI, Walker.returnAddress, Walker.callFrameAddress);
     ++Walker;
   }
 }
@@ -195,11 +264,11 @@ void Thread::enterUncooperativeCode(uint16_t level) {
   	if (!inRV) {
   		assert(!lastSP && "SP already set when entering uncooperative code");
       // Get the caller.
-      word_t temp = System::GetCallerAddress();
+      word_t temp = System::GetCallFrameAddress();
       // Make sure to at least get the caller of the caller.
       ++level;
       while (level--)
-    	  temp = System::GetCallerOfAddress(temp);
+    	  temp = System::GetCallerCallFrame(temp);
       // The cas is not necessary, but it does a memory barrier.
       __sync_bool_compare_and_swap(&lastSP, 0, temp);
       if (doYield) joinRVBeforeEnter();
@@ -337,7 +406,20 @@ extern void sigsTermHandler(int n, siginfo_t *info, void *context);
 /// given routine of th.
 ///
 void Thread::internalThreadStart(vmkit::Thread* th) {
-  th->baseSP  = System::GetCallerAddress();
+  th->baseSP  = System::GetCallFrameAddress();
+
+#if JAVA_CHARGED_TIER_CALL_STACK
+  th->chargedTierID = (uint32_t)-1;
+#endif
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+  memset(th->stackEmbeddedListHead, 0,
+    sizeof(*th->stackEmbeddedListHead) * StackEmbeddedListNodeCountPerThread);
+#endif
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  th->total_called_methods_count = 0;
+#endif
 
   // Set the alternate stack as the second page of the thread's
   // stack.
@@ -374,6 +456,10 @@ void Thread::internalThreadStart(vmkit::Thread* th) {
   th->MyVM->rendezvous.addThread(th);
   th->routine(th);
   th->MyVM->removeThread(th);
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  Jnjvm_incrementTotalCalledMethodsCounter(th);
+#endif
 }
 
 
@@ -420,6 +506,10 @@ void Thread::releaseThread(vmkit::Thread* th) {
   word_t index = ((word_t)th & System::GetThreadIDMask());
   index = (index & ~TheStackManager.baseAddr) >> 20;
   TheStackManager.used[index] = 0;
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  Jnjvm_incrementTotalCalledMethodsCounter(th);
+#endif
 }
 
 void Thread::throwNullPointerException(word_t methodIP)

@@ -119,7 +119,7 @@ bool Precompiled::Init(JnjvmBootstrapLoader* loader) {
   Class* javaLangObject = (Class*)dlsym(SELF_HANDLE, "java_lang_Object");
   void* nativeHandle = vmkit::System::GetSelfHandle();
   if (javaLangObject == NULL) {
-    void* handle = dlopen("libvmjc"DYLD_EXTENSION, RTLD_LAZY | RTLD_GLOBAL);
+    void* handle = dlopen("libvmjc" DYLD_EXTENSION, RTLD_LAZY | RTLD_GLOBAL);
     if (handle != NULL) {
       nativeHandle = handle;
       javaLangObject = (Class*)dlsym(nativeHandle, "java_lang_Object");

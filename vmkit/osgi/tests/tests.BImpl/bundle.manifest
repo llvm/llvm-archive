@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-Version: 1.0.0
+Bundle-Name: Tests B Impl
+Bundle-Activator: tests.BImpl.Activator
+Bundle-ManifestVersion: 2
+Import-Package: org.osgi.util.tracker, tests.A, tests.B, org.osgi.fram
+ ework
+Bundle-SymbolicName: tests.BImpl
+

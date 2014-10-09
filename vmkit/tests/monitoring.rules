@@ -1,0 +1,39 @@
+tier 1 { org.knopflerfish.framework }
+
+tier 11 {
+	org.knopflerfish.bundle.cm,
+	org.knopflerfish.bundle.util-LIB,
+	org.knopflerfish.bundle.console,
+	org.knopflerfish.bundle.frameworkcommands-IMPL,
+	org.knopflerfish.bundle.logcommands-IMPL,
+	org.knopflerfish.bundle.cm_cmd-IMPL,
+	org.knopflerfish.bundle.consoletty-IMPL,
+	org.knopflerfish.bundle.useradmin-API
+}
+tier 12 { org.knopflerfish.log }
+
+tier 20 { tests.A }
+tier 30 { tests.B }
+tier 40 { tests.E }
+tier 50 { tests.AImpl }
+tier 60 { tests.BImpl }
+tier 70 { tests.FImpl }
+tier 80 { tests.GImpl }
+
+tier 200 { j3mgr }
+
+account { 0, 1, called }
+account { 1, 0, caller }
+account { *, 1, caller }
+account { 1, *, called }
+
+account { *, */_/org.osgi.framework.BundleActivator, called }
+
+account { 0, 0/_/java.lang.Runnable/run, called }
+account { 0, 0/_/java.lang.Thread/run,   called }
+account { 0, 0/_/java.lang.VMThread/run, called }
+
+account { *, 200/j3mgr/j3.J3Mgr, caller }
+
+account { *, 20/tests.A/tests.A.A, caller }
+# account { *, */_/tests.B.BEvent, called }

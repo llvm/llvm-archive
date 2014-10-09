@@ -1,0 +1,47 @@
+-Dorg.osgi.framework.dir=/tmp/fwdir
+-Dorg.knopflerfish.framework.system.export.all_13=false
+-Dorg.knopflerfish.framework.verbosity=0
+
+-Forg.knopflerfish.framework.debug.errors=true
+-Forg.knopflerfish.framework.debug.packages=false
+-Forg.knopflerfish.framework.debug.classloader=false
+#-Forg.knopflerfish.framework.debug.permissions=false
+
+#-Forg.osgi.framework.system.packages.extra=
+
+-Forg.knopflerfish.http.dnslookup=true
+-Forg.osgi.service.http.port=8080
+
+-Dhttp.proxyHost=proxy
+-Dhttp.proxyPort=3128
+
+#-Forg.knopflerfish.framework.all_signed=false
+
+-Dorg.knopflerfish.gosg.jars=file:///home/koutheir/PhD/VMKit/knopflerfish.vmkit/osgi/jars/;file:///home/koutheir/PhD/VMKit/vmkit-monitor/osgi/j3mgr/out/;file:///home/koutheir/PhD/VMKit/vmkit-monitor/osgi/tests/
+
+-Forg.knopflerfish.startlevel.use=true
+
+-init
+
+-istart j3mgr-1.0.0.jar
+
+-istart log/log_all-5.0.0.jar
+-istart cm/cm_all-5.0.0.jar
+-istart util/util-4.1.0.jar
+-istart console/console_all-4.0.1.jar
+-istart frameworkcommands/frameworkcommands-4.0.1.jar
+-istart logcommands/logcommands-5.0.0.jar
+-istart cm_cmd/cm_cmd-5.0.1.jar
+-istart consoletty/consoletty-4.0.1.jar
+-istart useradmin/useradmin_api-4.0.0.jar
+-istart util/util-4.1.0.jar
+
+-launch
+
+-install ijvm.tests.A/out/ijvm.tests.A-1.0.0.jar
+-install ijvm.tests.C/out/ijvm.tests.C-1.0.0.jar
+
+-install ijvm.tests.AImpl/out/ijvm.tests.AImpl-1.0.0.jar
+-install ijvm.tests.BImpl/out/ijvm.tests.BImpl-1.0.0.jar
+-install ijvm.tests.CImpl/out/ijvm.tests.CImpl-1.0.0.jar
+#-install ijvm.tests.DImpl/out/ijvm.tests.DImpl-1.0.0.jar

@@ -27,6 +27,14 @@
 #include "JNIReferences.h"
 #include "LockedMap.h"
 
+#if OSGI_BUNDLE_STATE_INFO
+#include "OSGiBundleStateMonitor.h"
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+#include "OSGiTierManager.h"
+#endif
+
 namespace j3 {
 
 class ArrayUInt16;
@@ -365,6 +373,14 @@ public:
   void loadBootstrap();
 
   static void printBacktrace() __attribute__((noinline));
+
+#if OSGI_BUNDLE_STATE_INFO
+  OSGi::BundleStateMonitor bundle_state_monitor;
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  OSGi::TierManager tier_manager;
+#endif
 };
 
 } // end namespace j3

@@ -1,0 +1,46 @@
+diff -U 4 -H -d -p -r -N -- a/osgi/framework/src/j3/vm/OSGi.java b/osgi/framework/src/j3/vm/OSGi.java
+--- a/osgi/framework/src/j3/vm/OSGi.java	1970-01-01 01:00:00.000000000 +0100
++++ b/osgi/framework/src/j3/vm/OSGi.java	2013-12-09 17:26:46.738542108 +0100
+@@ -0,0 +1,9 @@
++package j3.vm;
++
++public class OSGi
++{
++	public static native void bundleResolved(
++		String bundleName, long bundleID, ClassLoader loaderObject);
++	public static native void bundleUnresolved(
++		String bundleName, long bundleID);
++}
+diff -U 4 -H -d -p -r -N -- a/osgi/framework/src/org/knopflerfish/framework/BundleGeneration.java b/osgi/framework/src/org/knopflerfish/framework/BundleGeneration.java
+--- a/osgi/framework/src/org/knopflerfish/framework/BundleGeneration.java	2013-12-06 11:47:15.745783303 +0100
++++ b/osgi/framework/src/org/knopflerfish/framework/BundleGeneration.java	2013-12-09 17:55:39.705198422 +0100
+@@ -212,8 +212,9 @@ public class BundleGeneration implements
+     timeStamp = System.currentTimeMillis();
+     bpkgs = new BundlePackages(this, exportStr);
+     bundleRevision = new BundleRevisionImpl(this);
+     classLoader = b.getClassLoader();
++	j3.vm.OSGi.bundleResolved(symbolicName, bundle.getBundleId(), classLoader);
+     processCapabilities(capabilityStr);
+     identity = new BundleCapabilityImpl(this);
+   }
+ 
+@@ -546,8 +547,9 @@ public class BundleGeneration implements
+             }
+           }
+         }
+         classLoader = bundle.secure.newBundleClassLoader(this);
++		j3.vm.OSGi.bundleResolved(symbolicName, bundle.getBundleId(), classLoader);
+ 
+         return true;
+       }
+       if (isFragmentHost()) {
+@@ -920,8 +922,9 @@ public class BundleGeneration implements
+     final BundleClassLoader tmp = (BundleClassLoader)classLoader;
+     if (tmp != null) {
+       classLoader = null;
+       tmp.close();
++	  j3.vm.OSGi.bundleUnresolved(symbolicName, bundle.getBundleId());
+     }
+   }
+ 
+ 

@@ -27,7 +27,7 @@
 #define _BOLD "01"
 #define _SOULIGNE "04"
 
-#define MK_COLOR(type, bg) type";"bg
+#define MK_COLOR(type, bg) type";" bg
 
 /*
 #define MK_COLOR(type, bg, fg) type";"bg";"fg

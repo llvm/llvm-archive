@@ -45,10 +45,19 @@ public:
   llvm::Type* JavaMethodType;
   llvm::Type* JavaFieldType;
   llvm::Type* AttributeType;
+  llvm::Type* ThreadType;
   llvm::Type* JavaThreadType;
   llvm::Type* MutatorThreadType;
   llvm::Type* J3DenseMapType;
-  
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  llvm::Type* TierIDType;
+#endif
+
+#if EMBEDDED_LIST_IN_CALL_STACK
+  llvm::Type* StackEmbeddedListNodeType;
+#endif
+
   llvm::Function* VTAllocateFunction;
   llvm::Function* VTAllocateUnresolvedFunction;
 
@@ -109,6 +118,16 @@ public:
   llvm::Function* GetFinalFloatFieldFunction;
   llvm::Function* GetFinalDoubleFieldFunction;
   
+#if JAVA_CHARGED_TIER_CALL_STACK
+  llvm::Function* PushChargedTierNodeFunction;
+  llvm::Function* PopChargedTierNodeFunction;
+#endif
+
+#if OSGI_BUNDLE_TIER_TAGGING
+  llvm::Constant* InvalidTierIDConstant;
+  llvm::Constant* OffsetChargedTierIDInThreadConstant;
+#endif
+
   llvm::Constant* JavaArraySizeOffsetConstant;
   llvm::Constant* JavaArrayElementsOffsetConstant;
   llvm::Constant* HeaderObjectLockOffsetConstant;
@@ -131,6 +150,15 @@ public:
   llvm::Constant* OffsetJNIInJavaThreadConstant;
   llvm::Constant* OffsetJavaExceptionInJavaThreadConstant;
 
+#if EMBEDDED_LIST_IN_CALL_STACK
+  llvm::Constant* OffsetStackEmbeddedListHeadInThreadConstant;
+
+  llvm::Constant* OffsetCallerNodeInStackEmbeddedListNodeConstant;
+  llvm::Constant* OffsetDataInStackEmbeddedListNodeConstant;
+#endif
+
+  llvm::Constant* constantNullJavaMethodPtr;
+
   llvm::Constant* OffsetClassInVTConstant;
   llvm::Constant* OffsetDepthInVTConstant;
   llvm::Constant* OffsetDisplayInVTConstant;
@@ -140,11 +168,17 @@ public:
   llvm::Constant* OffsetBaseClassInArrayClassConstant;
   llvm::Constant* OffsetLogSizeInPrimitiveClassConstant;
   
+  llvm::Constant* OffsetOffsetInJavaMethodConstant;
+
   llvm::Constant* ClassReadyConstant;
 
   llvm::Constant* JavaObjectNullConstant;
   llvm::Constant* MaxArraySizeConstant;
   llvm::Constant* JavaArraySizeConstant;
+
+#if MONITOR_CREATED_OBJECTS_COUNT
+  llvm::Constant* OffsetTotalCalledMethodsCounterInThread;
+#endif
 
   llvm::Function* ThrowExceptionFunction;
   llvm::Function* NullPointerExceptionFunction;

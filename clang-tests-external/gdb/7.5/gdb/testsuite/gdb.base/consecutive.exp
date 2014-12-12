@@ -62,6 +62,7 @@ gdb_test_multiple "x /2i \$pc" "get breakpoint address for foo" {
 gdb_test "break \*$bp_addr" "Breakpoint $decimal at $bp_addr: file .*" \
 	"set bp, 2nd instr"
 
+if [using_clang] { setup_kfail gdb/17701 *-*-* }
 gdb_test_multiple "step" "stopped at bp, 2nd instr" {
     -re "Breakpoint $decimal, ($hex) in foo.*$gdb_prompt $" {
 	set stop_addr $expect_out(1,string)

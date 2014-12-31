@@ -258,25 +258,20 @@ gdb_test_multiple "step" "$test_message" {
 
 # step backward out of called function (thru call)
 
-if [using_clang] { setup_xfail "PR 20284" *-*-* }
 gdb_test "step" ".*STEP INTO THIS CALL.*" "reverse step out of called fn"
 
 # next backward over call
 
-if [using_clang] { setup_xfail "PR 20284" *-*-* }
 gdb_test "next" ".*NEXT OVER THIS CALL.*" "reverse next over call"
 
 # step/next backward with count
 
-if [using_clang] { setup_xfail "PR 20284" *-*-* }
 gdb_test "step 3" ".*REVERSE STEP TEST 1.*" "reverse step test 1"
-if [using_clang] { setup_xfail "PR 20284" *-*-* }
 gdb_test "next 2" ".*REVERSE NEXT TEST 1.*" "reverse next test 1"
 
 # step/next backward without count
 
 gdb_test "step" ".*STEP TEST 1.*" "reverse step test 2"
-if [using_clang] { setup_xfail "PR 20284" *-*-* }
 gdb_test "next" ".*NEXT TEST 1.*" "reverse next test 2"
 
 

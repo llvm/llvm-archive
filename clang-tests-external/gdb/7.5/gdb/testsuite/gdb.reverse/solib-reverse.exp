@@ -106,19 +106,16 @@ gdb_test "reverse-next" " generic statement.*" "reverse-next generic"
 # Test reverse-step into debuggable solib function
 #
 
-# multiple failures here, haven't bothered to match/diagnose them precisely
-# Clang 14580 means reverse stepping will reach the return, not the
-# '}'
-# GDB 17701 means reverse stepping will step to the assignment
-# after the call before stepping back into the call
-if [using_clang] { setup_kfail "gdb/17701" *-*-* }
-gdb_test "reverse-step" "}" "reverse-step into solib function one"
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if ![gdb_test "reverse-step" "}" "reverse-step into solib function one"] {
+  gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function one"
+}
 gdb_test "reverse-step" " middle part two.*" "reverse-step back to main one"
 
-if [using_clang] { setup_kfail "gdb/17701" *-*-* }
-gdb_test "reverse-step" "}" "reverse-step into solib function two"
-gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
+if [using_clang] { setup_xfail "clang/14580" *-*-* }
+if ![gdb_test "reverse-step" "}" "reverse-step into solib function two"] {
+  gdb_test "reverse-step" "return 2.x.*" "reverse-step within solib function two"
+}
 gdb_test "reverse-step" " begin part two.*" "reverse-step back to main two"
 
 #
@@ -128,5 +125,4 @@ gdb_test "reverse-step" " begin part two.*" "reverse-step back to main two"
 gdb_test "until $end_part_two" " end part two.*" "run until end part two"
 
 gdb_test "reverse-next" " middle part two.*" "reverse-next over solib function one"
-if [using_clang] { setup_kfail "gdb/17701" *-*-* }
 gdb_test "reverse-next" " begin part two.*" "reverse-next over solib function two"

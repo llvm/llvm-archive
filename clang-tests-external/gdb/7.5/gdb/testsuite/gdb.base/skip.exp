@@ -126,7 +126,11 @@ if ![using_clang] { # Clang PR14580
   gdb_test "step" ".*" "step after disabling 3 (2)"; # Return from foo()
 }
 # account for differing order of evaluation of function operands
-gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (3)"
+if [using_clang] {
+  gdb_test "step" "bar \\(\\) at.*" "step after disabling 3 (3)"
+} else {
+  gdb_test "step" "foo \\(\\) at.*" "step after disabling 3 (3)"
+}
 if ![using_clang] { # Clang PR14580
   gdb_test "step" ".*" "step after disabling 3 (4)"; # Return from bar()
 }

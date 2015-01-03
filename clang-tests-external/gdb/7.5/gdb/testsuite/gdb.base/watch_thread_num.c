@@ -39,10 +39,7 @@ int main () {
 
     for (i = 0; i < NUM; i++)
       {
-        res = pthread_create (&threads[i],
-                             NULL,
-                             thread_function,
-			     (void *) i);
+        res = pthread_create (&threads[i], NULL, thread_function, (void *) i);
       }
 
     thread_result = thread_function ((void *) i);

@@ -43,8 +43,8 @@ func (const A &a)
   b.i = 10;
   b.c = 'a';
 
-  return 0; /* Break here.  */
-}
+// Clang skips the ret 0 and attributes B's dtor and the return to the '}'
+  return 0; } /* Break here.  */
 
 int
 main ()

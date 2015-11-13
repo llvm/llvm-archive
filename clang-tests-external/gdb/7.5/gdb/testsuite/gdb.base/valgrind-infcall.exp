@@ -85,7 +85,7 @@ unset_board_info fileid
 
 clean_restart $executable
 
-gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
+gdb_test "$vgdbcmd" " in .*" "target remote for vgdb"
 
 gdb_test "monitor v.set gdb_output" "valgrind output will go to gdb.*"
 
